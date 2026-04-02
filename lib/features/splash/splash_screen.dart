@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tahsel/core/services/security_service.dart';
 import 'package:tahsel/core/services/translation_helper.dart';
 import 'package:tahsel/core/utils/app_constants.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/shared/widgets/fields/text_widget.dart';
 import 'package:tahsel/shared/widgets/buttons/theme_toggle_button.dart';
@@ -93,7 +94,7 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                     const SizedBox(height: 24),
                     TextWidget(
-                      Loc.tr(context, AppConstants.splashText),
+                      Loc.tr(context, AppStrings.no_data),
                       style: TextStyles.font28WeightBoldWhite().copyWith(
                         letterSpacing: 4,
                       ),

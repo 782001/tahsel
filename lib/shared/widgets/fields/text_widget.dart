@@ -21,7 +21,7 @@ class TextWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextWidget(
+    return Text(
       text ?? '',
       style: style,
       textAlign: textAlign,

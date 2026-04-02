@@ -5,7 +5,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 class AppConstants {
   AppConstants._();
   static const String fontFamily = 'DGAgnadeen';
-  static const String splashText = 'splash.title';
   static double appHorizontalPadding = 18.h;
   static double appMargin = 30.h;
   static Radius radius24 = Radius.circular(24.h);
