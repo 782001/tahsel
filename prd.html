@@ -1,0 +1,137 @@
+Okay, I can definitely do that! However, you haven't provided any context yet.
+
+To create a project PRD (Product Requirements Document) or brief, I need some information about the product or feature you want to build.
+
+**Please provide context for:**
+
+1.  **What is the product/company?** (e.g., "We are an e-commerce platform called 'ShopEase'", "We have a mobile productivity app called 'TaskMaster'")
+2.  **What is the problem you are trying to solve?** (e.g., "Users complain our checkout process is too long," "Our users want a better way to organize their project files.")
+3.  **What is the proposed solution or feature idea?** (e.g., "Implement a one-click checkout," "Build a drag-and-drop file organizer with tagging.")
+4.  **Who is the target audience for this feature?** (e.g., "All existing customers," "Small business owners using our platform.")
+5.  **What do you hope to achieve with this project?** (e.g., "Increase conversion rates by 10%," "Reduce customer support tickets by 5%.")
+6.  **Any known constraints or specific requirements?** (e.g., "Must be GDPR compliant," "Must integrate with Salesforce.")
+
+---
+
+**In the meantime, I will create a *sample* project brief based on a common scenario: "Adding a new user-requested feature to an existing mobile productivity app."**
+
+This will show you the typical structure and content you can expect.
+
+---
+
+### **SAMPLE PROJECT BRIEF: Customizable Notification Sounds & Vibration Patterns (FocusFlow App)**
+
+---
+
+**Document Title:** Project Brief: Customizable Notification Sounds & Vibration Patterns
+**Product:** FocusFlow (Mobile Productivity App)
+**Version:** 1.0 (Initial Draft)
+**Date:** October 26, 2023
+**Author:** [Your Name/Team]
+
+---
+
+### **1. Project Overview / Executive Summary**
+
+This project aims to enhance user experience within the FocusFlow mobile application by introducing customizable notification sounds and vibration patterns. Currently, FocusFlow relies on generic system defaults, leading to user complaints about lack of personalization and difficulty distinguishing FocusFlow alerts from other app notifications. By providing tailored alert options, we intend to increase user satisfaction, improve engagement, and reinforce FocusFlow's position as a personalized productivity tool.
+
+### **2. Problem Statement**
+
+FocusFlow users frequently express a desire for more control over their in-app notifications. The current generic system default sounds and vibration patterns are often described as disruptive, indistinguishable from other apps, or simply not aligned with users' personal preferences or work environments. This leads to:
+*   **User Frustration:** Lack of personalization reduces the perceived value of notifications.
+*   **Missed Alerts:** Users may ignore or dismiss generic alerts, missing important task reminders.
+*   **Distraction:** Inappropriate sounds can break focus rather than aid it.
+*   **Competitive Disadvantage:** Many competitors offer some form of notification customization.
+
+### **3. Goals & Objectives**
+
+*   **Primary Goal:** Increase user satisfaction and engagement by providing personalized notification experiences.
+*   **Specific Objectives (SMART):**
+    *   Achieve a 15% increase in positive feedback related to notification settings within 3 months post-launch.
+    *   Reduce notification-related customer support tickets by 20% within 6 months post-launch.
+    *   Increase the average session duration by 5% for users who customize their notifications.
+    *   Ensure feature adoption by at least 30% of daily active users (DAU) within 6 months post-launch.
+
+### **4. Target Audience**
+
+All FocusFlow users, with a particular emphasis on:
+*   **Power Users:** Those who extensively customize their app experiences.
+*   **Users in Diverse Environments:** Individuals who need distinct alerts for focused work (e.g., quiet chime), or more prominent alerts in noisy environments.
+*   **Users reliant on reminders:** Individuals who heavily depend on FocusFlow's task and deadline reminders.
+
+### **5. Proposed Solution & Key Features**
+
+The solution involves adding a dedicated "Notification Settings" section within the app where users can customize alerts for different event types.
+
+**Key Features (MVP):**
+
+1.  **Dedicated Notification Settings Screen:** A new section under "Settings" for managing all notification preferences.
+2.  **Per-Notification Type Customization:**
+    *   Users can select specific event types (e.g., "Task Reminder," "Deadline Alert," "Daily Digest").
+    *   For each type, they can:
+        *   Choose from a curated library of pre-set notification sounds (e.g., "Gentle Chime," "Productivity Pulse," "Sharp Alert," "Silent").
+        *   Choose from a curated library of pre-set vibration patterns (e.g., "Short Pulse," "Long Buzz," "Rhythmic Tap," "None").
+3.  **Preview Functionality:** Allow users to preview selected sounds and vibration patterns before saving.
+4.  **Reset to Default Option:** A clear option to revert all custom settings back to system defaults.
+
+### **6. Non-Goals / Out of Scope (for MVP)**
+
+*   Uploading custom sound files (e.g., MP3s).
+*   Per-task specific notification overrides (only per *type*).
+*   Integration with third-party sound libraries or advanced sound mixing.
+*   Advanced scheduling of notification profiles (e.g., "Work Mode" vs. "Home Mode" notification settings).
+*   Customized LED light patterns (if applicable to device).
+
+### **7. Success Metrics**
+
+*   **Quantitative:**
+    *   Percentage of users utilizing the new notification customization features.
+    *   Number of unique notification sound/vibration combinations applied.
+    *   App store ratings and reviews mentioning notifications.
+    *   Reduction in notification-related support tickets.
+    *   Impact on user retention rates (for customized vs. non-customized users).
+*   **Qualitative:**
+    *   Direct user feedback via in-app surveys or beta testing.
+    *   Customer sentiment analysis from social media and forums.
+
+### **8. High-Level Technical Considerations**
+
+*   **Mobile Platform APIs:** Utilize native iOS (e.g., `UNNotificationSound`, `AudioServicesPlaySystemSound`) and Android (e.g., `NotificationChannel`, `VibrationEffect`) APIs for sounds and vibrations.
+*   **Backend Storage:** User preferences for notification sounds/vibrations will need to be stored in the user profile database.
+*   **Asset Management:** Management of curated sound files within the app bundle or CDN.
+*   **Accessibility:** Ensure compliance with accessibility standards (e.g., providing visual alternatives for sound/vibration).
+*   **Performance:** Minimize app bundle size increase due to new sound assets and ensure smooth playback.
+
+### **9. Dependencies & Risks**
+
+*   **Dependencies:**
+    *   UI/UX Design resources for new settings screens and sound/vibration selector.
+    *   Mobile Engineering (iOS & Android) for implementation.
+    *   Backend Engineering for preference storage.
+    *   QA & Testing.
+*   **Risks:**
+    *   **Scope Creep:** High user demand for out-of-scope features (e.g., custom uploads) might distract from MVP.
+    *   **Performance Impact:** Poorly optimized sound assets or API usage could degrade app performance.
+    *   **Platform Fragmentation:** Ensuring consistent experience across various iOS and Android versions/devices.
+    *   **Accessibility Challenges:** Ensuring the feature is usable and beneficial for users with hearing or tactile impairments.
+
+### **10. High-Level Timeline (Tentative)**
+
+*   **Phase 1: Discovery & Design:** 2-3 weeks (User Research, Wireframes, UI/UX Mockups)
+*   **Phase 2: Development:** 6-8 weeks (Backend integration, iOS/Android implementation)
+*   **Phase 3: QA & Testing:** 2 weeks (Internal testing, bug fixing)
+*   **Phase 4: Beta Program/Pilot:** 1-2 weeks (Optional, with select users)
+*   **Phase 5: Launch:** TBD (Targeting late Q1/early Q2 next year)
+
+### **11. Key Stakeholders**
+
+*   Product Management Lead (PM)
+*   Engineering Lead (iOS, Android, Backend)
+*   Design Lead (UI/UX)
+*   QA Lead
+*   Customer Support Lead
+*   Marketing Lead (for launch communication)
+
+---
+
+**Now, please provide your specific context, and I'll create a tailored PRD/Brief for you!**

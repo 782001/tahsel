@@ -1,0 +1,114 @@
+name: tahsel
+description: "A new Flutter project."
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+# The following defines the version and build number for your application.
+# A version number is three numbers separated by dots, like 1.2.43
+# followed by an optional build number separated by a +.
+# Both the version and the builder number may be overridden in flutter
+# build by specifying --build-name and --build-number, respectively.
+# In Android, build-name is used as versionName while build-number used as versionCode.
+# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
+# In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
+# Read more about iOS versioning at
+# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
+# In Windows, build-name is used as the major, minor, and patch parts
+# of the product and file versions while build-number is used as the build suffix.
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.1
+
+# Dependencies specify other packages that your package needs in order to work.
+# To automatically upgrade your package dependencies to the latest versions
+# consider running `flutter pub upgrade --major-versions`. Alternatively,
+# dependencies can be manually updated by changing the version numbers below to
+# the latest version available on pub.dev. To see which dependencies have newer
+# versions available, run `flutter pub outdated`.
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  bloc: ^8.1.4
+  dio: ^5.8.0+1
+  equatable: ^2.0.7
+  flutter_bloc: ^8.1.6
+  flutter_colorpicker: ^1.1.0
+  flutter_localizations:
+    sdk: flutter
+  flutter_otp_text_field: ^1.4.0+2
+  flutter_screenutil: ^5.9.3
+  flutter_svg: ^2.0.17
+  flutter_typeahead: ^5.2.0
+  fluttertoast: ^8.2.12
+  get_it: ^8.0.1
+
+
+  image_picker: ^0.8.7+4
+  internet_connection_checker: ^1.0.0+1
+  intl_phone_field: ^3.2.0
+  loading_indicator: ^3.1.1
+  painter: ^2.0.0
+  path_provider: ^2.1.5
+  pin_code_fields: ^8.0.1
+  pinput: ^5.0.1
+  retry: ^3.1.2
+  shared_preferences: ^2.3.2
+  shimmer: ^3.0.0
+  url_launcher: ^6.3.1
+  connectivity_plus: ^7.0.0
+  pretty_dio_logger: ^1.3.1
+  dartz: ^0.10.1
+  pull_to_refresh_flutter3: ^2.0.0
+  flutter_jailbreak_detection: ^1.10.0
+  vault_kit: ^1.0.5
+  flutter_dotenv: 5.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/svg/
+    - lang/ar.json
+    - lang/en.json
+
+  fonts:
+    - family: DGAgnadeen
+      fonts:
+        - asset: assets/fonts/DGAgnadeen-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/DGAgnadeen-Ultralight.ttf
+          weight: 200
+        - asset: assets/fonts/DGAgnadeen-Light.ttf
+          weight: 300
+        - asset: assets/fonts/DGAgnadeen-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/DGAgnadeen-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/DGAgnadeen-Extrabold.ttf
+          weight: 800
+        - asset: assets/fonts/DGAgnadeen-Heavy.ttf
+          weight: 900
+
+flutter_assets:
+  assets_path: assets/
+  output_path: lib/core/utils/
+  filename: assets.dart
+  field_prefix:
+
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/appLogo.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/appLogo.png"
