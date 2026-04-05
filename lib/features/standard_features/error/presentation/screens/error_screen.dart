@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:tahsel/core/services/translation_helper.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
-import 'package:tahsel/shared/widgets/fields/text_widget.dart';
 import 'package:tahsel/shared/widgets/buttons/theme_toggle_button.dart';
+import 'package:tahsel/shared/widgets/fields/text_widget.dart';
 
 class ErrorScreen extends StatelessWidget {
   final FlutterErrorDetails errorDetails;
@@ -34,7 +34,7 @@ class ErrorScreen extends StatelessWidget {
               ),
               SizedBox(height: 24.h),
               TextWidget(
-                Loc.tr(context, AppStrings.errorScreenTitle),
+                AppStrings.errorScreenTitle.tr(),
                 style: TextStyles.font28WeightBoldWhite().copyWith(
                   color: AppColors.textColor,
                 ),
@@ -57,7 +57,7 @@ class ErrorScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         TextWidget(
-                          Loc.tr(context, AppStrings.errorScreenDetailsLabel),
+                          AppStrings.errorScreenDetailsLabel.tr(),
                           style: TextStyles.font16WeightBoldText(),
                         ),
                         SizedBox(height: 8.h),
@@ -88,7 +88,7 @@ class ErrorScreen extends StatelessWidget {
                   ),
                 ),
                 child: TextWidget(
-                  Loc.tr(context, AppStrings.errorScreenGoBackButton),
+                  AppStrings.errorScreenGoBackButton.tr(),
                   style: TextStyles.font18Weight500White(),
                 ),
               ),

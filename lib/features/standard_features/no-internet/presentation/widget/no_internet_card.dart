@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/translation_helper.dart';
 import 'package:tahsel/core/utils/assets.dart';
 import 'package:tahsel/shared/widgets/fields/text_widget.dart';
@@ -44,7 +45,7 @@ class NoInternetCard extends StatelessWidget {
           AnimatedBuilder(
             animation: colorAnimation,
             builder: (context, _) => TextWidget(
-              Loc.tr(context, "noInternetTitle"),
+               "noInternetTitle".tr(),
               style: TextStyles.appbartext().copyWith(
                 color: colorAnimation.value,
                 fontWeight: FontWeight.w600,
@@ -54,7 +55,7 @@ class NoInternetCard extends StatelessWidget {
           ),
           SizedBox(height: 12.h),
           TextWidget(
-            Loc.tr(context, "noInternetDescription"),
+             "noInternetDescription".tr(),
             textAlign: TextAlign.center,
             style: TextStyles.font14Weight400RightAligned().copyWith(
               color: const Color(0xFF616161),
@@ -73,7 +74,7 @@ class NoInternetCard extends StatelessWidget {
                   )
                 : CustomButton(
                     key: const ValueKey('retry'),
-                    text: Loc.tr(context, "tryAgain"),
+                    text:  "tryAgain".tr(),
                     height: 48.h,
                     width: 200.w,
                     onPressed: onRetry,

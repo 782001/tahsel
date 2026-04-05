@@ -1,0 +1,35 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/styles.dart';
+
+class LogoutButton extends StatelessWidget {
+  const LogoutButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: TextButton(
+        onPressed: () {},
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(vertical: 16.h),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.r),
+            side: BorderSide(color: AppColors.error),
+          ),
+        ),
+        child: Text(
+          AppStrings.logout.tr(),
+          style: TextStyles.customStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: AppColors.error,
+          ),
+        ),
+      ),
+    );
+  }
+}

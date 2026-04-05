@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/security_service.dart';
-import 'package:tahsel/core/services/translation_helper.dart';
-import 'package:tahsel/core/utils/app_constants.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
-import 'package:tahsel/shared/widgets/fields/text_widget.dart';
-import 'package:tahsel/shared/widgets/buttons/theme_toggle_button.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/services/navigator_service.dart';
+import 'package:tahsel/routes/app_routes.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -47,7 +47,9 @@ class _SplashScreenState extends State<SplashScreen>
   void _navigateToNext() async {
     await SecurityService.checkSecurity();
     await Future.delayed(const Duration(seconds: 3));
-    if (mounted) {}
+    if (mounted) {
+      nav().pushNamedAndRemoveUntil(AppRoutes.login);
+    }
   }
 
   @override
@@ -71,14 +73,14 @@ class _SplashScreenState extends State<SplashScreen>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      width: 120,
-                      height: 120,
+                      width: 120.w,
+                      height: 120.w,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.white,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
+                            color: AppColors.shadowColor.withOpacity(0.2),
                             blurRadius: 20,
                             offset: const Offset(0, 10),
                           ),
@@ -86,25 +88,26 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                       child: Center(
                         child: Icon(
-                          Icons.star_rounded,
-                          size: 80,
+                          Icons.account_balance,
+                          size: 60.sp,
                           color: AppColors.primaryColor,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    TextWidget(
-                      Loc.tr(context, AppStrings.no_data),
-                      style: TextStyles.font28WeightBoldWhite().copyWith(
-                        letterSpacing: 4,
-                      ),
+                    SizedBox(height: 24.h),
+                    Text(
+                      AppStrings.financialEngineer.tr(),
+                      style: TextStyles.customStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.white,
+                      ).copyWith(letterSpacing: 2),
                     ),
                   ],
                 ),
               ),
             ),
           ),
-          const Positioned(top: 40, right: 16, child: ThemeToggleButton()),
         ],
       ),
     );

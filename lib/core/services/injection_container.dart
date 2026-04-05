@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:tahsel/features/category/service_injection/category_injection.dart';
+import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:vault_kit/vault_kit.dart';
 import 'package:get_it/get_it.dart';
 import '../../core/dio_client/dio_client.dart';
@@ -29,6 +30,9 @@ Future<void> initDependencies() async {
 
   // theme
   sl.registerFactory<ThemeCubit>(() => ThemeCubit(cashHelper: sl()));
+
+  // main layout
+  sl.registerFactory<MainLayoutCubit>(() => MainLayoutCubit());
 
   /// --------useCases----------
   sl.registerLazySingleton<ChangeLangUseCase>(

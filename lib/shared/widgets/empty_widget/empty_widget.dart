@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:tahsel/core/services/translation_helper.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_constants.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -27,7 +27,7 @@ class EmptyWidget extends StatelessWidget {
             SizedBox(height: topHeight, width: double.infinity),
             SizedBox(height: 24.h),
             TextWidget(
-              title ?? Loc.tr(context, AppStrings.no_data),
+              title ?? AppStrings.no_data.tr(),
               style: TextStyle(
                 fontSize: 18.sp,
                 fontWeight: FontWeight.w600,
@@ -37,7 +37,7 @@ class EmptyWidget extends StatelessWidget {
             ),
             SizedBox(height: 8.h),
             TextWidget(
-              subTitle ?? Loc.tr(context, AppStrings.sorry_no_data),
+              subTitle ?? AppStrings.sorry_no_data.tr(),
               style: TextStyle(color: AppColors.blackLight),
               textAlign: TextAlign.center,
             ),

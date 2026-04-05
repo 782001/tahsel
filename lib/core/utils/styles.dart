@@ -75,4 +75,21 @@ class TextStyles {
       color: Colors.white,
     );
   }
+
+  static TextStyle customStyle({
+    required double fontSize,
+    required FontWeight fontWeight,
+    required Color color,
+    double? letterSpacing,
+    double? height,
+  }) {
+    return TextStyle(
+      fontSize: getResponsiveFontSize(fontSize: fontSize),
+      fontWeight: fontWeight,
+      fontFamily: AppConstants.fontFamily,
+      color: color,
+      letterSpacing: letterSpacing,
+      height: height,
+    );
+  }
 }

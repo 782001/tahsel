@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-
 import 'no_internet_card.dart';
+import 'package:tahsel/shared/widgets/buttons/theme_toggle_button.dart';
 
 class NoInternetOverlay extends StatelessWidget {
   final Animation<double> scaleAnimation;
@@ -20,23 +20,32 @@ class NoInternetOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      color: const Color(0xF2FFFFFF),
-      child: Center(
-        child: ScaleTransition(
-          scale: scaleAnimation,
-          child: SlideTransition(
-            position: slideAnimation,
-            child: NoInternetCard(
-              colorAnimation: colorAnimation,
-              isChecking: isChecking,
-              onRetry: onRetry,
+    return Stack(
+      children: [
+        Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: const Color(0xF2FFFFFF),
+        ),
+        const Positioned(
+          top: 40,
+          right: 16,
+          child: ThemeToggleButton(),
+        ),
+        Center(
+          child: ScaleTransition(
+            scale: scaleAnimation,
+            child: SlideTransition(
+              position: slideAnimation,
+              child: NoInternetCard(
+                colorAnimation: colorAnimation,
+                isChecking: isChecking,
+                onRetry: onRetry,
+              ),
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 }

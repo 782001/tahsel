@@ -9,9 +9,13 @@ class AppStrings {
   static const String serverFailure = 'Server Failure';
   static const String cacheFailure = 'Cache Failure';
   static const String unexpectedError = 'Unexpected Error';
-  static const String englishCode = 'en';
-  static const String arabicCode = 'ar';
-  static const String locale = 'locale';
+  static const String arabicCode = "ar";
+  static const String englishCode = "en";
+  static const String locale = "locale";
+
+  // Auth Screen
+  static const String login = "login";
+  static const String noData = "no_data";
   static String currentLang = "ar";
   static String userToken =
       sl<CashHelper>().getData(key: 'token') as String? ?? '';
@@ -45,4 +49,64 @@ class AppStrings {
   static const String errorScreenTitle = "error_screen_title";
   static const String errorScreenDetailsLabel = "error_screen_details_label";
   static const String errorScreenGoBackButton = "error_screen_go_back_button";
+
+  // Settings Screen
+  static const String settings = "settings";
+  static const String changeLanguage = "change_language";
+  static const String changeLanguageDesc = "change_language_desc";
+  static const String arabic = "arabic";
+  static const String arabicDesc = "arabic_desc";
+  static const String english = "english";
+  static const String englishDesc = "english_desc";
+  static const String languageChangeInfo = "language_change_info";
+
+  // Expenses Screen
+  static const String dashboard = "dashboard";
+  static const String totalMonthlyExpenses = "total_monthly_expenses";
+  static const String expenseIncreaseHint = "expense_increase_hint";
+  static const String allExpenses = "all_expenses";
+  static const String supplies = "supplies";
+  static const String operations = "operations";
+  static const String employees = "employees";
+  static const String rents = "rents";
+  static const String salaries = "salaries";
+  static const String payrollDesc = "payroll_desc";
+  static const String rent = "rent";
+  static const String electricityBill = "electricity_bill";
+  static const String mainOfficeServices = "main_office_services";
+
+  // Customer Debts Screen
+  static const String customerDebts = "customer_debts";
+  static const String customerDebtsDesc = "customer_debts_desc";
+  static const String searchCustomer = "search_customer";
+  static const String partialPayment = "partial_payment";
+  static const String amountPaid = "amount_paid";
+  static const String currencyEgp = "currency_egp";
+  static const String confirm = "confirm";
+  static const String cancel = "cancel";
+
+  // General Nav
+  static const String home = "home";
+  static const String reports = "reports";
+
+  // Login Screen
+  static const String financialEngineer = "financial_engineer";
+  static const String loginSubtitle = "login_subtitle";
+  static const String welcomeBack = "welcome_back";
+  static const String emailAddress = "email_address";
+  static const String password = "password";
+  static const String contactManager = "contact_manager";
+  static const String noAccount = "no_account";
+  static const String helpCenter = "help_center";
+  static const String termsOfService = "terms_of_service";
+  static const String privacyPolicy = "privacy_policy";
+  static const String appearance = "appearance";
+  static const String lightMode = "light_mode";
+  static const String darkMode = "dark_mode";
+  static const String account = "account";
+  static const String profile = "profile";
+  static const String notifications = "notifications";
+  static const String security = "security";
+  static const String support = "support";
+  static const String logout = "logout";
 }

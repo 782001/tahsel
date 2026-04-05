@@ -20,6 +20,7 @@ class AuthTextFormField extends StatefulWidget {
   final Color? suffixIconColor;
   final int? maxLines;
   final FocusNode? focusNode;
+  final Widget? headerTrailingWidget;
 
   const AuthTextFormField({
     super.key,
@@ -38,6 +39,7 @@ class AuthTextFormField extends StatefulWidget {
     this.suffixIconColor,
     this.maxLines = 1,
     this.focusNode,
+    this.headerTrailingWidget,
   });
 
   @override
@@ -68,13 +70,25 @@ class _AuthTextFormFieldState extends State<AuthTextFormField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextWidget(
-            widget.label,
-            style: TextStyles.font14Weight400RightAligned(),
-            textAlign: TextAlign.right,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            if (widget.headerTrailingWidget != null) widget.headerTrailingWidget!,
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: TextWidget(
+                  widget.label,
+                  style: TextStyles.customStyle(
+                    color: AppColors.textColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.right,
+                ),
+              ),
+            ),
+          ],
         ),
         SizedBox(height: 8.h),
         SizedBox(

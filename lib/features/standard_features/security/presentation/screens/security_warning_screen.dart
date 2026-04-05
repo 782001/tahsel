@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/translation_helper.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -39,7 +40,7 @@ class SecurityWarningScreen extends StatelessWidget {
               ),
               SizedBox(height: 32.h),
               TextWidget(
-                Loc.tr(context, AppStrings.securityWarningTitle),
+                 AppStrings.securityWarningTitle.tr(),
                 style: TextStyles.font28WeightBoldWhite().copyWith(
                   color: AppColors.textColor,
                 ),
@@ -47,7 +48,7 @@ class SecurityWarningScreen extends StatelessWidget {
               ),
               SizedBox(height: 16.h),
               TextWidget(
-                Loc.tr(context, AppStrings.securityWarningDescription),
+                 AppStrings.securityWarningDescription.tr(),
                 style: TextStyles.font16Weight400Text(),
                 textAlign: TextAlign.center,
               ),
@@ -99,7 +100,7 @@ class SecurityWarningScreen extends StatelessWidget {
               ),
               SizedBox(height: 48.h),
               TextWidget(
-                Loc.tr(context, AppStrings.securityWarningFooter),
+                 AppStrings.securityWarningFooter.tr(),
                 style: TextStyles.font14Weight400RightAligned().copyWith(
                   color: AppColors.textColor2.withOpacity(0.7),
                 ),

@@ -1,23 +1,21 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/config/locale/app_localizations_setup.dart';
-import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/injection_container.dart' as di;
+import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
 import 'package:tahsel/core/services/security_service.dart';
 import 'package:tahsel/core/utils/app_constants.dart';
 import 'package:tahsel/features/standard_features/error/presentation/screens/error_screen.dart';
 import 'package:tahsel/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/no_internet.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_cubit.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_state.dart';
-import 'package:tahsel/features/standard_features/no-internet/no_internet.dart';
 import 'package:tahsel/routes/app_routes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
 
   SecurityService.isEnabled = false;
   await initDependencies();
@@ -62,7 +60,7 @@ class MyApp extends StatelessWidget {
                   return MaterialApp(
                     navigatorKey: sl<NavigatorService>().navigatorKey,
                     debugShowCheckedModeBanner: false,
-                    title: 'Standard Repo',
+                    title: 'تحصيل',
                     locale: localeState.locale,
                     themeMode: themeState.themeMode,
                     supportedLocales: AppLocalizationsSetup.supportedLocales,

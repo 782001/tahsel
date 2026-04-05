@@ -68,6 +68,7 @@ dependencies:
       url: https://github.com/pdurasie-ecovery/flutter_jailbreak_detection.git
       ref: add-namespace
   vault_kit: ^1.0.5
+  flutter_slidable: ^4.0.3
   # flutter_dotenv: 5.2.1
 
 dev_dependencies:

@@ -1,14 +1,13 @@
-import 'package:tahsel/core/services/injection_container.dart';
-import 'package:tahsel/core/storage/cashhelper.dart';
+import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/standard_features/localization/domain/usecases/change_lang.dart';
 import 'package:tahsel/features/standard_features/localization/domain/usecases/get_saved_lang.dart';
-
-import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/features/standard_features/localization/domain/usecases/no_parameter.dart';
+
+import 'package:tahsel/core/config/locale/app_localizations.dart';
 
 part 'locale_state.dart';
 
@@ -26,10 +25,12 @@ class LocaleCubit extends Cubit<LocaleState> {
     final response = await getSavedLangUseCase.call(NoParemeters());
     response.fold((failure) => AppLogger.handleLogs(AppStrings.cacheFailure), (
       value,
-    ) {
+    ) async {
       currentLangCode = value;
       AppStrings.currentLang = value;
-      emit(ChangeLocaleState(Locale(currentLangCode)));
+      final locale = Locale(currentLangCode);
+      await AppLocalizations.init(locale);
+      emit(ChangeLocaleState(locale));
     });
   }
 
@@ -37,11 +38,13 @@ class LocaleCubit extends Cubit<LocaleState> {
     final response = await changeLangUseCase.call(langCode);
     response.fold((failure) => AppLogger.handleLogs(AppStrings.cacheFailure), (
       value,
-    ) {
+    ) async {
       currentLangCode = langCode;
       AppStrings.currentLang = langCode;
 
-      emit(ChangeLocaleState(Locale(currentLangCode)));
+      final locale = Locale(currentLangCode);
+      await AppLocalizations.init(locale); // Pre-load translations
+      emit(ChangeLocaleState(locale));
     });
   }
 

@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/translation_helper.dart';
 import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
@@ -48,7 +49,7 @@ class ServerException implements Exception {
 
     if (statusCode == 401 || bodyCode == 401 || statusCode == 404) {
       if (context != null) {
-        showfailureToast(Loc.tr(context, "sessionExpired"));
+        showfailureToast("sessionExpired".tr());
       }
       return Loc.tr(context!, "sessionExpired");
     }
