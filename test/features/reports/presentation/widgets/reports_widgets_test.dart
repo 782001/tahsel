@@ -43,8 +43,9 @@ void main() {
       await tester.pumpWidget(createTestableWidget(
         const ReportsNetProfitCard(
           amount: '5,500',
-          percentage: '15',
+          difference: '150',
           isPositive: true,
+          comparisonText: 'مقارنة بالأمس',
         ),
       ));
 

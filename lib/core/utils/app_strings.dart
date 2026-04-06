@@ -16,6 +16,7 @@ class AppStrings {
   // Auth Screen
   static const String login = "login";
   static const String noData = "no_data";
+  static const String tryAgain = "tryAgain";
   static String currentLang = "ar";
   static String get userToken =>
       sl<FirebaseAuth>().currentUser?.uid ?? '';
@@ -195,4 +196,28 @@ class AppStrings {
   static const String confirmDeleteMessage = "confirm_delete_message";
   static const String confirmDeleteMonthMessage = "confirm_delete_month_message";
   static const String deleteSuccess = "delete_success";
+  static const String paid = "paid";
+  static const String unpaid = "unpaid";
+  static const String psSessionTime = "ps_session_time";
+  static const String psSessionTurn = "ps_session_turn";
+  static const String insightProfitDailyIncrease = "insight_profit_daily_increase";
+  static const String insightProfitDailyDecrease = "insight_profit_daily_decrease";
+  static const String insightProfitDailySame = "insight_profit_daily_same";
+  static const String insightProfitWeeklyIncrease = "insight_profit_weekly_increase";
+  static const String insightProfitWeeklyDecrease = "insight_profit_weekly_decrease";
+  static const String insightProfitWeeklySame = "insight_profit_weekly_same";
+  static const String insightProfitMonthlyIncrease = "insight_profit_monthly_increase";
+  static const String insightProfitMonthlyDecrease = "insight_profit_monthly_decrease";
+  static const String insightProfitMonthlySame = "insight_profit_monthly_same";
+  static const String insightNoPreviousData = "insight_no_previous_data";
+  static const String smartInsights = "smart_insights";
+  static const String insightIncomeUpCafe = "insight_income_up_cafe";
+  static const String insightIncomeUpPs = "insight_income_up_ps";
+  static const String insightExpensesUpHigh = "insight_expenses_up_high";
+  static const String insightPsLowContribution = "insight_ps_low_contribution";
+  static const String insightProfitZero = "insight_profit_zero";
+  static const String exitAppTitle = "exit_app_title";
+  static const String exitAppMessage = "exit_app_message";
+  static const String logoutAppTitle = "logout_app_title";
+  static const String logoutAppMessage = "logout_app_message";
 }

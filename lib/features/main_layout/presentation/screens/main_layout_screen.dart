@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/widgets/exit_confirmation_dialog.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_state.dart';
 import 'package:tahsel/features/main_layout/presentation/widgets/bottom_nav_bar.dart';
@@ -22,11 +24,34 @@ class MainLayoutScreen extends StatelessWidget {
               builder: (context, state) {
                 var cubit = BlocProvider.of<MainLayoutCubit>(context);
 
-                return Scaffold(
-                  extendBody: true,
-                  backgroundColor: AppColors.scafoldBackGround,
-                  body: cubit.bottomScreens[cubit.currentIndex],
-                  bottomNavigationBar: BottomNavBar(cubit: cubit),
+                return PopScope(
+                  canPop: false,
+                  onPopInvokedWithResult: (didPop, result) async {
+                    if (didPop) return;
+
+                    // 1. If not on Home tab (index 0), go back to Home
+                    if (cubit.currentIndex != 0) {
+                      cubit.changeBottomNav(0);
+                      return;
+                    }
+
+                    // 2. If already on Home tab, show exit confirmation dialog
+                    final shouldExit = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => const ExitConfirmationDialog(),
+                    );
+
+                    if (shouldExit ?? false) {
+                      // Final exit from the app
+                      SystemNavigator.pop();
+                    }
+                  },
+                  child: Scaffold(
+                    extendBody: true,
+                    backgroundColor: AppColors.scafoldBackGround,
+                    body: cubit.bottomScreens[cubit.currentIndex],
+                    bottomNavigationBar: BottomNavBar(cubit: cubit),
+                  ),
                 );
               },
             );

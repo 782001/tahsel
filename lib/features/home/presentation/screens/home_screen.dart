@@ -162,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       operation = OperationEntity(
         uid: uid,
-        type: 'shop',
+        type: AppStrings.shop,
         customerName: customerName,
         productName: productName,
         totalAmount: paid + remainingDebt,
@@ -192,7 +192,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       operation = OperationEntity(
         uid: uid,
-        type: 'playStation',
+        type: AppStrings.playStation,
         subType: _psSubMode == PlayStationMode.time ? 'time' : 'turn',
         customerName: customerName,
         totalAmount: totalDue,
@@ -270,11 +270,11 @@ class _HomeScreenState extends State<HomeScreen> {
                               _selectedMode == QuickAddMode.shop
                               ? _productController.text.trim()
                               : (_psSubMode == PlayStationMode.time
-                                    ? 'PS Session (Time)'
-                                    : 'PS Session (Turn)'),
+                                    ? AppStrings.psSessionTime.tr()
+                                    : AppStrings.psSessionTurn.tr()),
                           operationType: _selectedMode == QuickAddMode.shop
-                              ? 'shop'
-                              : 'playStation',
+                              ? AppStrings.shop
+                              : AppStrings.playStation,
                         ),
                       );
                     }

@@ -18,44 +18,55 @@ class ReportsRepositoryImpl implements ReportsRepository {
       final duration = endDate.difference(startDate);
       final prevStartDate = startDate.subtract(duration);
       final prevEndDate = endDate.subtract(duration);
-      
+
       final prevData = await dataSource.getPeriodData(prevStartDate, prevEndDate);
 
-      // Calculations
-      final currentIncome = currentData['income'] ?? 0;
-      final currentExpenses = currentData['expenses'] ?? 0;
-      final currentTotalDebts = currentData['totalDebts'] ?? 0;
-      final currentPaidDebts = currentData['paidDebts'] ?? 0;
-      final currentUnpaidDebts = currentData['unpaidDebts'] ?? 0;
-      final currentProfit = currentIncome - currentExpenses;
+      // Current Data
+      final double currentIncome = (currentData['income'] ?? 0).toDouble();
+      final double currentCafeIncome = (currentData['cafeIncome'] ?? 0).toDouble();
+      final double currentPlaystationIncome = (currentData['playstationIncome'] ?? 0).toDouble();
+      final double currentExpenses = (currentData['expenses'] ?? 0).toDouble();
+      final double currentTotalDebts = (currentData['totalDebts'] ?? 0).toDouble();
+      final double currentPaidDebts = (currentData['paidDebts'] ?? 0).toDouble();
+      final double currentUnpaidDebts = (currentData['unpaidDebts'] ?? 0).toDouble();
+      final double currentProfit = currentIncome - currentExpenses;
 
-      final prevIncome = prevData['income'] ?? 0;
-      final prevExpenses = prevData['expenses'] ?? 0;
-      final prevProfit = prevIncome - prevExpenses;
+      // Previous Data
+      final double prevIncome = (prevData['income'] ?? 0).toDouble();
+      final double prevCafeIncome = (prevData['cafeIncome'] ?? 0).toDouble();
+      final double prevPlaystationIncome = (prevData['playstationIncome'] ?? 0).toDouble();
+      final double prevExpenses = (prevData['expenses'] ?? 0).toDouble();
+      final double prevProfit = prevIncome - prevExpenses;
 
-      // Percentages calculation
-      double _calcPercUpdate(double current, double prev) {
-        if (prev == 0) return current > 0 ? 100 : 0;
-        return ((current - prev) / prev) * 100;
-      }
-
-      final incomePerc = _calcPercUpdate(currentIncome, prevIncome);
-      final expensePerc = _calcPercUpdate(currentExpenses, prevExpenses);
-      final profitPerc = _calcPercUpdate(currentProfit, prevProfit);
+      final double incomeDiff = currentIncome - prevIncome;
+      final double expenseDiff = currentExpenses - prevExpenses;
+      final double profitDiff = currentProfit - prevProfit;
+      final double cafeDiff = currentCafeIncome - prevCafeIncome;
+      final double psDiff = currentPlaystationIncome - prevPlaystationIncome;
 
       final reports = ReportsEntity(
         totalIncome: currentIncome,
+        cafeIncome: currentCafeIncome,
+        playstationIncome: currentPlaystationIncome,
         totalExpenses: currentExpenses,
         totalDebts: currentTotalDebts,
         paidDebts: currentPaidDebts,
         unpaidDebts: currentUnpaidDebts,
         netProfit: currentProfit,
-        incomePercentage: incomePerc.abs(),
-        expensePercentage: expensePerc.abs(),
-        profitPercentage: profitPerc.abs(),
-        isIncomeIncrease: incomePerc >= 0,
-        isExpenseIncrease: expensePerc >= 0,
-        isProfitIncrease: profitPerc >= 0,
+        prevIncome: prevIncome,
+        prevExpenses: prevExpenses,
+        prevCafeIncome: prevCafeIncome,
+        prevPlaystationIncome: prevPlaystationIncome,
+        incomeDiff: incomeDiff.abs(),
+        expenseDiff: expenseDiff.abs(),
+        profitDiff: profitDiff.abs(),
+        cafeDiff: cafeDiff.abs(),
+        playstationDiff: psDiff.abs(),
+        isIncomeIncrease: incomeDiff >= 0,
+        isExpenseIncrease: expenseDiff >= 0,
+        isProfitIncrease: profitDiff >= 0,
+        isCafeIncrease: cafeDiff >= 0,
+        isPlaystationIncrease: psDiff >= 0,
       );
 
       return Right(reports);

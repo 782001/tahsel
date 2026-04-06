@@ -1,8 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
-import 'package:tahsel/features/operation/data/models/operation_model.dart';
-import 'package:tahsel/features/expenses/data/models/expense_model.dart';
-import 'package:tahsel/features/debt/data/models/debt_model.dart';
 
 abstract class ReportsRemoteDataSource {
   Future<Map<String, double>> getPeriodData(DateTime start, DateTime end);
@@ -16,12 +13,14 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
   @override
   Future<Map<String, double>> getPeriodData(DateTime start, DateTime end) async {
     final uid = AppStrings.userToken;
-    
+    if (uid.isEmpty) return {};
+
     // Convert to Timestamp for Firestore
     final startTimestamp = Timestamp.fromDate(start);
     final endTimestamp = Timestamp.fromDate(end);
 
-    // 1. Fetch Operations Income
+    // 1. Fetch Operations Income (Revenue)
+    // We fetch all operations in period and sum their totalAmount (Revenue)
     final operationsQuery = await firestore
         .collection('users')
         .doc(uid)
@@ -30,10 +29,23 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
         .where('timestamp', isLessThanOrEqualTo: endTimestamp)
         .get();
 
-    double income = 0;
+    double totalIncome = 0;
+    double cafeIncome = 0;
+    double playstationIncome = 0;
+
     for (var doc in operationsQuery.docs) {
-      final model = OperationModel.fromJson(doc.data(), doc.id);
-      income += model.paidAmount;
+      final data = doc.data();
+      final double totalAmount = (data['totalAmount'] ?? 0).toDouble();
+      final type = (data['type'] ?? '').toString().toLowerCase();
+
+      totalIncome += totalAmount;
+      
+      // Breakdown by type (shop mapping to cafe report)
+      if (type == AppStrings.shop.toLowerCase()) {
+        cafeIncome += totalAmount;
+      } else if (type == AppStrings.playStation.toLowerCase()) {
+        playstationIncome += totalAmount;
+      }
     }
 
     // 2. Fetch Expenses
@@ -45,19 +57,18 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
         .where('createdAt', isLessThanOrEqualTo: endTimestamp)
         .get();
 
-    double expenses = 0;
+    double totalExpenses = 0;
     for (var doc in expensesQuery.docs) {
-      final model = ExpenseModel.fromJson(doc.data(), doc.id);
-      expenses += model.amount;
+      final double amount = (doc.data()['amount'] ?? 0).toDouble();
+      totalExpenses += amount;
     }
 
-    // 3. Fetch Debts (for total debts and paid debts in this period)
+    // 3. Fetch Debts (Global state - what customers owe CURRENTLY)
+    // We fetch all unpaid or partially paid debts to show current business health
     final debtsQuery = await firestore
         .collection('users')
         .doc(uid)
         .collection('debts')
-        .where('timestamp', isGreaterThanOrEqualTo: startTimestamp)
-        .where('timestamp', isLessThanOrEqualTo: endTimestamp)
         .get();
 
     double totalDebts = 0;
@@ -65,18 +76,17 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
     double unpaidDebtsSum = 0;
 
     for (var doc in debtsQuery.docs) {
-      final model = DebtModel.fromJson(doc.data(), doc.id);
-      totalDebts += model.totalAmount;
-      paidDebtsSum += model.paidAmount;
-      unpaidDebtsSum += model.remainingAmount;
+      final data = doc.data();
+      totalDebts += (data['totalAmount'] ?? 0).toDouble();
+      paidDebtsSum += (data['paidAmount'] ?? 0).toDouble();
+      unpaidDebtsSum += (data['remainingAmount'] ?? 0).toDouble();
     }
 
-    // Also need to account for session categories if needed manually,
-    // but the models cover the basics.
-
     return {
-      'income': income,
-      'expenses': expenses,
+      'income': totalIncome,
+      'cafeIncome': cafeIncome,
+      'playstationIncome': playstationIncome,
+      'expenses': totalExpenses,
       'totalDebts': totalDebts,
       'paidDebts': paidDebtsSum,
       'unpaidDebts': unpaidDebtsSum,

@@ -6,6 +6,7 @@ import 'package:tahsel/features/operation/service_injection/operation_injection.
 import 'package:tahsel/features/customer/service_injection/customer_injection.dart';
 import 'package:tahsel/features/debt/service_injection/debt_injection.dart';
 import 'package:tahsel/features/expenses/service_injection/expense_injection.dart';
+import 'package:tahsel/features/reports/service_injection/reports_injection.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:vault_kit/vault_kit.dart';
 import 'package:get_it/get_it.dart';
@@ -33,6 +34,7 @@ Future<void> initDependencies() async {
   await initDebt();
   initCustomerInjection();
   await initExpense();
+  ReportsInjection.init(sl);
 
   // firebase
   sl.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);

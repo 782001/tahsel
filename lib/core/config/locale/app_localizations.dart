@@ -39,7 +39,29 @@ class AppLocalizations {
   }
 
   /// Static translation helper for String extensions
-  static String tr(String key) => _instance?._localizedStrings[key] ?? key;
+  static String tr(String key, {List<String>? args}) {
+    String value = _instance?._localizedStrings[key] ?? key;
+    if (args != null && args.isNotEmpty) {
+      // Standard replacement for {0}, {1}, etc.
+      for (int i = 0; i < args.length; i++) {
+        value = value.replaceAll('{$i}', args[i]);
+      }
+      
+      // Explicitly support historical and named placeholders used in the project.
+      if (args.length >= 1) {
+        value = value.replaceAll('{percentage}', args[0]);
+        value = value.replaceAll('{amount}', args[0]);
+        value = value.replaceAll('{difference}', args[0]);
+      }
+      
+      if (args.length >= 2) {
+        value = value.replaceAll('{netProfit}', args[1]);
+        // Also support index-based if needed, though replaced by names above for 0/1
+        value = value.replaceAll('{amount}', args[1]);
+      }
+    }
+    return value;
+  }
 
   String? translate(String key) => _localizedStrings[key];
   bool get isEnLocale => locale.languageCode == 'en';

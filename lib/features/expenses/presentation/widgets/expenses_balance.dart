@@ -85,10 +85,13 @@ class ExpensesBalance extends StatelessWidget {
               if (percentage > 0) ...[
                 SizedBox(height: 20.h),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 8.h,
+                  ),
                   decoration: BoxDecoration(
-                    color: isIncrease 
-                        ? AppColors.errorContainer.withOpacity(0.8) 
+                    color: isIncrease
+                        ? AppColors.errorContainer.withOpacity(0.8)
                         : Colors.green.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(24.r),
                   ),
@@ -96,15 +99,15 @@ class ExpensesBalance extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        isIncrease ? Icons.trending_up : Icons.trending_down, 
-                        color: isIncrease ? AppColors.error : Colors.green, 
-                        size: 18.r
+                        isIncrease ? Icons.trending_up : Icons.trending_down,
+                        color: isIncrease ? AppColors.error : Colors.green,
+                        size: 18.r,
                       ),
                       SizedBox(width: 8.w),
                       Text(
-                        isIncrease 
-                          ? "${AppStrings.comparisonLastMonth.tr()} $percentage%" 
-                          : "${AppStrings.comparisonLastMonth.tr()} $percentage%",
+                        isIncrease
+                            ? "${AppStrings.comparisonLastMonth.tr()} $percentage%"
+                            : "${AppStrings.comparisonLastMonth.tr()} $percentage%",
                         style: TextStyles.customStyle(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.bold,

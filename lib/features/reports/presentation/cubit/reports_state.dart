@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/reports_entity.dart';
+import '../../domain/entities/profit_insight.dart';
 
 abstract class ReportsState extends Equatable {
   const ReportsState();
@@ -13,9 +14,10 @@ class ReportsLoading extends ReportsState {}
 
 class ReportsSuccess extends ReportsState {
   final ReportsEntity reports;
-  const ReportsSuccess(this.reports);
+  final List<ProfitInsight> insights;
+  const ReportsSuccess(this.reports, this.insights);
   @override
-  List<Object?> get props => [reports];
+  List<Object?> get props => [reports, insights];
 }
 
 class ReportsError extends ReportsState {
