@@ -11,6 +11,7 @@ class DebtEntity extends Equatable {
   final String? productOrSessionDetails;
   final String operationType;
   final DateTime? timestamp;
+  final bool isPaid;
 
   const DebtEntity({
     this.id,
@@ -23,7 +24,37 @@ class DebtEntity extends Equatable {
     this.productOrSessionDetails,
     required this.operationType,
     this.timestamp,
+    this.isPaid = false,
   });
+
+  DebtEntity copyWith({
+    String? id,
+    String? uid,
+    String? operationId,
+    double? totalAmount,
+    double? paidAmount,
+    double? remainingAmount,
+    String? customerName,
+    String? productOrSessionDetails,
+    String? operationType,
+    DateTime? timestamp,
+    bool? isPaid,
+  }) {
+    return DebtEntity(
+      id: id ?? this.id,
+      uid: uid ?? this.uid,
+      operationId: operationId ?? this.operationId,
+      totalAmount: totalAmount ?? this.totalAmount,
+      paidAmount: paidAmount ?? this.paidAmount,
+      remainingAmount: remainingAmount ?? this.remainingAmount,
+      customerName: customerName ?? this.customerName,
+      productOrSessionDetails:
+          productOrSessionDetails ?? this.productOrSessionDetails,
+      operationType: operationType ?? this.operationType,
+      timestamp: timestamp ?? this.timestamp,
+      isPaid: isPaid ?? this.isPaid,
+    );
+  }
 
   @override
   List<Object?> get props => [
@@ -37,5 +68,6 @@ class DebtEntity extends Equatable {
         productOrSessionDetails,
         operationType,
         timestamp,
+        isPaid,
       ];
 }

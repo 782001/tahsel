@@ -6,6 +6,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/storage/cashhelper.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/home/presentation/widgets/quick_add_mode_selector.dart';
@@ -17,6 +18,7 @@ import 'package:tahsel/features/home/presentation/widgets/quick_add_turn_form.da
 import 'package:tahsel/shared/widgets/buttons/quick_action_button.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 
+import '../../../../features/customer/presentation/cubit/customer_cubit.dart';
 import '../../../../features/debt/domain/entities/debt_entity.dart';
 import '../../../../features/debt/presentation/cubit/debt_cubit.dart';
 import '../../../../features/debt/presentation/cubit/debt_state.dart';
@@ -53,6 +55,12 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+
+    final uid = sl<FirebaseAuth>().currentUser?.uid;
+    if (uid != null) {
+      context.read<CustomerCubit>().fetchCustomers(uid);
+    }
+
     // Load persisted rates
     final hourlyRate = sl<CashHelper>().getData(key: AppStrings.hourlyRateKey);
     final slotRate = sl<CashHelper>().getData(key: AppStrings.slotRateKey);
@@ -113,9 +121,12 @@ class _HomeScreenState extends State<HomeScreen> {
   void _submitOperation(BuildContext context) {
     final uid = sl<FirebaseAuth>().currentUser?.uid;
     if (uid == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(AppStrings.userNotFound.tr())));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: Duration(milliseconds: 500),
+          content: Text(AppStrings.userNotFound.tr()),
+        ),
+      );
       return;
     }
 
@@ -141,6 +152,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (validationMsg != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
+            duration: Duration(milliseconds: 500),
             content: Text(validationMsg),
             backgroundColor: Colors.orange,
           ),
@@ -170,6 +182,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (validationMsg != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
+            duration: Duration(milliseconds: 500),
             content: Text(validationMsg),
             backgroundColor: Colors.orange,
           ),
@@ -214,10 +227,13 @@ class _HomeScreenState extends State<HomeScreen> {
               listener: (context, state) {
                 if (state is DebtAddSuccess) {
                   // Optional: show a small toast or just log it
-                  debugPrint('Debt recorded with ID: ${state.debtId}');
+                  AppLogger.printMessage(
+                    'Debt recorded with ID: ${state.debtId}',
+                  );
                 } else if (state is DebtFailure) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
+                      duration: Duration(milliseconds: 500),
                       content: Text(
                         '${AppStrings.operationFailed.tr()}: ${state.message}',
                       ),
@@ -266,14 +282,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
+                      duration: Duration(milliseconds: 500),
                       content: Text(state.message.tr()),
                       backgroundColor: Colors.green,
                     ),
                   );
+
+                  // Save customer for autocomplete
+                  final uid = sl<FirebaseAuth>().currentUser?.uid;
+                  final customerName = _customerController.text.trim();
+                  if (uid != null && customerName.isNotEmpty) {
+                    context.read<CustomerCubit>().saveCustomer(
+                      uid,
+                      customerName,
+                    );
+                  }
+
                   _clearFields();
                 } else if (state is OperationFailure) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
+                      duration: Duration(milliseconds: 500),
                       content: Text(state.message.tr()),
                       backgroundColor: Colors.red,
                     ),
@@ -373,7 +402,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               TextButton(
                                 onPressed: () {
                                   setState(() {
-                                    _paidController.text = totalDue.toStringAsFixed(2);
+                                    _paidController.text = totalDue
+                                        .toStringAsFixed(1);
                                   });
                                 },
                                 child: Text(

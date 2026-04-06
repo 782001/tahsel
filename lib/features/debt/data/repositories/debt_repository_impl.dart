@@ -1,8 +1,10 @@
 import 'package:dartz/dartz.dart';
 import '../../domain/entities/debt_entity.dart';
+import '../../domain/entities/payment_entity.dart';
 import '../../domain/repositories/debt_repository.dart';
 import '../datasources/debt_remote_data_source.dart';
 import '../models/debt_model.dart';
+import '../models/payment_model.dart';
 
 class DebtRepositoryImpl implements DebtRepository {
   final DebtRemoteDataSource remoteDataSource;
@@ -25,6 +27,41 @@ class DebtRepositoryImpl implements DebtRepository {
     try {
       final result = await remoteDataSource.getDebts(uid);
       return Right(result);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  @override
+  Future<Either<dynamic, void>> payDebt(
+      DebtEntity debt, PaymentEntity payment) async {
+    try {
+      final debtModel = DebtModel.fromEntity(debt);
+      final paymentModel = PaymentModel.fromEntity(payment);
+      await remoteDataSource.payDebt(debtModel, paymentModel);
+      return const Right(null);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  @override
+  Future<Either<dynamic, void>> payTotalDebt(
+      String uid, String customerName, double amount) async {
+    try {
+      await remoteDataSource.payTotalDebt(uid, customerName, amount);
+      return const Right(null);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  @override
+  Future<Either<dynamic, void>> markCustomerAsPaid(
+      String uid, String customerName) async {
+    try {
+      await remoteDataSource.markCustomerAsPaid(uid, customerName);
+      return const Right(null);
     } catch (e) {
       return Left(e.toString());
     }

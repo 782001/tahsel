@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/text_fields/custom_text_form_field.dart';
-import 'package:tahsel/core/services/injection_container.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
 
@@ -34,10 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+      SnackBar(duration: Duration(milliseconds: 500),content: Text(message), backgroundColor: Colors.red),
     );
   }
 
@@ -66,7 +64,10 @@ class _LoginScreenState extends State<LoginScreen> {
             SafeArea(
               child: Center(
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 48.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 24.w,
+                    vertical: 48.h,
+                  ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -150,14 +151,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                 labelText: AppStrings.emailAddress.tr(),
                                 controller: _emailController,
                                 keyboardType: TextInputType.emailAddress,
-                            hintText: 'name@company.com',
+                                hintText: 'name@company.com',
                                 prefixIcon: Icons.email_outlined,
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return AppStrings.validationEmailRequired.tr();
+                                    return AppStrings.validationEmailRequired
+                                        .tr();
                                   }
                                   if (!value.isValidEmail()) {
-                                    return AppStrings.validationEmailInvalid.tr();
+                                    return AppStrings.validationEmailInvalid
+                                        .tr();
                                   }
                                   return null;
                                 },
@@ -173,10 +176,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                 prefixIcon: Icons.lock_outline,
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return AppStrings.validationPasswordRequired.tr();
+                                    return AppStrings.validationPasswordRequired
+                                        .tr();
                                   }
                                   if (value.length < 6) {
-                                    return AppStrings.validationPasswordLength.tr();
+                                    return AppStrings.validationPasswordLength
+                                        .tr();
                                   }
                                   return null;
                                 },
@@ -187,25 +192,33 @@ class _LoginScreenState extends State<LoginScreen> {
                               BlocConsumer<AuthCubit, AuthState>(
                                 listener: (context, state) {
                                   if (state is AuthSuccess) {
-                                    nav().navigatorKey.currentState?.pushReplacementNamed(
-                                      AppRoutes.mainLayout,
-                                    );
+                                    nav().navigatorKey.currentState
+                                        ?.pushReplacementNamed(
+                                          AppRoutes.mainLayout,
+                                        );
                                   } else if (state is AuthFailure) {
                                     _showError(state.message);
                                   }
                                 },
                                 builder: (context, state) {
                                   if (state is AuthLoading) {
-                                    return const Center(
-                                      child: CircularProgressIndicator(),
+                                    return  Center(
+                                      child: CircularProgressIndicator(
+                                        color: AppColors.primaryColor,
+                                      ),
                                     );
                                   }
                                   return GestureDetector(
                                     onTap: () {
                                       if (_formKey.currentState!.validate()) {
-                                        final email = _emailController.text.trim();
-                                        final password = _passwordController.text;
-                                        context.read<AuthCubit>().login(email, password);
+                                        final email = _emailController.text
+                                            .trim();
+                                        final password =
+                                            _passwordController.text;
+                                        context.read<AuthCubit>().login(
+                                          email,
+                                          password,
+                                        );
                                       }
                                     },
                                     child: Container(
@@ -213,19 +226,21 @@ class _LoginScreenState extends State<LoginScreen> {
                                       height: 56.h,
                                       decoration: BoxDecoration(
                                         color: AppColors.primaryColor,
-                                        borderRadius: BorderRadius.circular(12.r),
+                                        borderRadius: BorderRadius.circular(
+                                          12.r,
+                                        ),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: AppColors.primaryColor.withOpacity(
-                                              0.3,
-                                            ),
+                                            color: AppColors.primaryColor
+                                                .withOpacity(0.3),
                                             blurRadius: 8,
                                             offset: const Offset(0, 4),
                                           ),
                                         ],
                                       ),
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           Text(
                                             AppStrings.login.tr(),
@@ -256,9 +271,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 decoration: BoxDecoration(
                                   border: Border(
                                     top: BorderSide(
-                                      color: AppColors.disabledColor.withOpacity(
-                                        0.1,
-                                      ),
+                                      color: AppColors.disabledColor
+                                          .withOpacity(0.1),
                                     ),
                                   ),
                                 ),
@@ -281,7 +295,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                         );
                                         if (!await launchUrl(url)) {
                                           if (context.mounted) {
-                                            _showError('Could not open WhatsApp');
+                                            _showError(
+                                              'Could not open WhatsApp',
+                                            );
                                           }
                                         }
                                       },
@@ -293,7 +309,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                               fontSize: 14,
                                               fontWeight: FontWeight.bold,
                                             ).copyWith(
-                                              decoration: TextDecoration.underline,
+                                              decoration:
+                                                  TextDecoration.underline,
                                             ),
                                       ),
                                     ),
@@ -305,7 +322,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       SizedBox(height: 32.h),
-
                     ],
                   ),
                 ),

@@ -10,11 +10,15 @@ import 'package:tahsel/features/customer_debts/data/models/debt_item_model.dart'
 class DebtItemCard extends StatelessWidget {
   final DebtItem item;
   final int index;
+  final Function(DebtItem) onPayPartial;
+  final Function(DebtItem) onPayFull;
 
   const DebtItemCard({
     super.key,
     required this.item,
     required this.index,
+    required this.onPayPartial,
+    required this.onPayFull,
   });
 
   @override
@@ -74,6 +78,8 @@ class DebtItemCard extends StatelessWidget {
                     children: [
                       Text(
                         item.itemDescription,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyles.customStyle(
                           color: AppColors.textColor,
                           fontSize: 15.sp,
@@ -116,7 +122,9 @@ class DebtItemCard extends StatelessWidget {
                         ? AppStrings.fullPaymentLabel.tr()
                         : AppStrings.debtStatusOverdue.tr(),
                     style: TextStyles.customStyle(
-                      color: isSettled ? AppColors.primaryColor : AppColors.error,
+                      color: isSettled
+                          ? AppColors.primaryColor
+                          : AppColors.error,
                       fontSize: 10.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -149,11 +157,62 @@ class DebtItemCard extends StatelessWidget {
                   _FinancialCell(
                     label: AppStrings.remainingDebt.tr(),
                     amount: item.remainingDebt,
-                    color: item.remainingDebt > 0 ? AppColors.error : AppColors.primaryColor,
+                    color: item.remainingDebt > 0
+                        ? AppColors.error
+                        : AppColors.primaryColor,
                   ),
                 ],
               ),
             ),
+            if (!isSettled) ...[
+              SizedBox(height: 16.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => onPayPartial(item),
+                      icon: Icon(Icons.payments_outlined, size: 16.r),
+                      label: Text(AppStrings.partialPayLabel.tr()),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primaryColor,
+                        side: BorderSide(
+                          color: AppColors.primaryColor.withOpacity(0.5),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 8.h),
+                        textStyle: TextStyles.customStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => onPayFull(item),
+                      icon: Icon(Icons.check_circle_outline, size: 16.r),
+                      label: Text(AppStrings.fullPaymentLabel.tr()),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryColor,
+                        foregroundColor: AppColors.whiteColor,
+                        elevation: 0,
+                        padding: EdgeInsets.symmetric(vertical: 8.h),
+                        textStyle: TextStyles.customStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
@@ -189,14 +248,18 @@ class _FinancialCell extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           SizedBox(height: 4.h),
-          Text(
-            '${amount.toStringAsFixed(2)} ${AppStrings.currencyEgp.tr()}',
-            style: TextStyles.customStyle(
-              color: color,
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w800,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              '${amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
+              style: TextStyles.customStyle(
+                color: color,
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w800,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
             ),
-            textAlign: TextAlign.center,
           ),
         ],
       ),

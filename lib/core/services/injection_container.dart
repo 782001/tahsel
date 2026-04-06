@@ -3,7 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tahsel/features/auth/service_injection/auth_injection.dart';
 import 'package:tahsel/features/category/service_injection/category_injection.dart';
 import 'package:tahsel/features/operation/service_injection/operation_injection.dart';
+import 'package:tahsel/features/customer/service_injection/customer_injection.dart';
 import 'package:tahsel/features/debt/service_injection/debt_injection.dart';
+import 'package:tahsel/features/expenses/service_injection/expense_injection.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:vault_kit/vault_kit.dart';
 import 'package:get_it/get_it.dart';
@@ -18,6 +20,7 @@ import '../../features/standard_features/localization/domain/usecases/change_lan
 import '../../features/standard_features/localization/domain/usecases/get_saved_lang.dart';
 import '../../features/standard_features/localization/presentation/cubit/locale_cubit.dart';
 import '../../features/standard_features/theme/presentation/cubit/theme_cubit.dart';
+import '../../features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final sl = GetIt.instance;
@@ -28,6 +31,8 @@ Future<void> initDependencies() async {
   AuthInjection.init(sl);
   await initOperation();
   await initDebt();
+  initCustomerInjection();
+  await initExpense();
 
   // firebase
   sl.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
@@ -40,6 +45,9 @@ Future<void> initDependencies() async {
 
   // theme
   sl.registerFactory<ThemeCubit>(() => ThemeCubit(cashHelper: sl()));
+
+  // connectivity
+  sl.registerFactory<ConnectivityCubit>(() => ConnectivityCubit());
 
   // main layout
   sl.registerFactory<MainLayoutCubit>(() => MainLayoutCubit());

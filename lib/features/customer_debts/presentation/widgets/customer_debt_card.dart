@@ -122,7 +122,7 @@ class CustomerDebtCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              '${amount.toStringAsFixed(2)} ${AppStrings.currencyEgp.tr()}',
+                              '${amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
                               style: TextStyles.customStyle(
                                 color: statusColor,
                                 fontSize: 22,

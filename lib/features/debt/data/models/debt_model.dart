@@ -13,6 +13,7 @@ class DebtModel extends DebtEntity {
     super.productOrSessionDetails,
     required super.operationType,
     super.timestamp,
+    super.isPaid,
   });
 
   factory DebtModel.fromJson(Map<String, dynamic> json, String id) {
@@ -29,6 +30,7 @@ class DebtModel extends DebtEntity {
       timestamp: json['timestamp'] != null
           ? (json['timestamp'] as Timestamp).toDate()
           : null,
+      isPaid: json['isPaid'] ?? false,
     );
   }
 
@@ -42,7 +44,8 @@ class DebtModel extends DebtEntity {
       'customerName': customerName,
       'productOrSessionDetails': productOrSessionDetails,
       'operationType': operationType,
-      'timestamp': FieldValue.serverTimestamp(),
+      'timestamp': timestamp ?? FieldValue.serverTimestamp(),
+      'isPaid': isPaid,
     };
   }
 
@@ -58,6 +61,7 @@ class DebtModel extends DebtEntity {
       productOrSessionDetails: entity.productOrSessionDetails,
       operationType: entity.operationType,
       timestamp: entity.timestamp,
+      isPaid: entity.isPaid,
     );
   }
 }

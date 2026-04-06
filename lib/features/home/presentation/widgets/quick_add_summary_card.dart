@@ -7,11 +7,7 @@ class QuickAddSummaryCard extends StatelessWidget {
   final double totalDue;
   final String? label;
 
-  const QuickAddSummaryCard({
-    super.key,
-    required this.totalDue,
-    this.label,
-  });
+  const QuickAddSummaryCard({super.key, required this.totalDue, this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +37,7 @@ class QuickAddSummaryCard extends StatelessWidget {
           const SizedBox(height: 4),
           FittedBox(
             child: Text(
-              '${totalDue.toStringAsFixed(2)} ${AppStrings.currencyEgp.tr()}',
+              '${totalDue.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
               style: TextStyle(
                 fontSize: 48,
                 fontWeight: FontWeight.w900,

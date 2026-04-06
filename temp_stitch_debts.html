@@ -1,292 +1,502 @@
-<!DOCTYPE html>
+<!doctype html>
 
-<html class="light" dir="rtl" lang="ar"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>ديون الزبائن - المهندس المالي</title>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Noto+Sans+Arabic:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary-container": "#2e7d32",
-                        "on-tertiary-fixed": "#2e1500",
-                        "error": "#ba1a1a",
-                        "on-primary-fixed": "#002204",
-                        "on-error-container": "#93000a",
-                        "on-secondary": "#ffffff",
-                        "secondary": "#005db7",
-                        "inverse-on-surface": "#f1f1f1",
-                        "on-primary": "#ffffff",
-                        "inverse-primary": "#88d982",
-                        "surface-container-low": "#f3f3f3",
-                        "secondary-fixed": "#d6e3ff",
-                        "surface-bright": "#f9f9f9",
-                        "secondary-fixed-dim": "#a9c7ff",
-                        "primary": "#0d631b",
-                        "on-primary-fixed-variant": "#005312",
-                        "surface-dim": "#dadada",
-                        "on-secondary-fixed-variant": "#00468c",
-                        "surface-container-lowest": "#ffffff",
-                        "on-secondary-container": "#003670",
-                        "error-container": "#ffdad6",
-                        "on-secondary-fixed": "#001b3d",
-                        "surface-container": "#eeeeee",
-                        "inverse-surface": "#2f3131",
-                        "on-primary-container": "#cbffc2",
-                        "outline": "#707a6c",
-                        "surface-variant": "#e2e2e2",
-                        "on-tertiary": "#ffffff",
-                        "surface": "#f9f9f9",
-                        "on-error": "#ffffff",
-                        "on-surface": "#1a1c1c",
-                        "surface-tint": "#1b6d24",
-                        "on-surface-variant": "#40493d",
-                        "surface-container-high": "#e8e8e8",
-                        "outline-variant": "#bfcaba",
-                        "tertiary-fixed": "#ffdcc2",
-                        "surface-container-highest": "#e2e2e2",
-                        "on-background": "#1a1c1c",
-                        "on-tertiary-container": "#ffefe5",
-                        "background": "#f9f9f9",
-                        "secondary-container": "#64a1ff",
-                        "primary-fixed-dim": "#88d982",
-                        "on-tertiary-fixed-variant": "#6d3a00",
-                        "tertiary-fixed-dim": "#ffb77b",
-                        "tertiary-container": "#a65b00",
-                        "tertiary": "#834600",
-                        "primary-fixed": "#a3f69c"
-                    },
-                    fontFamily: {
-                        "headline": ["Noto Sans Arabic", "Manrope", "sans-serif"],
-                        "body": ["Noto Sans Arabic", "Inter", "sans-serif"],
-                        "label": ["Noto Sans Arabic", "Inter", "sans-serif"]
-                    },
-                    borderRadius: {
-                        "DEFAULT": "0.25rem",
-                        "lg": "1rem",
-                        "xl": "1.25rem",
-                        "full": "9999px"
-                    },
-                },
+<html class="light" dir="rtl" lang="ar">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>ديون الزبائن - تحصيل</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Noto+Sans+Arabic:wght@400;600;700;800&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary-container": "#2e7d32",
+              "on-tertiary-fixed": "#2e1500",
+              error: "#ba1a1a",
+              "on-primary-fixed": "#002204",
+              "on-error-container": "#93000a",
+              "on-secondary": "#ffffff",
+              secondary: "#005db7",
+              "inverse-on-surface": "#f1f1f1",
+              "on-primary": "#ffffff",
+              "inverse-primary": "#88d982",
+              "surface-container-low": "#f3f3f3",
+              "secondary-fixed": "#d6e3ff",
+              "surface-bright": "#f9f9f9",
+              "secondary-fixed-dim": "#a9c7ff",
+              primary: "#0d631b",
+              "on-primary-fixed-variant": "#005312",
+              "surface-dim": "#dadada",
+              "on-secondary-fixed-variant": "#00468c",
+              "surface-container-lowest": "#ffffff",
+              "on-secondary-container": "#003670",
+              "error-container": "#ffdad6",
+              "on-secondary-fixed": "#001b3d",
+              "surface-container": "#eeeeee",
+              "inverse-surface": "#2f3131",
+              "on-primary-container": "#cbffc2",
+              outline: "#707a6c",
+              "surface-variant": "#e2e2e2",
+              "on-tertiary": "#ffffff",
+              surface: "#f9f9f9",
+              "on-error": "#ffffff",
+              "on-surface": "#1a1c1c",
+              "surface-tint": "#1b6d24",
+              "on-surface-variant": "#40493d",
+              "surface-container-high": "#e8e8e8",
+              "outline-variant": "#bfcaba",
+              "tertiary-fixed": "#ffdcc2",
+              "surface-container-highest": "#e2e2e2",
+              "on-background": "#1a1c1c",
+              "on-tertiary-container": "#ffefe5",
+              background: "#f9f9f9",
+              "secondary-container": "#64a1ff",
+              "primary-fixed-dim": "#88d982",
+              "on-tertiary-fixed-variant": "#6d3a00",
+              "tertiary-fixed-dim": "#ffb77b",
+              "tertiary-container": "#a65b00",
+              tertiary: "#834600",
+              "primary-fixed": "#a3f69c",
             },
-        }
+            fontFamily: {
+              headline: ["Noto Sans Arabic", "Manrope", "sans-serif"],
+              body: ["Noto Sans Arabic", "Inter", "sans-serif"],
+              label: ["Noto Sans Arabic", "Inter", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "1rem",
+              xl: "1.25rem",
+              full: "9999px",
+            },
+          },
+        },
+      };
     </script>
-<style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        body {
-            font-family: 'Noto Sans Arabic', 'Inter', sans-serif;
-            background-color: #f9f9f9;
-        }
-        .editorial-header {
-            font-family: 'Noto Sans Arabic', 'Manrope', sans-serif;
-        }
-        .swipe-container {
-            overflow: hidden;
-            position: relative;
-        }
-        .swipe-content {
-            transition: transform 0.3s ease-out;
-            position: relative;
-            z-index: 2;
-        }
-        /* Reveal background buttons */
-        .swipe-actions {
-            position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            left: 0;
-            display: flex;
-            flex-direction: row-reverse;
-            z-index: 1;
-        }
-        /* Demo helper for swiped state */
-        .swiped .swipe-content {
-            transform: translateX(160px);
-        }
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+      body {
+        font-family: "Noto Sans Arabic", "Inter", sans-serif;
+        background-color: #f9f9f9;
+      }
+      .editorial-header {
+        font-family: "Noto Sans Arabic", "Manrope", sans-serif;
+      }
+      .swipe-container {
+        overflow: hidden;
+        position: relative;
+      }
+      .swipe-content {
+        transition: transform 0.3s ease-out;
+        position: relative;
+        z-index: 2;
+      }
+      /* Reveal background buttons */
+      .swipe-actions {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        display: flex;
+        flex-direction: row-reverse;
+        z-index: 1;
+      }
+      /* Demo helper for swiped state */
+      .swiped .swipe-content {
+        transform: translateX(160px);
+      }
     </style>
-<style>
-    body {
-      min-height: max(884px, 100dvh);
-    }
-  </style>
-</head>
-<body class="bg-surface text-on-surface antialiased min-h-screen pb-32" dir="rtl">
-<header class="bg-surface/80 dark:bg-slate-900/80 backdrop-blur-md fixed top-0 w-full z-40 flex justify-between items-center px-6 py-4">
-<div class="flex items-center gap-3">
-<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden">
-<img class="w-full h-full object-cover" data-alt="professional male portrait with soft studio lighting and neutral background for profile avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHLsKSCHx7nYEtaDEYP9w1XodpRxdrlKvVJgKW1veEhd-JqkVSrO6PzToDMur3y2pULOVp7wu_lKnvdcPR3_2VRNfDZBhWUd62ywQ848MaPPEWVuckT2IQmDEql3VgIg0CDIWa6dsaJL3WFN-4moz6HxNczxsVmInOBK24LUv27Fuo9W_Oj4tB87hYajRE1lqfcbn5tytHkU9gysCQRaroTq-hvDZbgh8OVSbjcIS_IZj84D_NWbPJsQelLKAfmCHN8UBb7cTGPG0"/>
-</div>
-<h1 class="editorial-header text-2xl font-bold text-green-800 tracking-tight">لوحة التحكم</h1>
-</div>
-<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors active:scale-95 duration-150">
-<span class="material-symbols-outlined text-on-surface-variant" data-icon="settings">settings</span>
-</button>
-</header>
-<main class="pt-24 px-6 max-w-2xl mx-auto">
-<section class="mb-8">
-<h2 class="editorial-header text-display-md text-4xl font-extrabold text-on-surface mb-2">ديون الزبائن</h2>
-<p class="text-on-surface-variant text-sm font-medium">إدارة الأرصدة المستحقة وشروط الائتمان.</p>
-</section>
-<div class="mb-8 relative group">
-<div class="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-<span class="material-symbols-outlined text-outline" data-icon="search">search</span>
-</div>
-<input class="w-full py-4 pr-12 pl-4 bg-surface-container-high border-none rounded-xl focus:ring-2 focus:ring-primary/40 transition-all text-on-surface placeholder:text-on-surface-variant/60" placeholder="بحث باسم الزبون..." type="text"/>
-</div>
-<div class="grid grid-cols-1 gap-4">
-<!-- Card 1 (Swiped Example) -->
-<div class="swipe-container rounded-lg group swiped">
-<div class="swipe-actions">
-<button class="flex flex-col items-center justify-center bg-amber-500 text-white w-20 px-2" onclick="document.getElementById('partial-payment-modal').classList.remove('hidden')">
-<span class="material-symbols-outlined text-xl mb-1">payments</span>
-<span class="text-[10px] font-bold">دفع جزء</span>
-</button>
-<button class="flex flex-col items-center justify-center bg-green-600 text-white w-20 px-2">
-<span class="material-symbols-outlined text-xl mb-1">check_circle</span>
-<span class="text-[10px] font-bold">تم الدفع</span>
-</button>
-</div>
-<div class="swipe-content bg-surface-container-lowest rounded-lg p-5 flex justify-between items-center shadow-sm relative overflow-hidden">
-<div class="absolute right-0 top-0 bottom-0 w-1 bg-tertiary"></div>
-<div class="flex flex-col gap-1">
-<span class="text-lg font-bold text-on-surface leading-tight">ألكسندر رايت</span>
-<span class="text-xs font-medium text-on-surface-variant">آخر عملية: ٢٤ أكتوبر ٢٠٢٣</span>
-</div>
-<div class="text-left">
-<span class="editorial-header block text-2xl font-extrabold text-tertiary tracking-tight">١,٢٤٠.٠٠ ج.م</span>
-<span class="text-[10px] font-bold uppercase tracking-widest text-tertiary/70">متأخر</span>
-</div>
-</div>
-</div>
-<!-- Card 2 -->
-<div class="swipe-container rounded-lg">
-<div class="swipe-actions">
-<button class="flex flex-col items-center justify-center bg-amber-500 text-white w-20 px-2" onclick="document.getElementById('partial-payment-modal').classList.remove('hidden')">
-<span class="material-symbols-outlined text-xl mb-1">payments</span>
-<span class="text-[10px] font-bold">دفع جزء</span>
-</button>
-<button class="flex flex-col items-center justify-center bg-green-600 text-white w-20 px-2">
-<span class="material-symbols-outlined text-xl mb-1">check_circle</span>
-<span class="text-[10px] font-bold">تم الدفع</span>
-</button>
-</div>
-<div class="swipe-content bg-surface-container-lowest rounded-lg p-5 flex justify-between items-center shadow-sm relative overflow-hidden">
-<div class="absolute right-0 top-0 bottom-0 w-1 bg-tertiary"></div>
-<div class="flex flex-col gap-1">
-<span class="text-lg font-bold text-on-surface leading-tight">إيلينا رودريغيز</span>
-<span class="text-xs font-medium text-on-surface-variant">آخر عملية: ١٢ نوفمبر ٢٠٢٣</span>
-</div>
-<div class="text-left">
-<span class="editorial-header block text-2xl font-extrabold text-tertiary tracking-tight">٤٥٠.٢٥ ج.م</span>
-<span class="text-[10px] font-bold uppercase tracking-widest text-tertiary/70">رصيد</span>
-</div>
-</div>
-</div>
-<!-- Card 3 -->
-<div class="swipe-container rounded-lg">
-<div class="swipe-actions">
-<button class="flex flex-col items-center justify-center bg-amber-500 text-white w-20 px-2" onclick="document.getElementById('partial-payment-modal').classList.remove('hidden')">
-<span class="material-symbols-outlined text-xl mb-1">payments</span>
-<span class="text-[10px] font-bold">دفع جزء</span>
-</button>
-<button class="flex flex-col items-center justify-center bg-green-600 text-white w-20 px-2">
-<span class="material-symbols-outlined text-xl mb-1">check_circle</span>
-<span class="text-[10px] font-bold">تم الدفع</span>
-</button>
-</div>
-<div class="swipe-content bg-surface-container-lowest rounded-lg p-5 flex justify-between items-center shadow-sm relative overflow-hidden">
-<div class="absolute right-0 top-0 bottom-0 w-1 bg-tertiary"></div>
-<div class="flex flex-col gap-1">
-<span class="text-lg font-bold text-on-surface leading-tight">ماركوس ثورن</span>
-<span class="text-xs font-medium text-on-surface-variant">آخر عملية: ٠٨ نوفمبر ٢٠٢٣</span>
-</div>
-<div class="text-left">
-<span class="editorial-header block text-2xl font-extrabold text-tertiary tracking-tight">٢,٨٩٠.٠٠ ج.م</span>
-<span class="text-[10px] font-bold uppercase tracking-widest text-tertiary/70">حرج</span>
-</div>
-</div>
-</div>
-<!-- Card 4 -->
-<div class="swipe-container rounded-lg">
-<div class="swipe-actions">
-<button class="flex flex-col items-center justify-center bg-amber-500 text-white w-20 px-2" onclick="document.getElementById('partial-payment-modal').classList.remove('hidden')">
-<span class="material-symbols-outlined text-xl mb-1">payments</span>
-<span class="text-[10px] font-bold">دفع جزء</span>
-</button>
-<button class="flex flex-col items-center justify-center bg-green-600 text-white w-20 px-2">
-<span class="material-symbols-outlined text-xl mb-1">check_circle</span>
-<span class="text-[10px] font-bold">تم الدفع</span>
-</button>
-</div>
-<div class="swipe-content bg-surface-container-lowest rounded-lg p-5 flex justify-between items-center shadow-sm relative overflow-hidden">
-<div class="absolute right-0 top-0 bottom-0 w-1 bg-tertiary"></div>
-<div class="flex flex-col gap-1">
-<span class="text-lg font-bold text-on-surface leading-tight">سارة جينكينز</span>
-<span class="text-xs font-medium text-on-surface-variant">آخر عملية: ٣٠ أكتوبر ٢٠٢٣</span>
-</div>
-<div class="text-left">
-<span class="editorial-header block text-2xl font-extrabold text-tertiary tracking-tight">٨٥.٠٠ ج.م</span>
-<span class="text-[10px] font-bold uppercase tracking-widest text-tertiary/70">بسيط</span>
-</div>
-</div>
-</div>
-</div>
-</main>
-<!-- Partial Payment Modal -->
-<div class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-sm hidden" id="partial-payment-modal">
-<div class="bg-surface rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
-<div class="p-6">
-<h3 class="editorial-header text-xl font-bold text-on-surface mb-6">دفع جزء من الدين</h3>
-<div class="mb-6">
-<label class="block text-xs font-bold text-on-surface-variant mb-2 uppercase tracking-wide" for="amount">المبلغ المدفوع</label>
-<div class="relative">
-<input class="w-full bg-surface-container-high border-none rounded-xl py-4 pr-4 pl-12 text-2xl font-bold text-on-surface focus:ring-2 focus:ring-primary/40" id="amount" placeholder="0.00" type="number"/>
-<div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-<span class="text-lg font-bold text-on-surface-variant">ج.م</span>
-</div>
-</div>
-</div>
-<div class="flex flex-col gap-3">
-<button class="w-full py-4 bg-primary text-on-primary rounded-xl font-bold text-lg hover:brightness-110 active:scale-[0.98] transition-all" onclick="document.getElementById('partial-payment-modal').classList.add('hidden')">تأكيد</button>
-<button class="w-full py-4 text-on-surface-variant font-bold text-lg hover:bg-surface-container-high rounded-xl transition-all" onclick="document.getElementById('partial-payment-modal').classList.add('hidden')">إلغاء</button>
-</div>
-</div>
-</div>
-</div>
-<nav class="fixed bottom-0 left-0 w-full bg-surface/80 dark:bg-slate-900/80 backdrop-blur-xl z-50 flex justify-around items-center px-4 pb-6 pt-2 shadow-[0_-8px_24px_rgba(26,28,28,0.06)]">
-<div class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 p-3 hover:text-green-700 dark:hover:text-green-300 transition-colors">
-<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
-<span class="text-[10px] font-medium tracking-tight mt-1">الرئيسية</span>
-</div>
-<div class="flex flex-col items-center justify-center bg-green-100/50 dark:bg-green-900/30 text-green-900 dark:text-green-200 rounded-2xl p-3 scale-90 duration-200 ease-out">
-<span class="material-symbols-outlined" data-icon="group" style="font-variation-settings: 'FILL' 1;">group</span>
-<span class="text-[10px] font-medium tracking-tight mt-1">الزبائن</span>
-</div>
-<div class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 p-3 hover:text-green-700 dark:hover:text-green-300 transition-colors">
-<span class="material-symbols-outlined" data-icon="assessment">assessment</span>
-<span class="text-[10px] font-medium tracking-tight mt-1">تقارير</span>
-</div>
-<div class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 p-3 hover:text-green-700 dark:hover:text-green-300 transition-colors">
-<span class="material-symbols-outlined" data-icon="videogame_asset">videogame_asset</span>
-<span class="text-[10px] font-medium tracking-tight mt-1">جلسات</span>
-</div>
-</nav>
-<script>
-    // Minimal interactivity for the demo
-    document.querySelectorAll('.swipe-container').forEach(card => {
-        card.addEventListener('click', (e) => {
-            if (!e.target.closest('button')) {
-                card.classList.toggle('swiped');
-            }
+    <style>
+      body {
+        min-height: max(884px, 100dvh);
+      }
+    </style>
+  </head>
+  <body
+    class="bg-surface text-on-surface antialiased min-h-screen pb-32"
+    dir="rtl"
+  >
+    <header
+      class="bg-surface/80 dark:bg-slate-900/80 backdrop-blur-md fixed top-0 w-full z-40 flex justify-between items-center px-6 py-4"
+    >
+      <div class="flex items-center gap-3">
+        <div
+          class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden"
+        >
+          <img
+            class="w-full h-full object-cover"
+            data-alt="professional male portrait with soft studio lighting and neutral background for profile avatar"
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHLsKSCHx7nYEtaDEYP9w1XodpRxdrlKvVJgKW1veEhd-JqkVSrO6PzToDMur3y2pULOVp7wu_lKnvdcPR3_2VRNfDZBhWUd62ywQ848MaPPEWVuckT2IQmDEql3VgIg0CDIWa6dsaJL3WFN-4moz6HxNczxsVmInOBK24LUv27Fuo9W_Oj4tB87hYajRE1lqfcbn5tytHkU9gysCQRaroTq-hvDZbgh8OVSbjcIS_IZj84D_NWbPJsQelLKAfmCHN8UBb7cTGPG0"
+          />
+        </div>
+        <h1
+          class="editorial-header text-2xl font-bold text-green-800 tracking-tight"
+        >
+          لوحة التحكم
+        </h1>
+      </div>
+      <button
+        class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors active:scale-95 duration-150"
+      >
+        <span
+          class="material-symbols-outlined text-on-surface-variant"
+          data-icon="settings"
+          >settings</span
+        >
+      </button>
+    </header>
+    <main class="pt-24 px-6 max-w-2xl mx-auto">
+      <section class="mb-8">
+        <h2
+          class="editorial-header text-display-md text-4xl font-extrabold text-on-surface mb-2"
+        >
+          ديون الزبائن
+        </h2>
+        <p class="text-on-surface-variant text-sm font-medium">
+          إدارة الأرصدة المستحقة وشروط الائتمان.
+        </p>
+      </section>
+      <div class="mb-8 relative group">
+        <div
+          class="absolute inset-y-0 right-4 flex items-center pointer-events-none"
+        >
+          <span
+            class="material-symbols-outlined text-outline"
+            data-icon="search"
+            >search</span
+          >
+        </div>
+        <input
+          class="w-full py-4 pr-12 pl-4 bg-surface-container-high border-none rounded-xl focus:ring-2 focus:ring-primary/40 transition-all text-on-surface placeholder:text-on-surface-variant/60"
+          placeholder="بحث باسم الزبون..."
+          type="text"
+        />
+      </div>
+      <div class="grid grid-cols-1 gap-4">
+        <!-- Card 1 (Swiped Example) -->
+        <div class="swipe-container rounded-lg group swiped">
+          <div class="swipe-actions">
+            <button
+              class="flex flex-col items-center justify-center bg-amber-500 text-white w-20 px-2"
+              onclick="
+                document
+                  .getElementById('partial-payment-modal')
+                  .classList.remove('hidden')
+              "
+            >
+              <span class="material-symbols-outlined text-xl mb-1"
+                >payments</span
+              >
+              <span class="text-[10px] font-bold">دفع جزء</span>
+            </button>
+            <button
+              class="flex flex-col items-center justify-center bg-green-600 text-white w-20 px-2"
+            >
+              <span class="material-symbols-outlined text-xl mb-1"
+                >check_circle</span
+              >
+              <span class="text-[10px] font-bold">تم الدفع</span>
+            </button>
+          </div>
+          <div
+            class="swipe-content bg-surface-container-lowest rounded-lg p-5 flex justify-between items-center shadow-sm relative overflow-hidden"
+          >
+            <div class="absolute right-0 top-0 bottom-0 w-1 bg-tertiary"></div>
+            <div class="flex flex-col gap-1">
+              <span class="text-lg font-bold text-on-surface leading-tight"
+                >ألكسندر رايت</span
+              >
+              <span class="text-xs font-medium text-on-surface-variant"
+                >آخر عملية: ٢٤ أكتوبر ٢٠٢٣</span
+              >
+            </div>
+            <div class="text-left">
+              <span
+                class="editorial-header block text-2xl font-extrabold text-tertiary tracking-tight"
+                >١,٢٤٠.٠٠ ج.م</span
+              >
+              <span
+                class="text-[10px] font-bold uppercase tracking-widest text-tertiary/70"
+                >متأخر</span
+              >
+            </div>
+          </div>
+        </div>
+        <!-- Card 2 -->
+        <div class="swipe-container rounded-lg">
+          <div class="swipe-actions">
+            <button
+              class="flex flex-col items-center justify-center bg-amber-500 text-white w-20 px-2"
+              onclick="
+                document
+                  .getElementById('partial-payment-modal')
+                  .classList.remove('hidden')
+              "
+            >
+              <span class="material-symbols-outlined text-xl mb-1"
+                >payments</span
+              >
+              <span class="text-[10px] font-bold">دفع جزء</span>
+            </button>
+            <button
+              class="flex flex-col items-center justify-center bg-green-600 text-white w-20 px-2"
+            >
+              <span class="material-symbols-outlined text-xl mb-1"
+                >check_circle</span
+              >
+              <span class="text-[10px] font-bold">تم الدفع</span>
+            </button>
+          </div>
+          <div
+            class="swipe-content bg-surface-container-lowest rounded-lg p-5 flex justify-between items-center shadow-sm relative overflow-hidden"
+          >
+            <div class="absolute right-0 top-0 bottom-0 w-1 bg-tertiary"></div>
+            <div class="flex flex-col gap-1">
+              <span class="text-lg font-bold text-on-surface leading-tight"
+                >إيلينا رودريغيز</span
+              >
+              <span class="text-xs font-medium text-on-surface-variant"
+                >آخر عملية: ١٢ نوفمبر ٢٠٢٣</span
+              >
+            </div>
+            <div class="text-left">
+              <span
+                class="editorial-header block text-2xl font-extrabold text-tertiary tracking-tight"
+                >٤٥٠.٢٥ ج.م</span
+              >
+              <span
+                class="text-[10px] font-bold uppercase tracking-widest text-tertiary/70"
+                >رصيد</span
+              >
+            </div>
+          </div>
+        </div>
+        <!-- Card 3 -->
+        <div class="swipe-container rounded-lg">
+          <div class="swipe-actions">
+            <button
+              class="flex flex-col items-center justify-center bg-amber-500 text-white w-20 px-2"
+              onclick="
+                document
+                  .getElementById('partial-payment-modal')
+                  .classList.remove('hidden')
+              "
+            >
+              <span class="material-symbols-outlined text-xl mb-1"
+                >payments</span
+              >
+              <span class="text-[10px] font-bold">دفع جزء</span>
+            </button>
+            <button
+              class="flex flex-col items-center justify-center bg-green-600 text-white w-20 px-2"
+            >
+              <span class="material-symbols-outlined text-xl mb-1"
+                >check_circle</span
+              >
+              <span class="text-[10px] font-bold">تم الدفع</span>
+            </button>
+          </div>
+          <div
+            class="swipe-content bg-surface-container-lowest rounded-lg p-5 flex justify-between items-center shadow-sm relative overflow-hidden"
+          >
+            <div class="absolute right-0 top-0 bottom-0 w-1 bg-tertiary"></div>
+            <div class="flex flex-col gap-1">
+              <span class="text-lg font-bold text-on-surface leading-tight"
+                >ماركوس ثورن</span
+              >
+              <span class="text-xs font-medium text-on-surface-variant"
+                >آخر عملية: ٠٨ نوفمبر ٢٠٢٣</span
+              >
+            </div>
+            <div class="text-left">
+              <span
+                class="editorial-header block text-2xl font-extrabold text-tertiary tracking-tight"
+                >٢,٨٩٠.٠٠ ج.م</span
+              >
+              <span
+                class="text-[10px] font-bold uppercase tracking-widest text-tertiary/70"
+                >حرج</span
+              >
+            </div>
+          </div>
+        </div>
+        <!-- Card 4 -->
+        <div class="swipe-container rounded-lg">
+          <div class="swipe-actions">
+            <button
+              class="flex flex-col items-center justify-center bg-amber-500 text-white w-20 px-2"
+              onclick="
+                document
+                  .getElementById('partial-payment-modal')
+                  .classList.remove('hidden')
+              "
+            >
+              <span class="material-symbols-outlined text-xl mb-1"
+                >payments</span
+              >
+              <span class="text-[10px] font-bold">دفع جزء</span>
+            </button>
+            <button
+              class="flex flex-col items-center justify-center bg-green-600 text-white w-20 px-2"
+            >
+              <span class="material-symbols-outlined text-xl mb-1"
+                >check_circle</span
+              >
+              <span class="text-[10px] font-bold">تم الدفع</span>
+            </button>
+          </div>
+          <div
+            class="swipe-content bg-surface-container-lowest rounded-lg p-5 flex justify-between items-center shadow-sm relative overflow-hidden"
+          >
+            <div class="absolute right-0 top-0 bottom-0 w-1 bg-tertiary"></div>
+            <div class="flex flex-col gap-1">
+              <span class="text-lg font-bold text-on-surface leading-tight"
+                >سارة جينكينز</span
+              >
+              <span class="text-xs font-medium text-on-surface-variant"
+                >آخر عملية: ٣٠ أكتوبر ٢٠٢٣</span
+              >
+            </div>
+            <div class="text-left">
+              <span
+                class="editorial-header block text-2xl font-extrabold text-tertiary tracking-tight"
+                >٨٥.٠٠ ج.م</span
+              >
+              <span
+                class="text-[10px] font-bold uppercase tracking-widest text-tertiary/70"
+                >بسيط</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <!-- Partial Payment Modal -->
+    <div
+      class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-sm hidden"
+      id="partial-payment-modal"
+    >
+      <div
+        class="bg-surface rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300"
+      >
+        <div class="p-6">
+          <h3 class="editorial-header text-xl font-bold text-on-surface mb-6">
+            دفع جزء من الدين
+          </h3>
+          <div class="mb-6">
+            <label
+              class="block text-xs font-bold text-on-surface-variant mb-2 uppercase tracking-wide"
+              for="amount"
+              >المبلغ المدفوع</label
+            >
+            <div class="relative">
+              <input
+                class="w-full bg-surface-container-high border-none rounded-xl py-4 pr-4 pl-12 text-2xl font-bold text-on-surface focus:ring-2 focus:ring-primary/40"
+                id="amount"
+                placeholder="0.00"
+                type="number"
+              />
+              <div
+                class="absolute inset-y-0 left-4 flex items-center pointer-events-none"
+              >
+                <span class="text-lg font-bold text-on-surface-variant"
+                  >ج.م</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="flex flex-col gap-3">
+            <button
+              class="w-full py-4 bg-primary text-on-primary rounded-xl font-bold text-lg hover:brightness-110 active:scale-[0.98] transition-all"
+              onclick="
+                document
+                  .getElementById('partial-payment-modal')
+                  .classList.add('hidden')
+              "
+            >
+              تأكيد
+            </button>
+            <button
+              class="w-full py-4 text-on-surface-variant font-bold text-lg hover:bg-surface-container-high rounded-xl transition-all"
+              onclick="
+                document
+                  .getElementById('partial-payment-modal')
+                  .classList.add('hidden')
+              "
+            >
+              إلغاء
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <nav
+      class="fixed bottom-0 left-0 w-full bg-surface/80 dark:bg-slate-900/80 backdrop-blur-xl z-50 flex justify-around items-center px-4 pb-6 pt-2 shadow-[0_-8px_24px_rgba(26,28,28,0.06)]"
+    >
+      <div
+        class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 p-3 hover:text-green-700 dark:hover:text-green-300 transition-colors"
+      >
+        <span class="material-symbols-outlined" data-icon="dashboard"
+          >dashboard</span
+        >
+        <span class="text-[10px] font-medium tracking-tight mt-1"
+          >الرئيسية</span
+        >
+      </div>
+      <div
+        class="flex flex-col items-center justify-center bg-green-100/50 dark:bg-green-900/30 text-green-900 dark:text-green-200 rounded-2xl p-3 scale-90 duration-200 ease-out"
+      >
+        <span
+          class="material-symbols-outlined"
+          data-icon="group"
+          style="font-variation-settings: &quot;FILL&quot; 1"
+          >group</span
+        >
+        <span class="text-[10px] font-medium tracking-tight mt-1">الزبائن</span>
+      </div>
+      <div
+        class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 p-3 hover:text-green-700 dark:hover:text-green-300 transition-colors"
+      >
+        <span class="material-symbols-outlined" data-icon="assessment"
+          >assessment</span
+        >
+        <span class="text-[10px] font-medium tracking-tight mt-1">تقارير</span>
+      </div>
+      <div
+        class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 p-3 hover:text-green-700 dark:hover:text-green-300 transition-colors"
+      >
+        <span class="material-symbols-outlined" data-icon="videogame_asset"
+          >videogame_asset</span
+        >
+        <span class="text-[10px] font-medium tracking-tight mt-1">جلسات</span>
+      </div>
+    </nav>
+    <script>
+      // Minimal interactivity for the demo
+      document.querySelectorAll(".swipe-container").forEach((card) => {
+        card.addEventListener("click", (e) => {
+          if (!e.target.closest("button")) {
+            card.classList.toggle("swiped");
+          }
         });
-    });
-</script>
-</body></html>
+      });
+    </script>
+  </body>
+</html>

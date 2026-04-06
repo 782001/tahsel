@@ -13,6 +13,8 @@ import 'package:tahsel/features/standard_features/localization/presentation/cubi
 import 'package:tahsel/features/standard_features/no-internet/no_internet.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_cubit.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_state.dart';
+import 'package:tahsel/features/customer/presentation/cubit/customer_cubit.dart';
+import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
 import 'package:tahsel/routes/app_routes.dart';
 
 void main() async {
@@ -45,7 +47,9 @@ class MyApp extends StatelessWidget {
       providers: [
         BlocProvider(create: (context) => di.sl<LocaleCubit>()..getSavedLang()),
         BlocProvider(create: (context) => di.sl<ThemeCubit>()),
-        BlocProvider(create: (context) => ConnectivityCubit()),
+        BlocProvider(create: (context) => di.sl<ConnectivityCubit>()),
+        BlocProvider(create: (context) => di.sl<CustomerCubit>()),
+        BlocProvider(create: (context) => di.sl<ExpenseCubit>()),
       ],
       child: BlocBuilder<ThemeCubit, ThemeState>(
         builder: (context, themeState) {

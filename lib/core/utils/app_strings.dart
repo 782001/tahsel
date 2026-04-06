@@ -1,5 +1,5 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tahsel/core/services/injection_container.dart';
-import 'package:tahsel/core/storage/cashhelper.dart';
 
 class AppStrings {
   static const String noRouteFound = 'No Route Found';
@@ -18,7 +18,7 @@ class AppStrings {
   static const String noData = "no_data";
   static String currentLang = "ar";
   static String get userToken =>
-      sl<CashHelper>().getData(key: 'token') as String? ?? '';
+      sl<FirebaseAuth>().currentUser?.uid ?? '';
 
   ///-----------------------------
   ///-----------------------------
@@ -72,8 +72,10 @@ class AppStrings {
   static const String descriptionPlaceholder = "description_placeholder";
   static const String dashboard = "dashboard";
   static const String totalMonthlyExpenses = "total_monthly_expenses";
+  static const String totalExpensesThisMonth = "total_expenses_this_month";
   static const String expenseIncreaseHint = "expense_increase_hint";
   static const String allExpenses = "all_expenses";
+  static const String noPreviousMonths = "no_previous_months";
   static const String supplies = "supplies";
   static const String operations = "operations";
   static const String employees = "employees";
@@ -102,6 +104,11 @@ class AppStrings {
   static const String debtStatusCritical = "debt_status_critical";
   static const String debtStatusMinor = "debt_status_minor";
   static const String transactionCount = "transaction_count";
+  static const String requiredField = "required_field";
+  static const String invalidValue = "invalid_value";
+  static const String paymentExceedsRemaining = "payment_exceeds_remaining";
+  static const String paymentSuccess = "payment_success";
+  static const String fullSettlement = "full_settlement";
 
   // General Nav
   static const String home = "home";
@@ -115,6 +122,7 @@ class AppStrings {
   static const String password = "password";
   static const String contactManager = "contact_manager";
   static const String noAccount = "no_account";
+  static const String noCustomerDebts = "no_customer_debts";
   static const String validationEmailRequired = "validation_email_required";
   static const String validationEmailInvalid = "validation_email_invalid";
   static const String validationPasswordRequired = "validation_password_required";
@@ -182,4 +190,9 @@ class AppStrings {
   static const String comparisonLastMonth = "comparison_last_month";
   static const String withinBudget = "within_budget";
   static const String alert = "alert";
+  static const String delete = "delete";
+  static const String confirmDeleteTitle = "confirm_delete_title";
+  static const String confirmDeleteMessage = "confirm_delete_message";
+  static const String confirmDeleteMonthMessage = "confirm_delete_month_message";
+  static const String deleteSuccess = "delete_success";
 }

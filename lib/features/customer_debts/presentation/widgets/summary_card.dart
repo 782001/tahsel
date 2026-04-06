@@ -53,7 +53,7 @@ class SummaryCard extends StatelessWidget {
           ),
           SizedBox(height: 8.h),
           Text(
-            amount.toStringAsFixed(2),
+            amount.toStringAsFixed(1),
             style: TextStyles.customStyle(
               color: color,
               fontSize: 20.sp,
