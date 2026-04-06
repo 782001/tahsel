@@ -113,7 +113,7 @@
   "price_per_hour": "سعر الساعة",
   "price_per_turn": "سعر الدور",
   "turn_count": "عدد الأدوار",
-  "time_duration": "الوقت (ساعة)",
+  "time_duration": "الوقت (دقيقة)",
   "quick_add_desc": "سيتم إضافة هذه العملية فوراً إلى سجل النشاط اليومي وتحديث رصيد البلايستيشن.",
   "customer_name_hint": "اكتب اسم الزبون هنا...",
   "product_name_hint": "ايه اللي اتباع؟",
@@ -136,5 +136,11 @@
   "alert": "تنبيه",
   "operation_success": "تمت إضافة العملية بنجاح!",
   "operation_failed": "فشل في إضافة العملية.",
-  "user_not_found": "المستخدم غير موجود! يرجى تسجيل الدخول مرة أخرى."
+  "user_not_found": "المستخدم غير موجود! يرجى تسجيل الدخول مرة أخرى.",
+  "validation_field_required": "هذا الحقل مطلوب",
+  "validation_invalid_amount": "يرجى إدخال مبلغ صحيح",
+  "validation_customer_name_required": "اسم العميل مطلوب للديون",
+  "validation_product_name_required": "اسم المنتج مطلوب",
+  "validation_session_required": "تفاصيل الجلسة مطلوبة",
+  "paid_full": "دفع بالكامل"
 }

@@ -13,11 +13,12 @@ class OperationLoading extends OperationState {}
 
 class OperationSuccess extends OperationState {
   final String message;
+  final String operationId;
 
-  const OperationSuccess({required this.message});
+  const OperationSuccess({required this.message, required this.operationId});
 
   @override
-  List<Object> get props => [message];
+  List<Object> get props => [message, operationId];
 }
 
 class OperationFailure extends OperationState {

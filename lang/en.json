@@ -113,7 +113,7 @@
   "price_per_hour": "Price per Hour",
   "price_per_turn": "Price per Turn",
   "turn_count": "Turn Count",
-  "time_duration": "Time (Hours)",
+  "time_duration": "Time (Minutes)",
   "quick_add_desc": "This operation will be added immediately to the daily activity log and update the balance.",
   "customer_name_hint": "Enter customer name here...",
   "product_name_hint": "What was sold?",
@@ -136,5 +136,11 @@
   "alert": "Alert",
   "operation_success": "Operation added successfully!",
   "operation_failed": "Failed to add operation.",
-  "user_not_found": "User not found! Please login again."
+  "user_not_found": "User not found! Please login again.",
+  "validation_field_required": "This field is required",
+  "validation_invalid_amount": "Please enter a valid amount",
+  "validation_customer_name_required": "Customer name is required for debts",
+  "validation_product_name_required": "Product name is required",
+  "validation_session_required": "Session details are required",
+  "paid_full": "Paid Full"
 }

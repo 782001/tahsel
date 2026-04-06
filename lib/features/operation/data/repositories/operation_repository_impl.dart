@@ -13,11 +13,11 @@ class OperationRepositoryImpl implements OperationRepository {
   });
 
   @override
-  Future<Either<dynamic, void>> addOperation(OperationEntity operation) async {
+  Future<Either<dynamic, String>> addOperation(OperationEntity operation) async {
     try {
       final model = OperationModel.fromEntity(operation);
-      await remoteDataSource.addOperation(model);
-      return const Right(null);
+      final id = await remoteDataSource.addOperation(model);
+      return Right(id);
     } catch (e) {
       return Left(e.toString());
     }

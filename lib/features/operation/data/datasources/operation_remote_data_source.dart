@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/operation_model.dart';
 
 abstract class OperationRemoteDataSource {
-  Future<void> addOperation(OperationModel operation);
+  Future<String> addOperation(OperationModel operation);
 }
 
 class OperationRemoteDataSourceImpl implements OperationRemoteDataSource {
@@ -11,7 +11,7 @@ class OperationRemoteDataSourceImpl implements OperationRemoteDataSource {
   OperationRemoteDataSourceImpl({required this.firestore});
 
   @override
-  Future<void> addOperation(OperationModel operation) async {
+  Future<String> addOperation(OperationModel operation) async {
     try {
       final docRef = firestore
           .collection('users')
@@ -20,6 +20,7 @@ class OperationRemoteDataSourceImpl implements OperationRemoteDataSource {
           .doc();
       
       await docRef.set(operation.toJson());
+      return docRef.id;
     } catch (e) {
       throw Exception('Failed to add operation: $e');
     }

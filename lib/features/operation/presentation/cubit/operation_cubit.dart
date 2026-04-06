@@ -13,8 +13,8 @@ class OperationCubit extends Cubit<OperationState> {
     final result = await addOperationUseCase(AddOperationParams(operation: operation));
 
     result.fold(
-      (failure) => emit(OperationFailure(message: failure.message ?? 'Unknown error occurred')),
-      (_) => emit(const OperationSuccess(message: 'operation_success')),
+      (failure) => emit(OperationFailure(message: failure.toString())),
+      (id) => emit(OperationSuccess(message: 'operation_success', operationId: id)),
     );
   }
 }
