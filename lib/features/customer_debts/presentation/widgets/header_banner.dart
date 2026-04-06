@@ -8,7 +8,7 @@ import 'package:tahsel/features/customer_debts/data/models/debt_item_model.dart'
 class HeaderBanner extends StatelessWidget {
   final CustomerDebtDetail detail;
 
-  const HeaderBanner({required this.detail});
+  const HeaderBanner({super.key, required this.detail});
 
   @override
   Widget build(BuildContext context) {

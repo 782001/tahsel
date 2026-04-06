@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/security_service.dart';
+import 'package:tahsel/core/storage/secure_storage_helper.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
@@ -48,7 +50,12 @@ class _SplashScreenState extends State<SplashScreen>
     await SecurityService.checkSecurity();
     await Future.delayed(const Duration(seconds: 3));
     if (mounted) {
-      nav().pushNamedAndRemoveUntil(AppRoutes.login);
+      final token = await sl<SecureStorageHelper>().getData(key: 'token');
+      if (token != null && token.isNotEmpty) {
+        nav().pushNamedAndRemoveUntil(AppRoutes.mainLayout);
+      } else {
+        nav().pushNamedAndRemoveUntil(AppRoutes.login);
+      }
     }
   }
 

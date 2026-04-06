@@ -32,6 +32,7 @@ This project serves as a **standard repository for Abdullah Alawadi’s personal
 ## 🎯 Project Purpose
 
 This repository is designed to be:
+
 - **A Standard Reference**: A reflection of Abdullah Alawadi’s approach to writing high-quality Flutter code.
 - **Reusable Base**: A modular boilerplate that can be integrated into any new project to jumpstart development with best practices.
 - **Clean Architecture Showcase**: A real-world demonstration of how Clean Architecture is implemented to separate concerns and ensure maintainability.
@@ -41,19 +42,22 @@ This repository is designed to be:
 ## 🚀 Latest Changes (March 17, 2026)
 
 ### 1. Secure Storage Migration (`vault_kit`)
+
 - **Refactor**: Replaced `flutter_secure_storage` with `vault_kit: ^1.0.5`.
 - **Reasoning**: Switched to a lighter and more efficient native encryption solution (AES-256-GCM on Android, Keychain on iOS) with improved read/write performance for authentication tokens.
 - **Implementation**: Updated `SecureStorageHelper` and Dependency Injection to use the new engine while maintaining the existing abstraction layer.
 
 ### 2. Clean Architecture Implementation (Category Module)
+
 - **Feature**: Added a new `Category` feature following strict Clean Architecture principles.
 - **Components**:
-    - **Data Layer**: Remote Data Source and Repository implementation.
-    - **Domain Layer**: Entities and Use Cases (`GetCategories`, `GetCategoryById`).
-    - **Presentation Layer**: BLoC/Cubit for state management.
+  - **Data Layer**: Remote Data Source and Repository implementation.
+  - **Domain Layer**: Entities and Use Cases (`GetCategories`, `GetCategoryById`).
+  - **Presentation Layer**: BLoC/Cubit for state management.
 - **Purpose**: Serves as a live example of how to scale the project with new features using the established architectural patterns.
 
 ### 3. API Infrastructure Improvements
+
 - Updated `Endpoint` management to include dynamic category routing.
 - Enhanced `injection_container.dart` with modular dependency registration.
 
@@ -74,7 +78,7 @@ final navigator = sl<NavigatorService>();
 AppStrings.login.tr()
 
 ------------Logging--------------
-AppLogger.handleLogs("Log message only in debug mode");
+AppLogger.printMessage("Log message only in debug mode");
 
 ------------Security-------------
 // make sure that SecurityService.isEnabled = true;
@@ -354,7 +358,7 @@ void _navigateToNext() async {
 
 ---
 
-## 8️⃣ AppLogger (handleLogs)
+## 8️⃣ AppLogger (printMessage)
 
 ✅✅ A utility to manage logging safely, ensuring logs only appear during development.
 
@@ -362,7 +366,7 @@ void _navigateToNext() async {
 import 'package:tahsel/core/utils/app_logger.dart';
 
 // Use this anywhere in the app
-AppLogger.handleLogs("User logged in with ID: 123");
+AppLogger.printMessage("User logged in with ID: 123");
 ```
 
 - **Debug Mode**: Logs are printed to the console.
@@ -379,6 +383,7 @@ AppLogger.handleLogs("User logged in with ID: 123");
 The project uses **VaultKit** for secure storage. VaultKit is a lightweight, efficient, and native solution (AES-256-GCM on Android, Keychain on iOS) designed for high performance and a clean API.
 
 **Why VaultKit?**
+
 - **Lighter & Efficient**: Minimal overhead compared to other solutions.
 - **Improved Performance**: Faster read/write operations for quick token access.
 - **Native Security**: Uses OS-level encryption (Android Keystore / iOS Keychain).
@@ -444,11 +449,13 @@ String safeEmail = SecurityService.obfuscateData(sensitiveEmail); // us****om
 A Cubit-based theme management system that persists the user's choice using `CashHelper`.
 
 ### Implementation
+
 - **ThemeCubit**: Handles state transitions between `ThemeMode.light` and `ThemeMode.dark`.
 - **Persistence**: Automatically saves the selected theme to `SharedPreferences`.
 - **Integration**: Wrapped in `main.dart`'s `MaterialApp` via `BlocBuilder`.
 
 ### Usage
+
 Toggle theme from any widget or using global helpers:
 
 ```dart
@@ -469,9 +476,11 @@ theme().toLightMode();
 ```
 
 ### Pre-built Widgets
+
 We provide two ready-to-use widgets for theme switching:
 
 1. **ThemeToggleButton**: A simple icon button for AppBars.
+
    ```dart
    appBar: AppBar(
      actions: [ThemeToggleButton()],
@@ -497,11 +506,13 @@ We provide two ready-to-use widgets for theme switching:
 ✅✅ A centralized system for managing colors that automatically adapt to the current theme (Light or Dark).
 
 ### Core Features:
+
 - **Dynamic Getters**: `AppColors` properties are getters that evaluate the current theme state dynamically.
 - **Theme Awareness**: Uses `NavigatorService` to check the current `Brightness` or directly interfaces with `ThemeCubit`.
 - **Consistency**: Ensures all UI components (TextStyles, CustomButtons, Containers) use the same semantic colors.
 
 ### Usage:
+
 Instead of reaching into `Theme.of(context)` manually, use `AppColors` anywhere:
 
 ```dart
@@ -522,6 +533,7 @@ Container(
 > The following Android configuration details are **CRITICAL** and must be included in every project to ensure correct module resolution, secure signing, and consistent builds across different environments.
 
 ### 1. Root `build.gradle.kts` (Namespace Fix)
+
 Add the following `subprojects` block to your `android/build.gradle.kts`. This is essential for fixing namespace issues in older plugins (like `flutter_jailbreak_detection`) and ensuring proper evaluation order.
 
 ```kotlin
@@ -560,9 +572,11 @@ subprojects {
 ```
 
 ### 2. App Signing & `key.properties`
+
 To maintain secure and consistent release builds, use a `key.properties` file in the `android/` directory.
 
 **File Structure (`android/key.properties`):**
+
 ```properties
 storePassword=your_password
 keyPassword=your_password
@@ -572,6 +586,7 @@ storeFile=path/to/your/upload-keystore.jks
 
 **Implementation in `android/app/build.gradle.kts`:**
 Ensure your app-level build file loads these properties:
+
 ```kotlin
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")

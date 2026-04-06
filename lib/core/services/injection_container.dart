@@ -1,5 +1,8 @@
 import 'package:dio/dio.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:tahsel/features/auth/service_injection/auth_injection.dart';
 import 'package:tahsel/features/category/service_injection/category_injection.dart';
+import 'package:tahsel/features/operation/service_injection/operation_injection.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:vault_kit/vault_kit.dart';
 import 'package:get_it/get_it.dart';
@@ -21,6 +24,11 @@ final sl = GetIt.instance;
 Future<void> initDependencies() async {
   //! Features
   await CategoryDI.init();
+  AuthInjection.init(sl);
+  await initOperation();
+
+  // firebase
+  sl.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
 
   // localization
   /// -----localizationCubit------

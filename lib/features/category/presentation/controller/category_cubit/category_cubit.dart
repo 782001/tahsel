@@ -1,11 +1,11 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 
+import '../../../domain/entities/get_categories_entity.dart';
 import '../../../domain/entities/get_category_by_id_entity.dart';
+import '../../../domain/usecases/get_categories_usecase.dart';
 import '../../../domain/usecases/get_category_by_id_usecase.dart';
 import 'category_states.dart';
-import '../../../domain/entities/get_categories_entity.dart';
-import '../../../domain/usecases/get_categories_usecase.dart';
 
 class CategoryCubit extends Cubit<CategoryState> {
   final GetCategoryByIdUseCase kGetCategoryByIdUseCase;
@@ -26,12 +26,12 @@ class CategoryCubit extends Cubit<CategoryState> {
 
     response.fold(
       (failure) {
-        AppLogger.handleLogs('Failure: GetCategoryByIdErrorState');
+        AppLogger.printMessage('Failure: GetCategoryByIdErrorState');
         emit(GetCategoryByIdErrorState());
       },
       (r) {
         getCategoryByIdResponseEntity = r;
-        AppLogger.handleLogs('Success: ${r.message}');
+        AppLogger.printMessage('Success: ${r.message}');
         emit(GetCategoryByIdSucssesState(message: r.message!));
       },
     );
@@ -45,12 +45,12 @@ class CategoryCubit extends Cubit<CategoryState> {
 
     response.fold(
       (failure) {
-        AppLogger.handleLogs('Failure: GetCategoriesErrorState');
+        AppLogger.printMessage('Failure: GetCategoriesErrorState');
         emit(GetCategoriesErrorState());
       },
       (r) {
         getCategoriesResponseEntity = r;
-        AppLogger.handleLogs('Success: ${r.message}');
+        AppLogger.printMessage('Success: ${r.message}');
         emit(GetCategoriesSucssesState(message: r.message ?? ''));
       },
     );

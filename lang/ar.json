@@ -83,6 +83,10 @@
   "password": "كلمة المرور",
   "contact_manager": "اتصل بالمدير",
   "no_account": "ليس لديك حساب؟ ",
+  "validation_email_required": "الرجاء إدخال البريد الإلكتروني",
+  "validation_email_invalid": "الرجاء إدخال بريد إلكتروني صحيح",
+  "validation_password_required": "الرجاء إدخال كلمة المرور",
+  "validation_password_length": "يجب أن تكون كلمة المرور ٦ أحرف على الأقل",
   "help_center": "مركز المساعدة",
   "terms_of_service": "شروط الخدمة",
   "privacy_policy": "سياسة الخصوصية",
@@ -129,5 +133,8 @@
   "comparison_yesterday": "مقارنة بالأمس",
   "comparison_last_month": "مقارنة بالشهر الماضي",
   "within_budget": "ضمن الميزانية",
-  "alert": "تنبيه"
+  "alert": "تنبيه",
+  "operation_success": "تمت إضافة العملية بنجاح!",
+  "operation_failed": "فشل في إضافة العملية.",
+  "user_not_found": "المستخدم غير موجود! يرجى تسجيل الدخول مرة أخرى."
 }

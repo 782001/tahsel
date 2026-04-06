@@ -115,6 +115,10 @@ class AppStrings {
   static const String password = "password";
   static const String contactManager = "contact_manager";
   static const String noAccount = "no_account";
+  static const String validationEmailRequired = "validation_email_required";
+  static const String validationEmailInvalid = "validation_email_invalid";
+  static const String validationPasswordRequired = "validation_password_required";
+  static const String validationPasswordLength = "validation_password_length";
   static const String helpCenter = "help_center";
   static const String termsOfService = "terms_of_service";
   static const String privacyPolicy = "privacy_policy";
@@ -147,7 +151,9 @@ class AppStrings {
   static const String customerNameHint = "customer_name_hint";
   static const String productNameHint = "product_name_hint";
   static const String quickAddDesc = "quick_add_desc";
-
+  static const String operationSuccess = "operation_success";
+  static const String operationFailed = "operation_failed";
+  static const String userNotFound = "user_not_found";
   // Storage Keys
   static const String hourlyRateKey = "hourly_rate_key";
   static const String slotRateKey = "slot_rate_key";

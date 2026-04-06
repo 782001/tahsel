@@ -83,6 +83,10 @@
   "password": "Password",
   "contact_manager": "Contact Admin",
   "no_account": "Don't have an account? ",
+  "validation_email_required": "Please enter your email",
+  "validation_email_invalid": "Please enter a valid email",
+  "validation_password_required": "Please enter your password",
+  "validation_password_length": "Password must be at least 6 characters",
   "help_center": "Help Center",
   "terms_of_service": "Terms of Service",
   "privacy_policy": "Privacy Policy",
@@ -129,5 +133,8 @@
   "comparison_yesterday": "Compared to Yesterday",
   "comparison_last_month": "Compared to Last Month",
   "within_budget": "Within Budget",
-  "alert": "Alert"
+  "alert": "Alert",
+  "operation_success": "Operation added successfully!",
+  "operation_failed": "Failed to add operation.",
+  "user_not_found": "User not found! Please login again."
 }

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1016396879588",
+    "project_id": "tahsel-9f124",
+    "storage_bucket": "tahsel-9f124.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1016396879588:android:2f430c2860ad0b65d4fef1",
+        "android_client_info": {
+          "package_name": "com.awadi.tahsel"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCCOGqWARiJtSC3AtwrqLems-4Y19i0eQA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
