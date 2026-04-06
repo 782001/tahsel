@@ -9,7 +9,8 @@ class LanguageOption extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
-  const  LanguageOption({
+  const LanguageOption({
+    super.key,
     required this.title,
     required this.subtitle,
     required this.isSelected,
@@ -53,13 +54,10 @@ class LanguageOption extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: Center(
-                child: Text(
-                  title[0],
-                  style: TextStyles.customStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: isSelected ? AppColors.white : AppColors.sandText,
-                  ),
+                child: Icon(
+                  Icons.language,
+                  color: isSelected ? AppColors.white : AppColors.sandText,
+                  size: 24.sp,
                 ),
               ),
             ),

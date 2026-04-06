@@ -47,7 +47,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
 
           // Theme Toggle REMOVED
-
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -101,7 +100,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: double.infinity,
                       padding: EdgeInsets.all(32.w),
                       decoration: BoxDecoration(
-                        color: AppColors.scafoldBackGround == const Color(0xFFF8F8F8)
+                        color:
+                            AppColors.scafoldBackGround ==
+                                const Color(0xFFF8F8F8)
                             ? Colors.white
                             : const Color(0xFF1E1E1E),
                         borderRadius: BorderRadius.circular(16.r),
@@ -161,7 +162,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 borderRadius: BorderRadius.circular(12.r),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.primaryColor.withOpacity(0.3),
+                                    color: AppColors.primaryColor.withOpacity(
+                                      0.3,
+                                    ),
                                     blurRadius: 8,
                                     offset: const Offset(0, 4),
                                   ),
@@ -170,12 +173,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(
-                                    Icons.arrow_forward,
-                                    color: Colors.white,
-                                    size: 20.sp,
-                                  ),
-                                  SizedBox(width: 8.w),
                                   Text(
                                     AppStrings.login.tr(),
                                     style: TextStyles.customStyle(
@@ -183,6 +180,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
                                     ),
+                                  ),
+                                  SizedBox(width: 8.w),
+                                  Icon(
+                                    Icons.arrow_forward,
+                                    color: Colors.white,
+                                    size: 20.sp,
                                   ),
                                 ],
                               ),
@@ -197,33 +200,36 @@ class _LoginScreenState extends State<LoginScreen> {
                             decoration: BoxDecoration(
                               border: Border(
                                 top: BorderSide(
-                                  color: AppColors.disabledColor.withOpacity(0.1),
+                                  color: AppColors.disabledColor.withOpacity(
+                                    0.1,
+                                  ),
                                 ),
                               ),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                GestureDetector(
-                                  onTap: () {},
-                                  child: Text(
-                                    AppStrings.contactManager.tr(),
-                                    style: TextStyles.customStyle(
-                                      color: AppColors.primaryColor,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                    ).copyWith(
-                                      decoration: TextDecoration.underline,
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: 4.w),
                                 Text(
                                   AppStrings.noAccount.tr(),
                                   style: TextStyles.customStyle(
                                     color: AppColors.disabledColor,
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+
+                                GestureDetector(
+                                  onTap: () {},
+                                  child: Text(
+                                    AppStrings.contactManager.tr(),
+                                    style:
+                                        TextStyles.customStyle(
+                                          color: AppColors.primaryColor,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                        ).copyWith(
+                                          decoration: TextDecoration.underline,
+                                        ),
                                   ),
                                 ),
                               ],
@@ -235,36 +241,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     SizedBox(height: 32.h),
 
                     // Footer Links
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildFooterLink(AppStrings.helpCenter.tr()),
-                        SizedBox(width: 24.w),
-                        _buildFooterLink(AppStrings.termsOfService.tr()),
-                        SizedBox(width: 24.w),
-                        _buildFooterLink(AppStrings.privacyPolicy.tr()),
-                      ],
-                    ),
                   ],
                 ),
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildFooterLink(String title) {
-    return GestureDetector(
-      onTap: () {},
-      child: Text(
-        title,
-        style: TextStyles.customStyle(
-          color: AppColors.disabledColor,
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-        ),
       ),
     );
   }

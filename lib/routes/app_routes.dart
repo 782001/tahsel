@@ -7,6 +7,7 @@ import 'package:tahsel/features/auth/presentation/screens/login_screen.dart';
 import 'package:tahsel/core/services/injection_container.dart' as di;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/shared/widgets/fields/text_widget.dart';
+import 'package:tahsel/features/expenses/presentation/screens/add_expense_screen.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -15,6 +16,7 @@ class AppRoutes {
   static const String mainLayout = '/main-layout';
   static const String login = '/login';
   static const String securityWarning = '/security-warning';
+  static const String addExpense = '/add-expense';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -38,6 +40,10 @@ class AppRoutes {
             isRooted: args?['isRooted'] ?? false,
             isDevMode: args?['isDevMode'] ?? false,
           ),
+        );
+      case addExpense:
+        return MaterialPageRoute(
+          builder: (_) => const AddExpenseScreen(),
         );
       default:
         return MaterialPageRoute(
@@ -66,6 +72,7 @@ class AppRoutes {
           isDevMode: args?['isDevMode'] ?? false,
         );
       },
+      addExpense: (_) => const AddExpenseScreen(),
     };
   }
 }

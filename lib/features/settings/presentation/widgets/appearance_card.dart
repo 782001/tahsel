@@ -9,7 +9,7 @@ class AppearanceCard extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
-  const AppearanceCard({
+  const AppearanceCard({super.key, 
     required this.title,
     required this.icon,
     required this.isSelected,

@@ -5,7 +5,7 @@ import 'package:tahsel/core/utils/styles.dart';
 
 class SectionHeader extends StatelessWidget {
   final String title;
-  const SectionHeader({required this.title});
+  const SectionHeader({super.key, required this.title});
 
   @override
   Widget build(BuildContext context) {

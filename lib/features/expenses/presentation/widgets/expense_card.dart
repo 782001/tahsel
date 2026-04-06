@@ -30,15 +30,16 @@ class ExpenseCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: backgroundColor,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
               color: AppColors.shadowColor,
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              blurRadius: 12,
+              offset: Offset(0, 4),
             )
           ],
         ),
         child: Stack(
+          clipBehavior: Clip.none,
           children: [
             Positioned(
               right: -16,
@@ -61,29 +62,22 @@ class ExpenseCard extends StatelessWidget {
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      width: 40,
-                      height: 40,
+                      width: 44,
+                      height: 44,
                       decoration: BoxDecoration(
-                        color: AppColors.primaryColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        color: AppColors.stitchBlue.withOpacity(0.08),
+                        shape: BoxShape.circle,
                       ),
-                      child: Icon(icon, color: AppColors.primaryColor),
+                      child: Icon(icon, color: AppColors.stitchBlue, size: 20),
                     ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 8.0, top: 4.0),
-                        child: Text(
-                          date,
-                          textAlign: TextAlign.end,
-                          style: TextStyles.customStyle(
-                            color: AppColors.disabledColor,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
+                    Text(
+                      date,
+                      style: TextStyles.customStyle(
+                        color: AppColors.blackLight,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -94,20 +88,22 @@ class ExpenseCard extends StatelessWidget {
                   children: [
                     Text(
                       title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyles.customStyle(
-                        color: AppColors.textColor,
+                        color: AppColors.black,
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '-${amount.toStringAsFixed(2)}\$',
+                      '-${amount.toStringAsFixed(2)}',
                       textDirection: TextDirection.ltr,
                       style: TextStyles.customStyle(
                         color: AppColors.error,
                         fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ],
@@ -121,19 +117,20 @@ class ExpenseCard extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: AppColors.shadowColor,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            blurRadius: 12,
+            offset: Offset(0, 4),
           )
         ],
       ),
       child: Stack(
+        clipBehavior: Clip.none,
         children: [
           Positioned(
             right: -16,
@@ -151,61 +148,58 @@ class ExpenseCard extends StatelessWidget {
             ),
           ),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: AppColors.stitchBlue.withOpacity(0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: AppColors.stitchBlue, size: 24),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyles.customStyle(
+                        color: AppColors.black,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    child: Icon(icon, color: AppColors.primaryColor),
-                  ),
-                  const SizedBox(width: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyles.customStyle(
-                          color: AppColors.textColor,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyles.customStyle(
+                        color: AppColors.blackLight,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle,
-                        style: TextStyles.customStyle(
-                          color: AppColors.disabledColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '-${amount.toStringAsFixed(2)}\$',
+                    '-${amount.toStringAsFixed(2)}',
                     textDirection: TextDirection.ltr,
                     style: TextStyles.customStyle(
                       color: AppColors.error,
                       fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     date,
                     style: TextStyles.customStyle(
-                      color: AppColors.disabledColor,
+                      color: AppColors.blackLight,
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
                     ),

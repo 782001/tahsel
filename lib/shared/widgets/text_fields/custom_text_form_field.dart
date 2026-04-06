@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import '../../../core/utils/app_colors.dart';
 import '../../../core/utils/styles.dart';
 
@@ -45,7 +46,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
   @override
   Widget build(BuildContext context) {
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -83,9 +84,13 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
               color: AppColors.disabledColor,
             ),
             filled: true,
-            fillColor: isDarkMode ? const Color(0xFF1E1E1E) : const Color(0xFFF0F0F0),
+            fillColor: AppColors.stitchSurfaceHigh.withOpacity(0.5),
             prefixIcon: widget.prefixIcon != null
-                ? Icon(widget.prefixIcon, color: AppColors.primaryColor, size: 20.sp)
+                ? Icon(
+                    widget.prefixIcon,
+                    color: AppColors.primaryColor,
+                    size: 20.sp,
+                  )
                 : null,
             suffixIcon: widget.isPassword
                 ? IconButton(
@@ -121,7 +126,10 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
               borderRadius: BorderRadius.circular(12.r),
               borderSide: const BorderSide(color: Colors.red, width: 1.5),
             ),
-            contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 16.w,
+              vertical: 16.h,
+            ),
           ),
         ),
       ],

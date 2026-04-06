@@ -5,7 +5,7 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 
 class PartialPaymentDialog extends StatelessWidget {
-  const PartialPaymentDialog();
+  const PartialPaymentDialog({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +86,7 @@ class PartialPaymentDialog extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.success,
+                  backgroundColor: AppColors.primaryColor,
                   foregroundColor: AppColors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),

@@ -6,7 +6,7 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 
 class LanguageInfoBox extends StatelessWidget {
-  const LanguageInfoBox();
+  const LanguageInfoBox({super.key});
 
   @override
   Widget build(BuildContext context) {

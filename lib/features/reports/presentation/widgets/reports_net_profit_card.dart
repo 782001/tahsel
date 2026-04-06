@@ -5,78 +5,74 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 
-class ExpensesBalance extends StatelessWidget {
-  const ExpensesBalance({super.key});
+class ReportsNetProfitCard extends StatelessWidget {
+  final String amount;
+  final String percentage;
+  final bool isPositive;
+
+  const ReportsNetProfitCard({
+    super.key,
+    required this.amount,
+    required this.percentage,
+    this.isPositive = true,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
+      padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
-            AppStrings.totalMonthlyExpenses.tr(),
+            AppStrings.netProfit.tr(),
             style: TextStyles.customStyle(
               fontSize: 14.sp,
-              fontWeight: FontWeight.w500,
-              color: AppColors.blackLight,
-              letterSpacing: 0.5,
+              fontWeight: FontWeight.w600,
+              color: AppColors.blackLight.withOpacity(0.6),
             ),
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: 8.h),
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
               Text(
-                '١٢,٤٥٠',
+                amount,
                 style: TextStyles.customStyle(
-                  fontSize: 56.sp,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 42.sp,
+                  fontWeight: FontWeight.w900,
                   color: AppColors.black,
-                  height: 1.0,
-                ),
-              ),
-              SizedBox(width: 4.w),
-              Text(
-                '.٠٠',
-                style: TextStyles.customStyle(
-                  fontSize: 24.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.blackLight,
                 ),
               ),
               SizedBox(width: 8.w),
               Text(
                 AppStrings.currencyEgp.tr(),
                 style: TextStyles.customStyle(
-                  fontSize: 20.sp,
+                  fontSize: 18.sp,
                   fontWeight: FontWeight.bold,
                   color: AppColors.blackLight,
                 ),
               ),
             ],
           ),
-          SizedBox(height: 20.h),
+          SizedBox(height: 8.h),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
             decoration: BoxDecoration(
-              color: AppColors.errorContainer.withOpacity(0.8),
-              borderRadius: BorderRadius.circular(24.r),
+              color: (isPositive ? AppColors.primaryColor : AppColors.error).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12.r),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.trending_up, color: AppColors.error, size: 18.r),
-                SizedBox(width: 8.w),
                 Text(
-                  AppStrings.expenseIncreaseHint
-                      .tr(), // Should map to "Increased by 12%..."
+                  "$percentage% ${isPositive ? '↑' : '↓'}",
                   style: TextStyles.customStyle(
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.error,
+                    color: isPositive ? AppColors.primaryColor : AppColors.error,
                   ),
                 ),
               ],

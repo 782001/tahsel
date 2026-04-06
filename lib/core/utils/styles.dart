@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tahsel/core/utils/responsive_text.dart';
+
 import 'app_colors.dart';
 import 'app_constants.dart';
 
@@ -79,7 +80,7 @@ class TextStyles {
   static TextStyle customStyle({
     required double fontSize,
     required FontWeight fontWeight,
-    required Color color,
+    Color? color,
     double? letterSpacing,
     double? height,
   }) {
@@ -87,7 +88,7 @@ class TextStyles {
       fontSize: getResponsiveFontSize(fontSize: fontSize),
       fontWeight: fontWeight,
       fontFamily: AppConstants.fontFamily,
-      color: color,
+      color: color ?? AppColors.blackReal,
       letterSpacing: letterSpacing,
       height: height,
     );

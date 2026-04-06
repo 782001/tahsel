@@ -6,7 +6,6 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/settings/presentation/widgets/appearance_card.dart';
-import 'package:tahsel/features/settings/presentation/widgets/language_info_box.dart';
 import 'package:tahsel/features/settings/presentation/widgets/language_option.dart';
 import 'package:tahsel/features/settings/presentation/widgets/logout_button.dart';
 import 'package:tahsel/features/settings/presentation/widgets/section_header.dart';
@@ -143,10 +142,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
 
                         SizedBox(height: 32.h),
-
-                        // Info Box
-                        const LanguageInfoBox(),
-                        SizedBox(height: 48.h),
 
                         // Logout button
                         const LogoutButton(),

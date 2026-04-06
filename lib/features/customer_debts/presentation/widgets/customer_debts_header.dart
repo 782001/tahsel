@@ -5,7 +5,7 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 
 class CustomerDebtsHeader extends StatelessWidget {
-  const CustomerDebtsHeader();
+  const CustomerDebtsHeader({super.key});
 
   @override
   Widget build(BuildContext context) {

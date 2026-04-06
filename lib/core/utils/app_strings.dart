@@ -17,7 +17,7 @@ class AppStrings {
   static const String login = "login";
   static const String noData = "no_data";
   static String currentLang = "ar";
-  static String userToken =
+  static String get userToken =>
       sl<CashHelper>().getData(key: 'token') as String? ?? '';
 
   ///-----------------------------
@@ -61,6 +61,15 @@ class AppStrings {
   static const String languageChangeInfo = "language_change_info";
 
   // Expenses Screen
+  static const String expenses = "expenses";
+  static const String addExpense = "add_expense";
+  static const String addNewExpense = "add_new_expense";
+  static const String amountLabel = "amount_label";
+  static const String expenseNameLabel = "expense_name_label";
+  static const String descriptionLabel = "description_label";
+  static const String dateLabel = "date_label";
+  static const String expenseNamePlaceholder = "expense_name_placeholder";
+  static const String descriptionPlaceholder = "description_placeholder";
   static const String dashboard = "dashboard";
   static const String totalMonthlyExpenses = "total_monthly_expenses";
   static const String expenseIncreaseHint = "expense_increase_hint";
@@ -84,6 +93,15 @@ class AppStrings {
   static const String currencyEgp = "currency_egp";
   static const String confirm = "confirm";
   static const String cancel = "cancel";
+  static const String partialPayLabel = "partial_pay_label";
+  static const String fullPaymentLabel = "full_payment_label";
+  static const String lastTransactionPrefix = "last_transaction_prefix";
+  // Debt status labels
+  static const String debtStatusOverdue = "debt_status_overdue";
+  static const String debtStatusBalance = "debt_status_balance";
+  static const String debtStatusCritical = "debt_status_critical";
+  static const String debtStatusMinor = "debt_status_minor";
+  static const String transactionCount = "transaction_count";
 
   // General Nav
   static const String home = "home";
@@ -109,4 +127,47 @@ class AppStrings {
   static const String security = "security";
   static const String support = "support";
   static const String logout = "logout";
+
+  // Quick Add Feature
+  static const String quickAdd = "quick_add";
+  static const String playStation = "playstation";
+  static const String shop = "shop";
+  static const String byTime = "by_time";
+  static const String byTurn = "by_turn";
+  static const String customerName = "customer_name";
+  static const String paidAmount = "paid_amount";
+  static const String totalDueLabel = "total_due_label";
+  static const String confirmOperation = "confirm_operation";
+  static const String productName = "product_name";
+  static const String remainingDebt = "remaining_debt";
+  static const String pricePerHour = "price_per_hour";
+  static const String pricePerTurn = "price_per_turn";
+  static const String turnCount = "turn_count";
+  static const String timeDuration = "time_duration";
+  static const String customerNameHint = "customer_name_hint";
+  static const String productNameHint = "product_name_hint";
+  static const String quickAddDesc = "quick_add_desc";
+
+  // Storage Keys
+  static const String hourlyRateKey = "hourly_rate_key";
+  static const String slotRateKey = "slot_rate_key";
+
+  // Reports Screen
+  static const String daily = "daily";
+  static const String weekly = "weekly";
+  static const String monthly = "monthly";
+  static const String netProfit = "net_profit";
+  static const String totalIncome = "total_income";
+  static const String totalExpenses = "total_expenses";
+  static const String activityDetails = "activity_details";
+  static const String operationalMargin = "operational_margin";
+  static const String cafeIncome = "cafe_income";
+  static const String playstationIncome = "playstation_income";
+  static const String debts = "debts";
+  static const String activeSessions = "active_sessions";
+  static const String comparisonLastWeek = "comparison_last_week";
+  static const String comparisonYesterday = "comparison_yesterday";
+  static const String comparisonLastMonth = "comparison_last_month";
+  static const String withinBudget = "within_budget";
+  static const String alert = "alert";
 }

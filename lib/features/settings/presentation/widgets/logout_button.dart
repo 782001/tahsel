@@ -6,7 +6,7 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 
 class LogoutButton extends StatelessWidget {
-  const LogoutButton();
+  const LogoutButton({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -4,6 +4,15 @@ import 'package:tahsel/core/services/navigator_service.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_cubit.dart';
 
 class AppColors {
+  static Color get stitchBlue =>
+      isDark ? const Color(0xFF90CAF9) : const Color(0xFF005DB7);
+  static Color get stitchOrange =>
+      isDark ? const Color(0xFFFFB74D) : const Color(0xFF834600);
+  static Color get stitchSurfaceLow =>
+      isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF3F3F3);
+  static Color get stitchSurfaceHigh =>
+      isDark ? const Color(0xFF2C2C2C) : const Color(0xFFE8E8E8);
+
   /// Helper to detect if the current theme is dark
   static bool get isDark {
     try {
@@ -66,8 +75,7 @@ class AppColors {
   static Color get sandText2 =>
       isDark ? const Color(0xFF90CAF9) : const Color(0xFF1E56A0);
 
-  static Color get disabledColor =>
-      isDark ? Colors.white38 : Colors.black38;
+  static Color get disabledColor => isDark ? Colors.white38 : Colors.black38;
 
   // --- Status Colors ---
   static Color get success =>
@@ -82,6 +90,19 @@ class AppColors {
   static Color get info =>
       isDark ? const Color(0xFF64B5F6) : const Color(0xFF1976D2);
 
+  // --- Customer Debt Card Colors ---
+  /// Surface color for the debt card (white in light, dark grey in dark)
+  static Color get debtCardSurface =>
+      isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF);
+
+  /// Background for the slidable 'Partial Payment' action (amber)
+  static Color get slidablePartialPayment =>
+      isDark ? const Color(0xFFFFB74D) : const Color(0xFFF59E0B);
+
+  /// Background for the slidable 'Paid in Full' action (primary blue, no green)
+  static Color get slidableFullPayment =>
+      isDark ? const Color(0xFF64B5F6) : const Color(0xFF1E56A0);
+
   static Color get errorContainer =>
       isDark ? const Color(0xFF442726) : const Color(0xFFFFEBEE);
 
@@ -92,13 +113,17 @@ class AppColors {
   static const Color redColor = Color(0xFFF21616);
   static const Color orange100 = Color(0xFFEE9300);
   static const Color blue100 = Color(0xFF1E56A0);
-  static const Color whiteColor = Color(0xFFFFFFFF);
-  static const Color black = Color(0xFF212121);
+
+  static Color get whiteColor =>
+      isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF);
+  static Color get black =>
+      isDark ? const Color(0xFFE1E1E1) : const Color(0xFF212121);
   static const Color green = Colors.green;
-  static const Color blackLight = Color(0xFF404968);
-  
-  static const Color white = Colors.white;
-  static const Color blackReal = Colors.black;
+  static Color get blackLight =>
+      isDark ? const Color(0xFFB0B0B0) : const Color(0xFF404968);
+
+  static Color get white => isDark ? const Color(0xFF121212) : Colors.white;
+  static Color get blackReal => isDark ? Colors.white : Colors.black;
   static const Color transparent = Colors.transparent;
   static const Color shadowColor = Color(0x0F1A1C1C);
 }
