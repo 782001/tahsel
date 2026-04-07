@@ -6,6 +6,7 @@ import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/assets.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/text_fields/custom_text_form_field.dart';
@@ -35,7 +36,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(duration: Duration(milliseconds: 500),content: Text(message), backgroundColor: Colors.red),
+      SnackBar(
+        duration: Duration(milliseconds: 500),
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
     );
   }
 
@@ -86,10 +91,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ],
                         ),
-                        child: Icon(
-                          Icons.account_balance,
-                          color: Colors.white,
-                          size: 32.sp,
+                        child: Image.asset(
+                          Assets.imagesAppLogo,
+                          width: 32.w,
+                          height: 32.w,
                         ),
                       ),
                       SizedBox(height: 16.h),
@@ -202,7 +207,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 },
                                 builder: (context, state) {
                                   if (state is AuthLoading) {
-                                    return  Center(
+                                    return Center(
                                       child: CircularProgressIndicator(
                                         color: AppColors.primaryColor,
                                       ),

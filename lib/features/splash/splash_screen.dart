@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
+import 'package:tahsel/core/services/navigator_service.dart';
 import 'package:tahsel/core/services/security_service.dart';
 import 'package:tahsel/core/storage/secure_storage_helper.dart';
-import 'package:tahsel/core/utils/app_strings.dart';
-import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
-import 'package:tahsel/core/services/navigator_service.dart';
+import 'package:tahsel/core/utils/assets.dart';
 import 'package:tahsel/routes/app_routes.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -79,36 +77,13 @@ class _SplashScreenState extends State<SplashScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      width: 120.w,
-                      height: 120.w,
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.shadowColor.withOpacity(0.2),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
+                    Center(
+                      child: Image.asset(
+                        Assets.imagesAppLogo,
+                        width: 180.h,
+                        height: 180.h,
+                        fit: BoxFit.fill,
                       ),
-                      child: Center(
-                        child: Icon(
-                          Icons.account_balance,
-                          size: 60.sp,
-                          color: AppColors.primaryColor,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 24.h),
-                    Text(
-                      AppStrings.financialEngineer.tr(),
-                      style: TextStyles.customStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.white,
-                      ).copyWith(letterSpacing: 2),
                     ),
                   ],
                 ),
