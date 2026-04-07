@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
 import 'package:tahsel/shared/widgets/fields/text_widget.dart';
 
@@ -102,7 +103,7 @@ class _LanguageSectionState extends State<LanguageSection> {
                           fontWeight: _isArabic
                               ? FontWeight.bold
                               : FontWeight.w500,
-                          color: _isArabic ? Colors.white : Colors.grey[600],
+                          color: _isArabic ? Colors.white : AppColors.grey,
                         ),
                       ),
                     ),
@@ -142,7 +143,7 @@ class _LanguageSectionState extends State<LanguageSection> {
                               : FontWeight.w500,
                           color: !_isArabic
                               ? const Color(0xFF004D40)
-                              : Colors.grey[600],
+                              : AppColors.grey,
                         ),
                       ),
                     ),

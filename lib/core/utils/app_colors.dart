@@ -119,6 +119,7 @@ class AppColors {
   static Color get black =>
       isDark ? const Color(0xFFE1E1E1) : const Color(0xFF212121);
   static const Color green = Colors.green;
+  static const Color grey = Colors.grey;
   static Color get blackLight =>
       isDark ? const Color(0xFFB0B0B0) : const Color(0xFF404968);
 

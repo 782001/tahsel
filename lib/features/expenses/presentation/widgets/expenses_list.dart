@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
@@ -38,7 +38,7 @@ class ExpensesList extends StatelessWidget {
                 padding: EdgeInsets.symmetric(vertical: 40.h),
                 child: Text(
                   AppStrings.noData.tr(), // Using existing localization
-                  style: const TextStyle(color: Colors.grey),
+                  style: const TextStyle(color: AppColors.grey),
                 ),
               ),
             );
@@ -59,7 +59,11 @@ class ExpensesList extends StatelessWidget {
                     extentRatio: 0.25,
                     children: [
                       SlidableAction(
-                        onPressed: (context) => _confirmDeleteMonth(context, month.monthKey, month.monthName),
+                        onPressed: (context) => _confirmDeleteMonth(
+                          context,
+                          month.monthKey,
+                          month.monthName,
+                        ),
                         backgroundColor: AppColors.error,
                         foregroundColor: AppColors.white,
                         icon: Icons.delete,
@@ -132,7 +136,7 @@ class ExpensesList extends StatelessWidget {
                                   "${month.transactionCount} ${AppStrings.transactionCount.tr()}",
                                   style: TextStyle(
                                     fontSize: 12.sp,
-                                    color: Colors.grey,
+                                    color: AppColors.grey,
                                   ),
                                 ),
                               ],
@@ -154,7 +158,7 @@ class ExpensesList extends StatelessWidget {
                                 Icon(
                                   Icons.arrow_forward_ios,
                                   size: 14.r,
-                                  color: Colors.grey,
+                                  color: AppColors.grey,
                                 ),
                               ],
                             ),
@@ -172,13 +176,20 @@ class ExpensesList extends StatelessWidget {
       },
     );
   }
-  void _confirmDeleteMonth(BuildContext context, String monthKey, String monthName) {
+
+  void _confirmDeleteMonth(
+    BuildContext context,
+    String monthKey,
+    String monthName,
+  ) {
     final expenseCubit = context.read<ExpenseCubit>();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(AppStrings.confirmDeleteTitle.tr()),
-        content: Text("${AppStrings.confirmDeleteMonthMessage.tr()} ($monthName)؟"),
+        content: Text(
+          "${AppStrings.confirmDeleteMonthMessage.tr()} ($monthName)؟",
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -190,10 +201,7 @@ class ExpensesList extends StatelessWidget {
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              expenseCubit.deleteMonth(
-                    AppStrings.userToken,
-                    monthKey,
-                  );
+              expenseCubit.deleteMonth(AppStrings.userToken, monthKey);
             },
             child: Text(
               AppStrings.delete.tr(),

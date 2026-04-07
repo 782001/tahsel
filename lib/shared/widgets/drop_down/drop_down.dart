@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/styles.dart';
 
 class DropDownCustomTextfailed extends StatefulWidget {
@@ -64,7 +65,7 @@ class _DropDownCustomTextfailedState extends State<DropDownCustomTextfailed> {
                 decoration: InputDecoration(
                   hintText: _selectedDropdownItem ?? widget.hintText,
                   hintStyle: TextStyles.font14Weight400RightAligned().copyWith(
-                    color: Colors.grey,
+                    color: AppColors.grey,
                   ),
                   prefixIcon: Icon(
                     _isDropdownOpen
@@ -74,7 +75,7 @@ class _DropDownCustomTextfailedState extends State<DropDownCustomTextfailed> {
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10.r),
                     borderSide: BorderSide(
-                      color: _isDropdownOpen ? Colors.green : Colors.grey,
+                      color: _isDropdownOpen ? AppColors.green : AppColors.grey,
                       width: 1.w,
                     ),
                   ),
@@ -98,7 +99,7 @@ class _DropDownCustomTextfailedState extends State<DropDownCustomTextfailed> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(10.r),
                 border: Border.all(
-                  color: _isDropdownOpen ? Colors.grey.shade300 : Colors.green,
+                  color: _isDropdownOpen ? AppColors.grey : AppColors.green,
                 ),
               ),
               child: SizedBox(

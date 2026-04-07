@@ -92,7 +92,7 @@ class ExpensesBalance extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isIncrease
                         ? AppColors.errorContainer.withOpacity(0.8)
-                        : Colors.green.withOpacity(0.1),
+                        : AppColors.green.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(24.r),
                   ),
                   child: Row(
@@ -100,7 +100,7 @@ class ExpensesBalance extends StatelessWidget {
                     children: [
                       Icon(
                         isIncrease ? Icons.trending_up : Icons.trending_down,
-                        color: isIncrease ? AppColors.error : Colors.green,
+                        color: isIncrease ? AppColors.error : AppColors.green,
                         size: 18.r,
                       ),
                       SizedBox(width: 8.w),
@@ -111,7 +111,7 @@ class ExpensesBalance extends StatelessWidget {
                         style: TextStyles.customStyle(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.bold,
-                          color: isIncrease ? AppColors.error : Colors.green,
+                          color: isIncrease ? AppColors.error : AppColors.green,
                         ),
                       ),
                     ],

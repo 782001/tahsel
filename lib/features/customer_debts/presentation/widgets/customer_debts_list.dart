@@ -11,8 +11,9 @@ import 'package:tahsel/features/customer_debts/presentation/screens/customer_deb
 import 'package:tahsel/features/customer_debts/presentation/widgets/customer_debt_card.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/partial_payment_dialog.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_cubit.dart';
-import '../../../debt/presentation/cubit/debt_state.dart';
+
 import '../../../debt/domain/entities/debt_entity.dart';
+import '../../../debt/presentation/cubit/debt_state.dart';
 
 class CustomerDebtsList extends StatefulWidget {
   final String searchQuery;
@@ -32,7 +33,11 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
     }
   }
 
-  void _showPartialPaymentModal(BuildContext context, String customerName, double totalRemaining) {
+  void _showPartialPaymentModal(
+    BuildContext context,
+    String customerName,
+    double totalRemaining,
+  ) {
     final cubit = context.read<DebtCubit>();
     showDialog(
       context: context,
@@ -86,7 +91,7 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
     return BlocBuilder<DebtCubit, DebtState>(
       builder: (context, state) {
         if (state is DebtLoading) {
-          return  Center(
+          return Center(
             child: CircularProgressIndicator(color: AppColors.primaryColor),
           );
         }
@@ -103,12 +108,13 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
               child: Text(
                 AppStrings.noCustomerDebts
                     .tr(), // Or a more specific empty state string
-                style: const TextStyle(color: Colors.grey),
+                style: const TextStyle(color: AppColors.grey),
               ),
             );
           }
 
-          return RefreshIndicator(color: AppColors.primaryColor,
+          return RefreshIndicator(
+            color: AppColors.primaryColor,
             onRefresh: () async {
               final uid = sl<FirebaseAuth>().currentUser?.uid;
               if (uid != null) {

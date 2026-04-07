@@ -284,7 +284,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     SnackBar(
                       duration: Duration(milliseconds: 500),
                       content: Text(state.message.tr()),
-                      backgroundColor: Colors.green,
+                      backgroundColor: AppColors.green,
                     ),
                   );
 

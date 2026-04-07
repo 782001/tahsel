@@ -73,7 +73,8 @@ class _AuthTextFormFieldState extends State<AuthTextFormField> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            if (widget.headerTrailingWidget != null) widget.headerTrailingWidget!,
+            if (widget.headerTrailingWidget != null)
+              widget.headerTrailingWidget!,
             Expanded(
               child: Align(
                 alignment: Alignment.centerRight,
@@ -143,7 +144,7 @@ class _AuthTextFormFieldState extends State<AuthTextFormField> {
                           _obscureText
                               ? Icons.visibility
                               : Icons.visibility_off,
-                          color: widget.suffixIconColor ?? Colors.grey,
+                          color: widget.suffixIconColor ?? AppColors.grey,
                         ),
                         onPressed: () {
                           setState(() {
@@ -155,7 +156,7 @@ class _AuthTextFormFieldState extends State<AuthTextFormField> {
                     ? IconButton(
                         icon: Icon(
                           widget.suffixIcon!,
-                          color: widget.suffixIconColor ?? Colors.grey,
+                          color: widget.suffixIconColor ?? AppColors.grey,
                         ),
                         onPressed: widget.suffixTap,
                       )
