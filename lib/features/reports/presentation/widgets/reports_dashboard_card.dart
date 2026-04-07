@@ -86,7 +86,7 @@ class ReportsDashboardCard extends StatelessWidget {
                           badgeText!,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyles.customStyle(
-                            fontSize: 10.sp,
+                            fontSize: 15.sp,
                             fontWeight: FontWeight.w600,
                             color: isAccentCard
                                 ? AppColors.whiteColor.withOpacity(0.8)

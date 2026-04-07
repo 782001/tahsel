@@ -191,7 +191,7 @@ class _ReportsViewState extends State<ReportsView> {
                           amount: data.unpaidDebts.toStringAsFixed(1),
                           type: BusinessReportType.debts,
                           badgeText:
-                              "${AppStrings.debts.tr()}: ${data.totalDebts.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} / ${AppStrings.paid.tr()}: ${data.paidDebts.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}",
+                              "${AppStrings.debts.tr()}: ${data.totalDebts.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} \n${AppStrings.paid.tr()}: ${data.paidDebts.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}",
                           onTap: () {
                             context.read<MainLayoutCubit>().changeBottomNav(2);
                           },

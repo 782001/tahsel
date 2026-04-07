@@ -73,7 +73,7 @@ class ReportsNetProfitCard extends StatelessWidget {
                 Text(
                   "${isPositive ? '+' : '-'}$difference ${AppStrings.currencyEgp.tr()}  $comparisonText  ${isPositive ? '↑↑' : '↓↓'}",
                   style: TextStyles.customStyle(
-                    fontSize: 11.sp,
+                    fontSize: 15.sp,
                     fontWeight: FontWeight.bold,
                     color: isPositive
                         ? AppColors.primaryColor
