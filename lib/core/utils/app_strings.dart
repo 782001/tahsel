@@ -220,4 +220,11 @@ class AppStrings {
   static const String exitAppMessage = "exit_app_message";
   static const String logoutAppTitle = "logout_app_title";
   static const String logoutAppMessage = "logout_app_message";
+  static const String incomeDetails = "income_details";
+  static const String cafeIncomeDetails = "cafe_income_details";
+  static const String playstationIncomeDetails = "playstation_income_details";
+  static const String totalIncomeDetails = "total_income_details";
+  static const String noIncomeData = "no_income_data";
+  static const String durationMins = "duration_mins";
+  static const String walkingCustomer = "walking_customer";
 }

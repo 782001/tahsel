@@ -10,6 +10,7 @@ import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit
 import 'package:tahsel/features/reports/domain/entities/profit_insight.dart';
 import 'package:tahsel/features/reports/presentation/cubit/reports_cubit.dart';
 import 'package:tahsel/features/reports/presentation/cubit/reports_state.dart';
+import 'package:tahsel/features/reports/presentation/screens/income_details_screen.dart';
 import 'package:tahsel/features/reports/presentation/widgets/profit_insight_ui_extension.dart';
 import 'package:tahsel/features/reports/presentation/widgets/reports_dashboard_card.dart';
 import 'package:tahsel/features/reports/presentation/widgets/reports_net_profit_card.dart';
@@ -128,6 +129,18 @@ class _ReportsViewState extends State<ReportsView> {
                           type: BusinessReportType.income,
                           badgeText:
                               "${data.isIncomeIncrease ? '+' : '-'}${data.incomeDiff.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${_getBadgeText()}",
+                          onTap: () {
+                            final dateRange = _getDateRange();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => IncomeDetailsScreen(
+                                  startDate: dateRange.start,
+                                  endDate: dateRange.end,
+                                ),
+                              ),
+                            );
+                          },
                         ),
 
                         ReportsDashboardCard(
@@ -168,6 +181,19 @@ class _ReportsViewState extends State<ReportsView> {
                           type: BusinessReportType.cafe,
                           badgeText:
                               "${data.isCafeIncrease ? '+' : '-'}${data.cafeDiff.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${_getBadgeText()}",
+                          onTap: () {
+                            final dateRange = _getDateRange();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => IncomeDetailsScreen(
+                                  startDate: dateRange.start,
+                                  endDate: dateRange.end,
+                                  type: AppStrings.shop,
+                                ),
+                              ),
+                            );
+                          },
                         ),
 
                         // Restore Playstation Income Card
@@ -178,6 +204,19 @@ class _ReportsViewState extends State<ReportsView> {
                           type: BusinessReportType.playstation,
                           badgeText:
                               "${data.isPlaystationIncrease ? '+' : '-'}${data.playstationDiff.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${_getBadgeText()}",
+                          onTap: () {
+                            final dateRange = _getDateRange();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => IncomeDetailsScreen(
+                                  startDate: dateRange.start,
+                                  endDate: dateRange.end,
+                                  type: AppStrings.playStation,
+                                ),
+                              ),
+                            );
+                          },
                         ),
 
                         ReportsOperationalMarginCard(
@@ -191,7 +230,7 @@ class _ReportsViewState extends State<ReportsView> {
                           amount: data.unpaidDebts.toStringAsFixed(1),
                           type: BusinessReportType.debts,
                           badgeText:
-                              "${AppStrings.debts.tr()}: ${data.totalDebts.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} \n${AppStrings.paid.tr()}: ${data.paidDebts.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}",
+                              "${AppStrings.debts.tr()}: ${data.totalDebts.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}  \n${AppStrings.paid.tr()}: ${data.paidDebts.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}",
                           onTap: () {
                             context.read<MainLayoutCubit>().changeBottomNav(2);
                           },
@@ -254,6 +293,24 @@ class _ReportsViewState extends State<ReportsView> {
       case 2:
         cubit.fetchCurrentMonth();
         break;
+    }
+  }
+
+  ({DateTime start, DateTime end}) _getDateRange() {
+    final now = DateTime.now();
+    switch (_selectedTimeRange) {
+      case 0:
+        return (
+          start: DateTime(now.year, now.month, now.day),
+          end: DateTime(now.year, now.month, now.day, 23, 59, 59),
+        );
+      case 1:
+        final start = now.subtract(Duration(days: now.weekday % 7));
+        return (start: DateTime(start.year, start.month, start.day), end: now);
+      case 2:
+        return (start: DateTime(now.year, now.month, 1), end: now);
+      default:
+        return (start: DateTime(now.year, now.month, now.day), end: now);
     }
   }
 

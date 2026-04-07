@@ -3,6 +3,9 @@ import 'package:tahsel/core/utils/app_strings.dart';
 
 abstract class ReportsRemoteDataSource {
   Future<Map<String, double>> getPeriodData(DateTime start, DateTime end);
+  Future<List<Map<String, dynamic>>> getIncomeDetails(
+      DateTime start, DateTime end,
+      {String? type});
 }
 
 class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
@@ -91,5 +94,53 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
       'paidDebts': paidDebtsSum,
       'unpaidDebts': unpaidDebtsSum,
     };
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getIncomeDetails(
+      DateTime start, DateTime end,
+      {String? type}) async {
+    final uid = AppStrings.userToken;
+    if (uid.isEmpty) return [];
+
+    final startTimestamp = Timestamp.fromDate(start);
+    final endTimestamp = Timestamp.fromDate(end);
+
+    Query<Map<String, dynamic>> query = firestore
+        .collection('users')
+        .doc(uid)
+        .collection('operations')
+        .where('timestamp', isGreaterThanOrEqualTo: startTimestamp)
+        .where('timestamp', isLessThanOrEqualTo: endTimestamp);
+
+    // Note: We might need to filter locally if we don't have composite indexes, 
+    // but typically filtering by time + ordering works if equality is first. 
+    // To be safe and simple, we'll fetch all in range and filter locally if type is provided, 
+    // since operations in a period shouldn't be massive for a single user.
+    final snapshot = await query.get();
+
+    List<Map<String, dynamic>> results = [];
+    for (var doc in snapshot.docs) {
+      final data = doc.data();
+      data['id'] = doc.id; // Inject document ID
+      
+      if (type != null && type.isNotEmpty) {
+        if ((data['type'] ?? '').toString().toLowerCase() == type.toLowerCase()) {
+          results.add(data);
+        }
+      } else {
+        results.add(data);
+      }
+    }
+    
+    // Sort descending by timestamp
+    results.sort((a, b) {
+      final aTime = a['timestamp'] as Timestamp?;
+      final bTime = b['timestamp'] as Timestamp?;
+      if (aTime == null || bTime == null) return 0;
+      return bTime.compareTo(aTime);
+    });
+
+    return results;
   }
 }

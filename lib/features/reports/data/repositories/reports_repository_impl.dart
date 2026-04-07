@@ -2,6 +2,8 @@ import 'package:dartz/dartz.dart';
 import '../../domain/entities/reports_entity.dart';
 import '../../domain/repositories/reports_repository.dart';
 import '../datasources/reports_remote_data_source.dart';
+import '../../../operation/data/models/operation_model.dart';
+import '../../../operation/domain/entities/operation_entity.dart';
 
 class ReportsRepositoryImpl implements ReportsRepository {
   final ReportsRemoteDataSource dataSource;
@@ -70,6 +72,22 @@ class ReportsRepositoryImpl implements ReportsRepository {
       );
 
       return Right(reports);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  @override
+  Future<Either<String, List<OperationEntity>>> getIncomeDetails(
+      DateTime startDate, DateTime endDate,
+      {String? type}) async {
+    try {
+      final results = await dataSource.getIncomeDetails(startDate, endDate, type: type);
+      final List<OperationEntity> operations = results.map((data) {
+        final id = data['id'] as String;
+        return OperationModel.fromJson(data, id);
+      }).toList();
+      return Right(operations);
     } catch (e) {
       return Left(e.toString());
     }

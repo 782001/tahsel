@@ -71,26 +71,29 @@ class ReportsDashboardCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     if (badgeText != null)
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 10.w,
-                          vertical: 4.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isAccentCard
-                              ? AppColors.whiteColor.withOpacity(0.1)
-                              : contentColor.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                        child: Text(
-                          badgeText!,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyles.customStyle(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w600,
+                      Flexible(
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 10.w,
+                            vertical: 4.h,
+                          ),
+                          decoration: BoxDecoration(
                             color: isAccentCard
-                                ? AppColors.whiteColor.withOpacity(0.8)
-                                : contentColor.withOpacity(0.8),
+                                ? AppColors.whiteColor.withOpacity(0.1)
+                                : contentColor.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Text(
+                            badgeText!,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 2,
+                            style: TextStyles.customStyle(
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w600,
+                              color: isAccentCard
+                                  ? AppColors.whiteColor.withOpacity(0.8)
+                                  : contentColor.withOpacity(0.8),
+                            ),
                           ),
                         ),
                       )
@@ -115,6 +118,7 @@ class ReportsDashboardCard extends StatelessWidget {
                       )
                     else
                       const SizedBox.shrink(),
+                    10.horizontalSpace,
                     Container(
                       padding: EdgeInsets.all(10.r),
                       decoration: BoxDecoration(

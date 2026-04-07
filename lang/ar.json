@@ -176,5 +176,12 @@
   "exit_app_title": "الخروج من التطبيق",
   "exit_app_message": "هل تريد الخروج من التطبيق؟",
   "logout_app_title": "تسجيل الخروج",
-  "logout_app_message": "هل تريد تسجيل الخروج من الحساب؟"
+  "logout_app_message": "هل تريد تسجيل الخروج من الحساب؟",
+  "income_details": "تفاصيل الدخل",
+  "cafe_income_details": "تفاصيل دخل الكافيه",
+  "playstation_income_details": "تفاصيل دخل البلايستيشن",
+  "total_income_details": "تفاصيل إجمالي الدخل",
+  "no_income_data": "لا توجد بيانات دخل للفترة المحددة",
+  "duration_mins": "{mins} دقيقة",
+  "walking_customer": "عميل عام"
 }

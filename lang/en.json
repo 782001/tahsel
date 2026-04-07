@@ -176,5 +176,12 @@
   "exit_app_title": "Exit Application",
   "exit_app_message": "Do you want to exit the app?",
   "logout_app_title": "Logout",
-  "logout_app_message": "Do you want to logout?"
+  "logout_app_message": "Do you want to logout?",
+  "income_details": "Income Details",
+  "cafe_income_details": "Cafe Income Details",
+  "playstation_income_details": "PlayStation Income Details",
+  "total_income_details": "Total Income Details",
+  "no_income_data": "No income data available for the selected period",
+  "duration_mins": "{mins} Min",
+  "walking_customer": "Walking Customer"
 }
