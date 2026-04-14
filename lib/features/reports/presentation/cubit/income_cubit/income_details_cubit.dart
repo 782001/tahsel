@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../operation/domain/entities/operation_entity.dart';
-import '../../domain/usecases/get_income_details_usecase.dart';
+import '../../../../operation/domain/entities/operation_entity.dart';
+import '../../../domain/usecases/get_income_details_usecase.dart';
 
 part 'income_details_state.dart';
 

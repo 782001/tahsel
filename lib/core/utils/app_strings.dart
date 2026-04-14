@@ -228,4 +228,8 @@ class AppStrings {
   static const String noIncomeData = "no_income_data";
   static const String durationMins = "duration_mins";
   static const String walkingCustomer = "walking_customer";
+  static const String periodDaily = "period_daily";
+  static const String periodWeekly = "period_weekly";
+  static const String periodMonthly = "period_monthly";
+  static const String totalIncomeValue = "total_income_value";
 }

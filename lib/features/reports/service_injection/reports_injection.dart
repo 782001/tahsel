@@ -6,8 +6,8 @@ import '../domain/repositories/reports_repository.dart';
 import '../domain/usecases/get_reports_usecase.dart';
 import '../domain/usecases/generate_insights_usecase.dart';
 import '../domain/usecases/get_income_details_usecase.dart';
-import '../presentation/cubit/reports_cubit.dart';
-import '../presentation/cubit/income_details_cubit.dart';
+import '../presentation/cubit/reports_cubit/reports_cubit.dart';
+import '../presentation/cubit/income_cubit/income_details_cubit.dart';
 class ReportsInjection {
   static void init(GetIt sl) {
     // Cubit

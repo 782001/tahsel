@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../domain/entities/reports_entity.dart';
-import '../../domain/usecases/get_reports_usecase.dart';
-import '../../domain/usecases/generate_insights_usecase.dart';
+import '../../../domain/entities/reports_entity.dart';
+import '../../../domain/usecases/get_reports_usecase.dart';
+import '../../../domain/usecases/generate_insights_usecase.dart';
 import 'reports_state.dart';
 
 class ReportsCubit extends Cubit<ReportsState> {

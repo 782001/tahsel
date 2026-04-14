@@ -8,9 +8,9 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:tahsel/features/reports/domain/entities/profit_insight.dart';
-import 'package:tahsel/features/reports/presentation/cubit/reports_cubit.dart';
-import 'package:tahsel/features/reports/presentation/cubit/reports_state.dart';
-import 'package:tahsel/features/reports/presentation/screens/income_details_screen.dart';
+import 'package:tahsel/features/reports/presentation/cubit/reports_cubit/reports_cubit.dart';
+import 'package:tahsel/features/reports/presentation/cubit/reports_cubit/reports_state.dart';
+import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/features/reports/presentation/widgets/profit_insight_ui_extension.dart';
 import 'package:tahsel/features/reports/presentation/widgets/reports_dashboard_card.dart';
 import 'package:tahsel/features/reports/presentation/widgets/reports_net_profit_card.dart';
@@ -131,14 +131,15 @@ class _ReportsViewState extends State<ReportsView> {
                               "${data.isIncomeIncrease ? '+' : '-'}${data.incomeDiff.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${_getBadgeText()}",
                           onTap: () {
                             final dateRange = _getDateRange();
-                            Navigator.push(
+                            Navigator.pushNamed(
                               context,
-                              MaterialPageRoute(
-                                builder: (_) => IncomeDetailsScreen(
-                                  startDate: dateRange.start,
-                                  endDate: dateRange.end,
-                                ),
-                              ),
+                              AppRoutes.incomeDetails,
+                              arguments: {
+                                'startDate': dateRange.start,
+                                'endDate': dateRange.end,
+                                'period': _selectedTimeRange == 0 ? 'daily' : (_selectedTimeRange == 1 ? 'weekly' : 'monthly'),
+                                'type': null,
+                              },
                             );
                           },
                         ),
@@ -183,15 +184,15 @@ class _ReportsViewState extends State<ReportsView> {
                               "${data.isCafeIncrease ? '+' : '-'}${data.cafeDiff.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${_getBadgeText()}",
                           onTap: () {
                             final dateRange = _getDateRange();
-                            Navigator.push(
+                            Navigator.pushNamed(
                               context,
-                              MaterialPageRoute(
-                                builder: (_) => IncomeDetailsScreen(
-                                  startDate: dateRange.start,
-                                  endDate: dateRange.end,
-                                  type: AppStrings.shop,
-                                ),
-                              ),
+                              AppRoutes.incomeDetails,
+                              arguments: {
+                                'startDate': dateRange.start,
+                                'endDate': dateRange.end,
+                                'type': AppStrings.shop,
+                                'period': _selectedTimeRange == 0 ? 'daily' : (_selectedTimeRange == 1 ? 'weekly' : 'monthly'),
+                              },
                             );
                           },
                         ),
@@ -206,15 +207,15 @@ class _ReportsViewState extends State<ReportsView> {
                               "${data.isPlaystationIncrease ? '+' : '-'}${data.playstationDiff.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${_getBadgeText()}",
                           onTap: () {
                             final dateRange = _getDateRange();
-                            Navigator.push(
+                            Navigator.pushNamed(
                               context,
-                              MaterialPageRoute(
-                                builder: (_) => IncomeDetailsScreen(
-                                  startDate: dateRange.start,
-                                  endDate: dateRange.end,
-                                  type: AppStrings.playStation,
-                                ),
-                              ),
+                              AppRoutes.incomeDetails,
+                              arguments: {
+                                'startDate': dateRange.start,
+                                'endDate': dateRange.end,
+                                'type': AppStrings.playStation,
+                                'period': _selectedTimeRange == 0 ? 'daily' : (_selectedTimeRange == 1 ? 'weekly' : 'monthly'),
+                              },
                             );
                           },
                         ),

@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
-import '../../domain/entities/reports_entity.dart';
-import '../../domain/entities/profit_insight.dart';
+import '../../../domain/entities/reports_entity.dart';
+import '../../../domain/entities/profit_insight.dart';
 
 abstract class ReportsState extends Equatable {
   const ReportsState();

@@ -184,5 +184,9 @@
   "total_income_details": "Total Income Details",
   "no_income_data": "No income data available for the selected period",
   "duration_mins": "{mins} Min",
-  "walking_customer": "Walking Customer"
+  "walking_customer": "Walking Customer",
+  "period_daily": "Daily",
+  "period_weekly": "Weekly",
+  "period_monthly": "Monthly",
+  "total_income_value": "Total Income: {amount} {currency}"
 }

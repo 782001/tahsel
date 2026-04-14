@@ -1,23 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/services/injection_container.dart';
-import 'package:tahsel/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
-import '../cubit/income_details_cubit.dart';
-import '../../../operation/domain/entities/operation_entity.dart';
+import 'package:tahsel/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
+import '../cubit/income_cubit/income_details_cubit.dart';
+import '../widgets/income_summary_card.dart';
+import '../widgets/transaction_detail_card.dart';
 
 class IncomeDetailsScreen extends StatelessWidget {
   final DateTime startDate;
   final DateTime endDate;
   final String? type; // AppStrings.shop, AppStrings.playStation, or null
+  final String period; // 'daily', 'weekly', 'monthly'
 
   const IncomeDetailsScreen({
     Key? key,
     required this.startDate,
     required this.endDate,
+    required this.period,
     this.type,
   }) : super(key: key);
 
@@ -26,21 +30,21 @@ class IncomeDetailsScreen extends StatelessWidget {
     return BlocProvider(
       create: (context) => sl<IncomeDetailsCubit>()..fetchIncomeDetails(startDate, endDate, type: type),
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.scafoldBackGround,
         appBar: AppBar(
           backgroundColor: AppColors.primaryColor,
           elevation: 0,
           centerTitle: true,
           title: Text(
-            _getScreenTitle(context, type),
-            style: const TextStyle(
+            _getScreenTitle(context, type, period),
+            style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
-              fontSize: 18,
+              fontSize: 18.sp,
             ),
           ),
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+            icon: Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20.sp),
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -50,38 +54,86 @@ class IncomeDetailsScreen extends StatelessWidget {
               return Center(child: CircularProgressIndicator(color: AppColors.primaryColor));
             } else if (state is IncomeDetailsError) {
               return Center(
-                child: Text(
-                  state.message,
-                  style: const TextStyle(color: Colors.red, fontSize: 16),
-                  textAlign: TextAlign.center,
-                ),
-              );
-            } else if (state is IncomeDetailsLoaded) {
-              if (state.operations.isEmpty) {
-                return Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24.r),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.insert_chart_outlined, size: 80, color: Colors.grey.withOpacity(0.5)),
-                      const SizedBox(height: 16),
+                      Icon(Icons.error_outline_rounded, color: AppColors.error, size: 60.sp),
+                      SizedBox(height: 16.h),
                       Text(
-                        AppStrings.noIncomeData.tr(),
-                        style: const TextStyle(color: Colors.grey, fontSize: 18, fontWeight: FontWeight.bold),
+                        state.message,
+                        style: TextStyle(color: AppColors.error, fontSize: 16.sp),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 24.h),
+                      ElevatedButton(
+                        onPressed: () => context.read<IncomeDetailsCubit>().fetchIncomeDetails(startDate, endDate, type: type),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryColor,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                        ),
+                        child: Text(AppStrings.tryAgain.tr()),
                       ),
                     ],
                   ),
-                );
-              }
+                ),
+              );
+            } else if (state is IncomeDetailsLoaded) {
+              final totalIncome = state.operations.fold<double>(0, (sum, op) => sum + op.totalAmount);
+              final dateRangeStr = _formatDateRange(context, startDate, endDate);
 
               return RefreshIndicator(
                 color: AppColors.primaryColor,
                 onRefresh: () => context.read<IncomeDetailsCubit>().fetchIncomeDetails(startDate, endDate, type: type),
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: state.operations.length,
-                  itemBuilder: (context, index) {
-                    return _buildOperationCard(context, state.operations[index]);
-                  },
+                child: CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                  slivers: [
+                    // Summary Section
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 16.h),
+                        child: IncomeSummaryCard(
+                          totalIncome: totalIncome,
+                          count: state.operations.length,
+                          dateRange: dateRangeStr,
+                        ),
+                      ),
+                    ),
+
+                    // List or Empty State
+                    if (state.operations.isEmpty)
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.insert_chart_outlined_rounded, size: 80.sp, color: AppColors.blackLight.withOpacity(0.1)),
+                              SizedBox(height: 16.h),
+                              Text(
+                                AppStrings.noIncomeData.tr(),
+                                style: TextStyle(
+                                  color: AppColors.blackLight.withOpacity(0.4),
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      SliverPadding(
+                        padding: EdgeInsets.fromLTRB(24.w, 8.h, 24.w, 24.h),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) => TransactionDetailCard(operation: state.operations[index]),
+                            childCount: state.operations.length,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               );
             }
@@ -92,127 +144,32 @@ class IncomeDetailsScreen extends StatelessWidget {
     );
   }
 
-  String _getScreenTitle(BuildContext context, String? type) {
+  String _getScreenTitle(BuildContext context, String? type, String period) {
+    String periodStr = '';
+    if (period == 'daily') periodStr = AppStrings.periodDaily.tr();
+    else if (period == 'weekly') periodStr = AppStrings.periodWeekly.tr();
+    else if (period == 'monthly') periodStr = AppStrings.periodMonthly.tr();
+
     if (type == null) {
-      return AppStrings.totalIncomeDetails.tr();
+      return "$periodStr ${AppStrings.totalIncome.tr()}";
     } else if (type.toLowerCase() == AppStrings.shop.toLowerCase()) {
-      return AppStrings.cafeIncomeDetails.tr();
+      return "$periodStr ${AppStrings.cafeIncome.tr()}";
     } else if (type.toLowerCase() == AppStrings.playStation.toLowerCase()) {
-      return AppStrings.playstationIncomeDetails.tr();
+      return "$periodStr ${AppStrings.playstationIncome.tr()}";
     }
+    
     return AppStrings.incomeDetails.tr();
   }
 
-  Widget _buildOperationCard(BuildContext context, OperationEntity operation) {
+  String _formatDateRange(BuildContext context, DateTime start, DateTime end) {
     final bool isArabic = context.read<LocaleCubit>().state.locale.languageCode == 'ar';
-    final DateFormat timeFormat = isArabic ? DateFormat('hh:mm a', 'ar') : DateFormat('hh:mm a', 'en');
-    final DateFormat dateFormat = isArabic ? DateFormat('yyyy/MM/dd', 'ar') : DateFormat('yyyy/MM/dd', 'en');
-
-    final bool isPlaystation = operation.type.toLowerCase() == AppStrings.playStation.toLowerCase();
+    final DateFormat formatter = isArabic ? DateFormat('d MMM', 'ar') : DateFormat('d MMM', 'en');
     
-    String subtitleText = '';
-    if (isPlaystation) {
-      if (operation.subType == 'time') {
-        final durationStr = AppStrings.durationMins.tr().replaceAll('{mins}', '${operation.durationMinutes ?? 0}');
-        subtitleText = "${AppStrings.psSessionTime.tr()} - $durationStr";
-      } else {
-        subtitleText = "${AppStrings.psSessionTurn.tr()} - ${operation.turnCount ?? 0} ادوار";
-      }
-    } else {
-      subtitleText = operation.productName ?? AppStrings.shop.tr();
+    // If it's the same day
+    if (start.year == end.year && start.month == end.month && start.day == end.day) {
+      return formatter.format(start);
     }
-
-    final String customerName = (operation.customerName != null && operation.customerName!.isNotEmpty) 
-        ? operation.customerName! 
-        : AppStrings.walkingCustomer.tr();
-
-    return Card(
-      elevation: 2,
-      shadowColor: Colors.black.withOpacity(0.05),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    customerName,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Text(
-                  "${operation.totalAmount.toStringAsFixed(0)} ${AppStrings.currencyEgp.tr()}",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryColor,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(
-                  isPlaystation ? Icons.sports_esports : Icons.local_cafe,
-                  size: 16,
-                  color: Colors.grey[600],
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    subtitleText,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[700],
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const Divider(height: 1),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.calendar_today, size: 14, color: Colors.grey[500]),
-                    const SizedBox(width: 6),
-                    Text(
-                      operation.timestamp != null ? dateFormat.format(operation.timestamp!) : 'N/A',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Icon(Icons.access_time_rounded, size: 14, color: Colors.grey[500]),
-                    const SizedBox(width: 6),
-                    Text(
-                      operation.timestamp != null ? timeFormat.format(operation.timestamp!) : 'N/A',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
+    
+    return "${formatter.format(start)} - ${formatter.format(end)}";
   }
 }

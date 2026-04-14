@@ -8,6 +8,7 @@ import 'package:tahsel/core/services/injection_container.dart' as di;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/shared/widgets/fields/text_widget.dart';
 import 'package:tahsel/features/expenses/presentation/screens/add_expense_screen.dart';
+import 'package:tahsel/features/reports/presentation/screens/income_details_screen.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -17,6 +18,7 @@ class AppRoutes {
   static const String login = '/login';
   static const String securityWarning = '/security-warning';
   static const String addExpense = '/add-expense';
+  static const String incomeDetails = '/income-details';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -44,6 +46,16 @@ class AppRoutes {
       case addExpense:
         return MaterialPageRoute(
           builder: (_) => const AddExpenseScreen(),
+        );
+      case incomeDetails:
+        final args = settings.arguments as Map<String, dynamic>;
+        return MaterialPageRoute(
+          builder: (_) => IncomeDetailsScreen(
+            startDate: args['startDate'] as DateTime,
+            endDate: args['endDate'] as DateTime,
+            period: args['period'] as String,
+            type: args['type'] as String?,
+          ),
         );
       default:
         return MaterialPageRoute(
