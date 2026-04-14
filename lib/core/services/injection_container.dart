@@ -4,6 +4,7 @@ import 'package:tahsel/features/auth/service_injection/auth_injection.dart';
 import 'package:tahsel/features/category/service_injection/category_injection.dart';
 import 'package:tahsel/features/operation/service_injection/operation_injection.dart';
 import 'package:tahsel/features/customer/service_injection/customer_injection.dart';
+import 'package:tahsel/features/product/service_injection/product_injection.dart';
 import 'package:tahsel/features/debt/service_injection/debt_injection.dart';
 import 'package:tahsel/features/expenses/service_injection/expense_injection.dart';
 import 'package:tahsel/features/reports/service_injection/reports_injection.dart';
@@ -33,6 +34,7 @@ Future<void> initDependencies() async {
   await initOperation();
   await initDebt();
   initCustomerInjection();
+  initProductInjection();
   await initExpense();
   ReportsInjection.init(sl);
 

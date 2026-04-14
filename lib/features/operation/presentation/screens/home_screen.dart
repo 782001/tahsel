@@ -20,6 +20,7 @@ import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 import '../utils/operation_validator.dart';
 
 import '../../../customer/presentation/cubit/customer_cubit.dart';
+import '../../../product/presentation/cubit/product_cubit.dart';
 import '../../../debt/domain/entities/debt_entity.dart';
 import '../../../debt/presentation/cubit/debt_cubit.dart';
 import '../../../debt/presentation/cubit/debt_state.dart';
@@ -61,6 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final uid = sl<FirebaseAuth>().currentUser?.uid;
     if (uid != null) {
       context.read<CustomerCubit>().fetchCustomers(uid);
+      context.read<ProductCubit>().fetchProducts(uid);
     }
 
     // Load persisted rates
@@ -314,6 +316,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     context.read<CustomerCubit>().saveCustomer(
                       uid,
                       customerName,
+                    );
+                  }
+
+                  // Save product for autocomplete (Shop Mode only)
+                  final productName = _productController.text.trim();
+                  if (uid != null && _selectedMode == QuickAddMode.shop && productName.isNotEmpty) {
+                    context.read<ProductCubit>().saveProduct(
+                      uid,
+                      productName,
                     );
                   }
 
