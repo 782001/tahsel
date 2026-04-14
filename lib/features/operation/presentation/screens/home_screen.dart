@@ -17,6 +17,7 @@ import 'package:tahsel/features/operation/presentation/widgets/quick_add_time_fo
 import 'package:tahsel/features/operation/presentation/widgets/quick_add_turn_form.dart';
 import 'package:tahsel/shared/widgets/buttons/quick_action_button.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
+import '../utils/operation_validator.dart';
 
 import '../../../customer/presentation/cubit/customer_cubit.dart';
 import '../../../debt/domain/entities/debt_entity.dart';
@@ -51,6 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Temporary constants for calculation prototypes
   int _matchCount = 1;
   int _durationMinutes = 60; // Default to 60 mins (1 hour)
+  String? _customerError;
 
   @override
   void initState() {
@@ -115,6 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _matchCount = 1;
       _durationMinutes = 60;
+      _customerError = null;
     });
   }
 
@@ -141,12 +144,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (productName.isEmpty) {
         validationMsg = AppStrings.validationProductNameRequired.tr();
-      } else if (customerName.isEmpty) {
-        validationMsg = AppStrings.validationCustomerNameRequired.tr();
-      } else if (remainingDebt > 0 && customerName.isEmpty) {
-        validationMsg = AppStrings.validationCustomerNameRequired.tr();
-      } else if (paid == 0 && remainingDebt == 0) {
-        validationMsg = AppStrings.validationInvalidAmount.tr();
+      } else {
+        final errorKey = OperationValidator.validateCustomerName(
+          name: customerName,
+          totalAmount: paid + remainingDebt,
+          paidAmount: paid,
+        );
+        if (errorKey != null) {
+          setState(() => _customerError = errorKey.tr());
+          return;
+        }
+        setState(() => _customerError = null);
+        
+        if (paid == 0 && remainingDebt == 0) {
+          validationMsg = AppStrings.validationInvalidAmount.tr();
+        }
       }
 
       if (validationMsg != null) {
@@ -154,7 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
           SnackBar(
             duration: Duration(milliseconds: 500),
             content: Text(validationMsg),
-            backgroundColor: Colors.orange,
+            backgroundColor: AppColors.orange,
           ),
         );
         return;
@@ -173,10 +185,17 @@ class _HomeScreenState extends State<HomeScreen> {
       final customerName = _customerController.text.trim();
       if (totalDue <= 0) {
         validationMsg = AppStrings.validationSessionRequired.tr();
-      } else if (customerName.isEmpty) {
-        validationMsg = AppStrings.validationCustomerNameRequired.tr();
-      } else if (totalDue > paid && customerName.isEmpty) {
-        validationMsg = AppStrings.validationCustomerNameRequired.tr();
+      } else {
+        final errorKey = OperationValidator.validateCustomerName(
+          name: customerName,
+          totalAmount: totalDue,
+          paidAmount: paid,
+        );
+        if (errorKey != null) {
+          setState(() => _customerError = errorKey.tr());
+          return;
+        }
+        setState(() => _customerError = null);
       }
 
       if (validationMsg != null) {
@@ -184,7 +203,7 @@ class _HomeScreenState extends State<HomeScreen> {
           SnackBar(
             duration: Duration(milliseconds: 500),
             content: Text(validationMsg),
-            backgroundColor: Colors.orange,
+            backgroundColor: AppColors.orange,
           ),
         );
         return;
@@ -237,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       content: Text(
                         '${AppStrings.operationFailed.tr()}: ${state.message}',
                       ),
-                      backgroundColor: Colors.orange,
+                      backgroundColor: AppColors.orange,
                     ),
                   );
                 }
@@ -362,6 +381,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               customerController: _customerController,
                               hourlyRateController: _hourlyRateController,
                               durationMinutes: _durationMinutes,
+                              customerError: _customerError,
                               onDurationAdd: () =>
                                   setState(() => _durationMinutes += 5),
                               onDurationRemove: () => setState(
@@ -375,6 +395,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               customerController: _customerController,
                               turnRateController: _turnRateController,
                               matchCount: _matchCount,
+                              customerError: _customerError,
                               onAdd: () => setState(() => _matchCount++),
                               onRemove: () => setState(
                                 () => _matchCount > 1 ? _matchCount-- : null,
@@ -431,6 +452,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             productController: _productController,
                             paidController: _paidController,
                             debtController: _debtController,
+                            customerError: _customerError,
                           ),
                           const SizedBox(height: 32),
                         ],

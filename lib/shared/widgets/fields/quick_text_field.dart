@@ -8,6 +8,7 @@ class QuickAddTextField extends StatelessWidget {
   final String? prefixText;
   final String? suffixText;
   final bool isNumber;
+  final String? errorText;
   final ValueChanged<String>? onChanged;
 
   const QuickAddTextField({
@@ -18,6 +19,7 @@ class QuickAddTextField extends StatelessWidget {
     this.prefixText,
     this.suffixText,
     this.isNumber = false,
+    this.errorText,
     this.onChanged,
   });
 
@@ -33,6 +35,7 @@ class QuickAddTextField extends StatelessWidget {
       ),
       decoration: InputDecoration(
         hintText: hint,
+        errorText: errorText,
         hintStyle: TextStyle(
           color: AppColors.blackLight.withOpacity(0.5),
           fontWeight: FontWeight.normal,

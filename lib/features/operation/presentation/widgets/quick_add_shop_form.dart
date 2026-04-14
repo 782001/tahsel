@@ -10,6 +10,7 @@ class QuickAddShopForm extends StatelessWidget {
   final TextEditingController productController;
   final TextEditingController paidController;
   final TextEditingController debtController;
+  final String? customerError;
 
   const QuickAddShopForm({
     super.key,
@@ -17,6 +18,7 @@ class QuickAddShopForm extends StatelessWidget {
     required this.productController,
     required this.paidController,
     required this.debtController,
+    this.customerError,
   });
 
   @override
@@ -45,6 +47,7 @@ class QuickAddShopForm extends StatelessWidget {
           CustomerAutocompleteField(
             hint: AppStrings.customerNameHint.tr(),
             controller: customerController,
+            errorText: customerError,
             icon: Icons.person_outline,
           ),
           const SizedBox(height: 20),

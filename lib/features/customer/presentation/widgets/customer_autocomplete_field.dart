@@ -8,12 +8,14 @@ class CustomerAutocompleteField extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
   final IconData? icon;
+  final String? errorText;
 
   const CustomerAutocompleteField({
     super.key,
     required this.controller,
     required this.hint,
     this.icon,
+    this.errorText,
   });
 
   @override
@@ -35,6 +37,7 @@ class CustomerAutocompleteField extends StatelessWidget {
           ),
           decoration: InputDecoration(
             hintText: hint,
+            errorText: errorText,
             hintStyle: TextStyle(
               color: AppColors.blackLight.withOpacity(0.5),
               fontWeight: FontWeight.normal,

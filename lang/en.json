@@ -141,6 +141,7 @@
   "validation_field_required": "This field is required",
   "validation_invalid_amount": "Please enter a valid amount",
   "validation_customer_name_required": "Customer name is required for debts",
+  "validation_customer_name_debt_required": "Customer name is required when there is a remaining amount",
   "validation_product_name_required": "Product name is required",
   "validation_session_required": "Session details are required",
   "paid_full": "Paid Full",

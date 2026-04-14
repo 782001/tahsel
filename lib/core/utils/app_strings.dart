@@ -166,6 +166,7 @@ class AppStrings {
   static const String validationFieldRequired = "validation_field_required";
   static const String validationInvalidAmount = "validation_invalid_amount";
   static const String validationCustomerNameRequired = "validation_customer_name_required";
+  static const String validationCustomerNameDebtRequired = "validation_customer_name_debt_required";
   static const String validationProductNameRequired = "validation_product_name_required";
   static const String validationSessionRequired = "validation_session_required";
   static const String paidFull = "paid_full";

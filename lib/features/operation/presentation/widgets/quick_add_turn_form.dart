@@ -9,6 +9,7 @@ class QuickAddTurnForm extends StatelessWidget {
   final TextEditingController customerController;
   final TextEditingController turnRateController;
   final int matchCount;
+  final String? customerError;
   final VoidCallback onAdd;
   final VoidCallback onRemove;
 
@@ -17,6 +18,7 @@ class QuickAddTurnForm extends StatelessWidget {
     required this.customerController,
     required this.turnRateController,
     required this.matchCount,
+    this.customerError,
     required this.onAdd,
     required this.onRemove,
   });
@@ -34,6 +36,7 @@ class QuickAddTurnForm extends StatelessWidget {
         CustomerAutocompleteField(
           hint: AppStrings.customerNameHint.tr(),
           controller: customerController,
+          errorText: customerError,
         ),
         const SizedBox(height: 20),
         Row(

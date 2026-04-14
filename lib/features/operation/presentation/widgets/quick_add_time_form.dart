@@ -9,6 +9,7 @@ class QuickAddTimeForm extends StatelessWidget {
   final TextEditingController customerController;
   final TextEditingController hourlyRateController;
   final int durationMinutes;
+  final String? customerError;
   final VoidCallback onDurationAdd;
   final VoidCallback onDurationRemove;
 
@@ -17,6 +18,7 @@ class QuickAddTimeForm extends StatelessWidget {
     required this.customerController,
     required this.hourlyRateController,
     required this.durationMinutes,
+    this.customerError,
     required this.onDurationAdd,
     required this.onDurationRemove,
   });
@@ -34,6 +36,7 @@ class QuickAddTimeForm extends StatelessWidget {
         CustomerAutocompleteField(
           hint: AppStrings.customerNameHint.tr(),
           controller: customerController,
+          errorText: customerError,
         ),
         const SizedBox(height: 20),
         Row(
