@@ -9,22 +9,22 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
-import 'package:tahsel/features/home/presentation/widgets/quick_add_mode_selector.dart';
-import 'package:tahsel/features/home/presentation/widgets/quick_add_shop_form.dart';
-import 'package:tahsel/features/home/presentation/widgets/quick_add_sub_tab_header.dart';
-import 'package:tahsel/features/home/presentation/widgets/quick_add_summary_card.dart';
-import 'package:tahsel/features/home/presentation/widgets/quick_add_time_form.dart';
-import 'package:tahsel/features/home/presentation/widgets/quick_add_turn_form.dart';
+import 'package:tahsel/features/operation/presentation/widgets/quick_add_mode_selector.dart';
+import 'package:tahsel/features/operation/presentation/widgets/quick_add_shop_form.dart';
+import 'package:tahsel/features/operation/presentation/widgets/quick_add_sub_tab_header.dart';
+import 'package:tahsel/features/operation/presentation/widgets/quick_add_summary_card.dart';
+import 'package:tahsel/features/operation/presentation/widgets/quick_add_time_form.dart';
+import 'package:tahsel/features/operation/presentation/widgets/quick_add_turn_form.dart';
 import 'package:tahsel/shared/widgets/buttons/quick_action_button.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 
-import '../../../../features/customer/presentation/cubit/customer_cubit.dart';
-import '../../../../features/debt/domain/entities/debt_entity.dart';
-import '../../../../features/debt/presentation/cubit/debt_cubit.dart';
-import '../../../../features/debt/presentation/cubit/debt_state.dart';
-import '../../../../features/operation/domain/entities/operation_entity.dart';
-import '../../../../features/operation/presentation/cubit/operation_cubit.dart';
-import '../../../../features/operation/presentation/cubit/operation_state.dart';
+import '../../../customer/presentation/cubit/customer_cubit.dart';
+import '../../../debt/domain/entities/debt_entity.dart';
+import '../../../debt/presentation/cubit/debt_cubit.dart';
+import '../../../debt/presentation/cubit/debt_state.dart';
+import '../../domain/entities/operation_entity.dart';
+import '../cubit/operation_cubit.dart';
+import '../cubit/operation_state.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
