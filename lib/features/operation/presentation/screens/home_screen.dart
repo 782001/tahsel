@@ -17,16 +17,16 @@ import 'package:tahsel/features/operation/presentation/widgets/quick_add_time_fo
 import 'package:tahsel/features/operation/presentation/widgets/quick_add_turn_form.dart';
 import 'package:tahsel/shared/widgets/buttons/quick_action_button.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
-import '../utils/operation_validator.dart';
 
 import '../../../customer/presentation/cubit/customer_cubit.dart';
-import '../../../product/presentation/cubit/product_cubit.dart';
 import '../../../debt/domain/entities/debt_entity.dart';
 import '../../../debt/presentation/cubit/debt_cubit.dart';
 import '../../../debt/presentation/cubit/debt_state.dart';
+import '../../../product/presentation/cubit/product_cubit.dart';
 import '../../domain/entities/operation_entity.dart';
 import '../cubit/operation_cubit.dart';
 import '../cubit/operation_state.dart';
+import '../utils/operation_validator.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -157,7 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
           return;
         }
         setState(() => _customerError = null);
-        
+
         if (paid == 0 && remainingDebt == 0) {
           validationMsg = AppStrings.validationInvalidAmount.tr();
         }
@@ -321,11 +321,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   // Save product for autocomplete (Shop Mode only)
                   final productName = _productController.text.trim();
-                  if (uid != null && _selectedMode == QuickAddMode.shop && productName.isNotEmpty) {
-                    context.read<ProductCubit>().saveProduct(
-                      uid,
-                      productName,
-                    );
+                  if (uid != null &&
+                      _selectedMode == QuickAddMode.shop &&
+                      productName.isNotEmpty) {
+                    context.read<ProductCubit>().saveProduct(uid, productName);
                   }
 
                   _clearFields();
@@ -465,10 +464,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             debtController: _debtController,
                             customerError: _customerError,
                           ),
-                          const SizedBox(height: 32),
                         ],
 
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 20),
 
                         // Confirm Action Button
                         QuickActionButton(
