@@ -188,5 +188,10 @@
   "period_daily": "يومي",
   "period_weekly": "أسبوعي",
   "period_monthly": "شهري",
-  "total_income_value": "إجمالي الدخل: {amount} {currency}"
+  "total_income_value": "إجمالي الدخل: {amount} {currency}",
+  "confirm_delete_debt_title": "حذف دين العميل",
+  "confirm_delete_debt_message": "هل أنت متأكد من حذف جميع بيانات الدين لهذا العميل؟",
+  "delete_debt_success": "تم حذف ديون العميل بنجاح",
+  "delete_debt_failed": "فشل في حذف ديون العميل",
+  "sessionExpired": "انتهت صلاحية الجلسة، برجاء تسجيل الدخول مرة أخرى"
 }

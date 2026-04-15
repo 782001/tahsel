@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../core/error/firebase_error_handler.dart';
 import '../models/operation_model.dart';
 
 abstract class OperationRemoteDataSource {
@@ -22,6 +23,7 @@ class OperationRemoteDataSourceImpl implements OperationRemoteDataSource {
       await docRef.set(operation.toJson());
       return docRef.id;
     } catch (e) {
+      FirebaseErrorHandler.handle(e);
       throw Exception('Failed to add operation: $e');
     }
   }

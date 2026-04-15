@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../core/error/firebase_error_handler.dart';
 import '../../domain/entities/expense_entity.dart';
 import '../models/expense_model.dart';
 import 'package:tahsel/core/utils/date_formatter.dart';
@@ -27,6 +28,7 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
           .add(expense.toJson());
       return docRef.id;
     } catch (e) {
+      FirebaseErrorHandler.handle(e);
       throw Exception('Failed to add expense: $e');
     }
   }
@@ -45,6 +47,7 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
           .map((doc) => ExpenseModel.fromJson(doc.data(), doc.id))
           .toList();
     } catch (e) {
+      FirebaseErrorHandler.handle(e);
       throw Exception('Failed to fetch expenses: $e');
     }
   }
@@ -89,6 +92,7 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
       
       return results;
     } catch (e) {
+      FirebaseErrorHandler.handle(e);
       throw Exception('Failed to fetch monthly aggregates: $e');
     }
   }
@@ -111,6 +115,7 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
       expenses.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return expenses;
     } catch (e) {
+      FirebaseErrorHandler.handle(e);
       throw Exception('Failed to fetch expenses by month: $e');
     }
   }
@@ -125,6 +130,7 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
           .doc(expenseId)
           .delete();
     } catch (e) {
+      FirebaseErrorHandler.handle(e);
       throw Exception('Failed to delete expense: $e');
     }
   }
@@ -145,6 +151,7 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
       }
       await batch.commit();
     } catch (e) {
+      FirebaseErrorHandler.handle(e);
       throw Exception('Failed to delete month expenses: $e');
     }
   }

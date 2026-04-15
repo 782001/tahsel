@@ -186,6 +186,7 @@ class CustomerDebtDetailScreen extends StatelessWidget {
                               ),
                             ],
                           ),
+                    
                       ],
                     ),
                   ),

@@ -13,6 +13,7 @@ class CustomerDebtCard extends StatelessWidget {
   final Color statusColor;
   final VoidCallback onPartialPayment;
   final VoidCallback onFullPayment;
+  final VoidCallback onDelete;
   final VoidCallback? onTap;
 
   const CustomerDebtCard({
@@ -24,6 +25,7 @@ class CustomerDebtCard extends StatelessWidget {
     required this.statusColor,
     required this.onPartialPayment,
     required this.onFullPayment,
+    required this.onDelete,
     this.onTap,
   });
 
@@ -43,12 +45,20 @@ class CustomerDebtCard extends StatelessWidget {
               icon: Icons.payments,
               label: AppStrings.partialPayLabel.tr(),
             ),
+
             SlidableAction(
               onPressed: (_) => onFullPayment(),
               backgroundColor: AppColors.slidableFullPayment,
               foregroundColor: AppColors.whiteColor,
               icon: Icons.check_circle,
               label: AppStrings.fullPaymentLabel.tr(),
+            ),
+            SlidableAction(
+              onPressed: (_) => onDelete(),
+              backgroundColor: AppColors.error,
+              foregroundColor: AppColors.whiteColor,
+              icon: Icons.delete_forever_rounded,
+              label: AppStrings.delete.tr(),
             ),
           ],
         ),
@@ -72,17 +82,17 @@ class CustomerDebtCard extends StatelessWidget {
               child: Stack(
                 children: [
                   // Status accent bar on the right
-                  Positioned(
-                    right: 0,
+                  PositionedDirectional(
+                    start: 0,
                     top: 0,
                     bottom: 0,
                     child: Container(
                       width: 4,
                       decoration: BoxDecoration(
                         color: statusColor,
-                        borderRadius: const BorderRadius.only(
-                          topRight: Radius.circular(12),
-                          bottomRight: Radius.circular(12),
+                        borderRadius: const BorderRadiusDirectional.only(
+                          topStart: Radius.circular(12),
+                          bottomStart: Radius.circular(12),
                         ),
                       ),
                     ),

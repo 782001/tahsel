@@ -7,4 +7,6 @@ abstract class AuthBaseRepository {
   Future<Either<dynamic, UserEntity>> login({
     required LoginParameters parameters,
   });
+
+  Future<void> logout();
 }

@@ -188,5 +188,10 @@
   "period_daily": "Daily",
   "period_weekly": "Weekly",
   "period_monthly": "Monthly",
-  "total_income_value": "Total Income: {amount} {currency}"
+  "total_income_value": "Total Income: {amount} {currency}",
+  "confirm_delete_debt_title": "Delete Customer Debt",
+  "confirm_delete_debt_message": "Are you sure you want to delete all debt data for this customer?",
+  "delete_debt_success": "Customer debt deleted successfully",
+  "delete_debt_failed": "Failed to delete customer debt",
+  "sessionExpired": "Session expired, please login again"
 }

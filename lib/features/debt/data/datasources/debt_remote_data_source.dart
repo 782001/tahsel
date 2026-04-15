@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../core/error/firebase_error_handler.dart';
 import '../models/debt_model.dart';
 import '../models/payment_model.dart';
 
@@ -8,6 +9,7 @@ abstract class DebtRemoteDataSource {
   Future<void> payDebt(DebtModel debt, PaymentModel payment);
   Future<void> payTotalDebt(String uid, String customerName, double amount);
   Future<void> markCustomerAsPaid(String uid, String customerName);
+  Future<void> deleteCustomerDebts(String uid, String customerName);
 }
 
 class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
@@ -27,6 +29,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
       await docRef.set(debt.toJson());
       return docRef.id;
     } catch (e) {
+      FirebaseErrorHandler.handle(e);
       throw Exception('Failed to add debt: $e');
     }
   }
@@ -45,6 +48,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           .map((doc) => DebtModel.fromJson(doc.data(), doc.id))
           .toList();
     } catch (e) {
+      FirebaseErrorHandler.handle(e);
       throw Exception('Failed to fetch debts: $e');
     }
   }
@@ -67,6 +71,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
       await batch.commit();
     } catch (e) {
+      FirebaseErrorHandler.handle(e);
       throw Exception('Failed to record payment: $e');
     }
   }
@@ -134,6 +139,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
       await batch.commit();
     } catch (e) {
+      FirebaseErrorHandler.handle(e);
       throw Exception('Failed to pay total debt: $e');
     }
   }
@@ -182,7 +188,67 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
       await batch.commit();
     } catch (e) {
+      FirebaseErrorHandler.handle(e);
       throw Exception('Failed to mark customer as paid: $e');
+    }
+  }
+
+  @override
+  Future<void> deleteCustomerDebts(String uid, String customerName) async {
+    try {
+      final snapshot = await firestore
+          .collection('users')
+          .doc(uid)
+          .collection('debts')
+          .where('customerName', isEqualTo: customerName)
+          .get();
+
+      if (snapshot.docs.isEmpty) return;
+
+      // Firestore batch limit is 500 writes, so we chunk
+      final List<DocumentReference> allRefs = [];
+
+      for (var doc in snapshot.docs) {
+        // Collect payment sub-collection docs
+        final paymentsSnapshot =
+            await doc.reference.collection('payments').get();
+        for (var paymentDoc in paymentsSnapshot.docs) {
+          allRefs.add(paymentDoc.reference);
+        }
+        // Add the debt doc itself
+        allRefs.add(doc.reference);
+      }
+
+      // Also delete linked operations
+      final operationIds = snapshot.docs
+          .map((doc) => doc.data()['operationId'] as String?)
+          .where((id) => id != null && id.isNotEmpty)
+          .toSet();
+
+      for (var opId in operationIds) {
+        final opRef = firestore
+            .collection('users')
+            .doc(uid)
+            .collection('operations')
+            .doc(opId);
+        allRefs.add(opRef);
+      }
+
+      // Batch delete in chunks of 500
+      for (var i = 0; i < allRefs.length; i += 500) {
+        final chunk = allRefs.sublist(
+          i,
+          i + 500 > allRefs.length ? allRefs.length : i + 500,
+        );
+        final batch = firestore.batch();
+        for (var ref in chunk) {
+          batch.delete(ref);
+        }
+        await batch.commit();
+      }
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      throw Exception('Failed to delete customer debts: $e');
     }
   }
 }

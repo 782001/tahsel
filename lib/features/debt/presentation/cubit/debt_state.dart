@@ -32,6 +32,10 @@ class DebtPaymentSuccess extends DebtState {
   const DebtPaymentSuccess();
 }
 
+class DebtDeleteSuccess extends DebtState {
+  const DebtDeleteSuccess();
+}
+
 class DebtFailure extends DebtState {
   final String message;
   const DebtFailure({required this.message});

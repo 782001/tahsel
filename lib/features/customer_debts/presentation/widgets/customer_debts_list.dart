@@ -4,13 +4,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
-// Removed unused import
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/customer_debts/data/models/debt_item_model.dart';
 import 'package:tahsel/features/customer_debts/presentation/screens/customer_debt_detail_screen.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/customer_debt_card.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/partial_payment_dialog.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_cubit.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
 import '../../../debt/domain/entities/debt_entity.dart';
 import '../../../debt/presentation/cubit/debt_state.dart';
@@ -58,6 +59,77 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
     }
   }
 
+  void _onDeleteCustomerDebt(BuildContext context, String customerName) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+             Icon(Icons.warning_amber_rounded, color: AppColors.error),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                AppStrings.confirmDeleteDebtTitle.tr(),
+                style: TextStyles.customStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textColor,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          AppStrings.confirmDeleteDebtMessage.tr(),
+          style: TextStyles.customStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: AppColors.blackLight,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              AppStrings.cancel.tr(),
+              style: TextStyles.customStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.disabledColor,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              final uid = sl<FirebaseAuth>().currentUser?.uid;
+              if (uid != null) {
+                context.read<DebtCubit>().deleteCustomerDebts(uid, customerName);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: AppColors.whiteColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text(
+              AppStrings.delete.tr(),
+              style: TextStyles.customStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _navigateToDetail(BuildContext context, CustomerDebtDetail detail) {
     final cubit = context.read<DebtCubit>();
     Navigator.push(
@@ -88,7 +160,15 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<DebtCubit, DebtState>(
+    return BlocConsumer<DebtCubit, DebtState>(
+      listener: (context, state) {
+        if (state is DebtDeleteSuccess) {
+          showSuccessToast(AppStrings.deleteDebtSuccess.tr());
+        }
+        if (state is DebtFailure) {
+          showfailureToast(AppStrings.deleteDebtFailed.tr());
+        }
+      },
       builder: (context, state) {
         if (state is DebtLoading) {
           return Center(
@@ -106,8 +186,7 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
           if (customers.isEmpty) {
             return Center(
               child: Text(
-                AppStrings.noCustomerDebts
-                    .tr(), // Or a more specific empty state string
+                AppStrings.noCustomerDebts.tr(),
                 style: const TextStyle(color: AppColors.grey),
               ),
             );
@@ -143,6 +222,7 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
                     detail.totalDebt,
                   ),
                   onFullPayment: () => _onPayFull(context, detail.customerName),
+                  onDelete: () => _onDeleteCustomerDebt(context, detail.customerName),
                 );
               },
             ),

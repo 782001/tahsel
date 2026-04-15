@@ -6,6 +6,7 @@ import '../../domain/usecases/pay_debt_usecase.dart';
 import '../../domain/usecases/mark_customer_as_paid_usecase.dart';
 import '../../domain/usecases/mark_item_as_paid_usecase.dart';
 import '../../domain/usecases/pay_item_debt_usecase.dart';
+import '../../domain/usecases/delete_customer_debt_usecase.dart';
 import 'debt_state.dart';
 
 class DebtCubit extends Cubit<DebtState> {
@@ -15,6 +16,7 @@ class DebtCubit extends Cubit<DebtState> {
   final MarkCustomerAsPaidUseCase markCustomerAsPaidUseCase;
   final PayItemDebtUseCase payItemDebtUseCase;
   final MarkItemAsPaidUseCase markItemAsPaidUseCase;
+  final DeleteCustomerDebtUseCase deleteCustomerDebtUseCase;
 
   DebtCubit({
     required this.addDebtUseCase,
@@ -23,6 +25,7 @@ class DebtCubit extends Cubit<DebtState> {
     required this.markCustomerAsPaidUseCase,
     required this.payItemDebtUseCase,
     required this.markItemAsPaidUseCase,
+    required this.deleteCustomerDebtUseCase,
   }) : super(DebtInitial());
 
   Future<void> addDebt(DebtEntity debt) async {
@@ -93,6 +96,18 @@ class DebtCubit extends Cubit<DebtState> {
       (_) {
         emit(const DebtPaymentSuccess());
         getDebts(debt.uid);
+      },
+    );
+  }
+
+  Future<void> deleteCustomerDebts(String uid, String customerName) async {
+    emit(DebtLoading());
+    final result = await deleteCustomerDebtUseCase(uid, customerName);
+    result.fold(
+      (failure) => emit(DebtFailure(message: failure.toString())),
+      (_) {
+        emit(const DebtDeleteSuccess());
+        getDebts(uid);
       },
     );
   }

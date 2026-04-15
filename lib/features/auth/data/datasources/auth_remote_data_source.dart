@@ -4,6 +4,7 @@ import '../../domain/usecases/login_usecase.dart';
 
 abstract class AuthRemoteDataSourceBase {
   Future<UserModel> login({required LoginParameters parameters});
+  Future<void> logout();
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSourceBase {
@@ -33,5 +34,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSourceBase {
     } catch (e) {
       throw Exception(e.toString());
     }
+  }
+
+  @override
+  Future<void> logout() async {
+    await firebaseAuth.signOut();
   }
 }

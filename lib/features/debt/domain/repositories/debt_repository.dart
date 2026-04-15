@@ -8,4 +8,5 @@ abstract class DebtRepository {
   Future<Either<dynamic, void>> payDebt(DebtEntity debt, PaymentEntity payment);
   Future<Either<dynamic, void>> payTotalDebt(String uid, String customerName, double amount);
   Future<Either<dynamic, void>> markCustomerAsPaid(String uid, String customerName);
+  Future<Either<dynamic, void>> deleteCustomerDebts(String uid, String customerName);
 }

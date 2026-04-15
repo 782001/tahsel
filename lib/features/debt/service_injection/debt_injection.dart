@@ -10,6 +10,7 @@ import '../domain/usecases/pay_debt_usecase.dart';
 import '../domain/usecases/mark_customer_as_paid_usecase.dart';
 import '../domain/usecases/mark_item_as_paid_usecase.dart';
 import '../domain/usecases/pay_item_debt_usecase.dart';
+import '../domain/usecases/delete_customer_debt_usecase.dart';
 import '../presentation/cubit/debt_cubit.dart';
 
 Future<void> initDebt() async {
@@ -24,6 +25,7 @@ Future<void> initDebt() async {
       markCustomerAsPaidUseCase: sl(),
       payItemDebtUseCase: sl(),
       markItemAsPaidUseCase: sl(),
+      deleteCustomerDebtUseCase: sl(),
     ),
   );
 
@@ -34,6 +36,7 @@ Future<void> initDebt() async {
   sl.registerLazySingleton(() => MarkCustomerAsPaidUseCase(repository: sl()));
   sl.registerLazySingleton(() => PayItemDebtUseCase(repository: sl()));
   sl.registerLazySingleton(() => MarkItemAsPaidUseCase(repository: sl()));
+  sl.registerLazySingleton(() => DeleteCustomerDebtUseCase(repository: sl()));
 
   // Repository
   sl.registerLazySingleton<DebtRepository>(

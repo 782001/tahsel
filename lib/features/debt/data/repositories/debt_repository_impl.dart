@@ -66,4 +66,15 @@ class DebtRepositoryImpl implements DebtRepository {
       return Left(e.toString());
     }
   }
+
+  @override
+  Future<Either<dynamic, void>> deleteCustomerDebts(
+      String uid, String customerName) async {
+    try {
+      await remoteDataSource.deleteCustomerDebts(uid, customerName);
+      return const Right(null);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
 }

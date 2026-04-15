@@ -232,4 +232,9 @@ class AppStrings {
   static const String periodWeekly = "period_weekly";
   static const String periodMonthly = "period_monthly";
   static const String totalIncomeValue = "total_income_value";
+  static const String confirmDeleteDebtTitle = "confirm_delete_debt_title";
+  static const String confirmDeleteDebtMessage = "confirm_delete_debt_message";
+  static const String deleteDebtSuccess = "delete_debt_success";
+  static const String deleteDebtFailed = "delete_debt_failed";
+  static const String sessionExpired = 'sessionExpired';
 }

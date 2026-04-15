@@ -4,11 +4,16 @@ import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repo_base.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../datasources/auth_remote_data_source.dart';
+import 'package:tahsel/core/storage/secure_storage_helper.dart';
 
 class AuthRepositoryImpl implements AuthBaseRepository {
   final AuthRemoteDataSourceBase remoteDataSource;
+  final SecureStorageHelper secureStorage;
 
-  AuthRepositoryImpl({required this.remoteDataSource});
+  AuthRepositoryImpl({
+    required this.remoteDataSource,
+    required this.secureStorage,
+  });
 
   @override
   Future<Either<dynamic, UserEntity>> login({
@@ -22,5 +27,12 @@ class AuthRepositoryImpl implements AuthBaseRepository {
       // mapping them to failures. Here we are simplifying.
       return Left(e.toString());
     }
+  }
+
+  @override
+  Future<void> logout() async {
+    await secureStorage.deleteData(key: 'token');
+    await secureStorage.deleteData(key: 'email');
+    await remoteDataSource.logout();
   }
 }
