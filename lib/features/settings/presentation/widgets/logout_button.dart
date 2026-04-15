@@ -7,6 +7,7 @@ import 'package:tahsel/core/storage/secure_storage_helper.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/features/auth/domain/usecases/logout_usecase.dart';
 import 'package:tahsel/routes/app_routes.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -31,8 +32,10 @@ class LogoutButton extends StatelessWidget {
               );
 
               if (shouldLogout ?? false) {
-                await sl<SecureStorageHelper>().deleteData(key: 'token');
-                nav().pushNamedAndRemoveUntil(AppRoutes.login);
+                // await sl<SecureStorageHelper>().deleteData(key: 'token');
+                // nav().pushNamedAndRemoveUntil(AppRoutes.login);
+                   await sl<LogoutUseCase>().call(NoParameters());
+          nav().pushNamedAndRemoveUntil(AppRoutes.login);
               }
             },
             style: TextButton.styleFrom(
