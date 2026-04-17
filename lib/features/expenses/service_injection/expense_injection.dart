@@ -35,7 +35,11 @@ Future<void> initExpense() async {
 
   // Repository
   sl.registerLazySingleton<ExpenseRepository>(
-      () => ExpenseRepositoryImpl(remoteDataSource: sl()));
+      () => ExpenseRepositoryImpl(
+            remoteDataSource: sl(),
+            offlineSyncRepository: sl(),
+            connectionChecker: sl(),
+          ));
 
   // Data sources
   sl.registerLazySingleton<ExpenseRemoteDataSource>(

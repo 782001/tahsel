@@ -9,6 +9,8 @@ import 'package:tahsel/features/main_layout/presentation/widgets/bottom_nav_bar.
 import 'package:tahsel/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_cubit.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_state.dart';
+import 'package:tahsel/features/offline_sync/presentation/widgets/offline_banner.dart';
+import 'package:tahsel/features/offline_sync/presentation/widgets/sync_status_listener.dart';
 
 class MainLayoutScreen extends StatelessWidget {
   const MainLayoutScreen({super.key});
@@ -49,7 +51,13 @@ class MainLayoutScreen extends StatelessWidget {
                   child: Scaffold(
                     extendBody: true,
                     backgroundColor: AppColors.scafoldBackGround,
-                    body: cubit.bottomScreens[cubit.currentIndex],
+                    body: SafeArea(
+                      child: SyncStatusListener(
+                        child: OfflineBanner(
+                          child: cubit.bottomScreens[cubit.currentIndex],
+                        ),
+                      ),
+                    ),
                     bottomNavigationBar: BottomNavBar(cubit: cubit),
                   ),
                 );

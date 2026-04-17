@@ -7,6 +7,7 @@ import 'package:tahsel/features/customer/service_injection/customer_injection.da
 import 'package:tahsel/features/product/service_injection/product_injection.dart';
 import 'package:tahsel/features/debt/service_injection/debt_injection.dart';
 import 'package:tahsel/features/expenses/service_injection/expense_injection.dart';
+import 'package:tahsel/features/offline_sync/service_injection/offline_sync_injection.dart';
 import 'package:tahsel/features/reports/service_injection/reports_injection.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:vault_kit/vault_kit.dart';
@@ -36,6 +37,7 @@ Future<void> initDependencies() async {
   initCustomerInjection();
   initProductInjection();
   await initExpense();
+  await OfflineSyncInjection.init(sl);
   ReportsInjection.init(sl);
 
   // firebase

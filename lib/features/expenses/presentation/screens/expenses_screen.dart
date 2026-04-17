@@ -12,6 +12,10 @@ import 'package:tahsel/features/expenses/presentation/widgets/expenses_list.dart
 import 'package:tahsel/shared/widgets/buttons/quick_action_button.dart';
 import 'package:tahsel/routes/app_routes.dart';
 
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/shared/widgets/no_internet_view.dart';
+
 class ExpensesScreen extends StatefulWidget {
   const ExpensesScreen({super.key});
 
@@ -29,7 +33,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocListener<ExpenseCubit, ExpenseState>(
-      listenWhen: (previous, current) => current is ExpenseDeleteMonthSuccess || current is ExpenseFailure,
+      listenWhen: (previous, current) =>
+          current is ExpenseDeleteMonthSuccess || current is ExpenseFailure,
       listener: (context, state) {
         if (state is ExpenseDeleteMonthSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -38,7 +43,6 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               backgroundColor: AppColors.success,
             ),
           );
-          // fetchMonths is already called inside cubit on success
         } else if (state is ExpenseFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -49,37 +53,76 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         }
       },
       child: SafeArea(
-        child: RefreshIndicator(
-          color: AppColors.primaryColor,
-          onRefresh: () async {
-            context.read<ExpenseCubit>().fetchMonths(AppStrings.userToken);
+        child: BlocBuilder<ConnectivityCubit, ConnectivityState>(
+          builder: (context, connectivityState) {
+            final bool isOffline = connectivityState is ConnectivityDisconnected;
+
+            return Column(
+              children: [
+                const ExpensesAppBar(),
+                Expanded(
+                  child: isOffline
+                      ? Column(
+                          children: [
+                            Expanded(child: NoInternetView(
+                              onRetry: () {
+                                context.read<ConnectivityCubit>().checkConnectivity();
+                              },
+                            )),
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 24.w, vertical: 20.h),
+                              child: QuickActionButton(
+                                label: AppStrings.addExpense.tr(),
+                                icon: Icons.add,
+                                onPressed: () {
+                                  Navigator.pushNamed(context, AppRoutes.addExpense);
+                                },
+                              ),
+                            ),
+                          ],
+                        )
+                      : RefreshIndicator(
+                          color: AppColors.primaryColor,
+                          onRefresh: () async {
+                            context
+                                .read<ExpenseCubit>()
+                                .fetchMonths(AppStrings.userToken);
+                          },
+                          child: SingleChildScrollView(
+                            physics: const BouncingScrollPhysics(
+                              parent: AlwaysScrollableScrollPhysics(),
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.only(
+                                  bottom:
+                                      110.h), // Better padding for BottomNavBar
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const ExpensesBalance(),
+                                  const ExpensesList(),
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 24.w, vertical: 20.h),
+                                    child: QuickActionButton(
+                                      label: AppStrings.addExpense.tr(),
+                                      icon: Icons.add,
+                                      onPressed: () {
+                                        Navigator.pushNamed(
+                                            context, AppRoutes.addExpense);
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                ),
+              ],
+            );
           },
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
-            ),
-            child: Padding(
-              padding: EdgeInsets.only(bottom: 110.h), // Better padding for BottomNavBar
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const ExpensesAppBar(),
-                  const ExpensesBalance(),
-                  const ExpensesList(),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 20.h),
-                    child: QuickActionButton(
-                      label: AppStrings.addExpense.tr(),
-                      icon: Icons.add,
-                      onPressed: () {
-                        Navigator.pushNamed(context, AppRoutes.addExpense);
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ),
       ),
     );

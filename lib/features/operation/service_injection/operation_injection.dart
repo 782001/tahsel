@@ -16,7 +16,11 @@ Future<void> initOperation() async {
 
   // Repository
   sl.registerLazySingleton<OperationRepository>(
-    () => OperationRepositoryImpl(remoteDataSource: sl()),
+    () => OperationRepositoryImpl(
+      remoteDataSource: sl(),
+      offlineSyncRepository: sl(),
+      connectionChecker: sl(),
+    ),
   );
 
   // Data sources

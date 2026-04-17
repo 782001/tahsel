@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
 import 'package:tahsel/core/services/security_service.dart';
@@ -48,17 +49,26 @@ class _SplashScreenState extends State<SplashScreen>
   void _navigateToNext() async {
     await SecurityService.checkSecurity();
     await Future.delayed(const Duration(seconds: 3));
+    
     if (mounted) {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        try {
-          // Verify user still exists in Firebase Authentication
-          await user.reload();
+        // Check internet connection
+        final bool hasInternet = await sl<InternetConnectionChecker>().hasConnection;
+        
+        if (hasInternet) {
+          try {
+            // Verify user still exists in Firebase Authentication if online
+            await user.reload();
+            nav().pushNamedAndRemoveUntil(AppRoutes.mainLayout);
+          } catch (e) {
+            // User deleted/disabled on server or token expired
+            await sl<LogoutUseCase>().call(NoParameters());
+            nav().pushNamedAndRemoveUntil(AppRoutes.login);
+          }
+        } else {
+          // No internet: Trust local session and navigate to Main Layout
           nav().pushNamedAndRemoveUntil(AppRoutes.mainLayout);
-        } catch (e) {
-          // User exists locally but deleted/disabled on server
-          await sl<LogoutUseCase>().call(NoParameters());
-          nav().pushNamedAndRemoveUntil(AppRoutes.login);
         }
       } else {
         nav().pushNamedAndRemoveUntil(AppRoutes.login);

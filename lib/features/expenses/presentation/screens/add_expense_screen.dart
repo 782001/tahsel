@@ -152,9 +152,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   SizedBox(height: 40.h),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 24.w),
-                    child: state is ExpenseLoading
-                        ?  Center(child: CircularProgressIndicator(color: AppColors.primaryColor,))
-                        : QuickActionButton(
+                    child: QuickActionButton(
                             label: AppStrings.addExpense.tr(),
                             icon: Icons.check_circle_outline,
                             onPressed: () {

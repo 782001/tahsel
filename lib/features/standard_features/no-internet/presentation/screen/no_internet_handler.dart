@@ -72,22 +72,7 @@ class _NoInternetHandlerState extends State<NoInternetHandler>
         buildWhen: (previous, current) =>
             previous.runtimeType != current.runtimeType,
         builder: (context, state) {
-          return Stack(
-            children: [
-              widget.child,
-              if (state is ConnectivityDisconnected)
-                FadeTransition(
-                  opacity: _animations.fadeAnimation,
-                  child: NoInternetOverlay(
-                    scaleAnimation: _animations.scaleAnimation,
-                    slideAnimation: _animations.slideAnimation,
-                    colorAnimation: _animations.colorAnimation,
-                    isChecking: _stateManager.isChecking,
-                    onRetry: _handleRetry,
-                  ),
-                ),
-            ],
-          );
+          return widget.child;
         },
       ),
     );

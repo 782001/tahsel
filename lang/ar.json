@@ -193,5 +193,8 @@
   "confirm_delete_debt_message": "هل أنت متأكد من حذف جميع بيانات الدين لهذا العميل؟",
   "delete_debt_success": "تم حذف ديون العميل بنجاح",
   "delete_debt_failed": "فشل في حذف ديون العميل",
-  "sessionExpired": "انتهت صلاحية الجلسة، برجاء تسجيل الدخول مرة أخرى"
+  "no_internet_connection": "لا يوجد اتصال بالإنترنت",
+  "syncing_data": "جاري مزامنة البيانات...",
+  "sync_success": "تمت المزامنة بنجاح",
+  "sync_failed": "فشل في المزامنة"
 }

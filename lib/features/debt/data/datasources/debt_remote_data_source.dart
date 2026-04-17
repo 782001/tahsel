@@ -56,9 +56,10 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
   @override
   Future<void> payDebt(DebtModel debt, PaymentModel payment) async {
     try {
+      final uid = debt.uid;
       final debtRef = firestore
           .collection('users')
-          .doc(debt.uid)
+          .doc(uid)
           .collection('debts')
           .doc(debt.id);
 
@@ -68,6 +69,19 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
       batch.update(debtRef, debt.toJson());
       batch.set(paymentRef, payment.toJson());
+
+      // Update the operation record to keep reports consistent
+      if (debt.operationId.isNotEmpty) {
+        final opRef = firestore
+            .collection('users')
+            .doc(uid)
+            .collection('operations')
+            .doc(debt.operationId);
+        batch.update(opRef, {
+          'paidAmount': debt.paidAmount,
+          'remainingDebt': debt.remainingAmount, // Fix: In operations collection it is 'remainingDebt'
+        });
+      }
 
       await batch.commit();
     } catch (e) {
@@ -98,6 +112,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
         final debtData = doc.data();
         final debtId = doc.id;
+        final operationId = debtData['operationId'] as String?;
         final currentTotal = (debtData['totalAmount'] as num).toDouble();
         final currentPaid = (debtData['paidAmount'] as num).toDouble();
         final currentRemaining = (debtData['remainingAmount'] as num).toDouble();
@@ -126,6 +141,17 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           'remainingAmount': newRemainingAmount,
           'isPaid': isPaid,
         });
+
+        // Also update the linked operation record for real-time consistency in Reports
+        if (operationId != null && operationId.isNotEmpty) {
+          batch.update(
+            firestore.collection('users').doc(uid).collection('operations').doc(operationId),
+            {
+              'paidAmount': newPaidAmount,
+              'remainingDebt': newRemainingAmount, // Fix: In operations collection it is 'remainingDebt'
+            },
+          );
+        }
 
         // Add payment record to sub-collection
         final paymentRef = debtRef.collection('payments').doc();
@@ -162,6 +188,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
       for (var doc in snapshot.docs) {
         final debtData = doc.data();
         final debtId = doc.id;
+        final operationId = debtData['operationId'] as String?;
         final currentTotal = (debtData['totalAmount'] as num).toDouble();
 
         final debtRef = firestore
@@ -175,6 +202,17 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           'remainingAmount': 0.0,
           'isPaid': true,
         });
+
+        // Sync with operations for Report accuracy
+        if (operationId != null && operationId.isNotEmpty) {
+          batch.update(
+            firestore.collection('users').doc(uid).collection('operations').doc(operationId),
+            {
+              'paidAmount': currentTotal,
+              'remainingDebt': 0.0, // Fix: In operations collection it is 'remainingDebt'
+            },
+          );
+        }
 
         // Add payment record to sub-collection
         final paymentRef = debtRef.collection('payments').doc();

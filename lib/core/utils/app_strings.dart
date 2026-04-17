@@ -143,6 +143,9 @@ class AppStrings {
 
   // Quick Add Feature
   static const String quickAdd = "quick_add";
+  // Connectivity
+  static const String noInternetConnection = 'no_internet_connection';
+  
   static const String playStation = "playstation";
   static const String shop = "shop";
   static const String byTime = "by_time";
@@ -237,4 +240,7 @@ class AppStrings {
   static const String deleteDebtSuccess = "delete_debt_success";
   static const String deleteDebtFailed = "delete_debt_failed";
   static const String sessionExpired = 'sessionExpired';
+  static const String syncingData = 'syncing_data';
+  static const String syncSuccess = 'sync_success';
+  static const String syncFailed = 'sync_failed';
 }

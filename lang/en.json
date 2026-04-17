@@ -193,5 +193,8 @@
   "confirm_delete_debt_message": "Are you sure you want to delete all debt data for this customer?",
   "delete_debt_success": "Customer debt deleted successfully",
   "delete_debt_failed": "Failed to delete customer debt",
-  "sessionExpired": "Session expired, please login again"
+  "no_internet_connection": "No internet connection",
+  "syncing_data": "Syncing data...",
+  "sync_success": "Synced successfully",
+  "sync_failed": "Sync failed"
 }

@@ -56,7 +56,7 @@ class TransactionDetailCard extends StatelessWidget {
         ],
         border: Border.all(
           color: hasDebt
-              ? AppColors.warning.withOpacity(0.3)
+              ? AppColors.error.withOpacity(0.3)
               : Colors.transparent,
           width: 1,
         ),
@@ -70,14 +70,14 @@ class TransactionDetailCard extends StatelessWidget {
               Container(
                 width: double.infinity,
                 padding: EdgeInsets.symmetric(vertical: 4.h),
-                color: AppColors.warning.withOpacity(0.1),
+                color: AppColors.error.withOpacity(0.3),
                 child: Center(
                   child: Text(
                     AppStrings.remainingDebt.tr(),
                     style: TextStyles.customStyle(
                       fontSize: 10.sp,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.warning,
+                      color: AppColors.error,
                     ),
                   ),
                 ),
@@ -168,6 +168,70 @@ class TransactionDetailCard extends StatelessWidget {
 
                   SizedBox(height: 16.h),
                   const Divider(height: 1),
+                  
+                  // Debt Breakdown Section
+                  if (hasDebt) ...[
+                    SizedBox(height: 12.h),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                AppStrings.paidAmount.tr(),
+                                style: TextStyles.customStyle(
+                                  fontSize: 11.sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.blackLight.withOpacity(0.5),
+                                ),
+                              ),
+                              SizedBox(height: 4.h),
+                              Text(
+                                "${operation.paidAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}",
+                                style: TextStyles.customStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.success,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          width: 1,
+                          height: 30.h,
+                          color: AppColors.blackLight.withOpacity(0.1),
+                        ),
+                        SizedBox(width: 16.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                AppStrings.remainingDebt.tr(),
+                                style: TextStyles.customStyle(
+                                  fontSize: 11.sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.blackLight.withOpacity(0.5),
+                                ),
+                              ),
+                              SizedBox(height: 4.h),
+                              Text(
+                                "${operation.remainingDebt.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}",
+                                style: TextStyles.customStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.error,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+
                   SizedBox(height: 12.h),
 
                   // Footer: Date & Time + Payment Info
