@@ -62,23 +62,7 @@ class NoInternetCard extends StatelessWidget {
             ),
           ),
           SizedBox(height: 28.h),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            child: isChecking
-                ? SizedBox(
-                    key: const ValueKey('loading'),
-                    width: 40.w,
-                    height: 40.w,
-                    child: const CupertinoActivityIndicator(),
-                  )
-                : CustomButton(
-                    key: const ValueKey('retry'),
-                    text:  "tryAgain".tr(),
-                    height: 48.h,
-                    width: 200.w,
-                    onPressed: onRetry,
-                  ),
-          ),
+         
         ],
       ),
     );

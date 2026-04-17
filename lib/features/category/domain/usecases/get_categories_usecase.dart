@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
+import 'package:tahsel/core/error/failures.dart';
 
 import '../../../../../core/base_usecase/base_usecase.dart';
 import '../entities/get_categories_entity.dart';
@@ -12,7 +13,7 @@ class GetCategoriesUseCase
   GetCategoriesUseCase({required this.baseRepository});
 
   @override
-  Future<Either<dynamic, GetCategoriesResponseEntity>> call(
+  Future<Either<Failure, GetCategoriesResponseEntity>> call(
       GetCategoriesParameters parameters) async {
     return await baseRepository.call(parameters: parameters);
   }

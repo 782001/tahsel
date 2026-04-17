@@ -1,5 +1,6 @@
-import 'package:equatable/equatable.dart';
 import 'package:dartz/dartz.dart';
+import 'package:equatable/equatable.dart';
+import 'package:tahsel/core/error/failures.dart';
 
 import '../../../../../core/base_usecase/base_usecase.dart';
 import '../entities/user_entity.dart';
@@ -11,7 +12,7 @@ class LoginUseCase extends BaseUseCase<UserEntity, LoginParameters> {
   LoginUseCase({required this.baseRepository});
 
   @override
-  Future<Either<dynamic, UserEntity>> call(LoginParameters parameters) async {
+  Future<Either<Failure, UserEntity>> call(LoginParameters parameters) async {
     return await baseRepository.login(parameters: parameters);
   }
 }

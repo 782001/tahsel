@@ -196,5 +196,13 @@
   "no_internet_connection": "لا يوجد اتصال بالإنترنت",
   "syncing_data": "جاري مزامنة البيانات...",
   "sync_success": "تمت المزامنة بنجاح",
-  "sync_failed": "فشل في المزامنة"
+  "sync_failed": "فشل في المزامنة",
+  "auth_user_not_found": "هذا البريد الإلكتروني غير مسجل",
+  "auth_wrong_password": "كلمة المرور غير صحيحة",
+  "auth_invalid_email": "البريد الإلكتروني غير صالح",
+  "auth_invalid_credential": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
+  "auth_user_disabled": "تم تعطيل هذا الحساب",
+  "auth_too_many_requests": "عدد محاولات كثيرة، حاول لاحقاً",
+  "auth_default_error": "حدث خطأ، حاول مرة أخرى",
+  "auth_network_error": "لا يوجد اتصال بالإنترنت"
 }

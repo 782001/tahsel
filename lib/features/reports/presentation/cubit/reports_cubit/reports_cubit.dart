@@ -21,11 +21,14 @@ class ReportsCubit extends Cubit<ReportsState> {
   }) async {
     emit(ReportsLoading());
 
-    final result = await getReportsUseCase(startDate, endDate);
+    final result = await getReportsUseCase(GetReportsParams(startDate: startDate, endDate: endDate));
 
-    result.fold((error) => emit(ReportsError(error)), (reports) {
-      final insights = generateInsightsUseCase(reports, period);
-      emit(ReportsSuccess(reports, insights));
+    result.fold((failure) => emit(ReportsError(failure.message)), (reports) async {
+      final insightsResult = await generateInsightsUseCase(GenerateInsightsParams(reports: reports, period: period));
+      insightsResult.fold(
+        (failure) => emit(ReportsError(failure.message)),
+        (insights) => emit(ReportsSuccess(reports, insights)),
+      );
     });
   }
 

@@ -1,12 +1,13 @@
 import 'package:dartz/dartz.dart';
 import '../entities/debt_entity.dart';
 import '../entities/payment_entity.dart';
+import '../../../../core/error/failures.dart';
 
 abstract class DebtRepository {
-  Future<Either<dynamic, String>> addDebt(DebtEntity debt);
-  Future<Either<dynamic, List<DebtEntity>>> getDebts(String uid);
-  Future<Either<dynamic, void>> payDebt(DebtEntity debt, PaymentEntity payment);
-  Future<Either<dynamic, void>> payTotalDebt(String uid, String customerName, double amount);
-  Future<Either<dynamic, void>> markCustomerAsPaid(String uid, String customerName);
-  Future<Either<dynamic, void>> deleteCustomerDebts(String uid, String customerName);
+  Future<Either<Failure, String>> addDebt(DebtEntity debt);
+  Future<Either<Failure, List<DebtEntity>>> getDebts(String uid);
+  Future<Either<Failure, void>> payDebt(DebtEntity debt, PaymentEntity payment);
+  Future<Either<Failure, void>> payTotalDebt(String uid, String customerName, double amount);
+  Future<Either<Failure, void>> markCustomerAsPaid(String uid, String customerName);
+  Future<Either<Failure, void>> deleteCustomerDebts(String uid, String customerName);
 }

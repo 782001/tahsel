@@ -4,9 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/config/locale/app_localizations.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/base_usecase/base_usecase.dart';
 import 'package:tahsel/features/standard_features/localization/domain/usecases/change_lang.dart';
 import 'package:tahsel/features/standard_features/localization/domain/usecases/get_saved_lang.dart';
-import 'package:tahsel/features/standard_features/localization/domain/usecases/no_parameter.dart';
 
 part 'locale_state.dart';
 
@@ -21,7 +21,7 @@ class LocaleCubit extends Cubit<LocaleState> {
   String currentLangCode = AppStrings.arabicCode;
 
   Future<void> getSavedLang() async {
-    final response = await getSavedLangUseCase.call(NoParemeters());
+    final response = await getSavedLangUseCase.call(const NoParams());
     response.fold((failure) => AppLogger.printMessage(AppStrings.cacheFailure), (
       value,
     ) async {

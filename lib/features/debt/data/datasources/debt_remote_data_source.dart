@@ -257,21 +257,6 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         allRefs.add(doc.reference);
       }
 
-      // Also delete linked operations
-      final operationIds = snapshot.docs
-          .map((doc) => doc.data()['operationId'] as String?)
-          .where((id) => id != null && id.isNotEmpty)
-          .toSet();
-
-      for (var opId in operationIds) {
-        final opRef = firestore
-            .collection('users')
-            .doc(uid)
-            .collection('operations')
-            .doc(opId);
-        allRefs.add(opRef);
-      }
-
       // Batch delete in chunks of 500
       for (var i = 0; i < allRefs.length; i += 500) {
         final chunk = allRefs.sublist(

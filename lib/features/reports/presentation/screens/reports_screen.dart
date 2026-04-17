@@ -10,15 +10,14 @@ import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit
 import 'package:tahsel/features/reports/domain/entities/profit_insight.dart';
 import 'package:tahsel/features/reports/presentation/cubit/reports_cubit/reports_cubit.dart';
 import 'package:tahsel/features/reports/presentation/cubit/reports_cubit/reports_state.dart';
-import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/features/reports/presentation/widgets/profit_insight_ui_extension.dart';
 import 'package:tahsel/features/reports/presentation/widgets/reports_dashboard_card.dart';
 import 'package:tahsel/features/reports/presentation/widgets/reports_net_profit_card.dart';
 import 'package:tahsel/features/reports/presentation/widgets/reports_operational_margin_card.dart';
 import 'package:tahsel/features/reports/presentation/widgets/reports_time_range_selector.dart';
-
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/no_internet_view.dart';
 
 class ReportsScreen extends StatelessWidget {
@@ -108,7 +107,8 @@ class _ReportsViewState extends State<ReportsView> {
                                   height: 400.h,
                                   child: Center(
                                     child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         Text(state.message),
                                         TextButton(
@@ -131,8 +131,8 @@ class _ReportsViewState extends State<ReportsView> {
                                   children: [
                                     ReportsNetProfitCard(
                                       amount: data.netProfit.toStringAsFixed(1),
-                                      difference:
-                                          data.profitDiff.toStringAsFixed(1),
+                                      difference: data.profitDiff
+                                          .toStringAsFixed(1),
                                       isPositive: data.isProfitIncrease,
                                       comparisonText: _getBadgeText(),
                                     ),
@@ -145,14 +145,16 @@ class _ReportsViewState extends State<ReportsView> {
                                           vertical: 8.h,
                                         ),
                                         child: _buildInsightCard(
-                                            state.insights.first),
+                                          state.insights.first,
+                                        ),
                                       ),
 
                                     ReportsDashboardCard(
                                       title: AppStrings.totalIncome.tr(),
                                       subtitle: "",
-                                      amount:
-                                          data.totalIncome.toStringAsFixed(1),
+                                      amount: data.totalIncome.toStringAsFixed(
+                                        1,
+                                      ),
                                       type: BusinessReportType.income,
                                       badgeText:
                                           "${data.isIncomeIncrease ? '+' : '-'}${data.incomeDiff.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${_getBadgeText()}",
@@ -167,8 +169,8 @@ class _ReportsViewState extends State<ReportsView> {
                                             'period': _selectedTimeRange == 0
                                                 ? 'daily'
                                                 : (_selectedTimeRange == 1
-                                                    ? 'weekly'
-                                                    : 'monthly'),
+                                                      ? 'weekly'
+                                                      : 'monthly'),
                                             'type': null,
                                           },
                                         );
@@ -178,8 +180,8 @@ class _ReportsViewState extends State<ReportsView> {
                                     ReportsDashboardCard(
                                       title: AppStrings.totalExpenses.tr(),
                                       subtitle: "",
-                                      amount:
-                                          data.totalExpenses.toStringAsFixed(1),
+                                      amount: data.totalExpenses
+                                          .toStringAsFixed(1),
                                       type: BusinessReportType.expense,
                                       badgeText:
                                           "${data.isExpenseIncrease ? '+' : '-'}${data.expenseDiff.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${_getBadgeText()}",
@@ -191,14 +193,16 @@ class _ReportsViewState extends State<ReportsView> {
                                     ),
 
                                     const Padding(
-                                      padding:
-                                          EdgeInsets.symmetric(horizontal: 24),
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 24,
+                                      ),
                                       child: Divider(height: 32),
                                     ),
 
                                     Padding(
                                       padding: EdgeInsets.symmetric(
-                                          horizontal: 24.w),
+                                        horizontal: 24.w,
+                                      ),
                                       child: Text(
                                         AppStrings.activityDetails.tr(),
                                         style: TextStyles.customStyle(
@@ -214,7 +218,9 @@ class _ReportsViewState extends State<ReportsView> {
                                     ReportsDashboardCard(
                                       title: AppStrings.cafeIncome.tr(),
                                       subtitle: "",
-                                      amount: data.cafeIncome.toStringAsFixed(1),
+                                      amount: data.cafeIncome.toStringAsFixed(
+                                        1,
+                                      ),
                                       type: BusinessReportType.cafe,
                                       badgeText:
                                           "${data.isCafeIncrease ? '+' : '-'}${data.cafeDiff.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${_getBadgeText()}",
@@ -230,8 +236,8 @@ class _ReportsViewState extends State<ReportsView> {
                                             'period': _selectedTimeRange == 0
                                                 ? 'daily'
                                                 : (_selectedTimeRange == 1
-                                                    ? 'weekly'
-                                                    : 'monthly'),
+                                                      ? 'weekly'
+                                                      : 'monthly'),
                                           },
                                         );
                                       },
@@ -258,8 +264,8 @@ class _ReportsViewState extends State<ReportsView> {
                                             'period': _selectedTimeRange == 0
                                                 ? 'daily'
                                                 : (_selectedTimeRange == 1
-                                                    ? 'weekly'
-                                                    : 'monthly'),
+                                                      ? 'weekly'
+                                                      : 'monthly'),
                                           },
                                         );
                                       },
@@ -273,8 +279,9 @@ class _ReportsViewState extends State<ReportsView> {
                                     ReportsDashboardCard(
                                       title: AppStrings.unpaid.tr(),
                                       subtitle: "",
-                                      amount:
-                                          data.unpaidDebts.toStringAsFixed(1),
+                                      amount: data.unpaidDebts.toStringAsFixed(
+                                        1,
+                                      ),
                                       type: BusinessReportType.debts,
                                       badgeText:
                                           "${AppStrings.debts.tr()}: ${data.totalDebts.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}  \n${AppStrings.paid.tr()}: ${data.paidDebts.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}",
@@ -290,7 +297,8 @@ class _ReportsViewState extends State<ReportsView> {
                                       32.verticalSpace,
                                       Padding(
                                         padding: EdgeInsets.symmetric(
-                                            horizontal: 24.w),
+                                          horizontal: 24.w,
+                                        ),
                                         child: Text(
                                           AppStrings.smartInsights.tr(),
                                           style: TextStyles.customStyle(
@@ -301,7 +309,9 @@ class _ReportsViewState extends State<ReportsView> {
                                         ),
                                       ),
                                       12.verticalSpace,
-                                      ...state.insights.skip(1).map(
+                                      ...state.insights
+                                          .skip(1)
+                                          .map(
                                             (insight) => Padding(
                                               padding: EdgeInsets.fromLTRB(
                                                 24.w,

@@ -4,6 +4,7 @@ import '../../domain/repositories/reports_repository.dart';
 import '../datasources/reports_remote_data_source.dart';
 import '../../../operation/data/models/operation_model.dart';
 import '../../../operation/domain/entities/operation_entity.dart';
+import '../../../../core/error/failures.dart';
 
 class ReportsRepositoryImpl implements ReportsRepository {
   final ReportsRemoteDataSource dataSource;
@@ -11,7 +12,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
   ReportsRepositoryImpl(this.dataSource);
 
   @override
-  Future<Either<String, ReportsEntity>> getReports(DateTime startDate, DateTime endDate) async {
+  Future<Either<Failure, ReportsEntity>> getReports(DateTime startDate, DateTime endDate) async {
     try {
       // 1. Fetch Current Period Data
       final currentData = await dataSource.getPeriodData(startDate, endDate);
@@ -73,12 +74,12 @@ class ReportsRepositoryImpl implements ReportsRepository {
 
       return Right(reports);
     } catch (e) {
-      return Left(e.toString());
+      return Left(ServerFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<String, List<OperationEntity>>> getIncomeDetails(
+  Future<Either<Failure, List<OperationEntity>>> getIncomeDetails(
       DateTime startDate, DateTime endDate,
       {String? type}) async {
     try {
@@ -89,7 +90,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
       }).toList();
       return Right(operations);
     } catch (e) {
-      return Left(e.toString());
+      return Left(ServerFailure(e.toString()));
     }
   }
 }

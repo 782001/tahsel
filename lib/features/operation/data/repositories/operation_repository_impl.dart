@@ -7,6 +7,7 @@ import '../datasources/operation_remote_data_source.dart';
 import '../models/operation_model.dart';
 import '../../../offline_sync/domain/repositories/offline_sync_repository.dart';
 import '../../../offline_sync/data/models/offline_record.dart';
+import '../../../../core/error/failures.dart';
 
 class OperationRepositoryImpl implements OperationRepository {
   final OperationRemoteDataSource remoteDataSource;
@@ -20,7 +21,7 @@ class OperationRepositoryImpl implements OperationRepository {
   });
 
   @override
-  Future<Either<dynamic, String>> addOperation(OperationEntity operation) async {
+  Future<Either<Failure, String>> addOperation(OperationEntity operation) async {
     try {
       final model = OperationModel.fromEntity(operation);
       final hasConnection = await connectionChecker.hasConnection;
@@ -48,12 +49,12 @@ class OperationRepositoryImpl implements OperationRepository {
 
         final result = await offlineSyncRepository.saveOfflineRecord(offlineRecord);
         return result.fold(
-          (failure) => Left(failure.toString()),
+          (failure) => Left(failure),
           (_) => Right(localId),
         );
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(ServerFailure(e.toString()));
     }
   }
 }

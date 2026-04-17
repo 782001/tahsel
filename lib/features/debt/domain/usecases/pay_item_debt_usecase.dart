@@ -1,4 +1,6 @@
 import 'package:dartz/dartz.dart';
+import '../../../../core/base_usecase/base_usecase.dart';
+import '../../../../core/error/failures.dart';
 import '../entities/debt_entity.dart';
 import '../entities/payment_entity.dart';
 import '../repositories/debt_repository.dart';
@@ -13,18 +15,19 @@ class PayItemDebtParams {
   });
 }
 
-class PayItemDebtUseCase {
+class PayItemDebtUseCase implements BaseUseCase<void, PayItemDebtParams> {
   final DebtRepository repository;
 
   PayItemDebtUseCase({required this.repository});
 
-  Future<Either<dynamic, void>> call(PayItemDebtParams params) {
+  @override
+  Future<Either<Failure, void>> call(PayItemDebtParams params) {
     if (params.amountToPay <= 0) {
-      return Future.value(const Left('Payment amount must be greater than zero'));
+      return Future.value(const Left(GeneralFailure('Payment amount must be greater than zero')));
     }
 
     if (params.amountToPay > params.debt.remainingAmount) {
-      return Future.value(const Left('Payment amount exceeds remaining debt'));
+      return Future.value(const Left(GeneralFailure('Payment amount exceeds remaining debt')));
     }
 
     final newPaidAmount = params.debt.paidAmount + params.amountToPay;

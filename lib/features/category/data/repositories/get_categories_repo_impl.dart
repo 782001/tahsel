@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:tahsel/core/error/failures.dart';
 
 import '../../domain/entities/get_categories_entity.dart';
 import '../../domain/repositories/get_categories_repo_base.dart';
@@ -11,7 +12,7 @@ class GetCategoriesRepository extends GetCategoriesBaseRepository {
   GetCategoriesRepository(this.baseRemoteDataSource);
 
   @override
-  Future<Either<dynamic, GetCategoriesResponseEntity>> call({
+  Future<Either<Failure, GetCategoriesResponseEntity>> call({
     required GetCategoriesParameters parameters,
   }) async {
     try {
@@ -20,7 +21,7 @@ class GetCategoriesRepository extends GetCategoriesBaseRepository {
       );
       return Right(response);
     } catch (e) {
-      return Left(e);
+      return Left(ServerFailure(e.toString()));
     }
   }
 }

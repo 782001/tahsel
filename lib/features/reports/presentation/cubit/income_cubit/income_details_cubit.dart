@@ -13,10 +13,12 @@ class IncomeDetailsCubit extends Cubit<IncomeDetailsState> {
   Future<void> fetchIncomeDetails(DateTime startDate, DateTime endDate, {String? type}) async {
     emit(IncomeDetailsLoading());
 
-    final result = await getIncomeDetailsUseCase(startDate, endDate, type: type);
+    final result = await getIncomeDetailsUseCase(
+      GetIncomeDetailsParams(startDate: startDate, endDate: endDate, type: type),
+    );
 
     result.fold(
-      (failure) => emit(IncomeDetailsError(message: failure)),
+      (failure) => emit(IncomeDetailsError(message: failure.message)),
       (operations) => emit(IncomeDetailsLoaded(operations: operations)),
     );
   }

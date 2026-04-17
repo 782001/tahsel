@@ -1,13 +1,23 @@
 import 'package:dartz/dartz.dart';
+import '../../../../core/base_usecase/base_usecase.dart';
+import '../../../../core/error/failures.dart';
 import '../repositories/product_repository.dart';
 import '../entities/product_entity.dart';
 
-class SaveProductUseCase {
+class SaveProductParams {
+  final String uid;
+  final ProductEntity product;
+
+  SaveProductParams({required this.uid, required this.product});
+}
+
+class SaveProductUseCase implements BaseUseCase<void, SaveProductParams> {
   final ProductRepository repository;
 
   SaveProductUseCase(this.repository);
 
-  Future<Either<dynamic, void>> call(String uid, ProductEntity product) {
-    return repository.saveProduct(uid, product);
+  @override
+  Future<Either<Failure, void>> call(SaveProductParams params) {
+    return repository.saveProduct(params.uid, params.product);
   }
 }

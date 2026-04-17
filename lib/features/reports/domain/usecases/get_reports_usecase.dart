@@ -1,13 +1,23 @@
 import 'package:dartz/dartz.dart';
+import '../../../../core/base_usecase/base_usecase.dart';
+import '../../../../core/error/failures.dart';
 import '../entities/reports_entity.dart';
 import '../repositories/reports_repository.dart';
 
-class GetReportsUseCase {
+class GetReportsParams {
+  final DateTime startDate;
+  final DateTime endDate;
+
+  GetReportsParams({required this.startDate, required this.endDate});
+}
+
+class GetReportsUseCase implements BaseUseCase<ReportsEntity, GetReportsParams> {
   final ReportsRepository repository;
 
   GetReportsUseCase(this.repository);
 
-  Future<Either<String, ReportsEntity>> call(DateTime startDate, DateTime endDate) {
-    return repository.getReports(startDate, endDate);
+  @override
+  Future<Either<Failure, ReportsEntity>> call(GetReportsParams params) {
+    return repository.getReports(params.startDate, params.endDate);
   }
 }

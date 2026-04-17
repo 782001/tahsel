@@ -4,10 +4,16 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/features/reports/domain/entities/profit_insight.dart';
 
 extension ProfitInsightUIExtension on ProfitInsight {
-  String get message => messageKey.tr(args: [
-        difference.abs().toStringAsFixed(1),
+  String get message => messageKey.tr(
+    args: [
+      difference.abs().toStringAsFixed(1),
+      if (status == ProfitInsightStatus.loss &&
+          netProfit.abs().toStringAsFixed(1) != "0.0")
+        "-${netProfit.abs().toStringAsFixed(1)}"
+      else
         netProfit.abs().toStringAsFixed(1),
-      ]);
+    ],
+  );
 
   Color get color {
     switch (status) {

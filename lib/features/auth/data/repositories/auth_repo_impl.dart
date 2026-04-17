@@ -1,31 +1,40 @@
 import 'package:dartz/dartz.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:tahsel/core/error/exceptions.dart';
+import 'package:tahsel/core/error/failures.dart';
+import 'package:tahsel/core/storage/secure_storage_helper.dart';
 
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repo_base.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../datasources/auth_remote_data_source.dart';
-import 'package:tahsel/core/storage/secure_storage_helper.dart';
 
 class AuthRepositoryImpl implements AuthBaseRepository {
   final AuthRemoteDataSourceBase remoteDataSource;
   final SecureStorageHelper secureStorage;
+  final InternetConnectionChecker connectionChecker;
 
   AuthRepositoryImpl({
     required this.remoteDataSource,
     required this.secureStorage,
+    required this.connectionChecker,
   });
 
   @override
-  Future<Either<dynamic, UserEntity>> login({
+  Future<Either<Failure, UserEntity>> login({
     required LoginParameters parameters,
   }) async {
+    if (!await connectionChecker.hasConnection) {
+      return const Left(ServerFailure('auth_network_error'));
+    }
+
     try {
       final result = await remoteDataSource.login(parameters: parameters);
       return Right(result);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(_mapExceptionToMessage(e.code)));
     } catch (e) {
-      // In a real app, you would handle network errors and exceptions properly
-      // mapping them to failures. Here we are simplifying.
-      return Left(e.toString());
+      return const Left(ServerFailure('auth_default_error'));
     }
   }
 
@@ -34,5 +43,26 @@ class AuthRepositoryImpl implements AuthBaseRepository {
     await secureStorage.deleteData(key: 'token');
     await secureStorage.deleteData(key: 'email');
     await remoteDataSource.logout();
+  }
+
+  String _mapExceptionToMessage(String code) {
+    switch (code) {
+      case 'user-not-found':
+      case 'wrong-password':
+      case 'invalid-credential':
+        return 'auth_invalid_credential';
+      case 'invalid-email':
+        return 'auth_invalid_email';
+      case 'user-disabled':
+        return 'auth_user_disabled';
+      case 'too-many-requests':
+        return 'auth_too_many_requests';
+      case 'network-request-failed':
+        return 'auth_network_error';
+      case 'internal-error':
+        return 'auth_default_error';
+      default:
+        return 'auth_default_error';
+    }
   }
 }

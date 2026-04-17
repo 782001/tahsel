@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/base_usecase/base_usecase.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
@@ -34,7 +35,7 @@ class LogoutButton extends StatelessWidget {
               if (shouldLogout ?? false) {
                 // await sl<SecureStorageHelper>().deleteData(key: 'token');
                 // nav().pushNamedAndRemoveUntil(AppRoutes.login);
-                   await sl<LogoutUseCase>().call(NoParameters());
+                   await sl<LogoutUseCase>().call(NoParams());
           nav().pushNamedAndRemoveUntil(AppRoutes.login);
               }
             },

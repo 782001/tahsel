@@ -1,11 +1,11 @@
 import 'package:dartz/dartz.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
-
 import '../../domain/repositories/offline_sync_repository.dart';
 import '../datasources/offline_local_data_source.dart';
 import '../datasources/offline_remote_data_source.dart';
 import '../models/offline_record.dart';
+import '../../../../core/error/failures.dart';
 
 class OfflineSyncRepositoryImpl implements OfflineSyncRepository {
   final OfflineLocalDataSource localDataSource;
@@ -19,27 +19,27 @@ class OfflineSyncRepositoryImpl implements OfflineSyncRepository {
   });
 
   @override
-  Future<Either<dynamic, void>> saveOfflineRecord(OfflineRecord record) async {
+  Future<Either<Failure, void>> saveOfflineRecord(OfflineRecord record) async {
     try {
       await localDataSource.saveRecord(record);
       return const Right(null);
     } catch (e) {
-      return Left(e.toString());
+      return Left(CacheFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<dynamic, List<OfflineRecord>>> getPendingRecords() async {
+  Future<Either<Failure, List<OfflineRecord>>> getPendingRecords() async {
     try {
       final records = await localDataSource.getPendingRecords();
       return Right(records);
     } catch (e) {
-      return Left(e.toString());
+      return Left(CacheFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<dynamic, void>> syncAllPendingRecords() async {
+  Future<Either<Failure, void>> syncAllPendingRecords() async {
     try {
       final pendingRecords = await localDataSource.getPendingRecords();
       final totalRecords = pendingRecords.length;
@@ -79,13 +79,13 @@ class OfflineSyncRepositoryImpl implements OfflineSyncRepository {
       );
 
       if (failureCount > 0) {
-        return Left("Sync completed with $failureCount failures.");
+        return Left(ServerFailure("Sync completed with $failureCount failures."));
       }
 
       return const Right(null);
     } catch (e) {
       AppLogger.printMessage("[OfflineSync] Global sync error: $e");
-      return Left(e.toString());
+      return Left(ServerFailure(e.toString()));
     }
   }
 }

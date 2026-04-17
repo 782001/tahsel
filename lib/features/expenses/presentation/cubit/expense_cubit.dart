@@ -36,9 +36,8 @@ class ExpenseCubit extends Cubit<ExpenseState> {
     emit(ExpenseLoading());
     final result = await getMonthlyExpensesUseCase(GetMonthlyExpensesParams(uid: uid));
     result.fold(
-      (failure) => emit(ExpenseFailure(message: failure.toString())),
+      (failure) => emit(ExpenseFailure(message: failure.message)),
       (months) async {
-        // Calculate comparing current actual month vs previous actual month
         // Calculate comparing current actual month vs previous actual month
         final now = DateTime.now();
         final thisMonthKeyStr = DateFormatter.formatNumericMonth(now);
@@ -90,7 +89,7 @@ class ExpenseCubit extends Cubit<ExpenseState> {
     emit(ExpenseLoading());
     final result = await getExpensesByMonthUseCase(GetExpensesByMonthParams(uid: uid, monthKey: monthKey));
     result.fold(
-      (failure) => emit(ExpenseFailure(message: failure.toString())),
+      (failure) => emit(ExpenseFailure(message: failure.message)),
       (expenses) => emit(ExpenseMonthDetailsSuccess(
         expenses: expenses, 
         monthKey: monthKey, 
@@ -105,7 +104,7 @@ class ExpenseCubit extends Cubit<ExpenseState> {
     result.fold(
       (failure) {
         AppLogger.printMessage(failure);
-        emit(ExpenseFailure(message: failure.toString()));
+        emit(ExpenseFailure(message: failure.message));
       },
       (id) async {
         emit(ExpenseAddSuccess(expenseId: id));
@@ -116,9 +115,11 @@ class ExpenseCubit extends Cubit<ExpenseState> {
 
   Future<void> deleteExpense(String uid, String expenseId, {String? monthKey, String? monthName}) async {
     emit(ExpenseLoading());
-    final result = await deleteExpenseUseCase(uid, expenseId);
+    final result = await deleteExpenseUseCase(
+      DeleteExpenseParams(uid: uid, expenseId: expenseId),
+    );
     result.fold(
-      (failure) => emit(ExpenseFailure(message: failure.toString())),
+      (failure) => emit(ExpenseFailure(message: failure.message)),
       (_) async {
         emit(const ExpenseDeleteSuccess());
         if (monthKey != null && monthName != null) {
@@ -132,9 +133,11 @@ class ExpenseCubit extends Cubit<ExpenseState> {
 
   Future<void> deleteMonth(String uid, String monthKey) async {
     emit(ExpenseLoading());
-    final result = await deleteMonthExpensesUseCase(uid, monthKey);
+    final result = await deleteMonthExpensesUseCase(
+      DeleteMonthParams(uid: uid, monthKey: monthKey),
+    );
     result.fold(
-      (failure) => emit(ExpenseFailure(message: failure.toString())),
+      (failure) => emit(ExpenseFailure(message: failure.message)),
       (_) async {
         emit(const ExpenseDeleteMonthSuccess());
         await fetchMonths(uid);

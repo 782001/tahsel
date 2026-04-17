@@ -5,6 +5,7 @@ import '../../domain/repositories/debt_repository.dart';
 import '../datasources/debt_remote_data_source.dart';
 import '../models/debt_model.dart';
 import '../models/payment_model.dart';
+import '../../../../core/error/failures.dart';
 
 class DebtRepositoryImpl implements DebtRepository {
   final DebtRemoteDataSource remoteDataSource;
@@ -12,28 +13,28 @@ class DebtRepositoryImpl implements DebtRepository {
   DebtRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<Either<dynamic, String>> addDebt(DebtEntity debt) async {
+  Future<Either<Failure, String>> addDebt(DebtEntity debt) async {
     try {
       final deptModel = DebtModel.fromEntity(debt);
       final id = await remoteDataSource.addDebt(deptModel);
       return Right(id);
     } catch (e) {
-      return Left(e.toString());
+      return Left(ServerFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<dynamic, List<DebtEntity>>> getDebts(String uid) async {
+  Future<Either<Failure, List<DebtEntity>>> getDebts(String uid) async {
     try {
       final result = await remoteDataSource.getDebts(uid);
       return Right(result);
     } catch (e) {
-      return Left(e.toString());
+      return Left(ServerFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<dynamic, void>> payDebt(
+  Future<Either<Failure, void>> payDebt(
       DebtEntity debt, PaymentEntity payment) async {
     try {
       final debtModel = DebtModel.fromEntity(debt);
@@ -41,40 +42,40 @@ class DebtRepositoryImpl implements DebtRepository {
       await remoteDataSource.payDebt(debtModel, paymentModel);
       return const Right(null);
     } catch (e) {
-      return Left(e.toString());
+      return Left(ServerFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<dynamic, void>> payTotalDebt(
+  Future<Either<Failure, void>> payTotalDebt(
       String uid, String customerName, double amount) async {
     try {
       await remoteDataSource.payTotalDebt(uid, customerName, amount);
       return const Right(null);
     } catch (e) {
-      return Left(e.toString());
+      return Left(ServerFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<dynamic, void>> markCustomerAsPaid(
+  Future<Either<Failure, void>> markCustomerAsPaid(
       String uid, String customerName) async {
     try {
       await remoteDataSource.markCustomerAsPaid(uid, customerName);
       return const Right(null);
     } catch (e) {
-      return Left(e.toString());
+      return Left(ServerFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<dynamic, void>> deleteCustomerDebts(
+  Future<Either<Failure, void>> deleteCustomerDebts(
       String uid, String customerName) async {
     try {
       await remoteDataSource.deleteCustomerDebts(uid, customerName);
       return const Right(null);
     } catch (e) {
-      return Left(e.toString());
+      return Left(ServerFailure(e.toString()));
     }
   }
 }

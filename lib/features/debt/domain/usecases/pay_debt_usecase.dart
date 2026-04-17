@@ -1,4 +1,6 @@
 import 'package:dartz/dartz.dart';
+import '../../../../core/base_usecase/base_usecase.dart';
+import '../../../../core/error/failures.dart';
 import '../repositories/debt_repository.dart';
 
 class PayDebtParams {
@@ -13,12 +15,13 @@ class PayDebtParams {
   });
 }
 
-class PayDebtUseCase {
+class PayDebtUseCase implements BaseUseCase<void, PayDebtParams> {
   final DebtRepository repository;
 
   PayDebtUseCase({required this.repository});
 
-  Future<Either<dynamic, void>> call(PayDebtParams params) {
+  @override
+  Future<Either<Failure, void>> call(PayDebtParams params) {
     return repository.payTotalDebt(params.uid, params.customerName, params.amount);
   }
 }

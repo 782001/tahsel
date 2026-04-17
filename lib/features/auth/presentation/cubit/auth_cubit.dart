@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/core/base_usecase/base_usecase.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
 import 'package:tahsel/core/storage/secure_storage_helper.dart';
@@ -60,7 +61,7 @@ class AuthCubit extends Cubit<AuthState> {
       LoginParameters(email: email, password: password),
     );
 
-    result.fold((failure) => emit(AuthFailure(failure.toString())), (
+    result.fold((failure) => emit(AuthFailure(failure.message)), (
       user,
     ) async {
       final secureStorage = sl<SecureStorageHelper>();
@@ -75,7 +76,7 @@ class AuthCubit extends Cubit<AuthState> {
     if (state is AuthUnauthenticated) return;
     
     emit(AuthUnauthenticated());
-    await logoutUseCase.call(NoParameters());
+    await logoutUseCase.call(NoParams());
 
     final context = sl<NavigatorService>().context;
     if (context != null && context.mounted) {

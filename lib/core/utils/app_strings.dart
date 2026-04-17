@@ -243,4 +243,12 @@ class AppStrings {
   static const String syncingData = 'syncing_data';
   static const String syncSuccess = 'sync_success';
   static const String syncFailed = 'sync_failed';
+  static const String authUserNotFound = "auth_user_not_found";
+  static const String authWrongPassword = "auth_wrong_password";
+  static const String authInvalidEmail = "auth_invalid_email";
+  static const String authInvalidCredential = "auth_invalid_credential";
+  static const String authUserDisabled = "auth_user_disabled";
+  static const String authTooManyRequests = "auth_too_many_requests";
+  static const String authDefaultError = "auth_default_error";
+  static const String authNetworkError = "auth_network_error";
 }

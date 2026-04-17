@@ -1,14 +1,17 @@
 import 'package:dartz/dartz.dart';
+import '../../../../core/base_usecase/base_usecase.dart';
+import '../../../../core/error/failures.dart';
 import '../entities/expense_entity.dart';
 import '../repositories/expense_repository.dart';
 import 'package:intl/intl.dart';
 
-class GetMonthlyExpensesUseCase {
+class GetMonthlyExpensesUseCase implements BaseUseCase<List<MonthlyExpenseGroup>, GetMonthlyExpensesParams> {
   final ExpenseRepository repository;
 
   GetMonthlyExpensesUseCase({required this.repository});
 
-  Future<Either<dynamic, List<MonthlyExpenseGroup>>> call(GetMonthlyExpensesParams params) async {
+  @override
+  Future<Either<Failure, List<MonthlyExpenseGroup>>> call(GetMonthlyExpensesParams params) async {
     // Generate the last 12 months keys
     final List<String> monthKeys = [];
     final now = DateTime.now();

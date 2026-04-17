@@ -1,24 +1,35 @@
+import 'package:dartz/dartz.dart';
+import '../../../../core/base_usecase/base_usecase.dart';
+import '../../../../core/error/failures.dart';
 import '../entities/reports_entity.dart';
 import '../entities/profit_insight.dart';
 
-class GenerateInsightsUseCase {
-  List<ProfitInsight> call(ReportsEntity reports, ReportPeriod period) {
+class GenerateInsightsParams {
+  final ReportsEntity reports;
+  final ReportPeriod period;
+
+  GenerateInsightsParams({required this.reports, required this.period});
+}
+
+class GenerateInsightsUseCase implements BaseUseCase<List<ProfitInsight>, GenerateInsightsParams> {
+  @override
+  Future<Either<Failure, List<ProfitInsight>>> call(GenerateInsightsParams params) async {
     final List<ProfitInsight> insights = [];
 
     // 1. Net Profit Analysis (Growth Trend)
-    insights.add(_getNetProfitTrendInsight(reports, period));
+    insights.add(_getNetProfitTrendInsight(params.reports, params.period));
 
     // 2. Extra Smart Insights
-    final incomeInsight = _getIncomeTrendInsight(reports);
+    final incomeInsight = _getIncomeTrendInsight(params.reports);
     if (incomeInsight != null) insights.add(incomeInsight);
 
-    final expenseInsight = _getExpenseTrendInsight(reports);
+    final expenseInsight = _getExpenseTrendInsight(params.reports);
     if (expenseInsight != null) insights.add(expenseInsight);
 
-    final contributionInsight = _getContributionInsight(reports);
+    final contributionInsight = _getContributionInsight(params.reports);
     if (contributionInsight != null) insights.add(contributionInsight);
 
-    return insights;
+    return Right(insights);
   }
 
   // Pure logic for profit growth analysis

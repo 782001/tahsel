@@ -33,7 +33,7 @@ class DebtCubit extends Cubit<DebtState> {
     emit(DebtLoading());
     final result = await addDebtUseCase(AddDebtParams(debt: debt));
     result.fold(
-      (failure) => emit(DebtFailure(message: failure.toString())),
+      (failure) => emit(DebtFailure(message: failure.message)),
       (debtId) => emit(DebtAddSuccess(debtId: debtId)),
     );
   }
@@ -42,7 +42,7 @@ class DebtCubit extends Cubit<DebtState> {
     emit(DebtLoading());
     final result = await getDebtsUseCase(GetDebtsParams(uid: uid));
     result.fold(
-      (failure) => emit(DebtFailure(message: failure.toString())),
+      (failure) => emit(DebtFailure(message: failure.message)),
       (debts) => emit(DebtsFetchSuccess(debts: debts)),
     );
   }
@@ -52,7 +52,7 @@ class DebtCubit extends Cubit<DebtState> {
     final result = await payDebtUseCase(
       PayDebtParams(uid: uid, customerName: customerName, amount: amount),
     );
-    result.fold((failure) => emit(DebtFailure(message: failure.toString())), (
+    result.fold((failure) => emit(DebtFailure(message: failure.message)), (
       _,
     ) {
       emit(const DebtPaymentSuccess());
@@ -62,8 +62,10 @@ class DebtCubit extends Cubit<DebtState> {
 
   Future<void> markAsPaid(String uid, String customerName) async {
     emit(DebtLoading());
-    final result = await markCustomerAsPaidUseCase(uid, customerName);
-    result.fold((failure) => emit(DebtFailure(message: failure.toString())), (
+    final result = await markCustomerAsPaidUseCase(
+      MarkCustomerAsPaidParams(uid: uid, customerName: customerName),
+    );
+    result.fold((failure) => emit(DebtFailure(message: failure.message)), (
       _,
     ) {
       emit(const DebtPaymentSuccess());
@@ -76,7 +78,7 @@ class DebtCubit extends Cubit<DebtState> {
     final result = await payItemDebtUseCase(
       PayItemDebtParams(debt: debt, amountToPay: amount),
     );
-    result.fold((failure) => emit(DebtFailure(message: failure.toString())), (
+    result.fold((failure) => emit(DebtFailure(message: failure.message)), (
       _,
     ) {
       emit(const DebtPaymentSuccess());
@@ -87,7 +89,7 @@ class DebtCubit extends Cubit<DebtState> {
   Future<void> markItemAsPaid(DebtEntity debt) async {
     emit(DebtLoading());
     final result = await markItemAsPaidUseCase(debt);
-    result.fold((failure) => emit(DebtFailure(message: failure.toString())), (
+    result.fold((failure) => emit(DebtFailure(message: failure.message)), (
       _,
     ) {
       emit(const DebtPaymentSuccess());
@@ -97,8 +99,10 @@ class DebtCubit extends Cubit<DebtState> {
 
   Future<void> deleteCustomerDebts(String uid, String customerName) async {
     emit(DebtLoading());
-    final result = await deleteCustomerDebtUseCase(uid, customerName);
-    result.fold((failure) => emit(DebtFailure(message: failure.toString())), (
+    final result = await deleteCustomerDebtUseCase(
+      DeleteDebtParams(uid: uid, customerName: customerName),
+    );
+    result.fold((failure) => emit(DebtFailure(message: failure.message)), (
       _,
     ) {
       emit(const DebtDeleteSuccess());

@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:tahsel/core/base_usecase/base_usecase.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
 import 'package:tahsel/core/services/security_service.dart';
@@ -63,7 +64,7 @@ class _SplashScreenState extends State<SplashScreen>
             nav().pushNamedAndRemoveUntil(AppRoutes.mainLayout);
           } catch (e) {
             // User deleted/disabled on server or token expired
-            await sl<LogoutUseCase>().call(NoParameters());
+            await sl<LogoutUseCase>().call(NoParams());
             nav().pushNamedAndRemoveUntil(AppRoutes.login);
           }
         } else {

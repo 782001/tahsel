@@ -17,9 +17,9 @@ class CustomerCubit extends Cubit<CustomerState> {
 
   Future<void> fetchCustomers(String uid) async {
     emit(CustomerLoading());
-    final result = await getCustomersUseCase(uid);
+    final result = await getCustomersUseCase(GetCustomersParams(uid: uid));
     result.fold(
-      (failure) => emit(CustomerError('Failed to fetch customers')),
+      (failure) => emit(CustomerError(failure.message)),
       (customers) {
         _allCustomers = customers;
         emit(CustomerLoaded(customers));
@@ -34,7 +34,7 @@ class CustomerCubit extends Cubit<CustomerState> {
     );
     
     // We don't await this if we want to be fast, but usually UI expects some feedback or just quiet update
-    final result = await saveCustomerUseCase(uid, customer);
+    final result = await saveCustomerUseCase(SaveCustomerParams(uid: uid, customer: customer));
     result.fold(
       (failure) => null, // Silently fail for now or log
       (_) {

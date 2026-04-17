@@ -196,5 +196,13 @@
   "no_internet_connection": "No internet connection",
   "syncing_data": "Syncing data...",
   "sync_success": "Synced successfully",
-  "sync_failed": "Sync failed"
+  "sync_failed": "Sync failed",
+  "auth_user_not_found": "No user found with this email",
+  "auth_wrong_password": "Incorrect password",
+  "auth_invalid_email": "Invalid email address",
+  "auth_invalid_credential": "Invalid email or password",
+  "auth_user_disabled": "This account has been disabled",
+  "auth_too_many_requests": "Too many attempts, please try again later",
+  "auth_default_error": "Something went wrong, please try again",
+  "auth_network_error": "No internet connection"
 }

@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:tahsel/core/error/exceptions.dart';
 import '../models/user_model.dart';
 import '../../domain/usecases/login_usecase.dart';
 
@@ -25,14 +26,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSourceBase {
         throw Exception("User not found");
       }
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'user-not-found') {
-        throw Exception('No user found for that email.');
-      } else if (e.code == 'wrong-password') {
-        throw Exception('Wrong password provided for that user.');
-      }
-      throw Exception(e.message ?? 'Authentication failed');
+      throw ServerException(e.code);
     } catch (e) {
-      throw Exception(e.toString());
+      throw ServerException('default');
     }
   }
 

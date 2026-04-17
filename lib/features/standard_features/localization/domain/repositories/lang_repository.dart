@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
+import 'package:tahsel/core/error/failures.dart';
 
 abstract class LangRepository {
-  Future<Either<dynamic, bool>> changeLang({required String langCode});
-  Future<Either<dynamic, String>> getSavedLang();
+  Future<Either<Failure, bool>> changeLang({required String langCode});
+  Future<Either<Failure, String>> getSavedLang();
 }

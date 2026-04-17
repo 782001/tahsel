@@ -38,9 +38,29 @@ class _LoginScreenState extends State<LoginScreen> {
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        duration: Duration(milliseconds: 500),
-        content: Text(message),
-        backgroundColor: Colors.red,
+        content: Row(
+          children: [
+            Icon(Icons.error_outline, color: Colors.white, size: 24.sp),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Text(
+                message.tr(),
+                style: TextStyles.customStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        margin: EdgeInsets.all(16.w),
+        elevation: 4,
       ),
     );
   }
@@ -51,7 +71,8 @@ class _LoginScreenState extends State<LoginScreen> {
       create: (context) => sl<AuthCubit>(),
       child: Scaffold(
         backgroundColor: AppColors.scafoldBackGround,
-        body: OfflineBanner(
+        body: SafeArea(
+          child:OfflineBanner(
           child: Stack(
             children: [
               // Background Decoration
@@ -336,7 +357,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ],
           ),
-        ),
+        ),),
       ),
     );
   }

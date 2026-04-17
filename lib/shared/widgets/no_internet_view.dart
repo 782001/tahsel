@@ -51,32 +51,33 @@ class NoInternetView extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
-            if (onRetry != null) ...[
-              32.verticalSpace,
-              SizedBox(
-                width: 180.w,
-                child: ElevatedButton(
-                  onPressed: onRetry,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    "tryAgain".tr(),
-                    style: TextStyles.customStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            // if (onRetry != null) ...[
+            // 32.verticalSpace,
+            // SizedBox(
+            //   width: 180.w,
+            //   child: ElevatedButton(
+            //     onPressed: onRetry,
+            //     style: ElevatedButton.styleFrom(
+            //       backgroundColor: AppColors.primaryColor,
+            //       foregroundColor: Colors.white,
+            //       padding: EdgeInsets.symmetric(vertical: 12.h),
+            //       shape: RoundedRectangleBorder(
+            //         borderRadius: BorderRadius.circular(12.r),
+            //       ),
+            //       elevation: 0,
+            //     ),
+            //     child: Text(
+            //       "tryAgain".tr(),
+            //       style: TextStyles.customStyle(
+            //         fontSize: 16.sp,
+            //         fontWeight: FontWeight.bold,
+            //         color: Colors.white,
+            //       ),
+            //     ),
+            //   ),
+            // ),
+
+            // ],
           ],
         ),
       ),
