@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
+import 'package:tahsel/core/services/navigator_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -163,9 +164,8 @@ class _ReportsViewState extends State<ReportsView> {
                                           "${data.isIncomeIncrease ? '+' : '-'}${data.incomeDiff.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${_getBadgeText()}",
                                       onTap: () {
                                         final dateRange = _getDateRange();
-                                        Navigator.pushNamed(
-                                          context,
-                                          AppRoutes.incomeDetails,
+                                        nav().pushNamedWithArgs(
+                                          routeName: AppRoutes.incomeDetails,
                                           arguments: {
                                             'startDate': dateRange.start,
                                             'endDate': dateRange.end,
@@ -252,9 +252,8 @@ class _ReportsViewState extends State<ReportsView> {
                                             "${data.isCafeIncrease ? '+' : '-'}${data.cafeDiff.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${_getBadgeText()}",
                                         onTap: () {
                                           final dateRange = _getDateRange();
-                                          Navigator.pushNamed(
-                                            context,
-                                            AppRoutes.incomeDetails,
+                                          nav().pushNamedWithArgs(
+                                            routeName: AppRoutes.incomeDetails,
                                             arguments: {
                                               'startDate': dateRange.start,
                                               'endDate': dateRange.end,
@@ -285,9 +284,8 @@ class _ReportsViewState extends State<ReportsView> {
                                             "${data.isPlaystationIncrease ? '+' : '-'}${data.playstationDiff.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${_getBadgeText()}",
                                         onTap: () {
                                           final dateRange = _getDateRange();
-                                          Navigator.pushNamed(
-                                            context,
-                                            AppRoutes.incomeDetails,
+                                          nav().pushNamedWithArgs(
+                                            routeName: AppRoutes.incomeDetails,
                                             arguments: {
                                               'startDate': dateRange.start,
                                               'endDate': dateRange.end,

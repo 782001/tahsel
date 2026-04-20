@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/navigator_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
@@ -93,10 +94,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             label: AppStrings.addExpense.tr(),
                             icon: Icons.add,
                             onPressed: () {
-                              Navigator.pushNamed(
-                                context,
-                                AppRoutes.addExpense,
-                              );
+                              nav().pushNamed(AppRoutes.addExpense);
                             },
                           ),
                         ),
