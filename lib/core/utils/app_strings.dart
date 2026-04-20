@@ -251,4 +251,6 @@ class AppStrings {
   static const String authTooManyRequests = "auth_too_many_requests";
   static const String authDefaultError = "auth_default_error";
   static const String authNetworkError = "auth_network_error";
+  static const String pendingUpload = "pending_upload";
+  static const String waitingForInternet = "waiting_for_internet";
 }

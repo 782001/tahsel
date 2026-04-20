@@ -9,12 +9,9 @@ import 'package:tahsel/features/expenses/presentation/cubit/expense_state.dart';
 import 'package:tahsel/features/expenses/presentation/widgets/expenses_app_bar.dart';
 import 'package:tahsel/features/expenses/presentation/widgets/expenses_balance.dart';
 import 'package:tahsel/features/expenses/presentation/widgets/expenses_list.dart';
-import 'package:tahsel/shared/widgets/buttons/quick_action_button.dart';
+import 'package:tahsel/features/offline_sync/presentation/cubit/offline_sync_cubit.dart';
 import 'package:tahsel/routes/app_routes.dart';
-
-import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
-import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
-import 'package:tahsel/shared/widgets/no_internet_view.dart';
+import 'package:tahsel/shared/widgets/buttons/quick_action_button.dart';
 
 class ExpensesScreen extends StatefulWidget {
   const ExpensesScreen({super.key});
@@ -32,97 +29,84 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<ExpenseCubit, ExpenseState>(
-      listenWhen: (previous, current) =>
-          current is ExpenseDeleteMonthSuccess || current is ExpenseFailure,
-      listener: (context, state) {
-        if (state is ExpenseDeleteMonthSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(AppStrings.deleteSuccess.tr()),
-              backgroundColor: AppColors.success,
-            ),
-          );
-        } else if (state is ExpenseFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-      },
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<ExpenseCubit, ExpenseState>(
+          listenWhen: (previous, current) =>
+              current is ExpenseDeleteMonthSuccess || current is ExpenseFailure,
+          listener: (context, state) {
+            if (state is ExpenseDeleteMonthSuccess) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(AppStrings.deleteSuccess.tr()),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+            } else if (state is ExpenseFailure) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: AppColors.error,
+                ),
+              );
+            }
+          },
+        ),
+        BlocListener<OfflineSyncCubit, OfflineSyncState>(
+          listener: (context, state) {
+            if (state is OfflineSyncSuccess) {
+              // Refresh list when sync is successful
+              context.read<ExpenseCubit>().fetchMonths(AppStrings.userToken);
+            }
+          },
+        ),
+      ],
       child: SafeArea(
-        child: BlocBuilder<ConnectivityCubit, ConnectivityState>(
-          builder: (context, connectivityState) {
-            final bool isOffline = connectivityState is ConnectivityDisconnected;
-
-            return Column(
-              children: [
-                const ExpensesAppBar(),
-                Expanded(
-                  child: isOffline
-                      ? Column(
-                          children: [
-                            Expanded(child: NoInternetView(
-                              onRetry: () {
-                                context.read<ConnectivityCubit>().checkConnectivity();
-                              },
-                            )),
-                            Padding(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 24.w, vertical: 20.h),
-                              child: QuickActionButton(
-                                label: AppStrings.addExpense.tr(),
-                                icon: Icons.add,
-                                onPressed: () {
-                                  Navigator.pushNamed(context, AppRoutes.addExpense);
-                                },
-                              ),
-                            ),
-                          ],
-                        )
-                      : RefreshIndicator(
-                          color: AppColors.primaryColor,
-                          onRefresh: () async {
-                            context
-                                .read<ExpenseCubit>()
-                                .fetchMonths(AppStrings.userToken);
-                          },
-                          child: SingleChildScrollView(
-                            physics: const BouncingScrollPhysics(
-                              parent: AlwaysScrollableScrollPhysics(),
-                            ),
-                            child: Padding(
-                              padding: EdgeInsets.only(
-                                  bottom:
-                                      110.h), // Better padding for BottomNavBar
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const ExpensesBalance(),
-                                  const ExpensesList(),
-                                  Padding(
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 24.w, vertical: 20.h),
-                                    child: QuickActionButton(
-                                      label: AppStrings.addExpense.tr(),
-                                      icon: Icons.add,
-                                      onPressed: () {
-                                        Navigator.pushNamed(
-                                            context, AppRoutes.addExpense);
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+        child: Column(
+          children: [
+            const ExpensesAppBar(),
+            Expanded(
+              child: RefreshIndicator(
+                color: AppColors.primaryColor,
+                onRefresh: () async {
+                  context.read<ExpenseCubit>().fetchMonths(
+                    AppStrings.userToken,
+                  );
+                },
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: 110.h),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const ExpensesBalance(),
+                        const ExpensesList(),
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 24.w,
+                            vertical: 20.h,
+                          ),
+                          child: QuickActionButton(
+                            label: AppStrings.addExpense.tr(),
+                            icon: Icons.add,
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                context,
+                                AppRoutes.addExpense,
+                              );
+                            },
                           ),
                         ),
+                      ],
+                    ),
+                  ),
                 ),
-              ],
-            );
-          },
+              ),
+            ),
+          ],
         ),
       ),
     );

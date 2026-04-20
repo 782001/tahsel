@@ -14,9 +14,15 @@ class ExpenseModel extends ExpenseEntity {
 
   factory ExpenseModel.fromJson(Map<String, dynamic> json, String id) {
     final createdAtData = json['createdAt'];
-    final DateTime createdAtDate = createdAtData is Timestamp 
-        ? createdAtData.toDate() 
-        : DateTime.now();
+    DateTime createdAtDate;
+    
+    if (createdAtData is Timestamp) {
+      createdAtDate = createdAtData.toDate();
+    } else if (createdAtData is String) {
+      createdAtDate = DateTime.parse(createdAtData);
+    } else {
+      createdAtDate = DateTime.now();
+    }
 
     String monthKeyVal = json['monthKey'] as String? ?? '';
     if (monthKeyVal.isEmpty) {
@@ -40,7 +46,7 @@ class ExpenseModel extends ExpenseEntity {
       'amount': amount,
       'category': category,
       'description': description,
-      'createdAt': Timestamp.fromDate(createdAt),
+      'createdAt': createdAt.toIso8601String(), // Store as string for easier JSON serialization
       'monthKey': monthKey,
     };
   }

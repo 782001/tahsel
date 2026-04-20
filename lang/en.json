@@ -204,5 +204,7 @@
   "auth_user_disabled": "This account has been disabled",
   "auth_too_many_requests": "Too many attempts, please try again later",
   "auth_default_error": "Something went wrong, please try again",
-  "auth_network_error": "No internet connection"
+  "auth_network_error": "No internet connection",
+  "pending_upload": "Pending Upload",
+  "waiting_for_internet": "Waiting for internet..."
 }

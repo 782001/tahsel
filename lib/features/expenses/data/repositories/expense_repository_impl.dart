@@ -32,7 +32,7 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
       } else {
         final localId = DateTime.now().millisecondsSinceEpoch.toString();
         final Map<String, dynamic> rawJson = model.toJson();
-        rawJson['createdAt'] = null; // Replaced during sync
+        // Keep the user-selected createdAt date for accurate syncing
         
         final payloadJson = jsonEncode(rawJson);
         
@@ -106,5 +106,10 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
+  }
+
+  @override
+  Future<Either<Failure, List<OfflineRecord>>> getPendingExpenses() async {
+    return await offlineSyncRepository.getPendingRecords();
   }
 }

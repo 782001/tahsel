@@ -8,4 +8,8 @@ class DateFormatter {
   static String formatNumericMonth(DateTime date) {
     return DateFormat('yyyy/MM').format(date);
   }
+
+  static String formatArabicMonthYear(DateTime date) {
+    return DateFormat('MMMM yyyy', 'ar').format(date);
+  }
 }

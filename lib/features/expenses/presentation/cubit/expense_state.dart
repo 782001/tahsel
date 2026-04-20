@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/expense_entity.dart';
 import '../../domain/entities/expense_stats.dart';
+import '../../../offline_sync/data/models/offline_record.dart';
 
 abstract class ExpenseState extends Equatable {
   const ExpenseState();
@@ -16,11 +17,16 @@ class ExpenseLoading extends ExpenseState {}
 class ExpenseFetchSuccess extends ExpenseState {
   final List<MonthlyExpenseGroup> months;
   final ExpenseStats stats;
+  final List<OfflineRecord> pendingRecords;
 
-  const ExpenseFetchSuccess({required this.months, required this.stats});
+  const ExpenseFetchSuccess({
+    required this.months, 
+    required this.stats,
+    this.pendingRecords = const [],
+  });
 
   @override
-  List<Object?> get props => [months, stats];
+  List<Object?> get props => [months, stats, pendingRecords];
 }
 
 class ExpenseMonthDetailsSuccess extends ExpenseState {
