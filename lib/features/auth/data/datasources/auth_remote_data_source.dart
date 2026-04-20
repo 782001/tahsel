@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tahsel/core/error/exceptions.dart';
 import '../models/user_model.dart';
@@ -10,8 +11,12 @@ abstract class AuthRemoteDataSourceBase {
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSourceBase {
   final FirebaseAuth firebaseAuth;
+  final FirebaseFirestore firestore;
 
-  AuthRemoteDataSourceImpl({required this.firebaseAuth});
+  AuthRemoteDataSourceImpl({
+    required this.firebaseAuth,
+    required this.firestore,
+  });
 
   @override
   Future<UserModel> login({required LoginParameters parameters}) async {
@@ -21,7 +26,17 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSourceBase {
         password: parameters.password,
       );
       if (userCredential.user != null) {
-        return UserModel.fromFirebaseUser(userCredential.user!);
+        // Fetch user type from Firestore
+        final doc = await firestore
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .get();
+        final userType = doc.exists ? doc.get('userType') : 'cafe';
+        
+        return UserModel.fromFirebaseUser(
+          userCredential.user!,
+          userType: userType,
+        );
       } else {
         throw Exception("User not found");
       }

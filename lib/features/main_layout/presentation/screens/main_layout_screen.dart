@@ -54,7 +54,7 @@ class MainLayoutScreen extends StatelessWidget {
                     body: SafeArea(
                       child: SyncStatusListener(
                         child: OfflineBanner(
-                          child: cubit.bottomScreens[cubit.currentIndex],
+                          child: cubit.screens[cubit.currentIndex],
                         ),
                       ),
                     ),

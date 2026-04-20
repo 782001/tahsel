@@ -67,7 +67,8 @@ class AuthCubit extends Cubit<AuthState> {
       final secureStorage = sl<SecureStorageHelper>();
       await secureStorage.saveData(key: 'token', value: user.uid);
       await secureStorage.saveData(key: 'email', value: user.email);
-      AppLogger.printMessage('User logged in successfully: ${user.uid}');
+      await secureStorage.saveData(key: AppStrings.userTypeKey, value: user.userType);
+      AppLogger.printMessage('User logged in successfully: ${user.uid} (${user.userType})');
       emit(AuthSuccess(user));
     });
   }

@@ -156,6 +156,7 @@ class _ReportsViewState extends State<ReportsView> {
                                         1,
                                       ),
                                       type: BusinessReportType.income,
+                                      isShop: context.read<MainLayoutCubit>().isShop,
                                       badgeText:
                                           "${data.isIncomeIncrease ? '+' : '-'}${data.incomeDiff.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${_getBadgeText()}",
                                       onTap: () {
@@ -183,6 +184,7 @@ class _ReportsViewState extends State<ReportsView> {
                                       amount: data.totalExpenses
                                           .toStringAsFixed(1),
                                       type: BusinessReportType.expense,
+                                      isShop: context.read<MainLayoutCubit>().isShop,
                                       badgeText:
                                           "${data.isExpenseIncrease ? '+' : '-'}${data.expenseDiff.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${_getBadgeText()}",
                                       onTap: () {
@@ -216,12 +218,15 @@ class _ReportsViewState extends State<ReportsView> {
 
                                     // Restore Cafe Income Card
                                     ReportsDashboardCard(
-                                      title: AppStrings.cafeIncome.tr(),
+                                      title: context.watch<MainLayoutCubit>().isShop
+                                          ? AppStrings.shopIncome.tr()
+                                          : AppStrings.cafeIncome.tr(),
                                       subtitle: "",
                                       amount: data.cafeIncome.toStringAsFixed(
                                         1,
                                       ),
                                       type: BusinessReportType.cafe,
+                                      isShop: context.watch<MainLayoutCubit>().isShop,
                                       badgeText:
                                           "${data.isCafeIncrease ? '+' : '-'}${data.cafeDiff.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${_getBadgeText()}",
                                       onTap: () {
@@ -238,38 +243,41 @@ class _ReportsViewState extends State<ReportsView> {
                                                 : (_selectedTimeRange == 1
                                                       ? 'weekly'
                                                       : 'monthly'),
+                                            'isShop': context.read<MainLayoutCubit>().isShop,
                                           },
                                         );
                                       },
                                     ),
 
                                     // Restore Playstation Income Card
-                                    ReportsDashboardCard(
-                                      title: AppStrings.playstationIncome.tr(),
-                                      subtitle: "",
-                                      amount: data.playstationIncome
-                                          .toStringAsFixed(1),
-                                      type: BusinessReportType.playstation,
-                                      badgeText:
-                                          "${data.isPlaystationIncrease ? '+' : '-'}${data.playstationDiff.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${_getBadgeText()}",
-                                      onTap: () {
-                                        final dateRange = _getDateRange();
-                                        Navigator.pushNamed(
-                                          context,
-                                          AppRoutes.incomeDetails,
-                                          arguments: {
-                                            'startDate': dateRange.start,
-                                            'endDate': dateRange.end,
-                                            'type': AppStrings.playStation,
-                                            'period': _selectedTimeRange == 0
-                                                ? 'daily'
-                                                : (_selectedTimeRange == 1
-                                                      ? 'weekly'
-                                                      : 'monthly'),
-                                          },
-                                        );
-                                      },
-                                    ),
+                                    if (context.read<MainLayoutCubit>().isCafe)
+                                      ReportsDashboardCard(
+                                        title: AppStrings.playstationIncome.tr(),
+                                        subtitle: "",
+                                        amount: data.playstationIncome
+                                            .toStringAsFixed(1),
+                                        type: BusinessReportType.playstation,
+                                        badgeText:
+                                            "${data.isPlaystationIncrease ? '+' : '-'}${data.playstationDiff.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${_getBadgeText()}",
+                                        onTap: () {
+                                          final dateRange = _getDateRange();
+                                          Navigator.pushNamed(
+                                            context,
+                                            AppRoutes.incomeDetails,
+                                            arguments: {
+                                              'startDate': dateRange.start,
+                                              'endDate': dateRange.end,
+                                              'type': AppStrings.playStation,
+                                              'period': _selectedTimeRange == 0
+                                                  ? 'daily'
+                                                  : (_selectedTimeRange == 1
+                                                        ? 'weekly'
+                                                        : 'monthly'),
+                                              'isShop': context.read<MainLayoutCubit>().isShop,
+                                            },
+                                          );
+                                        },
+                                      ),
 
                                     ReportsOperationalMarginCard(
                                       amount: data.netProfit.toStringAsFixed(1),
@@ -311,6 +319,13 @@ class _ReportsViewState extends State<ReportsView> {
                                       12.verticalSpace,
                                       ...state.insights
                                           .skip(1)
+                                          .where((insight) {
+                                            if (context.read<MainLayoutCubit>().isShop) {
+                                              return !insight.messageKey.toLowerCase().contains('ps') &&
+                                                  !insight.messageKey.toLowerCase().contains('playstation');
+                                            }
+                                            return true;
+                                          })
                                           .map(
                                             (insight) => Padding(
                                               padding: EdgeInsets.fromLTRB(
@@ -420,7 +435,7 @@ class _ReportsViewState extends State<ReportsView> {
           12.horizontalSpace,
           Expanded(
             child: Text(
-              insight.message,
+              insight.getMessage(context.read<MainLayoutCubit>().isShop),
               style: TextStyles.customStyle(
                 fontSize: 13.sp,
                 fontWeight: FontWeight.w600,

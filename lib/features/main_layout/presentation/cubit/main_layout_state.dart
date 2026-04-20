@@ -7,3 +7,9 @@ class MainLayoutChangeBottomNavIndex extends MainLayoutState {
 
   MainLayoutChangeBottomNavIndex(this.index);
 }
+
+class MainLayoutUserTypeLoaded extends MainLayoutState {
+  final String userType;
+
+  MainLayoutUserTypeLoaded(this.userType);
+}

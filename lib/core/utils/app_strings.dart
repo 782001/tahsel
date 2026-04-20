@@ -60,7 +60,13 @@ class AppStrings {
   static const String english = "english";
   static const String englishDesc = "english_desc";
   static const String languageChangeInfo = "language_change_info";
-  static const String autoCleanReports = "auto_clean_reports";
+  static const String userTypeKey = 'userType';
+  static const String cafe = 'cafe';
+  static const String shop = 'shop';
+  static const String shopIncome = "shop_income";
+  static const String shopManagement = "shop_management";
+  static const String shopIncomeDetails = "shop_income_details";
+  static const String shopManagementDetails = "shop_management_details";
   static const String autoCleanReportsDesc = "auto_clean_reports_desc";
   static const String dataCleanedSuccessfully = "data_cleaned_successfully";
 
@@ -150,7 +156,6 @@ class AppStrings {
   static const String noInternetConnection = 'no_internet_connection';
   
   static const String playStation = "playstation";
-  static const String shop = "shop";
   static const String byTime = "by_time";
   static const String byTurn = "by_turn";
   static const String customerName = "customer_name";
@@ -220,6 +225,7 @@ class AppStrings {
   static const String insightNoPreviousData = "insight_no_previous_data";
   static const String smartInsights = "smart_insights";
   static const String insightIncomeUpCafe = "insight_income_up_cafe";
+  static const String insightIncomeUpShop = "insight_income_up_shop";
   static const String insightIncomeUpPs = "insight_income_up_ps";
   static const String insightExpensesUpHigh = "insight_expenses_up_high";
   static const String insightPsLowContribution = "insight_ps_low_contribution";

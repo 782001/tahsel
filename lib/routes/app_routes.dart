@@ -54,6 +54,7 @@ class AppRoutes {
             startDate: args['startDate'] as DateTime,
             endDate: args['endDate'] as DateTime,
             period: args['period'] as String,
+            isShop: args['isShop'] as bool,
             type: args['type'] as String?,
           ),
         );

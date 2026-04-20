@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tahsel/features/auth/service_injection/auth_injection.dart';
@@ -29,6 +30,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 final sl = GetIt.instance;
 
 Future<void> initDependencies() async {
+  // firebase
+  if (!sl.isRegistered<FirebaseAuth>()) {
+    sl.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
+  }
+  if (!sl.isRegistered<FirebaseFirestore>()) {
+    sl.registerLazySingleton<FirebaseFirestore>(() => FirebaseFirestore.instance);
+  }
+
   //! Features
   await CategoryDI.init();
   AuthInjection.init(sl);
@@ -39,9 +48,6 @@ Future<void> initDependencies() async {
   await initExpense();
   await OfflineSyncInjection.init(sl);
   ReportsInjection.init(sl);
-
-  // firebase
-  sl.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
 
   // localization
   /// -----localizationCubit------
@@ -60,6 +66,8 @@ Future<void> initDependencies() async {
     () => MainLayoutCubit(
       cleanupOldReportsUseCase: sl(),
       cashHelper: sl(),
+      secureStorage: sl(),
+      firestore: sl(),
     ),
   );
 

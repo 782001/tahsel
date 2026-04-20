@@ -14,6 +14,7 @@ class ReportsDashboardCard extends StatelessWidget {
   final BusinessReportType type;
   final String? badgeText;
   final bool hasActiveStatus;
+  final bool isShop;
   final VoidCallback? onTap;
 
   const ReportsDashboardCard({
@@ -24,6 +25,7 @@ class ReportsDashboardCard extends StatelessWidget {
     required this.type,
     this.badgeText,
     this.hasActiveStatus = false,
+    this.isShop = false,
     this.onTap,
   });
 
@@ -219,7 +221,7 @@ class ReportsDashboardCard extends StatelessWidget {
       case BusinessReportType.playstation:
         return Icons.videogame_asset_outlined;
       case BusinessReportType.cafe:
-        return Icons.coffee_outlined;
+        return isShop ? Icons.storefront_outlined : Icons.coffee_outlined;
       case BusinessReportType.debts:
         return Icons.warning_amber_rounded;
       case BusinessReportType.income:

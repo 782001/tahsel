@@ -36,7 +36,10 @@ class AuthInjection {
 
     // Data sources
     sl.registerLazySingleton<AuthRemoteDataSourceBase>(
-      () => AuthRemoteDataSourceImpl(firebaseAuth: sl()),
+      () => AuthRemoteDataSourceImpl(
+        firebaseAuth: sl(),
+        firestore: sl(),
+      ),
     );
   }
 }

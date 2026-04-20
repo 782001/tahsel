@@ -3,6 +3,7 @@ import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:tahsel/core/error/exceptions.dart';
 import 'package:tahsel/core/error/failures.dart';
 import 'package:tahsel/core/storage/secure_storage_helper.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repo_base.dart';
@@ -42,6 +43,7 @@ class AuthRepositoryImpl implements AuthBaseRepository {
   Future<void> logout() async {
     await secureStorage.deleteData(key: 'token');
     await secureStorage.deleteData(key: 'email');
+    await secureStorage.deleteData(key: AppStrings.userTypeKey);
     await remoteDataSource.logout();
   }
 

@@ -5,14 +5,16 @@ class UserModel extends UserEntity {
   const UserModel({
     required super.uid,
     required super.email,
+    required super.userType,
     super.displayName,
   });
 
-  factory UserModel.fromFirebaseUser(User user) {
+  factory UserModel.fromFirebaseUser(User user, {String? userType}) {
     return UserModel(
       uid: user.uid,
       email: user.email ?? '',
       displayName: user.displayName,
+      userType: userType ?? 'cafe',
     );
   }
 }

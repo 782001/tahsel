@@ -9,6 +9,8 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
+import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_state.dart';
 import 'package:tahsel/features/operation/presentation/widgets/quick_add_mode_selector.dart';
 import 'package:tahsel/features/operation/presentation/widgets/quick_add_shop_form.dart';
 import 'package:tahsel/features/operation/presentation/widgets/quick_add_sub_tab_header.dart';
@@ -58,6 +60,12 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+
+    // Check user type from MainLayoutCubit
+    final layoutCubit = context.read<MainLayoutCubit>();
+    if (layoutCubit.isShop) {
+      _selectedMode = QuickAddMode.shop;
+    }
 
     final uid = sl<FirebaseAuth>().currentUser?.uid;
     if (uid != null) {
@@ -241,9 +249,17 @@ class _HomeScreenState extends State<HomeScreen> {
         BlocProvider(create: (context) => sl<OperationCubit>()),
         BlocProvider(create: (context) => sl<DebtCubit>()),
       ],
-      child: SafeArea(
         child: MultiBlocListener(
           listeners: [
+            BlocListener<MainLayoutCubit, MainLayoutState>(
+              listener: (context, state) {
+                if (state is MainLayoutUserTypeLoaded) {
+                  if (context.read<MainLayoutCubit>().isShop) {
+                    setState(() => _selectedMode = QuickAddMode.shop);
+                  }
+                }
+              },
+            ),
             BlocListener<DebtCubit, DebtState>(
               listener: (context, state) {
                 if (state is DebtAddSuccess) {
@@ -362,17 +378,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         20.verticalSpace,
                         // Mode Selection
-                        QuickAddModeSelector(
-                          selectedMode: _selectedMode,
-                          onModeChanged: (mode) {
-                            setState(() {
-                              _selectedMode = mode;
-                              if (_selectedMode == QuickAddMode.playStation) {
-                                _psSubMode = PlayStationMode.time;
-                              }
-                            });
-                          },
-                        ),
+                        if (context.read<MainLayoutCubit>().isCafe && !context.watch<MainLayoutCubit>().isShop)
+                          QuickAddModeSelector(
+                            selectedMode: _selectedMode,
+                            onModeChanged: (mode) {
+                              setState(() {
+                                _selectedMode = mode;
+                                if (_selectedMode == QuickAddMode.playStation) {
+                                  _psSubMode = PlayStationMode.time;
+                                }
+                              });
+                            },
+                          ),
                         const SizedBox(height: 24),
 
                         // Mode Body
@@ -509,7 +526,7 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
         ),
-      ),
+      
     );
   }
 }

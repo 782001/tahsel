@@ -6,6 +6,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:tahsel/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
 
 import '../cubit/income_cubit/income_details_cubit.dart';
@@ -17,12 +18,14 @@ class IncomeDetailsScreen extends StatelessWidget {
   final DateTime endDate;
   final String? type; // AppStrings.shop, AppStrings.playStation, or null
   final String period; // 'daily', 'weekly', 'monthly'
+  final bool isShop;
 
   const IncomeDetailsScreen({
     super.key,
     required this.startDate,
     required this.endDate,
     required this.period,
+    required this.isShop,
     this.type,
   });
 
@@ -183,17 +186,20 @@ class IncomeDetailsScreen extends StatelessWidget {
 
   String _getScreenTitle(BuildContext context, String? type, String period) {
     String periodStr = '';
-    if (period == 'daily')
+    if (period == 'daily') {
       periodStr = AppStrings.periodDaily.tr();
-    else if (period == 'weekly')
+    } else if (period == 'weekly') {
       periodStr = AppStrings.periodWeekly.tr();
-    else if (period == 'monthly')
+    } else if (period == 'monthly') {
       periodStr = AppStrings.periodMonthly.tr();
+    }
 
     if (type == null) {
       return "${AppStrings.totalIncome.tr()} ($periodStr)";
     } else if (type.toLowerCase() == AppStrings.shop.toLowerCase()) {
-      return "${AppStrings.cafeIncome.tr()} ($periodStr)";
+      return isShop
+          ? "${AppStrings.shopIncome.tr()} ($periodStr)"
+          : "${AppStrings.cafeIncome.tr()} ($periodStr)";
     } else if (type.toLowerCase() == AppStrings.playStation.toLowerCase()) {
       return "${AppStrings.playstationIncome.tr()} ($periodStr)";
     }
