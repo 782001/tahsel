@@ -7,6 +7,7 @@ import '../domain/repositories/reports_repository.dart';
 import '../domain/usecases/generate_insights_usecase.dart';
 import '../domain/usecases/get_income_details_usecase.dart';
 import '../domain/usecases/get_reports_usecase.dart';
+import '../domain/usecases/cleanup_old_reports_usecase.dart';
 import '../presentation/cubit/income_cubit/income_details_cubit.dart';
 import '../presentation/cubit/reports_cubit/reports_cubit.dart';
 
@@ -23,6 +24,7 @@ class ReportsInjection {
     sl.registerLazySingleton(() => GetReportsUseCase(sl()));
     sl.registerLazySingleton(() => GenerateInsightsUseCase());
     sl.registerLazySingleton(() => GetIncomeDetailsUseCase(sl()));
+    sl.registerLazySingleton(() => CleanupOldReportsUseCase(sl()));
 
     // Repository
     sl.registerLazySingleton<ReportsRepository>(

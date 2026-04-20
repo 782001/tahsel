@@ -1,12 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../../core/error/firebase_error_handler.dart';
+import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+
+import '../../../../core/error/firebase_error_handler.dart';
 
 abstract class ReportsRemoteDataSource {
   Future<Map<String, double>> getPeriodData(DateTime start, DateTime end);
   Future<List<Map<String, dynamic>>> getIncomeDetails(
-      DateTime start, DateTime end,
-      {String? type});
+    DateTime start,
+    DateTime end, {
+    String? type,
+  });
+  Future<int> cleanupOldReports();
 }
 
 class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
@@ -15,7 +20,10 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
   ReportsRemoteDataSourceImpl(this.firestore);
 
   @override
-  Future<Map<String, double>> getPeriodData(DateTime start, DateTime end) async {
+  Future<Map<String, double>> getPeriodData(
+    DateTime start,
+    DateTime end,
+  ) async {
     try {
       final uid = AppStrings.userToken;
       if (uid.isEmpty) return {};
@@ -43,7 +51,7 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
         final type = (data['type'] ?? '').toString().toLowerCase();
 
         totalIncome += totalAmount;
-        
+
         // Breakdown by type (shop mapping to cafe report)
         if (type == AppStrings.shop.toLowerCase()) {
           cafeIncome += totalAmount;
@@ -102,8 +110,10 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
 
   @override
   Future<List<Map<String, dynamic>>> getIncomeDetails(
-      DateTime start, DateTime end,
-      {String? type}) async {
+    DateTime start,
+    DateTime end, {
+    String? type,
+  }) async {
     try {
       final uid = AppStrings.userToken;
       if (uid.isEmpty) return [];
@@ -124,16 +134,17 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
       for (var doc in snapshot.docs) {
         final data = doc.data();
         data['id'] = doc.id; // Inject document ID
-        
+
         if (type != null && type.isNotEmpty) {
-          if ((data['type'] ?? '').toString().toLowerCase() == type.toLowerCase()) {
+          if ((data['type'] ?? '').toString().toLowerCase() ==
+              type.toLowerCase()) {
             results.add(data);
           }
         } else {
           results.add(data);
         }
       }
-      
+
       // Sort descending by timestamp
       results.sort((a, b) {
         final aTime = a['timestamp'] as Timestamp?;
@@ -143,6 +154,59 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
       });
 
       return results;
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<int> cleanupOldReports() async {
+    try {
+      final uid = AppStrings.userToken;
+      if (uid.isEmpty) return 0;
+
+      final now = DateTime.now();
+      // Sliding window: exactly 60 days back from today
+      final thresholdDate = now.subtract(const Duration(days: 60));
+      AppLogger.printMessage('Threshold date: $thresholdDate');
+      final thresholdTimestamp = Timestamp.fromDate(thresholdDate);
+
+      final querySnapshot = await firestore
+          .collection('users')
+          .doc(uid)
+          .collection('operations')
+          .where('timestamp', isLessThan: thresholdTimestamp)
+          .get();
+
+      int deletedCount = 0;
+      WriteBatch batch = firestore.batch();
+      int currentBatchCount = 0;
+
+      for (var doc in querySnapshot.docs) {
+        final data = doc.data();
+        final remainingDebt = (data['remainingDebt'] ?? 0).toDouble();
+
+        // Safety check: Only delete if no remaining debt
+        if (remainingDebt <= 0) {
+          batch.delete(doc.reference);
+          deletedCount++;
+          currentBatchCount++;
+
+          // Firestore batch limit is 500
+          if (currentBatchCount >= 500) {
+            await batch.commit();
+            batch = firestore.batch();
+            currentBatchCount = 0;
+          }
+        }
+      }
+
+      if (currentBatchCount > 0) {
+        await batch.commit();
+      }
+
+      return deletedCount;
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;

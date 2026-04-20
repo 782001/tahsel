@@ -1,10 +1,12 @@
 import 'package:dartz/dartz.dart';
+import 'package:tahsel/core/utils/app_logger.dart';
+
+import '../../../../core/error/failures.dart';
+import '../../../operation/data/models/operation_model.dart';
+import '../../../operation/domain/entities/operation_entity.dart';
 import '../../domain/entities/reports_entity.dart';
 import '../../domain/repositories/reports_repository.dart';
 import '../datasources/reports_remote_data_source.dart';
-import '../../../operation/data/models/operation_model.dart';
-import '../../../operation/domain/entities/operation_entity.dart';
-import '../../../../core/error/failures.dart';
 
 class ReportsRepositoryImpl implements ReportsRepository {
   final ReportsRemoteDataSource dataSource;
@@ -12,7 +14,10 @@ class ReportsRepositoryImpl implements ReportsRepository {
   ReportsRepositoryImpl(this.dataSource);
 
   @override
-  Future<Either<Failure, ReportsEntity>> getReports(DateTime startDate, DateTime endDate) async {
+  Future<Either<Failure, ReportsEntity>> getReports(
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
     try {
       // 1. Fetch Current Period Data
       final currentData = await dataSource.getPeriodData(startDate, endDate);
@@ -22,22 +27,31 @@ class ReportsRepositoryImpl implements ReportsRepository {
       final prevStartDate = startDate.subtract(duration);
       final prevEndDate = endDate.subtract(duration);
 
-      final prevData = await dataSource.getPeriodData(prevStartDate, prevEndDate);
+      final prevData = await dataSource.getPeriodData(
+        prevStartDate,
+        prevEndDate,
+      );
 
       // Current Data
       final double currentIncome = (currentData['income'] ?? 0).toDouble();
-      final double currentCafeIncome = (currentData['cafeIncome'] ?? 0).toDouble();
-      final double currentPlaystationIncome = (currentData['playstationIncome'] ?? 0).toDouble();
+      final double currentCafeIncome = (currentData['cafeIncome'] ?? 0)
+          .toDouble();
+      final double currentPlaystationIncome =
+          (currentData['playstationIncome'] ?? 0).toDouble();
       final double currentExpenses = (currentData['expenses'] ?? 0).toDouble();
-      final double currentTotalDebts = (currentData['totalDebts'] ?? 0).toDouble();
-      final double currentPaidDebts = (currentData['paidDebts'] ?? 0).toDouble();
-      final double currentUnpaidDebts = (currentData['unpaidDebts'] ?? 0).toDouble();
+      final double currentTotalDebts = (currentData['totalDebts'] ?? 0)
+          .toDouble();
+      final double currentPaidDebts = (currentData['paidDebts'] ?? 0)
+          .toDouble();
+      final double currentUnpaidDebts = (currentData['unpaidDebts'] ?? 0)
+          .toDouble();
       final double currentProfit = currentIncome - currentExpenses;
 
       // Previous Data
       final double prevIncome = (prevData['income'] ?? 0).toDouble();
       final double prevCafeIncome = (prevData['cafeIncome'] ?? 0).toDouble();
-      final double prevPlaystationIncome = (prevData['playstationIncome'] ?? 0).toDouble();
+      final double prevPlaystationIncome = (prevData['playstationIncome'] ?? 0)
+          .toDouble();
       final double prevExpenses = (prevData['expenses'] ?? 0).toDouble();
       final double prevProfit = prevIncome - prevExpenses;
 
@@ -80,15 +94,40 @@ class ReportsRepositoryImpl implements ReportsRepository {
 
   @override
   Future<Either<Failure, List<OperationEntity>>> getIncomeDetails(
-      DateTime startDate, DateTime endDate,
-      {String? type}) async {
+    DateTime startDate,
+    DateTime endDate, {
+    String? type,
+  }) async {
     try {
-      final results = await dataSource.getIncomeDetails(startDate, endDate, type: type);
+      final results = await dataSource.getIncomeDetails(
+        startDate,
+        endDate,
+        type: type,
+      );
       final List<OperationEntity> operations = results.map((data) {
         final id = data['id'] as String;
         return OperationModel.fromJson(data, id);
       }).toList();
       return Right(operations);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, int>> cleanupOldReports() async {
+    try {
+      final startTime = DateTime.now();
+      final deletedCount = await dataSource.cleanupOldReports();
+      final endTime = DateTime.now();
+
+      final duration = endTime.difference(startTime).inMilliseconds;
+      // Logging the result
+      AppLogger.printMessage(
+        'Cleanup executed in ${duration}ms. Deleted $deletedCount records.',
+      );
+
+      return Right(deletedCount);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

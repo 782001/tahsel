@@ -56,7 +56,12 @@ Future<void> initDependencies() async {
   sl.registerFactory<ConnectivityCubit>(() => ConnectivityCubit());
 
   // main layout
-  sl.registerFactory<MainLayoutCubit>(() => MainLayoutCubit());
+  sl.registerFactory<MainLayoutCubit>(
+    () => MainLayoutCubit(
+      cleanupOldReportsUseCase: sl(),
+      cashHelper: sl(),
+    ),
+  );
 
   /// --------useCases----------
   sl.registerLazySingleton<ChangeLangUseCase>(

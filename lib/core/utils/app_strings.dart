@@ -60,6 +60,9 @@ class AppStrings {
   static const String english = "english";
   static const String englishDesc = "english_desc";
   static const String languageChangeInfo = "language_change_info";
+  static const String autoCleanReports = "auto_clean_reports";
+  static const String autoCleanReportsDesc = "auto_clean_reports_desc";
+  static const String dataCleanedSuccessfully = "data_cleaned_successfully";
 
   // Expenses Screen
   static const String expenses = "expenses";
@@ -176,6 +179,7 @@ class AppStrings {
   // Storage Keys
   static const String hourlyRateKey = "hourly_rate_key";
   static const String slotRateKey = "slot_rate_key";
+  static const String autoCleanKey = "auto_clean_key";
 
   // Reports Screen
   static const String daily = "daily";

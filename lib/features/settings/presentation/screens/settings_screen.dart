@@ -7,6 +7,8 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/settings/presentation/widgets/appearance_card.dart';
 import 'package:tahsel/features/settings/presentation/widgets/language_option.dart';
+import 'package:tahsel/core/services/injection_container.dart';
+import 'package:tahsel/core/storage/cashhelper.dart';
 import 'package:tahsel/features/settings/presentation/widgets/logout_button.dart';
 import 'package:tahsel/features/settings/presentation/widgets/section_header.dart';
 import 'package:tahsel/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
@@ -139,6 +141,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               context.read<LocaleCubit>().toEnglish();
                             }
                           },
+                        ),
+
+                        SizedBox(height: 32.h),
+                        
+                        // Data Management Section
+                        SectionHeader(title: AppStrings.security.tr()),
+                        Container(
+                          padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 8.w),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16.r),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: SwitchListTile(
+                            activeColor: AppColors.primaryColor,
+                            title: Text(
+                              AppStrings.autoCleanReports.tr(),
+                              style: TextStyles.customStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primaryColor,
+                              ),
+                            ),
+                            subtitle: Text(
+                              AppStrings.autoCleanReportsDesc.tr(),
+                              style: TextStyles.customStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.sandText,
+                              ),
+                            ),
+                            value: sl<CashHelper>().getData(key: AppStrings.autoCleanKey) ?? true,
+                            onChanged: (val) {
+                              sl<CashHelper>().saveData(key: AppStrings.autoCleanKey, value: val);
+                              setState(() {});
+                            },
+                          ),
                         ),
 
                         SizedBox(height: 32.h),
