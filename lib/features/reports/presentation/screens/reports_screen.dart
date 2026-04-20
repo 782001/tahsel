@@ -156,7 +156,9 @@ class _ReportsViewState extends State<ReportsView> {
                                         1,
                                       ),
                                       type: BusinessReportType.income,
-                                      isShop: context.read<MainLayoutCubit>().isShop,
+                                      isShop: context
+                                          .read<MainLayoutCubit>()
+                                          .isShop,
                                       badgeText:
                                           "${data.isIncomeIncrease ? '+' : '-'}${data.incomeDiff.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${_getBadgeText()}",
                                       onTap: () {
@@ -172,7 +174,15 @@ class _ReportsViewState extends State<ReportsView> {
                                                 : (_selectedTimeRange == 1
                                                       ? 'weekly'
                                                       : 'monthly'),
-                                            'type': null,
+                                            'type':
+                                                context
+                                                    .read<MainLayoutCubit>()
+                                                    .isShop
+                                                ? AppStrings.shop
+                                                : null,
+                                            'isShop': context
+                                                .read<MainLayoutCubit>()
+                                                .isShop,
                                           },
                                         );
                                       },
@@ -184,7 +194,9 @@ class _ReportsViewState extends State<ReportsView> {
                                       amount: data.totalExpenses
                                           .toStringAsFixed(1),
                                       type: BusinessReportType.expense,
-                                      isShop: context.read<MainLayoutCubit>().isShop,
+                                      isShop: context
+                                          .read<MainLayoutCubit>()
+                                          .isShop,
                                       badgeText:
                                           "${data.isExpenseIncrease ? '+' : '-'}${data.expenseDiff.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${_getBadgeText()}",
                                       onTap: () {
@@ -217,42 +229,54 @@ class _ReportsViewState extends State<ReportsView> {
                                     SizedBox(height: 12.h),
 
                                     // Restore Cafe Income Card
-                                    ReportsDashboardCard(
-                                      title: context.watch<MainLayoutCubit>().isShop
-                                          ? AppStrings.shopIncome.tr()
-                                          : AppStrings.cafeIncome.tr(),
-                                      subtitle: "",
-                                      amount: data.cafeIncome.toStringAsFixed(
-                                        1,
+                                    if (context
+                                            .read<MainLayoutCubit>()
+                                            .isShop ==
+                                        false)
+                                      ReportsDashboardCard(
+                                        title:
+                                            context
+                                                .watch<MainLayoutCubit>()
+                                                .isShop
+                                            ? AppStrings.shopIncome.tr()
+                                            : AppStrings.cafeIncome.tr(),
+                                        subtitle: "",
+                                        amount: data.cafeIncome.toStringAsFixed(
+                                          1,
+                                        ),
+                                        type: BusinessReportType.cafe,
+                                        isShop: context
+                                            .watch<MainLayoutCubit>()
+                                            .isShop,
+                                        badgeText:
+                                            "${data.isCafeIncrease ? '+' : '-'}${data.cafeDiff.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${_getBadgeText()}",
+                                        onTap: () {
+                                          final dateRange = _getDateRange();
+                                          Navigator.pushNamed(
+                                            context,
+                                            AppRoutes.incomeDetails,
+                                            arguments: {
+                                              'startDate': dateRange.start,
+                                              'endDate': dateRange.end,
+                                              'type': AppStrings.shop,
+                                              'period': _selectedTimeRange == 0
+                                                  ? 'daily'
+                                                  : (_selectedTimeRange == 1
+                                                        ? 'weekly'
+                                                        : 'monthly'),
+                                              'isShop': context
+                                                  .read<MainLayoutCubit>()
+                                                  .isShop,
+                                            },
+                                          );
+                                        },
                                       ),
-                                      type: BusinessReportType.cafe,
-                                      isShop: context.watch<MainLayoutCubit>().isShop,
-                                      badgeText:
-                                          "${data.isCafeIncrease ? '+' : '-'}${data.cafeDiff.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${_getBadgeText()}",
-                                      onTap: () {
-                                        final dateRange = _getDateRange();
-                                        Navigator.pushNamed(
-                                          context,
-                                          AppRoutes.incomeDetails,
-                                          arguments: {
-                                            'startDate': dateRange.start,
-                                            'endDate': dateRange.end,
-                                            'type': AppStrings.shop,
-                                            'period': _selectedTimeRange == 0
-                                                ? 'daily'
-                                                : (_selectedTimeRange == 1
-                                                      ? 'weekly'
-                                                      : 'monthly'),
-                                            'isShop': context.read<MainLayoutCubit>().isShop,
-                                          },
-                                        );
-                                      },
-                                    ),
 
                                     // Restore Playstation Income Card
                                     if (context.read<MainLayoutCubit>().isCafe)
                                       ReportsDashboardCard(
-                                        title: AppStrings.playstationIncome.tr(),
+                                        title: AppStrings.playstationIncome
+                                            .tr(),
                                         subtitle: "",
                                         amount: data.playstationIncome
                                             .toStringAsFixed(1),
@@ -273,7 +297,9 @@ class _ReportsViewState extends State<ReportsView> {
                                                   : (_selectedTimeRange == 1
                                                         ? 'weekly'
                                                         : 'monthly'),
-                                              'isShop': context.read<MainLayoutCubit>().isShop,
+                                              'isShop': context
+                                                  .read<MainLayoutCubit>()
+                                                  .isShop,
                                             },
                                           );
                                         },
@@ -320,9 +346,15 @@ class _ReportsViewState extends State<ReportsView> {
                                       ...state.insights
                                           .skip(1)
                                           .where((insight) {
-                                            if (context.read<MainLayoutCubit>().isShop) {
-                                              return !insight.messageKey.toLowerCase().contains('ps') &&
-                                                  !insight.messageKey.toLowerCase().contains('playstation');
+                                            if (context
+                                                .read<MainLayoutCubit>()
+                                                .isShop) {
+                                              return !insight.messageKey
+                                                      .toLowerCase()
+                                                      .contains('ps') &&
+                                                  !insight.messageKey
+                                                      .toLowerCase()
+                                                      .contains('playstation');
                                             }
                                             return true;
                                           })
