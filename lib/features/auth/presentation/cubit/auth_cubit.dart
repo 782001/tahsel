@@ -9,6 +9,7 @@ import 'package:tahsel/core/storage/secure_storage_helper.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/features/auth/domain/entities/user_entity.dart';
 import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 
@@ -64,12 +65,28 @@ class AuthCubit extends Cubit<AuthState> {
     result.fold((failure) => emit(AuthFailure(failure.message)), (
       user,
     ) async {
+      // Automatic userType detection based on email (temporary test solution)
+      String detectedType = AppStrings.cafe;
+      if (email.toLowerCase().contains('.shop')||user.userType==AppStrings.shop) {
+        detectedType = AppStrings.shop;
+      }
+      
       final secureStorage = sl<SecureStorageHelper>();
       await secureStorage.saveData(key: 'token', value: user.uid);
       await secureStorage.saveData(key: 'email', value: user.email);
-      await secureStorage.saveData(key: AppStrings.userTypeKey, value: user.userType);
-      AppLogger.printMessage('User logged in successfully: ${user.uid} (${user.userType})');
-      emit(AuthSuccess(user));
+      await secureStorage.saveData(key: AppStrings.userTypeKey, value: detectedType);
+      
+      AppLogger.printMessage('User logged in successfully: ${user.uid} ($detectedType detected from email)');
+      
+      // Override the user object with the detected type for immediate UI response
+      final updatedUser = UserEntity(
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        userType: detectedType,
+      );
+      
+      emit(AuthSuccess(updatedUser));
     });
   }
 

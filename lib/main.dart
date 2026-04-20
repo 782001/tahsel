@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/config/locale/app_localizations_setup.dart';
@@ -12,6 +13,7 @@ import 'package:tahsel/features/standard_features/error/presentation/screens/err
 import 'package:tahsel/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/no_internet.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_cubit.dart';
+import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_state.dart';
 import 'package:tahsel/features/customer/presentation/cubit/customer_cubit.dart';
 import 'package:tahsel/features/product/presentation/cubit/product_cubit.dart';
@@ -57,6 +59,17 @@ class MyApp extends StatelessWidget {
       ],
       child: BlocBuilder<ThemeCubit, ThemeState>(
         builder: (context, themeState) {
+          // Update Status Bar based on theme
+          SystemChrome.setSystemUIOverlayStyle(
+            SystemUiOverlayStyle(
+              statusBarColor: Colors.transparent, // Make it transparent to show background
+              statusBarIconBrightness: AppColors.isDark ? Brightness.light : Brightness.dark,
+              statusBarBrightness: AppColors.isDark ? Brightness.dark : Brightness.light, // iOS
+              systemNavigationBarColor: AppColors.scafoldBackGround,
+              systemNavigationBarIconBrightness: AppColors.isDark ? Brightness.light : Brightness.dark,
+            ),
+          );
+
           return BlocBuilder<LocaleCubit, LocaleState>(
             buildWhen: (previousState, currentState) {
               return previousState != currentState;
