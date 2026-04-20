@@ -59,16 +59,18 @@ class MyApp extends StatelessWidget {
       ],
       child: BlocBuilder<ThemeCubit, ThemeState>(
         builder: (context, themeState) {
+         
           // Update Status Bar based on theme
-          SystemChrome.setSystemUIOverlayStyle(
-            SystemUiOverlayStyle(
-              statusBarColor: Colors.transparent, // Make it transparent to show background
-              statusBarIconBrightness: AppColors.isDark ? Brightness.light : Brightness.dark,
-              statusBarBrightness: AppColors.isDark ? Brightness.dark : Brightness.light, // iOS
-              systemNavigationBarColor: AppColors.scafoldBackGround,
-              systemNavigationBarIconBrightness: AppColors.isDark ? Brightness.light : Brightness.dark,
-            ),
-          );
+        SystemChrome.setSystemUIOverlayStyle(
+           SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent, // Make it transparent to show background
+            statusBarIconBrightness: AppColors.isDark ? Brightness.light : Brightness.dark,
+             statusBarBrightness: AppColors.isDark ? Brightness.dark : Brightness.light, // iOS
+             systemNavigationBarColor: AppColors.scafoldBackGround,
+             systemNavigationBarIconBrightness: AppColors.isDark ? Brightness.light : Brightness.dark,
+           ),
+        );
+
 
           return BlocBuilder<LocaleCubit, LocaleState>(
             buildWhen: (previousState, currentState) {
