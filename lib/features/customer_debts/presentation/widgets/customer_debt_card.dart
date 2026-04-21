@@ -38,21 +38,23 @@ class CustomerDebtCard extends StatelessWidget {
         endActionPane: ActionPane(
           motion: const ScrollMotion(),
           children: [
-            SlidableAction(
-              onPressed: (_) => onPartialPayment(),
-              backgroundColor: AppColors.slidablePartialPayment,
-              foregroundColor: AppColors.whiteColor,
-              icon: Icons.payments,
-              label: AppStrings.partialPayLabel.tr(),
-            ),
+            if (amount != 0)
+              SlidableAction(
+                onPressed: (_) => onPartialPayment(),
+                backgroundColor: AppColors.slidablePartialPayment,
+                foregroundColor: AppColors.whiteColor,
+                icon: Icons.payments,
+                label: AppStrings.partialPayLabel.tr(),
+              ),
 
-            SlidableAction(
-              onPressed: (_) => onFullPayment(),
-              backgroundColor: AppColors.slidableFullPayment,
-              foregroundColor: AppColors.whiteColor,
-              icon: Icons.check_circle,
-              label: AppStrings.fullPaymentLabel.tr(),
-            ),
+            if (amount != 0)
+              SlidableAction(
+                onPressed: (_) => onFullPayment(),
+                backgroundColor: AppColors.slidableFullPayment,
+                foregroundColor: AppColors.whiteColor,
+                icon: Icons.check_circle,
+                label: AppStrings.fullPaymentLabel.tr(),
+              ),
             if (amount == 0)
               SlidableAction(
                 onPressed: (_) => onDelete(),
