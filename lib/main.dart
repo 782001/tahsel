@@ -59,23 +59,21 @@ class MyApp extends StatelessWidget {
       ],
       child: BlocBuilder<ThemeCubit, ThemeState>(
         builder: (context, themeState) {
-         
-          // Update Status Bar based on theme
-        SystemChrome.setSystemUIOverlayStyle(
-           SystemUiOverlayStyle(
-            statusBarColor: Colors.transparent, // Make it transparent to show background
-            statusBarIconBrightness: AppColors.isDark ? Brightness.light : Brightness.dark,
-             statusBarBrightness: AppColors.isDark ? Brightness.dark : Brightness.light, // iOS
-             systemNavigationBarColor: AppColors.scafoldBackGround,
-             systemNavigationBarIconBrightness: AppColors.isDark ? Brightness.light : Brightness.dark,
-           ),
-        );
+          final isDark = themeState.themeMode == ThemeMode.dark;
 
+          // Unified Status Bar Style
+          final systemOverlayStyle = SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+            statusBarBrightness: isDark ? Brightness.dark : Brightness.light, // iOS
+            systemNavigationBarColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8F8F8),
+            systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+          );
+
+          // Force update SystemUI
+          SystemChrome.setSystemUIOverlayStyle(systemOverlayStyle);
 
           return BlocBuilder<LocaleCubit, LocaleState>(
-            buildWhen: (previousState, currentState) {
-              return previousState != currentState;
-            },
             builder: (context, localeState) {
               return ScreenUtilInit(
                 designSize: const Size(375, 812),
@@ -98,12 +96,22 @@ class MyApp extends StatelessWidget {
                       primarySwatch: Colors.blue,
                       fontFamily: AppConstants.fontFamily,
                       scaffoldBackgroundColor: const Color(0xFFF8F8F8),
+                      appBarTheme: AppBarTheme(
+                        systemOverlayStyle: systemOverlayStyle,
+                        backgroundColor: const Color(0xFFF8F8F8),
+                        elevation: 0,
+                      ),
                     ),
                     darkTheme: ThemeData(
                       brightness: Brightness.dark,
                       primarySwatch: Colors.blue,
                       fontFamily: AppConstants.fontFamily,
                       scaffoldBackgroundColor: const Color(0xFF121212),
+                      appBarTheme: AppBarTheme(
+                        systemOverlayStyle: systemOverlayStyle,
+                        backgroundColor: const Color(0xFF121212),
+                        elevation: 0,
+                      ),
                     ),
                     initialRoute: AppRoutes.splash,
                     onGenerateRoute: AppRoutes.generateRoute,
