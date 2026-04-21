@@ -6,4 +6,5 @@ abstract class OfflineSyncRepository {
   Future<Either<Failure, void>> saveOfflineRecord(OfflineRecord record);
   Future<Either<Failure, List<OfflineRecord>>> getPendingRecords();
   Future<Either<Failure, void>> syncAllPendingRecords();
+  Future<Either<Failure, void>> syncSingleRecord(OfflineRecord record);
 }

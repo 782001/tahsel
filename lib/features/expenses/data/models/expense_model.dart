@@ -46,7 +46,7 @@ class ExpenseModel extends ExpenseEntity {
       'amount': amount,
       'category': category,
       'description': description,
-      'createdAt': createdAt.toIso8601String(), // Store as string for easier JSON serialization
+      'createdAt': Timestamp.fromDate(createdAt), // Always store as Timestamp for Firestore queries
       'monthKey': monthKey,
     };
   }

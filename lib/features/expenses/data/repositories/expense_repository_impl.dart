@@ -24,35 +24,49 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
   Future<Either<Failure, String>> addExpense(ExpenseEntity expense) async {
     try {
       final model = ExpenseModel.fromEntity(expense);
-      final hasConnection = await connectionChecker.hasConnection;
+      
+      // 1. ALWAYS handle as an offline record first for 100% data consistency.
+      final localId = DateTime.now().millisecondsSinceEpoch.toString();
+      
+      // We manually construct the Hive payload to avoid jsonEncode failing on Firestore Timestamps.
+      final Map<String, dynamic> hivePayload = {
+        'uid': model.uid,
+        'amount': model.amount,
+        'category': model.category,
+        'description': model.description,
+        'createdAt': model.createdAt.toIso8601String(), // Safe for JSON/Hive
+        'monthKey': model.monthKey,
+      };
+      
+      final payloadJson = jsonEncode(hivePayload);
+      
+      final offlineRecord = OfflineRecord(
+        id: localId,
+        amount: model.amount,
+        date: model.createdAt,
+        customerName: model.category,
+        type: 'expense',
+        isSynced: false,
+        payloadJson: payloadJson,
+        collectionName: 'users/${model.uid}/expenses',
+      );
 
-      if (hasConnection) {
-        final id = await remoteDataSource.addExpense(model);
-        return Right(id);
-      } else {
-        final localId = DateTime.now().millisecondsSinceEpoch.toString();
-        final Map<String, dynamic> rawJson = model.toJson();
-        // Keep the user-selected createdAt date for accurate syncing
-        
-        final payloadJson = jsonEncode(rawJson);
-        
-        final offlineRecord = OfflineRecord(
-          id: localId,
-          amount: model.amount,
-          date: model.createdAt,
-          customerName: model.category,
-          type: 'expense',
-          isSynced: false,
-          payloadJson: payloadJson,
-          collectionName: 'users/${model.uid}/expenses',
-        );
-
-        final result = await offlineSyncRepository.saveOfflineRecord(offlineRecord);
-        return result.fold(
-          (failure) => Left(failure),
-          (_) => Right(localId),
-        );
-      }
+      // Save to local cache first
+      final saveResult = await offlineSyncRepository.saveOfflineRecord(offlineRecord);
+      
+      return saveResult.fold(
+        (failure) => Left(failure),
+        (_) async {
+          // 2. CHECK CONNECTION: If online, trigger IMMEDIATE prioritized sync
+          final hasConnection = await connectionChecker.hasConnection;
+          if (hasConnection) {
+            // This sync call converts 'createdAt' String back to Timestamp and adds 'syncedAt'
+            await offlineSyncRepository.syncSingleRecord(offlineRecord);
+          }
+          
+          return Right(localId);
+        },
+      );
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

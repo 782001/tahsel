@@ -84,7 +84,22 @@ class OfflineSyncRepositoryImpl implements OfflineSyncRepository {
 
       return const Right(null);
     } catch (e) {
-      AppLogger.printMessage("[OfflineSync] Global sync error: $e");
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> syncSingleRecord(OfflineRecord record) async {
+    try {
+      // 1. Sync to remote
+      await remoteDataSource.syncRecord(record);
+      
+      // 2. Mark as synced by deleting from local cache
+      await localDataSource.deleteRecord(record.id);
+      
+      return const Right(null);
+    } catch (e) {
+      AppLogger.printMessage("[OfflineSync] Error in syncSingleRecord: $e");
       return Left(ServerFailure(e.toString()));
     }
   }
