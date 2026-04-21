@@ -87,7 +87,7 @@ class CustomerDebtDetailScreen extends StatelessWidget {
               slivers: [
                 // ── Collapsible App Bar ─────────────────────────────────────────
                 SliverAppBar(
-                  expandedHeight: 200.h,
+                  expandedHeight: 180.h,
                   pinned: true,
                   backgroundColor: AppColors.primaryColor,
                   centerTitle: true,
@@ -100,9 +100,9 @@ class CustomerDebtDetailScreen extends StatelessWidget {
                     ),
                   ),
                   leading: IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.arrow_back_ios_new_rounded,
-                      color: Colors.white,
+                      color: AppColors.whiteColor,
                     ),
                     onPressed: () => Navigator.pop(context),
                   ),
@@ -186,7 +186,6 @@ class CustomerDebtDetailScreen extends StatelessWidget {
                               ),
                             ],
                           ),
-                    
                       ],
                     ),
                   ),
