@@ -16,6 +16,7 @@ class OperationModel extends OperationEntity {
     super.durationMinutes,
     super.turnCount,
     super.rate,
+    super.ledgerNumber,
   });
 
   factory OperationModel.fromJson(Map<String, dynamic> json, String id) {
@@ -33,6 +34,7 @@ class OperationModel extends OperationEntity {
       durationMinutes: json['durationMinutes'],
       turnCount: json['turnCount'],
       rate: json['rate']?.toDouble(),
+      ledgerNumber: json['ledgerNumber'] as String?,
     );
   }
 
@@ -50,6 +52,7 @@ class OperationModel extends OperationEntity {
       'durationMinutes': durationMinutes,
       'turnCount': turnCount,
       'rate': rate,
+      if (ledgerNumber != null) 'ledgerNumber': ledgerNumber,
     };
   }
 
@@ -68,6 +71,7 @@ class OperationModel extends OperationEntity {
       durationMinutes: entity.durationMinutes,
       turnCount: entity.turnCount,
       rate: entity.rate,
+      ledgerNumber: entity.ledgerNumber,
     );
   }
 }

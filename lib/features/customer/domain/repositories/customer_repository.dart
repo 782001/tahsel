@@ -5,4 +5,6 @@ import '../../../../core/error/failures.dart';
 abstract class CustomerRepository {
   Future<Either<Failure, List<CustomerEntity>>> getCustomers(String uid);
   Future<Either<Failure, void>> saveCustomer(String uid, CustomerEntity customer);
+  Future<Either<Failure, void>> updateCustomerPhone(String uid, String name, String phoneNumber);
+  Future<Either<Failure, void>> updateCustomerPreference(String uid, String name, String preference);
 }

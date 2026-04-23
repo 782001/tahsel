@@ -4,6 +4,8 @@ import '../data/repositories/customer_repository_impl.dart';
 import '../domain/repositories/customer_repository.dart';
 import '../domain/usecases/get_customers_usecase.dart';
 import '../domain/usecases/save_customer_usecase.dart';
+import '../domain/usecases/update_customer_phone_usecase.dart';
+import '../domain/usecases/update_customer_preference_usecase.dart';
 import '../presentation/cubit/customer_cubit.dart';
 
 
@@ -12,11 +14,15 @@ void initCustomerInjection() {
   sl.registerFactory(() => CustomerCubit(
         getCustomersUseCase: sl(),
         saveCustomerUseCase: sl(),
+        updateCustomerPhoneUseCase: sl(),
+        updateCustomerPreferenceUseCase: sl(),
       ));
 
   // Use cases
   sl.registerLazySingleton(() => GetCustomersUseCase(sl()));
   sl.registerLazySingleton(() => SaveCustomerUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateCustomerPhoneUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateCustomerPreferenceUseCase(sl()));
 
   // Repository
   sl.registerLazySingleton<CustomerRepository>(

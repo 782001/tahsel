@@ -29,7 +29,20 @@ class DebtsFetchSuccess extends DebtState {
 }
 
 class DebtPaymentSuccess extends DebtState {
-  const DebtPaymentSuccess();
+  final String customerName;
+  final double amountPaid;
+  final double remainingBalance;
+  final String? note;
+
+  const DebtPaymentSuccess({
+    required this.customerName,
+    required this.amountPaid,
+    required this.remainingBalance,
+    this.note,
+  });
+
+  @override
+  List<Object?> get props => [customerName, amountPaid, remainingBalance, note];
 }
 
 class DebtDeleteSuccess extends DebtState {

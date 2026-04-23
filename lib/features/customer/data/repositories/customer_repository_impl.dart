@@ -29,4 +29,24 @@ class CustomerRepositoryImpl implements CustomerRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, void>> updateCustomerPhone(String uid, String name, String phoneNumber) async {
+    try {
+      await remoteDataSource.updateCustomerPhone(uid, name, phoneNumber);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updateCustomerPreference(String uid, String name, String preference) async {
+    try {
+      await remoteDataSource.updateCustomerPreference(uid, name, preference);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }

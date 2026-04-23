@@ -128,4 +128,9 @@ class AppColors {
   static Color get blackReal => isDark ? Colors.white : Colors.black;
   static const Color transparent = Colors.transparent;
   static const Color shadowColor = Color(0x0F1A1C1C);
+  static const BoxShadow shadow = BoxShadow(
+    color: shadowColor,
+    blurRadius: 10,
+    offset: Offset(0, 4),
+  );
 }

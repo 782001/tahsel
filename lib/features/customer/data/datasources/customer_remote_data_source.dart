@@ -5,6 +5,8 @@ import '../models/customer_model.dart';
 abstract class CustomerRemoteDataSource {
   Future<List<CustomerModel>> getCustomers(String uid);
   Future<void> saveCustomer(String uid, CustomerModel customer);
+  Future<void> updateCustomerPhone(String uid, String name, String phoneNumber);
+  Future<void> updateCustomerPreference(String uid, String name, String preference);
 }
 
 class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
@@ -57,6 +59,37 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
         });
       } else {
         await collection.add(customer.toJson());
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> updateCustomerPhone(String uid, String name, String phoneNumber) async {
+    try {
+      final collection = firestore.collection('users').doc(uid).collection('customers');
+      final normalizedName = name.trim();
+      final existing = await collection.where('name', isEqualTo: normalizedName).limit(1).get();
+
+      if (existing.docs.isNotEmpty) {
+        await existing.docs.first.reference.update({'phoneNumber': phoneNumber});
+      }
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> updateCustomerPreference(String uid, String name, String preference) async {
+    try {
+      final collection = firestore.collection('users').doc(uid).collection('customers');
+      final normalizedName = name.trim();
+      final existing = await collection.where('name', isEqualTo: normalizedName).limit(1).get();
+
+      if (existing.docs.isNotEmpty) {
+        await existing.docs.first.reference.update({'notificationPreference': preference});
       }
     } catch (e) {
       FirebaseErrorHandler.handle(e);

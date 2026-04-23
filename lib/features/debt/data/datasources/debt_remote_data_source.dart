@@ -20,14 +20,33 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
   @override
   Future<String> addDebt(DebtModel debt) async {
     try {
-      final docRef = firestore
-          .collection('users')
-          .doc(debt.uid)
-          .collection('debts')
-          .doc();
-          
-      await docRef.set(debt.toJson());
-      return docRef.id;
+      final userRef = firestore.collection('users').doc(debt.uid);
+      final debtRef = userRef.collection('debts').doc();
+      
+      // We use the operationId provided (which is unique) to link with operations collection
+      final opRef = userRef.collection('operations').doc(debt.operationId);
+
+      final batch = firestore.batch();
+
+      // 1. Add to debts collection
+      batch.set(debtRef, debt.toJson());
+
+      // 2. Add to operations collection for Reports consistency
+      batch.set(opRef, {
+        'uid': debt.uid,
+        'type': debt.operationType,
+        'customerName': debt.customerName,
+        'productName': debt.productOrSessionDetails,
+        'totalAmount': debt.totalAmount,
+        'paidAmount': debt.paidAmount,
+        'remainingDebt': debt.remainingAmount,
+        'timestamp': debt.timestamp != null 
+            ? Timestamp.fromDate(debt.timestamp!) 
+            : FieldValue.serverTimestamp(),
+      });
+
+      await batch.commit();
+      return debtRef.id;
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       throw Exception('Failed to add debt: $e');

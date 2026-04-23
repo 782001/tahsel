@@ -6,11 +6,15 @@ import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/features/customer/presentation/cubit/customer_cubit.dart';
+import 'package:tahsel/features/customer/presentation/cubit/customer_state.dart';
+import 'package:tahsel/features/customer/presentation/widgets/notification_dialog.dart';
 import 'package:tahsel/features/customer_debts/data/models/debt_item_model.dart';
 import 'package:tahsel/features/customer_debts/presentation/screens/customer_debt_detail_screen.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/customer_debt_card.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/partial_payment_dialog.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_cubit.dart';
+import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
 import '../../../debt/domain/entities/debt_entity.dart';
@@ -52,10 +56,15 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
     );
   }
 
-  void _onPayFull(BuildContext context, String customerName) {
+  void _onPayFull(BuildContext context, String customerName, double totalAmount) {
     final uid = sl<FirebaseAuth>().currentUser?.uid;
     if (uid != null) {
-      context.read<DebtCubit>().markAsPaid(uid, customerName);
+      context.read<DebtCubit>().markAsPaid(
+            uid: uid,
+            customerName: customerName,
+            totalAmount: totalAmount,
+            note: AppStrings.fullSettlement.tr(),
+          );
     }
   }
 
@@ -132,12 +141,16 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
 
   void _navigateToDetail(BuildContext context, CustomerDebtDetail detail) {
     final cubit = context.read<DebtCubit>();
+    final isShop = context.read<MainLayoutCubit>().isShop;
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => BlocProvider.value(
           value: cubit,
-          child: CustomerDebtDetailScreen(detail: detail),
+          child: CustomerDebtDetailScreen(
+            detail: detail,
+            isShop: isShop,
+          ),
         ),
       ),
     );
@@ -164,6 +177,15 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
       listener: (context, state) {
         if (state is DebtDeleteSuccess) {
           showSuccessToast(AppStrings.deleteDebtSuccess.tr());
+        }
+        if (state is DebtPaymentSuccess) {
+          NotificationDialog.show(
+            context: context,
+            customerName: state.customerName,
+            amountPaid: state.amountPaid,
+            remainingBalance: state.remainingBalance,
+            note: state.note,
+          );
         }
         if (state is DebtFailure) {
           showfailureToast(AppStrings.deleteDebtFailed.tr());
@@ -221,7 +243,11 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
                     detail.customerName,
                     detail.totalDebt,
                   ),
-                  onFullPayment: () => _onPayFull(context, detail.customerName),
+                  onFullPayment: () => _onPayFull(
+                    context,
+                    detail.customerName,
+                    detail.totalDebt,
+                  ),
                   onDelete: () => _onDeleteCustomerDebt(context, detail.customerName),
                 );
               },

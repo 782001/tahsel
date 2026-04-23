@@ -20,7 +20,9 @@ import 'package:tahsel/features/operation/presentation/widgets/quick_add_turn_fo
 import 'package:tahsel/shared/widgets/buttons/quick_action_button.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 
+import 'package:tahsel/features/customer/presentation/widgets/notification_dialog.dart';
 import '../../../customer/presentation/cubit/customer_cubit.dart';
+import '../../../customer/presentation/cubit/customer_state.dart';
 import '../../../debt/domain/entities/debt_entity.dart';
 import '../../../debt/presentation/cubit/debt_cubit.dart';
 import '../../../debt/presentation/cubit/debt_state.dart';
@@ -342,6 +344,20 @@ class _HomeScreenState extends State<HomeScreen> {
                       productName.isNotEmpty) {
                     context.read<ProductCubit>().saveProduct(uid, productName);
                   }
+
+                  // if (paid > 0) {
+                  //   NotificationDialog.show(
+                  //     context: context,
+                  //     customerName: customerName,
+                  //     amountPaid: paid,
+                  //     remainingBalance: remaining,
+                  //     note: _selectedMode == QuickAddMode.shop
+                  //         ? _productController.text.trim()
+                  //         : (_psSubMode == PlayStationMode.time
+                  //             ? AppStrings.psSessionTime.tr()
+                  //             : AppStrings.psSessionTurn.tr()),
+                  //   );
+                  // }
 
                   _clearFields();
                 } else if (state is OperationFailure) {
