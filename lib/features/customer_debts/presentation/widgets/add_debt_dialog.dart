@@ -13,11 +13,13 @@ import 'package:tahsel/features/debt/presentation/cubit/debt_state.dart';
 class AddDebtDialog extends StatefulWidget {
   final String customerName;
   final bool isShop;
+  final String? ledgerNumber;
 
   const AddDebtDialog({
     super.key,
     required this.customerName,
     required this.isShop,
+    this.ledgerNumber,
   });
 
   @override
@@ -28,6 +30,9 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _paidAmountController = TextEditingController();
   final TextEditingController _debtNameController = TextEditingController();
+  final FocusNode _amountFocus = FocusNode();
+  final FocusNode _paidAmountFocus = FocusNode();
+  final FocusNode _debtNameFocus = FocusNode();
   String _selectedType = AppStrings.shop;
   String? _errorText;
 
@@ -36,6 +41,9 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
     _amountController.dispose();
     _paidAmountController.dispose();
     _debtNameController.dispose();
+    _amountFocus.dispose();
+    _paidAmountFocus.dispose();
+    _debtNameFocus.dispose();
     super.dispose();
   }
 
@@ -82,6 +90,7 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
         operationType: _selectedType,
         timestamp: DateTime.now(),
         isPaid: remainingAmount <= 0,
+        ledgerNumber: widget.ledgerNumber,
       );
 
       context.read<DebtCubit>().addDebt(debt);
@@ -163,7 +172,11 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
                                 Expanded(
                                   child: TextField(
                                     controller: _amountController,
+                                    focusNode: _amountFocus,
                                     keyboardType: TextInputType.number,
+                                    textInputAction: TextInputAction.next,
+                                    onSubmitted: (_) => FocusScope.of(context)
+                                        .requestFocus(_paidAmountFocus),
                                     style: TextStyles.customStyle(
                                       color: AppColors.textColor,
                                       fontSize: 18,
@@ -220,7 +233,11 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
                                 Expanded(
                                   child: TextField(
                                     controller: _paidAmountController,
+                                    focusNode: _paidAmountFocus,
                                     keyboardType: TextInputType.number,
+                                    textInputAction: TextInputAction.next,
+                                    onSubmitted: (_) => FocusScope.of(context)
+                                        .requestFocus(_debtNameFocus),
                                     style: TextStyles.customStyle(
                                       color: AppColors.textColor,
                                       fontSize: 18,
@@ -290,7 +307,10 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
                   ),
                   child: TextField(
                     controller: _debtNameController,
+                    focusNode: _debtNameFocus,
                     maxLines: 2,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _submit(),
                     style: TextStyles.customStyle(
                       color: AppColors.textColor,
                       fontWeight: FontWeight.w400,

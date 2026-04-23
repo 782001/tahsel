@@ -11,6 +11,7 @@ class CustomerDebtCard extends StatelessWidget {
   final double amount;
   final String status;
   final Color statusColor;
+  final String? ledgerNumber;
   final VoidCallback onPartialPayment;
   final VoidCallback onFullPayment;
   final VoidCallback onDelete;
@@ -26,6 +27,7 @@ class CustomerDebtCard extends StatelessWidget {
     required this.onPartialPayment,
     required this.onFullPayment,
     required this.onDelete,
+    this.ledgerNumber,
     this.onTap,
   });
 
@@ -143,24 +145,26 @@ class CustomerDebtCard extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: statusColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                status,
-                                style: TextStyles.customStyle(
-                                  color: statusColor,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
+                            if (ledgerNumber != null &&
+                                ledgerNumber!.isNotEmpty)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: statusColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  ledgerNumber ?? "",
+                                  style: TextStyles.customStyle(
+                                    color: statusColor,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
-                            ),
                           ],
                         ),
                       ],

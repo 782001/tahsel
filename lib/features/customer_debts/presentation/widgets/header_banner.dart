@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/customer_debts/data/models/debt_item_model.dart';
 
@@ -54,7 +55,7 @@ class HeaderBanner extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    detail.customerName,
+                     detail.customerName,
                     style: TextStyles.customStyle(
                       color: Colors.white,
                       fontSize: 20.sp,
@@ -62,24 +63,26 @@ class HeaderBanner extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 4.h),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 10.w,
-                      vertical: 3.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(20.r),
-                    ),
-                    child: Text(
-                      detail.status.tr(),
-                      style: TextStyles.customStyle(
-                        color: Colors.white,
-                        fontSize: 11.sp,
-                        fontWeight: FontWeight.w600,
+                  if (detail.ledgerNumber != null &&
+                      detail.ledgerNumber!.isNotEmpty)
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10.w,
+                        vertical: 3.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20.r),
+                      ),
+                      child: Text(
+                        detail.ledgerNumber ?? "",
+                        style: TextStyles.customStyle(
+                          color: Colors.white,
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ],

@@ -68,7 +68,11 @@ class CustomerDebtDetailScreen extends StatelessWidget {
       context: context,
       builder: (_) => BlocProvider.value(
         value: cubit,
-        child: AddDebtDialog(customerName: customerName, isShop: isShop),
+        child: AddDebtDialog(
+          customerName: customerName,
+          isShop: isShop,
+          ledgerNumber: detail.ledgerNumber,
+        ),
       ),
     );
   }

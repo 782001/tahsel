@@ -42,17 +42,28 @@ class CustomerDebtDetail {
   final String status;
   final Color statusColor;
   final List<DebtItem> items;
+  final String? ledgerNumber;
 
   const CustomerDebtDetail({
     required this.customerName,
     required this.status,
     required this.statusColor,
     required this.items,
+    this.ledgerNumber,
   });
 
   factory CustomerDebtDetail.fromEntities(String name, List<DebtEntity> entities) {
     final items = entities.map((e) => DebtItem.fromEntity(e)).toList();
     
+    // Extract ledger number from the first entity that has it
+    String? ledger;
+    for (var entity in entities) {
+      if (entity.ledgerNumber != null && entity.ledgerNumber!.isNotEmpty) {
+        ledger = entity.ledgerNumber;
+        break;
+      }
+    }
+
     // Logic for status
     double totalRemaining = items.fold(0.0, (sum, item) => sum + item.remainingDebt);
     
@@ -75,6 +86,7 @@ class CustomerDebtDetail {
       status: status,
       statusColor: statusColor,
       items: items,
+      ledgerNumber: ledger,
     );
   }
 

@@ -12,6 +12,7 @@ class DebtEntity extends Equatable {
   final String operationType;
   final DateTime? timestamp;
   final bool isPaid;
+  final String? ledgerNumber;
 
   const DebtEntity({
     this.id,
@@ -25,6 +26,7 @@ class DebtEntity extends Equatable {
     required this.operationType,
     this.timestamp,
     this.isPaid = false,
+    this.ledgerNumber,
   });
 
   DebtEntity copyWith({
@@ -39,6 +41,7 @@ class DebtEntity extends Equatable {
     String? operationType,
     DateTime? timestamp,
     bool? isPaid,
+    String? ledgerNumber,
   }) {
     return DebtEntity(
       id: id ?? this.id,
@@ -53,6 +56,7 @@ class DebtEntity extends Equatable {
       operationType: operationType ?? this.operationType,
       timestamp: timestamp ?? this.timestamp,
       isPaid: isPaid ?? this.isPaid,
+      ledgerNumber: ledgerNumber ?? this.ledgerNumber,
     );
   }
 
@@ -69,5 +73,6 @@ class DebtEntity extends Equatable {
         operationType,
         timestamp,
         isPaid,
+        ledgerNumber,
       ];
 }

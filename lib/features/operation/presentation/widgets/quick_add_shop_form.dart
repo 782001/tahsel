@@ -11,6 +11,8 @@ class QuickAddShopForm extends StatelessWidget {
   final TextEditingController productController;
   final TextEditingController paidController;
   final TextEditingController debtController;
+  final TextEditingController ledgerController;
+  final bool isShop;
   final String? customerError;
 
   const QuickAddShopForm({
@@ -19,6 +21,8 @@ class QuickAddShopForm extends StatelessWidget {
     required this.productController,
     required this.paidController,
     required this.debtController,
+    required this.ledgerController,
+    required this.isShop,
     this.customerError,
   });
 
@@ -51,6 +55,20 @@ class QuickAddShopForm extends StatelessWidget {
             errorText: customerError,
             icon: Icons.person_outline,
           ),
+          if (isShop) ...[
+            const SizedBox(height: 20),
+            Text(
+              AppStrings.ledgerNumber.tr(),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            QuickAddTextField(
+              hint: AppStrings.ledgerNumber.tr(),
+              controller: ledgerController,
+              icon: Icons.menu_book_outlined,
+              isNumber: true,
+            ),
+          ],
           const SizedBox(height: 20),
           Text(
             AppStrings.productName.tr(),

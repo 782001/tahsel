@@ -20,9 +20,7 @@ import 'package:tahsel/features/operation/presentation/widgets/quick_add_turn_fo
 import 'package:tahsel/shared/widgets/buttons/quick_action_button.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 
-import 'package:tahsel/features/customer/presentation/widgets/notification_dialog.dart';
 import '../../../customer/presentation/cubit/customer_cubit.dart';
-import '../../../customer/presentation/cubit/customer_state.dart';
 import '../../../debt/domain/entities/debt_entity.dart';
 import '../../../debt/presentation/cubit/debt_cubit.dart';
 import '../../../debt/presentation/cubit/debt_state.dart';
@@ -53,6 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Controllers for Shop mode
   final _productController = TextEditingController();
   final _debtController = TextEditingController();
+  final _ledgerController = TextEditingController();
 
   // Temporary constants for calculation prototypes
   int _matchCount = 1;
@@ -118,6 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _debtController.dispose();
     _hourlyRateController.dispose();
     _turnRateController.dispose();
+    _ledgerController.dispose();
     super.dispose();
   }
 
@@ -126,6 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _paidController.clear();
     _productController.clear();
     _debtController.clear();
+    _ledgerController.clear();
     setState(() {
       _matchCount = 1;
       _durationMinutes = 60;
@@ -192,6 +193,9 @@ class _HomeScreenState extends State<HomeScreen> {
         totalAmount: paid + remainingDebt,
         paidAmount: paid,
         remainingDebt: remainingDebt,
+        ledgerNumber: _ledgerController.text.trim().isNotEmpty
+            ? _ledgerController.text.trim()
+            : null,
       );
     } else {
       final customerName = _customerController.text.trim();
@@ -251,298 +255,306 @@ class _HomeScreenState extends State<HomeScreen> {
         BlocProvider(create: (context) => sl<OperationCubit>()),
         BlocProvider(create: (context) => sl<DebtCubit>()),
       ],
-        child: MultiBlocListener(
-          listeners: [
-            BlocListener<MainLayoutCubit, MainLayoutState>(
-              listener: (context, state) {
-                if (state is MainLayoutUserTypeLoaded) {
-                  if (context.read<MainLayoutCubit>().isShop) {
-                    setState(() => _selectedMode = QuickAddMode.shop);
-                  }
+      child: MultiBlocListener(
+        listeners: [
+          BlocListener<MainLayoutCubit, MainLayoutState>(
+            listener: (context, state) {
+              if (state is MainLayoutUserTypeLoaded) {
+                if (context.read<MainLayoutCubit>().isShop) {
+                  setState(() => _selectedMode = QuickAddMode.shop);
                 }
-              },
-            ),
-            BlocListener<DebtCubit, DebtState>(
-              listener: (context, state) {
-                if (state is DebtAddSuccess) {
-                  // Optional: show a small toast or just log it
-                  AppLogger.printMessage(
-                    'Debt recorded with ID: ${state.debtId}',
-                  );
-                } else if (state is DebtFailure) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      duration: Duration(milliseconds: 500),
-                      content: Text(
-                        '${AppStrings.operationFailed.tr()}: ${state.message}',
-                      ),
-                      backgroundColor: AppColors.orange,
-                    ),
-                  );
-                }
-              },
-            ),
-            BlocListener<OperationCubit, OperationState>(
-              listener: (context, state) {
-                if (state is OperationSuccess) {
-                  // Check if there is debt before clearing
-                  final double paid =
-                      double.tryParse(_paidController.text) ?? 0.0;
-                  final double remaining = _selectedMode == QuickAddMode.shop
-                      ? (double.tryParse(_debtController.text) ?? 0.0)
-                      : (totalDue - paid);
-
-                  if (remaining > 0) {
-                    final uid = sl<FirebaseAuth>().currentUser?.uid;
-                    if (uid != null) {
-                      context.read<DebtCubit>().addDebt(
-                        DebtEntity(
-                          uid: uid,
-                          operationId: state.operationId,
-                          totalAmount: _selectedMode == QuickAddMode.shop
-                              ? (paid + remaining)
-                              : totalDue,
-                          paidAmount: paid,
-                          remainingAmount: remaining,
-                          customerName: _customerController.text.trim(),
-                          productOrSessionDetails:
-                              _selectedMode == QuickAddMode.shop
-                              ? _productController.text.trim()
-                              : (_psSubMode == PlayStationMode.time
-                                    ? AppStrings.psSessionTime.tr()
-                                    : AppStrings.psSessionTurn.tr()),
-                          operationType: _selectedMode == QuickAddMode.shop
-                              ? AppStrings.shop
-                              : AppStrings.playStation,
-                        ),
-                      );
-                    }
-                  }
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      duration: Duration(milliseconds: 500),
-                      content: Text(state.message.tr()),
-                      backgroundColor: AppColors.green,
-                    ),
-                  );
-
-                  // Save customer for autocomplete
-                  final uid = sl<FirebaseAuth>().currentUser?.uid;
-                  final customerName = _customerController.text.trim();
-                  if (uid != null && customerName.isNotEmpty) {
-                    context.read<CustomerCubit>().saveCustomer(
-                      uid,
-                      customerName,
-                    );
-                  }
-
-                  // Save product for autocomplete (Shop Mode only)
-                  final productName = _productController.text.trim();
-                  if (uid != null &&
-                      _selectedMode == QuickAddMode.shop &&
-                      productName.isNotEmpty) {
-                    context.read<ProductCubit>().saveProduct(uid, productName);
-                  }
-
-                  // if (paid > 0) {
-                  //   NotificationDialog.show(
-                  //     context: context,
-                  //     customerName: customerName,
-                  //     amountPaid: paid,
-                  //     remainingBalance: remaining,
-                  //     note: _selectedMode == QuickAddMode.shop
-                  //         ? _productController.text.trim()
-                  //         : (_psSubMode == PlayStationMode.time
-                  //             ? AppStrings.psSessionTime.tr()
-                  //             : AppStrings.psSessionTurn.tr()),
-                  //   );
-                  // }
-
-                  _clearFields();
-                } else if (state is OperationFailure) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      duration: Duration(milliseconds: 500),
-                      content: Text(state.message.tr()),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              },
-            ),
-          ],
-          child: BlocBuilder<OperationCubit, OperationState>(
-            builder: (context, state) {
-              return Stack(
-                children: [
-                  SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Center(
-                          child: Text(
-                            AppStrings.quickAdd.tr(),
-                            style: TextStyles.customStyle(
-                              color: AppColors.black,
-                              fontSize: 25,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        20.verticalSpace,
-                        // Mode Selection
-                        if (context.read<MainLayoutCubit>().isCafe && !context.watch<MainLayoutCubit>().isShop)
-                          QuickAddModeSelector(
-                            selectedMode: _selectedMode,
-                            onModeChanged: (mode) {
-                              setState(() {
-                                _selectedMode = mode;
-                                if (_selectedMode == QuickAddMode.playStation) {
-                                  _psSubMode = PlayStationMode.time;
-                                }
-                              });
-                            },
-                          ),
-                        const SizedBox(height: 24),
-
-                        // Mode Body
-                        if (_selectedMode == QuickAddMode.playStation) ...[
-                          // PS Mode Sub-tabs
-                          QuickAddSubTabHeader(
-                            selectedMode: _psSubMode,
-                            onModeChanged: (mode) =>
-                                setState(() => _psSubMode = mode),
-                          ),
-                          const SizedBox(height: 24),
-
-                          // Form based on sub-mode
-                          if (_psSubMode == PlayStationMode.time)
-                            QuickAddTimeForm(
-                              customerController: _customerController,
-                              hourlyRateController: _hourlyRateController,
-                              durationMinutes: _durationMinutes,
-                              customerError: _customerError,
-                              onDurationAdd: () =>
-                                  setState(() => _durationMinutes += 5),
-                              onDurationRemove: () => setState(
-                                () => _durationMinutes > 5
-                                    ? _durationMinutes -= 5
-                                    : null,
-                              ),
-                            )
-                          else
-                            QuickAddTurnForm(
-                              customerController: _customerController,
-                              turnRateController: _turnRateController,
-                              matchCount: _matchCount,
-                              customerError: _customerError,
-                              onAdd: () => setState(() => _matchCount++),
-                              onRemove: () => setState(
-                                () => _matchCount > 1 ? _matchCount-- : null,
-                              ),
-                            ),
-
-                          const SizedBox(height: 24),
-
-                          // Total Calculation Card
-                          QuickAddSummaryCard(totalDue: totalDue),
-
-                          const SizedBox(height: 24),
-
-                          // Paid Field
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                AppStrings.paidAmount.tr(),
-                                style: TextStyles.customStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _paidController.text = totalDue
-                                        .toStringAsFixed(1);
-                                  });
-                                },
-                                child: Text(
-                                  AppStrings.paidFull.tr(),
-                                  style: TextStyles.customStyle(
-                                    color: AppColors.primaryColor,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          QuickAddTextField(
-                            hint: '0.00',
-                            controller: _paidController,
-                            suffixText: AppStrings.currencyEgp.tr(),
-                            isNumber: true,
-                          ),
-                        ] else ...[
-                          // Shop Mode Body (Simplified Form)
-                          QuickAddShopForm(
-                            customerController: _customerController,
-                            productController: _productController,
-                            paidController: _paidController,
-                            debtController: _debtController,
-                            customerError: _customerError,
-                          ),
-                        ],
-
-                        const SizedBox(height: 20),
-
-                        // Confirm Action Button
-                        QuickActionButton(
-                          label: AppStrings.confirmOperation.tr(),
-                          icon: Icons.check_circle_outline,
-                          onPressed: state is OperationLoading
-                              ? () {}
-                              : () => _submitOperation(context),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Footer Info
-                        Center(
-                          child: Text(
-                            AppStrings.quickAddDesc.tr(),
-                            textAlign: TextAlign.center,
-                            style: TextStyles.customStyle(
-                              color: AppColors.blackLight,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 100), // Padding for bottom nav
-                      ],
-                    ),
-                  ),
-                  if (state is OperationLoading)
-                    Container(
-                      color: Colors.black.withOpacity(0.3),
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primaryColor,
-                        ),
-                      ),
-                    ),
-                ],
-              );
+              }
             },
           ),
+          BlocListener<DebtCubit, DebtState>(
+            listener: (context, state) {
+              if (state is DebtAddSuccess) {
+                // Optional: show a small toast or just log it
+                AppLogger.printMessage(
+                  'Debt recorded with ID: ${state.debtId}',
+                );
+              } else if (state is DebtFailure) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    duration: Duration(milliseconds: 500),
+                    content: Text(
+                      '${AppStrings.operationFailed.tr()}: ${state.message}',
+                    ),
+                    backgroundColor: AppColors.orange,
+                  ),
+                );
+              }
+            },
+          ),
+          BlocListener<OperationCubit, OperationState>(
+            listener: (context, state) {
+              if (state is OperationSuccess) {
+                // Check if there is debt before clearing
+                final double paid =
+                    double.tryParse(_paidController.text) ?? 0.0;
+                final double remaining = _selectedMode == QuickAddMode.shop
+                    ? (double.tryParse(_debtController.text) ?? 0.0)
+                    : (totalDue - paid);
+
+                if (remaining > 0) {
+                  final uid = sl<FirebaseAuth>().currentUser?.uid;
+                  if (uid != null) {
+                    context.read<DebtCubit>().addDebt(
+                      DebtEntity(
+                        uid: uid,
+                        operationId: state.operationId,
+                        totalAmount: _selectedMode == QuickAddMode.shop
+                            ? (paid + remaining)
+                            : totalDue,
+                        paidAmount: paid,
+                        remainingAmount: remaining,
+                        customerName: _customerController.text.trim(),
+                        productOrSessionDetails:
+                            _selectedMode == QuickAddMode.shop
+                            ? _productController.text.trim()
+                            : (_psSubMode == PlayStationMode.time
+                                  ? AppStrings.psSessionTime.tr()
+                                  : AppStrings.psSessionTurn.tr()),
+                        operationType: _selectedMode == QuickAddMode.shop
+                            ? AppStrings.shop
+                            : AppStrings.playStation,
+                        ledgerNumber: _ledgerController.text.trim().isNotEmpty
+                            ? _ledgerController.text.trim()
+                            : null,
+                      ),
+                    );
+                  }
+                }
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    duration: Duration(milliseconds: 500),
+                    content: Text(state.message.tr()),
+                    backgroundColor: AppColors.green,
+                  ),
+                );
+
+                // Save customer for autocomplete
+                final uid = sl<FirebaseAuth>().currentUser?.uid;
+                final customerName = _customerController.text.trim();
+                if (uid != null && customerName.isNotEmpty) {
+                  context.read<CustomerCubit>().saveCustomer(
+                    uid,
+                    customerName,
+                    ledgerNumber: _ledgerController.text.trim().isNotEmpty
+                        ? _ledgerController.text.trim()
+                        : null,
+                  );
+                }
+
+                // Save product for autocomplete (Shop Mode only)
+                final productName = _productController.text.trim();
+                if (uid != null &&
+                    _selectedMode == QuickAddMode.shop &&
+                    productName.isNotEmpty) {
+                  context.read<ProductCubit>().saveProduct(uid, productName);
+                }
+
+                // if (paid > 0) {
+                //   NotificationDialog.show(
+                //     context: context,
+                //     customerName: customerName,
+                //     amountPaid: paid,
+                //     remainingBalance: remaining,
+                //     note: _selectedMode == QuickAddMode.shop
+                //         ? _productController.text.trim()
+                //         : (_psSubMode == PlayStationMode.time
+                //             ? AppStrings.psSessionTime.tr()
+                //             : AppStrings.psSessionTurn.tr()),
+                //   );
+                // }
+
+                _clearFields();
+              } else if (state is OperationFailure) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    duration: Duration(milliseconds: 500),
+                    content: Text(state.message.tr()),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+          ),
+        ],
+        child: BlocBuilder<OperationCubit, OperationState>(
+          builder: (context, state) {
+            return Stack(
+              children: [
+                SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Text(
+                          AppStrings.quickAdd.tr(),
+                          style: TextStyles.customStyle(
+                            color: AppColors.black,
+                            fontSize: 25,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      20.verticalSpace,
+                      // Mode Selection
+                      if (context.read<MainLayoutCubit>().isCafe &&
+                          !context.watch<MainLayoutCubit>().isShop)
+                        QuickAddModeSelector(
+                          selectedMode: _selectedMode,
+                          onModeChanged: (mode) {
+                            setState(() {
+                              _selectedMode = mode;
+                              if (_selectedMode == QuickAddMode.playStation) {
+                                _psSubMode = PlayStationMode.time;
+                              }
+                            });
+                          },
+                        ),
+                      const SizedBox(height: 24),
+
+                      // Mode Body
+                      if (_selectedMode == QuickAddMode.playStation) ...[
+                        // PS Mode Sub-tabs
+                        QuickAddSubTabHeader(
+                          selectedMode: _psSubMode,
+                          onModeChanged: (mode) =>
+                              setState(() => _psSubMode = mode),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Form based on sub-mode
+                        if (_psSubMode == PlayStationMode.time)
+                          QuickAddTimeForm(
+                            customerController: _customerController,
+                            hourlyRateController: _hourlyRateController,
+                            durationMinutes: _durationMinutes,
+                            customerError: _customerError,
+                            onDurationAdd: () =>
+                                setState(() => _durationMinutes += 5),
+                            onDurationRemove: () => setState(
+                              () => _durationMinutes > 5
+                                  ? _durationMinutes -= 5
+                                  : null,
+                            ),
+                          )
+                        else
+                          QuickAddTurnForm(
+                            customerController: _customerController,
+                            turnRateController: _turnRateController,
+                            matchCount: _matchCount,
+                            customerError: _customerError,
+                            onAdd: () => setState(() => _matchCount++),
+                            onRemove: () => setState(
+                              () => _matchCount > 1 ? _matchCount-- : null,
+                            ),
+                          ),
+
+                        const SizedBox(height: 24),
+
+                        // Total Calculation Card
+                        QuickAddSummaryCard(totalDue: totalDue),
+
+                        const SizedBox(height: 24),
+
+                        // Paid Field
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              AppStrings.paidAmount.tr(),
+                              style: TextStyles.customStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  _paidController.text = totalDue
+                                      .toStringAsFixed(1);
+                                });
+                              },
+                              child: Text(
+                                AppStrings.paidFull.tr(),
+                                style: TextStyles.customStyle(
+                                  color: AppColors.primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        QuickAddTextField(
+                          hint: '0.00',
+                          controller: _paidController,
+                          suffixText: AppStrings.currencyEgp.tr(),
+                          isNumber: true,
+                        ),
+                      ] else ...[
+                        // Shop Mode Body (Simplified Form)
+                        QuickAddShopForm(
+                          customerController: _customerController,
+                          productController: _productController,
+                          paidController: _paidController,
+                          debtController: _debtController,
+                          ledgerController: _ledgerController,
+                          isShop: context.read<MainLayoutCubit>().isShop,
+                          customerError: _customerError,
+                        ),
+                      ],
+
+                      const SizedBox(height: 20),
+
+                      // Confirm Action Button
+                      QuickActionButton(
+                        label: AppStrings.confirmOperation.tr(),
+                        icon: Icons.check_circle_outline,
+                        onPressed: state is OperationLoading
+                            ? () {}
+                            : () => _submitOperation(context),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Footer Info
+                      Center(
+                        child: Text(
+                          AppStrings.quickAddDesc.tr(),
+                          textAlign: TextAlign.center,
+                          style: TextStyles.customStyle(
+                            color: AppColors.blackLight,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 100), // Padding for bottom nav
+                    ],
+                  ),
+                ),
+                if (state is OperationLoading)
+                  Container(
+                    color: Colors.black.withOpacity(0.3),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primaryColor,
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
-      
+      ),
     );
   }
 }
