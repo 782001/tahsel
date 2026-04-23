@@ -12,6 +12,13 @@ class QuickAddTimeForm extends StatelessWidget {
   final String? customerError;
   final VoidCallback onDurationAdd;
   final VoidCallback onDurationRemove;
+  final FocusNode customerFocus;
+  final FocusNode hourlyRateFocus;
+  final FocusNode nextFocus;
+  final TextInputAction customerInputAction;
+  final TextInputAction hourlyRateInputAction;
+  final ValueChanged<String>? onCustomerSubmitted;
+  final ValueChanged<String>? onHourlyRateSubmitted;
 
   const QuickAddTimeForm({
     super.key,
@@ -21,6 +28,13 @@ class QuickAddTimeForm extends StatelessWidget {
     this.customerError,
     required this.onDurationAdd,
     required this.onDurationRemove,
+    required this.customerFocus,
+    required this.hourlyRateFocus,
+    required this.nextFocus,
+    this.customerInputAction = TextInputAction.next,
+    this.hourlyRateInputAction = TextInputAction.next,
+    this.onCustomerSubmitted,
+    this.onHourlyRateSubmitted,
   });
 
   @override
@@ -37,6 +51,9 @@ class QuickAddTimeForm extends StatelessWidget {
           hint: AppStrings.customerNameHint.tr(),
           controller: customerController,
           errorText: customerError,
+          focusNode: customerFocus,
+          textInputAction: customerInputAction,
+          onSubmitted: onCustomerSubmitted ?? (_) => nextFocus.requestFocus(),
         ),
         const SizedBox(height: 20),
         Row(
@@ -55,6 +72,9 @@ class QuickAddTimeForm extends StatelessWidget {
                     controller: hourlyRateController,
                     isNumber: true,
                     suffixText: AppStrings.currencyEgp.tr(),
+                    focusNode: hourlyRateFocus,
+                    textInputAction: hourlyRateInputAction,
+                    onSubmitted: onHourlyRateSubmitted,
                   ),
                 ],
               ),

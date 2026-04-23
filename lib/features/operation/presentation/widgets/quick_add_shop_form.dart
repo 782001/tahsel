@@ -14,6 +14,17 @@ class QuickAddShopForm extends StatelessWidget {
   final TextEditingController ledgerController;
   final bool isShop;
   final String? customerError;
+  final FocusNode customerFocus;
+  final FocusNode ledgerFocus;
+  final FocusNode productFocus;
+  final FocusNode paidFocus;
+  final FocusNode debtFocus;
+  final TextInputAction customerInputAction;
+  final TextInputAction ledgerInputAction;
+  final TextInputAction productInputAction;
+  final TextInputAction paidInputAction;
+  final TextInputAction debtInputAction;
+  final ValueChanged<String>? onDebtSubmitted;
 
   const QuickAddShopForm({
     super.key,
@@ -24,6 +35,17 @@ class QuickAddShopForm extends StatelessWidget {
     required this.ledgerController,
     required this.isShop,
     this.customerError,
+    required this.customerFocus,
+    required this.ledgerFocus,
+    required this.productFocus,
+    required this.paidFocus,
+    required this.debtFocus,
+    this.customerInputAction = TextInputAction.next,
+    this.ledgerInputAction = TextInputAction.next,
+    this.productInputAction = TextInputAction.next,
+    this.paidInputAction = TextInputAction.next,
+    this.debtInputAction = TextInputAction.done,
+    this.onDebtSubmitted,
   });
 
   @override
@@ -54,6 +76,11 @@ class QuickAddShopForm extends StatelessWidget {
             controller: customerController,
             errorText: customerError,
             icon: Icons.person_outline,
+            focusNode: customerFocus,
+            textInputAction: customerInputAction,
+            onSubmitted: (_) => isShop
+                ? ledgerFocus.requestFocus()
+                : productFocus.requestFocus(),
           ),
           if (isShop) ...[
             const SizedBox(height: 20),
@@ -67,6 +94,9 @@ class QuickAddShopForm extends StatelessWidget {
               controller: ledgerController,
               icon: Icons.menu_book_outlined,
               isNumber: true,
+              focusNode: ledgerFocus,
+              textInputAction: ledgerInputAction,
+              onSubmitted: (_) => productFocus.requestFocus(),
             ),
           ],
           const SizedBox(height: 20),
@@ -79,6 +109,9 @@ class QuickAddShopForm extends StatelessWidget {
             hint: AppStrings.productNameHint.tr(),
             controller: productController,
             icon: Icons.shopping_bag_outlined,
+            focusNode: productFocus,
+            textInputAction: productInputAction,
+            onSubmitted: (_) => paidFocus.requestFocus(),
           ),
           const SizedBox(height: 20),
           Row(
@@ -97,6 +130,9 @@ class QuickAddShopForm extends StatelessWidget {
                       controller: paidController,
                       prefixText: AppStrings.currencyEgp.tr(),
                       isNumber: true,
+                      focusNode: paidFocus,
+                      textInputAction: paidInputAction,
+                      onSubmitted: (_) => debtFocus.requestFocus(),
                     ),
                   ],
                 ),
@@ -116,6 +152,9 @@ class QuickAddShopForm extends StatelessWidget {
                       controller: debtController,
                       prefixText: AppStrings.currencyEgp.tr(),
                       isNumber: true,
+                      focusNode: debtFocus,
+                      textInputAction: debtInputAction,
+                      onSubmitted: onDebtSubmitted,
                     ),
                   ],
                 ),

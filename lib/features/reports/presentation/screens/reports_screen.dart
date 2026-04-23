@@ -132,10 +132,12 @@ class _ReportsViewState extends State<ReportsView> {
                                   children: [
                                     ReportsNetProfitCard(
                                       amount: data.netProfit.toStringAsFixed(1),
-                                      difference: data.profitDiff
-                                          .toStringAsFixed(1),
                                       isPositive: data.isProfitIncrease,
-                                      comparisonText: _getBadgeText(),
+                                      comparisonText: _buildComparisonText(
+                                        label: AppStrings.netProfit.tr(),
+                                        diff: data.profitDiff,
+                                        isIncrease: data.isProfitIncrease,
+                                      ),
                                     ),
 
                                     // Main Profit Insight Message
@@ -160,8 +162,11 @@ class _ReportsViewState extends State<ReportsView> {
                                       isShop: context
                                           .read<MainLayoutCubit>()
                                           .isShop,
-                                      badgeText:
-                                          "${data.isIncomeIncrease ? '+' : '-'}${data.incomeDiff.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${_getBadgeText()}",
+                                      badgeText: _buildComparisonText(
+                                        label: AppStrings.totalIncome.tr(),
+                                        diff: data.incomeDiff,
+                                        isIncrease: data.isIncomeIncrease,
+                                      ),
                                       onTap: () {
                                         final dateRange = _getDateRange();
                                         nav().pushNamedWithArgs(
@@ -197,8 +202,11 @@ class _ReportsViewState extends State<ReportsView> {
                                       isShop: context
                                           .read<MainLayoutCubit>()
                                           .isShop,
-                                      badgeText:
-                                          "${data.isExpenseIncrease ? '+' : '-'}${data.expenseDiff.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${_getBadgeText()}",
+                                      badgeText: _buildComparisonText(
+                                        label: AppStrings.totalExpenses.tr(),
+                                        diff: data.expenseDiff,
+                                        isIncrease: data.isExpenseIncrease,
+                                      ),
                                       onTap: () {
                                         context
                                             .read<MainLayoutCubit>()
@@ -248,8 +256,15 @@ class _ReportsViewState extends State<ReportsView> {
                                         isShop: context
                                             .watch<MainLayoutCubit>()
                                             .isShop,
-                                        badgeText:
-                                            "${data.isCafeIncrease ? '+' : '-'}${data.cafeDiff.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${_getBadgeText()}",
+                                        badgeText: _buildComparisonText(
+                                          label: context
+                                                  .read<MainLayoutCubit>()
+                                                  .isShop
+                                              ? AppStrings.shopIncome.tr()
+                                              : AppStrings.cafeIncome.tr(),
+                                          diff: data.cafeDiff,
+                                          isIncrease: data.isCafeIncrease,
+                                        ),
                                         onTap: () {
                                           final dateRange = _getDateRange();
                                           nav().pushNamedWithArgs(
@@ -280,8 +295,12 @@ class _ReportsViewState extends State<ReportsView> {
                                         amount: data.playstationIncome
                                             .toStringAsFixed(1),
                                         type: BusinessReportType.playstation,
-                                        badgeText:
-                                            "${data.isPlaystationIncrease ? '+' : '-'}${data.playstationDiff.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${_getBadgeText()}",
+                                        badgeText: _buildComparisonText(
+                                          label: AppStrings.playstationIncome
+                                              .tr(),
+                                          diff: data.playstationDiff,
+                                          isIncrease: data.isPlaystationIncrease,
+                                        ),
                                         onTap: () {
                                           final dateRange = _getDateRange();
                                           nav().pushNamedWithArgs(
@@ -433,6 +452,30 @@ class _ReportsViewState extends State<ReportsView> {
       default:
         return "";
     }
+  }
+
+  String _buildComparisonText({
+    required String label,
+    required double diff,
+    required bool isIncrease,
+  }) {
+    if (diff == 0) {
+      return AppStrings.comparisonNoChange.tr(namedArgs: {
+        'label': label,
+        'period': _getBadgeText(),
+      });
+    }
+
+    final String key = isIncrease
+        ? AppStrings.comparisonIncrease
+        : AppStrings.comparisonDecrease;
+
+    return key.tr(namedArgs: {
+      'label': label,
+      'amount': diff.toStringAsFixed(1),
+      'currency': AppStrings.currencyEgp.tr(),
+      'period': _getBadgeText(),
+    });
   }
 
   Widget _buildInsightCard(ProfitInsight insight) {

@@ -10,6 +10,9 @@ class QuickAddTextField extends StatelessWidget {
   final bool isNumber;
   final String? errorText;
   final ValueChanged<String>? onChanged;
+  final FocusNode? focusNode;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onSubmitted;
 
   const QuickAddTextField({
     super.key,
@@ -21,14 +24,20 @@ class QuickAddTextField extends StatelessWidget {
     this.isNumber = false,
     this.errorText,
     this.onChanged,
+    this.focusNode,
+    this.textInputAction,
+    this.onSubmitted,
   });
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
+      focusNode: focusNode,
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+      textInputAction: textInputAction,
       onChanged: onChanged,
+      onSubmitted: onSubmitted,
       style: TextStyle(
         fontWeight: FontWeight.w600,
         color: AppColors.black,

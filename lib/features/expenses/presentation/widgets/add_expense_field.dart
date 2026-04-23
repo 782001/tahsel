@@ -13,6 +13,9 @@ class AddExpenseField extends StatelessWidget {
   final bool isMultiline;
   final VoidCallback? onTap;
   final bool readOnly;
+  final FocusNode? focusNode;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onSubmitted;
 
   const AddExpenseField({
     super.key,
@@ -25,6 +28,9 @@ class AddExpenseField extends StatelessWidget {
     this.isMultiline = false,
     this.onTap,
     this.readOnly = false,
+    this.focusNode,
+    this.textInputAction,
+    this.onSubmitted,
   });
 
   @override
@@ -47,8 +53,11 @@ class AddExpenseField extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 24.w),
           child: TextField(
             controller: controller,
+            focusNode: focusNode,
             onTap: onTap,
             readOnly: readOnly,
+            onSubmitted: onSubmitted,
+            textInputAction: textInputAction,
             maxLines: isMultiline ? 4 : 1,
             keyboardType: isMultiline
                 ? TextInputType.multiline

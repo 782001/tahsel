@@ -26,6 +26,11 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   final TextEditingController _dateController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
 
+  // FocusNodes for navigation
+  final FocusNode _amountFocus = FocusNode();
+  final FocusNode _nameFocus = FocusNode();
+  final FocusNode _descFocus = FocusNode();
+
   @override
   void initState() {
     super.initState();
@@ -38,6 +43,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     _nameController.dispose();
     _descController.dispose();
     _dateController.dispose();
+    _amountFocus.dispose();
+    _nameFocus.dispose();
+    _descFocus.dispose();
     super.dispose();
   }
 
@@ -70,6 +78,31 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     }
   }
 
+  void _submit() {
+    if (_amountController.text.isEmpty || _nameController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(milliseconds: 500),
+          content: Text(
+            AppStrings.validationFieldRequired.tr(),
+          ),
+        ),
+      );
+      return;
+    }
+
+    final expense = ExpenseEntity(
+      uid: AppStrings.userToken,
+      amount: double.parse(_amountController.text),
+      category: _nameController.text,
+      description: _descController.text,
+      createdAt: _selectedDate,
+      monthKey: DateFormatter.formatNumericMonth(_selectedDate),
+    );
+
+    context.read<ExpenseCubit>().addExpense(expense);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -96,14 +129,15 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           if (state is ExpenseAddSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                duration: Duration(milliseconds: 500),
+                duration: const Duration(milliseconds: 500),
                 content: Text(AppStrings.operationSuccess.tr()),
               ),
             );
             Navigator.pop(context);
           } else if (state is ExpenseFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(  duration: Duration(milliseconds: 500),
+              SnackBar(
+                duration: const Duration(milliseconds: 500),
                 content: Text(state.message),
                 backgroundColor: Colors.red,
               ),
@@ -124,6 +158,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     prefixText: AppStrings.currencyEgp.tr(),
                     suffixIcon: Icons.account_balance_wallet_outlined,
                     isNumber: true,
+                    focusNode: _amountFocus,
+                    textInputAction: TextInputAction.next,
+                    onSubmitted: (_) => _nameFocus.requestFocus(),
                   ),
                   SizedBox(height: 16.h),
                   AddExpenseField(
@@ -131,6 +168,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     hint: AppStrings.expenseNamePlaceholder.tr(),
                     controller: _nameController,
                     suffixIcon: Icons.folder_outlined,
+                    focusNode: _nameFocus,
+                    textInputAction: TextInputAction.next,
+                    onSubmitted: (_) => _descFocus.requestFocus(),
                   ),
                   SizedBox(height: 16.h),
                   AddExpenseField(
@@ -138,7 +178,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     hint: AppStrings.descriptionPlaceholder.tr(),
                     controller: _descController,
                     suffixIcon: Icons.description_outlined,
-                    isMultiline: true,
+                    focusNode: _descFocus,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _submit(),
                   ),
                   SizedBox(height: 16.h),
                   AddExpenseField(
@@ -153,33 +195,10 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 24.w),
                     child: QuickActionButton(
-                            label: AppStrings.addExpense.tr(),
-                            icon: Icons.check_circle_outline,
-                            onPressed: () {
-                              if (_amountController.text.isEmpty ||
-                                  _nameController.text.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(  duration: Duration(milliseconds: 500),
-                                    content: Text(
-                                      AppStrings.validationFieldRequired.tr(),
-                                    ),
-                                  ),
-                                );
-                                return;
-                              }
-
-                              final expense = ExpenseEntity(
-                                uid: AppStrings.userToken,
-                                amount: double.parse(_amountController.text),
-                                category: _nameController.text,
-                                description: _descController.text,
-                                createdAt: _selectedDate,
-                                monthKey: DateFormatter.formatNumericMonth(_selectedDate),
-                              );
-
-                              context.read<ExpenseCubit>().addExpense(expense);
-                            },
-                          ),
+                      label: AppStrings.addExpense.tr(),
+                      icon: Icons.check_circle_outline,
+                      onPressed: _submit,
+                    ),
                   ),
                   SizedBox(height: 48.h),
                 ],

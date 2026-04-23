@@ -45,13 +45,22 @@ class _HomeScreenState extends State<HomeScreen> {
   // Controllers for PlayStation modes
   final _customerController = TextEditingController();
   final _paidController = TextEditingController();
+  final _ledgerController = TextEditingController();
   final _hourlyRateController = TextEditingController();
   final _turnRateController = TextEditingController();
 
   // Controllers for Shop mode
   final _productController = TextEditingController();
   final _debtController = TextEditingController();
-  final _ledgerController = TextEditingController();
+
+  // FocusNodes for navigation
+  final _customerFocus = FocusNode();
+  final _paidFocus = FocusNode();
+  final _hourlyRateFocus = FocusNode();
+  final _turnRateFocus = FocusNode();
+  final _productFocus = FocusNode();
+  final _debtFocus = FocusNode();
+  final _ledgerFocus = FocusNode();
 
   // Temporary constants for calculation prototypes
   int _matchCount = 1;
@@ -118,6 +127,14 @@ class _HomeScreenState extends State<HomeScreen> {
     _hourlyRateController.dispose();
     _turnRateController.dispose();
     _ledgerController.dispose();
+
+    _customerFocus.dispose();
+    _paidFocus.dispose();
+    _hourlyRateFocus.dispose();
+    _turnRateFocus.dispose();
+    _productFocus.dispose();
+    _debtFocus.dispose();
+    _ledgerFocus.dispose();
     super.dispose();
   }
 
@@ -436,6 +453,13 @@ class _HomeScreenState extends State<HomeScreen> {
                             hourlyRateController: _hourlyRateController,
                             durationMinutes: _durationMinutes,
                             customerError: _customerError,
+                            customerFocus: _customerFocus,
+                            hourlyRateFocus: _hourlyRateFocus,
+                            nextFocus: _paidFocus,
+                            onCustomerSubmitted: (_) =>
+                                _hourlyRateFocus.requestFocus(),
+                            onHourlyRateSubmitted: (_) =>
+                                _paidFocus.requestFocus(),
                             onDurationAdd: () =>
                                 setState(() => _durationMinutes += 5),
                             onDurationRemove: () => setState(
@@ -450,6 +474,13 @@ class _HomeScreenState extends State<HomeScreen> {
                             turnRateController: _turnRateController,
                             matchCount: _matchCount,
                             customerError: _customerError,
+                            customerFocus: _customerFocus,
+                            turnRateFocus: _turnRateFocus,
+                            nextFocus: _paidFocus,
+                            onCustomerSubmitted: (_) =>
+                                _turnRateFocus.requestFocus(),
+                            onTurnRateSubmitted: (_) =>
+                                _paidFocus.requestFocus(),
                             onAdd: () => setState(() => _matchCount++),
                             onRemove: () => setState(
                               () => _matchCount > 1 ? _matchCount-- : null,
@@ -498,6 +529,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           controller: _paidController,
                           suffixText: AppStrings.currencyEgp.tr(),
                           isNumber: true,
+                          focusNode: _paidFocus,
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _submitOperation(context),
                         ),
                       ] else ...[
                         // Shop Mode Body (Simplified Form)
@@ -509,6 +543,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           ledgerController: _ledgerController,
                           isShop: context.read<MainLayoutCubit>().isShop,
                           customerError: _customerError,
+                          customerFocus: _customerFocus,
+                          ledgerFocus: _ledgerFocus,
+                          productFocus: _productFocus,
+                          paidFocus: _paidFocus,
+                          debtFocus: _debtFocus,
+                          onDebtSubmitted: (_) => _submitOperation(context),
                         ),
                       ],
 

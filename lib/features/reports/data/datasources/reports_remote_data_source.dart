@@ -38,7 +38,7 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
           .doc(uid)
           .collection('operations')
           .where('timestamp', isGreaterThanOrEqualTo: startTimestamp)
-          .where('timestamp', isLessThanOrEqualTo: endTimestamp)
+          .where('timestamp', isLessThan: endTimestamp)
           .get();
 
       double totalIncome = 0;
@@ -66,7 +66,7 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
           .doc(uid)
           .collection('expenses')
           .where('createdAt', isGreaterThanOrEqualTo: startTimestamp)
-          .where('createdAt', isLessThanOrEqualTo: endTimestamp)
+          .where('createdAt', isLessThan: endTimestamp)
           .get();
 
       double totalExpenses = 0;
@@ -126,7 +126,7 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
           .doc(uid)
           .collection('operations')
           .where('timestamp', isGreaterThanOrEqualTo: startTimestamp)
-          .where('timestamp', isLessThanOrEqualTo: endTimestamp);
+          .where('timestamp', isLessThan: endTimestamp);
 
       final snapshot = await query.get();
 

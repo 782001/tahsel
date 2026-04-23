@@ -12,6 +12,13 @@ class QuickAddTurnForm extends StatelessWidget {
   final String? customerError;
   final VoidCallback onAdd;
   final VoidCallback onRemove;
+  final FocusNode customerFocus;
+  final FocusNode turnRateFocus;
+  final FocusNode nextFocus;
+  final TextInputAction customerInputAction;
+  final TextInputAction turnRateInputAction;
+  final ValueChanged<String>? onCustomerSubmitted;
+  final ValueChanged<String>? onTurnRateSubmitted;
 
   const QuickAddTurnForm({
     super.key,
@@ -21,6 +28,13 @@ class QuickAddTurnForm extends StatelessWidget {
     this.customerError,
     required this.onAdd,
     required this.onRemove,
+    required this.customerFocus,
+    required this.turnRateFocus,
+    required this.nextFocus,
+    this.customerInputAction = TextInputAction.next,
+    this.turnRateInputAction = TextInputAction.next,
+    this.onCustomerSubmitted,
+    this.onTurnRateSubmitted,
   });
 
   @override
@@ -37,6 +51,9 @@ class QuickAddTurnForm extends StatelessWidget {
           hint: AppStrings.customerNameHint.tr(),
           controller: customerController,
           errorText: customerError,
+          focusNode: customerFocus,
+          textInputAction: customerInputAction,
+          onSubmitted: onCustomerSubmitted ?? (_) => nextFocus.requestFocus(),
         ),
         const SizedBox(height: 20),
         Row(
@@ -55,6 +72,9 @@ class QuickAddTurnForm extends StatelessWidget {
                     controller: turnRateController,
                     isNumber: true,
                     suffixText: AppStrings.currencyEgp.tr(),
+                    focusNode: turnRateFocus,
+                    textInputAction: turnRateInputAction,
+                    onSubmitted: onTurnRateSubmitted,
                   ),
                 ],
               ),

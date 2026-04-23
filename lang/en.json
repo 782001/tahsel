@@ -242,5 +242,8 @@
   "sms": "SMS",
   "none": "None",
   "sms_not_supported": "This device does not support sending SMS",
-  "ledger_number": "Ledger Number"
+  "ledger_number": "Ledger Number",
+  "comparison_increase": "{label} increased by {amount} {currency} {period}",
+  "comparison_decrease": "{label} decreased by {amount} {currency} {period}",
+  "comparison_no_change": "No change in {label} {period}"
 }

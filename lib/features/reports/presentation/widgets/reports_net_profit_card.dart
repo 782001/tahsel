@@ -7,14 +7,12 @@ import 'package:tahsel/core/utils/styles.dart';
 
 class ReportsNetProfitCard extends StatelessWidget {
   final String amount;
-  final String difference;
-  final bool isPositive;
   final String comparisonText;
+  final bool isPositive;
 
   const ReportsNetProfitCard({
     super.key,
     required this.amount,
-    required this.difference,
     required this.comparisonText,
     this.isPositive = true,
   });
@@ -67,20 +65,14 @@ class ReportsNetProfitCard extends StatelessWidget {
                   .withOpacity(0.1),
               borderRadius: BorderRadius.circular(12.r),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  "${isPositive ? '+' : '-'}$difference ${AppStrings.currencyEgp.tr()}  $comparisonText  ${isPositive ? '↑↑' : '↓↓'}",
-                  style: TextStyles.customStyle(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.bold,
-                    color: isPositive
-                        ? AppColors.primaryColor
-                        : AppColors.error,
-                  ),
-                ),
-              ],
+            child: Text(
+              "$comparisonText  ${isPositive ? '↑↑' : '↓↓'}",
+              textAlign: TextAlign.center,
+              style: TextStyles.customStyle(
+                fontSize: 15.sp,
+                fontWeight: FontWeight.bold,
+                color: isPositive ? AppColors.primaryColor : AppColors.error,
+              ),
             ),
           ),
         ],

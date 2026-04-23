@@ -242,5 +242,8 @@
   "sms": "رسالة نصية",
   "none": "بدون",
   "sms_not_supported": "هذا الجهاز لا يدعم إرسال الرسائل النصية",
-  "ledger_number": "رقم الدفتر"
+  "ledger_number": "رقم الدفتر",
+  "comparison_increase": "{label} زاد بمقدار {amount} {currency} {period}",
+  "comparison_decrease": "{label} قل بمقدار {amount} {currency} {period}",
+  "comparison_no_change": "لا يوجد تغيير في {label} {period}"
 }

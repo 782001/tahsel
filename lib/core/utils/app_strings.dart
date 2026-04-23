@@ -291,4 +291,7 @@ class AppStrings {
   static const String none = "none";
   static const String smsNotSupported = "sms_not_supported";
   static const String ledgerNumber = "ledger_number";
+  static const String comparisonIncrease = "comparison_increase";
+  static const String comparisonDecrease = "comparison_decrease";
+  static const String comparisonNoChange = "comparison_no_change";
 }

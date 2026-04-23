@@ -35,7 +35,7 @@ class ReportsCubit extends Cubit<ReportsState> {
   void fetchToday() {
     final now = DateTime.now();
     final start = DateTime(now.year, now.month, now.day);
-    final end = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    final end = DateTime(now.year, now.month, now.day + 1);
     fetchReports(startDate: start, endDate: end, period: ReportPeriod.daily);
   }
 
@@ -43,14 +43,7 @@ class ReportsCubit extends Cubit<ReportsState> {
     final now = DateTime.now();
     final yesterday = now.subtract(const Duration(days: 1));
     final start = DateTime(yesterday.year, yesterday.month, yesterday.day);
-    final end = DateTime(
-      yesterday.year,
-      yesterday.month,
-      yesterday.day,
-      23,
-      59,
-      59,
-    );
+    final end = DateTime(yesterday.year, yesterday.month, yesterday.day + 1);
     fetchReports(startDate: start, endDate: end, period: ReportPeriod.daily);
   }
 
@@ -58,7 +51,7 @@ class ReportsCubit extends Cubit<ReportsState> {
     final now = DateTime.now();
     final start = now.subtract(Duration(days: now.weekday % 7));
     final startDate = DateTime(start.year, start.month, start.day);
-    final end = now;
+    final end = DateTime(now.year, now.month, now.day + 1);
     fetchReports(
       startDate: startDate,
       endDate: end,
@@ -69,7 +62,7 @@ class ReportsCubit extends Cubit<ReportsState> {
   void fetchCurrentMonth() {
     final now = DateTime.now();
     final start = DateTime(now.year, now.month, 1);
-    final end = now;
+    final end = DateTime(now.year, now.month, now.day + 1);
     fetchReports(startDate: start, endDate: end, period: ReportPeriod.monthly);
   }
 }

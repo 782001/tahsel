@@ -9,6 +9,9 @@ class ProductAutocompleteField extends StatelessWidget {
   final String hint;
   final IconData? icon;
   final String? errorText;
+  final FocusNode? focusNode;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onSubmitted;
 
   const ProductAutocompleteField({
     super.key,
@@ -16,21 +19,26 @@ class ProductAutocompleteField extends StatelessWidget {
     required this.hint,
     this.icon,
     this.errorText,
+    this.focusNode,
+    this.textInputAction,
+    this.onSubmitted,
   });
 
   @override
   Widget build(BuildContext context) {
     return RawAutocomplete<ProductEntity>(
       textEditingController: controller,
-      focusNode: FocusNode(),
+      focusNode: focusNode ?? FocusNode(),
       optionsBuilder: (TextEditingValue textEditingValue) {
         return context.read<ProductCubit>().getSuggestions(textEditingValue.text);
       },
       displayStringForOption: (ProductEntity option) => option.name,
-      fieldViewBuilder: (context, fieldController, focusNode, onFieldSubmitted) {
+      fieldViewBuilder: (context, fieldController, fieldFocusNode, onFieldSubmitted) {
         return TextField(
           controller: fieldController,
-          focusNode: focusNode,
+          focusNode: fieldFocusNode,
+          textInputAction: textInputAction,
+          onSubmitted: onSubmitted,
           style: TextStyle(
             fontWeight: FontWeight.w600,
             color: AppColors.black,

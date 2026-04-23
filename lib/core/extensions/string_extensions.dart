@@ -5,8 +5,8 @@ import 'package:tahsel/core/services/translation_helper.dart';
 extension StringExtensions on String {
   /// Translates the string key using the current localization instance.
   /// Matches the easy_localization usage pattern: 'key'.tr()
-  String tr({List<String>? args}) {
-    return AppLocalizations.tr(this, args: args);
+  String tr({List<String>? args, Map<String, String>? namedArgs}) {
+    return AppLocalizations.tr(this, args: args, namedArgs: namedArgs);
   }
 
   /// Translates the string key using a specific [context].
