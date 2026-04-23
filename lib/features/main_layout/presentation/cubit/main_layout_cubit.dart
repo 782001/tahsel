@@ -38,7 +38,9 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
 
   void _init() async {
     await _loadUserType();
-    _initCleanup();
+    if (!isShop) {
+      _initCleanup();
+    }
   }
 
   Future<void> _loadUserType() async {
