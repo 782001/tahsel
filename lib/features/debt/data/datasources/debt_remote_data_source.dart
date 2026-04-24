@@ -43,6 +43,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         'timestamp': debt.timestamp != null 
             ? Timestamp.fromDate(debt.timestamp!) 
             : FieldValue.serverTimestamp(),
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
       });
 
       await batch.commit();
@@ -86,7 +87,9 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
       final batch = firestore.batch();
 
-      batch.update(debtRef, debt.toJson());
+      var debtData = debt.toJson();
+      debtData['lastUpdatedAt'] = FieldValue.serverTimestamp();
+      batch.update(debtRef, debtData);
       batch.set(paymentRef, payment.toJson());
 
       // Update the operation record to keep reports consistent
@@ -98,7 +101,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             .doc(debt.operationId);
         batch.update(opRef, {
           'paidAmount': debt.paidAmount,
-          'remainingDebt': debt.remainingAmount, // Fix: In operations collection it is 'remainingDebt'
+          'remainingDebt': debt.remainingAmount, 
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
         });
       }
 
@@ -159,6 +163,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           'paidAmount': newPaidAmount,
           'remainingAmount': newRemainingAmount,
           'isPaid': isPaid,
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
         });
 
         // Also update the linked operation record for real-time consistency in Reports
@@ -167,7 +172,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             firestore.collection('users').doc(uid).collection('operations').doc(operationId),
             {
               'paidAmount': newPaidAmount,
-              'remainingDebt': newRemainingAmount, // Fix: In operations collection it is 'remainingDebt'
+              'remainingDebt': newRemainingAmount, 
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
             },
           );
         }
@@ -220,6 +226,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           'paidAmount': currentTotal,
           'remainingAmount': 0.0,
           'isPaid': true,
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
         });
 
         // Sync with operations for Report accuracy
@@ -228,7 +235,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             firestore.collection('users').doc(uid).collection('operations').doc(operationId),
             {
               'paidAmount': currentTotal,
-              'remainingDebt': 0.0, // Fix: In operations collection it is 'remainingDebt'
+              'remainingDebt': 0.0, 
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
             },
           );
         }

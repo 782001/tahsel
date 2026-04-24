@@ -33,11 +33,12 @@ class CustomerCubit extends Cubit<CustomerState> {
     );
   }
 
-  Future<void> saveCustomer(String uid, String name, {String? ledgerNumber}) async {
+  Future<void> saveCustomer(String uid, String name, {String? ledgerNumber, String? phoneNumber}) async {
     final customer = CustomerEntity(
       name: name,
       lastUsedAt: DateTime.now(),
       ledgerNumber: ledgerNumber,
+      phoneNumber: phoneNumber,
     );
     
     // We don't await this if we want to be fast, but usually UI expects some feedback or just quiet update

@@ -8,6 +8,8 @@ class CustomerAutocompleteField extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
   final IconData? icon;
+  final IconData? suffixIcon;
+  final VoidCallback? onSuffixIconPressed;
   final String? errorText;
   final FocusNode? focusNode;
   final TextInputAction? textInputAction;
@@ -18,6 +20,8 @@ class CustomerAutocompleteField extends StatelessWidget {
     required this.controller,
     required this.hint,
     this.icon,
+    this.suffixIcon,
+    this.onSuffixIconPressed,
     this.errorText,
     this.focusNode,
     this.textInputAction,
@@ -51,6 +55,12 @@ class CustomerAutocompleteField extends StatelessWidget {
               fontWeight: FontWeight.normal,
             ),
             prefixIcon: icon != null ? Icon(icon, color: AppColors.blackLight) : null,
+            suffixIcon: suffixIcon != null
+                ? IconButton(
+                    icon: Icon(suffixIcon, color: AppColors.primaryColor),
+                    onPressed: onSuffixIconPressed,
+                  )
+                : null,
             filled: true,
             fillColor: AppColors.stitchSurfaceHigh.withOpacity(0.5),
             border: OutlineInputBorder(
@@ -70,7 +80,6 @@ class CustomerAutocompleteField extends StatelessWidget {
             color: AppColors.surface,
             child: LayoutBuilder(
               builder: (context, constraints) {
-                // Determine the width of the field to match it
                 final fieldWidth = FocusScope.of(context).focusedChild?.size.width ?? 300;
                 
                 return SizedBox(

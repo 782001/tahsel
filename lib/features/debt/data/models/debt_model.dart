@@ -13,6 +13,8 @@ class DebtModel extends DebtEntity {
     super.productOrSessionDetails,
     required super.operationType,
     super.timestamp,
+    super.lastUpdatedAt,
+    super.phoneNumber,
     super.isPaid,
     super.ledgerNumber,
   });
@@ -31,6 +33,10 @@ class DebtModel extends DebtEntity {
       timestamp: json['timestamp'] != null
           ? (json['timestamp'] as Timestamp).toDate()
           : null,
+      lastUpdatedAt: json['lastUpdatedAt'] != null
+          ? (json['lastUpdatedAt'] as Timestamp).toDate()
+          : null,
+      phoneNumber: json['phoneNumber'],
       isPaid: json['isPaid'] ?? false,
       ledgerNumber: json['ledgerNumber'],
     );
@@ -46,7 +52,9 @@ class DebtModel extends DebtEntity {
       'customerName': customerName,
       'productOrSessionDetails': productOrSessionDetails,
       'operationType': operationType,
-      'timestamp': timestamp ?? FieldValue.serverTimestamp(),
+      'timestamp': timestamp != null ? Timestamp.fromDate(timestamp!) : FieldValue.serverTimestamp(),
+      'lastUpdatedAt': lastUpdatedAt != null ? Timestamp.fromDate(lastUpdatedAt!) : FieldValue.serverTimestamp(),
+      'phoneNumber': phoneNumber,
       'isPaid': isPaid,
       'ledgerNumber': ledgerNumber,
     };
@@ -64,6 +72,8 @@ class DebtModel extends DebtEntity {
       productOrSessionDetails: entity.productOrSessionDetails,
       operationType: entity.operationType,
       timestamp: entity.timestamp,
+      lastUpdatedAt: entity.lastUpdatedAt,
+      phoneNumber: entity.phoneNumber,
       isPaid: entity.isPaid,
       ledgerNumber: entity.ledgerNumber,
     );

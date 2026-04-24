@@ -11,6 +11,8 @@ class DebtEntity extends Equatable {
   final String? productOrSessionDetails;
   final String operationType;
   final DateTime? timestamp;
+  final DateTime? lastUpdatedAt;
+  final String? phoneNumber;
   final bool isPaid;
   final String? ledgerNumber;
 
@@ -25,6 +27,8 @@ class DebtEntity extends Equatable {
     this.productOrSessionDetails,
     required this.operationType,
     this.timestamp,
+    this.lastUpdatedAt,
+    this.phoneNumber,
     this.isPaid = false,
     this.ledgerNumber,
   });
@@ -40,6 +44,8 @@ class DebtEntity extends Equatable {
     String? productOrSessionDetails,
     String? operationType,
     DateTime? timestamp,
+    DateTime? lastUpdatedAt,
+    String? phoneNumber,
     bool? isPaid,
     String? ledgerNumber,
   }) {
@@ -55,6 +61,8 @@ class DebtEntity extends Equatable {
           productOrSessionDetails ?? this.productOrSessionDetails,
       operationType: operationType ?? this.operationType,
       timestamp: timestamp ?? this.timestamp,
+      lastUpdatedAt: lastUpdatedAt ?? this.lastUpdatedAt,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
       isPaid: isPaid ?? this.isPaid,
       ledgerNumber: ledgerNumber ?? this.ledgerNumber,
     );
@@ -72,6 +80,8 @@ class DebtEntity extends Equatable {
         productOrSessionDetails,
         operationType,
         timestamp,
+        lastUpdatedAt,
+        phoneNumber,
         isPaid,
         ledgerNumber,
       ];

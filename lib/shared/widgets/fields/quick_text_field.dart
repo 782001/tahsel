@@ -7,6 +7,8 @@ class QuickAddTextField extends StatelessWidget {
   final IconData? icon;
   final String? prefixText;
   final String? suffixText;
+  final IconData? suffixIcon;
+  final VoidCallback? onSuffixIconPressed;
   final bool isNumber;
   final String? errorText;
   final ValueChanged<String>? onChanged;
@@ -21,6 +23,8 @@ class QuickAddTextField extends StatelessWidget {
     this.icon,
     this.prefixText,
     this.suffixText,
+    this.suffixIcon,
+    this.onSuffixIconPressed,
     this.isNumber = false,
     this.errorText,
     this.onChanged,
@@ -63,6 +67,12 @@ class QuickAddTextField extends StatelessWidget {
                     ),
                   )
                 : null,
+        suffixIcon: suffixIcon != null
+            ? IconButton(
+                icon: Icon(suffixIcon, color: AppColors.primaryColor),
+                onPressed: onSuffixIconPressed,
+              )
+            : null,
         suffixText: suffixText,
         suffixStyle: TextStyle(
           color: AppColors.blackLight,

@@ -19,6 +19,7 @@ class QuickAddTurnForm extends StatelessWidget {
   final TextInputAction turnRateInputAction;
   final ValueChanged<String>? onCustomerSubmitted;
   final ValueChanged<String>? onTurnRateSubmitted;
+  final VoidCallback? onContactPickerPressed;
 
   const QuickAddTurnForm({
     super.key,
@@ -35,6 +36,7 @@ class QuickAddTurnForm extends StatelessWidget {
     this.turnRateInputAction = TextInputAction.next,
     this.onCustomerSubmitted,
     this.onTurnRateSubmitted,
+    this.onContactPickerPressed,
   });
 
   @override
@@ -52,6 +54,8 @@ class QuickAddTurnForm extends StatelessWidget {
           controller: customerController,
           errorText: customerError,
           focusNode: customerFocus,
+          suffixIcon: Icons.contact_phone_rounded,
+          onSuffixIconPressed: onContactPickerPressed,
           textInputAction: customerInputAction,
           onSubmitted: onCustomerSubmitted ?? (_) => nextFocus.requestFocus(),
         ),

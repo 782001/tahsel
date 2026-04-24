@@ -19,6 +19,7 @@ class QuickAddTimeForm extends StatelessWidget {
   final TextInputAction hourlyRateInputAction;
   final ValueChanged<String>? onCustomerSubmitted;
   final ValueChanged<String>? onHourlyRateSubmitted;
+  final VoidCallback? onContactPickerPressed;
 
   const QuickAddTimeForm({
     super.key,
@@ -35,6 +36,7 @@ class QuickAddTimeForm extends StatelessWidget {
     this.hourlyRateInputAction = TextInputAction.next,
     this.onCustomerSubmitted,
     this.onHourlyRateSubmitted,
+    this.onContactPickerPressed,
   });
 
   @override
@@ -52,6 +54,8 @@ class QuickAddTimeForm extends StatelessWidget {
           controller: customerController,
           errorText: customerError,
           focusNode: customerFocus,
+          suffixIcon: Icons.contact_phone_rounded,
+          onSuffixIconPressed: onContactPickerPressed,
           textInputAction: customerInputAction,
           onSubmitted: onCustomerSubmitted ?? (_) => nextFocus.requestFocus(),
         ),

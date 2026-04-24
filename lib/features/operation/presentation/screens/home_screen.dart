@@ -19,6 +19,7 @@ import 'package:tahsel/features/operation/presentation/widgets/quick_add_time_fo
 import 'package:tahsel/features/operation/presentation/widgets/quick_add_turn_form.dart';
 import 'package:tahsel/shared/widgets/buttons/quick_action_button.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
+import 'package:tahsel/core/services/contact_service.dart';
 
 import '../../../customer/presentation/cubit/customer_cubit.dart';
 import '../../../debt/domain/entities/debt_entity.dart';
@@ -66,6 +67,17 @@ class _HomeScreenState extends State<HomeScreen> {
   int _matchCount = 1;
   int _durationMinutes = 60; // Default to 60 mins (1 hour)
   String? _customerError;
+  String? _selectedPhoneNumber;
+
+  void _onContactPickerPressed() async {
+    final result = await ContactService.pickContact(context);
+    if (result != null) {
+      setState(() {
+        _customerController.text = result['name'] ?? '';
+        _selectedPhoneNumber = result['phone'];
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -148,6 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _matchCount = 1;
       _durationMinutes = 60;
       _customerError = null;
+      _selectedPhoneNumber = null;
     });
   }
 
@@ -206,6 +219,7 @@ class _HomeScreenState extends State<HomeScreen> {
         uid: uid,
         type: AppStrings.shop,
         customerName: customerName,
+        phoneNumber: _selectedPhoneNumber,
         productName: productName,
         totalAmount: paid + remainingDebt,
         paidAmount: paid,
@@ -213,6 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ledgerNumber: _ledgerController.text.trim().isNotEmpty
             ? _ledgerController.text.trim()
             : null,
+        lastUpdatedAt: DateTime.now(),
       );
     } else {
       final customerName = _customerController.text.trim();
@@ -247,6 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
         type: AppStrings.playStation,
         subType: _psSubMode == PlayStationMode.time ? 'time' : 'turn',
         customerName: customerName,
+        phoneNumber: _selectedPhoneNumber,
         totalAmount: totalDue,
         paidAmount: paid,
         remainingDebt: (totalDue - paid) > 0 ? (totalDue - paid) : 0,
@@ -259,6 +275,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ? _hourlyRateController.text
               : _turnRateController.text,
         ),
+        lastUpdatedAt: DateTime.now(),
       );
     }
 
@@ -338,6 +355,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         ledgerNumber: _ledgerController.text.trim().isNotEmpty
                             ? _ledgerController.text.trim()
                             : null,
+                        phoneNumber: _selectedPhoneNumber,
+                        lastUpdatedAt: DateTime.now(),
                       ),
                     );
                   }
@@ -361,6 +380,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ledgerNumber: _ledgerController.text.trim().isNotEmpty
                         ? _ledgerController.text.trim()
                         : null,
+                    phoneNumber: _selectedPhoneNumber,
                   );
                 }
 
@@ -467,6 +487,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ? _durationMinutes -= 5
                                   : null,
                             ),
+                            onContactPickerPressed: _onContactPickerPressed,
                           )
                         else
                           QuickAddTurnForm(
@@ -485,6 +506,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             onRemove: () => setState(
                               () => _matchCount > 1 ? _matchCount-- : null,
                             ),
+                            onContactPickerPressed: _onContactPickerPressed,
                           ),
 
                         const SizedBox(height: 24),
@@ -549,6 +571,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           paidFocus: _paidFocus,
                           debtFocus: _debtFocus,
                           onDebtSubmitted: (_) => _submitOperation(context),
+                          onContactPickerPressed: _onContactPickerPressed,
                         ),
                       ],
 

@@ -189,7 +189,7 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
       }).toList();
     }
 
-    return results..sort((a, b) => b.totalDebt.compareTo(a.totalDebt));
+    return results..sort((a, b) => b.lastActivity.compareTo(a.lastActivity));
   }
 
   @override

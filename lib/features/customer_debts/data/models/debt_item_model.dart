@@ -11,6 +11,7 @@ class DebtItem {
   final double amountPaid;      // المبلغ المدفوع
   final double remainingDebt;   // المتبقي / الديون
   final String date;            // تاريخ العملية
+  final DateTime lastUpdatedAt; // Latest activity timestamp
   final DebtEntity entity;      // Original entity for updates
 
   const DebtItem({
@@ -18,6 +19,7 @@ class DebtItem {
     required this.amountPaid,
     required this.remainingDebt,
     required this.date,
+    required this.lastUpdatedAt,
     required this.entity,
   });
 
@@ -29,6 +31,7 @@ class DebtItem {
       date: entity.timestamp != null
           ? DateFormat('yyyy/MM/dd').format(entity.timestamp!)
           : '',
+      lastUpdatedAt: entity.lastUpdatedAt ?? entity.timestamp ?? DateTime.now(),
       entity: entity,
     );
   }
@@ -43,12 +46,14 @@ class CustomerDebtDetail {
   final Color statusColor;
   final List<DebtItem> items;
   final String? ledgerNumber;
+  final DateTime lastActivity;
 
   const CustomerDebtDetail({
     required this.customerName,
     required this.status,
     required this.statusColor,
     required this.items,
+    required this.lastActivity,
     this.ledgerNumber,
   });
 
@@ -61,6 +66,14 @@ class CustomerDebtDetail {
       if (entity.ledgerNumber != null && entity.ledgerNumber!.isNotEmpty) {
         ledger = entity.ledgerNumber;
         break;
+      }
+    }
+
+    // Latest activity across all debt items for this customer
+    DateTime latest = DateTime(2000);
+    for (var item in items) {
+      if (item.lastUpdatedAt.isAfter(latest)) {
+        latest = item.lastUpdatedAt;
       }
     }
 
@@ -86,6 +99,7 @@ class CustomerDebtDetail {
       status: status,
       statusColor: statusColor,
       items: items,
+      lastActivity: latest,
       ledgerNumber: ledger,
     );
   }

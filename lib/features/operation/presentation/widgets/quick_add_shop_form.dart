@@ -25,6 +25,7 @@ class QuickAddShopForm extends StatelessWidget {
   final TextInputAction paidInputAction;
   final TextInputAction debtInputAction;
   final ValueChanged<String>? onDebtSubmitted;
+  final VoidCallback? onContactPickerPressed;
 
   const QuickAddShopForm({
     super.key,
@@ -46,6 +47,7 @@ class QuickAddShopForm extends StatelessWidget {
     this.paidInputAction = TextInputAction.next,
     this.debtInputAction = TextInputAction.done,
     this.onDebtSubmitted,
+    this.onContactPickerPressed,
   });
 
   @override
@@ -76,6 +78,8 @@ class QuickAddShopForm extends StatelessWidget {
             controller: customerController,
             errorText: customerError,
             icon: Icons.person_outline,
+            suffixIcon: Icons.contact_phone_rounded,
+            onSuffixIconPressed: onContactPickerPressed,
             focusNode: customerFocus,
             textInputAction: customerInputAction,
             onSubmitted: (_) => isShop
