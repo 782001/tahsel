@@ -100,6 +100,7 @@ class AppStrings {
   static const String customerDebts = "customer_debts";
   static const String totalDebts = "total_debts";
   static const String customers = "customers";
+  static const String myCustomers = "my_customers";
   static const String customerDebtsDesc = "customer_debts_desc";
   static const String searchCustomer = "search_customer";
   static const String partialPayment = "partial_payment";
@@ -163,6 +164,7 @@ class AppStrings {
   static const String customerName = "customer_name";
   static const String paidAmount = "paid_amount";
   static const String totalDueLabel = "total_due_label";
+  static const String totalAmountHint = "total_amount_hint";
   static const String confirmOperation = "confirm_operation";
   static const String productName = "product_name";
   static const String remainingDebt = "remaining_debt";

@@ -2,8 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
@@ -96,7 +96,8 @@ class _ReportsViewState extends State<ReportsView> {
                             padding: EdgeInsets.symmetric(horizontal: 24.w),
                             child: GestureDetector(
                               onTap: () {
-                                final uid = FirebaseAuth.instance.currentUser?.uid;
+                                final uid =
+                                    FirebaseAuth.instance.currentUser?.uid;
                                 if (uid != null) {
                                   Navigator.pushNamed(
                                     context,
@@ -112,7 +113,9 @@ class _ReportsViewState extends State<ReportsView> {
                                   borderRadius: BorderRadius.circular(16.r),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.primaryColor.withOpacity(0.3),
+                                      color: AppColors.primaryColor.withOpacity(
+                                        0.3,
+                                      ),
                                       blurRadius: 10,
                                       offset: const Offset(0, 4),
                                     ),
@@ -135,10 +138,11 @@ class _ReportsViewState extends State<ReportsView> {
                                     16.horizontalSpace,
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            AppStrings.customers.tr(),
+                                            AppStrings.myCustomers.tr(),
                                             style: TextStyles.customStyle(
                                               color: Colors.white,
                                               fontSize: 18.sp,
@@ -148,7 +152,9 @@ class _ReportsViewState extends State<ReportsView> {
                                           Text(
                                             AppStrings.customersReportDesc.tr(),
                                             style: TextStyles.customStyle(
-                                              color: Colors.white.withOpacity(0.8),
+                                              color: Colors.white.withOpacity(
+                                                0.8,
+                                              ),
                                               fontSize: 12.sp,
                                             ),
                                           ),
@@ -270,7 +276,8 @@ class _ReportsViewState extends State<ReportsView> {
                                     ReportsDashboardCard(
                                       title: AppStrings.totalExpenses.tr(),
                                       subtitle: "",
-                                      amount: data.totalExpenses.toSmartAmount(),
+                                      amount: data.totalExpenses
+                                          .toSmartAmount(),
                                       type: BusinessReportType.expense,
                                       isShop: context
                                           .read<MainLayoutCubit>()
@@ -328,7 +335,8 @@ class _ReportsViewState extends State<ReportsView> {
                                             .watch<MainLayoutCubit>()
                                             .isShop,
                                         badgeText: _buildComparisonText(
-                                          label: context
+                                          label:
+                                              context
                                                   .read<MainLayoutCubit>()
                                                   .isShop
                                               ? AppStrings.shopIncome.tr()
@@ -363,13 +371,15 @@ class _ReportsViewState extends State<ReportsView> {
                                         title: AppStrings.playstationIncome
                                             .tr(),
                                         subtitle: "",
-                                        amount: data.playstationIncome.toSmartAmount(),
+                                        amount: data.playstationIncome
+                                            .toSmartAmount(),
                                         type: BusinessReportType.playstation,
                                         badgeText: _buildComparisonText(
                                           label: AppStrings.playstationIncome
                                               .tr(),
                                           diff: data.playstationDiff,
-                                          isIncrease: data.isPlaystationIncrease,
+                                          isIncrease:
+                                              data.isPlaystationIncrease,
                                         ),
                                         onTap: () {
                                           final dateRange = _getDateRange();
@@ -528,22 +538,23 @@ class _ReportsViewState extends State<ReportsView> {
     required bool isIncrease,
   }) {
     if (diff == 0) {
-      return AppStrings.comparisonNoChange.tr(namedArgs: {
-        'label': label,
-        'period': _getBadgeText(),
-      });
+      return AppStrings.comparisonNoChange.tr(
+        namedArgs: {'label': label, 'period': _getBadgeText()},
+      );
     }
 
     final String key = isIncrease
         ? AppStrings.comparisonIncrease
         : AppStrings.comparisonDecrease;
 
-    return key.tr(namedArgs: {
-      'label': label,
-      'amount': diff.toSmartAmount(),
-      'currency': AppStrings.currencyEgp.tr(),
-      'period': _getBadgeText(),
-    });
+    return key.tr(
+      namedArgs: {
+        'label': label,
+        'amount': diff.toSmartAmount(),
+        'currency': AppStrings.currencyEgp.tr(),
+        'period': _getBadgeText(),
+      },
+    );
   }
 
   Widget _buildInsightCard(ProfitInsight insight) {

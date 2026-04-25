@@ -52,6 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Controllers for Shop mode
   final _productController = TextEditingController();
+  final _totalAmountController = TextEditingController();
   final _debtController = TextEditingController();
 
   // FocusNodes for navigation
@@ -60,6 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final _hourlyRateFocus = FocusNode();
   final _turnRateFocus = FocusNode();
   final _productFocus = FocusNode();
+  final _totalAmountFocus = FocusNode();
   final _debtFocus = FocusNode();
   final _ledgerFocus = FocusNode();
 
@@ -118,6 +120,34 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       setState(() {}); // Recalculate totalDue
     });
+
+    _totalAmountController.addListener(_updateShopDebt);
+    _paidController.addListener(_updateShopDebt);
+  }
+
+  void _updateShopDebt() async {
+    if (_selectedMode != QuickAddMode.shop) return;
+
+    final totalText = _totalAmountController.text;
+    final paidText = _paidController.text;
+
+    if (totalText.isEmpty && paidText.isEmpty) {
+      if (_debtController.text != '') {
+        setState(() => _debtController.text = '');
+      }
+      return;
+    }
+
+    final total = double.tryParse(totalText) ?? 0.0;
+    final paid = double.tryParse(paidText) ?? 0.0;
+
+    final remaining = await context.read<OperationCubit>().calculateDebt(total, paid);
+
+    if (mounted && _debtController.text != remaining.toStringAsFixed(1)) {
+      setState(() {
+        _debtController.text = remaining.toStringAsFixed(1);
+      });
+    }
   }
 
   double get totalDue {
@@ -135,6 +165,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _customerController.dispose();
     _paidController.dispose();
     _productController.dispose();
+    _totalAmountController.dispose();
     _debtController.dispose();
     _hourlyRateController.dispose();
     _turnRateController.dispose();
@@ -145,6 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _hourlyRateFocus.dispose();
     _turnRateFocus.dispose();
     _productFocus.dispose();
+    _totalAmountFocus.dispose();
     _debtFocus.dispose();
     _ledgerFocus.dispose();
     super.dispose();
@@ -154,6 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _customerController.clear();
     _paidController.clear();
     _productController.clear();
+    _totalAmountController.clear();
     _debtController.clear();
     _ledgerController.clear();
     setState(() {
@@ -183,25 +216,25 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_selectedMode == QuickAddMode.shop) {
       final productName = _productController.text.trim();
       final customerName = _customerController.text.trim();
+      double totalAmount = double.tryParse(_totalAmountController.text) ?? 0.0;
+      double paidAmount = double.tryParse(_paidController.text) ?? 0.0;
       double remainingDebt = double.tryParse(_debtController.text) ?? 0.0;
 
       if (productName.isEmpty) {
         validationMsg = AppStrings.validationProductNameRequired.tr();
+      } else if (totalAmount <= 0) {
+        validationMsg = AppStrings.validationInvalidAmount.tr();
       } else {
         final errorKey = OperationValidator.validateCustomerName(
           name: customerName,
-          totalAmount: paid + remainingDebt,
-          paidAmount: paid,
+          totalAmount: totalAmount,
+          paidAmount: paidAmount,
         );
         if (errorKey != null) {
           setState(() => _customerError = errorKey.tr());
           return;
         }
         setState(() => _customerError = null);
-
-        if (paid == 0 && remainingDebt == 0) {
-          validationMsg = AppStrings.validationInvalidAmount.tr();
-        }
       }
 
       if (validationMsg != null) {
@@ -221,8 +254,8 @@ class _HomeScreenState extends State<HomeScreen> {
         customerName: customerName,
         phoneNumber: _selectedPhoneNumber,
         productName: productName,
-        totalAmount: paid + remainingDebt,
-        paidAmount: paid,
+        totalAmount: totalAmount,
+        paidAmount: paidAmount,
         remainingDebt: remainingDebt,
         ledgerNumber: _ledgerController.text.trim().isNotEmpty
             ? _ledgerController.text.trim()
@@ -284,48 +317,41 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (context) => sl<OperationCubit>()),
-        BlocProvider(create: (context) => sl<DebtCubit>()),
-      ],
-      child: MultiBlocListener(
-        listeners: [
-          BlocListener<MainLayoutCubit, MainLayoutState>(
-            listener: (context, state) {
-              if (state is MainLayoutUserTypeLoaded) {
-                if (context.read<MainLayoutCubit>().isShop) {
-                  setState(() => _selectedMode = QuickAddMode.shop);
-                }
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<MainLayoutCubit, MainLayoutState>(
+          listener: (context, state) {
+            if (state is MainLayoutUserTypeLoaded) {
+              if (context.read<MainLayoutCubit>().isShop) {
+                setState(() => _selectedMode = QuickAddMode.shop);
               }
-            },
-          ),
-          BlocListener<DebtCubit, DebtState>(
-            listener: (context, state) {
-              if (state is DebtAddSuccess) {
-                // Optional: show a small toast or just log it
-                AppLogger.printMessage(
-                  'Debt recorded with ID: ${state.debtId}',
-                );
-              } else if (state is DebtFailure) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    duration: Duration(milliseconds: 500),
-                    content: Text(
-                      '${AppStrings.operationFailed.tr()}: ${state.message}',
-                    ),
-                    backgroundColor: AppColors.orange,
+            }
+          },
+        ),
+        BlocListener<DebtCubit, DebtState>(
+          listener: (context, state) {
+            if (state is DebtAddSuccess) {
+              AppLogger.printMessage(
+                'Debt recorded with ID: ${state.debtId}',
+              );
+            } else if (state is DebtFailure) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  duration: const Duration(milliseconds: 500),
+                  content: Text(
+                    '${AppStrings.operationFailed.tr()}: ${state.message}',
                   ),
-                );
-              }
-            },
-          ),
-          BlocListener<OperationCubit, OperationState>(
-            listener: (context, state) {
-              if (state is OperationSuccess) {
-                // Check if there is debt before clearing
-                final double paid =
-                    double.tryParse(_paidController.text) ?? 0.0;
+                  backgroundColor: AppColors.orange,
+                ),
+              );
+            }
+          },
+        ),
+        BlocListener<OperationCubit, OperationState>(
+          listener: (context, state) {
+            if (state is OperationSuccess) {
+              // Check if there is debt before clearing
+              final double paid = double.tryParse(_paidController.text) ?? 0.0;
                 final double remaining = _selectedMode == QuickAddMode.shop
                     ? (double.tryParse(_debtController.text) ?? 0.0)
                     : (totalDue - paid);
@@ -338,7 +364,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         uid: uid,
                         operationId: state.operationId,
                         totalAmount: _selectedMode == QuickAddMode.shop
-                            ? (paid + remaining)
+                            ? (double.tryParse(_totalAmountController.text) ??
+                                0.0)
                             : totalDue,
                         paidAmount: paid,
                         remainingAmount: remaining,
@@ -418,10 +445,10 @@ class _HomeScreenState extends State<HomeScreen> {
               }
             },
           ),
-        ],
-        child: BlocBuilder<OperationCubit, OperationState>(
-          builder: (context, state) {
-            return Stack(
+      ],
+      child: BlocBuilder<OperationCubit, OperationState>(
+        builder: (context, state) {
+          return Stack(
               children: [
                 SingleChildScrollView(
                   padding: const EdgeInsets.all(20),
@@ -558,6 +585,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ] else ...[
                         // Shop Mode Body (Simplified Form)
                         QuickAddShopForm(
+                          totalAmountController: _totalAmountController,
                           customerController: _customerController,
                           productController: _productController,
                           paidController: _paidController,
@@ -565,6 +593,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ledgerController: _ledgerController,
                           isShop: context.read<MainLayoutCubit>().isShop,
                           customerError: _customerError,
+                          totalAmountFocus: _totalAmountFocus,
                           customerFocus: _customerFocus,
                           ledgerFocus: _ledgerFocus,
                           productFocus: _productFocus,
@@ -617,7 +646,7 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           },
         ),
-      ),
+     
     );
   }
 }

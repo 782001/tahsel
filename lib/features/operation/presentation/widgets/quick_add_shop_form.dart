@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
-import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
+import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/customer/presentation/widgets/customer_autocomplete_field.dart';
 import 'package:tahsel/features/product/presentation/widgets/product_autocomplete_field.dart';
+import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 
 class QuickAddShopForm extends StatelessWidget {
+  final TextEditingController totalAmountController;
   final TextEditingController customerController;
   final TextEditingController productController;
   final TextEditingController paidController;
@@ -14,11 +17,13 @@ class QuickAddShopForm extends StatelessWidget {
   final TextEditingController ledgerController;
   final bool isShop;
   final String? customerError;
+  final FocusNode totalAmountFocus;
   final FocusNode customerFocus;
   final FocusNode ledgerFocus;
   final FocusNode productFocus;
   final FocusNode paidFocus;
   final FocusNode debtFocus;
+  final TextInputAction totalAmountInputAction;
   final TextInputAction customerInputAction;
   final TextInputAction ledgerInputAction;
   final TextInputAction productInputAction;
@@ -29,6 +34,7 @@ class QuickAddShopForm extends StatelessWidget {
 
   const QuickAddShopForm({
     super.key,
+    required this.totalAmountController,
     required this.customerController,
     required this.productController,
     required this.paidController,
@@ -36,11 +42,13 @@ class QuickAddShopForm extends StatelessWidget {
     required this.ledgerController,
     required this.isShop,
     this.customerError,
+    required this.totalAmountFocus,
     required this.customerFocus,
     required this.ledgerFocus,
     required this.productFocus,
     required this.paidFocus,
     required this.debtFocus,
+    this.totalAmountInputAction = TextInputAction.next,
     this.customerInputAction = TextInputAction.next,
     this.ledgerInputAction = TextInputAction.next,
     this.productInputAction = TextInputAction.next,
@@ -70,7 +78,11 @@ class QuickAddShopForm extends StatelessWidget {
         children: [
           Text(
             AppStrings.customerName.tr(),
-            style: const TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyles.customStyle(
+              color: AppColors.black,
+              fontWeight: FontWeight.bold,
+              fontSize: 16.sp,
+            ),
           ),
           const SizedBox(height: 8),
           CustomerAutocompleteField(
@@ -84,13 +96,17 @@ class QuickAddShopForm extends StatelessWidget {
             textInputAction: customerInputAction,
             onSubmitted: (_) => isShop
                 ? ledgerFocus.requestFocus()
-                : productFocus.requestFocus(),
+                : totalAmountFocus.requestFocus(),
           ),
           if (isShop) ...[
             const SizedBox(height: 20),
             Text(
               AppStrings.ledgerNumber.tr(),
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyles.customStyle(
+                color: AppColors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 16.sp,
+              ),
             ),
             const SizedBox(height: 8),
             QuickAddTextField(
@@ -106,7 +122,11 @@ class QuickAddShopForm extends StatelessWidget {
           const SizedBox(height: 20),
           Text(
             AppStrings.productName.tr(),
-            style: const TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyles.customStyle(
+              color: AppColors.black,
+              fontWeight: FontWeight.bold,
+              fontSize: 16.sp,
+            ),
           ),
           const SizedBox(height: 8),
           ProductAutocompleteField(
@@ -115,7 +135,7 @@ class QuickAddShopForm extends StatelessWidget {
             icon: Icons.shopping_bag_outlined,
             focusNode: productFocus,
             textInputAction: productInputAction,
-            onSubmitted: (_) => paidFocus.requestFocus(),
+            onSubmitted: (_) => totalAmountFocus.requestFocus(),
           ),
           const SizedBox(height: 20),
           Row(
@@ -125,10 +145,41 @@ class QuickAddShopForm extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      AppStrings.paidAmount.tr(),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      AppStrings.totalDueLabel.tr(),
+                      style: TextStyles.customStyle(
+                        color: AppColors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14.sp,
+                      ),
                     ),
                     const SizedBox(height: 8),
+                    QuickAddTextField(
+                      hint: AppStrings.totalAmountHint.tr(),
+                      hintFontSize: 10.sp,
+                      controller: totalAmountController,
+                      icon: Icons.payments_outlined,
+                      isNumber: true,
+                      focusNode: totalAmountFocus,
+                      textInputAction: totalAmountInputAction,
+                      onSubmitted: (_) => paidFocus.requestFocus(),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(width: 16.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppStrings.paidAmount.tr(),
+                      style: TextStyles.customStyle(
+                        color: AppColors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14.sp,
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
                     QuickAddTextField(
                       hint: '0.00',
                       controller: paidController,
@@ -141,29 +192,49 @@ class QuickAddShopForm extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      AppStrings.remainingDebt.tr(),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    QuickAddTextField(
-                      hint: '0.00',
-                      controller: debtController,
-                      prefixText: AppStrings.currencyEgp.tr(),
-                      isNumber: true,
-                      focusNode: debtFocus,
-                      textInputAction: debtInputAction,
-                      onSubmitted: onDebtSubmitted,
-                    ),
-                  ],
-                ),
-              ),
             ],
+          ),
+          SizedBox(height: 12.h),
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: debtController,
+            builder: (context, value, child) {
+              final debt = double.tryParse(value.text) ?? 0.0;
+              if (debt <= 0) return const SizedBox.shrink();
+              return FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryColor.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        size: 14,
+                        color: AppColors.primaryColor,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        "${AppStrings.remainingDebt.tr()}: ${value.text} ${AppStrings.currencyEgp.tr()}",
+                        style: TextStyles.customStyle(
+                          color: AppColors.primaryColor,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14.sp,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),

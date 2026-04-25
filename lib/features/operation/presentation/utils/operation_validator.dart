@@ -7,6 +7,10 @@ class OperationValidator {
     required double paidAmount,
   }) {
     final trimmedName = name?.trim() ?? '';
+    if (paidAmount > totalAmount) {
+      return AppStrings.validationInvalidAmount;
+    }
+
     final hasDebt = totalAmount > paidAmount;
 
     if (hasDebt && trimmedName.isEmpty) {

@@ -5,14 +5,21 @@ import '../data/datasources/operation_remote_data_source.dart';
 import '../data/repositories/operation_repository_impl.dart';
 import '../domain/repositories/operation_repository.dart';
 import '../domain/usecases/add_operation_usecase.dart';
+import '../domain/usecases/calculate_remaining_debt_usecase.dart';
 import '../presentation/cubit/operation_cubit.dart';
 
 Future<void> initOperation() async {
   // Cubit
-  sl.registerFactory(() => OperationCubit(addOperationUseCase: sl()));
+  sl.registerFactory(
+    () => OperationCubit(
+      addOperationUseCase: sl(),
+      calculateRemainingDebtUseCase: sl(),
+    ),
+  );
 
   // Use cases
   sl.registerLazySingleton(() => AddOperationUseCase(repository: sl()));
+  sl.registerLazySingleton(() => CalculateRemainingDebtUseCase());
 
   // Repository
   sl.registerLazySingleton<OperationRepository>(

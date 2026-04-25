@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/utils/styles.dart';
 
 class QuickAddTextField extends StatelessWidget {
   final String hint;
@@ -15,6 +16,8 @@ class QuickAddTextField extends StatelessWidget {
   final FocusNode? focusNode;
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onSubmitted;
+  final double? hintFontSize;
+  final double? fontSize;
 
   const QuickAddTextField({
     super.key,
@@ -31,6 +34,8 @@ class QuickAddTextField extends StatelessWidget {
     this.focusNode,
     this.textInputAction,
     this.onSubmitted,
+    this.hintFontSize = 14,
+    this.fontSize = 14,
   });
 
   @override
@@ -43,13 +48,18 @@ class QuickAddTextField extends StatelessWidget {
       textInputAction: textInputAction,
       onChanged: onChanged,
       onSubmitted: onSubmitted,
-      style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.black),
+      style: TextStyles.customStyle(
+        color: AppColors.black,
+        fontWeight: FontWeight.w600,
+        fontSize: fontSize ?? 14,
+      ),
       decoration: InputDecoration(
         hintText: hint,
         errorText: errorText,
-        hintStyle: TextStyle(
+        hintStyle: TextStyles.customStyle(
           color: AppColors.blackLight.withOpacity(0.5),
           fontWeight: FontWeight.normal,
+          fontSize: hintFontSize ?? 14,
         ),
         prefixIcon: icon != null
             ? Icon(icon, color: AppColors.blackLight)
