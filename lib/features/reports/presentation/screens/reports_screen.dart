@@ -254,11 +254,7 @@ class _ReportsViewState extends State<ReportsView> {
                                           arguments: {
                                             'startDate': dateRange.start,
                                             'endDate': dateRange.end,
-                                            'period': _selectedTimeRange == 0
-                                                ? 'daily'
-                                                : (_selectedTimeRange == 1
-                                                      ? 'weekly'
-                                                      : 'monthly'),
+                                            'period': _getPeriodString(),
                                             'type':
                                                 context
                                                     .read<MainLayoutCubit>()
@@ -352,11 +348,7 @@ class _ReportsViewState extends State<ReportsView> {
                                               'startDate': dateRange.start,
                                               'endDate': dateRange.end,
                                               'type': AppStrings.shop,
-                                              'period': _selectedTimeRange == 0
-                                                  ? 'daily'
-                                                  : (_selectedTimeRange == 1
-                                                        ? 'weekly'
-                                                        : 'monthly'),
+                                              'period': _getPeriodString(),
                                               'isShop': context
                                                   .read<MainLayoutCubit>()
                                                   .isShop,
@@ -389,11 +381,7 @@ class _ReportsViewState extends State<ReportsView> {
                                               'startDate': dateRange.start,
                                               'endDate': dateRange.end,
                                               'type': AppStrings.playStation,
-                                              'period': _selectedTimeRange == 0
-                                                  ? 'daily'
-                                                  : (_selectedTimeRange == 1
-                                                        ? 'weekly'
-                                                        : 'monthly'),
+                                              'period': _getPeriodString(),
                                               'isShop': context
                                                   .read<MainLayoutCubit>()
                                                   .isShop,
@@ -407,19 +395,21 @@ class _ReportsViewState extends State<ReportsView> {
                                       margin: margin.clamp(0.0, 1.0),
                                     ),
 
-                                    ReportsDashboardCard(
-                                      title: AppStrings.unpaid.tr(),
-                                      subtitle: "",
-                                      amount: data.unpaidDebts.toSmartAmount(),
-                                      type: BusinessReportType.debts,
-                                      badgeText:
-                                          "${AppStrings.debts.tr()}: ${data.totalDebts.toSmartAmount()} ${AppStrings.currencyEgp.tr()}  \n${AppStrings.paid.tr()}: ${data.paidDebts.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
-                                      onTap: () {
-                                        context
-                                            .read<MainLayoutCubit>()
-                                            .changeBottomNav(2);
-                                      },
-                                    ),
+                                      ReportsDashboardCard(
+                                        title: AppStrings.unpaid.tr(),
+                                        subtitle: "",
+                                        amount:
+                                            data.unpaidDebts.toSmartAmount(),
+                                        type: BusinessReportType.debts,
+                                        badgeText: _selectedTimeRange == 3
+                                            ? ""
+                                            : "${AppStrings.debts.tr()}: ${data.totalDebts.toSmartAmount()} ${AppStrings.currencyEgp.tr()}  \n${AppStrings.paid.tr()}: ${data.paidDebts.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
+                                        onTap: () {
+                                          context
+                                              .read<MainLayoutCubit>()
+                                              .changeBottomNav(2);
+                                        },
+                                      ),
 
                                     // Smart Insights Section
                                     if (state.insights.length > 1) ...[
@@ -498,6 +488,9 @@ class _ReportsViewState extends State<ReportsView> {
       case 2:
         cubit.fetchCurrentMonth();
         break;
+      case 3:
+        cubit.fetchAllTime();
+        break;
     }
   }
 
@@ -514,6 +507,9 @@ class _ReportsViewState extends State<ReportsView> {
         return (start: DateTime(start.year, start.month, start.day), end: now);
       case 2:
         return (start: DateTime(now.year, now.month, 1), end: now);
+      case 3:
+        // All time: from a very old date to now
+        return (start: DateTime(1800, 1, 1), end: now);
       default:
         return (start: DateTime(now.year, now.month, now.day), end: now);
     }
@@ -527,8 +523,25 @@ class _ReportsViewState extends State<ReportsView> {
         return AppStrings.comparisonLastWeek.tr();
       case 2:
         return AppStrings.comparisonLastMonth.tr();
+      case 3:
+        return "";
       default:
         return "";
+    }
+  }
+
+  String _getPeriodString() {
+    switch (_selectedTimeRange) {
+      case 0:
+        return 'daily';
+      case 1:
+        return 'weekly';
+      case 2:
+        return 'monthly';
+      case 3:
+        return 'allTime';
+      default:
+        return 'daily';
     }
   }
 
@@ -537,6 +550,8 @@ class _ReportsViewState extends State<ReportsView> {
     required double diff,
     required bool isIncrease,
   }) {
+    if (_selectedTimeRange == 3) return "";
+
     if (diff == 0) {
       return AppStrings.comparisonNoChange.tr(
         namedArgs: {'label': label, 'period': _getBadgeText()},

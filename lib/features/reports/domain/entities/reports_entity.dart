@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-enum ReportPeriod { daily, weekly, monthly }
+enum ReportPeriod { daily, weekly, monthly, allTime }
 
 class ReportsEntity extends Equatable {
   final double totalIncome;

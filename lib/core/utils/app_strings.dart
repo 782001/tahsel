@@ -194,6 +194,7 @@ class AppStrings {
   static const String daily = "daily";
   static const String weekly = "weekly";
   static const String monthly = "monthly";
+  static const String allTime = "all_time";
   static const String netProfit = "net_profit";
   static const String totalIncome = "total_income";
   static const String totalExpenses = "total_expenses";

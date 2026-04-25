@@ -21,7 +21,12 @@ class ReportsTimeRangeSelector extends StatefulWidget {
 
 class _ReportsTimeRangeSelectorState extends State<ReportsTimeRangeSelector> {
   late int _selectedIndex;
-  final List<String> _tabs = [AppStrings.daily, AppStrings.weekly, AppStrings.monthly];
+  final List<String> _tabs = [
+    AppStrings.daily,
+    AppStrings.weekly,
+    AppStrings.monthly,
+    AppStrings.allTime,
+  ];
 
   @override
   void initState() {

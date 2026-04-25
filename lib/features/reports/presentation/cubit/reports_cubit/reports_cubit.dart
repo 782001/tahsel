@@ -1,17 +1,21 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/core/base_usecase/base_usecase.dart';
 
 import '../../../domain/entities/reports_entity.dart';
 import '../../../domain/usecases/generate_insights_usecase.dart';
+import '../../../domain/usecases/get_all_time_reports_usecase.dart';
 import '../../../domain/usecases/get_reports_usecase.dart';
 import 'reports_state.dart';
 
 class ReportsCubit extends Cubit<ReportsState> {
   final GetReportsUseCase getReportsUseCase;
   final GenerateInsightsUseCase generateInsightsUseCase;
+  final GetAllTimeReportsUseCase getAllTimeReportsUseCase;
 
   ReportsCubit({
     required this.getReportsUseCase,
     required this.generateInsightsUseCase,
+    required this.getAllTimeReportsUseCase,
   }) : super(ReportsInitial());
 
   Future<void> fetchReports({
@@ -64,5 +68,16 @@ class ReportsCubit extends Cubit<ReportsState> {
     final start = DateTime(now.year, now.month, 1);
     final end = DateTime(now.year, now.month, now.day + 1);
     fetchReports(startDate: start, endDate: end, period: ReportPeriod.monthly);
+  }
+
+  Future<void> fetchAllTime() async {
+    emit(ReportsLoading());
+
+    final result = await getAllTimeReportsUseCase(NoParams());
+
+    result.fold(
+      (failure) => emit(ReportsError(failure.message)),
+      (reports) => emit(ReportsSuccess(reports, [])), // Pure aggregation, no insights
+    );
   }
 }

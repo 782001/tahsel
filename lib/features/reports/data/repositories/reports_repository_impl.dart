@@ -93,6 +93,47 @@ class ReportsRepositoryImpl implements ReportsRepository {
   }
 
   @override
+  Future<Either<Failure, ReportsEntity>> getAllTimeReports() async {
+    try {
+      final data = await dataSource.getAllTimeData();
+
+      final double income = (data['income'] ?? 0).toDouble();
+      final double cafeIncome = (data['cafeIncome'] ?? 0).toDouble();
+      final double playstationIncome =
+          (data['playstationIncome'] ?? 0).toDouble();
+      final double expenses = (data['expenses'] ?? 0).toDouble();
+      final double totalDebts = (data['totalDebts'] ?? 0).toDouble();
+      final double paidDebts = (data['paidDebts'] ?? 0).toDouble();
+      final double unpaidDebts = (data['unpaidDebts'] ?? 0).toDouble();
+      final double profit = income - expenses;
+
+      final reports = ReportsEntity(
+        totalIncome: income,
+        cafeIncome: cafeIncome,
+        playstationIncome: playstationIncome,
+        totalExpenses: expenses,
+        totalDebts: totalDebts,
+        paidDebts: paidDebts,
+        unpaidDebts: unpaidDebts,
+        netProfit: profit,
+        // No comparison for all-time aggregation
+        incomeDiff: 0,
+        expenseDiff: 0,
+        profitDiff: 0,
+        cafeDiff: 0,
+        playstationDiff: 0,
+        isIncomeIncrease: true,
+        isExpenseIncrease: false,
+        isProfitIncrease: true,
+      );
+
+      return Right(reports);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, List<OperationEntity>>> getIncomeDetails(
     DateTime startDate,
     DateTime endDate, {

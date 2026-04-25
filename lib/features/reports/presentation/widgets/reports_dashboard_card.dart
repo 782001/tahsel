@@ -72,7 +72,7 @@ class ReportsDashboardCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    if (badgeText != null)
+                    if (badgeText != null && badgeText!.isNotEmpty)
                       Flexible(
                         child: Container(
                           padding: EdgeInsets.symmetric(

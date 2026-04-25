@@ -14,6 +14,10 @@ class GenerateInsightsParams {
 class GenerateInsightsUseCase implements BaseUseCase<List<ProfitInsight>, GenerateInsightsParams> {
   @override
   Future<Either<Failure, List<ProfitInsight>>> call(GenerateInsightsParams params) async {
+    if (params.period == ReportPeriod.allTime) {
+      return const Right([]); // Pure aggregation, no insights for all-time
+    }
+
     final List<ProfitInsight> insights = [];
 
     // 1. Net Profit Analysis (Growth Trend)
@@ -66,6 +70,7 @@ class GenerateInsightsUseCase implements BaseUseCase<List<ProfitInsight>, Genera
         case ReportPeriod.daily: key = 'insight_profit_same_daily'; break;
         case ReportPeriod.weekly: key = 'insight_profit_same_weekly'; break;
         case ReportPeriod.monthly: key = 'insight_profit_same_monthly'; break;
+        case ReportPeriod.allTime: key = 'insight_profit_same_general'; break; // Placeholder or general key
       }
       return ProfitInsight(
         status: ProfitInsightStatus.same,
@@ -81,6 +86,7 @@ class GenerateInsightsUseCase implements BaseUseCase<List<ProfitInsight>, Genera
       case ReportPeriod.daily: keyPrefix += 'daily_'; break;
       case ReportPeriod.weekly: keyPrefix += 'weekly_'; break;
       case ReportPeriod.monthly: keyPrefix += 'monthly_'; break;
+      case ReportPeriod.allTime: keyPrefix += 'general_'; break;
     }
 
     if (currentProfit > prevProfit) {

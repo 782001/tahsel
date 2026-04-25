@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 
@@ -6,6 +7,7 @@ import '../../../../core/error/firebase_error_handler.dart';
 
 abstract class ReportsRemoteDataSource {
   Future<Map<String, double>> getPeriodData(DateTime start, DateTime end);
+  Future<Map<String, double>> getAllTimeData();
   Future<List<Map<String, dynamic>>> getIncomeDetails(
     DateTime start,
     DateTime end, {
@@ -102,6 +104,45 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
         'paidDebts': paidDebtsSum,
         'unpaidDebts': unpaidDebtsSum,
       };
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Map<String, double>> getAllTimeData() async {
+    try {
+      final uid = AppStrings.userToken;
+      if (uid.isEmpty) return {};
+
+      // 1. Fetch ALL Operations
+      final operationsQuery = await firestore
+          .collection('users')
+          .doc(uid)
+          .collection('operations')
+          .get();
+
+      // 2. Fetch ALL Expenses
+      final expensesQuery = await firestore
+          .collection('users')
+          .doc(uid)
+          .collection('expenses')
+          .get();
+
+      // 3. Fetch ALL Debts
+      final debtsQuery = await firestore
+          .collection('users')
+          .doc(uid)
+          .collection('debts')
+          .get();
+
+      // Aggregating in isolate for performance with large datasets
+      return await compute(_aggregateAllTimeData, {
+        'operations': operationsQuery.docs.map((d) => d.data()).toList(),
+        'expenses': expensesQuery.docs.map((d) => d.data()).toList(),
+        'debts': debtsQuery.docs.map((d) => d.data()).toList(),
+      });
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;
@@ -212,4 +253,53 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
       rethrow;
     }
   }
+}
+
+/// Helper function for isolate-based aggregation
+Map<String, double> _aggregateAllTimeData(Map<String, dynamic> data) {
+  final List<Map<String, dynamic>> operations = List<Map<String, dynamic>>.from(data['operations']);
+  final List<Map<String, dynamic>> expenses = List<Map<String, dynamic>>.from(data['expenses']);
+  final List<Map<String, dynamic>> debts = List<Map<String, dynamic>>.from(data['debts']);
+
+  double totalIncome = 0;
+  double cafeIncome = 0;
+  double playstationIncome = 0;
+
+  for (var op in operations) {
+    final double totalAmount = (op['totalAmount'] ?? 0).toDouble();
+    final type = (op['type'] ?? '').toString().toLowerCase();
+
+    totalIncome += totalAmount;
+
+    if (type == 'shop') {
+      cafeIncome += totalAmount;
+    } else if (type == 'playstation') {
+      playstationIncome += totalAmount;
+    }
+  }
+
+  double totalExpenses = 0;
+  for (var exp in expenses) {
+    totalExpenses += (exp['amount'] ?? 0).toDouble();
+  }
+
+  double totalDebts = 0;
+  double paidDebtsSum = 0;
+  double unpaidDebtsSum = 0;
+
+  for (var debt in debts) {
+    totalDebts += (debt['totalAmount'] ?? 0).toDouble();
+    paidDebtsSum += (debt['paidAmount'] ?? 0).toDouble();
+    unpaidDebtsSum += (debt['remainingAmount'] ?? 0).toDouble();
+  }
+
+  return {
+    'income': totalIncome,
+    'cafeIncome': cafeIncome,
+    'playstationIncome': playstationIncome,
+    'expenses': totalExpenses,
+    'totalDebts': totalDebts,
+    'paidDebts': paidDebtsSum,
+    'unpaidDebts': unpaidDebtsSum,
+  };
 }
