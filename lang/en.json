@@ -260,5 +260,12 @@
   "full_payment": "Full Payment",
   "global_payments_report": "Customer Payments History",
   "activity": "Activity",
-  "all_activities": "All Activities"
+  "all_activities": "All Activities",
+  "customer_report": "Customer Report",
+  "total_spent": "Total Spent",
+  "remaining_balance": "Remaining Balance",
+  "all_operations": "All Operations",
+  "purchase": "Purchase",
+  "payment": "Payment",
+  "customers_report_desc": "View all customer reports and operations"
 }

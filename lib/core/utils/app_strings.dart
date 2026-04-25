@@ -309,4 +309,11 @@ class AppStrings {
   static const String globalPaymentsReport = "global_payments_report";
   static const String activity = "activity";
   static const String allActivities = "all_activities";
+  static const String allOperations = "all_operations";
+  static const String purchase = "purchase";
+  static const String customerReport = "customer_report";
+  static const String totalSpent = "total_spent";
+  static const String remainingBalance = "remaining_balance";
+  static const String payment = "payment";
+  static const String customersReportDesc = "customers_report_desc";
 }

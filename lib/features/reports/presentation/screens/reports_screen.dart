@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -91,6 +92,80 @@ class _ReportsViewState extends State<ReportsView> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           20.verticalSpace,
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 24.w),
+                            child: GestureDetector(
+                              onTap: () {
+                                final uid = FirebaseAuth.instance.currentUser?.uid;
+                                if (uid != null) {
+                                  Navigator.pushNamed(
+                                    context,
+                                    AppRoutes.customersList,
+                                    arguments: uid,
+                                  );
+                                }
+                              },
+                              child: Container(
+                                padding: EdgeInsets.all(16.w),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryColor,
+                                  borderRadius: BorderRadius.circular(16.r),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.primaryColor.withOpacity(0.3),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: EdgeInsets.all(10.w),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.2),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.people_alt_rounded,
+                                        color: Colors.white,
+                                        size: 24.sp,
+                                      ),
+                                    ),
+                                    16.horizontalSpace,
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            AppStrings.customers.tr(),
+                                            style: TextStyles.customStyle(
+                                              color: Colors.white,
+                                              fontSize: 18.sp,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          Text(
+                                            AppStrings.customersReportDesc.tr(),
+                                            style: TextStyles.customStyle(
+                                              color: Colors.white.withOpacity(0.8),
+                                              fontSize: 12.sp,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const Icon(
+                                      Icons.arrow_forward_ios_rounded,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          16.verticalSpace,
                           ReportsTimeRangeSelector(onTabChanged: _onTabChanged),
                           SizedBox(height: 16.h),
                           BlocBuilder<ReportsCubit, ReportsState>(

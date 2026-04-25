@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tahsel/features/debt/presentation/screens/customer_global_payments_screen.dart';
 import 'package:tahsel/features/standard_features/security/presentation/screens/security_warning_screen.dart';
 import 'package:tahsel/features/splash/splash_screen.dart';
 import 'package:tahsel/features/main_layout/presentation/screens/main_layout_screen.dart';
@@ -12,8 +13,9 @@ import 'package:tahsel/features/reports/presentation/screens/income_details_scre
 import 'package:tahsel/features/debt/presentation/screens/debt_details_report_screen.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_details/debt_details_cubit.dart';
 import 'package:tahsel/features/customer_debts/data/models/debt_item_model.dart';
-import 'package:tahsel/features/debt/presentation/screens/customer_global_payments_screen.dart';
 import 'package:tahsel/features/debt/presentation/cubit/global_payments/global_payments_cubit.dart';
+import 'package:tahsel/features/customer/presentation/screens/customers_list_screen.dart';
+import 'package:tahsel/features/customer/presentation/screens/customer_report_details_screen.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -26,6 +28,8 @@ class AppRoutes {
   static const String incomeDetails = '/income-details';
   static const String debtDetails = '/debt-details';
   static const String customerGlobalPayments = '/customer-global-payments';
+  static const String customersList = '/customers-list';
+  static const String customerReportDetails = '/customer-report-details';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -79,6 +83,19 @@ class AppRoutes {
           builder: (_) => BlocProvider(
             create: (context) => di.sl<GlobalPaymentsCubit>(),
             child: CustomerGlobalPaymentsScreen(customerDetail: customerDetail),
+          ),
+        );
+      case customersList:
+        final uid = settings.arguments as String;
+        return MaterialPageRoute(
+          builder: (_) => CustomersListScreen(uid: uid),
+        );
+      case customerReportDetails:
+        final args = settings.arguments as Map<String, dynamic>;
+        return MaterialPageRoute(
+          builder: (_) => CustomerReportDetailsScreen(
+            uid: args['uid'],
+            customerName: args['customerName'],
           ),
         );
       default:

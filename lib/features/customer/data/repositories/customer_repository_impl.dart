@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import '../../domain/entities/customer_entity.dart';
+import '../../domain/entities/customer_operation.dart';
 import '../../domain/repositories/customer_repository.dart';
 import '../datasources/customer_remote_data_source.dart';
 import '../models/customer_model.dart';
@@ -45,6 +46,19 @@ class CustomerRepositoryImpl implements CustomerRepository {
     try {
       await remoteDataSource.updateCustomerPreference(uid, name, preference);
       return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<CustomerOperation>>> getCustomerOperations(
+    String uid,
+    String customerName,
+  ) async {
+    try {
+      final operations = await remoteDataSource.getCustomerOperations(uid, customerName);
+      return Right(operations);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
