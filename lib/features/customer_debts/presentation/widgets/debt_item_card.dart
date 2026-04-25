@@ -5,6 +5,7 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/customer_debts/data/models/debt_item_model.dart';
+import 'package:tahsel/routes/app_routes.dart';
 
 /// A card showing a single debt transaction row (one item/day).
 class DebtItemCard extends StatelessWidget {
@@ -25,25 +26,32 @@ class DebtItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isSettled = item.remainingDebt <= 0;
 
-    return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
-      decoration: BoxDecoration(
-        color: AppColors.debtCardSurface,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: isSettled
-              ? AppColors.primaryColor.withOpacity(0.2)
-              : AppColors.error.withOpacity(0.15),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+    return InkWell(
+      onTap: () => Navigator.pushNamed(
+        context,
+        AppRoutes.debtDetails,
+        arguments: item,
       ),
+      borderRadius: BorderRadius.circular(16.r),
+      child: Container(
+        margin: EdgeInsets.only(bottom: 12.h),
+        decoration: BoxDecoration(
+          color: AppColors.debtCardSurface,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(
+            color: isSettled
+                ? AppColors.primaryColor.withOpacity(0.2)
+                : AppColors.error.withOpacity(0.15),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
       child: Padding(
         padding: EdgeInsets.all(16.r),
         child: Column(
@@ -216,7 +224,7 @@ class DebtItemCard extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
@@ -131,7 +132,7 @@ class _ReportsViewState extends State<ReportsView> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     ReportsNetProfitCard(
-                                      amount: data.netProfit.toStringAsFixed(1),
+                                      amount: data.netProfit.toSmartAmount(),
                                       isPositive: data.isProfitIncrease,
                                       comparisonText: _buildComparisonText(
                                         label: AppStrings.netProfit.tr(),
@@ -155,9 +156,7 @@ class _ReportsViewState extends State<ReportsView> {
                                     ReportsDashboardCard(
                                       title: AppStrings.totalIncome.tr(),
                                       subtitle: "",
-                                      amount: data.totalIncome.toStringAsFixed(
-                                        1,
-                                      ),
+                                      amount: data.totalIncome.toSmartAmount(),
                                       type: BusinessReportType.income,
                                       isShop: context
                                           .read<MainLayoutCubit>()
@@ -196,8 +195,7 @@ class _ReportsViewState extends State<ReportsView> {
                                     ReportsDashboardCard(
                                       title: AppStrings.totalExpenses.tr(),
                                       subtitle: "",
-                                      amount: data.totalExpenses
-                                          .toStringAsFixed(1),
+                                      amount: data.totalExpenses.toSmartAmount(),
                                       type: BusinessReportType.expense,
                                       isShop: context
                                           .read<MainLayoutCubit>()
@@ -249,9 +247,7 @@ class _ReportsViewState extends State<ReportsView> {
                                             ? AppStrings.shopIncome.tr()
                                             : AppStrings.cafeIncome.tr(),
                                         subtitle: "",
-                                        amount: data.cafeIncome.toStringAsFixed(
-                                          1,
-                                        ),
+                                        amount: data.cafeIncome.toSmartAmount(),
                                         type: BusinessReportType.cafe,
                                         isShop: context
                                             .watch<MainLayoutCubit>()
@@ -292,8 +288,7 @@ class _ReportsViewState extends State<ReportsView> {
                                         title: AppStrings.playstationIncome
                                             .tr(),
                                         subtitle: "",
-                                        amount: data.playstationIncome
-                                            .toStringAsFixed(1),
+                                        amount: data.playstationIncome.toSmartAmount(),
                                         type: BusinessReportType.playstation,
                                         badgeText: _buildComparisonText(
                                           label: AppStrings.playstationIncome
@@ -323,19 +318,17 @@ class _ReportsViewState extends State<ReportsView> {
                                       ),
 
                                     ReportsOperationalMarginCard(
-                                      amount: data.netProfit.toStringAsFixed(1),
+                                      amount: data.netProfit.toSmartAmount(),
                                       margin: margin.clamp(0.0, 1.0),
                                     ),
 
                                     ReportsDashboardCard(
                                       title: AppStrings.unpaid.tr(),
                                       subtitle: "",
-                                      amount: data.unpaidDebts.toStringAsFixed(
-                                        1,
-                                      ),
+                                      amount: data.unpaidDebts.toSmartAmount(),
                                       type: BusinessReportType.debts,
                                       badgeText:
-                                          "${AppStrings.debts.tr()}: ${data.totalDebts.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}  \n${AppStrings.paid.tr()}: ${data.paidDebts.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}",
+                                          "${AppStrings.debts.tr()}: ${data.totalDebts.toSmartAmount()} ${AppStrings.currencyEgp.tr()}  \n${AppStrings.paid.tr()}: ${data.paidDebts.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
                                       onTap: () {
                                         context
                                             .read<MainLayoutCubit>()
@@ -472,7 +465,7 @@ class _ReportsViewState extends State<ReportsView> {
 
     return key.tr(namedArgs: {
       'label': label,
-      'amount': diff.toStringAsFixed(1),
+      'amount': diff.toSmartAmount(),
       'currency': AppStrings.currencyEgp.tr(),
       'period': _getBadgeText(),
     });

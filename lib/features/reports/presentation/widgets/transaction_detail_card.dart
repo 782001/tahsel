@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -142,26 +143,29 @@ class TransactionDetailCard extends StatelessWidget {
                         ),
                       ),
                       // Amount
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            operation.totalAmount.toStringAsFixed(1),
-                            style: TextStyles.customStyle(
-                              fontSize: 18.sp,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.primaryColor,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              operation.totalAmount.toSmartAmount(),
+                              style: TextStyles.customStyle(
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.primaryColor,
+                              ),
                             ),
-                          ),
-                          Text(
-                            AppStrings.currencyEgp.tr(),
-                            style: TextStyles.customStyle(
-                              fontSize: 11.sp,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primaryColor.withOpacity(0.6),
+                            Text(
+                              AppStrings.currencyEgp.tr(),
+                              style: TextStyles.customStyle(
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primaryColor.withOpacity(0.6),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -187,14 +191,17 @@ class TransactionDetailCard extends StatelessWidget {
                                 ),
                               ),
                               SizedBox(height: 4.h),
-                              Text(
-                                "${operation.paidAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}",
-                                style: TextStyles.customStyle(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.success,
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    "${operation.paidAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
+                                    style: TextStyles.customStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.success,
+                                    ),
+                                  ),
                                 ),
-                              ),
                             ],
                           ),
                         ),
@@ -217,14 +224,17 @@ class TransactionDetailCard extends StatelessWidget {
                                 ),
                               ),
                               SizedBox(height: 4.h),
-                              Text(
-                                "${operation.remainingDebt.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}",
-                                style: TextStyles.customStyle(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.error,
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    "${operation.remainingDebt.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
+                                    style: TextStyles.customStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.error,
+                                    ),
+                                  ),
                                 ),
-                              ),
                             ],
                           ),
                         ),

@@ -33,29 +33,32 @@ class ReportsNetProfitCard extends StatelessWidget {
             ),
           ),
           SizedBox(height: 8.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                amount,
-                style: TextStyles.customStyle(
-                  fontSize: 42.sp,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.black,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  amount,
+                  style: TextStyles.customStyle(
+                    fontSize: 42.sp,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.black,
+                  ),
                 ),
-              ),
-              SizedBox(width: 8.w),
-              Text(
-                AppStrings.currencyEgp.tr(),
-                style: TextStyles.customStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.blackLight,
+                SizedBox(width: 8.w),
+                Text(
+                  AppStrings.currencyEgp.tr(),
+                  style: TextStyles.customStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.blackLight,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           SizedBox(height: 8.h),
           Container(
@@ -65,13 +68,16 @@ class ReportsNetProfitCard extends StatelessWidget {
                   .withOpacity(0.1),
               borderRadius: BorderRadius.circular(12.r),
             ),
-            child: Text(
-              "$comparisonText  ${isPositive ? '↑↑' : '↓↓'}",
-              textAlign: TextAlign.center,
-              style: TextStyles.customStyle(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.bold,
-                color: isPositive ? AppColors.primaryColor : AppColors.error,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                "$comparisonText  ${isPositive ? '↑↑' : '↓↓'}",
+                textAlign: TextAlign.center,
+                style: TextStyles.customStyle(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.bold,
+                  color: isPositive ? AppColors.primaryColor : AppColors.error,
+                ),
               ),
             ),
           ),

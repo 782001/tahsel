@@ -26,8 +26,9 @@ class MarkItemAsPaidUseCase implements BaseUseCase<void, DebtEntity> {
     final payment = PaymentEntity(
       debtId: debt.id!,
       amountPaid: amountPaid,
-      remainingAfterPayment: newRemainingAmount,
-      paymentDate: DateTime.now(),
+      remainingAmount: newRemainingAmount,
+      createdAt: DateTime.now(),
+      type: PaymentType.full,
     );
 
     return repository.payDebt(updatedDebt, payment);

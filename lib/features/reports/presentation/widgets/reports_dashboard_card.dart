@@ -151,32 +151,35 @@ class ReportsDashboardCard extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 8.h),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Text(
-                      amount,
-                      style: TextStyles.customStyle(
-                        fontSize: 24.sp,
-                        fontWeight: FontWeight.w900,
-                        color: isAccentCard
-                            ? AppColors.whiteColor
-                            : AppColors.black,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        amount,
+                        style: TextStyles.customStyle(
+                          fontSize: 24.sp,
+                          fontWeight: FontWeight.w900,
+                          color: isAccentCard
+                              ? AppColors.whiteColor
+                              : AppColors.black,
+                        ),
                       ),
-                    ),
-                    SizedBox(width: 4.w),
-                    Text(
-                      AppStrings.currencyEgp.tr(),
-                      style: TextStyles.customStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.bold,
-                        color: isAccentCard
-                            ? AppColors.whiteColor.withOpacity(0.6)
-                            : AppColors.blackLight.withOpacity(0.4),
+                      SizedBox(width: 4.w),
+                      Text(
+                        AppStrings.currencyEgp.tr(),
+                        style: TextStyles.customStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.bold,
+                          color: isAccentCard
+                              ? AppColors.whiteColor.withOpacity(0.6)
+                              : AppColors.blackLight.withOpacity(0.4),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),

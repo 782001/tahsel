@@ -9,6 +9,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/shared/widgets/fields/text_widget.dart';
 import 'package:tahsel/features/expenses/presentation/screens/add_expense_screen.dart';
 import 'package:tahsel/features/reports/presentation/screens/income_details_screen.dart';
+import 'package:tahsel/features/debt/presentation/screens/debt_details_report_screen.dart';
+import 'package:tahsel/features/debt/presentation/cubit/debt_details/debt_details_cubit.dart';
+import 'package:tahsel/features/customer_debts/data/models/debt_item_model.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -19,6 +22,7 @@ class AppRoutes {
   static const String securityWarning = '/security-warning';
   static const String addExpense = '/add-expense';
   static const String incomeDetails = '/income-details';
+  static const String debtDetails = '/debt-details';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -56,6 +60,14 @@ class AppRoutes {
             period: args['period'] as String,
             isShop: args['isShop'] as bool,
             type: args['type'] as String?,
+          ),
+        );
+      case debtDetails:
+        final debt = settings.arguments as DebtItem;
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (context) => di.sl<DebtDetailsCubit>(),
+            child: DebtDetailsReportScreen(debt: debt),
           ),
         );
       default:

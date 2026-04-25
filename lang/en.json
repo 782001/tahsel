@@ -215,6 +215,7 @@
   "pending_upload": "Pending Upload",
   "waiting_for_internet": "Waiting for internet...",
   "add_new_debt": "Add New Debt",
+  "new_debt": "New Debt",
   "debt_amount": "Debt Amount",
   "add_debt_success": "Debt added successfully",
   "add_debt_failed": "Failed to add debt",
@@ -245,5 +246,17 @@
   "ledger_number": "Ledger Number",
   "comparison_increase": "{label} increased by {amount} {currency} {period}",
   "comparison_decrease": "{label} decreased by {amount} {currency} {period}",
-  "comparison_no_change": "No change in {label} {period}"
+  "comparison_no_change": "No change in {label} {period}",
+  "transaction_history": "Transaction History",
+  "settlement": "Settlement",
+  "remaining": "Remaining",
+  "debt_details": "Debt Details",
+  "no_transactions": "No transactions recorded for this debt",
+  "transaction_type": "Transaction Type",
+  "payment_received": "Payment Received",
+  "debt_added": "Debt Added",
+  "full_payment": "Full Payment",
+  "global_payments_report": "Customer Payments History",
+  "activity": "Activity",
+  "all_activities": "All Activities"
 }

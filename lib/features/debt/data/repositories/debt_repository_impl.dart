@@ -78,4 +78,9 @@ class DebtRepositoryImpl implements DebtRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+
+  @override
+  Stream<List<PaymentEntity>> getDebtTransactions(String debtId) {
+    return remoteDataSource.getDebtTransactions(debtId);
+  }
 }

@@ -79,7 +79,7 @@ class TextStyles {
 
   static TextStyle customStyle({
     required double fontSize,
-    required FontWeight fontWeight,
+    FontWeight? fontWeight,
     Color? color,
     double? letterSpacing,
     double? height,

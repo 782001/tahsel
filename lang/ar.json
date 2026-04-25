@@ -215,6 +215,7 @@
   "pending_upload": "قيد الرفع",
   "waiting_for_internet": "بانتظار الاتصال بالإنترنت...",
   "add_new_debt": "إضافة دين جديد",
+  "new_debt": "دين جديد",
   "debt_amount": "قيمة الدين",
   "add_debt_success": "تم إضافة الدين بنجاح",
   "add_debt_failed": "فشل إضافة الدين",
@@ -245,5 +246,17 @@
   "ledger_number": "رقم الدفتر",
   "comparison_increase": "{label} زاد بمقدار {amount} {currency} {period}",
   "comparison_decrease": "{label} قل بمقدار {amount} {currency} {period}",
-  "comparison_no_change": "لا يوجد تغيير في {label} {period}"
+  "comparison_no_change": "لا يوجد تغيير في {label} {period}",
+  "transaction_history": "سجل المعاملات",
+  "settlement": "تسوية",
+  "remaining": "المتبقي",
+  "debt_details": "تفاصيل الدين",
+  "no_transactions": "لا توجد معاملات مسجلة لهذا الدين",
+  "transaction_type": "نوع المعاملة",
+  "payment_received": "دفعة مستلمة",
+  "debt_added": "إضافة دين",
+  "full_payment": "دفع كامل",
+  "global_payments_report": "سجل مدفوعات العميل",
+  "activity": "النشاط",
+  "all_activities": "جميع الأنشطة"
 }

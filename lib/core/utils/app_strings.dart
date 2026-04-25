@@ -264,6 +264,7 @@ class AppStrings {
   static const String pendingUpload = "pending_upload";
   static const String waitingForInternet = "waiting_for_internet";
   static const String addNewDebt = "add_new_debt";
+  static const String newDebt = "new_debt";
   static const String debtAmount = "debt_amount";
   static const String addDebtSuccess = "add_debt_success";
   static const String addDebtFailed = "add_debt_failed";
@@ -294,4 +295,16 @@ class AppStrings {
   static const String comparisonIncrease = "comparison_increase";
   static const String comparisonDecrease = "comparison_decrease";
   static const String comparisonNoChange = "comparison_no_change";
+  static const String transactionHistory = "transaction_history";
+  static const String settlement = "settlement";
+  static const String remaining = "remaining";
+  static const String debtDetails = "debt_details";
+  static const String noTransactions = "no_transactions";
+  static const String transactionType = "transaction_type";
+  static const String paymentReceived = "payment_received";
+  static const String debtAdded = "debt_added";
+  static const String fullPayment = "full_payment";
+  static const String globalPaymentsReport = "global_payments_report";
+  static const String activity = "activity";
+  static const String allActivities = "all_activities";
 }

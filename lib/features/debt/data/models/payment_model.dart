@@ -6,8 +6,10 @@ class PaymentModel extends PaymentEntity {
     super.id,
     required super.debtId,
     required super.amountPaid,
-    required super.remainingAfterPayment,
-    super.paymentDate,
+    required super.remainingAmount,
+    super.createdAt,
+    required super.type,
+    super.activityName,
   });
 
   factory PaymentModel.fromJson(Map<String, dynamic> json, String id) {
@@ -15,10 +17,12 @@ class PaymentModel extends PaymentEntity {
       id: id,
       debtId: json['debtId'] ?? '',
       amountPaid: (json['amountPaid'] ?? 0).toDouble(),
-      remainingAfterPayment: (json['remainingAfterPayment'] ?? 0).toDouble(),
-      paymentDate: json['paymentDate'] != null
-          ? (json['paymentDate'] as Timestamp).toDate()
+      remainingAmount: (json['remainingAmount'] ?? 0).toDouble(),
+      createdAt: json['createdAt'] != null
+          ? (json['createdAt'] as Timestamp).toDate()
           : null,
+      type: PaymentType.values.byName(json['type'] ?? 'partial'),
+      activityName: json['activityName'],
     );
   }
 
@@ -26,8 +30,10 @@ class PaymentModel extends PaymentEntity {
     return {
       'debtId': debtId,
       'amountPaid': amountPaid,
-      'remainingAfterPayment': remainingAfterPayment,
-      'paymentDate': paymentDate ?? FieldValue.serverTimestamp(),
+      'remainingAmount': remainingAmount,
+      'createdAt': createdAt ?? FieldValue.serverTimestamp(),
+      'type': type.name,
+      'activityName': activityName,
     };
   }
 
@@ -36,8 +42,10 @@ class PaymentModel extends PaymentEntity {
       id: entity.id,
       debtId: entity.debtId,
       amountPaid: entity.amountPaid,
-      remainingAfterPayment: entity.remainingAfterPayment,
-      paymentDate: entity.paymentDate,
+      remainingAmount: entity.remainingAmount,
+      createdAt: entity.createdAt,
+      type: entity.type,
+      activityName: entity.activityName,
     );
   }
 }

@@ -86,7 +86,7 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
         customerName: widget.customerName,
         productOrSessionDetails: _debtNameController.text.trim().isNotEmpty
             ? _debtNameController.text.trim()
-            : AppStrings.addNewDebt.tr(),
+            : AppStrings.newDebt.tr(),
         operationType: _selectedType,
         timestamp: DateTime.now(),
         isPaid: remainingAmount <= 0,

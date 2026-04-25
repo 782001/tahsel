@@ -31,49 +31,61 @@ class ReportsOperationalMarginCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppStrings.netProfit.tr(),
-                    style: TextStyles.customStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.blackLight.withOpacity(0.5),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppStrings.netProfit.tr(),
+                      style: TextStyles.customStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.blackLight.withOpacity(0.5),
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    "$amount ${AppStrings.currencyEgp.tr()}",
-                    style: TextStyles.customStyle(
-                      fontSize: 24.sp,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.black,
+                    SizedBox(height: 4.h),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: AlignmentDirectional.centerStart,
+                      child: Text(
+                        "$amount ${AppStrings.currencyEgp.tr()}",
+                        style: TextStyles.customStyle(
+                          fontSize: 24.sp,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.black,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    AppStrings.operationalMargin.tr(),
-                    style: TextStyles.customStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.blackLight.withOpacity(0.5),
+              16.horizontalSpace,
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      AppStrings.operationalMargin.tr(),
+                      style: TextStyles.customStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.blackLight.withOpacity(0.5),
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    "${(margin * 100).toInt()}%",
-                    style: TextStyles.customStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.black,
+                    SizedBox(height: 4.h),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        "${(margin * 100).toInt()}%",
+                        style: TextStyles.customStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.black,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),

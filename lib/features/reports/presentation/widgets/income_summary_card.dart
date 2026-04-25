@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -60,40 +61,46 @@ class IncomeSummaryCard extends StatelessWidget {
                   color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
-                child: Text(
-                  "$count ${AppStrings.operations.tr()}",
-                  style: TextStyles.customStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    "$count ${AppStrings.operations.tr()}",
+                    style: TextStyles.customStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
             ],
           ),
           SizedBox(height: 12.h),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                totalIncome.toStringAsFixed(1),
-                style: TextStyles.customStyle(
-                  fontSize: 32.sp,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  totalIncome.toSmartAmount(),
+                  style: TextStyles.customStyle(
+                    fontSize: 32.sp,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-              SizedBox(width: 8.w),
-              Text(
-                AppStrings.currencyEgp.tr(),
-                style: TextStyles.customStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white.withOpacity(0.8),
+                SizedBox(width: 8.w),
+                Text(
+                  AppStrings.currencyEgp.tr(),
+                  style: TextStyles.customStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white.withOpacity(0.8),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           SizedBox(height: 16.h),
           Row(
@@ -104,12 +111,16 @@ class IncomeSummaryCard extends StatelessWidget {
                 size: 14.sp,
               ),
               SizedBox(width: 8.w),
-              Text(
-                dateRange,
-                style: TextStyles.customStyle(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white.withOpacity(0.7),
+              Expanded(
+                child: Text(
+                  dateRange,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyles.customStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white.withOpacity(0.7),
+                  ),
                 ),
               ),
             ],

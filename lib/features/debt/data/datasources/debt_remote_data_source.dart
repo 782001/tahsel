@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/error/firebase_error_handler.dart';
 import '../models/debt_model.dart';
 import '../models/payment_model.dart';
+import '../../domain/entities/payment_entity.dart';
 
 abstract class DebtRemoteDataSource {
   Future<String> addDebt(DebtModel debt);
@@ -10,6 +11,8 @@ abstract class DebtRemoteDataSource {
   Future<void> payTotalDebt(String uid, String customerName, double amount);
   Future<void> markCustomerAsPaid(String uid, String customerName);
   Future<void> deleteCustomerDebts(String uid, String customerName);
+  Stream<List<PaymentModel>> getDebtTransactions(String debtId);
+  Future<List<PaymentModel>> getCustomerAllPayments(String uid, String customerName);
 }
 
 class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
@@ -44,6 +47,18 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             ? Timestamp.fromDate(debt.timestamp!) 
             : FieldValue.serverTimestamp(),
         'lastUpdatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // 3. Add initial transaction record to payments history
+      final initialPaymentRef = debtRef.collection('payments').doc();
+      batch.set(initialPaymentRef, {
+        'debtId': debtRef.id,
+        'amountPaid': debt.totalAmount,
+        'remainingAmount': debt.remainingAmount,
+        'createdAt': debt.timestamp != null 
+            ? Timestamp.fromDate(debt.timestamp!) 
+            : FieldValue.serverTimestamp(),
+        'type': PaymentType.debtAdded.name,
       });
 
       await batch.commit();
@@ -183,8 +198,9 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         batch.set(paymentRef, {
           'debtId': debtId,
           'amountPaid': paymentForThisItem,
-          'remainingAfterPayment': newRemainingAmount,
-          'paymentDate': FieldValue.serverTimestamp(),
+          'remainingAmount': newRemainingAmount,
+          'createdAt': FieldValue.serverTimestamp(),
+          'type': isPaid ? PaymentType.full.name : PaymentType.partial.name,
         });
       }
 
@@ -246,8 +262,9 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         batch.set(paymentRef, {
           'debtId': debtId,
           'amountPaid': currentTotal - (debtData['paidAmount'] as num).toDouble(),
-          'remainingAfterPayment': 0.0,
-          'paymentDate': FieldValue.serverTimestamp(),
+          'remainingAmount': 0.0,
+          'createdAt': FieldValue.serverTimestamp(),
+          'type': PaymentType.settlement.name,
         });
       }
 
@@ -299,6 +316,66 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       throw Exception('Failed to delete customer debts: $e');
+    }
+  }
+
+  @override
+  Stream<List<PaymentModel>> getDebtTransactions(String debtId) {
+    // This is more complex because we need the UID to find the debt
+    // But usually we can find it by searching all users or by passing the UID
+    // However, looking at the structure, debts are under users/{uid}/debts/{debtId}
+    // We need to know which user this debt belongs to.
+    // Let's assume we can use a collectionGroup or pass the path.
+    // For now, I'll use collectionGroup for 'payments' and filter by 'debtId'
+    // which is safe if debtId is unique (which doc().id is).
+    
+    return firestore
+        .collectionGroup('payments')
+        .where('debtId', isEqualTo: debtId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => PaymentModel.fromJson(doc.data(), doc.id))
+            .toList());
+  }
+
+  @override
+  Future<List<PaymentModel>> getCustomerAllPayments(String uid, String customerName) async {
+    try {
+      // 1. Fetch all debts for this customer
+      final debtsSnapshot = await firestore
+          .collection('users')
+          .doc(uid)
+          .collection('debts')
+          .where('customerName', isEqualTo: customerName)
+          .get();
+
+      List<PaymentModel> allPayments = [];
+
+      for (var debtDoc in debtsSnapshot.docs) {
+        final debtData = debtDoc.data();
+        final activityName = debtData['operationType'] as String;
+        
+        // 2. Fetch payments for this specific debt
+        final paymentsSnapshot = await debtDoc.reference
+            .collection('payments')
+            .orderBy('createdAt', descending: true)
+            .get();
+        
+        for (var paymentDoc in paymentsSnapshot.docs) {
+          final paymentData = paymentDoc.data();
+          // Inject activityName from parent debt
+          paymentData['activityName'] = activityName;
+          
+          allPayments.add(PaymentModel.fromJson(paymentData, paymentDoc.id));
+        }
+      }
+      
+      // Note: Sorting and calculations will be handled by the Isolate in the presentation layer/Cubit
+      return allPayments;
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      throw Exception('Failed to fetch customer payments: $e');
     }
   }
 }

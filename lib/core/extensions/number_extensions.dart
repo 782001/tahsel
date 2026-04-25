@@ -11,6 +11,16 @@ extension NumberExtensions on num {
     return format.format(this);
   }
 
+  /// Formats the number in a smart way:
+  /// - Compact if very large (e.g. 1.2M)
+  /// - Fixed decimals if small
+  String toSmartAmount({int decimalDigits = 1}) {
+    if (this >= 1000000 || this <= -1000000) {
+      return NumberFormat.compact().format(this);
+    }
+    return toStringAsFixed(decimalDigits);
+  }
+
   /// Adds a delay of the given number in seconds.
   /// Example: await 2.delay(); // wait 2 seconds
   Future<void> delay() => Future.delayed(Duration(seconds: toInt()));

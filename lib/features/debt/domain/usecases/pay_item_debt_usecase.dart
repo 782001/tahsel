@@ -43,8 +43,9 @@ class PayItemDebtUseCase implements BaseUseCase<void, PayItemDebtParams> {
     final payment = PaymentEntity(
       debtId: params.debt.id!,
       amountPaid: params.amountToPay,
-      remainingAfterPayment: newRemainingAmount,
-      paymentDate: DateTime.now(),
+      remainingAmount: newRemainingAmount,
+      createdAt: DateTime.now(),
+      type: isPaid ? PaymentType.full : PaymentType.partial,
     );
 
     return repository.payDebt(updatedDebt, payment);
