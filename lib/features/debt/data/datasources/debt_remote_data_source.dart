@@ -13,6 +13,7 @@ abstract class DebtRemoteDataSource {
   Future<void> deleteCustomerDebts(String uid, String customerName);
   Stream<List<PaymentModel>> getDebtTransactions(String debtId);
   Future<List<PaymentModel>> getCustomerAllPayments(String uid, String customerName);
+  Stream<List<DebtModel>> getDebtsStream(String uid);
 }
 
 class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
@@ -377,5 +378,18 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
       FirebaseErrorHandler.handle(e);
       throw Exception('Failed to fetch customer payments: $e');
     }
+  }
+
+  @override
+  Stream<List<DebtModel>> getDebtsStream(String uid) {
+    return firestore
+        .collection('users')
+        .doc(uid)
+        .collection('debts')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => DebtModel.fromJson(doc.data(), doc.id))
+            .toList());
   }
 }

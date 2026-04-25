@@ -99,6 +99,7 @@ class AppStrings {
   // Customer Debts Screen
   static const String customerDebts = "customer_debts";
   static const String totalDebts = "total_debts";
+  static const String customers = "customers";
   static const String customerDebtsDesc = "customer_debts_desc";
   static const String searchCustomer = "search_customer";
   static const String partialPayment = "partial_payment";

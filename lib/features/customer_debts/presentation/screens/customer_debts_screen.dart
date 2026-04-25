@@ -11,6 +11,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import '../../../debt/presentation/cubit/debt_cubit.dart';
 
+import '../../../debt/presentation/cubit/total_debts/total_debts_cubit.dart';
+import '../widgets/total_debts_summary_card.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/shared/widgets/no_internet_view.dart';
@@ -34,8 +36,11 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => sl<DebtCubit>(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => sl<DebtCubit>()),
+        BlocProvider(create: (context) => sl<TotalDebtsCubit>()),
+      ],
       child: Scaffold(
         backgroundColor: AppColors.scafoldBackGround,
         body: SafeArea(
@@ -48,6 +53,7 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen> {
                 children: [
                   const CustomerDebtsHeader(),
                   if (!isOffline) ...[
+                    const TotalDebtsSummaryCard(),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       child: CustomSearchField(

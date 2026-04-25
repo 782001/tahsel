@@ -16,6 +16,9 @@ import '../presentation/cubit/debt_cubit.dart';
 import '../presentation/cubit/debt_details/debt_details_cubit.dart';
 import '../domain/usecases/get_customer_all_payments_usecase.dart';
 import '../presentation/cubit/global_payments/global_payments_cubit.dart';
+import '../domain/usecases/get_debts_stream_usecase.dart';
+import '../domain/usecases/calculate_total_debts_usecase.dart';
+import '../presentation/cubit/total_debts/total_debts_cubit.dart';
 
 Future<void> initDebt() async {
   // Cubit
@@ -43,6 +46,13 @@ Future<void> initDebt() async {
     ),
   );
 
+  sl.registerFactory(
+    () => TotalDebtsCubit(
+      getDebtsStreamUseCase: sl(),
+      calculateTotalDebtsUseCase: sl(),
+    ),
+  );
+
   // Use cases
   sl.registerLazySingleton(() => AddDebtUseCase(repository: sl()));
   sl.registerLazySingleton(() => GetDebtsUseCase(repository: sl()));
@@ -53,6 +63,8 @@ Future<void> initDebt() async {
   sl.registerLazySingleton(() => DeleteCustomerDebtUseCase(repository: sl()));
   sl.registerLazySingleton(() => GetDebtTransactionsUseCase(sl()));
   sl.registerLazySingleton(() => GetCustomerAllPaymentsUseCase(repository: sl()));
+  sl.registerLazySingleton(() => GetDebtsStreamUseCase(sl()));
+  sl.registerLazySingleton(() => CalculateTotalDebtsUseCase());
 
   // Repository
   sl.registerLazySingleton<DebtRepository>(

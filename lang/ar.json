@@ -64,6 +64,7 @@
   "main_office_services": "خدمات المكان الرئيسي",
   "customer_debts": "ديون العملاء",
   "total_debts": "الديون",
+  "customers": "عملاء",
   "customer_debts_desc": "إدارة الأرصدة المستحقة وشروط الائتمان.",
   "search_customer": "بحث باسم العميل...",
   "partial_payment": "دفع جزئي",

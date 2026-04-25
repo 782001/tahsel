@@ -177,16 +177,13 @@ class CustomerDebtDetailScreen extends StatelessWidget {
             title: Text(
               currentDetail.customerName,
               style: TextStyles.customStyle(
-                color: AppColors.whiteColor,
+                color: Colors.white,
                 fontSize: 18.sp,
                 fontWeight: FontWeight.bold,
               ),
             ),
             leading: IconButton(
-              icon: Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: AppColors.whiteColor,
-              ),
+              icon: Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
               onPressed: () => Navigator.pop(context),
             ),
             flexibleSpace: FlexibleSpaceBar(

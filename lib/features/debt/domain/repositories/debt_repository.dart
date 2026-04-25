@@ -12,4 +12,5 @@ abstract class DebtRepository {
   Future<Either<Failure, void>> deleteCustomerDebts(String uid, String customerName);
   Stream<List<PaymentEntity>> getDebtTransactions(String debtId);
   Future<Either<Failure, List<PaymentEntity>>> getCustomerAllPayments(String uid, String customerName);
+  Stream<List<DebtEntity>> getDebtsStream(String uid);
 }

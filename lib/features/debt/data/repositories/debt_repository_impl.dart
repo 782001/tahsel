@@ -35,7 +35,9 @@ class DebtRepositoryImpl implements DebtRepository {
 
   @override
   Future<Either<Failure, void>> payDebt(
-      DebtEntity debt, PaymentEntity payment) async {
+    DebtEntity debt,
+    PaymentEntity payment,
+  ) async {
     try {
       final debtModel = DebtModel.fromEntity(debt);
       final paymentModel = PaymentModel.fromEntity(payment);
@@ -48,7 +50,10 @@ class DebtRepositoryImpl implements DebtRepository {
 
   @override
   Future<Either<Failure, void>> payTotalDebt(
-      String uid, String customerName, double amount) async {
+    String uid,
+    String customerName,
+    double amount,
+  ) async {
     try {
       await remoteDataSource.payTotalDebt(uid, customerName, amount);
       return const Right(null);
@@ -59,7 +64,9 @@ class DebtRepositoryImpl implements DebtRepository {
 
   @override
   Future<Either<Failure, void>> markCustomerAsPaid(
-      String uid, String customerName) async {
+    String uid,
+    String customerName,
+  ) async {
     try {
       await remoteDataSource.markCustomerAsPaid(uid, customerName);
       return const Right(null);
@@ -70,7 +77,9 @@ class DebtRepositoryImpl implements DebtRepository {
 
   @override
   Future<Either<Failure, void>> deleteCustomerDebts(
-      String uid, String customerName) async {
+    String uid,
+    String customerName,
+  ) async {
     try {
       await remoteDataSource.deleteCustomerDebts(uid, customerName);
       return const Right(null);
@@ -86,12 +95,22 @@ class DebtRepositoryImpl implements DebtRepository {
 
   @override
   Future<Either<Failure, List<PaymentEntity>>> getCustomerAllPayments(
-      String uid, String customerName) async {
+    String uid,
+    String customerName,
+  ) async {
     try {
-      final result = await remoteDataSource.getCustomerAllPayments(uid, customerName);
+      final result = await remoteDataSource.getCustomerAllPayments(
+        uid,
+        customerName,
+      );
       return Right(result);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
+  }
+
+  @override
+  Stream<List<DebtEntity>> getDebtsStream(String uid) {
+    return remoteDataSource.getDebtsStream(uid);
   }
 }

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
-import 'package:tahsel/core/extensions/number_extensions.dart';
+import 'package:tahsel/core/extensions/extensions.dart';
 
 import '../../../../core/config/locale/app_localizations.dart';
 import '../../../../core/utils/app_colors.dart';
@@ -300,42 +300,19 @@ class _CustomerGlobalPaymentsScreenState
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Activity Name & Type
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 8.w,
-                      vertical: 4.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(6.r),
-                    ),
-                    child: Text(
-                      transaction.activityName ??
-                          AppLocalizations.tr(AppStrings.activity),
-                      style: TextStyles.customStyle(
-                        color: AppColors.primaryColor,
-                        fontSize: 11.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    isAddition
-                        ? AppLocalizations.tr(AppStrings.debtAdded)
-                        : AppLocalizations.tr(AppStrings.paymentReceived),
-                    style: TextStyles.customStyle(
-                      color: AppColors.textColor,
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+              // Activity Name
+              Text(
+                isAddition
+                    ? AppStrings.debtAdded.tr()
+                    : AppStrings.paymentReceived.tr(),
+                textAlign: TextAlign.start,
+                style: TextStyles.customStyle(
+                  color: AppColors.textColor,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
+
               // Amount
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
