@@ -12,6 +12,8 @@ import 'package:tahsel/features/reports/presentation/screens/income_details_scre
 import 'package:tahsel/features/debt/presentation/screens/debt_details_report_screen.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_details/debt_details_cubit.dart';
 import 'package:tahsel/features/customer_debts/data/models/debt_item_model.dart';
+import 'package:tahsel/features/debt/presentation/screens/customer_global_payments_screen.dart';
+import 'package:tahsel/features/debt/presentation/cubit/global_payments/global_payments_cubit.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -23,6 +25,7 @@ class AppRoutes {
   static const String addExpense = '/add-expense';
   static const String incomeDetails = '/income-details';
   static const String debtDetails = '/debt-details';
+  static const String customerGlobalPayments = '/customer-global-payments';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -68,6 +71,14 @@ class AppRoutes {
           builder: (_) => BlocProvider(
             create: (context) => di.sl<DebtDetailsCubit>(),
             child: DebtDetailsReportScreen(debt: debt),
+          ),
+        );
+      case customerGlobalPayments:
+        final customerDetail = settings.arguments as CustomerDebtDetail;
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (context) => di.sl<GlobalPaymentsCubit>(),
+            child: CustomerGlobalPaymentsScreen(customerDetail: customerDetail),
           ),
         );
       default:

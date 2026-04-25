@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/styles.dart';
-import 'package:tahsel/features/customer_debts/data/models/debt_item_model.dart';
+import 'package:tahsel/routes/app_routes.dart';
+
+import '../../data/models/debt_item_model.dart';
 
 class HeaderBanner extends StatelessWidget {
   final CustomerDebtDetail detail;
@@ -11,81 +12,88 @@ class HeaderBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(24.w, 60.h, 24.w, 32.h),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.primaryColor,
-            AppColors.primaryColor.withOpacity(0.75),
-          ],
-        ),
+    return GestureDetector(
+      onTap: () => Navigator.pushNamed(
+        context,
+        AppRoutes.customerGlobalPayments,
+        arguments: detail,
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Avatar circle with initials
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: 52.r,
-                height: 52.r,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.25),
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  detail.customerName.isNotEmpty ? detail.customerName[0] : '؟',
-                  style: TextStyles.customStyle(
-                    color: Colors.white,
-                    fontSize: 22.sp,
-                    fontWeight: FontWeight.bold,
+      child: Container(
+        padding: EdgeInsets.fromLTRB(24.w, 60.h, 24.w, 32.h),
+
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Avatar circle with initials
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 52.r,
+                  height: 52.r,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.25),
+                    shape: BoxShape.circle,
                   ),
-                ),
-              ),
-              SizedBox(width: 14.w),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    detail.customerName,
+                  alignment: Alignment.center,
+                  child: Text(
+                    detail.customerName.isNotEmpty
+                        ? detail.customerName[0]
+                        : '؟',
                     style: TextStyles.customStyle(
                       color: Colors.white,
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 22.sp,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: 4.h),
-                  if (detail.ledgerNumber != null &&
-                      detail.ledgerNumber!.isNotEmpty)
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 10.w,
-                        vertical: 3.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(20.r),
-                      ),
-                      child: Text(
-                        detail.ledgerNumber ?? "",
+                ),
+                SizedBox(width: 14.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        detail.customerName,
                         style: TextStyles.customStyle(
                           color: Colors.white,
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 20.sp,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
-                    ),
-                ],
-              ),
-            ],
-          ),
-        ],
+                      SizedBox(height: 4.h),
+                      if (detail.ledgerNumber != null &&
+                          detail.ledgerNumber!.isNotEmpty)
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 10.w,
+                            vertical: 3.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20.r),
+                          ),
+                          child: Text(
+                            detail.ledgerNumber ?? "",
+                            style: TextStyles.customStyle(
+                              color: Colors.white,
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white.withOpacity(0.5),
+                  size: 16.r,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -63,6 +63,7 @@
   "electricity_bill": "Electricity Bill",
   "main_office_services": "Main Office Services",
   "customer_debts": "Customer Debts",
+  "total_debts": "Total Debts",
   "customer_debts_desc": "Manage outstanding balances and credit terms.",
   "search_customer": "Search by customer name...",
   "partial_payment": "Partial Payment",

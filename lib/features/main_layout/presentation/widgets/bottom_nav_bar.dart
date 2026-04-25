@@ -40,7 +40,7 @@ class BottomNavBar extends StatelessWidget {
         ),
         BottomNavigationBarItem(
           icon: const Icon(Icons.people_alt_rounded),
-          label: AppStrings.customerDebts.tr(),
+          label: AppStrings.totalDebts.tr(),
         ),
         BottomNavigationBarItem(
           icon: const Icon(Icons.bar_chart_rounded),

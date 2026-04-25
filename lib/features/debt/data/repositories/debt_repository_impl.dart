@@ -83,4 +83,15 @@ class DebtRepositoryImpl implements DebtRepository {
   Stream<List<PaymentEntity>> getDebtTransactions(String debtId) {
     return remoteDataSource.getDebtTransactions(debtId);
   }
+
+  @override
+  Future<Either<Failure, List<PaymentEntity>>> getCustomerAllPayments(
+      String uid, String customerName) async {
+    try {
+      final result = await remoteDataSource.getCustomerAllPayments(uid, customerName);
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }

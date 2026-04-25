@@ -169,6 +169,11 @@ class CustomerDebtDetailScreen extends StatelessWidget {
             pinned: true,
             backgroundColor: AppColors.primaryColor,
             centerTitle: true,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(
+                bottom: Radius.circular(24.r),
+              ),
+            ),
             title: Text(
               currentDetail.customerName,
               style: TextStyles.customStyle(
@@ -187,18 +192,18 @@ class CustomerDebtDetailScreen extends StatelessWidget {
             flexibleSpace: FlexibleSpaceBar(
               background: HeaderBanner(detail: currentDetail),
             ),
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(0),
-              child: Container(
-                height: 20.h,
-                decoration: BoxDecoration(
-                  color: AppColors.scafoldBackGround,
-                  borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(24.r),
-                  ),
-                ),
-              ),
-            ),
+            // bottom: PreferredSize(
+            //   preferredSize: const Size.fromHeight(0),
+            //   child: Container(
+            //     height: 20.h,
+            //     decoration: BoxDecoration(
+            //       color: AppColors.scafoldBackGround,
+            //       borderRadius: BorderRadius.vertical(
+            //         top: Radius.circular(24.r),
+            //       ),
+            //     ),
+            //   ),
+            // ),
           ),
 
           // ── Summary Cards ───────────────────────────────────────────────
@@ -207,12 +212,13 @@ class CustomerDebtDetailScreen extends StatelessWidget {
               padding: EdgeInsets.fromLTRB(24.w, 0, 24.w, 0),
               child: Column(
                 children: [
+                  SizedBox(height: 20.h),
                   SummaryRow(detail: currentDetail),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: 20.h),
                   _NotificationPreferenceToggle(
                     customerName: currentDetail.customerName,
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: 20.h),
                   if (currentDetail.totalDebt != 0)
                     Row(
                       children: [

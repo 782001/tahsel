@@ -164,14 +164,35 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    if (widget.debt.entity.ledgerNumber != null)
-                      Text(
-                        '${AppStrings.ledgerNumber.tr()}: ${widget.debt.entity.ledgerNumber}',
-                        maxLines: 1,
+                    SizedBox(height: 4.h),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Text(
+                        widget.debt.itemDescription,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyles.customStyle(
-                          color: Colors.white.withOpacity(0.8),
-                          fontSize: 12.sp,
+                          color: Colors.white,
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    if (widget.debt.entity.ledgerNumber != null)
+                      Padding(
+                        padding: EdgeInsets.only(top: 4.h),
+                        child: Text(
+                          '${AppStrings.ledgerNumber.tr()}: ${widget.debt.entity.ledgerNumber}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyles.customStyle(
+                            color: Colors.white.withOpacity(0.8),
+                            fontSize: 12.sp,
+                          ),
                         ),
                       ),
                   ],
