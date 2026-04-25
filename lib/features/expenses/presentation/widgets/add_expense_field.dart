@@ -52,6 +52,7 @@ class AddExpenseField extends StatelessWidget {
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 24.w),
           child: TextField(
+            cursorColor: AppColors.primaryColor,
             controller: controller,
             focusNode: focusNode,
             onTap: onTap,
@@ -62,8 +63,8 @@ class AddExpenseField extends StatelessWidget {
             keyboardType: isMultiline
                 ? TextInputType.multiline
                 : isNumber
-                    ? const TextInputType.numberWithOptions(decimal: true)
-                    : TextInputType.text,
+                ? const TextInputType.numberWithOptions(decimal: true)
+                : TextInputType.text,
             style: TextStyles.customStyle(
               fontSize: 16.sp,
               fontWeight: FontWeight.bold,
@@ -89,7 +90,10 @@ class AddExpenseField extends StatelessWidget {
                       ),
                     )
                   : null,
-              prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+              prefixIconConstraints: const BoxConstraints(
+                minWidth: 0,
+                minHeight: 0,
+              ),
               suffixIcon: suffixIcon != null
                   ? Icon(suffixIcon, color: AppColors.blackLight, size: 22.r)
                   : null,
@@ -99,7 +103,10 @@ class AddExpenseField extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24.r),
                 borderSide: BorderSide.none,
               ),
-              contentPadding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 18.h),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 24.w,
+                vertical: 18.h,
+              ),
             ),
           ),
         ),

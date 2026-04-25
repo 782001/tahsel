@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../../core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/styles.dart';
+
+import '../../../../core/utils/app_colors.dart';
 
 class CustomSearchField extends StatelessWidget {
   final String hintText;
@@ -22,6 +23,7 @@ class CustomSearchField extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: TextField(
+        cursorColor: AppColors.primaryColor,
         controller: controller,
         onChanged: onChanged,
         style: TextStyles.customStyle(
@@ -31,17 +33,18 @@ class CustomSearchField extends StatelessWidget {
         ),
         decoration: InputDecoration(
           hintText: hintText,
+
           hintStyle: TextStyles.customStyle(
             color: AppColors.disabledColor,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
-          prefixIcon: Icon(
-            Icons.search,
-            color: AppColors.disabledColor,
-          ),
+          prefixIcon: Icon(Icons.search, color: AppColors.disabledColor),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
         ),
       ),
     );

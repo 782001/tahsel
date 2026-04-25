@@ -61,6 +61,7 @@ class _DropDownCustomTextfailedState extends State<DropDownCustomTextfailed> {
             },
             child: AbsorbPointer(
               child: TextField(
+                cursorColor: AppColors.primaryColor,
                 textAlign: TextAlign.right,
                 decoration: InputDecoration(
                   hintText: _selectedDropdownItem ?? widget.hintText,

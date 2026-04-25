@@ -36,16 +36,14 @@ class QuickAddTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextField(
+      cursorColor: AppColors.primaryColor,
       controller: controller,
       focusNode: focusNode,
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
       textInputAction: textInputAction,
       onChanged: onChanged,
       onSubmitted: onSubmitted,
-      style: TextStyle(
-        fontWeight: FontWeight.w600,
-        color: AppColors.black,
-      ),
+      style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.black),
       decoration: InputDecoration(
         hintText: hint,
         errorText: errorText,
@@ -56,17 +54,17 @@ class QuickAddTextField extends StatelessWidget {
         prefixIcon: icon != null
             ? Icon(icon, color: AppColors.blackLight)
             : prefixText != null
-                ? Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      prefixText!,
-                      style: TextStyle(
-                        color: AppColors.stitchOrange,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  )
-                : null,
+            ? Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  prefixText!,
+                  style: TextStyle(
+                    color: AppColors.stitchOrange,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              )
+            : null,
         suffixIcon: suffixIcon != null
             ? IconButton(
                 icon: Icon(suffixIcon, color: AppColors.primaryColor),
@@ -84,7 +82,10 @@ class QuickAddTextField extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 18,
+        ),
       ),
     );
   }

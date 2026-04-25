@@ -171,12 +171,14 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
                                 ),
                                 Expanded(
                                   child: TextField(
+                                    cursorColor: AppColors.primaryColor,
                                     controller: _amountController,
                                     focusNode: _amountFocus,
                                     keyboardType: TextInputType.number,
                                     textInputAction: TextInputAction.next,
-                                    onSubmitted: (_) => FocusScope.of(context)
-                                        .requestFocus(_paidAmountFocus),
+                                    onSubmitted: (_) => FocusScope.of(
+                                      context,
+                                    ).requestFocus(_paidAmountFocus),
                                     style: TextStyles.customStyle(
                                       color: AppColors.textColor,
                                       fontSize: 18,
@@ -232,12 +234,14 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
                                 ),
                                 Expanded(
                                   child: TextField(
+                                    cursorColor: AppColors.primaryColor,
                                     controller: _paidAmountController,
                                     focusNode: _paidAmountFocus,
                                     keyboardType: TextInputType.number,
                                     textInputAction: TextInputAction.next,
-                                    onSubmitted: (_) => FocusScope.of(context)
-                                        .requestFocus(_debtNameFocus),
+                                    onSubmitted: (_) => FocusScope.of(
+                                      context,
+                                    ).requestFocus(_debtNameFocus),
                                     style: TextStyles.customStyle(
                                       color: AppColors.textColor,
                                       fontSize: 18,
@@ -306,6 +310,7 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: TextField(
+                    cursorColor: AppColors.primaryColor,
                     controller: _debtNameController,
                     focusNode: _debtNameFocus,
                     maxLines: 2,

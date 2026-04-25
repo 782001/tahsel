@@ -48,37 +48,48 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen> {
             builder: (context, connectivityState) {
               final bool isOffline = connectivityState is ConnectivityDisconnected;
 
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const CustomerDebtsHeader(),
-                  if (!isOffline) ...[
-                    const TotalDebtsSummaryCard(),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: CustomSearchField(
-                        controller: _searchController,
-                        hintText: AppStrings.searchCustomer.tr(),
-                        onChanged: (val) {
-                          setState(() {
-                            _searchQuery = val;
-                          });
-                        },
+              return RefreshIndicator(
+                color: AppColors.primaryColor,
+                onRefresh: () async {
+                  final uid = AppStrings.userToken;
+                  if (uid.isNotEmpty) {
+                    await context.read<DebtCubit>().getDebts(uid);
+                  }
+                },
+                child: CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
+                  ),
+                  slivers: [
+                    const SliverToBoxAdapter(child: CustomerDebtsHeader()),
+                    if (!isOffline) ...[
+                      const SliverToBoxAdapter(child: TotalDebtsSummaryCard()),
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: CustomSearchField(
+                            controller: _searchController,
+                            hintText: AppStrings.searchCustomer.tr(),
+                            onChanged: (val) {
+                              setState(() {
+                                _searchQuery = val;
+                              });
+                            },
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    Expanded(
-                      child: CustomerDebtsList(searchQuery: _searchQuery),
-                    ),
-                  ] else
-                    Expanded(
-                      child: NoInternetView(
-                        onRetry: () {
-                          context.read<ConnectivityCubit>().checkConnectivity();
-                        },
+                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                      CustomerDebtsList(searchQuery: _searchQuery),
+                    ] else
+                      SliverFillRemaining(
+                        child: NoInternetView(
+                          onRetry: () {
+                            context.read<ConnectivityCubit>().checkConnectivity();
+                          },
+                        ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               );
             },
           ),

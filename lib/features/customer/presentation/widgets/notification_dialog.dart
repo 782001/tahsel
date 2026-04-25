@@ -302,7 +302,7 @@ class _NotificationDialogState extends State<NotificationDialog> {
                         ? Border.all(color: AppColors.error)
                         : null,
                   ),
-                  child: TextField(
+                  child: TextField(cursorColor: AppColors.primaryColor,
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
                     style: TextStyles.customStyle(

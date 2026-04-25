@@ -183,8 +183,9 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
     if (query.isNotEmpty) {
       results = results.where((detail) {
         final nameMatches = detail.customerName.toLowerCase().contains(query);
-        final ledgerMatches =
-            (detail.ledgerNumber ?? '').toLowerCase().contains(query);
+        final ledgerMatches = (detail.ledgerNumber ?? '')
+            .toLowerCase()
+            .contains(query);
         return nameMatches || ledgerMatches;
       }).toList();
     }
@@ -214,13 +215,15 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
       },
       builder: (context, state) {
         if (state is DebtLoading) {
-          return Center(
-            child: CircularProgressIndicator(color: AppColors.primaryColor),
+          return SliverFillRemaining(
+            child: Center(
+              child: CircularProgressIndicator(color: AppColors.primaryColor),
+            ),
           );
         }
 
         if (state is DebtFailure) {
-          return Center(child: Text(state.message));
+          return SliverFillRemaining(child: Center(child: Text(state.message)));
         }
 
         if (state is DebtsFetchSuccess) {
@@ -228,9 +231,11 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
             future: _groupDebts(state.debts),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.primaryColor,
+                return SliverFillRemaining(
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.primaryColor,
+                    ),
                   ),
                 );
               }
@@ -238,29 +243,23 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
               final customers = snapshot.data ?? [];
 
               if (customers.isEmpty) {
-                return Center(
-                  child: Text(
-                    AppStrings.noCustomerDebts.tr(),
-                    style: const TextStyle(color: AppColors.grey),
+                return SliverFillRemaining(
+                  child: Center(
+                    child: Text(
+                      AppStrings.noCustomerDebts.tr(),
+                      style: const TextStyle(color: AppColors.grey),
+                    ),
                   ),
                 );
               }
 
-              return RefreshIndicator(
-                color: AppColors.primaryColor,
-                onRefresh: () async {
-                  final uid = sl<FirebaseAuth>().currentUser?.uid;
-                  if (uid != null) {
-                    await context.read<DebtCubit>().getDebts(uid);
-                  }
-                },
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 8,
-                  ),
-                  itemCount: customers.length + 1, // +1 for bottom spacing
-                  itemBuilder: (context, index) {
+              return SliverPadding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 8,
+                ),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate((context, index) {
                     if (index == customers.length) {
                       return const SizedBox(height: 100);
                     }
@@ -287,14 +286,14 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
                       onDelete: () =>
                           _onDeleteCustomerDebt(context, detail.customerName),
                     );
-                  },
+                  }, childCount: customers.length + 1),
                 ),
               );
             },
           );
         }
 
-        return const SizedBox.shrink();
+        return const SliverToBoxAdapter(child: SizedBox.shrink());
       },
     );
   }

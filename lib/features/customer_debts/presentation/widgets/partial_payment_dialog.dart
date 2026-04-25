@@ -58,18 +58,18 @@ class _PartialPaymentDialogState extends State<PartialPaymentDialog> {
     if (uid != null) {
       if (widget.debt != null) {
         context.read<DebtCubit>().payItemDebt(
-              debt: widget.debt!,
-              amount: amount,
-              totalRemainingBefore: widget.totalRemaining,
-            );
+          debt: widget.debt!,
+          amount: amount,
+          totalRemainingBefore: widget.totalRemaining,
+        );
       } else {
         context.read<DebtCubit>().payDebt(
-              uid: uid,
-              customerName: widget.customerName,
-              amount: amount,
-              totalRemainingBefore: widget.totalRemaining,
-              note: AppStrings.partialPayment.tr(),
-            );
+          uid: uid,
+          customerName: widget.customerName,
+          amount: amount,
+          totalRemainingBefore: widget.totalRemaining,
+          note: AppStrings.partialPayment.tr(),
+        );
       }
     }
   }
@@ -139,6 +139,7 @@ class _PartialPaymentDialogState extends State<PartialPaymentDialog> {
                     ),
                     Expanded(
                       child: TextField(
+                        cursorColor: AppColors.primaryColor,
                         controller: _amountController,
                         keyboardType: TextInputType.number,
                         style: TextStyles.customStyle(
