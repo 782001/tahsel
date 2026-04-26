@@ -187,11 +187,23 @@ class _PartialPaymentDialogState extends State<PartialPaymentDialog> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: state is DebtLoading
-                          ? CircularProgressIndicator(
-                              color: AppColors.primaryColor,
-                            )
-                          : Text(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (state is DebtLoading) ...[
+                              SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: AppColors.white,
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                            ],
+                            Text(
                               AppStrings.confirm.tr(),
                               style: TextStyles.customStyle(
                                 fontSize: 18,
@@ -199,6 +211,9 @@ class _PartialPaymentDialogState extends State<PartialPaymentDialog> {
                                 color: AppColors.white,
                               ),
                             ),
+                          ],
+                        ),
+                      ),
                     );
                   },
                 ),

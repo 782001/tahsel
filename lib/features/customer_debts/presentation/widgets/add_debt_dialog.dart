@@ -77,23 +77,15 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
 
     final uid = sl<FirebaseAuth>().currentUser?.uid;
     if (uid != null) {
-      final debt = DebtEntity(
+      context.read<DebtCubit>().addDebt(
         uid: uid,
-        operationId: 'manual_debt_${DateTime.now().millisecondsSinceEpoch}',
         totalAmount: amount,
         paidAmount: paidAmount,
-        remainingAmount: remainingAmount,
         customerName: widget.customerName,
-        productOrSessionDetails: _debtNameController.text.trim().isNotEmpty
-            ? _debtNameController.text.trim()
-            : AppStrings.newDebt.tr(),
+        productOrSessionDetails: _debtNameController.text.trim(),
         operationType: _selectedType,
-        timestamp: DateTime.now(),
-        isPaid: remainingAmount <= 0,
         ledgerNumber: widget.ledgerNumber,
       );
-
-      context.read<DebtCubit>().addDebt(debt);
     }
   }
 
@@ -359,11 +351,23 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: state is DebtLoading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white,
-                              )
-                            : Text(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (state is DebtLoading) ...[
+                                SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: const CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                              ],
+                              Text(
                                 AppStrings.confirm.tr(),
                                 style: TextStyles.customStyle(
                                   fontSize: 18,
@@ -371,6 +375,9 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
                                   color: AppColors.white,
                                 ),
                               ),
+                            ],
+                          ),
+                        ),
                       );
                     },
                   ),

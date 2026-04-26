@@ -22,6 +22,7 @@ import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
 import 'package:tahsel/features/offline_sync/presentation/cubit/offline_sync_cubit.dart';
 import 'package:tahsel/features/operation/presentation/cubit/operation_cubit.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_cubit.dart';
+import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
 import 'package:tahsel/routes/app_routes.dart';
 
 void main() async {
@@ -62,6 +63,7 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (context) => di.sl<OfflineSyncCubit>()),
         BlocProvider(create: (context) => di.sl<OperationCubit>()),
         BlocProvider(create: (context) => di.sl<DebtCubit>()),
+        BlocProvider(create: (context) => di.sl<MyDebtsCubit>()),
       ],
       child: BlocBuilder<ThemeCubit, ThemeState>(
         builder: (context, themeState) {

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/debt_entity.dart';
@@ -29,8 +30,29 @@ class DebtCubit extends Cubit<DebtState> {
     required this.deleteCustomerDebtUseCase,
   }) : super(DebtInitial());
 
-  Future<void> addDebt(DebtEntity debt) async {
+  Future<void> addDebt({
+    required String uid,
+    required double totalAmount,
+    required double paidAmount,
+    required String customerName,
+    required String productOrSessionDetails,
+    required String operationType,
+    required String? ledgerNumber,
+  }) async {
     emit(DebtLoading());
+
+    final now = DateTime.now();
+    final debt = await compute(_createCustomerDebtEntity, _AddCustomerDebtParams(
+      uid: uid,
+      totalAmount: totalAmount,
+      paidAmount: paidAmount,
+      customerName: customerName,
+      productOrSessionDetails: productOrSessionDetails,
+      operationType: operationType,
+      ledgerNumber: ledgerNumber,
+      now: now,
+    ));
+
     final result = await addDebtUseCase(AddDebtParams(debt: debt));
     result.fold(
       (failure) => emit(DebtFailure(message: failure.message)),
@@ -151,4 +173,45 @@ class DebtCubit extends Cubit<DebtState> {
       getDebts(uid);
     });
   }
+}
+
+class _AddCustomerDebtParams {
+  final String uid;
+  final double totalAmount;
+  final double paidAmount;
+  final String customerName;
+  final String productOrSessionDetails;
+  final String operationType;
+  final String? ledgerNumber;
+  final DateTime now;
+  
+  _AddCustomerDebtParams({
+    required this.uid,
+    required this.totalAmount,
+    required this.paidAmount,
+    required this.customerName,
+    required this.productOrSessionDetails,
+    required this.operationType,
+    required this.ledgerNumber,
+    required this.now,
+  });
+}
+
+DebtEntity _createCustomerDebtEntity(_AddCustomerDebtParams params) {
+  final remainingAmount = params.totalAmount - params.paidAmount;
+  return DebtEntity(
+    uid: params.uid,
+    operationId: 'manual_debt_${params.now.millisecondsSinceEpoch}',
+    totalAmount: params.totalAmount,
+    paidAmount: params.paidAmount,
+    remainingAmount: remainingAmount,
+    customerName: params.customerName,
+    productOrSessionDetails: params.productOrSessionDetails.isNotEmpty
+        ? params.productOrSessionDetails
+        : 'ديون جديدة', // Keeping it consistent with "New debt" logic (from AppStrings.newDebt.tr() if empty)
+    operationType: params.operationType,
+    timestamp: params.now,
+    isPaid: remainingAmount <= 0,
+    ledgerNumber: params.ledgerNumber,
+  );
 }

@@ -18,8 +18,7 @@ class AppStrings {
   static const String noData = "no_data";
   static const String tryAgain = "tryAgain";
   static String currentLang = "ar";
-  static String get userToken =>
-      sl<FirebaseAuth>().currentUser?.uid ?? '';
+  static String get userToken => sl<FirebaseAuth>().currentUser?.uid ?? '';
 
   ///-----------------------------
   ///-----------------------------
@@ -138,7 +137,8 @@ class AppStrings {
   static const String noCustomerDebts = "no_customer_debts";
   static const String validationEmailRequired = "validation_email_required";
   static const String validationEmailInvalid = "validation_email_invalid";
-  static const String validationPasswordRequired = "validation_password_required";
+  static const String validationPasswordRequired =
+      "validation_password_required";
   static const String validationPasswordLength = "validation_password_length";
   static const String helpCenter = "help_center";
   static const String termsOfService = "terms_of_service";
@@ -157,7 +157,7 @@ class AppStrings {
   static const String quickAdd = "quick_add";
   // Connectivity
   static const String noInternetConnection = 'no_internet_connection';
-  
+
   static const String playStation = "playstation";
   static const String byTime = "by_time";
   static const String byTurn = "by_turn";
@@ -180,9 +180,12 @@ class AppStrings {
   static const String userNotFound = "user_not_found";
   static const String validationFieldRequired = "validation_field_required";
   static const String validationInvalidAmount = "validation_invalid_amount";
-  static const String validationCustomerNameRequired = "validation_customer_name_required";
-  static const String validationCustomerNameDebtRequired = "validation_customer_name_debt_required";
-  static const String validationProductNameRequired = "validation_product_name_required";
+  static const String validationCustomerNameRequired =
+      "validation_customer_name_required";
+  static const String validationCustomerNameDebtRequired =
+      "validation_customer_name_debt_required";
+  static const String validationProductNameRequired =
+      "validation_product_name_required";
   static const String validationSessionRequired = "validation_session_required";
   static const String paidFull = "paid_full";
   // Storage Keys
@@ -212,20 +215,27 @@ class AppStrings {
   static const String delete = "delete";
   static const String confirmDeleteTitle = "confirm_delete_title";
   static const String confirmDeleteMessage = "confirm_delete_message";
-  static const String confirmDeleteMonthMessage = "confirm_delete_month_message";
+  static const String confirmDeleteMonthMessage =
+      "confirm_delete_month_message";
   static const String deleteSuccess = "delete_success";
   static const String paid = "paid";
   static const String unpaid = "unpaid";
   static const String psSessionTime = "ps_session_time";
   static const String psSessionTurn = "ps_session_turn";
-  static const String insightProfitDailyIncrease = "insight_profit_daily_increase";
-  static const String insightProfitDailyDecrease = "insight_profit_daily_decrease";
+  static const String insightProfitDailyIncrease =
+      "insight_profit_daily_increase";
+  static const String insightProfitDailyDecrease =
+      "insight_profit_daily_decrease";
   static const String insightProfitDailySame = "insight_profit_daily_same";
-  static const String insightProfitWeeklyIncrease = "insight_profit_weekly_increase";
-  static const String insightProfitWeeklyDecrease = "insight_profit_weekly_decrease";
+  static const String insightProfitWeeklyIncrease =
+      "insight_profit_weekly_increase";
+  static const String insightProfitWeeklyDecrease =
+      "insight_profit_weekly_decrease";
   static const String insightProfitWeeklySame = "insight_profit_weekly_same";
-  static const String insightProfitMonthlyIncrease = "insight_profit_monthly_increase";
-  static const String insightProfitMonthlyDecrease = "insight_profit_monthly_decrease";
+  static const String insightProfitMonthlyIncrease =
+      "insight_profit_monthly_increase";
+  static const String insightProfitMonthlyDecrease =
+      "insight_profit_monthly_decrease";
   static const String insightProfitMonthlySame = "insight_profit_monthly_same";
   static const String insightNoPreviousData = "insight_no_previous_data";
   static const String smartInsights = "smart_insights";
@@ -281,6 +291,7 @@ class AppStrings {
   static const String whatsappNotInstalled = "whatsapp_not_installed";
   static const String invalidPhoneNumber = "invalid_phone_number";
   static const String customerPhone = "customer_phone";
+  static const String sellerPhone = "seller_phone";
   static const String addPhoneNumber = "add_phone_number";
   static const String manualEntry = "manual_entry";
   static const String selectFromContacts = "select_from_contacts";
@@ -316,7 +327,23 @@ class AppStrings {
   static const String purchase = "purchase";
   static const String customerReport = "customer_report";
   static const String totalSpent = "total_spent";
+  static const String myDebts = "my_debts";
+  static const String myDebtsTab = "my_debts_tab";
+  static const String customerDebtsTab = "customer_debts_tab";
+  static const String whatIOweOutside = "what_i_owe_outside";
+  static const String sellerPersonName = "seller_person_name";
+  static const String totalPeople = "total_people";
+  static const String addPayment = "add_payment";
+  static const String selectContact = "select_contact";
+  static const String searchByNameOrPhone = "search_by_name_or_phone";
+  static const String errorPaidGreaterTotal = "error_paid_greater_total";
+  static const String lastTransactionDate = "last_transaction_date";
+  static const String myDebtsCollection = "my_debts_collection";
   static const String remainingBalance = "remaining_balance";
   static const String payment = "payment";
+  static const String addNewTransaction = "add_new_transaction";
+  static const String newDebtAmount = "new_debt_amount";
+  static const String amount = "amount";
   static const String customersReportDesc = "customers_report_desc";
+  static const String addMyDebt = "add_my_debt";
 }

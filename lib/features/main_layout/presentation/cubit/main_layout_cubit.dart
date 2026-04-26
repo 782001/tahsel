@@ -7,6 +7,7 @@ import 'package:tahsel/core/storage/secure_storage_helper.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/customer_debts/presentation/screens/customer_debts_screen.dart';
+import 'package:tahsel/features/my_debts/presentation/screens/unified_debts_screen.dart';
 import 'package:tahsel/features/expenses/presentation/screens/expenses_screen.dart';
 import 'package:tahsel/features/operation/presentation/screens/home_screen.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_state.dart';
@@ -76,7 +77,7 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
   List<Widget> get screens => [
         const HomeScreen(),
         const ExpensesScreen(),
-        const CustomerDebtsScreen(),
+        const UnifiedDebtsScreen(),
         const ReportsScreen(),
         const SettingsScreen(),
       ];

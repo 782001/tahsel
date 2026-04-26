@@ -16,6 +16,12 @@ import 'package:tahsel/features/customer_debts/data/models/debt_item_model.dart'
 import 'package:tahsel/features/debt/presentation/cubit/global_payments/global_payments_cubit.dart';
 import 'package:tahsel/features/customer/presentation/screens/customers_list_screen.dart';
 import 'package:tahsel/features/customer/presentation/screens/customer_report_details_screen.dart';
+import 'package:tahsel/features/my_debts/presentation/screens/add_my_debt_screen.dart';
+import 'package:tahsel/features/my_debts/presentation/screens/my_debt_details_screen.dart';
+import 'package:tahsel/features/my_debts/presentation/screens/my_debt_details_report_screen.dart';
+import 'package:tahsel/features/my_debts/data/models/my_debt_item_model.dart';
+import 'package:tahsel/features/my_debts/domain/entities/my_debt_entity.dart';
+import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_cubit.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -30,6 +36,9 @@ class AppRoutes {
   static const String customerGlobalPayments = '/customer-global-payments';
   static const String customersList = '/customers-list';
   static const String customerReportDetails = '/customer-report-details';
+  static const String addMyDebt = '/add-my-debt';
+  static const String myDebtDetails = '/my-debt-details';
+  static const String myDebtDetailsReport = '/my-debt-details-report';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -96,6 +105,23 @@ class AppRoutes {
           builder: (_) => CustomerReportDetailsScreen(
             uid: args['uid'],
             customerName: args['customerName'],
+          ),
+        );
+      case addMyDebt:
+        return MaterialPageRoute(
+          builder: (_) => const AddMyDebtScreen(),
+        );
+      case myDebtDetails:
+        final detail = settings.arguments as MyDebtDetail;
+        return MaterialPageRoute(
+          builder: (_) => MyDebtDetailsScreen(detail: detail),
+        );
+      case myDebtDetailsReport:
+        final debt = settings.arguments as MyDebtEntity;
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (context) => di.sl<MyDebtDetailsCubit>(),
+            child: MyDebtDetailsReportScreen(debt: debt),
           ),
         );
       default:

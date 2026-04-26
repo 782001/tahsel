@@ -360,31 +360,23 @@ class _HomeScreenState extends State<HomeScreen> {
                   final uid = sl<FirebaseAuth>().currentUser?.uid;
                   if (uid != null) {
                     context.read<DebtCubit>().addDebt(
-                      DebtEntity(
-                        uid: uid,
-                        operationId: state.operationId,
-                        totalAmount: _selectedMode == QuickAddMode.shop
-                            ? (double.tryParse(_totalAmountController.text) ??
-                                0.0)
-                            : totalDue,
-                        paidAmount: paid,
-                        remainingAmount: remaining,
-                        customerName: _customerController.text.trim(),
-                        productOrSessionDetails:
-                            _selectedMode == QuickAddMode.shop
-                            ? _productController.text.trim()
-                            : (_psSubMode == PlayStationMode.time
-                                  ? AppStrings.psSessionTime.tr()
-                                  : AppStrings.psSessionTurn.tr()),
-                        operationType: _selectedMode == QuickAddMode.shop
-                            ? AppStrings.shop
-                            : AppStrings.playStation,
-                        ledgerNumber: _ledgerController.text.trim().isNotEmpty
-                            ? _ledgerController.text.trim()
-                            : null,
-                        phoneNumber: _selectedPhoneNumber,
-                        lastUpdatedAt: DateTime.now(),
-                      ),
+                      uid: uid,
+                      totalAmount: _selectedMode == QuickAddMode.shop
+                          ? (double.tryParse(_totalAmountController.text) ?? 0.0)
+                          : totalDue,
+                      paidAmount: paid,
+                      customerName: _customerController.text.trim(),
+                      productOrSessionDetails: _selectedMode == QuickAddMode.shop
+                          ? _productController.text.trim()
+                          : (_psSubMode == PlayStationMode.time
+                              ? AppStrings.psSessionTime.tr()
+                              : AppStrings.psSessionTurn.tr()),
+                      operationType: _selectedMode == QuickAddMode.shop
+                          ? AppStrings.shop
+                          : AppStrings.playStation,
+                      ledgerNumber: _ledgerController.text.trim().isNotEmpty
+                          ? _ledgerController.text.trim()
+                          : null,
                     );
                   }
                 }

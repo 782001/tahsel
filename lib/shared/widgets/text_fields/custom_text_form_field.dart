@@ -12,12 +12,15 @@ class CustomTextFormField extends StatefulWidget {
   final TextInputType keyboardType;
   final bool isPassword;
   final IconData? prefixIcon;
+  final String? prefixText;
   final Widget? suffixIcon;
   final void Function(String)? onChanged;
   final void Function(String)? onFieldSubmitted;
   final TextInputAction textInputAction;
   final bool enabled;
   final int maxLines;
+  final double? hintFontSize;
+  final double? fontSize;
 
   const CustomTextFormField({
     super.key,
@@ -28,12 +31,15 @@ class CustomTextFormField extends StatefulWidget {
     this.keyboardType = TextInputType.text,
     this.isPassword = false,
     this.prefixIcon,
+    this.prefixText,
     this.suffixIcon,
     this.onChanged,
     this.onFieldSubmitted,
     this.textInputAction = TextInputAction.next,
     this.enabled = true,
     this.maxLines = 1,
+    this.hintFontSize = 14,
+    this.fontSize = 16,
   });
 
   @override
@@ -71,15 +77,16 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
           textInputAction: widget.textInputAction,
           enabled: widget.enabled,
           maxLines: widget.maxLines,
+          cursorColor: AppColors.primaryColor,
           style: TextStyles.customStyle(
-            fontSize: 16,
+            fontSize: widget.fontSize ?? 16.sp,
             fontWeight: FontWeight.w500,
             color: AppColors.textColor,
           ),
           decoration: InputDecoration(
             hintText: widget.hintText,
             hintStyle: TextStyles.customStyle(
-              fontSize: 14,
+              fontSize: widget.hintFontSize ?? 14.sp,
               fontWeight: FontWeight.w400,
               color: AppColors.disabledColor,
             ),
@@ -90,6 +97,22 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
                     widget.prefixIcon,
                     color: AppColors.primaryColor,
                     size: 20.sp,
+                  )
+                : widget.prefixText != null
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(width: 12.w),
+                      Text(
+                        widget.prefixText!,
+                        style: TextStyles.customStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.orange,
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                    ],
                   )
                 : null,
             suffixIcon: widget.isPassword
@@ -110,22 +133,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
               borderRadius: BorderRadius.circular(12.r),
               borderSide: BorderSide.none,
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
-              borderSide: BorderSide.none,
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
-              borderSide: BorderSide(color: AppColors.primaryColor, width: 1.5),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
-              borderSide: const BorderSide(color: Colors.red, width: 1.5),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
-              borderSide: const BorderSide(color: Colors.red, width: 1.5),
-            ),
+
             contentPadding: EdgeInsets.symmetric(
               horizontal: 16.w,
               vertical: 16.h,

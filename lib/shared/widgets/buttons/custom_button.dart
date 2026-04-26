@@ -41,41 +41,40 @@ class CustomButton extends StatelessWidget {
           backgroundColor: color ?? AppColors.actionButton,
           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
           shape: RoundedRectangleBorder(
-            side: BorderSide(color: textColor ?? Colors.white),
             borderRadius: BorderRadius.circular((borderRadius ?? 12).r),
           ),
           elevation: 1,
           shadowColor: AppColors.actionButton.withOpacity(0.3),
         ),
-        child: isLoading
-            ? SizedBox(
-                height: 20.h,
-                width: 20.w,
-                child: CircularProgressIndicator(
-                  color: AppColors.primaryColor,
-
-                  strokeWidth: 2.w,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (isLoading) ...[
+                SizedBox(
+                  height: 20.h,
+                  width: 20.w,
+                  child: CircularProgressIndicator(
+                    color: textColor ?? AppColors.white,
+                    strokeWidth: 2.w,
+                  ),
                 ),
-              )
-            : FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (icon != null) ...[
-                      Icon(icon, color: iconColor ?? Colors.white, size: 20.sp),
-                      SizedBox(width: 8.w),
-                    ],
-                    TextWidget(
-                      text,
-                      style: TextStyles.font14Weight400RightAligned().copyWith(
-                        color: textColor ?? Colors.white,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+                SizedBox(width: 8.w),
+              ] else if (icon != null) ...[
+                Icon(icon, color: iconColor ?? Colors.white, size: 20.sp),
+                SizedBox(width: 8.w),
+              ],
+              TextWidget(
+                text,
+                style: TextStyles.font14Weight400RightAligned().copyWith(
+                  color: textColor ?? Colors.white,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+            ],
+          ),
+        ),
       ),
     );
   }

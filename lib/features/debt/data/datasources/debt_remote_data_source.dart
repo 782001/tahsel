@@ -54,13 +54,27 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
       final initialPaymentRef = debtRef.collection('payments').doc();
       batch.set(initialPaymentRef, {
         'debtId': debtRef.id,
-        'amountPaid': debt.totalAmount,
-        'remainingAmount': debt.remainingAmount,
+        'amountPaid': debt.totalAmount, // Debt amount
+        'remainingAmount': debt.totalAmount, // Before payment applied
         'createdAt': debt.timestamp != null 
             ? Timestamp.fromDate(debt.timestamp!) 
             : FieldValue.serverTimestamp(),
         'type': PaymentType.debtAdded.name,
       });
+
+      // 4. Add initial payment transaction if there was a payment
+      if (debt.paidAmount > 0) {
+        final actualPaymentRef = debtRef.collection('payments').doc();
+        batch.set(actualPaymentRef, {
+          'debtId': debtRef.id,
+          'amountPaid': debt.paidAmount,
+          'remainingAmount': debt.remainingAmount,
+          'createdAt': debt.timestamp != null 
+              ? Timestamp.fromDate(debt.timestamp!.add(const Duration(milliseconds: 1))) 
+              : FieldValue.serverTimestamp(),
+          'type': debt.remainingAmount <= 0 ? PaymentType.full.name : PaymentType.partial.name,
+        });
+      }
 
       await batch.commit();
       return debtRef.id;
