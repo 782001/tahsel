@@ -11,6 +11,7 @@ class MyDebtEntity extends Equatable {
   final String? notes;
   final DateTime createdAt;
   final DateTime lastTransactionDate;
+  final bool isDeleted;
 
   final String notificationPreference;
 
@@ -25,6 +26,7 @@ class MyDebtEntity extends Equatable {
     this.notes,
     required this.createdAt,
     required this.lastTransactionDate,
+    this.isDeleted = false,
     this.notificationPreference = 'none',
   });
 
@@ -39,6 +41,7 @@ class MyDebtEntity extends Equatable {
     String? notes,
     DateTime? createdAt,
     DateTime? lastTransactionDate,
+    bool? isDeleted,
     String? notificationPreference,
   }) {
     return MyDebtEntity(
@@ -52,6 +55,7 @@ class MyDebtEntity extends Equatable {
       notes: notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,
       lastTransactionDate: lastTransactionDate ?? this.lastTransactionDate,
+      isDeleted: isDeleted ?? this.isDeleted,
       notificationPreference: notificationPreference ?? this.notificationPreference,
     );
   }
@@ -68,6 +72,7 @@ class MyDebtEntity extends Equatable {
         notes,
         createdAt,
         lastTransactionDate,
+        isDeleted,
         notificationPreference,
       ];
 }

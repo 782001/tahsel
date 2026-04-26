@@ -7,6 +7,7 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_entity.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
+import 'package:tahsel/shared/widgets/shimmer/shimmer_loading.dart';
 
 class MyPartialPaymentDialog extends StatefulWidget {
   final String personName;
@@ -217,7 +218,10 @@ class _MyPartialPaymentDialogState extends State<MyPartialPaymentDialog> {
                   child: BlocBuilder<MyDebtsCubit, MyDebtsState>(
                     builder: (context, state) {
                       return ElevatedButton(
-                        onPressed: state.status == MyDebtsStatus.addingPayment
+                        onPressed: ((state.status == MyDebtsStatus.addingPayment ||
+                                        state.status == MyDebtsStatus.markingAsPaid) &&
+                                    (state.processingId == widget.debt?.id ||
+                                        state.processingId == widget.personName))
                             ? null
                             : _submit,
                         style: ElevatedButton.styleFrom(
@@ -232,18 +236,23 @@ class _MyPartialPaymentDialogState extends State<MyPartialPaymentDialog> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              if (state.status == MyDebtsStatus.addingPayment) ...[
-                                SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    color: AppColors.white,
-                                    strokeWidth: 2,
+                               if ((state.status == MyDebtsStatus.addingPayment ||
+                                        state.status == MyDebtsStatus.markingAsPaid) &&
+                                    (state.processingId == widget.debt?.id ||
+                                        state.processingId == widget.personName)) ...[
+                                  ShimmerLoading(
+                                    child: Container(
+                                      height: 20,
+                                      width: 20,
+                                      decoration: const BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                ],
                                 const SizedBox(width: 8),
-                              ],
-                              Text(
+                                Text(
                                 AppStrings.confirm.tr(),
                                 style: TextStyles.customStyle(
                                   fontSize: 18,

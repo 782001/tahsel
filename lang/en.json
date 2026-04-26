@@ -1,5 +1,6 @@
 {
   "no_data": "There is no data",
+  "cannot_delete_unpaid_debt": "Cannot delete a debt that is not fully settled",
   "swipe_down": "Swipe down",
   "download_failed": "Download failed",
   "slide_to_load_more": "Slide to load more",
@@ -211,6 +212,10 @@
   "confirm_delete_debt_message": "Are you sure you want to delete all debt data for this customer?",
   "delete_debt_success": "Customer debt deleted successfully",
   "delete_debt_failed": "Failed to delete customer debt",
+  "confirm_delete_my_debt_title": "Delete Debt",
+  "confirm_delete_my_debt_message": "Are you sure you want to delete all debt data?",
+  "delete_my_debt_success": "Debt deleted successfully",
+  "delete_my_debt_failed": "Failed to delete debt",
   "no_internet_connection": "No internet connection",
   "syncing_data": "Syncing data...",
   "sync_success": "Synced successfully",

@@ -24,7 +24,10 @@ class CustomerDebtsScreen extends StatefulWidget {
   State<CustomerDebtsScreen> createState() => _CustomerDebtsScreenState();
 }
 
-class _CustomerDebtsScreenState extends State<CustomerDebtsScreen> {
+class _CustomerDebtsScreenState extends State<CustomerDebtsScreen> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -36,14 +39,10 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (context) => sl<DebtCubit>()),
-        BlocProvider(create: (context) => sl<TotalDebtsCubit>()),
-      ],
-      child: Scaffold(
-        backgroundColor: AppColors.scafoldBackGround,
-        body: SafeArea(
+    super.build(context);
+    return Scaffold(
+      backgroundColor: AppColors.scafoldBackGround,
+      body: SafeArea(
           child: BlocBuilder<ConnectivityCubit, ConnectivityState>(
             builder: (context, connectivityState) {
               final bool isOffline = connectivityState is ConnectivityDisconnected;
@@ -53,7 +52,10 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen> {
                 onRefresh: () async {
                   final uid = AppStrings.userToken;
                   if (uid.isNotEmpty) {
-                    await context.read<DebtCubit>().getDebts(uid);
+                    await context.read<DebtCubit>().getDebts(uid, forceRefresh: true);
+                    if (mounted) {
+                      await context.read<TotalDebtsCubit>().getTotalDebts(uid, forceRefresh: true);
+                    }
                   }
                 },
                 child: CustomScrollView(
@@ -92,9 +94,7 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen> {
                 ),
               );
             },
-          ),
-        ),
-      ),
+          ),)
     );
   }
 }

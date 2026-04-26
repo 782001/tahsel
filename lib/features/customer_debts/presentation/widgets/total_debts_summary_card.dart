@@ -7,6 +7,7 @@ import '../../../../core/extensions/string_extensions.dart';
 import '../../../../core/utils/app_colors.dart';
 import '../../../../core/utils/app_strings.dart';
 import '../../../../core/utils/styles.dart';
+import 'package:tahsel/features/customer_debts/presentation/widgets/skeletons/total_debts_summary_skeleton.dart';
 import '../../../debt/presentation/cubit/total_debts/total_debts_cubit.dart';
 import '../../../debt/presentation/cubit/total_debts/total_debts_state.dart';
 
@@ -23,7 +24,7 @@ class _TotalDebtsSummaryCardState extends State<TotalDebtsSummaryCard> {
     super.initState();
     final uid = AppStrings.userToken;
     if (uid.isNotEmpty) {
-      context.read<TotalDebtsCubit>().init(uid);
+      context.read<TotalDebtsCubit>().getTotalDebts(uid);
     }
   }
 
@@ -32,7 +33,7 @@ class _TotalDebtsSummaryCardState extends State<TotalDebtsSummaryCard> {
     return BlocBuilder<TotalDebtsCubit, TotalDebtsState>(
       builder: (context, state) {
         if (state is TotalDebtsLoading || state is TotalDebtsInitial) {
-          return const _LoadingCard();
+          return const TotalDebtsSummarySkeleton();
         }
 
         if (state is TotalDebtsError) {
@@ -128,25 +129,6 @@ class _TotalDebtsSummaryCardState extends State<TotalDebtsSummaryCard> {
 
         return const SizedBox.shrink();
       },
-    );
-  }
-}
-
-class _LoadingCard extends StatelessWidget {
-  const _LoadingCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
-      height: 140.h,
-      decoration: BoxDecoration(
-        color: AppColors.debtCardSurface,
-        borderRadius: BorderRadius.circular(20.r),
-      ),
-      child: Center(
-        child: CircularProgressIndicator(color: AppColors.primaryColor),
-      ),
     );
   }
 }

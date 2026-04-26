@@ -8,6 +8,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_entity.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/my_debt_usecases.dart';
+import 'package:tahsel/features/my_debts/data/models/my_debt_item_model.dart';
 
 part 'my_debts_state.dart';
 
@@ -74,9 +75,18 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
   Timer? _searchDebounce;
   List<MyDebtEntity> _allDebts = [];
 
-  Future<void> loadMyDebts() async {
+  Future<void> loadMyDebts({bool forceRefresh = false}) async {
     if (isClosed) return;
-    emit(state.copyWith(status: MyDebtsStatus.loading));
+    
+    // Prevent multiple simultaneous loads or redundant loading if already fetching
+    if (state.status == MyDebtsStatus.loading) return;
+
+    // Cache logic: skip loading if already loaded and refresh is not forced
+    if (!forceRefresh && state.status == MyDebtsStatus.loaded && state.debts.isNotEmpty) {
+      return;
+    }
+    
+    emit(state.copyWith(status: MyDebtsStatus.loading, clearProcessingId: true, clearMessage: true, clearLastPayment: true));
     final result = await getMyDebtsUseCase();
     if (isClosed) return;
 
@@ -112,6 +122,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
             status: MyDebtsStatus.loaded,
             debts: debts,
             filteredDebts: debts,
+            groupedDebts: totals.groupedDebts,
             totalOwed: totals.totalRemaining,
             totalPeople: totals.totalPeople,
             totalPaid: totals.totalPaid,
@@ -134,18 +145,30 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
 
   void searchDebts(String query) {
     if (_searchDebounce?.isActive ?? false) _searchDebounce!.cancel();
-    _searchDebounce = Timer(const Duration(milliseconds: 500), () {
-      if (query.isEmpty) {
-        emit(state.copyWith(filteredDebts: _allDebts));
-      } else {
-        final filtered = _allDebts.where((debt) {
-          final nameMatch = debt.personName.toLowerCase().contains(
-            query.toLowerCase(),
-          );
-          final phoneMatch = debt.phoneNumber?.contains(query) ?? false;
-          return nameMatch || phoneMatch;
-        }).toList();
-        emit(state.copyWith(filteredDebts: filtered));
+    _searchDebounce = Timer(const Duration(milliseconds: 500), () async {
+      if (isClosed) return;
+      
+      final filtered = query.isEmpty
+          ? _allDebts
+          : _allDebts.where((debt) {
+              final nameMatch = debt.personName.toLowerCase().contains(
+                    query.toLowerCase(),
+                  );
+              final phoneMatch = debt.phoneNumber?.contains(query) ?? false;
+              return nameMatch || phoneMatch;
+            }).toList();
+
+      // Recalculate totals and grouping for the filtered list
+      final totals = await compute(_calculateTotals, filtered);
+      
+      if (!isClosed) {
+        emit(state.copyWith(
+          filteredDebts: filtered,
+          groupedDebts: totals.groupedDebts,
+          totalOwed: totals.totalRemaining,
+          totalPeople: totals.totalPeople,
+          totalPaid: totals.totalPaid,
+        ));
       }
     });
   }
@@ -158,7 +181,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
     String? notes,
   }) async {
     if (isClosed) return;
-    emit(state.copyWith(status: MyDebtsStatus.addingDebt));
+    emit(state.copyWith(status: MyDebtsStatus.addingDebt, processingId: name));
 
     final now = DateTime.now();
 
@@ -205,7 +228,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
         await updateMyDebtUseCase(existingDebt.copyWith(phoneNumber: phone));
       }
 
-      emit(state.copyWith(status: MyDebtsStatus.loaded));
+      emit(state.copyWith(status: MyDebtsStatus.loaded, clearProcessingId: true));
       loadMyDebts();
     } else {
       // 3. NEW PERSON: Create anchor document and first transaction
@@ -236,10 +259,11 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
           state.copyWith(
             status: MyDebtsStatus.error,
             message: 'Failed to add debt',
+            clearProcessingId: true,
           ),
         ),
         (_) {
-          emit(state.copyWith(status: MyDebtsStatus.loaded));
+          emit(state.copyWith(status: MyDebtsStatus.loaded, clearProcessingId: true));
           loadMyDebts();
         },
       );
@@ -254,7 +278,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
     required double remainingBalanceBefore,
   }) async {
     if (isClosed) return;
-    emit(state.copyWith(status: MyDebtsStatus.addingPayment));
+    emit(state.copyWith(status: MyDebtsStatus.addingPayment, processingId: debtId));
     final transaction = MyDebtTransactionEntity(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       debtId: debtId,
@@ -273,6 +297,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
             state.copyWith(
               status: MyDebtsStatus.error,
               message: 'Failed to add payment',
+              clearProcessingId: true,
             ),
           );
         }
@@ -286,6 +311,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
               lastPaymentAmount: amount,
               lastPaymentRemaining: remainingBalanceBefore - amount,
               lastPaymentNote: note,
+              clearProcessingId: true,
             ),
           );
           loadMyDebts();
@@ -299,7 +325,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
     required double totalRemainingBefore,
   }) async {
     if (isClosed) return;
-    emit(state.copyWith(status: MyDebtsStatus.markingAsPaid));
+    emit(state.copyWith(status: MyDebtsStatus.markingAsPaid, processingId: debt.id));
     final transaction = MyDebtTransactionEntity(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       debtId: debt.id,
@@ -318,6 +344,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
             state.copyWith(
               status: MyDebtsStatus.error,
               message: 'Failed to settle item',
+              clearProcessingId: true,
             ),
           );
         }
@@ -331,6 +358,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
               lastPaymentAmount: debt.remainingDebt,
               lastPaymentRemaining: totalRemainingBefore - debt.remainingDebt,
               lastPaymentNote: AppStrings.fullSettlement.tr(),
+              clearProcessingId: true,
             ),
           );
           loadMyDebts();
@@ -345,7 +373,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
     String? note,
   }) async {
     if (isClosed) return;
-    emit(state.copyWith(status: MyDebtsStatus.markingAsPaid));
+    emit(state.copyWith(status: MyDebtsStatus.markingAsPaid, processingId: personName));
 
     // Find all active debts for this person
     final personDebts = _allDebts
@@ -373,6 +401,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
         state.copyWith(
           status: MyDebtsStatus.error,
           message: 'Failed to settle some debts',
+          clearProcessingId: true,
         ),
       );
     } else {
@@ -383,15 +412,53 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
           lastPaymentAmount: totalAmount,
           lastPaymentRemaining: 0,
           lastPaymentNote: note ?? AppStrings.fullSettlement.tr(),
+          clearProcessingId: true,
         ),
       );
     }
     loadMyDebts();
   }
 
+  Future<void> deleteMultipleDebts(List<String> debtIds) async {
+    if (isClosed || debtIds.isEmpty) return;
+    emit(state.copyWith(status: MyDebtsStatus.deletingDebt, processingId: debtIds.first));
+    
+    bool hasError = false;
+    for (var id in debtIds) {
+      final result = await deleteMyDebtUseCase(id);
+      result.fold((failure) => hasError = true, (_) => null);
+    }
+    
+    if (isClosed) return;
+    
+    if (hasError) {
+      emit(state.copyWith(
+        status: MyDebtsStatus.error,
+        message: 'Failed to delete some debts',
+        clearProcessingId: true,
+      ));
+    } else {
+      emit(state.copyWith(status: MyDebtsStatus.loaded, message: 'delete_success', clearProcessingId: true));
+    }
+    loadMyDebts();
+  }
+
   Future<void> deleteDebt(String debtId) async {
     if (isClosed) return;
-    emit(state.copyWith(status: MyDebtsStatus.deletingDebt));
+
+    // Check if debt exists and is fully paid
+    final debt = state.debts.firstWhereOrNull((d) => d.id == debtId);
+    if (debt == null) return;
+
+    if (debt.remainingDebt > 0) {
+      emit(state.copyWith(
+        status: MyDebtsStatus.error,
+        message: AppStrings.cannotDeleteUnpaidDebt,
+      ));
+      return;
+    }
+
+    emit(state.copyWith(status: MyDebtsStatus.deletingDebt, processingId: debtId));
     final result = await deleteMyDebtUseCase(debtId);
     if (isClosed) return;
     result.fold(
@@ -401,6 +468,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
             state.copyWith(
               status: MyDebtsStatus.error,
               message: 'Failed to delete debt',
+              processingId: null,
             ),
           );
         }
@@ -408,7 +476,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
       (_) {
         if (!isClosed) {
           // Emit loaded FIRST so UI can react immediately
-          emit(state.copyWith(status: MyDebtsStatus.loaded));
+          emit(state.copyWith(status: MyDebtsStatus.loaded, message: 'delete_success', processingId: null));
           // Then refresh data in background
           loadMyDebts();
         }
@@ -428,25 +496,33 @@ class DebtTotals {
   final double totalRemaining;
   final double totalPaid;
   final int totalPeople;
-  DebtTotals(this.totalRemaining, this.totalPaid, this.totalPeople);
+  final List<MyDebtDetail> groupedDebts;
+  DebtTotals(this.totalRemaining, this.totalPaid, this.totalPeople, this.groupedDebts);
 }
 
 DebtTotals _calculateTotals(List<MyDebtEntity> debts) {
   double remaining = 0;
   double paid = 0;
   final Set<String> uniquePeople = {};
+  final Map<String, List<MyDebtEntity>> grouped = {};
 
   for (var debt in debts) {
     remaining += debt.remainingDebt;
     paid += debt.paidAmount;
 
-    // Prioritize personId for unique counting, fallback to name for legacy data
-    // Trim and lowercase the name to handle minor typos/consistency issues
     final personKey = debt.personId ?? debt.personName.trim().toLowerCase();
     uniquePeople.add(personKey);
+    
+    // Use the actual name from the entity for grouping
+    grouped.putIfAbsent(debt.personName, () => []).add(debt);
   }
 
-  return DebtTotals(remaining, paid, uniquePeople.length);
+  final groupedDebts = grouped.entries
+      .map((entry) => MyDebtDetail.fromEntities(entry.key, entry.value))
+      .toList()
+    ..sort((a, b) => b.lastActivity.compareTo(a.lastActivity));
+
+  return DebtTotals(remaining, paid, uniquePeople.length, groupedDebts);
 }
 
 class _AddDebtParams {

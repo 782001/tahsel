@@ -89,7 +89,7 @@ class MyDebtDetailsScreen extends StatelessWidget {
             SnackBar(
               duration: const Duration(milliseconds: 500),
               content: Text(state.message ?? 'Error'),
-              backgroundColor: AppColors.redColor,
+              backgroundColor: AppColors.error,
             ),
           );
         }
@@ -211,8 +211,8 @@ class MyDebtDetailsScreen extends StatelessWidget {
                         SizedBox(width: 12.w),
                         Expanded(
                           child: OutlinedButton(
-                            onPressed:
-                                state.status == MyDebtsStatus.markingAsPaid
+                            onPressed: (state.status == MyDebtsStatus.markingAsPaid &&
+                                        state.processingId == currentDetail.personName)
                                 ? null
                                 : () {
                                     context.read<MyDebtsCubit>().markAsPaid(
@@ -231,8 +231,8 @@ class MyDebtDetailsScreen extends StatelessWidget {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                if (state.status ==
-                                    MyDebtsStatus.markingAsPaid) ...[
+                                if (state.status == MyDebtsStatus.markingAsPaid &&
+                                    state.processingId == currentDetail.personName) ...[
                                   SizedBox(
                                     height: 18,
                                     width: 18,
@@ -316,7 +316,9 @@ class MyDebtDetailsScreen extends StatelessWidget {
                   index: index + 1,
                   onPayPartial: (i) => _onPayPartial(context, i, currentDetail),
                   onPayFull: (i) => _onPayFull(context, i, currentDetail),
-                  isFullPaying: state.status == MyDebtsStatus.markingAsPaid,
+                  isFullPaying: state.status == MyDebtsStatus.markingAsPaid &&
+                      (state.processingId == item.entity.id ||
+                          state.processingId == currentDetail.personName),
                   onTap: () {
                     // Navigate to transaction history for this specific debt entry
                     sl<NavigatorService>().pushNamedWithArgs(

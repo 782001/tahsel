@@ -12,6 +12,7 @@ import 'package:tahsel/features/customer_debts/data/models/debt_item_model.dart'
 import 'package:tahsel/features/customer_debts/presentation/screens/customer_debt_detail_screen.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/customer_debt_card.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/partial_payment_dialog.dart';
+import 'package:tahsel/features/customer_debts/presentation/widgets/skeletons/customer_debt_skeleton.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_cubit.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
@@ -198,7 +199,12 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
     return BlocConsumer<DebtCubit, DebtState>(
       listener: (context, state) {
         if (state is DebtDeleteSuccess) {
-          showSuccessToast(AppStrings.deleteDebtSuccess.tr());
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              duration: const Duration(milliseconds: 500),
+              content: Text(AppStrings.deleteDebtSuccess.tr()),
+            ),
+          );
         }
         if (state is DebtPaymentSuccess) {
           NotificationDialog.show(
@@ -210,14 +216,21 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
           );
         }
         if (state is DebtFailure) {
-          showfailureToast(AppStrings.deleteDebtFailed.tr());
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              duration: const Duration(milliseconds: 500),
+              content: Text(AppStrings.deleteDebtFailed.tr()),
+              backgroundColor: AppColors.error,
+            ),
+          );
         }
       },
       builder: (context, state) {
         if (state is DebtLoading) {
-          return SliverFillRemaining(
-            child: Center(
-              child: CircularProgressIndicator(color: AppColors.primaryColor),
+          return SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => const CustomerDebtCardSkeleton(),
+              childCount: 5,
             ),
           );
         }
@@ -231,11 +244,10 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
             future: _groupDebts(state.debts),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return SliverFillRemaining(
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.primaryColor,
-                    ),
+                return SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => const CustomerDebtCardSkeleton(),
+                    childCount: 5,
                   ),
                 );
               }

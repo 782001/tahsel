@@ -63,7 +63,10 @@ class DebtCubit extends Cubit<DebtState> {
     );
   }
 
-  Future<void> getDebts(String uid) async {
+  Future<void> getDebts(String uid, {bool forceRefresh = false}) async {
+    if (!forceRefresh && state is DebtsFetchSuccess && (state as DebtsFetchSuccess).debts.isNotEmpty) {
+      return;
+    }
     emit(DebtLoading());
     final result = await getDebtsUseCase(GetDebtsParams(uid: uid));
     result.fold(

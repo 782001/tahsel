@@ -12,6 +12,7 @@ abstract class DebtRemoteDataSource {
   Future<void> markCustomerAsPaid(String uid, String customerName);
   Future<void> deleteCustomerDebts(String uid, String customerName);
   Stream<List<PaymentModel>> getDebtTransactions(String debtId);
+  Future<List<PaymentModel>> getDebtTransactionsFuture(String debtId);
   Future<List<PaymentModel>> getCustomerAllPayments(String uid, String customerName);
   Stream<List<DebtModel>> getDebtsStream(String uid);
 }
@@ -352,6 +353,24 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         .map((snapshot) => snapshot.docs
             .map((doc) => PaymentModel.fromJson(doc.data(), doc.id))
             .toList());
+  }
+
+  @override
+  Future<List<PaymentModel>> getDebtTransactionsFuture(String debtId) async {
+    try {
+      final snapshot = await firestore
+          .collectionGroup('payments')
+          .where('debtId', isEqualTo: debtId)
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => PaymentModel.fromJson(doc.data(), doc.id))
+          .toList();
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      throw Exception('Failed to fetch transactions: $e');
+    }
   }
 
   @override

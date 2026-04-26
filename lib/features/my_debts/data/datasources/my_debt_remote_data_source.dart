@@ -23,8 +23,16 @@ class MyDebtRemoteDataSourceImpl implements MyDebtRemoteDataSource {
 
   @override
   Future<List<MyDebtModel>> getMyDebts() async {
-    final snapshot = await myDebtsCollection.orderBy('lastTransactionDate', descending: true).get();
-    return snapshot.docs.map((doc) => MyDebtModel.fromSnapshot(doc)).toList();
+    final snapshot = await myDebtsCollection.get();
+    
+    final debts = snapshot.docs
+        .map((doc) => MyDebtModel.fromSnapshot(doc))
+        .where((debt) => debt.isDeleted != true)
+        .toList();
+    
+    // Manual sort since we are not using orderBy (to avoid composite index complexity)
+    debts.sort((a, b) => b.lastTransactionDate.compareTo(a.lastTransactionDate));
+    return debts;
   }
 
   @override
@@ -98,7 +106,7 @@ class MyDebtRemoteDataSourceImpl implements MyDebtRemoteDataSource {
 
   @override
   Future<void> deleteMyDebt(String debtId) async {
-    await myDebtsCollection.doc(debtId).delete();
+    await myDebtsCollection.doc(debtId).update({'isDeleted': true});
   }
 
   @override

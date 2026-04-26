@@ -13,6 +13,7 @@ class MyDebtModel extends MyDebtEntity {
     super.notes,
     required super.createdAt,
     required super.lastTransactionDate,
+    super.isDeleted = false,
     super.notificationPreference = 'none',
   });
 
@@ -29,6 +30,7 @@ class MyDebtModel extends MyDebtEntity {
       notes: data['notes'],
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       lastTransactionDate: (data['lastTransactionDate'] as Timestamp).toDate(),
+      isDeleted: data['isDeleted'] ?? false,
       notificationPreference: data['notificationPreference'] ?? 'none',
     );
   }
@@ -44,6 +46,7 @@ class MyDebtModel extends MyDebtEntity {
       'notes': notes,
       'createdAt': Timestamp.fromDate(createdAt),
       'lastTransactionDate': Timestamp.fromDate(lastTransactionDate),
+      'isDeleted': isDeleted,
       'notificationPreference': notificationPreference,
     };
   }

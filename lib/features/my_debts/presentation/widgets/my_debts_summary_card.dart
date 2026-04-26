@@ -7,6 +7,7 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
+import 'package:tahsel/features/my_debts/presentation/widgets/skeletons/my_debts_summary_skeleton.dart';
 
 class MyDebtsSummaryCard extends StatelessWidget {
   const MyDebtsSummaryCard({super.key});
@@ -16,7 +17,7 @@ class MyDebtsSummaryCard extends StatelessWidget {
     return BlocBuilder<MyDebtsCubit, MyDebtsState>(
       builder: (context, state) {
         if (state.status == MyDebtsStatus.loading && state.debts.isEmpty) {
-          return _buildLoadingCard();
+          return const MyDebtsSummarySkeleton();
         }
 
         return FadeInDown(
@@ -114,20 +115,6 @@ class MyDebtsSummaryCard extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildLoadingCard() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
-      height: 140.h,
-      decoration: BoxDecoration(
-        color: AppColors.debtCardSurface,
-        borderRadius: BorderRadius.circular(20.r),
-      ),
-      child: Center(
-        child: CircularProgressIndicator(color: AppColors.primaryColor),
-      ),
     );
   }
 }

@@ -1,5 +1,6 @@
 {
   "no_data": "لا يوجد بيانات",
+  "cannot_delete_unpaid_debt": "لا يمكن حذف دين غير مسدد بالكامل",
   "swipe_down": "اسحب لأسفل",
   "download_failed": "فشل التحميل",
   "slide_to_load_more": "اسحب للمزيد",
@@ -211,6 +212,10 @@
   "confirm_delete_debt_message": "هل أنت متأكد من حذف جميع بيانات الدين لهذا العميل؟",
   "delete_debt_success": "تم حذف ديون العميل بنجاح",
   "delete_debt_failed": "فشل في حذف ديون العميل",
+  "confirm_delete_my_debt_title": "حذف ديوني",
+  "confirm_delete_my_debt_message": "هل أنت متأكد من حذف جميع بيانات الدين هذا؟",
+  "delete_my_debt_success": "تم حذف الديون بنجاح",
+  "delete_my_debt_failed": "فشل في حذف الديون",
   "no_internet_connection": "لا يوجد اتصال بالإنترنت",
   "syncing_data": "جاري مزامنة البيانات...",
   "sync_success": "تمت المزامنة بنجاح",

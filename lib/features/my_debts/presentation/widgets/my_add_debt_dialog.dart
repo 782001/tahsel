@@ -7,6 +7,7 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_entity.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
+import 'package:tahsel/shared/widgets/shimmer/shimmer_loading.dart';
 
 class MyAddDebtDialog extends StatefulWidget {
   final String personName;
@@ -230,12 +231,14 @@ class _MyAddDebtDialogState extends State<MyAddDebtDialog> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               if (state.status == MyDebtsStatus.addingDebt) ...[
-                                SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: const CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
+                                ShimmerLoading(
+                                  child: Container(
+                                    height: 20,
+                                    width: 20,
+                                    decoration: const BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 8),

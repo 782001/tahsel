@@ -11,7 +11,23 @@ class GlobalPaymentsCubit extends Cubit<GlobalPaymentsState> {
   GlobalPaymentsCubit({required this.getCustomerAllPaymentsUseCase})
       : super(GlobalPaymentsInitial());
 
-  Future<void> loadCustomerPayments({required String uid, required String customerName}) async {
+  List<PaymentEntity> _cachedTransactions = [];
+  String? _lastUid;
+  String? _lastCustomerName;
+
+  Future<void> loadCustomerPayments({
+    required String uid,
+    required String customerName,
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh &&
+        _lastUid == uid &&
+        _lastCustomerName == customerName &&
+        _cachedTransactions.isNotEmpty &&
+        state is GlobalPaymentsLoaded) {
+      return;
+    }
+
     emit(GlobalPaymentsLoading());
 
     final result = await getCustomerAllPaymentsUseCase(
@@ -32,6 +48,10 @@ class GlobalPaymentsCubit extends Cubit<GlobalPaymentsState> {
         // Processing in Isolate (MANDATORY)
         final processedData = await compute(_processPayments, payments);
         
+        _cachedTransactions = processedData.transactions;
+        _lastUid = uid;
+        _lastCustomerName = customerName;
+
         emit(GlobalPaymentsLoaded(
           transactions: processedData.transactions,
           totalPaid: processedData.totalPaid,

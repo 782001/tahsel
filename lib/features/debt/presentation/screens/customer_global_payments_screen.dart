@@ -13,6 +13,7 @@ import '../../../customer_debts/data/models/debt_item_model.dart';
 import '../../domain/entities/payment_entity.dart';
 import '../cubit/global_payments/global_payments_cubit.dart';
 import '../cubit/global_payments/global_payments_state.dart';
+import 'package:tahsel/shared/widgets/shimmer/transaction_skeleton.dart';
 
 class CustomerGlobalPaymentsScreen extends StatefulWidget {
   final CustomerDebtDetail customerDetail;
@@ -42,13 +43,28 @@ class _CustomerGlobalPaymentsScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          _buildSliverAppBar(),
-          _buildSummarySection(),
-          _buildTransactionList(),
-        ],
+      body: RefreshIndicator(
+        color: AppColors.primaryColor,
+        onRefresh: () async {
+          final uid = widget.customerDetail.items.isNotEmpty
+              ? widget.customerDetail.items.first.entity.uid
+              : "";
+          await context.read<GlobalPaymentsCubit>().loadCustomerPayments(
+                uid: uid,
+                customerName: widget.customerDetail.customerName,
+                forceRefresh: true,
+              );
+        },
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
+          slivers: [
+            _buildSliverAppBar(),
+            _buildSummarySection(),
+            _buildTransactionList(),
+          ],
+        ),
       ),
     );
   }
@@ -224,9 +240,13 @@ class _CustomerGlobalPaymentsScreenState
     return BlocBuilder<GlobalPaymentsCubit, GlobalPaymentsState>(
       builder: (context, state) {
         if (state is GlobalPaymentsLoading) {
-          return SliverFillRemaining(
-            child: Center(
-              child: CircularProgressIndicator(color: AppColors.primaryColor),
+          return SliverPadding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => const TransactionCardSkeleton(),
+                childCount: 5,
+              ),
             ),
           );
         }

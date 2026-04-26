@@ -11,6 +11,7 @@ import 'package:tahsel/features/customer_debts/data/models/debt_item_model.dart'
 import 'package:tahsel/features/debt/domain/entities/payment_entity.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_details/debt_details_cubit.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_details/debt_details_state.dart';
+import 'package:tahsel/shared/widgets/shimmer/transaction_skeleton.dart';
 
 class DebtDetailsReportScreen extends StatefulWidget {
   final DebtItem debt;
@@ -56,63 +57,86 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Column(
-        children: [
-          _buildSummaryCard(),
-          Expanded(
-            child: BlocBuilder<DebtDetailsCubit, DebtDetailsState>(
+      body: RefreshIndicator(
+        color: AppColors.primaryColor,
+        onRefresh: () async {
+          await context.read<DebtDetailsCubit>().loadTransactions(
+                widget.debt.entity.id ?? '',
+                forceRefresh: true,
+              );
+        },
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
+          slivers: [
+            SliverToBoxAdapter(child: _buildSummaryCard()),
+            BlocBuilder<DebtDetailsCubit, DebtDetailsState>(
               builder: (context, state) {
                 if (state is DebtDetailsLoading) {
-                  return Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.primaryColor,
+                  return SliverPadding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => const TransactionCardSkeleton(),
+                        childCount: 5,
+                      ),
                     ),
                   );
                 } else if (state is DebtDetailsLoaded) {
                   if (state.transactions.isEmpty) {
-                    return Center(
-                      child: Text(
-                        AppStrings.noTransactions.tr(),
-                        style: TextStyles.customStyle(
-                          color: AppColors.disabledColor,
-                          fontSize: 14.sp,
+                    return SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(
+                        child: Text(
+                          AppStrings.noTransactions.tr(),
+                          style: TextStyles.customStyle(
+                            color: AppColors.disabledColor,
+                            fontSize: 14.sp,
+                          ),
                         ),
                       ),
                     );
                   }
                   return _buildTransactionList(state.transactions);
                 } else if (state is DebtDetailsError) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          state.message,
-                          style: TextStyles.customStyle(
-                            color: AppColors.error,
-                            fontSize: 13.sp,
+                  return SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            state.message,
+                            style: TextStyles.customStyle(
+                              color: AppColors.error,
+                              fontSize: 13.sp,
+                            ),
                           ),
-                        ),
-                        SizedBox(height: 16.h),
-                        ElevatedButton(
-                          onPressed: () => context
-                              .read<DebtDetailsCubit>()
-                              .loadTransactions(widget.debt.entity.id ?? ''),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryColor,
-                            foregroundColor: Colors.white,
+                          SizedBox(height: 16.h),
+                          ElevatedButton(
+                            onPressed: () => context
+                                .read<DebtDetailsCubit>()
+                                .loadTransactions(
+                                  widget.debt.entity.id ?? '',
+                                  forceRefresh: true,
+                                ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryColor,
+                              foregroundColor: Colors.white,
+                            ),
+                            child: Text(AppStrings.tryAgain.tr()),
                           ),
-                          child: Text(AppStrings.tryAgain.tr()),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   );
                 }
-                return const SizedBox();
+                return const SliverToBoxAdapter(child: SizedBox());
               },
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -244,14 +268,17 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
   }
 
   Widget _buildTransactionList(List<PaymentEntity> transactions) {
-    return ListView.builder(
+    return SliverPadding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
-      itemCount: transactions.length,
-      physics: const BouncingScrollPhysics(),
-      itemBuilder: (context, index) {
-        final transaction = transactions[index];
-        return _TransactionItem(transaction: transaction);
-      },
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final transaction = transactions[index];
+            return _TransactionItem(transaction: transaction);
+          },
+          childCount: transactions.length,
+        ),
+      ),
     );
   }
 }

@@ -48,7 +48,7 @@ Future<void> initDebt() async {
 
   sl.registerFactory(
     () => TotalDebtsCubit(
-      getDebtsStreamUseCase: sl(),
+      getDebtsUseCase: sl(),
       calculateTotalDebtsUseCase: sl(),
     ),
   );

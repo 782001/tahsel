@@ -94,6 +94,16 @@ class DebtRepositoryImpl implements DebtRepository {
   }
 
   @override
+  Future<Either<Failure, List<PaymentEntity>>> getDebtTransactionsFuture(String debtId) async {
+    try {
+      final result = await remoteDataSource.getDebtTransactionsFuture(debtId);
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, List<PaymentEntity>>> getCustomerAllPayments(
     String uid,
     String customerName,

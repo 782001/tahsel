@@ -13,8 +13,10 @@ import 'package:tahsel/features/my_debts/domain/entities/my_debt_entity.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/widgets/my_debt_card.dart';
 import 'package:tahsel/features/my_debts/presentation/widgets/my_debts_summary_card.dart';
+import 'package:tahsel/features/my_debts/presentation/widgets/skeletons/my_debt_skeleton.dart';
 import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/text_fields/custom_search_field.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
 class MyDebtsTabView extends StatefulWidget {
   const MyDebtsTabView({super.key});
@@ -23,9 +25,11 @@ class MyDebtsTabView extends StatefulWidget {
   State<MyDebtsTabView> createState() => _MyDebtsTabViewState();
 }
 
-class _MyDebtsTabViewState extends State<MyDebtsTabView> {
+class _MyDebtsTabViewState extends State<MyDebtsTabView> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
 
   @override
   void dispose() {
@@ -33,42 +37,12 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView> {
     super.dispose();
   }
 
-  Future<List<MyDebtDetail>> _groupDebts(List<MyDebtEntity> debts) async {
-    return compute(_filterAndGroupDebts, {
-      'debts': debts,
-      'query': _searchQuery,
-    });
-  }
 
-  static List<MyDebtDetail> _filterAndGroupDebts(Map<String, dynamic> params) {
-    final List<MyDebtEntity> debts = params['debts'];
-    final String query = params['query'].toString().toLowerCase();
-
-    final Map<String, List<MyDebtEntity>> grouped = {};
-    for (var debt in debts) {
-      final name = debt.personName;
-      grouped.putIfAbsent(name, () => []).add(debt);
-    }
-
-    List<MyDebtDetail> results = grouped.entries
-        .map((entry) => MyDebtDetail.fromEntities(entry.key, entry.value))
-        .toList();
-
-    if (query.isNotEmpty) {
-      results = results.where((detail) {
-        final nameMatches = detail.personName.toLowerCase().contains(query);
-        final phoneMatches = (detail.phoneNumber ?? '').contains(query);
-        return nameMatches || phoneMatches;
-      }).toList();
-    }
-
-    return results..sort((a, b) => b.lastActivity.compareTo(a.lastActivity));
-  }
 
   @override
   void initState() {
     super.initState();
-    // Load debts when tab is initialized
+    // Load debts when tab is initialized (will skip loading state if already cached in Cubit)
     Future.microtask(() {
       if (mounted) {
         context.read<MyDebtsCubit>().loadMyDebts();
@@ -78,6 +52,7 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       backgroundColor: Colors.transparent,
       floatingActionButton: Builder(
@@ -87,6 +62,7 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView> {
           onPressed: () {
             sl<NavigatorService>().pushNamed(AppRoutes.addMyDebt).then((_) {
               if (context.mounted) {
+                // Background refresh after adding
                 context.read<MyDebtsCubit>().loadMyDebts();
               }
             });
@@ -102,93 +78,172 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView> {
           icon: Icon(Icons.add, color: AppColors.white),
         ),
       ),
-      body: BlocBuilder<MyDebtsCubit, MyDebtsState>(
-        builder: (context, state) {
-          return RefreshIndicator(
-            color: AppColors.primaryColor,
-            onRefresh: () => context.read<MyDebtsCubit>().loadMyDebts(),
-            child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
+      body: BlocListener<MyDebtsCubit, MyDebtsState>(
+        listener: (context, state) {
+          if (state.status == MyDebtsStatus.loaded &&
+              state.message == 'delete_success') {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                duration: const Duration(milliseconds: 500),
+                content: Text(AppStrings.deleteMyDebtSuccess.tr()),
               ),
-              slivers: [
-                const SliverToBoxAdapter(child: MyDebtsSummaryCard()),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: CustomSearchField(
-                      controller: _searchController,
-                      hintText: AppStrings.searchByNameOrPhone.tr(),
-                      onChanged: (val) {
-                        setState(() {
-                          _searchQuery = val;
-                        });
-                      },
-                    ),
-                  ),
+            );
+          }
+          if (state.status == MyDebtsStatus.error && state.message != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                duration: const Duration(milliseconds: 500),
+                content: Text(state.message!.tr()),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          }
+        },
+        child: BlocBuilder<MyDebtsCubit, MyDebtsState>(
+          builder: (context, state) {
+            return RefreshIndicator(
+              color: AppColors.primaryColor,
+              onRefresh: () => context.read<MyDebtsCubit>().loadMyDebts(forceRefresh: true),
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
                 ),
-                const SliverToBoxAdapter(child: SizedBox(height: 16)),
-                if (state.status == MyDebtsStatus.loading &&
-                    state.debts.isEmpty)
-                  SliverFillRemaining(
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primaryColor,
+                slivers: [
+                  const SliverToBoxAdapter(child: MyDebtsSummaryCard()),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: CustomSearchField(
+                        controller: _searchController,
+                        hintText: AppStrings.searchByNameOrPhone.tr(),
+                        onChanged: (val) {
+                          context.read<MyDebtsCubit>().searchDebts(val);
+                        },
                       ),
                     ),
-                  )
-                else
-                  FutureBuilder<List<MyDebtDetail>>(
-                    future: _groupDebts(state.debts),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting &&
-                          state.debts.isNotEmpty) {
-                        return SliverFillRemaining(
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              color: AppColors.primaryColor,
-                            ),
-                          ),
-                        );
-                      }
-
-                      final persons = snapshot.data ?? [];
-
-                      if (persons.isEmpty) {
-                        return SliverFillRemaining(
-                          child: Center(
-                            child: Text(
-                              AppStrings.noData.tr(),
-                              style: TextStyles.customStyle(
-                                color: AppColors.subTitleColor,
-                                fontSize: 16.sp,
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-
-                      return SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate((
-                            context,
-                            index,
-                          ) {
-                            if (index == persons.length) {
-                              return const SizedBox(height: 80);
-                            }
-                            final detail = persons[index];
-                            return MyDebtCard(detail: detail);
-                          }, childCount: persons.length + 1),
-                        ),
-                      );
-                    },
                   ),
-              ],
+                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                  if (state.status == MyDebtsStatus.loading &&
+                      state.debts.isEmpty)
+                    SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => const MyDebtCardSkeleton(),
+                        childCount: 5,
+                      ),
+                    )
+                  else if (state.groupedDebts.isEmpty)
+                    SliverFillRemaining(
+                      child: Center(
+                        child: Text(
+                          AppStrings.noData.tr(),
+                          style: TextStyles.customStyle(
+                            color: AppColors.subTitleColor,
+                            fontSize: 16.sp,
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate((
+                          context,
+                          index,
+                        ) {
+                          if (index == state.groupedDebts.length) {
+                            return const SizedBox(height: 80);
+                          }
+                          final detail = state.groupedDebts[index];
+                          return MyDebtCard(
+                            detail: detail,
+                            onLongPress: detail.totalDebt == 0
+                                ? () => _onDeleteDebt(context, detail)
+                                : null,
+                          );
+                        }, childCount: state.groupedDebts.length + 1),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  void _onDeleteDebt(BuildContext context, MyDebtDetail detail) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: AppColors.error),
+            SizedBox(width: 8.w),
+            Expanded(
+              child: Text(
+                AppStrings.confirmDeleteMyDebtTitle.tr(),
+                style: TextStyles.customStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textColor,
+                ),
+              ),
             ),
-          );
-        },
+          ],
+        ),
+        content: Text(
+          AppStrings.confirmDeleteMyDebtMessage.tr(),
+          style: TextStyles.customStyle(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w500,
+            color: AppColors.subTitleColor,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              AppStrings.cancel.tr(),
+              style: TextStyles.customStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.disabledColor,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              final debtIds = detail.items
+                  .where((item) => item.remainingDebt == 0)
+                  .map((item) => item.entity.id)
+                  .toList();
+              if (debtIds.isNotEmpty) {
+                context.read<MyDebtsCubit>().deleteMultipleDebts(debtIds);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: AppColors.whiteColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+            ),
+            child: Text(
+              AppStrings.delete.tr(),
+              style: TextStyles.customStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

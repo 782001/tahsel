@@ -1,30 +1,36 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../domain/usecases/get_debts_stream_usecase.dart';
+import '../../../../debt/domain/usecases/get_debts_usecase.dart';
 import '../../../domain/usecases/calculate_total_debts_usecase.dart';
 import 'total_debts_state.dart';
 
 class TotalDebtsCubit extends Cubit<TotalDebtsState> {
-  final GetDebtsStreamUseCase getDebtsStreamUseCase;
+  final GetDebtsUseCase getDebtsUseCase;
   final CalculateTotalDebtsUseCase calculateTotalDebtsUseCase;
-  StreamSubscription? _debtsSubscription;
 
   TotalDebtsCubit({
-    required this.getDebtsStreamUseCase,
+    required this.getDebtsUseCase,
     required this.calculateTotalDebtsUseCase,
   }) : super(TotalDebtsInitial());
 
-  void init(String uid) {
+  Future<void> getTotalDebts(String uid, {bool forceRefresh = false}) async {
+    if (!forceRefresh && state is TotalDebtsLoaded) {
+      return;
+    }
+
     emit(TotalDebtsLoading());
-    _debtsSubscription?.cancel();
-    _debtsSubscription = getDebtsStreamUseCase(uid).listen(
+    
+    final result = await getDebtsUseCase(GetDebtsParams(uid: uid));
+    
+    await result.fold(
+      (failure) async => emit(TotalDebtsError(failure.message)),
       (debts) async {
         try {
-          final result = await calculateTotalDebtsUseCase(debts);
+          final totalResult = await calculateTotalDebtsUseCase(debts);
           if (!isClosed) {
             emit(TotalDebtsLoaded(
-              totalAmount: result.totalAmount,
-              customerCount: result.customerCount,
+              totalAmount: totalResult.totalAmount,
+              customerCount: totalResult.customerCount,
             ));
           }
         } catch (e) {
@@ -33,17 +39,6 @@ class TotalDebtsCubit extends Cubit<TotalDebtsState> {
           }
         }
       },
-      onError: (e) {
-        if (!isClosed) {
-          emit(TotalDebtsError(e.toString()));
-        }
-      },
     );
-  }
-
-  @override
-  Future<void> close() {
-    _debtsSubscription?.cancel();
-    return super.close();
   }
 }

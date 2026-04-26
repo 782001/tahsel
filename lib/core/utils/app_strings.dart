@@ -346,4 +346,9 @@ class AppStrings {
   static const String amount = "amount";
   static const String customersReportDesc = "customers_report_desc";
   static const String addMyDebt = "add_my_debt";
+  static const String cannotDeleteUnpaidDebt = "cannot_delete_unpaid_debt";
+  static const String confirmDeleteMyDebtTitle = "confirm_delete_my_debt_title";
+  static const String confirmDeleteMyDebtMessage = "confirm_delete_my_debt_message";
+  static const String deleteMyDebtSuccess = "delete_my_debt_success";
+  static const String deleteMyDebtFailed = "delete_my_debt_failed";
 }

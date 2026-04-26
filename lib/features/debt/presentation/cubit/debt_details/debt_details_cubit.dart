@@ -4,28 +4,31 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_details/debt_details_state.dart';
 import '../../../domain/entities/payment_entity.dart';
-import '../../../domain/usecases/get_debt_transactions_use_case.dart';
+import '../../../domain/usecases/get_debt_transactions_future_use_case.dart';
 
 
 class DebtDetailsCubit extends Cubit<DebtDetailsState> {
-  final GetDebtTransactionsUseCase getDebtTransactionsUseCase;
-  StreamSubscription? _subscription;
+  final GetDebtTransactionsFutureUseCase getDebtTransactionsUseCase;
+  List<PaymentEntity> _cachedTransactions = [];
 
   DebtDetailsCubit({required this.getDebtTransactionsUseCase})
       : super(DebtDetailsInitial());
 
-  void loadTransactions(String debtId) {
+  Future<void> loadTransactions(String debtId, {bool forceRefresh = false}) async {
+    if (!forceRefresh && _cachedTransactions.isNotEmpty && state is DebtDetailsLoaded) {
+      return;
+    }
+
     emit(DebtDetailsLoading());
-    _subscription?.cancel();
-    _subscription = getDebtTransactionsUseCase(debtId).listen(
+    
+    final result = await getDebtTransactionsUseCase(debtId);
+    
+    result.fold(
+      (failure) => emit(DebtDetailsError(failure.message)),
       (transactions) async {
-        // Requirement 10: Use Isolate for processing large datasets
-        // We'll use compute for sorting and any calculations if needed
         final sortedTransactions = await compute(_processTransactions, transactions);
+        _cachedTransactions = sortedTransactions;
         emit(DebtDetailsLoaded(sortedTransactions));
-      },
-      onError: (error) {
-        emit(DebtDetailsError(error.toString()));
       },
     );
   }
@@ -44,7 +47,6 @@ class DebtDetailsCubit extends Cubit<DebtDetailsState> {
 
   @override
   Future<void> close() {
-    _subscription?.cancel();
     return super.close();
   }
 }
