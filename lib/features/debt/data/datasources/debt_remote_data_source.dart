@@ -11,6 +11,7 @@ abstract class DebtRemoteDataSource {
   Future<void> payTotalDebt(String uid, String customerName, double amount);
   Future<void> markCustomerAsPaid(String uid, String customerName);
   Future<void> deleteCustomerDebts(String uid, String customerName);
+  Future<void> deleteDebtItem(String uid, String debtId);
   Stream<List<PaymentModel>> getDebtTransactions(String debtId);
   Future<List<PaymentModel>> getDebtTransactionsFuture(String debtId);
   Future<List<PaymentModel>> getCustomerAllPayments(String uid, String customerName);
@@ -26,15 +27,34 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
   Future<String> addDebt(DebtModel debt) async {
     try {
       final userRef = firestore.collection('users').doc(debt.uid);
-      final debtRef = userRef.collection('debts').doc();
+      final customersCollection = userRef.collection('customers');
       
-      // We use the operationId provided (which is unique) to link with operations collection
+      // FETCH EXISTING CUSTOMER DATA to prevent data loss
+      String? existingPhone = debt.phoneNumber;
+      
+      final customerSnapshot = await customersCollection
+          .where('name', isEqualTo: debt.customerName?.trim())
+          .limit(1)
+          .get();
+          
+      if (customerSnapshot.docs.isNotEmpty) {
+        final data = customerSnapshot.docs.first.data();
+        existingPhone ??= data['phoneNumber'] as String?;
+      }
+
+      final debtRef = userRef.collection('debts').doc();
       final opRef = userRef.collection('operations').doc(debt.operationId);
 
       final batch = firestore.batch();
 
+      // Create a final JSON with the merged phone number
+      final debtJson = debt.toJson();
+      if (existingPhone != null) {
+        debtJson['phoneNumber'] = existingPhone;
+      }
+
       // 1. Add to debts collection
-      batch.set(debtRef, debt.toJson());
+      batch.set(debtRef, debtJson);
 
       // 2. Add to operations collection for Reports consistency
       batch.set(opRef, {
@@ -332,6 +352,41 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       throw Exception('Failed to delete customer debts: $e');
+    }
+  }
+
+  @override
+  Future<void> deleteDebtItem(String uid, String debtId) async {
+    try {
+      final debtRef = firestore
+          .collection('users')
+          .doc(uid)
+          .collection('debts')
+          .doc(debtId);
+
+      final paymentsSnapshot = await debtRef.collection('payments').get();
+      
+      final List<DocumentReference> allRefs = [];
+      for (var paymentDoc in paymentsSnapshot.docs) {
+        allRefs.add(paymentDoc.reference);
+      }
+      allRefs.add(debtRef);
+
+      // Batch delete in chunks of 500
+      for (var i = 0; i < allRefs.length; i += 500) {
+        final chunk = allRefs.sublist(
+          i,
+          i + 500 > allRefs.length ? allRefs.length : i + 500,
+        );
+        final batch = firestore.batch();
+        for (var ref in chunk) {
+          batch.delete(ref);
+        }
+        await batch.commit();
+      }
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      throw Exception('Failed to delete debt item: $e');
     }
   }
 

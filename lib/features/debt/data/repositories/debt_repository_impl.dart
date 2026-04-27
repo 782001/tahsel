@@ -89,6 +89,19 @@ class DebtRepositoryImpl implements DebtRepository {
   }
 
   @override
+  Future<Either<Failure, void>> deleteDebtItem(
+    String uid,
+    String debtId,
+  ) async {
+    try {
+      await remoteDataSource.deleteDebtItem(uid, debtId);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Stream<List<PaymentEntity>> getDebtTransactions(String debtId) {
     return remoteDataSource.getDebtTransactions(debtId);
   }

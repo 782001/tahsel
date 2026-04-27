@@ -7,6 +7,7 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
+import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_state.dart';
 import 'package:tahsel/features/my_debts/presentation/widgets/skeletons/my_debts_summary_skeleton.dart';
 
 class MyDebtsSummaryCard extends StatelessWidget {
@@ -16,7 +17,7 @@ class MyDebtsSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<MyDebtsCubit, MyDebtsState>(
       builder: (context, state) {
-        if (state.status == MyDebtsStatus.loading && state.debts.isEmpty) {
+        if (state.status == MyDebtsStatus.loading && state.persons.isEmpty) {
           return const MyDebtsSummarySkeleton();
         }
 

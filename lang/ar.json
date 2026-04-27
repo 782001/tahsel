@@ -298,5 +298,13 @@
   "add_new_transaction": "إضافة عملية جديدة",
   "new_debt_amount": "مبلغ دين جديد",
   "amount": "المبلغ",
-  "my_debts_collection": "ديوني"
+  "my_debts_collection": "ديوني",
+  "i_owe_to": "أنا مديون لـ",
+  "total_i_owe": "إجمالي ما علي",
+  "no_description": "بدون وصف",
+  "my_debts_whatsapp_template": "عزيزي {name}،\n قمنا بدفع مبلغ {amount} ج.م.\n رصيدك المتبقي لدينا هو {remaining} ج.م. بتاريخ {date}.\n {note} شكراً لتعاملك معنا.",
+  "my_debts_sms_template": "عزيزي {name}، تم دفع {amount} ج.م. المتبقي: {remaining} ج.م. بتاريخ {date}. ملاحظة: {note}. شكراً لك.",
+  "confirm_deletion": "تأكيد الحذف",
+  "delete_debt_item_confirmation": "هل أنت متأكد من رغبتك في حذف هذا الدين؟ سيؤدي ذلك إلى تحديث رصيدك الإجمالي.",
+  "deleteDebtAfterPaid": "لا يمكن حذف الدين إلا بعد سداده بالكامل"
 }

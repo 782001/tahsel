@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -5,20 +6,21 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
-import 'package:tahsel/features/my_debts/domain/entities/my_debt_entity.dart';
-import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
+import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_cubit.dart';
+import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_state.dart';
 import 'package:tahsel/shared/widgets/shimmer/shimmer_loading.dart';
 
 class MyPartialPaymentDialog extends StatefulWidget {
   final String personName;
   final double totalRemaining;
-  final MyDebtEntity? debt;
+
+  final String? debtId;
 
   const MyPartialPaymentDialog({
     super.key,
     required this.personName,
     required this.totalRemaining,
-    this.debt,
+    this.debtId,
   });
 
   @override
@@ -51,39 +53,42 @@ class _MyPartialPaymentDialogState extends State<MyPartialPaymentDialog> {
     }
 
     if (amount > widget.totalRemaining + 0.01) {
-      // Small epsilon for floating point
       setState(() => _errorText = AppStrings.paymentExceedsRemaining.tr());
       return;
     }
 
-    if (widget.debt != null) {
-      context.read<MyDebtsCubit>().addPayment(
-        widget.debt!.id,
-        amount,
-        _noteController.text.trim().isEmpty
-            ? AppStrings.partialPayment.tr()
-            : _noteController.text.trim(),
-        personName: widget.personName,
-        remainingBalanceBefore: widget.totalRemaining,
-      );
-    } else {
-      context.read<MyDebtsCubit>().markAsPaid(
-        personName: widget.personName,
-        totalAmount: amount, // This is actually amount to pay
-        note: _noteController.text.trim().isEmpty
-            ? AppStrings.partialPayment.tr()
-            : _noteController.text.trim(),
-      );
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      if (widget.debtId != null) {
+        context.read<MyDebtDetailsCubit>().payItem(
+          uid: uid,
+          debtId: widget.debtId!,
+          amount: amount,
+          personName: widget.personName,
+          note: _noteController.text.trim().isEmpty
+              ? AppStrings.partialPayment.tr()
+              : _noteController.text.trim(),
+        );
+      } else {
+        context.read<MyDebtDetailsCubit>().payDebt(
+          uid: uid,
+          personName: widget.personName,
+          amount: amount,
+          note: _noteController.text.trim().isEmpty
+              ? AppStrings.partialPayment.tr()
+              : _noteController.text.trim(),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<MyDebtsCubit, MyDebtsState>(
+    return BlocListener<MyDebtDetailsCubit, MyDebtDetailsState>(
       listener: (context, state) {
-        if (state.status == MyDebtsStatus.loaded) {
+        if (state.status == MyDebtDetailsStatus.loaded) {
           Navigator.pop(context);
-        } else if (state.status == MyDebtsStatus.error) {
+        } else if (state.status == MyDebtDetailsStatus.error) {
           setState(() => _errorText = state.message);
         }
       },
@@ -164,42 +169,43 @@ class _MyPartialPaymentDialogState extends State<MyPartialPaymentDialog> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  AppStrings.notes.tr(),
-                  style: TextStyles.customStyle(
-                    color: AppColors.disabledColor,
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.1,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: TextField(
-                    controller: _noteController,
-                    maxLines: 2,
-                    cursorColor: AppColors.primaryColor,
-                    style: TextStyles.customStyle(
-                      color: AppColors.textColor,
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: AppStrings.notes.tr(),
-                      hintStyle: TextStyles.customStyle(
-                        color: AppColors.disabledColor,
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.all(16),
-                    ),
-                  ),
-                ),
+
+                // Text(
+                //   AppStrings.notes.tr(),
+                //   style: TextStyles.customStyle(
+                //     color: AppColors.disabledColor,
+                //     fontSize: 12.sp,
+                //     fontWeight: FontWeight.bold,
+                //     letterSpacing: 1.1,
+                //   ),
+                // ),
+                // const SizedBox(height: 8),
+                // Container(
+                //   decoration: BoxDecoration(
+                //     color: AppColors.surfaceContainerHigh,
+                //     borderRadius: BorderRadius.circular(12),
+                //   ),
+                //   child: TextField(
+                //     controller: _noteController,
+                //     maxLines: 2,
+                //     cursorColor: AppColors.primaryColor,
+                //     style: TextStyles.customStyle(
+                //       color: AppColors.textColor,
+                //       fontSize: 16.sp,
+                //       fontWeight: FontWeight.bold,
+                //     ),
+                //     decoration: InputDecoration(
+                //       hintText: AppStrings.notes.tr(),
+                //       hintStyle: TextStyles.customStyle(
+                //         color: AppColors.disabledColor,
+                //         fontSize: 16.sp,
+                //         fontWeight: FontWeight.bold,
+                //       ),
+                //       border: InputBorder.none,
+                //       contentPadding: const EdgeInsets.all(16),
+                //     ),
+                //   ),
+                // ),
                 if (_errorText != null) ...[
                   const SizedBox(height: 8),
                   Text(
@@ -215,13 +221,10 @@ class _MyPartialPaymentDialogState extends State<MyPartialPaymentDialog> {
                 SizedBox(
                   width: double.infinity,
                   height: 56,
-                  child: BlocBuilder<MyDebtsCubit, MyDebtsState>(
+                  child: BlocBuilder<MyDebtDetailsCubit, MyDebtDetailsState>(
                     builder: (context, state) {
                       return ElevatedButton(
-                        onPressed: ((state.status == MyDebtsStatus.addingPayment ||
-                                        state.status == MyDebtsStatus.markingAsPaid) &&
-                                    (state.processingId == widget.debt?.id ||
-                                        state.processingId == widget.personName))
+                        onPressed: state.status == MyDebtDetailsStatus.loading
                             ? null
                             : _submit,
                         style: ElevatedButton.styleFrom(
@@ -236,28 +239,26 @@ class _MyPartialPaymentDialogState extends State<MyPartialPaymentDialog> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                               if ((state.status == MyDebtsStatus.addingPayment ||
-                                        state.status == MyDebtsStatus.markingAsPaid) &&
-                                    (state.processingId == widget.debt?.id ||
-                                        state.processingId == widget.personName)) ...[
-                                  ShimmerLoading(
-                                    child: Container(
-                                      height: 20,
-                                      width: 20,
-                                      decoration: const BoxDecoration(
-                                        color: Colors.white,
-                                        shape: BoxShape.circle,
-                                      ),
+                              if (state.status ==
+                                  MyDebtDetailsStatus.loading) ...[
+                                ShimmerLoading(
+                                  child: Container(
+                                    height: 20,
+                                    width: 20,
+                                    decoration: const BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
                                     ),
                                   ),
-                                ],
+                                ),
                                 const SizedBox(width: 8),
-                                Text(
+                              ],
+                              Text(
                                 AppStrings.confirm.tr(),
                                 style: TextStyles.customStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.white,
+                                  color: Colors.white,
                                 ),
                               ),
                             ],

@@ -6,7 +6,6 @@ import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
-import 'package:tahsel/features/debt/domain/entities/debt_entity.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_cubit.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_state.dart';
 
@@ -372,7 +371,7 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
                                 style: TextStyles.customStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.white,
+                                  color: Colors.white,
                                 ),
                               ),
                             ],

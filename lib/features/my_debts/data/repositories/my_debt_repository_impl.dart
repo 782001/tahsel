@@ -1,128 +1,188 @@
 import 'package:dartz/dartz.dart';
-import 'package:tahsel/core/error/exceptions.dart';
 import 'package:tahsel/core/error/failures.dart';
-import 'package:tahsel/features/my_debts/data/datasources/my_debt_remote_data_source.dart';
-import 'package:tahsel/features/my_debts/data/models/my_debt_model.dart';
-import 'package:tahsel/features/my_debts/domain/entities/my_debt_entity.dart';
+import 'package:tahsel/features/debt/domain/entities/payment_entity.dart';
+import 'package:tahsel/features/my_debts/domain/entities/my_debt_person_entity.dart';
+import 'package:tahsel/features/my_debts/domain/entities/my_debt_item_entity.dart';
+import 'package:tahsel/features/my_debts/domain/entities/my_debt_operation_entity.dart';
 import 'package:tahsel/features/my_debts/domain/repositories/my_debt_repository.dart';
+import 'package:tahsel/features/my_debts/data/datasources/my_debt_person_remote_data_source.dart';
+import 'package:tahsel/features/my_debts/data/datasources/my_debt_item_remote_data_source.dart';
+import 'package:tahsel/features/my_debts/data/models/my_debt_person_model.dart';
+import 'package:tahsel/features/my_debts/data/models/my_debt_item_model.dart';
 
 class MyDebtRepositoryImpl implements MyDebtRepository {
-  final MyDebtRemoteDataSource remoteDataSource;
+  final MyDebtPersonRemoteDataSource personRemoteDataSource;
+  final MyDebtItemRemoteDataSource itemRemoteDataSource;
 
-  MyDebtRepositoryImpl({required this.remoteDataSource});
+  MyDebtRepositoryImpl({
+    required this.personRemoteDataSource,
+    required this.itemRemoteDataSource,
+  });
 
   @override
-  Future<Either<Failure, List<MyDebtEntity>>> getMyDebts() async {
+  Future<Either<Failure, List<MyDebtPersonEntity>>> getMyDebtPersons(String uid) async {
     try {
-      final result = await remoteDataSource.getMyDebts();
-      return Right(result);
-    } on ServerException {
-      return const Left(ServerFailure('Server Error'));
+      final persons = await personRemoteDataSource.getPersons(uid);
+      return Right(persons);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> addMyDebt(MyDebtEntity debt, MyDebtTransactionEntity transaction) async {
+  Future<Either<Failure, void>> saveMyDebtPerson(String uid, MyDebtPersonEntity person) async {
     try {
-      final debtModel = MyDebtModel(
-        id: debt.id,
-        personId: debt.personId,
-        personName: debt.personName,
-        totalAmount: debt.totalAmount,
-        paidAmount: debt.paidAmount,
-        remainingDebt: debt.remainingDebt,
-        phoneNumber: debt.phoneNumber,
-        notes: debt.notes,
-        createdAt: debt.createdAt,
-        lastTransactionDate: debt.lastTransactionDate,
-      );
-      
-      final transactionModel = MyDebtTransactionModel(
-        id: transaction.id,
-        debtId: transaction.debtId,
-        amount: transaction.amount,
-        type: transaction.type,
-        note: transaction.note,
-        date: transaction.date,
-      );
-      
-      await remoteDataSource.addMyDebt(debtModel, transactionModel);
+      await personRemoteDataSource.savePerson(uid, MyDebtPersonModel.fromEntity(person));
       return const Right(null);
-    } on ServerException {
-      return const Left(ServerFailure('Server Error'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> addMyDebtTransaction(MyDebtTransactionEntity transaction) async {
+  Future<Either<Failure, void>> updateMyDebtPersonPhone(String uid, String name, String phoneNumber) async {
     try {
-      final transactionModel = MyDebtTransactionModel(
-        id: transaction.id,
-        debtId: transaction.debtId,
-        amount: transaction.amount,
-        type: transaction.type,
-        note: transaction.note,
-        date: transaction.date,
+      await personRemoteDataSource.updatePersonPhone(uid, name, phoneNumber);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updateMyDebtPersonPreference(String uid, String name, String preference) async {
+    try {
+      await personRemoteDataSource.updatePersonPreference(uid, name, preference);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, String>> addMyDebtItem(MyDebtItemEntity debt) async {
+    try {
+      final id = await itemRemoteDataSource.addDebtItem(MyDebtItemModel.fromEntity(debt));
+      return Right(id);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<MyDebtItemEntity>>> getMyDebtItems(String uid, String personName) async {
+    try {
+      final items = await itemRemoteDataSource.getDebtItems(uid, personName);
+      return Right(items);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteMyDebtItem(String uid, String debtId) async {
+    try {
+      await itemRemoteDataSource.deleteDebtItem(uid, debtId);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> markMyDebtItemAsPaid(String uid, String debtId) async {
+    try {
+      final items = await itemRemoteDataSource.getDebtsStream(uid).first;
+      final item = items.firstWhere((e) => e.id == debtId);
+      await itemRemoteDataSource.payItem(
+        uid: uid,
+        debtId: debtId,
+        amount: item.remainingAmount,
+        note: 'Full settlement',
       );
-      await remoteDataSource.addMyDebtTransaction(transactionModel);
       return const Right(null);
-    } on ServerException {
-      return const Left(ServerFailure('Server Error'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, List<MyDebtTransactionEntity>>> getMyDebtTransactions(String debtId) async {
+  Future<Either<Failure, void>> payMyDebtItem({
+    required String uid,
+    required String debtId,
+    required double amount,
+    String? note,
+  }) async {
     try {
-      final result = await remoteDataSource.getMyDebtTransactions(debtId);
-      return Right(result);
-    } on ServerException {
-      return const Left(ServerFailure('Server Error'));
-    } catch (e) {
-      return Left(ServerFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Either<Failure, void>> deleteMyDebt(String debtId) async {
-    try {
-      await remoteDataSource.deleteMyDebt(debtId);
-      return const Right(null);
-    } on ServerException {
-      return const Left(ServerFailure('Server Error'));
-    } catch (e) {
-      return Left(ServerFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Either<Failure, void>> updateMyDebt(MyDebtEntity debt) async {
-    try {
-      final debtModel = MyDebtModel(
-        id: debt.id,
-        personId: debt.personId,
-        personName: debt.personName,
-        totalAmount: debt.totalAmount,
-        paidAmount: debt.paidAmount,
-        remainingDebt: debt.remainingDebt,
-        phoneNumber: debt.phoneNumber,
-        notes: debt.notes,
-        createdAt: debt.createdAt,
-        lastTransactionDate: debt.lastTransactionDate,
-        notificationPreference: debt.notificationPreference,
+      await itemRemoteDataSource.payItem(
+        uid: uid,
+        debtId: debtId,
+        amount: amount,
+        note: note,
       );
-      await remoteDataSource.updateMyDebt(debtModel);
       return const Right(null);
-    } on ServerException {
-      return const Left(ServerFailure('Server Error'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> distributeMyDebtPayment({
+    required String uid,
+    required String personName,
+    required double amount,
+    String? note,
+  }) async {
+    try {
+      await itemRemoteDataSource.distributePayment(uid, personName, amount, note: note);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<MyDebtOperationEntity>>> getMyDebtPersonOperations(String uid, String personName) async {
+    try {
+      final ops = await personRemoteDataSource.getPersonOperations(uid, personName);
+      return Right(ops);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<PaymentEntity>>> getMyDebtItemPayments(String uid, String debtId) async {
+    try {
+      final payments = await itemRemoteDataSource.getDebtItemPayments(uid, debtId);
+      // Map MyDebtPaymentModel to PaymentEntity since Customer Debts UI expects PaymentEntity
+      final entities = payments.map((p) => PaymentEntity(
+        id: p.id,
+        debtId: p.debtId,
+        amountPaid: p.amountPaid,
+        remainingAmount: 0.0,
+        createdAt: p.createdAt,
+        type: _mapType(p.type),
+        activityName: p.note,
+      )).toList();
+      return Right(entities);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  PaymentType _mapType(String type) {
+    switch (type) {
+      case 'full':
+        return PaymentType.full;
+      case 'partial':
+        return PaymentType.partial;
+      case 'settlement':
+        return PaymentType.settlement;
+      case 'debtAdded':
+        return PaymentType.debtAdded;
+      default:
+        return PaymentType.partial;
     }
   }
 }

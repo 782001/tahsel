@@ -4,16 +4,22 @@ import 'package:tahsel/core/extensions/extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
-import 'package:tahsel/features/my_debts/data/models/my_debt_item_model.dart';
+import 'package:tahsel/features/my_debts/domain/entities/my_debt_person_entity.dart';
 
 class MyDebtHeaderBanner extends StatelessWidget {
-  final MyDebtDetail detail;
+  final String personName;
+  final double totalAmount;
+  final double remainingAmount;
 
-  const MyDebtHeaderBanner({super.key, required this.detail});
+  const MyDebtHeaderBanner({
+    super.key,
+    required this.personName,
+    required this.totalAmount,
+    required this.remainingAmount,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final totalDebt = detail.totalDebt + detail.totalPaid;
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(24.r)),
@@ -34,7 +40,7 @@ class MyDebtHeaderBanner extends StatelessWidget {
               children: [
                 SizedBox(height: 20.h),
                 Text(
-                  AppStrings.totalDueLabel.tr(),
+                  AppStrings.totalIOwe.tr(),
                   style: TextStyles.customStyle(
                     color: Colors.white.withOpacity(0.8),
                     fontSize: 14.sp,
@@ -42,7 +48,7 @@ class MyDebtHeaderBanner extends StatelessWidget {
                 ),
                 SizedBox(height: 8.h),
                 Text(
-                  '${totalDebt.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                  '${totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                   style: TextStyles.customStyle(
                     color: Colors.white,
                     fontSize: 32.sp,
@@ -59,12 +65,18 @@ class MyDebtHeaderBanner extends StatelessWidget {
 }
 
 class MyDebtSummaryRow extends StatelessWidget {
-  final MyDebtDetail detail;
+  final double totalOwed;
+  final double remainingAmount;
 
-  const MyDebtSummaryRow({super.key, required this.detail});
+  const MyDebtSummaryRow({
+    super.key,
+    required this.totalOwed,
+    required this.remainingAmount,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final totalPaid = totalOwed - remainingAmount;
     return Container(
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
@@ -76,7 +88,7 @@ class MyDebtSummaryRow extends StatelessWidget {
         children: [
           _buildSummaryItem(
             AppStrings.paid.tr(),
-            detail.totalPaid,
+            totalPaid,
             AppColors.success,
             Icons.check_circle_outline_rounded,
           ),
@@ -87,7 +99,7 @@ class MyDebtSummaryRow extends StatelessWidget {
           ),
           _buildSummaryItem(
             AppStrings.remainingDebt.tr(),
-            detail.totalDebt,
+            remainingAmount,
             AppColors.error,
             Icons.timer_outlined,
           ),

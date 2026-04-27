@@ -1,26 +1,28 @@
-part of 'my_debts_cubit.dart';
+import 'package:equatable/equatable.dart';
+import 'package:tahsel/features/my_debts/domain/entities/my_debt_person_entity.dart';
 
 enum MyDebtsStatus {
   initial,
   loading,
+  loaded,
+  error,
   addingDebt,
   addingPayment,
   markingAsPaid,
   deletingDebt,
-  loaded,
-  error
 }
 
 class MyDebtsState extends Equatable {
   final MyDebtsStatus status;
-  final List<MyDebtEntity> debts;
-  final List<MyDebtEntity> filteredDebts;
-  final List<MyDebtDetail> groupedDebts;
+  final List<MyDebtPersonEntity> persons;
+  final List<MyDebtPersonEntity> filteredPersons;
   final double totalOwed;
   final double totalPaid;
   final int totalPeople;
   final String? message;
   final String? processingId;
+
+  // Last payment info for success dialogs
   final String? lastPaymentPerson;
   final double? lastPaymentAmount;
   final double? lastPaymentRemaining;
@@ -28,9 +30,8 @@ class MyDebtsState extends Equatable {
 
   const MyDebtsState({
     this.status = MyDebtsStatus.initial,
-    this.debts = const [],
-    this.filteredDebts = const [],
-    this.groupedDebts = const [],
+    this.persons = const [],
+    this.filteredPersons = const [],
     this.totalOwed = 0,
     this.totalPaid = 0,
     this.totalPeople = 0,
@@ -44,9 +45,8 @@ class MyDebtsState extends Equatable {
 
   MyDebtsState copyWith({
     MyDebtsStatus? status,
-    List<MyDebtEntity>? debts,
-    List<MyDebtEntity>? filteredDebts,
-    List<MyDebtDetail>? groupedDebts,
+    List<MyDebtPersonEntity>? persons,
+    List<MyDebtPersonEntity>? filteredPersons,
     double? totalOwed,
     double? totalPaid,
     int? totalPeople,
@@ -56,47 +56,49 @@ class MyDebtsState extends Equatable {
     double? lastPaymentAmount,
     double? lastPaymentRemaining,
     String? lastPaymentNote,
-    bool clearProcessingId = false,
     bool clearMessage = false,
+    bool clearProcessingId = false,
     bool clearLastPayment = false,
   }) {
     return MyDebtsState(
       status: status ?? this.status,
-      debts: debts ?? this.debts,
-      filteredDebts: filteredDebts ?? this.filteredDebts,
-      groupedDebts: groupedDebts ?? this.groupedDebts,
+      persons: persons ?? this.persons,
+      filteredPersons: filteredPersons ?? this.filteredPersons,
       totalOwed: totalOwed ?? this.totalOwed,
       totalPaid: totalPaid ?? this.totalPaid,
       totalPeople: totalPeople ?? this.totalPeople,
       message: clearMessage ? null : (message ?? this.message),
-      processingId:
-          clearProcessingId ? null : (processingId ?? this.processingId),
-      lastPaymentPerson:
-          clearLastPayment ? null : (lastPaymentPerson ?? this.lastPaymentPerson),
-      lastPaymentAmount:
-          clearLastPayment ? null : (lastPaymentAmount ?? this.lastPaymentAmount),
+      processingId: clearProcessingId
+          ? null
+          : (processingId ?? this.processingId),
+      lastPaymentPerson: clearLastPayment
+          ? null
+          : (lastPaymentPerson ?? this.lastPaymentPerson),
+      lastPaymentAmount: clearLastPayment
+          ? null
+          : (lastPaymentAmount ?? this.lastPaymentAmount),
       lastPaymentRemaining: clearLastPayment
           ? null
           : (lastPaymentRemaining ?? this.lastPaymentRemaining),
-      lastPaymentNote:
-          clearLastPayment ? null : (lastPaymentNote ?? this.lastPaymentNote),
+      lastPaymentNote: clearLastPayment
+          ? null
+          : (lastPaymentNote ?? this.lastPaymentNote),
     );
   }
 
   @override
   List<Object?> get props => [
-        status,
-        debts,
-        filteredDebts,
-        groupedDebts,
-        totalOwed,
-        totalPaid,
-        totalPeople,
-        message,
-        processingId,
-        lastPaymentPerson,
-        lastPaymentAmount,
-        lastPaymentRemaining,
-        lastPaymentNote,
-      ];
+    status,
+    persons,
+    filteredPersons,
+    totalOwed,
+    totalPaid,
+    totalPeople,
+    message,
+    processingId,
+    lastPaymentPerson,
+    lastPaymentAmount,
+    lastPaymentRemaining,
+    lastPaymentNote,
+  ];
 }

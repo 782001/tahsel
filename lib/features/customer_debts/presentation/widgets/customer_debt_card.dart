@@ -12,6 +12,7 @@ class CustomerDebtCard extends StatelessWidget {
   final String status;
   final Color statusColor;
   final String? ledgerNumber;
+  final String? description;
   final VoidCallback onPartialPayment;
   final VoidCallback onFullPayment;
   final VoidCallback onDelete;
@@ -28,6 +29,7 @@ class CustomerDebtCard extends StatelessWidget {
     required this.onFullPayment,
     required this.onDelete,
     this.ledgerNumber,
+    this.description,
     this.onTap,
   });
 
@@ -129,6 +131,19 @@ class CustomerDebtCard extends StatelessWidget {
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
+                              if (description != null && description!.isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                Text(
+                                  description!,
+                                  style: TextStyles.customStyle(
+                                    color: AppColors.textColor.withOpacity(0.8),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
                             ],
                           ),
                         ),

@@ -19,9 +19,10 @@ import 'package:tahsel/features/customer/presentation/screens/customer_report_de
 import 'package:tahsel/features/my_debts/presentation/screens/add_my_debt_screen.dart';
 import 'package:tahsel/features/my_debts/presentation/screens/my_debt_details_screen.dart';
 import 'package:tahsel/features/my_debts/presentation/screens/my_debt_details_report_screen.dart';
-import 'package:tahsel/features/my_debts/data/models/my_debt_item_model.dart';
-import 'package:tahsel/features/my_debts/domain/entities/my_debt_entity.dart';
+import 'package:tahsel/features/my_debts/domain/entities/my_debt_person_entity.dart';
+import 'package:tahsel/features/my_debts/domain/entities/my_debt_item_entity.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_cubit.dart';
+import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_report_cubit.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -112,15 +113,18 @@ class AppRoutes {
           builder: (_) => const AddMyDebtScreen(),
         );
       case myDebtDetails:
-        final detail = settings.arguments as MyDebtDetail;
-        return MaterialPageRoute(
-          builder: (_) => MyDebtDetailsScreen(detail: detail),
-        );
-      case myDebtDetailsReport:
-        final debt = settings.arguments as MyDebtEntity;
+        final person = settings.arguments as MyDebtPersonEntity;
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
             create: (context) => di.sl<MyDebtDetailsCubit>(),
+            child: MyDebtDetailsScreen(person: person),
+          ),
+        );
+      case myDebtDetailsReport:
+        final debt = settings.arguments as MyDebtItemEntity;
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (context) => di.sl<MyDebtDetailsReportCubit>(),
             child: MyDebtDetailsReportScreen(debt: debt),
           ),
         );
@@ -144,8 +148,7 @@ class AppRoutes {
           ),
       login: (_) => const LoginScreen(),
       securityWarning: (context) {
-        final args =
-            ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+        final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
         return SecurityWarningScreen(
           isRooted: args?['isRooted'] ?? false,
           isDevMode: args?['isDevMode'] ?? false,

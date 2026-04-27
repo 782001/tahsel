@@ -351,4 +351,12 @@ class AppStrings {
   static const String confirmDeleteMyDebtMessage = "confirm_delete_my_debt_message";
   static const String deleteMyDebtSuccess = "delete_my_debt_success";
   static const String deleteMyDebtFailed = "delete_my_debt_failed";
+  static const String iOweTo = "i_owe_to";
+  static const String totalIOwe = "total_i_owe";
+  static const String noDescription = "no_description";
+  static const String myDebtsWhatsappTemplate = "my_debts_whatsapp_template";
+  static const String myDebtsSmsTemplate = "my_debts_sms_template";
+  static const String confirmDeletion = "confirm_deletion";
+  static const String deleteDebtItemConfirmation = "delete_debt_item_confirmation";
+  static const String deleteDebtAfterPaid = "deleteDebtAfterPaid";
 }

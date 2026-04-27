@@ -15,7 +15,6 @@ import 'package:tahsel/features/customer_debts/presentation/widgets/partial_paym
 import 'package:tahsel/features/customer_debts/presentation/widgets/skeletons/customer_debt_skeleton.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_cubit.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
-import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
 import '../../../debt/domain/entities/debt_entity.dart';
 import '../../../debt/presentation/cubit/debt_state.dart';
@@ -42,6 +41,7 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
     BuildContext context,
     String customerName,
     double totalRemaining,
+    DebtEntity? debt,
   ) {
     final cubit = context.read<DebtCubit>();
     showDialog(
@@ -51,28 +51,23 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
         child: PartialPaymentDialog(
           customerName: customerName,
           totalRemaining: totalRemaining,
+          debt: debt,
         ),
       ),
     );
   }
 
-  void _onPayFull(
-    BuildContext context,
-    String customerName,
-    double totalAmount,
-  ) {
+  void _onPayFull(BuildContext context, DebtEntity debt) {
     final uid = sl<FirebaseAuth>().currentUser?.uid;
     if (uid != null) {
-      context.read<DebtCubit>().markAsPaid(
-        uid: uid,
-        customerName: customerName,
-        totalAmount: totalAmount,
-        note: AppStrings.fullSettlement.tr(),
+      context.read<DebtCubit>().markItemAsPaid(
+        debt: debt,
+        totalRemainingBefore: debt.remainingAmount,
       );
     }
   }
 
-  void _onDeleteCustomerDebt(BuildContext context, String customerName) {
+  void _onDeleteDebt(BuildContext context, DebtEntity debt) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -118,10 +113,7 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
               Navigator.of(ctx).pop();
               final uid = sl<FirebaseAuth>().currentUser?.uid;
               if (uid != null) {
-                context.read<DebtCubit>().deleteCustomerDebts(
-                  uid,
-                  customerName,
-                );
+                context.read<DebtCubit>().deleteDebtItem(uid, debt.id ?? '');
               }
             },
             style: ElevatedButton.styleFrom(
@@ -171,25 +163,26 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
     final List<DebtEntity> debts = params['debts'];
     final String query = params['query'].toString().toLowerCase();
 
-    final Map<String, List<DebtEntity>> grouped = {};
+    // Group debts by customerName
+    final Map<String, List<DebtEntity>> groupedMap = {};
     for (var debt in debts) {
       final name = debt.customerName ?? 'Unknown';
-      grouped.putIfAbsent(name, () => []).add(debt);
+      
+      final nameMatches = name.toLowerCase().contains(query);
+      final ledgerMatches = (debt.ledgerNumber ?? '').toLowerCase().contains(query);
+      final detailsMatches = (debt.productOrSessionDetails ?? '').toLowerCase().contains(query);
+
+      if (query.isEmpty || nameMatches || ledgerMatches || detailsMatches) {
+        if (!groupedMap.containsKey(name)) {
+          groupedMap[name] = [];
+        }
+        groupedMap[name]!.add(debt);
+      }
     }
 
-    List<CustomerDebtDetail> results = grouped.entries
-        .map((entry) => CustomerDebtDetail.fromEntities(entry.key, entry.value))
-        .toList();
-
-    if (query.isNotEmpty) {
-      results = results.where((detail) {
-        final nameMatches = detail.customerName.toLowerCase().contains(query);
-        final ledgerMatches = (detail.ledgerNumber ?? '')
-            .toLowerCase()
-            .contains(query);
-        return nameMatches || ledgerMatches;
-      }).toList();
-    }
+    final List<CustomerDebtDetail> results = groupedMap.entries.map((entry) {
+      return CustomerDebtDetail.fromEntities(entry.key, entry.value);
+    }).toList();
 
     return results..sort((a, b) => b.lastActivity.compareTo(a.lastActivity));
   }
@@ -277,9 +270,12 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
                     }
 
                     final detail = customers[index];
+                    final debtEntity = detail.items.first.entity;
+
                     return CustomerDebtCard(
                       customerName: detail.customerName,
                       ledgerNumber: detail.ledgerNumber,
+                      description: detail.items.isNotEmpty ? detail.items.first.itemDescription : null,
                       lastTransactionDate: detail.lastTransactionDate,
                       amount: detail.totalDebt,
                       status: detail.status.tr(),
@@ -289,14 +285,10 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
                         context,
                         detail.customerName,
                         detail.totalDebt,
+                        debtEntity,
                       ),
-                      onFullPayment: () => _onPayFull(
-                        context,
-                        detail.customerName,
-                        detail.totalDebt,
-                      ),
-                      onDelete: () =>
-                          _onDeleteCustomerDebt(context, detail.customerName),
+                      onFullPayment: () => _onPayFull(context, debtEntity),
+                      onDelete: () => _onDeleteDebt(context, debtEntity),
                     );
                   }, childCount: customers.length + 1),
                 ),

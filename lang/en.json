@@ -298,5 +298,10 @@
   "new_debt_amount": "New Debt Amount",
   "amount": "Amount",
   "my_debts_collection": "My Debts",
-  "add_my_debt": "Add My Debt"
+  "add_my_debt": "Add My Debt",
+  "my_debts_whatsapp_template": "Dear {name},\n we sent a payment of {amount} EGP.\n My remaining balance to you is {remaining} EGP as of {date}.\n {note} Thank you.",
+  "my_debts_sms_template": "Dear {name}, we sent {amount} EGP. Remaining: {remaining} EGP as of {date}. Note: {note}. Thank you.",
+  "confirm_deletion": "Confirm Deletion",
+  "delete_debt_item_confirmation": "Are you sure you want to delete this debt? This will update your total balance.",
+  "deleteDebtAfterPaid": "You can only delete a debt after it is fully paid"
 }

@@ -1,120 +1,81 @@
-import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import '../../../../core/utils/app_colors.dart';
-import '../../../../core/utils/app_strings.dart';
-import '../../domain/entities/my_debt_entity.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tahsel/features/my_debts/domain/entities/my_debt_item_entity.dart';
 
-class MyDebtItem {
-  final String description;
-  final double amountPaid;
-  final double remainingDebt;
-  final String date;
-  final DateTime lastUpdatedAt;
-  final MyDebtEntity entity;
-
-  const MyDebtItem({
-    required this.description,
-    required this.amountPaid,
-    required this.remainingDebt,
-    required this.date,
-    required this.lastUpdatedAt,
-    required this.entity,
+class MyDebtItemModel extends MyDebtItemEntity {
+  const MyDebtItemModel({
+    super.id,
+    required super.uid,
+    required super.operationId,
+    required super.totalAmount,
+    required super.paidAmount,
+    required super.remainingAmount,
+    super.personName,
+    super.details,
+    required super.operationType,
+    super.timestamp,
+    super.lastUpdatedAt,
+    super.phoneNumber,
+    super.isPaid,
+    super.ledgerNumber,
   });
 
-  factory MyDebtItem.fromEntity(MyDebtEntity entity) {
-    return MyDebtItem(
-      description: entity.notes ?? '',
-      amountPaid: entity.paidAmount,
-      remainingDebt: entity.remainingDebt,
-      date: DateFormat('yyyy/MM/dd').format(entity.createdAt),
-      lastUpdatedAt: entity.lastTransactionDate,
-      entity: entity,
+  factory MyDebtItemModel.fromJson(Map<String, dynamic> json, String id) {
+    return MyDebtItemModel(
+      id: id,
+      uid: json['uid'] ?? '',
+      operationId: json['operationId'] ?? '',
+      totalAmount: (json['totalAmount'] ?? 0).toDouble(),
+      paidAmount: (json['paidAmount'] ?? 0).toDouble(),
+      remainingAmount: (json['remainingAmount'] ?? 0).toDouble(),
+      personName: json['personName'],
+      details: json['details'],
+      operationType: json['operationType'] ?? 'shop',
+      timestamp: json['timestamp'] != null
+          ? (json['timestamp'] as Timestamp).toDate()
+          : null,
+      lastUpdatedAt: json['lastUpdatedAt'] != null
+          ? (json['lastUpdatedAt'] as Timestamp).toDate()
+          : null,
+      phoneNumber: json['phoneNumber'],
+      isPaid: json['isPaid'] ?? false,
+      ledgerNumber: json['ledgerNumber'],
     );
   }
 
-  double get totalAmount => amountPaid + remainingDebt;
-}
-
-class MyDebtDetail {
-  final String? personId;
-  final String personName;
-  final String status;
-  final Color statusColor;
-  final List<MyDebtItem> items;
-  final DateTime lastActivity;
-  final String? phoneNumber;
-  final String notificationPreference;
-
-  const MyDebtDetail({
-    this.personId,
-    required this.personName,
-    required this.status,
-    required this.statusColor,
-    required this.items,
-    required this.lastActivity,
-    this.phoneNumber,
-    this.notificationPreference = 'none',
-  });
-
-  factory MyDebtDetail.fromEntities(String name, List<MyDebtEntity> entities) {
-    final items = entities.map((e) => MyDebtItem.fromEntity(e)).toList();
-    
-    String? phone;
-    String? pId;
-    String preference = 'none';
-    for (var entity in entities) {
-      if (entity.phoneNumber != null && entity.phoneNumber!.isNotEmpty) {
-        phone = entity.phoneNumber;
-      }
-      if (entity.notificationPreference != 'none') {
-        preference = entity.notificationPreference;
-      }
-      if (entity.personId != null) {
-        pId = entity.personId;
-      }
-    }
-
-    DateTime latest = DateTime(2000);
-    for (var item in items) {
-      if (item.lastUpdatedAt.isAfter(latest)) {
-        latest = item.lastUpdatedAt;
-      }
-    }
-
-    double totalRemaining = items.fold(0.0, (sum, item) => sum + item.remainingDebt);
-    
-    String status = AppStrings.debtStatusBalance;
-    Color statusColor = AppColors.info;
-
-    if (totalRemaining > 1000) {
-      status = AppStrings.debtStatusCritical;
-      statusColor = AppColors.error;
-    } else if (totalRemaining > 500) {
-      status = AppStrings.debtStatusOverdue;
-      statusColor = AppColors.warning;
-    } else if (totalRemaining > 0) {
-      status = AppStrings.debtStatusMinor;
-      statusColor = AppColors.primaryColor;
-    }
-
-    return MyDebtDetail(
-      personId: pId,
-      personName: name,
-      status: status,
-      statusColor: statusColor,
-      items: items,
-      lastActivity: latest,
-      phoneNumber: phone,
-      notificationPreference: preference,
-    );
+  Map<String, dynamic> toJson() {
+    return {
+      'uid': uid,
+      'operationId': operationId,
+      'totalAmount': totalAmount,
+      'paidAmount': paidAmount,
+      'remainingAmount': remainingAmount,
+      'personName': personName,
+      'details': details,
+      'operationType': operationType,
+      'timestamp': timestamp != null ? Timestamp.fromDate(timestamp!) : FieldValue.serverTimestamp(),
+      'lastUpdatedAt': lastUpdatedAt != null ? Timestamp.fromDate(lastUpdatedAt!) : FieldValue.serverTimestamp(),
+      'phoneNumber': phoneNumber,
+      'isPaid': isPaid,
+      'ledgerNumber': ledgerNumber,
+    };
   }
 
-  double get totalDebt =>
-      items.fold(0, (sum, item) => sum + item.remainingDebt);
-
-  double get totalPaid =>
-      items.fold(0, (sum, item) => sum + item.amountPaid);
-
-  String get lastTransactionDate =>
-      items.isNotEmpty ? items.last.date : '';
+  factory MyDebtItemModel.fromEntity(MyDebtItemEntity entity) {
+    return MyDebtItemModel(
+      id: entity.id,
+      uid: entity.uid,
+      operationId: entity.operationId,
+      totalAmount: entity.totalAmount,
+      paidAmount: entity.paidAmount,
+      remainingAmount: entity.remainingAmount,
+      personName: entity.personName,
+      details: entity.details,
+      operationType: entity.operationType,
+      timestamp: entity.timestamp,
+      lastUpdatedAt: entity.lastUpdatedAt,
+      phoneNumber: entity.phoneNumber,
+      isPaid: entity.isPaid,
+      ledgerNumber: entity.ledgerNumber,
+    );
+  }
 }

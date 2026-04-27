@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -9,6 +10,7 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
+import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_state.dart';
 import 'package:tahsel/shared/widgets/buttons/custom_button.dart';
 import 'package:tahsel/shared/widgets/text_fields/custom_text_form_field.dart';
 
@@ -66,13 +68,11 @@ class _AddMyDebtScreenState extends State<AddMyDebtScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => sl<MyDebtsCubit>(),
+    return BlocProvider.value(
+      value: context.read<MyDebtsCubit>(),
       child: BlocListener<MyDebtsCubit, MyDebtsState>(
         listener: (context, state) {
-          if (state.status == MyDebtsStatus.loaded) {
-            sl<NavigatorService>().pop();
-          } else if (state.status == MyDebtsStatus.error) {
+          if (state.status == MyDebtsStatus.error) {
             ScaffoldMessenger.of(
               context,
             ).showSnackBar(SnackBar(content: Text(state.message ?? 'Error')));
@@ -257,21 +257,29 @@ class _AddMyDebtScreenState extends State<AddMyDebtScreen> {
                         return CustomButton(
                           text: AppStrings.confirm.tr(),
                           isLoading: state.status == MyDebtsStatus.addingDebt,
-                          onPressed: () {
+                          onPressed: () async {
                             if (_formKey.currentState!.validate()) {
-                              context.read<MyDebtsCubit>().addDebt(
-                                name: _nameController.text,
-                                total: double.parse(_totalController.text),
-                                paid:
+                              final cubit = context.read<MyDebtsCubit>();
+
+                              await cubit.addDebt(
+                                uid: FirebaseAuth.instance.currentUser!.uid,
+                                personName: _nameController.text,
+                                totalAmount: double.parse(
+                                  _totalController.text,
+                                ),
+                                paidAmount:
                                     double.tryParse(_paidController.text) ?? 0,
                                 phone: _phoneController.text.isEmpty
                                     ? null
                                     : _phoneController.text,
-                                notes: _notesController.text.isEmpty
+                                details: _notesController.text.isEmpty
                                     ? null
                                     : _notesController.text,
                               );
                             }
+                            if (!mounted) return;
+
+                            sl<NavigatorService>().pop();
                           },
                         );
                       },

@@ -37,6 +37,7 @@ class WhatsAppService {
     required double remaining,
     required String date,
     String? note,
+    String? template,
   }) async {
     return await compute(_buildMessage, {
       'name': name,
@@ -44,7 +45,7 @@ class WhatsAppService {
       'remaining': remaining,
       'date': date,
       'note': note ?? '',
-      'template': AppStrings.whatsappMsgTemplate.tr(),
+      'template': template ?? AppStrings.whatsappMsgTemplate.tr(),
     });
   }
 

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/debt_entity.dart';
 import '../../domain/usecases/add_debt_usecase.dart';
 import '../../domain/usecases/delete_customer_debt_usecase.dart';
+import '../../domain/usecases/delete_debt_item_usecase.dart';
 import '../../domain/usecases/get_debts_usecase.dart';
 import '../../domain/usecases/mark_customer_as_paid_usecase.dart';
 import '../../domain/usecases/mark_item_as_paid_usecase.dart';
@@ -19,6 +20,7 @@ class DebtCubit extends Cubit<DebtState> {
   final PayItemDebtUseCase payItemDebtUseCase;
   final MarkItemAsPaidUseCase markItemAsPaidUseCase;
   final DeleteCustomerDebtUseCase deleteCustomerDebtUseCase;
+  final DeleteDebtItemUseCase deleteDebtItemUseCase;
 
   DebtCubit({
     required this.addDebtUseCase,
@@ -28,6 +30,7 @@ class DebtCubit extends Cubit<DebtState> {
     required this.payItemDebtUseCase,
     required this.markItemAsPaidUseCase,
     required this.deleteCustomerDebtUseCase,
+    required this.deleteDebtItemUseCase,
   }) : super(DebtInitial());
 
   Future<void> addDebt({
@@ -168,6 +171,19 @@ class DebtCubit extends Cubit<DebtState> {
     emit(DebtLoading());
     final result = await deleteCustomerDebtUseCase(
       DeleteDebtParams(uid: uid, customerName: customerName),
+    );
+    result.fold((failure) => emit(DebtFailure(message: failure.message)), (
+      _,
+    ) {
+      emit(const DebtDeleteSuccess());
+      getDebts(uid);
+    });
+  }
+
+  Future<void> deleteDebtItem(String uid, String debtId) async {
+    emit(DebtLoading());
+    final result = await deleteDebtItemUseCase(
+      DeleteDebtItemParams(uid: uid, debtId: debtId),
     );
     result.fold((failure) => emit(DebtFailure(message: failure.message)), (
       _,

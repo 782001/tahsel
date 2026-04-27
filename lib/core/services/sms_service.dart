@@ -12,6 +12,7 @@ class SmsService {
     required double remaining,
     required String date,
     required String note,
+    String? template,
   }) async {
     return await compute(_buildMessage, {
       'name': name,
@@ -19,7 +20,7 @@ class SmsService {
       'remaining': remaining,
       'date': date,
       'note': note,
-      'template': AppStrings.smsMsgTemplate.tr(),
+      'template': template ?? AppStrings.smsMsgTemplate.tr(),
     });
   }
 

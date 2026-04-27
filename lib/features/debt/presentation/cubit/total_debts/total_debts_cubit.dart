@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/features/debt/domain/entities/debt_entity.dart';
 import '../../../../debt/domain/usecases/get_debts_usecase.dart';
 import '../../../domain/usecases/calculate_total_debts_usecase.dart';
 import 'total_debts_state.dart';
@@ -41,4 +42,22 @@ class TotalDebtsCubit extends Cubit<TotalDebtsState> {
       },
     );
   }
+
+  /// Recalculates totals directly from a debt list.
+  /// Called when DebtCubit refreshes the debts list after any mutation,
+  /// so the summary card updates instantly without a separate Firestore fetch.
+  Future<void> updateFromDebts(List<DebtEntity> debts) async {
+    try {
+      final totalResult = await calculateTotalDebtsUseCase(debts);
+      if (!isClosed) {
+        emit(TotalDebtsLoaded(
+          totalAmount: totalResult.totalAmount,
+          customerCount: totalResult.customerCount,
+        ));
+      }
+    } catch (e) {
+      // Silently ignore — the current total stays as-is
+    }
+  }
 }
+

@@ -1,67 +1,164 @@
-import 'package:bloc/bloc.dart';
-import 'package:equatable/equatable.dart';
-import 'package:tahsel/features/my_debts/domain/entities/my_debt_entity.dart';
-import 'package:tahsel/features/my_debts/domain/usecases/my_debt_usecases.dart';
-
-part 'my_debt_details_state.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/features/my_debts/domain/entities/my_debt_item_entity.dart';
+import 'package:tahsel/features/my_debts/domain/usecases/debt/get_my_debt_items_usecase.dart';
+import 'package:tahsel/features/my_debts/domain/usecases/person/get_my_debt_person_operations_usecase.dart';
+import 'package:tahsel/features/my_debts/domain/usecases/payment/pay_my_debt_item_usecase.dart';
+import 'package:tahsel/features/my_debts/domain/usecases/debt/delete_my_debt_item_usecase.dart';
+import 'package:tahsel/features/my_debts/domain/usecases/debt/add_my_debt_usecase.dart';
+import 'package:tahsel/features/my_debts/domain/usecases/payment/distribute_my_debt_payment_usecase.dart';
+import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_state.dart';
 
 class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
-  final GetMyDebtTransactionsUseCase getTransactionsUseCase;
-  final AddMyDebtTransactionUseCase addTransactionUseCase;
+  final GetMyDebtItemsUseCase getItemsUseCase;
+  final GetMyDebtPersonOperationsUseCase getOperationsUseCase;
+  final PayMyDebtItemUseCase payItemUseCase;
+  final DeleteMyDebtItemUseCase deleteItemUseCase;
+  final AddMyDebtUseCase addDebtUseCase;
+  final DistributeMyDebtPaymentUseCase distributePaymentUseCase;
 
   MyDebtDetailsCubit({
-    required this.getTransactionsUseCase,
-    required this.addTransactionUseCase,
+    required this.getItemsUseCase,
+    required this.getOperationsUseCase,
+    required this.payItemUseCase,
+    required this.deleteItemUseCase,
+    required this.addDebtUseCase,
+    required this.distributePaymentUseCase,
   }) : super(const MyDebtDetailsState());
 
-  Future<void> loadTransactions(String debtId) async {
+  Future<void> loadDetails(String uid, String personName) async {
     emit(state.copyWith(status: MyDebtDetailsStatus.loading));
-    final result = await getTransactionsUseCase(debtId);
-    result.fold(
-      (failure) => emit(state.copyWith(status: MyDebtDetailsStatus.error, message: 'Failed to load history')),
-      (transactions) => emit(state.copyWith(status: MyDebtDetailsStatus.loaded, transactions: transactions)),
+
+    final itemsResult = await getItemsUseCase(uid, personName);
+    final opsResult = await getOperationsUseCase(uid, personName);
+
+    itemsResult.fold(
+      (f) => emit(state.copyWith(status: MyDebtDetailsStatus.error, message: f.message)),
+      (items) {
+        opsResult.fold(
+          (f) => emit(state.copyWith(status: MyDebtDetailsStatus.error, message: f.message)),
+          (ops) {
+            double totalOwed = 0;
+            double totalPaid = 0;
+            
+            for (var item in items) {
+              totalOwed += item.totalAmount;
+              totalPaid += item.paidAmount;
+            }
+
+            emit(state.copyWith(
+              status: MyDebtDetailsStatus.loaded,
+              items: items,
+              operations: ops,
+              totalOwed: totalOwed,
+              totalPaid: totalPaid,
+              remainingAmount: totalOwed - totalPaid,
+            ));
+          },
+        );
+      },
     );
   }
 
-  Future<void> addPayment({
+  void clearFlags() {
+    emit(state.copyWith(clearPayment: true, message: null));
+  }
+
+  Future<void> payItem({
+    required String uid,
     required String debtId,
     required double amount,
+    required String personName,
     String? note,
   }) async {
-    emit(state.copyWith(status: MyDebtDetailsStatus.loading));
-    final transaction = MyDebtTransactionEntity(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+    final result = await payItemUseCase(
+      uid: uid,
       debtId: debtId,
       amount: amount,
-      type: 'payment',
       note: note,
-      date: DateTime.now(),
     );
-    final result = await addTransactionUseCase(transaction);
+
     result.fold(
-      (failure) => emit(state.copyWith(status: MyDebtDetailsStatus.error, message: 'Failed to add payment')),
-      (_) => loadTransactions(debtId),
+      (f) => emit(state.copyWith(message: f.message)),
+      (_) {
+        emit(state.copyWith(
+          lastPaymentAmount: amount,
+          lastPaymentRemaining: state.remainingAmount - amount,
+          lastPaymentNote: note,
+        ));
+        loadDetails(uid, personName);
+      },
     );
   }
-  
-  Future<void> addMoreDebt({
-    required String debtId,
+
+  Future<void> addDebt({
+    required String uid,
+    required String personName,
+    required double totalAmount,
+    double? paidAmount,
+    String? description,
+    String? phone,
+  }) async {
+    emit(state.copyWith(status: MyDebtDetailsStatus.loading));
+    
+    final now = DateTime.now();
+    final debt = MyDebtItemEntity(
+      id: '',
+      uid: uid,
+      operationId: 'manual_my_debt_${now.millisecondsSinceEpoch}',
+      totalAmount: totalAmount,
+      paidAmount: paidAmount ?? 0,
+      remainingAmount: totalAmount - (paidAmount ?? 0),
+      personName: personName,
+      details: description ?? AppStrings.newDebt.tr(),
+      operationType: 'debt',
+      timestamp: now,
+      isPaid: (totalAmount - (paidAmount ?? 0)) <= 0,
+      phoneNumber: phone,
+    );
+
+    final result = await addDebtUseCase(debt);
+
+    result.fold(
+      (f) => emit(state.copyWith(status: MyDebtDetailsStatus.error, message: f.message)),
+      (_) => loadDetails(uid, personName),
+    );
+  }
+
+  Future<void> payDebt({
+    required String uid,
+    required String personName,
     required double amount,
     String? note,
   }) async {
     emit(state.copyWith(status: MyDebtDetailsStatus.loading));
-    final transaction = MyDebtTransactionEntity(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      debtId: debtId,
+    final result = await distributePaymentUseCase(
+      uid: uid,
+      personName: personName,
       amount: amount,
-      type: 'debt',
       note: note,
-      date: DateTime.now(),
     );
-    final result = await addTransactionUseCase(transaction);
+
     result.fold(
-      (failure) => emit(state.copyWith(status: MyDebtDetailsStatus.error, message: 'Failed to add debt')),
-      (_) => loadTransactions(debtId),
+      (f) => emit(state.copyWith(status: MyDebtDetailsStatus.error, message: f.message)),
+      (_) {
+        emit(state.copyWith(
+          lastPaymentAmount: amount,
+          lastPaymentRemaining: state.remainingAmount - amount,
+          lastPaymentNote: note,
+        ));
+        loadDetails(uid, personName);
+      },
+    );
+  }
+
+  Future<void> deleteItem(String uid, String debtId, String personName) async {
+    emit(state.copyWith(status: MyDebtDetailsStatus.loading));
+    final result = await deleteItemUseCase(uid, debtId);
+    result.fold(
+      (f) => emit(state.copyWith(status: MyDebtDetailsStatus.error, message: f.message)),
+      (_) => loadDetails(uid, personName),
     );
   }
 }

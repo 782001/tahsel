@@ -1,16 +1,22 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
-import 'package:tahsel/features/my_debts/domain/entities/my_debt_entity.dart';
-import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_cubit.dart';
+import 'package:tahsel/features/my_debts/domain/entities/my_debt_item_entity.dart';
+import 'package:tahsel/features/debt/domain/entities/payment_entity.dart';
+import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_report_cubit.dart';
+import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_report_state.dart';
+import 'package:tahsel/shared/widgets/shimmer/transaction_skeleton.dart';
 
 class MyDebtDetailsReportScreen extends StatefulWidget {
-  final MyDebtEntity debt;
+  final MyDebtItemEntity debt;
 
   const MyDebtDetailsReportScreen({super.key, required this.debt});
 
@@ -23,11 +29,18 @@ class _MyDebtDetailsReportScreenState extends State<MyDebtDetailsReportScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<MyDebtDetailsCubit>().loadTransactions(widget.debt.id);
+    final uid = sl<FirebaseAuth>().currentUser?.uid;
+    if (uid != null) {
+      context.read<MyDebtDetailsReportCubit>().loadTransactions(
+        uid,
+        widget.debt.id ?? '',
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final uid = sl<FirebaseAuth>().currentUser?.uid ?? '';
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
       appBar: AppBar(
@@ -51,69 +64,94 @@ class _MyDebtDetailsReportScreenState extends State<MyDebtDetailsReportScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Column(
-        children: [
-          _buildSummaryCard(),
-          Expanded(
-            child: BlocBuilder<MyDebtDetailsCubit, MyDebtDetailsState>(
+      body: RefreshIndicator(
+        color: AppColors.primaryColor,
+        onRefresh: () async {
+          await context.read<MyDebtDetailsReportCubit>().loadTransactions(
+                uid,
+                widget.debt.id ?? '',
+                forceRefresh: true,
+              );
+        },
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
+          slivers: [
+            SliverToBoxAdapter(child: _buildSummaryCard()),
+            BlocBuilder<MyDebtDetailsReportCubit, MyDebtDetailsReportState>(
               builder: (context, state) {
-                if (state.status == MyDebtDetailsStatus.loading) {
-                  return Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.primaryColor,
+                if (state is MyDebtDetailsReportLoading) {
+                  return SliverPadding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => const TransactionCardSkeleton(),
+                        childCount: 5,
+                      ),
                     ),
                   );
-                } else if (state.status == MyDebtDetailsStatus.loaded) {
+                } else if (state is MyDebtDetailsReportLoaded) {
                   if (state.transactions.isEmpty) {
-                    return Center(
-                      child: Text(
-                        AppStrings.noTransactions.tr(),
-                        style: TextStyles.customStyle(
-                          color: AppColors.disabledColor,
-                          fontSize: 14.sp,
+                    return SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(
+                        child: Text(
+                          AppStrings.noTransactions.tr(),
+                          style: TextStyles.customStyle(
+                            color: AppColors.disabledColor,
+                            fontSize: 14.sp,
+                          ),
                         ),
                       ),
                     );
                   }
                   return _buildTransactionList(state.transactions);
-                } else if (state.status == MyDebtDetailsStatus.error) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          state.message ?? '',
-                          style: TextStyles.customStyle(
-                            color: AppColors.error,
-                            fontSize: 13.sp,
+                } else if (state is MyDebtDetailsReportError) {
+                  return SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            state.message,
+                            style: TextStyles.customStyle(
+                              color: AppColors.error,
+                              fontSize: 13.sp,
+                            ),
                           ),
-                        ),
-                        SizedBox(height: 16.h),
-                        ElevatedButton(
-                          onPressed: () => context
-                              .read<MyDebtDetailsCubit>()
-                              .loadTransactions(widget.debt.id),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryColor,
-                            foregroundColor: Colors.white,
+                          SizedBox(height: 16.h),
+                          ElevatedButton(
+                            onPressed: () => context
+                                .read<MyDebtDetailsReportCubit>()
+                                .loadTransactions(
+                                  uid,
+                                  widget.debt.id ?? '',
+                                  forceRefresh: true,
+                                ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryColor,
+                              foregroundColor: Colors.white,
+                            ),
+                            child: Text(AppStrings.tryAgain.tr()),
                           ),
-                          child: Text(AppStrings.tryAgain.tr()),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   );
                 }
-                return const SizedBox();
+                return const SliverToBoxAdapter(child: SizedBox());
               },
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildSummaryCard() {
-    final bool isSettled = widget.debt.remainingDebt <= 0;
+    final bool isSettled = widget.debt.remainingAmount <= 0;
 
     return Container(
       margin: EdgeInsets.all(16.r),
@@ -150,7 +188,7 @@ class _MyDebtDetailsReportScreenState extends State<MyDebtDetailsReportScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      widget.debt.personName,
+                      widget.debt.personName ?? '',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyles.customStyle(
@@ -160,24 +198,23 @@ class _MyDebtDetailsReportScreenState extends State<MyDebtDetailsReportScreen> {
                       ),
                     ),
                     SizedBox(height: 4.h),
-                    if (widget.debt.notes != null && widget.debt.notes!.isNotEmpty)
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                        child: Text(
-                          widget.debt.notes!,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyles.customStyle(
-                            color: Colors.white,
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                          ),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Text(
+                        widget.debt.details ?? AppStrings.noDescription.tr(),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyles.customStyle(
+                          color: Colors.white,
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
+                    ),
                   ],
                 ),
               ),
@@ -206,17 +243,17 @@ class _MyDebtDetailsReportScreenState extends State<MyDebtDetailsReportScreen> {
             children: [
               _SummaryItem(
                 label: AppStrings.totalDueLabel.tr(),
-                value: widget.debt.totalAmount.toStringAsFixed(1),
+                value: widget.debt.totalAmount.toSmartAmount(),
               ),
               SizedBox(width: 8.w),
               _SummaryItem(
                 label: AppStrings.paid.tr(),
-                value: widget.debt.paidAmount.toStringAsFixed(1),
+                value: widget.debt.paidAmount.toSmartAmount(),
               ),
               SizedBox(width: 8.w),
               _SummaryItem(
                 label: AppStrings.remaining.tr(),
-                value: widget.debt.remainingDebt.toStringAsFixed(1),
+                value: widget.debt.remainingAmount.toSmartAmount(),
                 isHighlighted: true,
               ),
             ],
@@ -226,15 +263,18 @@ class _MyDebtDetailsReportScreenState extends State<MyDebtDetailsReportScreen> {
     );
   }
 
-  Widget _buildTransactionList(List<MyDebtTransactionEntity> transactions) {
-    return ListView.builder(
+  Widget _buildTransactionList(List<PaymentEntity> transactions) {
+    return SliverPadding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
-      itemCount: transactions.length,
-      physics: const BouncingScrollPhysics(),
-      itemBuilder: (context, index) {
-        final transaction = transactions[index];
-        return _TransactionItem(transaction: transaction);
-      },
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final transaction = transactions[index];
+            return _TransactionItem(transaction: transaction);
+          },
+          childCount: transactions.length,
+        ),
+      ),
     );
   }
 }
@@ -284,17 +324,19 @@ class _SummaryItem extends StatelessWidget {
 }
 
 class _TransactionItem extends StatelessWidget {
-  final MyDebtTransactionEntity transaction;
+  final PaymentEntity transaction;
 
   const _TransactionItem({required this.transaction});
 
   @override
   Widget build(BuildContext context) {
-    final bool isPayment = transaction.type == 'payment';
-    final String dateStr = DateFormat(
-      'yyyy/MM/dd - hh:mm a',
-      AppStrings.currentLang,
-    ).format(transaction.date);
+    final bool isPayment = transaction.type != PaymentType.debtAdded;
+    final String dateStr = transaction.createdAt != null
+        ? DateFormat(
+            'yyyy/MM/dd - hh:mm a',
+            AppStrings.currentLang,
+          ).format(transaction.createdAt!)
+        : '';
 
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
@@ -334,7 +376,7 @@ class _TransactionItem extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isPayment ? AppStrings.payment.tr() : AppStrings.debtAdded.tr(),
+                  _getTransactionTitle(),
                   style: TextStyles.customStyle(
                     color: AppColors.textColor,
                     fontSize: 14.sp,
@@ -358,11 +400,21 @@ class _TransactionItem extends StatelessWidget {
               FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
-                  '${isPayment ? "-" : "+"}${transaction.amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
+                  '${isPayment ? "-" : "+"}${transaction.amountPaid.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                   style: TextStyles.customStyle(
                     color: isPayment ? AppColors.primaryColor : AppColors.error,
                     fontSize: 15.sp,
                     fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  '${AppStrings.remaining.tr()}: ${transaction.remainingAmount.toSmartAmount()}',
+                  style: TextStyles.customStyle(
+                    color: AppColors.disabledColor,
+                    fontSize: 10.sp,
                   ),
                 ),
               ),
@@ -371,5 +423,20 @@ class _TransactionItem extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _getTransactionTitle() {
+    switch (transaction.type) {
+      case PaymentType.partial:
+        return AppStrings.partialPayment.tr();
+      case PaymentType.full:
+        return AppStrings.fullPayment.tr();
+      case PaymentType.settlement:
+        return AppStrings.settlement.tr();
+      case PaymentType.debtAdded:
+        return AppStrings.debtAdded.tr();
+      default:
+        return AppStrings.paymentReceived.tr();
+    }
   }
 }

@@ -11,6 +11,7 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/assets.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
+import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_state.dart';
 
 class MyDebtsNotificationDialog extends StatefulWidget {
   final String personName;
@@ -42,10 +43,10 @@ class MyDebtsNotificationDialog extends StatefulWidget {
     final myDebtsState = context.read<MyDebtsCubit>().state;
     String preference = 'none';
     if (myDebtsState.status == MyDebtsStatus.loaded) {
-      final debt = myDebtsState.debts
-          .where((d) => d.personName.trim() == personName.trim())
+      final person = myDebtsState.persons
+          .where((p) => p.name.trim() == personName.trim())
           .firstOrNull;
-      preference = debt?.notificationPreference ?? 'none';
+      preference = person?.notificationPreference ?? 'none';
     }
 
     if (preference == 'none') return;
@@ -112,6 +113,7 @@ class MyDebtsNotificationDialog extends StatefulWidget {
               remaining: remainingBalance,
               date: DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now()),
               note: note ?? '',
+              template: AppStrings.myDebtsWhatsappTemplate.tr(),
             )
           : SmsService.prepareMessage(
               name: personName,
@@ -119,6 +121,7 @@ class MyDebtsNotificationDialog extends StatefulWidget {
               remaining: remainingBalance,
               date: DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now()),
               note: note ?? '',
+              template: AppStrings.myDebtsSmsTemplate.tr(),
             ));
 
       if (mode == 'whatsapp') {
@@ -167,13 +170,13 @@ class _MyDebtsNotificationDialogState extends State<MyDebtsNotificationDialog> {
   void _loadPersonPhone() {
     final state = context.read<MyDebtsCubit>().state;
     if (state.status == MyDebtsStatus.loaded) {
-      final debt = state.debts
-          .where((d) => d.personName.trim() == widget.personName.trim())
+      final person = state.persons
+          .where((p) => p.name.trim() == widget.personName.trim())
           .firstOrNull;
-      if (debt != null &&
-          debt.phoneNumber != null &&
-          debt.phoneNumber!.isNotEmpty) {
-        _phoneController.text = debt.phoneNumber!;
+      if (person != null &&
+          person.phoneNumber != null &&
+          person.phoneNumber!.isNotEmpty) {
+        _phoneController.text = person.phoneNumber!;
       }
     }
   }
@@ -272,7 +275,7 @@ class _MyDebtsNotificationDialogState extends State<MyDebtsNotificationDialog> {
           ),
           SizedBox(height: 20.h),
           Text(
-            AppStrings.customerPhone.tr(),
+            AppStrings.sellerPhone.tr(),
             style: TextStyles.customStyle(
               color: AppColors.disabledColor,
               fontSize: 14.sp,

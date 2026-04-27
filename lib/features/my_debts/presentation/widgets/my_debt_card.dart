@@ -1,22 +1,24 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
-import 'package:tahsel/features/my_debts/data/models/my_debt_item_model.dart';
+import 'package:tahsel/features/my_debts/domain/entities/my_debt_person_entity.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
-import 'package:tahsel/shared/widgets/shimmer/shimmer_loading.dart';
+import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_state.dart';
 import 'package:tahsel/routes/app_routes.dart';
+import 'package:tahsel/shared/widgets/shimmer/shimmer_loading.dart';
 
 class MyDebtCard extends StatelessWidget {
-  final MyDebtDetail detail;
-  final VoidCallback? onLongPress;
+  final MyDebtPersonEntity person;
 
-  const MyDebtCard({super.key, required this.detail, this.onLongPress});
+  const MyDebtCard({super.key, required this.person});
 
   @override
   Widget build(BuildContext context) {
@@ -35,18 +37,22 @@ class MyDebtCard extends StatelessWidget {
       ),
       child: Material(
         color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            sl<NavigatorService>().pushNamedWithArgs(
+        child: GestureDetector(
+          onTap: () async {
+            final uid = FirebaseAuth.instance.currentUser?.uid;
+            await sl<NavigatorService>().pushNamedWithArgs(
               routeName: AppRoutes.myDebtDetails,
-              arguments: detail,
+              arguments: person,
             );
+            if (context.mounted && uid != null) {
+              context.read<MyDebtsCubit>().loadPersons(uid, forceRefresh: true);
+            }
           },
-          onLongPress: onLongPress,
-          borderRadius: BorderRadius.circular(16.r),
           child: BlocBuilder<MyDebtsCubit, MyDebtsState>(
             builder: (context, state) {
-              final isProcessing = state.processingId == detail.personName;
+              final isProcessing = state.processingId == person.name;
+              final totalPaid =
+                  person.totalDebtAmount - person.totalRemainingDebt;
 
               return Stack(
                 children: [
@@ -65,7 +71,7 @@ class MyDebtCard extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      detail.personName,
+                                      person.name,
                                       style: TextStyles.customStyle(
                                         color: AppColors.textColor,
                                         fontSize: 18.sp,
@@ -74,10 +80,10 @@ class MyDebtCard extends StatelessWidget {
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                    if (detail.phoneNumber != null &&
-                                        detail.phoneNumber!.isNotEmpty)
+                                    if (person.phoneNumber != null &&
+                                        person.phoneNumber!.isNotEmpty)
                                       Text(
-                                        detail.phoneNumber!,
+                                        person.phoneNumber!,
                                         style: TextStyles.customStyle(
                                           color: AppColors.subTitleColor,
                                           fontSize: 12.sp,
@@ -86,24 +92,7 @@ class MyDebtCard extends StatelessWidget {
                                   ],
                                 ),
                               ),
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 10.w,
-                                  vertical: 4.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: detail.statusColor.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8.r),
-                                ),
-                                child: Text(
-                                  detail.status.tr(),
-                                  style: TextStyles.customStyle(
-                                    color: detail.statusColor,
-                                    fontSize: 12.sp,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
+                              _buildStatusBadge(),
                             ],
                           ),
                           SizedBox(height: 16.h),
@@ -112,12 +101,12 @@ class MyDebtCard extends StatelessWidget {
                             children: [
                               _buildAmountInfo(
                                 AppStrings.remainingDebt.tr(),
-                                detail.totalDebt,
+                                person.totalRemainingDebt,
                                 AppColors.error,
                               ),
                               _buildAmountInfo(
                                 AppStrings.paid.tr(),
-                                detail.totalPaid,
+                                totalPaid,
                                 AppColors.success,
                               ),
                             ],
@@ -132,7 +121,7 @@ class MyDebtCard extends StatelessWidget {
                               ),
                               SizedBox(width: 6.w),
                               Text(
-                                '${AppStrings.lastTransactionDate.tr()}: ${detail.lastTransactionDate}',
+                                '${AppStrings.lastTransactionDate.tr()}: ${DateFormat('yyyy/MM/dd').format(person.lastUsedAt)}',
                                 style: TextStyles.customStyle(
                                   color: AppColors.disabledColor,
                                   fontSize: 12.sp,
@@ -159,6 +148,28 @@ class MyDebtCard extends StatelessWidget {
               );
             },
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge() {
+    final bool isPaid = person.totalRemainingDebt <= 0;
+    final color = isPaid ? AppColors.success : AppColors.error;
+    final text = isPaid ? AppStrings.paid : AppStrings.remaining;
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8.r),
+      ),
+      child: Text(
+        text.tr(),
+        style: TextStyles.customStyle(
+          color: color,
+          fontSize: 12.sp,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );
