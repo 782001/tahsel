@@ -18,6 +18,7 @@ import 'package:tahsel/features/my_debts/presentation/widgets/my_debt_details_wi
 import 'package:tahsel/features/my_debts/presentation/widgets/my_debt_item_card.dart';
 import 'package:tahsel/features/my_debts/presentation/widgets/my_notification_dialog.dart';
 import 'package:tahsel/features/my_debts/presentation/widgets/my_partial_payment_dialog.dart';
+import 'package:tahsel/shared/widgets/shimmer/transaction_skeleton.dart';
 
 class MyDebtDetailsScreen extends StatefulWidget {
   final MyDebtPersonEntity person;
@@ -356,10 +357,12 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
                 SliverToBoxAdapter(child: SizedBox(height: 16.h)),
                 if (state.status == MyDebtDetailsStatus.loading &&
                     state.items.isEmpty)
-                  SliverFillRemaining(
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primaryColor,
+                  SliverPadding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => const TransactionCardSkeleton(),
+                        childCount: 3,
                       ),
                     ),
                   )

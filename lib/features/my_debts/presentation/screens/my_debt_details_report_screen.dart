@@ -87,7 +87,7 @@ class _MyDebtDetailsReportScreenState extends State<MyDebtDetailsReportScreen> {
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (context, index) => const TransactionCardSkeleton(),
-                        childCount: 5,
+                        childCount: 3,
                       ),
                     ),
                   );
