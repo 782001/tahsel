@@ -37,7 +37,8 @@ class MyDebtCard extends StatelessWidget {
       ),
       child: Material(
         color: Colors.transparent,
-        child: GestureDetector(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16.r),
           onTap: () async {
             final uid = FirebaseAuth.instance.currentUser?.uid;
             await sl<NavigatorService>().pushNamedWithArgs(
