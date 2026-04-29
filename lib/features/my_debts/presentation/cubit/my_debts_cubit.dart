@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/base_usecase/base_usecase.dart';
+import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_item_entity.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_person_entity.dart';
@@ -172,11 +173,14 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
     String? details,
     String? phone,
   }) async {
+    // Sanitize personName: replace '/' with ' ' to avoid Firestore path segment errors
+    final sanitizedName = personName.replaceAll('/', ' ').trim();
+
     // if (isClosed) return;
     emit(
       state.copyWith(
         status: MyDebtsStatus.addingDebt,
-        processingId: personName,
+        processingId: sanitizedName,
       ),
     );
 
@@ -188,7 +192,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
       totalAmount: totalAmount,
       paidAmount: paidAmount,
       remainingAmount: totalAmount - paidAmount,
-      personName: personName,
+      personName: sanitizedName,
       details: details ?? 'ديون جديدة',
       operationType: 'debt',
       timestamp: now,
@@ -199,9 +203,12 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
     final result = await addDebtUseCase(debt);
     if (isClosed) return;
     result.fold(
-      (failure) => emit(
+      (failure) {
+        AppLogger.printMessage(failure.message);
+        emit(
         state.copyWith(status: MyDebtsStatus.error, message: failure.message),
-      ),
+      );
+      },
       (_) => loadPersons(uid, forceRefresh: true),
     );
   }
@@ -212,17 +219,18 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
     required double amount,
     required double totalRemainingBefore,
   }) async {
+    final sanitizedName = personName.replaceAll('/', ' ').trim();
     if (isClosed) return;
     emit(
       state.copyWith(
         status: MyDebtsStatus.addingPayment,
-        processingId: personName,
+        processingId: sanitizedName,
       ),
     );
 
     final result = await distributePaymentUseCase(
       uid: uid,
-      personName: personName,
+      personName: sanitizedName,
       amount: amount,
     );
 
@@ -235,7 +243,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
         emit(
           state.copyWith(
             status: MyDebtsStatus.loaded,
-            lastPaymentPerson: personName,
+            lastPaymentPerson: sanitizedName,
             lastPaymentAmount: amount,
             lastPaymentRemaining: totalRemainingBefore - amount,
           ),
@@ -250,14 +258,15 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
     String name,
     String preference,
   ) async {
+    final sanitizedName = name.replaceAll('/', ' ').trim();
     // Optimistic Update
     final updated = _allPersons.map((p) {
-      if (p.name == name) return p.copyWith(notificationPreference: preference);
+      if (p.name == sanitizedName) return p.copyWith(notificationPreference: preference);
       return p;
     }).toList();
     _emitLoaded(updated);
 
-    final result = await updatePreferenceUseCase(uid, name, preference);
+    final result = await updatePreferenceUseCase(uid, sanitizedName, preference);
     result.fold(
       (failure) => loadPersons(uid, forceRefresh: true), // Rollback
       (_) => null,

@@ -173,9 +173,9 @@ class _AddMyDebtScreenState extends State<AddMyDebtScreen> {
                               CustomTextFormField(
                                 controller: _totalController,
                                 hintText: AppStrings.totalAmountHint.tr(),
-                                prefixIcon: Icons.payments_outlined,
+                                // prefixIcon: Icons.payments_outlined,
                                 keyboardType: TextInputType.number,
-                                hintFontSize: 10.sp,
+                                hintFontSize: 12.sp,
                                 validator: (val) {
                                   if (val!.isEmpty) {
                                     return AppStrings.validationFieldRequired
@@ -208,7 +208,7 @@ class _AddMyDebtScreenState extends State<AddMyDebtScreen> {
                               CustomTextFormField(
                                 controller: _paidController,
                                 hintText: "0.00",
-                                prefixText: AppStrings.currencyEgp.tr(),
+                                // prefixText: AppStrings.currencyEgp.tr(),
                                 keyboardType: TextInputType.number,
                                 validator: (val) {
                                   if (val!.isEmpty) return null;

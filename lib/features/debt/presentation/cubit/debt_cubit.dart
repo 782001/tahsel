@@ -43,6 +43,7 @@ class DebtCubit extends Cubit<DebtState> {
     required String? ledgerNumber,
     String? operationId,
   }) async {
+    final sanitizedName = customerName.replaceAll('/', ' ').trim();
     emit(DebtLoading());
 
     final now = DateTime.now();
@@ -50,7 +51,7 @@ class DebtCubit extends Cubit<DebtState> {
       uid: uid,
       totalAmount: totalAmount,
       paidAmount: paidAmount,
-      customerName: customerName,
+      customerName: sanitizedName,
       productOrSessionDetails: productOrSessionDetails,
       operationType: operationType,
       ledgerNumber: ledgerNumber,
@@ -87,15 +88,16 @@ class DebtCubit extends Cubit<DebtState> {
     required double totalRemainingBefore,
     String? note,
   }) async {
+    final sanitizedName = customerName.replaceAll('/', ' ').trim();
     emit(DebtLoading());
     final result = await payDebtUseCase(
-      PayDebtParams(uid: uid, customerName: customerName, amount: amount),
+      PayDebtParams(uid: uid, customerName: sanitizedName, amount: amount),
     );
     result.fold((failure) => emit(DebtFailure(message: failure.message)), (
       _,
     ) {
       emit(DebtPaymentSuccess(
-        customerName: customerName,
+        customerName: sanitizedName,
         amountPaid: amount,
         remainingBalance: totalRemainingBefore - amount,
         note: note,
@@ -110,15 +112,16 @@ class DebtCubit extends Cubit<DebtState> {
     required double totalAmount,
     String? note,
   }) async {
+    final sanitizedName = customerName.replaceAll('/', ' ').trim();
     emit(DebtLoading());
     final result = await markCustomerAsPaidUseCase(
-      MarkCustomerAsPaidParams(uid: uid, customerName: customerName),
+      MarkCustomerAsPaidParams(uid: uid, customerName: sanitizedName),
     );
     result.fold((failure) => emit(DebtFailure(message: failure.message)), (
       _,
     ) {
       emit(DebtPaymentSuccess(
-        customerName: customerName,
+        customerName: sanitizedName,
         amountPaid: totalAmount,
         remainingBalance: 0,
         note: note,
@@ -170,9 +173,10 @@ class DebtCubit extends Cubit<DebtState> {
   }
 
   Future<void> deleteCustomerDebts(String uid, String customerName) async {
+    final sanitizedName = customerName.replaceAll('/', ' ').trim();
     emit(DebtLoading());
     final result = await deleteCustomerDebtUseCase(
-      DeleteDebtParams(uid: uid, customerName: customerName),
+      DeleteDebtParams(uid: uid, customerName: sanitizedName),
     );
     result.fold((failure) => emit(DebtFailure(message: failure.message)), (
       _,

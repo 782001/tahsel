@@ -155,9 +155,9 @@ class QuickAddShopForm extends StatelessWidget {
                     const SizedBox(height: 8),
                     QuickAddTextField(
                       hint: AppStrings.totalAmountHint.tr(),
-                      hintFontSize: 10.sp,
+                      hintFontSize: 12.sp,
                       controller: totalAmountController,
-                      icon: Icons.payments_outlined,
+                      // icon: Icons.payments_outlined,
                       isNumber: true,
                       focusNode: totalAmountFocus,
                       textInputAction: totalAmountInputAction,
@@ -183,7 +183,7 @@ class QuickAddShopForm extends StatelessWidget {
                     QuickAddTextField(
                       hint: '0.00',
                       controller: paidController,
-                      prefixText: AppStrings.currencyEgp.tr(),
+                      // prefixText: AppStrings.currencyEgp.tr(),
                       isNumber: true,
                       focusNode: paidFocus,
                       textInputAction: paidInputAction,
