@@ -41,6 +41,7 @@ class DebtCubit extends Cubit<DebtState> {
     required String productOrSessionDetails,
     required String operationType,
     required String? ledgerNumber,
+    String? operationId,
   }) async {
     emit(DebtLoading());
 
@@ -53,6 +54,7 @@ class DebtCubit extends Cubit<DebtState> {
       productOrSessionDetails: productOrSessionDetails,
       operationType: operationType,
       ledgerNumber: ledgerNumber,
+      operationId: operationId,
       now: now,
     ));
 
@@ -202,8 +204,9 @@ class _AddCustomerDebtParams {
   final String productOrSessionDetails;
   final String operationType;
   final String? ledgerNumber;
+  final String? operationId;
   final DateTime now;
-  
+
   _AddCustomerDebtParams({
     required this.uid,
     required this.totalAmount,
@@ -212,22 +215,28 @@ class _AddCustomerDebtParams {
     required this.productOrSessionDetails,
     required this.operationType,
     required this.ledgerNumber,
+    this.operationId,
     required this.now,
   });
 }
 
 DebtEntity _createCustomerDebtEntity(_AddCustomerDebtParams params) {
   final remainingAmount = params.totalAmount - params.paidAmount;
+
+  final timeKey = params.now.millisecondsSinceEpoch ~/ 1000;
+  final fingerprint = '${params.uid}_debt_${params.totalAmount}_${params.customerName}_$timeKey';
+  final deterministicId = 'debt_${fingerprint.hashCode.toString()}';
+
   return DebtEntity(
     uid: params.uid,
-    operationId: 'manual_debt_${params.now.millisecondsSinceEpoch}',
+    operationId: params.operationId ?? deterministicId,
     totalAmount: params.totalAmount,
     paidAmount: params.paidAmount,
     remainingAmount: remainingAmount,
     customerName: params.customerName,
     productOrSessionDetails: params.productOrSessionDetails.isNotEmpty
         ? params.productOrSessionDetails
-        : 'ديون جديدة', // Keeping it consistent with "New debt" logic (from AppStrings.newDebt.tr() if empty)
+        : 'ديون جديدة',
     operationType: params.operationType,
     timestamp: params.now,
     isPaid: remainingAmount <= 0,

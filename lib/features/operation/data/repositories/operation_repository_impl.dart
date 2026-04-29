@@ -26,12 +26,10 @@ class OperationRepositoryImpl implements OperationRepository {
     try {
       final model = OperationModel.fromEntity(operation);
 
-      // 1. ALWAYS handle as an offline record first for consistency ('syncedAt' and type safety)
-      final localId = DateTime.now().millisecondsSinceEpoch.toString();
-      
-      // We don't use model.toJson() directly for the local payload because it contains 
-      // FieldValue.serverTimestamp() which cannot be jsonEncoded for Hive.
+      // 1. Generate a DETERMINISTIC local ID (Idempotency Key)
+      // This prevents duplicates if the same data is sent multiple times within a short window.
       final transactionDate = model.timestamp ?? DateTime.now();
+      final localId = _generateIdempotencyKey(model, transactionDate);
       
       final Map<String, dynamic> hivePayload = {
         'uid': model.uid,
@@ -71,8 +69,6 @@ class OperationRepositoryImpl implements OperationRepository {
           // 2. Immediate prioritized sync if online
           final hasConnection = await connectionChecker.hasConnection;
           if (hasConnection) {
-            // This sync logic (in OfflineRemoteDataSourceImpl) will convert 
-            // the 'timestamp' String back into a proper Firestore Timestamp.
             await offlineSyncRepository.syncSingleRecord(offlineRecord);
           }
           return Right(localId);
@@ -81,5 +77,12 @@ class OperationRepositoryImpl implements OperationRepository {
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
+  }
+
+  String _generateIdempotencyKey(OperationModel model, DateTime date) {
+    // Round to the nearest second to collapse millisecond double-taps
+    final timeKey = date.millisecondsSinceEpoch ~/ 1000;
+    final fingerprint = '${model.uid}_${model.type}_${model.totalAmount}_${model.customerName}_$timeKey';
+    return 'op_${fingerprint.hashCode.toString()}';
   }
 }

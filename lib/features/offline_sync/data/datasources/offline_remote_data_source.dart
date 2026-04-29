@@ -21,6 +21,8 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
 
       if (record.type == 'my_debt_add') {
         await _syncMyDebtAdd(record, payload);
+      } else if (record.type == 'debt_add') {
+        await _syncDebtAdd(record, payload);
       } else {
         // Simple collection sync (e.g., expenses)
         await _syncSimpleRecord(record, payload);
@@ -115,6 +117,83 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
     AppLogger.printMessage("[OfflineSync] Committing Batch to Firestore...");
     await batch.commit();
     AppLogger.printMessage("[OfflineSync] Batch Committed Successfully.");
+  }
+
+  Future<void> _syncDebtAdd(OfflineRecord record, Map<String, dynamic> payload) async {
+    final uid = payload['uid'] as String;
+    final customerName = payload['customerName'] as String;
+    final operationId = payload['operationId'] as String;
+    final totalAmount = (payload['totalAmount'] as num).toDouble();
+    final paidAmount = (payload['paidAmount'] as num).toDouble();
+    final remainingAmount = (payload['remainingAmount'] as num).toDouble();
+    final timestampStr = payload['timestamp'] as String;
+    final timestamp = Timestamp.fromDate(DateTime.parse(timestampStr));
+
+    final userRef = firestore.collection('users').doc(uid);
+    // Use operationId for doc ID to ensure link integrity and idempotency
+    final debtRef = userRef.collection('debts').doc(operationId);
+    
+    // 0. IDEMPOTENCY CHECK
+    final existingDoc = await debtRef.get();
+    if (existingDoc.exists) {
+      AppLogger.printMessage("[OfflineSync] Debt record ${operationId} already exists. Skipping sync.");
+      return;
+    }
+
+    final opRef = userRef.collection('operations').doc(operationId);
+
+    AppLogger.printMessage("[OfflineSync] Syncing Customer Debt Add - Customer: $customerName, Amount: $totalAmount");
+
+    final batch = firestore.batch();
+
+    // 1. Prepare Debt Payload
+    payload['timestamp'] = timestamp;
+    payload['lastUpdatedAt'] = FieldValue.serverTimestamp();
+    payload['syncedAt'] = FieldValue.serverTimestamp();
+    batch.set(debtRef, payload);
+
+    // 2. Sync with operations ONLY if it doesn't look like a Quick Add (id starts with op_)
+    // or if we want to be safe, we just set it since it's a batch and will overwrite with same data.
+    if (!operationId.startsWith('op_')) {
+      batch.set(opRef, {
+        'uid': uid,
+        'type': payload['operationType'] ?? 'debt',
+        'customerName': customerName,
+        'productName': payload['productOrSessionDetails'],
+        'totalAmount': totalAmount,
+        'paidAmount': paidAmount,
+        'remainingDebt': remainingAmount,
+        'timestamp': timestamp,
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+        'syncedAt': FieldValue.serverTimestamp(),
+        'ledgerNumber': payload['ledgerNumber'],
+      });
+    }
+
+    // 3. Add initial transaction record to payments history
+    final initialPaymentRef = debtRef.collection('payments').doc('${operationId}_initial');
+    batch.set(initialPaymentRef, {
+      'debtId': operationId,
+      'amountPaid': totalAmount,
+      'remainingAmount': totalAmount,
+      'createdAt': timestamp,
+      'type': 'debtAdded',
+    });
+
+    // 4. Add initial payment transaction if any
+    if (paidAmount > 0) {
+      final actualPaymentRef = debtRef.collection('payments').doc('${operationId}_payment');
+      batch.set(actualPaymentRef, {
+        'debtId': operationId,
+        'amountPaid': paidAmount,
+        'remainingAmount': remainingAmount,
+        'createdAt': Timestamp.fromDate(DateTime.parse(timestampStr).add(const Duration(milliseconds: 1))),
+        'type': remainingAmount <= 0 ? 'full' : 'partial',
+      });
+    }
+
+    await batch.commit();
+    AppLogger.printMessage("[OfflineSync] Debt record $operationId synced successfully.");
   }
 
   Future<void> _syncSimpleRecord(OfflineRecord record, Map<String, dynamic> payload) async {

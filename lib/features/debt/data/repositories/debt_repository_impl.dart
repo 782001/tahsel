@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dartz/dartz.dart';
 import '../../domain/entities/debt_entity.dart';
 import '../../domain/entities/payment_entity.dart';
@@ -5,19 +6,58 @@ import '../../domain/repositories/debt_repository.dart';
 import '../datasources/debt_remote_data_source.dart';
 import '../models/debt_model.dart';
 import '../models/payment_model.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
+import '../../../offline_sync/data/models/offline_record.dart';
+import '../../../offline_sync/domain/repositories/offline_sync_repository.dart';
 import '../../../../core/error/failures.dart';
 
 class DebtRepositoryImpl implements DebtRepository {
   final DebtRemoteDataSource remoteDataSource;
+  final InternetConnectionChecker connectionChecker;
+  final OfflineSyncRepository offlineSyncRepository;
 
-  DebtRepositoryImpl({required this.remoteDataSource});
+  DebtRepositoryImpl({
+    required this.remoteDataSource,
+    required this.connectionChecker,
+    required this.offlineSyncRepository,
+  });
 
   @override
   Future<Either<Failure, String>> addDebt(DebtEntity debt) async {
     try {
-      final deptModel = DebtModel.fromEntity(debt);
-      final id = await remoteDataSource.addDebt(deptModel);
-      return Right(id);
+      final model = DebtModel.fromEntity(debt);
+      final hasConnection = await connectionChecker.hasConnection;
+
+      if (hasConnection) {
+        final id = await remoteDataSource.addDebt(model);
+        return Right(id);
+      } else {
+        // OFFLINE: Save to Hive for later sync
+        final Map<String, dynamic> hivePayload = model.toJson();
+        
+        // Sanitize for JSON encoding (REMOVE Timestamps/FieldValues)
+        hivePayload['timestamp'] = model.timestamp?.toIso8601String() ?? DateTime.now().toIso8601String();
+        hivePayload['lastUpdatedAt'] = DateTime.now().toIso8601String();
+
+        final payloadJson = jsonEncode(hivePayload);
+
+        final offlineRecord = OfflineRecord(
+          id: debt.operationId, // Use the shared operationId
+          amount: model.totalAmount,
+          date: model.timestamp ?? DateTime.now(),
+          customerName: model.customerName ?? '',
+          type: 'debt_add',
+          isSynced: false,
+          payloadJson: payloadJson,
+          collectionName: 'users/${model.uid}/debts',
+        );
+
+        final saveResult = await offlineSyncRepository.saveOfflineRecord(offlineRecord);
+        return saveResult.fold(
+          (failure) => Left(failure),
+          (_) => Right(debt.operationId),
+        );
+      }
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

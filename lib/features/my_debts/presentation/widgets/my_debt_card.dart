@@ -12,7 +12,6 @@ import 'package:tahsel/features/my_debts/domain/entities/my_debt_person_entity.d
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_state.dart';
 import 'package:tahsel/routes/app_routes.dart';
-import 'package:tahsel/shared/widgets/shimmer/shimmer_loading.dart';
 
 class MyDebtCard extends StatelessWidget {
   final MyDebtPersonEntity person;
@@ -52,133 +51,115 @@ class MyDebtCard extends StatelessWidget {
                         routeName: AppRoutes.myDebtDetails,
                         arguments: person,
                       );
-                      if (context.mounted && uid != null) {
+                      if (context.mounted) {
                         context.read<MyDebtsCubit>().loadPersons(
                           uid,
                           forceRefresh: true,
                         );
                       }
                     },
-              child: Stack(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.all(16.r),
-                    child: Opacity(
-                      opacity: (isProcessing || isOffline) ? 0.7 : 1.0,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Padding(
+                padding: EdgeInsets.all(16.r),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Flexible(
-                                          child: Text(
-                                            person.name,
-                                            style: TextStyles.customStyle(
-                                              color: AppColors.textColor,
-                                              fontSize: 18.sp,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        if (person.isPending) ...[
-                                          SizedBox(width: 8.w),
-                                          Container(
-                                            padding: EdgeInsets.symmetric(
-                                              horizontal: 6.w,
-                                              vertical: 2.h,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: AppColors.error
-                                                  .withOpacity(0.1),
-                                              borderRadius:
-                                                  BorderRadius.circular(4.r),
-                                            ),
-                                            child: Text(
-                                              AppStrings.syncing.tr(),
-                                              style: TextStyles.customStyle(
-                                                color: AppColors.error,
-                                                fontSize: 10.sp,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ],
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      person.name,
+                                      style: TextStyles.customStyle(
+                                        color: AppColors.textColor,
+                                        fontSize: 18.sp,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    if (person.phoneNumber != null &&
-                                        person.phoneNumber!.isNotEmpty)
-                                      Text(
-                                        person.phoneNumber!,
-                                        style: TextStyles.customStyle(
-                                          color: AppColors.subTitleColor,
-                                          fontSize: 12.sp,
+                                  ),
+                                  if (person.isPending) ...[
+                                    SizedBox(width: 8.w),
+                                    Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 6.w,
+                                        vertical: 2.h,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.error.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(
+                                          4.r,
                                         ),
                                       ),
+                                      child: Text(
+                                        AppStrings.syncing.tr(),
+                                        style: TextStyles.customStyle(
+                                          color: AppColors.error,
+                                          fontSize: 10.sp,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
                                   ],
+                                ],
+                              ),
+                              if (person.phoneNumber != null &&
+                                  person.phoneNumber!.isNotEmpty)
+                                Text(
+                                  person.phoneNumber!,
+                                  style: TextStyles.customStyle(
+                                    color: AppColors.subTitleColor,
+                                    fontSize: 12.sp,
+                                  ),
                                 ),
-                              ),
-                              _buildStatusBadge(),
                             ],
-                          ),
-                          SizedBox(height: 16.h),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              _buildAmountInfo(
-                                AppStrings.remainingDebt.tr(),
-                                person.totalRemainingDebt,
-                                AppColors.error,
-                              ),
-                              _buildAmountInfo(
-                                AppStrings.paid.tr(),
-                                totalPaid,
-                                AppColors.success,
-                              ),
-                            ],
-                          ),
-                          const Divider(height: 24, thickness: 0.5),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.calendar_today_outlined,
-                                color: AppColors.disabledColor,
-                                size: 14.sp,
-                              ),
-                              SizedBox(width: 6.w),
-                              Text(
-                                '${AppStrings.lastTransactionDate.tr()}: ${DateFormat('yyyy/MM/dd').format(person.lastUsedAt)}',
-                                style: TextStyles.customStyle(
-                                  color: AppColors.disabledColor,
-                                  fontSize: 12.sp,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (isProcessing)
-                    Positioned.fill(
-                      child: ShimmerLoading(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.5),
-                            borderRadius: BorderRadius.circular(16.r),
                           ),
                         ),
-                      ),
+                        _buildStatusBadge(),
+                      ],
                     ),
-                ],
+                    SizedBox(height: 16.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildAmountInfo(
+                          AppStrings.remainingDebt.tr(),
+                          person.totalRemainingDebt,
+                          AppColors.error,
+                        ),
+                        _buildAmountInfo(
+                          AppStrings.paid.tr(),
+                          totalPaid,
+                          AppColors.success,
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 24, thickness: 0.5),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today_outlined,
+                          color: AppColors.disabledColor,
+                          size: 14.sp,
+                        ),
+                        SizedBox(width: 6.w),
+                        Text(
+                          '${AppStrings.lastTransactionDate.tr()}: ${DateFormat('yyyy/MM/dd').format(person.lastUsedAt)}',
+                          style: TextStyles.customStyle(
+                            color: AppColors.disabledColor,
+                            fontSize: 12.sp,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

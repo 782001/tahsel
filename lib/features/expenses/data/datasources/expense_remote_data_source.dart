@@ -21,11 +21,16 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
   @override
   Future<String> addExpense(ExpenseModel expense) async {
     try {
-      final docRef = await firestore
+      final collectionRef = firestore
           .collection('users')
           .doc(expense.uid)
-          .collection('expenses')
-          .add(expense.toJson());
+          .collection('expenses');
+      
+      final docRef = (expense.id != null && expense.id!.isNotEmpty)
+          ? collectionRef.doc(expense.id)
+          : collectionRef.doc();
+      
+      await docRef.set(expense.toJson());
       return docRef.id;
     } catch (e) {
       FirebaseErrorHandler.handle(e);

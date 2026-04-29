@@ -74,7 +74,11 @@ Future<void> initDebt() async {
 
   // Repository
   sl.registerLazySingleton<DebtRepository>(
-    () => DebtRepositoryImpl(remoteDataSource: sl()),
+    () => DebtRepositoryImpl(
+      remoteDataSource: sl(),
+      connectionChecker: sl(),
+      offlineSyncRepository: sl(),
+    ),
   );
 
   // Data sources

@@ -4,13 +4,13 @@ import 'package:tahsel/core/utils/app_colors.dart';
 class QuickActionButton extends StatelessWidget {
   final String label;
   final IconData icon;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   const QuickActionButton({
     super.key,
     required this.label,
     required this.icon,
-    required this.onPressed,
+    this.onPressed,
   });
 
   @override

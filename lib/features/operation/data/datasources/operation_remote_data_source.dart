@@ -14,11 +14,14 @@ class OperationRemoteDataSourceImpl implements OperationRemoteDataSource {
   @override
   Future<String> addOperation(OperationModel operation) async {
     try {
-      final docRef = firestore
+      final collectionRef = firestore
           .collection('users')
           .doc(operation.uid)
-          .collection('operations')
-          .doc();
+          .collection('operations');
+      
+      final docRef = (operation.id != null && operation.id!.isNotEmpty)
+          ? collectionRef.doc(operation.id)
+          : collectionRef.doc();
       
       await docRef.set(operation.toJson());
       return docRef.id;

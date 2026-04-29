@@ -42,7 +42,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         existingPhone ??= data['phoneNumber'] as String?;
       }
 
-      final debtRef = userRef.collection('debts').doc();
+      final debtRef = userRef.collection('debts').doc(debt.operationId);
       final opRef = userRef.collection('operations').doc(debt.operationId);
 
       final batch = firestore.batch();
@@ -53,28 +53,31 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         debtJson['phoneNumber'] = existingPhone;
       }
 
-      // 1. Add to debts collection
+      // 2. ONLY write to operations collection if this is a manual debt (not from Quick Add)
+      // Quick Add operations are already written by OperationRepository.
+      // We detect Quick Add operations by their ID prefix 'op_'.
+      if (!debt.operationId.startsWith('op_')) {
+        batch.set(opRef, {
+          'uid': debt.uid,
+          'type': debt.operationType,
+          'customerName': debt.customerName,
+          'productName': debt.productOrSessionDetails,
+          'totalAmount': debt.totalAmount,
+          'paidAmount': debt.paidAmount,
+          'remainingDebt': debt.remainingAmount,
+          'timestamp': FieldValue.serverTimestamp(),
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+          'ledgerNumber': debt.ledgerNumber,
+        });
+      }
+
+      // 3. Add to debts collection
       batch.set(debtRef, debtJson);
 
-      // 2. Add to operations collection for Reports consistency
-      batch.set(opRef, {
-        'uid': debt.uid,
-        'type': debt.operationType,
-        'customerName': debt.customerName,
-        'productName': debt.productOrSessionDetails,
-        'totalAmount': debt.totalAmount,
-        'paidAmount': debt.paidAmount,
-        'remainingDebt': debt.remainingAmount,
-        'timestamp': debt.timestamp != null 
-            ? Timestamp.fromDate(debt.timestamp!) 
-            : FieldValue.serverTimestamp(),
-        'lastUpdatedAt': FieldValue.serverTimestamp(),
-      });
-
-      // 3. Add initial transaction record to payments history
-      final initialPaymentRef = debtRef.collection('payments').doc();
+      // 4. Add initial transaction record to payments history
+      final initialPaymentRef = debtRef.collection('payments').doc('${debt.operationId}_initial');
       batch.set(initialPaymentRef, {
-        'debtId': debtRef.id,
+        'debtId': debt.operationId,
         'amountPaid': debt.totalAmount, // Debt amount
         'remainingAmount': debt.totalAmount, // Before payment applied
         'createdAt': debt.timestamp != null 
@@ -85,9 +88,9 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
       // 4. Add initial payment transaction if there was a payment
       if (debt.paidAmount > 0) {
-        final actualPaymentRef = debtRef.collection('payments').doc();
+        final actualPaymentRef = debtRef.collection('payments').doc('${debt.operationId}_payment');
         batch.set(actualPaymentRef, {
-          'debtId': debtRef.id,
+          'debtId': debt.operationId,
           'amountPaid': debt.paidAmount,
           'remainingAmount': debt.remainingAmount,
           'createdAt': debt.timestamp != null 

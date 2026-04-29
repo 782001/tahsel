@@ -25,8 +25,14 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
     try {
       final model = ExpenseModel.fromEntity(expense);
       
-      // 1. ALWAYS handle as an offline record first for 100% data consistency.
-      final localId = DateTime.now().millisecondsSinceEpoch.toString();
+      // 1. GENERATE DETERMINISTIC ID (Idempotency Key)
+      // Rounded to nearest second to prevent race conditions from double-clicks
+      final timeKey = model.createdAt.millisecondsSinceEpoch ~/ 1000;
+      final fingerprint = '${model.uid}_${model.amount}_${model.category}_${model.description}_$timeKey';
+      final deterministicId = 'exp_${fingerprint.hashCode.toString()}';
+      
+      // 2. ALWAYS handle as an offline record first for 100% data consistency.
+      final localId = deterministicId;
       
       // We manually construct the Hive payload to avoid jsonEncode failing on Firestore Timestamps.
       final Map<String, dynamic> hivePayload = {
