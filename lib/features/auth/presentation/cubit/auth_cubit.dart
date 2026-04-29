@@ -37,19 +37,36 @@ class AuthCubit extends Cubit<AuthState> {
           await sl<InternetConnectionChecker>().hasConnection;
 
       if (user == null) {
-        // Only trigger logout if we ARE online and Firebase confirms no user.
-        // If offline, we trust the local session (token in SecureStorage).
-        if (hasInternet &&
-            state is! AuthUnauthenticated &&
-            state is! AuthInitial) {
-          AppLogger.printMessage(
-            'Firebase Auth state changed to null while ONLINE - triggering forced logout',
-          );
-          await forceLogout();
+        // Source of truth: Check if we have a local session stored securely
+        final String? localToken =
+            await sl<SecureStorageHelper>().getData(key: 'token');
+        final bool hasLocalSession =
+            localToken != null && localToken.isNotEmpty;
+
+        // Only trigger logout if we ARE online AND we have NO local session
+        // or if we are online and Firebase explicitly cleared the user (meaning session expired).
+        if (hasInternet) {
+          if (!hasLocalSession) {
+            // Already logged out locally, just ensure state is correct
+            if (state is! AuthUnauthenticated && state is! AuthInitial) {
+              await forceLogout();
+            }
+          } else {
+            // Online but Firebase says null? This usually means the session is invalid.
+            AppLogger.printMessage(
+              'Firebase user is null while ONLINE - Session likely expired on server',
+            );
+            await forceLogout();
+          }
         } else {
-          AppLogger.printMessage(
-            'Firebase Auth user is null while OFFLINE - ignoring to maintain local session',
-          );
+          // OFFLINE: If we have a local session, IGNORE Firebase being null.
+          if (hasLocalSession) {
+            AppLogger.printMessage(
+              'Firebase Auth is null while OFFLINE, but local session exists. Keeping user logged in.',
+            );
+          } else {
+            // No internet and no local session? Nothing to do, user is already out.
+          }
         }
       } else {
         // User is present. We only reload to check server status if we are online.
@@ -57,9 +74,11 @@ class AuthCubit extends Cubit<AuthState> {
           try {
             await user.reload();
           } catch (e) {
-            // Only logout if it's NOT a network error (e.g., user-not-found, user-disabled)
-            if (e.toString().contains('network-request-failed') ||
-                e.toString().contains('connection-failed')) {
+            // Only logout if it's NOT a network error
+            final errorStr = e.toString().toLowerCase();
+            if (errorStr.contains('network-request-failed') ||
+                errorStr.contains('connection-failed') ||
+                errorStr.contains('no internet')) {
               AppLogger.printMessage(
                 'User reload failed due to network - keeping session: $e',
               );
@@ -136,6 +155,14 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> forceLogout() async {
+    // ABSOLUTE GUARD: Never force logout while offline. 
+    // This prevents accidental logouts during network transitions or stream glitches.
+    final bool hasInternet = await sl<InternetConnectionChecker>().hasConnection;
+    if (!hasInternet) {
+      AppLogger.printMessage('Blocking forced logout: Device is OFFLINE');
+      return;
+    }
+
     if (state is AuthUnauthenticated) return;
 
     await logoutUseCase.call(NoParams());
