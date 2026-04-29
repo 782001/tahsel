@@ -18,7 +18,8 @@ class AppStrings {
   static const String noData = "no_data";
   static const String tryAgain = "tryAgain";
   static String currentLang = "ar";
-  static String get userToken => sl<FirebaseAuth>().currentUser?.uid ?? '';
+  static String userToken = '';
+  static String userType = 'cafe';
 
   ///-----------------------------
   ///-----------------------------

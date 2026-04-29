@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -37,8 +36,8 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
   }
 
   void _loadData() {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null) {
+    final uid = AppStrings.userToken;
+    if (uid.isNotEmpty) {
       context.read<MyDebtDetailsCubit>().loadDetails(uid, widget.person.name);
     }
   }
@@ -57,8 +56,8 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
   }
 
   void _onPayFull(BuildContext context, double totalRemaining) {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null) {
+    final uid = AppStrings.userToken;
+    if (uid.isNotEmpty) {
       context.read<MyDebtDetailsCubit>().payDebt(
         uid: uid,
         personName: widget.person.name,
@@ -83,8 +82,8 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
   }
 
   void _onPayItemFull(BuildContext context, MyDebtItemEntity item) {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null && item.id != null) {
+    final uid = AppStrings.userToken;
+    if (uid.isNotEmpty && item.id != null) {
       context.read<MyDebtDetailsCubit>().payItem(
         uid: uid,
         debtId: item.id!,
@@ -125,8 +124,8 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              final uid = FirebaseAuth.instance.currentUser?.uid;
-              if (uid != null && item.id != null) {
+              final uid = AppStrings.userToken;
+              if (uid.isNotEmpty && item.id != null) {
                 context.read<MyDebtDetailsCubit>().deleteItem(
                   uid,
                   item.id!,
@@ -170,7 +169,7 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
           );
 
           context.read<MyDebtsCubit>().loadPersons(
-            FirebaseAuth.instance.currentUser!.uid,
+            AppStrings.userToken,
           );
           context.read<MyDebtDetailsCubit>().clearFlags();
         } else if (state.status == MyDebtDetailsStatus.error &&
@@ -477,8 +476,8 @@ class _MyNotificationPreferenceToggle extends StatelessWidget {
                   selected: {currentPreference},
                   onSelectionChanged: (Set<String> newSelection) {
                     if (newSelection.isEmpty) return;
-                    final uid = FirebaseAuth.instance.currentUser?.uid;
-                    if (uid != null) {
+                    final uid = AppStrings.userToken;
+                    if (uid.isNotEmpty) {
                       context.read<MyDebtsCubit>().updatePreference(
                         uid,
                         person.name,

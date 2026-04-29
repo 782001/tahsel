@@ -57,8 +57,8 @@ class _MyPartialPaymentDialogState extends State<MyPartialPaymentDialog> {
       return;
     }
 
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null) {
+    final uid = AppStrings.userToken;
+    if (uid.isNotEmpty) {
       if (widget.debtId != null) {
         context.read<MyDebtDetailsCubit>().payItem(
           uid: uid,

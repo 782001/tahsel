@@ -91,8 +91,8 @@ class _HomeScreenState extends State<HomeScreen> {
       _selectedMode = QuickAddMode.shop;
     }
 
-    final uid = sl<FirebaseAuth>().currentUser?.uid;
-    if (uid != null) {
+    final uid = AppStrings.userToken;
+    if (uid.isNotEmpty) {
       context.read<CustomerCubit>().fetchCustomers(uid);
       context.read<ProductCubit>().fetchProducts(uid);
     }
@@ -198,11 +198,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _submitOperation(BuildContext context) {
-    final uid = sl<FirebaseAuth>().currentUser?.uid;
-    if (uid == null) {
+    final uid = AppStrings.userToken;
+    if (uid.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: Duration(milliseconds: 500),
+          duration: const Duration(milliseconds: 500),
           content: Text(AppStrings.userNotFound.tr()),
         ),
       );
@@ -357,8 +357,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     : (totalDue - paid);
 
                 if (remaining > 0) {
-                  final uid = sl<FirebaseAuth>().currentUser?.uid;
-                  if (uid != null) {
+                  final uid = AppStrings.userToken;
+                  if (uid.isNotEmpty) {
                     context.read<DebtCubit>().addDebt(
                       uid: uid,
                       totalAmount: _selectedMode == QuickAddMode.shop
@@ -390,9 +390,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
 
                 // Save customer for autocomplete
-                final uid = sl<FirebaseAuth>().currentUser?.uid;
+                final uid = AppStrings.userToken;
                 final customerName = _customerController.text.trim();
-                if (uid != null && customerName.isNotEmpty) {
+                if (uid.isNotEmpty && customerName.isNotEmpty) {
                   context.read<CustomerCubit>().saveCustomer(
                     uid,
                     customerName,
@@ -405,7 +405,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 // Save product for autocomplete (Shop Mode only)
                 final productName = _productController.text.trim();
-                if (uid != null &&
+                if (uid.isNotEmpty &&
                     _selectedMode == QuickAddMode.shop &&
                     productName.isNotEmpty) {
                   context.read<ProductCubit>().saveProduct(uid, productName);

@@ -31,8 +31,8 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
   @override
   void initState() {
     super.initState();
-    final uid = sl<FirebaseAuth>().currentUser?.uid;
-    if (uid != null) {
+    final uid = AppStrings.userToken;
+    if (uid.isNotEmpty) {
       context.read<DebtCubit>().getDebts(uid);
     }
   }
@@ -58,8 +58,8 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
   }
 
   void _onPayFull(BuildContext context, DebtEntity debt) {
-    final uid = sl<FirebaseAuth>().currentUser?.uid;
-    if (uid != null) {
+    final uid = AppStrings.userToken;
+    if (uid.isNotEmpty) {
       context.read<DebtCubit>().markItemAsPaid(
         debt: debt,
         totalRemainingBefore: debt.remainingAmount,
@@ -111,8 +111,8 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
           ElevatedButton(
             onPressed: () {
               Navigator.of(ctx).pop();
-              final uid = sl<FirebaseAuth>().currentUser?.uid;
-              if (uid != null) {
+              final uid = AppStrings.userToken;
+              if (uid.isNotEmpty) {
                 context.read<DebtCubit>().deleteDebtItem(uid, debt.id ?? '');
               }
             },

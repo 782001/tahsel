@@ -70,8 +70,8 @@ class _MyAddDebtDialogState extends State<MyAddDebtDialog> {
       return;
     }
 
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null) {
+    final uid = AppStrings.userToken;
+    if (uid.isNotEmpty) {
       context.read<MyDebtDetailsCubit>().addDebt(
             uid: uid,
             personName: widget.personName,

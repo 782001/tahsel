@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -48,7 +47,7 @@ class MyDebtCard extends StatelessWidget {
               onTap: isOffline
                   ? null
                   : () async {
-                      final uid = FirebaseAuth.instance.currentUser?.uid;
+                      final uid = AppStrings.userToken;
                       await sl<NavigatorService>().pushNamedWithArgs(
                         routeName: AppRoutes.myDebtDetails,
                         arguments: person,

@@ -52,8 +52,8 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
   void _listenToSync() {
     _syncSubscription = offlineSyncCubit.stream.listen((syncState) {
       if (syncState is OfflineSyncSuccess) {
-        final uid = FirebaseAuth.instance.currentUser?.uid;
-        if (uid != null && _currentPersonName != null) {
+        final uid = AppStrings.userToken;
+        if (uid.isNotEmpty && _currentPersonName != null) {
           loadDetails(uid, _currentPersonName!);
         }
       }
@@ -63,8 +63,8 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
   void _listenToConnectivity() {
     _connectivitySubscription = connectivityCubit.stream.listen((connectivityState) {
       if (connectivityState is ConnectivityConnected || connectivityState is ConnectivityDisconnected) {
-        final uid = FirebaseAuth.instance.currentUser?.uid;
-        if (uid != null && _currentPersonName != null && state.status != MyDebtDetailsStatus.loading) {
+        final uid = AppStrings.userToken;
+        if (uid.isNotEmpty && _currentPersonName != null && state.status != MyDebtDetailsStatus.loading) {
            loadDetails(uid, _currentPersonName!);
         }
       }

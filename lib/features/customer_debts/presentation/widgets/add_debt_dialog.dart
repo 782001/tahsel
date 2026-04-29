@@ -74,8 +74,8 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
 
     final remainingAmount = amount - paidAmount;
 
-    final uid = sl<FirebaseAuth>().currentUser?.uid;
-    if (uid != null) {
+    final uid = AppStrings.userToken;
+    if (uid.isNotEmpty) {
       context.read<DebtCubit>().addDebt(
         uid: uid,
         totalAmount: amount,

@@ -42,8 +42,8 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView> with AutomaticKeepAlive
   }
 
   void _loadData() {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null) {
+    final uid = AppStrings.userToken;
+    if (uid.isNotEmpty) {
       context.read<MyDebtsCubit>().loadPersons(uid);
     }
   }

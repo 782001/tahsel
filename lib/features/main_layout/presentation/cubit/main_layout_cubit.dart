@@ -50,11 +50,11 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
       _userType = storedType;
       emit(MainLayoutUserTypeLoaded(_userType));
     } else {
-      // Fallback: Fetch from Firestore if we have a current user
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
+      // Fallback: Fetch from Firestore if we have a current token
+      final uid = AppStrings.userToken;
+      if (uid.isNotEmpty) {
         try {
-          final doc = await firestore.collection('users').doc(user.uid).get();
+          final doc = await firestore.collection('users').doc(uid).get();
           if (doc.exists) {
             final type = doc.get(AppStrings.userTypeKey) ?? AppStrings.cafe;
             _userType = type;

@@ -7,7 +7,9 @@ import 'package:tahsel/core/base_usecase/base_usecase.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
 import 'package:tahsel/core/services/security_service.dart';
+import 'package:tahsel/core/storage/secure_storage_helper.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/assets.dart';
 import 'package:tahsel/features/auth/domain/usecases/logout_usecase.dart';
 import 'package:tahsel/routes/app_routes.dart';
@@ -49,33 +51,66 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   void _navigateToNext() async {
+    // 1. Perform security checks (e.g., root detection, developer mode)
     await SecurityService.checkSecurity();
-    await Future.delayed(const Duration(seconds: 3));
+    
+    // 2. Minimum splash duration for branding
+    await Future.delayed(const Duration(seconds: 2));
     
     if (mounted) {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        // Check internet connection
-        final bool hasInternet = await sl<InternetConnectionChecker>().hasConnection;
+      final secureStorage = sl<SecureStorageHelper>();
+      
+      // 3. Load local session data (PRIORITY)
+      final String? token = await secureStorage.getData(key: 'token');
+      final String? userType = await secureStorage.getData(key: AppStrings.userTypeKey);
+      
+      if (token != null && token.isNotEmpty) {
+        // SUCCESS: Local session found
+        AppStrings.userToken = token;
+        AppStrings.userType = userType ?? AppStrings.cafe;
         
-        if (hasInternet) {
-          try {
-            // Verify user still exists in Firebase Authentication if online
-            await user.reload();
-            nav().pushNamedAndRemoveUntil(AppRoutes.mainLayout);
-          } catch (e) {
-            // User deleted/disabled on server or token expired
-            await sl<LogoutUseCase>().call(NoParams());
-            nav().pushNamedAndRemoveUntil(AppRoutes.login);
-          }
-        } else {
-          // No internet: Trust local session and navigate to Main Layout
-          nav().pushNamedAndRemoveUntil(AppRoutes.mainLayout);
-        }
+        // 4. Navigate IMMEDIATELY to Main Layout (Offline-first)
+        nav().pushNamedAndRemoveUntil(AppRoutes.mainLayout);
+        
+        // 5. BACKGROUND: Verify with Firebase if online (Optional/Non-blocking)
+        _verifySessionInBackground();
       } else {
+        // FAILURE: No session, go to login
         nav().pushNamedAndRemoveUntil(AppRoutes.login);
       }
     }
+  }
+
+  /// Verifies the current Firebase session in the background.
+  /// If the session is invalid (user deleted/disabled), it triggers a logout.
+  void _verifySessionInBackground() async {
+    final bool hasInternet = await sl<InternetConnectionChecker>().hasConnection;
+    if (!hasInternet) return;
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await user.reload();
+      } else {
+        // Firebase says no user but local said yes? Clear local session.
+        _handleInvalidSession();
+      }
+    } catch (e) {
+      // User likely deleted or disabled on server
+      _handleInvalidSession();
+    }
+  }
+
+  void _handleInvalidSession() async {
+    await sl<LogoutUseCase>().call(NoParams());
+    
+    // Reset global strings
+    AppStrings.userToken = '';
+    AppStrings.userType = AppStrings.cafe;
+    
+    // If user is already in the app, the AuthCubit listener will handle 
+    // the redirection if it's set up, otherwise we can force a redirect here
+    // but typically AuthCubit.userChanges handles this.
   }
 
   @override

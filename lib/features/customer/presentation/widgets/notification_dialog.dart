@@ -109,7 +109,7 @@ class NotificationDialog extends StatefulWidget {
   }) async {
     final messenger = ScaffoldMessenger.of(context);
     final cubit = context.read<CustomerCubit>();
-    final uid = sl<FirebaseAuth>().currentUser?.uid;
+    final uid = AppStrings.userToken;
 
     try {
       if (uid != null) {

@@ -29,8 +29,8 @@ class _MyDebtDetailsReportScreenState extends State<MyDebtDetailsReportScreen> {
   @override
   void initState() {
     super.initState();
-    final uid = sl<FirebaseAuth>().currentUser?.uid;
-    if (uid != null) {
+    final uid = AppStrings.userToken;
+    if (uid.isNotEmpty) {
       context.read<MyDebtDetailsReportCubit>().loadTransactions(
         uid,
         widget.debt.id ?? '',
@@ -40,7 +40,7 @@ class _MyDebtDetailsReportScreenState extends State<MyDebtDetailsReportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final uid = sl<FirebaseAuth>().currentUser?.uid ?? '';
+    final uid = AppStrings.userToken;
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
       appBar: AppBar(

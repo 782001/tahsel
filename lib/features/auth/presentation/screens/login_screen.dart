@@ -67,12 +67,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => sl<AuthCubit>(),
-      child: Scaffold(
-        backgroundColor: AppColors.scafoldBackGround,
-        body: SafeArea(
-          child:OfflineBanner(
+    return Scaffold(
+      backgroundColor: AppColors.scafoldBackGround,
+      body: SafeArea(
+        child: OfflineBanner(
           child: Stack(
             children: [
               // Background Decoration
@@ -88,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-          
+
               SafeArea(
                 child: Center(
                   child: SingleChildScrollView(
@@ -139,14 +137,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         SizedBox(height: 40.h),
-          
+
                         // Login Card
                         Container(
                           width: double.infinity,
                           padding: EdgeInsets.all(32.w),
                           decoration: BoxDecoration(
-                            color:
-                                AppColors.scafoldBackGround ==
+                            color: AppColors.scafoldBackGround ==
                                     const Color(0xFFF8F8F8)
                                 ? Colors.white
                                 : const Color(0xFF1E1E1E),
@@ -173,7 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                                 SizedBox(height: 24.h),
-          
+
                                 // Email Field
                                 CustomTextFormField(
                                   labelText: AppStrings.emailAddress.tr(),
@@ -194,7 +191,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   },
                                 ),
                                 SizedBox(height: 24.h),
-          
+
                                 // Password Field
                                 CustomTextFormField(
                                   labelText: AppStrings.password.tr(),
@@ -215,12 +212,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                   },
                                 ),
                                 SizedBox(height: 32.h),
-          
+
                                 // Login Button
                                 BlocConsumer<AuthCubit, AuthState>(
                                   listener: (context, state) {
                                     if (state is AuthSuccess) {
-                                      nav().navigatorKey.currentState
+                                      sl<NavigatorService>()
+                                          .navigatorKey
+                                          .currentState
                                           ?.pushReplacementNamed(
                                             AppRoutes.mainLayout,
                                           );
@@ -244,9 +243,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                           final password =
                                               _passwordController.text;
                                           context.read<AuthCubit>().login(
-                                            email,
-                                            password,
-                                          );
+                                                email,
+                                                password,
+                                              );
                                         }
                                       },
                                       child: Container(
@@ -291,7 +290,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   },
                                 ),
                                 SizedBox(height: 24.h),
-          
+
                                 // Contact Manager text
                                 Container(
                                   width: double.infinity,
@@ -315,7 +314,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ),
-          
                                       GestureDetector(
                                         onTap: () async {
                                           final Uri url = Uri.parse(
@@ -331,15 +329,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                         },
                                         child: Text(
                                           AppStrings.contactManager.tr(),
-                                          style:
-                                              TextStyles.customStyle(
-                                                color: AppColors.primaryColor,
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.bold,
-                                              ).copyWith(
-                                                decoration:
-                                                    TextDecoration.underline,
-                                              ),
+                                          style: TextStyles.customStyle(
+                                            color: AppColors.primaryColor,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                          ).copyWith(
+                                            decoration:
+                                                TextDecoration.underline,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -357,7 +354,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ],
           ),
-        ),),
+        ),
       ),
     );
   }

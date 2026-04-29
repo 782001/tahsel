@@ -1,18 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:tahsel/core/base_usecase/base_usecase.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
-import 'package:tahsel/core/services/injection_container.dart';
-import 'package:tahsel/core/services/navigator_service.dart';
-import 'package:tahsel/core/storage/secure_storage_helper.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/logout_confirmation_dialog.dart';
-import 'package:tahsel/features/auth/domain/usecases/logout_usecase.dart';
+import 'package:tahsel/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:tahsel/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
-import 'package:tahsel/routes/app_routes.dart';
 
 class LogoutButton extends StatelessWidget {
   const LogoutButton({super.key});
@@ -32,10 +27,9 @@ class LogoutButton extends StatelessWidget {
               );
 
               if (shouldLogout ?? false) {
-                await sl<SecureStorageHelper>().deleteData(key: AppStrings.userTypeKey);
-                // nav().pushNamedAndRemoveUntil(AppRoutes.login);
-                await sl<LogoutUseCase>().call(NoParams());
-                nav().pushNamedAndRemoveUntil(AppRoutes.login);
+                if (context.mounted) {
+                  context.read<AuthCubit>().logout();
+                }
               }
             },
             style: TextButton.styleFrom(

@@ -18,9 +18,9 @@ class AppColors {
     try {
       final themeMode = sl<ThemeCubit>().state.themeMode;
       if (themeMode == ThemeMode.system) {
-        final context = sl<NavigatorService>().context;
-        if (context == null) return false;
-        return Theme.of(context).brightness == Brightness.dark;
+        // Use PlatformDispatcher to get system brightness if context is not ready
+        return WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+            Brightness.dark;
       }
       return themeMode == ThemeMode.dark;
     } catch (_) {

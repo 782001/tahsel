@@ -96,9 +96,8 @@ class _ReportsViewState extends State<ReportsView> {
                             padding: EdgeInsets.symmetric(horizontal: 24.w),
                             child: GestureDetector(
                               onTap: () {
-                                final uid =
-                                    FirebaseAuth.instance.currentUser?.uid;
-                                if (uid != null) {
+                                final uid = AppStrings.userToken;
+                                if (uid.isNotEmpty) {
                                   Navigator.pushNamed(
                                     context,
                                     AppRoutes.customersList,

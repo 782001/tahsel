@@ -54,8 +54,8 @@ class _PartialPaymentDialogState extends State<PartialPaymentDialog> {
       return;
     }
 
-    final uid = sl<FirebaseAuth>().currentUser?.uid;
-    if (uid != null) {
+    final uid = AppStrings.userToken;
+    if (uid.isNotEmpty) {
       if (widget.debt != null) {
         context.read<DebtCubit>().payItemDebt(
           debt: widget.debt!,

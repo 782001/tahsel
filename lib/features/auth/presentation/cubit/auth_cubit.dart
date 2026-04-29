@@ -1,17 +1,18 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/base_usecase/base_usecase.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
 import 'package:tahsel/core/storage/secure_storage_helper.dart';
+import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
-import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/features/auth/domain/entities/user_entity.dart';
 import 'package:tahsel/routes/app_routes.dart';
-import 'package:tahsel/core/extensions/string_extensions.dart';
 
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/logout_usecase.dart';
@@ -22,18 +23,20 @@ class AuthCubit extends Cubit<AuthState> {
   final LogoutUseCase logoutUseCase;
   StreamSubscription? _authSubscription;
 
-  AuthCubit({
-    required this.loginUseCase,
-    required this.logoutUseCase,
-  }) : super(AuthInitial()) {
+  AuthCubit({required this.loginUseCase, required this.logoutUseCase})
+    : super(AuthInitial()) {
     _listenToAuthChanges();
   }
 
   void _listenToAuthChanges() {
-    _authSubscription = FirebaseAuth.instance.userChanges().listen((User? user) async {
+    _authSubscription = FirebaseAuth.instance.userChanges().listen((
+      User? user,
+    ) async {
       if (user == null) {
         if (state is! AuthUnauthenticated && state is! AuthInitial) {
-          AppLogger.printMessage('Firebase Auth state changed to null - triggering forced logout');
+          AppLogger.printMessage(
+            'Firebase Auth state changed to null - triggering forced logout',
+          );
           await forceLogout();
         }
       } else {
@@ -41,9 +44,10 @@ class AuthCubit extends Cubit<AuthState> {
         try {
           // Force a reload to check if user was deleted/disabled in console
           await user.reload();
-          AppLogger.printMessage('User session verified: ${user.uid}');
         } catch (e) {
-          AppLogger.printMessage('User verification failed (user likely deleted from console): $e');
+          AppLogger.printMessage(
+            'User verification failed (user likely deleted from console): $e',
+          );
           await forceLogout();
         }
       }
@@ -62,22 +66,30 @@ class AuthCubit extends Cubit<AuthState> {
       LoginParameters(email: email, password: password),
     );
 
-    result.fold((failure) => emit(AuthFailure(failure.message)), (
-      user,
-    ) async {
+    result.fold((failure) => emit(AuthFailure(failure.message)), (user) async {
       // Automatic userType detection based on email (temporary test solution)
       String detectedType = AppStrings.cafe;
-      if (email.toLowerCase().contains('.shop')||user.userType==AppStrings.shop) {
+      if (email.toLowerCase().contains('.shop') ||
+          user.userType == AppStrings.shop) {
         detectedType = AppStrings.shop;
       }
-      
+
       final secureStorage = sl<SecureStorageHelper>();
       await secureStorage.saveData(key: 'token', value: user.uid);
       await secureStorage.saveData(key: 'email', value: user.email);
-      await secureStorage.saveData(key: AppStrings.userTypeKey, value: detectedType);
-      
-      AppLogger.printMessage('User logged in successfully: ${user.uid} ($detectedType detected from email)');
-      
+      await secureStorage.saveData(
+        key: AppStrings.userTypeKey,
+        value: detectedType,
+      );
+
+      // Update global session strings
+      AppStrings.userToken = user.uid;
+      AppStrings.userType = detectedType;
+
+      AppLogger.printMessage(
+        'User logged in successfully: ${user.uid} ($detectedType detected from email)',
+      );
+
       // Override the user object with the detected type for immediate UI response
       final updatedUser = UserEntity(
         uid: user.uid,
@@ -85,29 +97,56 @@ class AuthCubit extends Cubit<AuthState> {
         displayName: user.displayName,
         userType: detectedType,
       );
-      
+
       emit(AuthSuccess(updatedUser));
     });
   }
 
+  Future<void> logout() async {
+    emit(AuthLoading());
+    await logoutUseCase.call(NoParams());
+    await _clearSessionData();
+    emit(AuthUnauthenticated());
+
+    final context = sl<NavigatorService>().context;
+    if (context != null && context.mounted) {
+      sl<NavigatorService>().pushNamedAndRemoveUntil(AppRoutes.login);
+    }
+  }
+
   Future<void> forceLogout() async {
     if (state is AuthUnauthenticated) return;
-    
-    emit(AuthUnauthenticated());
+
     await logoutUseCase.call(NoParams());
+    await _clearSessionData();
+    emit(AuthUnauthenticated());
 
     final context = sl<NavigatorService>().context;
     if (context != null && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-             AppStrings.sessionExpired.tr(), 
-             style: TextStyle(color: AppColors.white)
+            AppStrings.sessionExpired.tr(),
+            style: TextStyle(color: AppColors.white),
           ),
           backgroundColor: AppColors.error,
         ),
       );
       sl<NavigatorService>().pushNamedAndRemoveUntil(AppRoutes.login);
     }
+  }
+
+  Future<void> _clearSessionData() async {
+    // Clear global session strings
+    AppStrings.userToken = '';
+    AppStrings.userType = AppStrings.cafe;
+
+    // Clear persistent secure storage
+    final secureStorage = sl<SecureStorageHelper>();
+    await secureStorage.deleteData(key: 'token');
+    await secureStorage.deleteData(key: 'email');
+    await secureStorage.deleteData(key: AppStrings.userTypeKey);
+    // Alternatively, use secureStorage.clearAll() if you want to wipe everything
+    // await secureStorage.clearAll();
   }
 }

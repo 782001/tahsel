@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/auth/service_injection/auth_injection.dart';
 import 'package:tahsel/features/category/service_injection/category_injection.dart';
 import 'package:tahsel/features/operation/service_injection/operation_injection.dart';
@@ -153,4 +154,18 @@ Future<void> initDependencies() async {
 
   // Register NavigatorService as singleton
   sl.registerLazySingleton<NavigatorService>(() => NavigatorService());
+
+  // PRELOAD: Session data for offline-first start
+  try {
+    final secureStorage = sl<SecureStorageHelper>();
+    final token = await secureStorage.getData(key: 'token');
+    final userType = await secureStorage.getData(key: AppStrings.userTypeKey);
+
+    if (token != null && token.isNotEmpty) {
+      AppStrings.userToken = token;
+      AppStrings.userType = userType ?? AppStrings.cafe;
+    }
+  } catch (e) {
+    // Silent catch: Splash screen will handle invalid sessions
+  }
 }

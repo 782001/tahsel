@@ -51,8 +51,8 @@ class CustomerDebtDetailScreen extends StatelessWidget {
   }
 
   void _onPayFull(BuildContext context, String customerName, double totalDebt) {
-    final uid = sl<FirebaseAuth>().currentUser?.uid;
-    if (uid != null) {
+    final uid = AppStrings.userToken;
+    if (uid.isNotEmpty) {
       context.read<DebtCubit>().markAsPaid(
         uid: uid,
         customerName: customerName,
@@ -438,8 +438,8 @@ class _NotificationPreferenceToggle extends StatelessWidget {
                   selected: {currentPreference},
                   onSelectionChanged: (Set<String> newSelection) {
                     if (newSelection.isEmpty) return;
-                    final uid = sl<FirebaseAuth>().currentUser?.uid;
-                    if (uid != null) {
+                    final uid = AppStrings.userToken;
+                    if (uid.isNotEmpty) {
                       context.read<CustomerCubit>().updateCustomerPreference(
                         uid,
                         customerName,

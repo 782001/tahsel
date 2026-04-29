@@ -1,6 +1,8 @@
 import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/base_usecase/base_usecase.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_item_entity.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_person_entity.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/debt/add_my_debt_usecase.dart';
@@ -11,10 +13,8 @@ import 'package:tahsel/features/my_debts/domain/usecases/person/update_my_debt_p
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_state.dart';
 import 'package:tahsel/features/offline_sync/data/models/offline_record.dart';
 import 'package:tahsel/features/offline_sync/presentation/cubit/offline_sync_cubit.dart';
-
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class MyDebtsCubit extends Cubit<MyDebtsState> {
   final GetMyDebtPersonsUseCase getPersonsUseCase;
@@ -43,8 +43,8 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
   void _listenToSync() {
     _syncSubscription = offlineSyncCubit.stream.listen((syncState) {
       if (syncState is OfflineSyncSuccess) {
-        final uid = FirebaseAuth.instance.currentUser?.uid;
-        if (uid != null) {
+        final uid = AppStrings.userToken;
+        if (uid.isNotEmpty) {
           loadPersons(uid, forceRefresh: true);
         }
       }
@@ -52,10 +52,13 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
   }
 
   void _listenToConnectivity() {
-    _connectivitySubscription = connectivityCubit.stream.listen((connectivityState) {
-      if (connectivityState is ConnectivityConnected || connectivityState is ConnectivityDisconnected) {
-        final uid = FirebaseAuth.instance.currentUser?.uid;
-        if (uid != null) {
+    _connectivitySubscription = connectivityCubit.stream.listen((
+      connectivityState,
+    ) {
+      if (connectivityState is ConnectivityConnected ||
+          connectivityState is ConnectivityDisconnected) {
+        final uid = AppStrings.userToken;
+        if (uid.isNotEmpty) {
           loadPersons(uid);
         }
       }
@@ -67,12 +70,15 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
 
   Future<void> loadPersons(String uid, {bool forceRefresh = false}) async {
     if (isClosed) return;
-    
+
     emit(state.copyWith(status: MyDebtsStatus.loading, clearMessage: true));
 
     final result = await getPersonsUseCase(uid);
     final pendingResult = await getPendingMyDebtsUseCase(NoParams());
-    final List<OfflineRecord> pendingRecords = pendingResult.fold((_) => [], (records) => records);
+    final List<OfflineRecord> pendingRecords = pendingResult.fold(
+      (_) => [],
+      (records) => records,
+    );
 
     if (isClosed) return;
 
@@ -104,7 +110,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
 
       // Use case-insensitive and trimmed comparison to avoid duplication
       final existingIndex = merged.indexWhere(
-        (p) => p.name.trim().toLowerCase() == name.toLowerCase()
+        (p) => p.name.trim().toLowerCase() == name.toLowerCase(),
       );
 
       if (existingIndex != -1) {
@@ -113,18 +119,20 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
           totalDebtAmount: existing.totalDebtAmount + amount,
           totalRemainingDebt: existing.totalRemainingDebt + amount,
           totalTransactions: existing.totalTransactions + 1,
-          lastUsedAt: record.date.isAfter(existing.lastUsedAt) 
-              ? record.date 
+          lastUsedAt: record.date.isAfter(existing.lastUsedAt)
+              ? record.date
               : existing.lastUsedAt,
         );
       } else {
-        merged.add(MyDebtPersonEntity(
-          name: name,
-          totalDebtAmount: amount,
-          totalRemainingDebt: amount,
-          lastUsedAt: record.date,
-          totalTransactions: 1,
-        ));
+        merged.add(
+          MyDebtPersonEntity(
+            name: name,
+            totalDebtAmount: amount,
+            totalRemainingDebt: amount,
+            lastUsedAt: record.date,
+            totalTransactions: 1,
+          ),
+        );
       }
     }
 
@@ -133,7 +141,10 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
     return merged;
   }
 
-  void _emitLoaded(List<MyDebtPersonEntity> persons, {MyDebtsStatus status = MyDebtsStatus.loaded}) {
+  void _emitLoaded(
+    List<MyDebtPersonEntity> persons, {
+    MyDebtsStatus status = MyDebtsStatus.loaded,
+  }) {
     double totalOwed = 0;
     double totalPaid = 0;
     for (var p in persons) {
