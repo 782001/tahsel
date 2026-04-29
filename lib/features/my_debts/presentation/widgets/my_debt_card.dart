@@ -22,45 +22,50 @@ class MyDebtCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
-      decoration: BoxDecoration(
-        color: AppColors.debtCardSurface,
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(AppColors.isDark ? 0.2 : 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16.r),
-          onTap: () async {
-            final uid = FirebaseAuth.instance.currentUser?.uid;
-            await sl<NavigatorService>().pushNamedWithArgs(
-              routeName: AppRoutes.myDebtDetails,
-              arguments: person,
-            );
-            if (context.mounted && uid != null) {
-              context.read<MyDebtsCubit>().loadPersons(uid, forceRefresh: true);
-            }
-          },
-          child: BlocBuilder<MyDebtsCubit, MyDebtsState>(
-            builder: (context, state) {
-              final isProcessing = state.processingId == person.name;
-              final totalPaid =
-                  person.totalDebtAmount - person.totalRemainingDebt;
+    return BlocBuilder<MyDebtsCubit, MyDebtsState>(
+      builder: (context, state) {
+        final isProcessing = state.processingId == person.name;
+        final isOffline = state.status == MyDebtsStatus.offlineLoaded;
+        final totalPaid = person.totalDebtAmount - person.totalRemainingDebt;
 
-              return Stack(
+        return Container(
+          margin: EdgeInsets.only(bottom: 12.h),
+          decoration: BoxDecoration(
+            color: AppColors.debtCardSurface,
+            borderRadius: BorderRadius.circular(16.r),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(AppColors.isDark ? 0.2 : 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16.r),
+              onTap: isOffline
+                  ? null
+                  : () async {
+                      final uid = FirebaseAuth.instance.currentUser?.uid;
+                      await sl<NavigatorService>().pushNamedWithArgs(
+                        routeName: AppRoutes.myDebtDetails,
+                        arguments: person,
+                      );
+                      if (context.mounted && uid != null) {
+                        context.read<MyDebtsCubit>().loadPersons(
+                          uid,
+                          forceRefresh: true,
+                        );
+                      }
+                    },
+              child: Stack(
                 children: [
                   Padding(
                     padding: EdgeInsets.all(16.r),
                     child: Opacity(
-                      opacity: isProcessing ? 0.5 : 1.0,
+                      opacity: (isProcessing || isOffline) ? 0.7 : 1.0,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -71,15 +76,44 @@ class MyDebtCard extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      person.name,
-                                      style: TextStyles.customStyle(
-                                        color: AppColors.textColor,
-                                        fontSize: 18.sp,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                    Row(
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            person.name,
+                                            style: TextStyles.customStyle(
+                                              color: AppColors.textColor,
+                                              fontSize: 18.sp,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        if (person.isPending) ...[
+                                          SizedBox(width: 8.w),
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: 6.w,
+                                              vertical: 2.h,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.error
+                                                  .withOpacity(0.1),
+                                              borderRadius:
+                                                  BorderRadius.circular(4.r),
+                                            ),
+                                            child: Text(
+                                              AppStrings.syncing.tr(),
+                                              style: TextStyles.customStyle(
+                                                color: AppColors.error,
+                                                fontSize: 10.sp,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
                                     ),
                                     if (person.phoneNumber != null &&
                                         person.phoneNumber!.isNotEmpty)
@@ -146,11 +180,11 @@ class MyDebtCard extends StatelessWidget {
                       ),
                     ),
                 ],
-              );
-            },
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

@@ -359,4 +359,5 @@ class AppStrings {
   static const String confirmDeletion = "confirm_deletion";
   static const String deleteDebtItemConfirmation = "delete_debt_item_confirmation";
   static const String deleteDebtAfterPaid = "deleteDebtAfterPaid";
+  static const String syncing = "syncing";
 }

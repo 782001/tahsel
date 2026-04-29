@@ -10,12 +10,12 @@ import '../domain/usecases/calculate_expense_stats_usecase.dart';
 import '../domain/usecases/get_expenses_usecase.dart';
 import '../domain/usecases/get_monthly_expenses_usecase.dart';
 import '../domain/usecases/get_expenses_by_month_usecase.dart';
-import '../domain/usecases/delete_expense_usecase.dart';
+import '../domain/usecases/delete_expense_usecase.dart';  
 import '../domain/usecases/get_pending_expenses_usecase.dart';
 
 Future<void> initExpense() async {
   // Cubit
-  sl.registerFactory(() => ExpenseCubit(
+  sl.registerLazySingleton(() => ExpenseCubit(
         addExpenseUseCase: sl(),
         getExpensesUseCase: sl(),
         getMonthlyExpensesUseCase: sl(),

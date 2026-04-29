@@ -11,6 +11,8 @@ class MyDebtPersonEntity extends Equatable {
   final double totalDebtAmount;
   final double totalRemainingDebt;
 
+  bool get isPending => id == null || id!.isEmpty;
+
   const MyDebtPersonEntity({
     this.id,
     required this.name,

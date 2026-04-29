@@ -303,5 +303,7 @@
   "my_debts_sms_template": "Dear {name}, we sent {amount} EGP. Remaining: {remaining} EGP as of {date}. Note: {note}. Thank you.",
   "confirm_deletion": "Confirm Deletion",
   "delete_debt_item_confirmation": "Are you sure you want to delete this debt? This will update your total balance.",
-  "deleteDebtAfterPaid": "You can only delete a debt after it is fully paid"
+  "deleteDebtAfterPaid": "You can only delete a debt after it is fully paid",
+    "syncing": "Syncing..."
+
 }

@@ -209,11 +209,12 @@ class ExpensesList extends StatelessWidget {
       ),
       child: InkWell(
         onTap: () {
+          final expenseCubit = context.read<ExpenseCubit>();
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (_) => BlocProvider.value(
-                value: context.read<ExpenseCubit>(),
+                value: expenseCubit,
                 child: MonthExpensesScreen(
                   monthKey: month.monthKey,
                   monthName: month.monthName,

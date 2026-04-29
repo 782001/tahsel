@@ -24,3 +24,7 @@ class GeneralFailure extends Failure {
 class CacheFailure extends Failure {
   const CacheFailure(super.message);
 }
+
+class OfflineFailure extends Failure {
+  const OfflineFailure(super.message);
+}

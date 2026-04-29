@@ -114,8 +114,6 @@ class CustomerDebtDetailScreen extends StatelessWidget {
       },
       child: BlocBuilder<DebtCubit, DebtState>(
         builder: (context, state) {
-          CustomerDebtDetail currentDetail = detail;
-
           if (state is DebtsFetchSuccess) {
             // Using a simple where for now, but compute could be used for large lists
             final customerDebts = state.debts

@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tahsel/core/utils/app_strings.dart';
+
 import '../../../domain/entities/payment_entity.dart';
 import '../../../domain/usecases/get_customer_all_payments_usecase.dart';
 import 'global_payments_state.dart';
@@ -9,7 +9,7 @@ class GlobalPaymentsCubit extends Cubit<GlobalPaymentsState> {
   final GetCustomerAllPaymentsUseCase getCustomerAllPaymentsUseCase;
 
   GlobalPaymentsCubit({required this.getCustomerAllPaymentsUseCase})
-      : super(GlobalPaymentsInitial());
+    : super(GlobalPaymentsInitial());
 
   List<PaymentEntity> _cachedTransactions = [];
   String? _lastUid;
@@ -31,33 +31,31 @@ class GlobalPaymentsCubit extends Cubit<GlobalPaymentsState> {
     emit(GlobalPaymentsLoading());
 
     final result = await getCustomerAllPaymentsUseCase(
-      GetCustomerAllPaymentsParams(
-        uid: uid,
-        customerName: customerName,
-      ),
+      GetCustomerAllPaymentsParams(uid: uid, customerName: customerName),
     );
 
-    result.fold(
-      (failure) => emit(GlobalPaymentsError(failure.message)),
-      (payments) async {
-        if (payments.isEmpty) {
-          emit(const GlobalPaymentsLoaded(transactions: [], totalPaid: 0));
-          return;
-        }
+    result.fold((failure) => emit(GlobalPaymentsError(failure.message)), (
+      payments,
+    ) async {
+      if (payments.isEmpty) {
+        emit(const GlobalPaymentsLoaded(transactions: [], totalPaid: 0));
+        return;
+      }
 
-        // Processing in Isolate (MANDATORY)
-        final processedData = await compute(_processPayments, payments);
-        
-        _cachedTransactions = processedData.transactions;
-        _lastUid = uid;
-        _lastCustomerName = customerName;
+      // Processing in Isolate (MANDATORY)
+      final processedData = await compute(_processPayments, payments);
 
-        emit(GlobalPaymentsLoaded(
+      _cachedTransactions = processedData.transactions;
+      _lastUid = uid;
+      _lastCustomerName = customerName;
+
+      emit(
+        GlobalPaymentsLoaded(
           transactions: processedData.transactions,
           totalPaid: processedData.totalPaid,
-        ));
-      },
-    );
+        ),
+      );
+    });
   }
 }
 
@@ -65,8 +63,11 @@ class GlobalPaymentsCubit extends Cubit<GlobalPaymentsState> {
 _ProcessedPayments _processPayments(List<PaymentEntity> payments) {
   // 1. Sorting by latest first
   final sorted = List<PaymentEntity>.from(payments)
-    ..sort((a, b) => (b.createdAt ?? DateTime.now())
-        .compareTo(a.createdAt ?? DateTime.now()));
+    ..sort(
+      (a, b) => (b.createdAt ?? DateTime.now()).compareTo(
+        a.createdAt ?? DateTime.now(),
+      ),
+    );
 
   // 2. Calculating total paid
   double total = 0;

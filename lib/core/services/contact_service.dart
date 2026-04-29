@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
-import 'package:tahsel/core/utils/styles.dart';
-import 'package:tahsel/core/utils/app_colors.dart';
 
 class ContactService {
   static Future<Map<String, String>?> pickContact(BuildContext context) async {
@@ -27,10 +25,12 @@ class ContactService {
                   content: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: fullContact.phones
-                        .map((p) => ListTile(
-                              title: Text(p.number),
-                              onTap: () => Navigator.pop(ctx, p.number),
-                            ))
+                        .map(
+                          (p) => ListTile(
+                            title: Text(p.number),
+                            onTap: () => Navigator.pop(ctx, p.number),
+                          ),
+                        )
                         .toList(),
                   ),
                 ),
@@ -51,9 +51,9 @@ class ContactService {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     }
     return null;
   }

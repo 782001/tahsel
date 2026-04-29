@@ -255,10 +255,12 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
                             children: [
                               Expanded(
                                 child: ElevatedButton.icon(
-                                  onPressed: () => _onPayPartial(
-                                    context,
-                                    state.remainingAmount,
-                                  ),
+                                  onPressed: (state.items.isEmpty || state.items.any((i) => i.isPending))
+                                      ? null
+                                      : () => _onPayPartial(
+                                            context,
+                                            state.remainingAmount,
+                                          ),
                                   icon: const Icon(
                                     Icons.payment_rounded,
                                     size: 18,
@@ -279,10 +281,12 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
                               SizedBox(width: 12.w),
                               Expanded(
                                 child: OutlinedButton.icon(
-                                  onPressed: () => _onPayFull(
-                                    context,
-                                    state.remainingAmount,
-                                  ),
+                                  onPressed: (state.items.isEmpty || state.items.any((i) => i.isPending))
+                                      ? null
+                                      : () => _onPayFull(
+                                            context,
+                                            state.remainingAmount,
+                                          ),
                                   icon: const Icon(
                                     Icons.check_circle_rounded,
                                     size: 18,

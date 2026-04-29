@@ -1,54 +1,139 @@
 import 'dart:async';
-
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/core/base_usecase/base_usecase.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_item_entity.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_person_entity.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/debt/add_my_debt_usecase.dart';
+import 'package:tahsel/features/my_debts/domain/usecases/debt/get_pending_my_debts_usecase.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/payment/distribute_my_debt_payment_usecase.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/person/get_my_debt_persons_usecase.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/person/update_my_debt_person_preference_usecase.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_state.dart';
+import 'package:tahsel/features/offline_sync/data/models/offline_record.dart';
+import 'package:tahsel/features/offline_sync/presentation/cubit/offline_sync_cubit.dart';
+
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MyDebtsCubit extends Cubit<MyDebtsState> {
   final GetMyDebtPersonsUseCase getPersonsUseCase;
   final AddMyDebtUseCase addDebtUseCase;
   final DistributeMyDebtPaymentUseCase distributePaymentUseCase;
   final UpdateMyDebtPersonPreferenceUseCase updatePreferenceUseCase;
+  final GetPendingMyDebtsUseCase getPendingMyDebtsUseCase;
+  final ConnectivityCubit connectivityCubit;
+  final OfflineSyncCubit offlineSyncCubit;
+  StreamSubscription? _connectivitySubscription;
+  StreamSubscription? _syncSubscription;
 
   MyDebtsCubit({
     required this.getPersonsUseCase,
     required this.addDebtUseCase,
     required this.distributePaymentUseCase,
     required this.updatePreferenceUseCase,
-  }) : super(const MyDebtsState());
+    required this.getPendingMyDebtsUseCase,
+    required this.connectivityCubit,
+    required this.offlineSyncCubit,
+  }) : super(const MyDebtsState()) {
+    _listenToConnectivity();
+    _listenToSync();
+  }
+
+  void _listenToSync() {
+    _syncSubscription = offlineSyncCubit.stream.listen((syncState) {
+      if (syncState is OfflineSyncSuccess) {
+        final uid = FirebaseAuth.instance.currentUser?.uid;
+        if (uid != null) {
+          loadPersons(uid, forceRefresh: true);
+        }
+      }
+    });
+  }
+
+  void _listenToConnectivity() {
+    _connectivitySubscription = connectivityCubit.stream.listen((connectivityState) {
+      if (connectivityState is ConnectivityConnected || connectivityState is ConnectivityDisconnected) {
+        final uid = FirebaseAuth.instance.currentUser?.uid;
+        if (uid != null) {
+          loadPersons(uid);
+        }
+      }
+    });
+  }
 
   List<MyDebtPersonEntity> _allPersons = [];
   Timer? _searchDebounce;
 
   Future<void> loadPersons(String uid, {bool forceRefresh = false}) async {
     if (isClosed) return;
-    if (!forceRefresh &&
-        state.status == MyDebtsStatus.loaded &&
-        state.persons.isNotEmpty) {
-      return;
-    }
-
+    
     emit(state.copyWith(status: MyDebtsStatus.loading, clearMessage: true));
 
     final result = await getPersonsUseCase(uid);
+    final pendingResult = await getPendingMyDebtsUseCase(NoParams());
+    final List<OfflineRecord> pendingRecords = pendingResult.fold((_) => [], (records) => records);
+
     if (isClosed) return;
+
     result.fold(
-      (failure) => emit(
-        state.copyWith(status: MyDebtsStatus.error, message: failure.message),
-      ),
+      (failure) {
+        // If remote fails, merge pending records with empty list (or existing list)
+        final merged = _mergePendingRecords([], pendingRecords);
+        _allPersons = merged;
+        _emitLoaded(merged, status: MyDebtsStatus.offlineLoaded);
+      },
       (persons) {
-        _allPersons = persons;
-        _emitLoaded(persons);
+        // ALWAYS merge pending records even when online to show local changes not yet synced
+        final merged = _mergePendingRecords(persons, pendingRecords);
+        _allPersons = merged;
+        _emitLoaded(merged, status: MyDebtsStatus.loaded);
       },
     );
   }
 
-  void _emitLoaded(List<MyDebtPersonEntity> persons) {
+  List<MyDebtPersonEntity> _mergePendingRecords(
+    List<MyDebtPersonEntity> persons,
+    List<OfflineRecord> pendingRecords,
+  ) {
+    final List<MyDebtPersonEntity> merged = List.from(persons);
+
+    for (final record in pendingRecords) {
+      final String name = record.customerName.trim(); // Trim for robustness
+      final double amount = record.amount;
+
+      // Use case-insensitive and trimmed comparison to avoid duplication
+      final existingIndex = merged.indexWhere(
+        (p) => p.name.trim().toLowerCase() == name.toLowerCase()
+      );
+
+      if (existingIndex != -1) {
+        final existing = merged[existingIndex];
+        merged[existingIndex] = existing.copyWith(
+          totalDebtAmount: existing.totalDebtAmount + amount,
+          totalRemainingDebt: existing.totalRemainingDebt + amount,
+          totalTransactions: existing.totalTransactions + 1,
+          lastUsedAt: record.date.isAfter(existing.lastUsedAt) 
+              ? record.date 
+              : existing.lastUsedAt,
+        );
+      } else {
+        merged.add(MyDebtPersonEntity(
+          name: name,
+          totalDebtAmount: amount,
+          totalRemainingDebt: amount,
+          lastUsedAt: record.date,
+          totalTransactions: 1,
+        ));
+      }
+    }
+
+    // Sort by lastUsedAt descending
+    merged.sort((a, b) => b.lastUsedAt.compareTo(a.lastUsedAt));
+    return merged;
+  }
+
+  void _emitLoaded(List<MyDebtPersonEntity> persons, {MyDebtsStatus status = MyDebtsStatus.loaded}) {
     double totalOwed = 0;
     double totalPaid = 0;
     for (var p in persons) {
@@ -58,7 +143,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
 
     emit(
       state.copyWith(
-        status: MyDebtsStatus.loaded,
+        status: status,
         persons: persons,
         filteredPersons: persons,
         totalOwed: totalOwed,
@@ -197,6 +282,8 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
   @override
   Future<void> close() {
     _searchDebounce?.cancel();
+    _connectivitySubscription?.cancel();
+    _syncSubscription?.cancel();
     return super.close();
   }
 }

@@ -69,7 +69,10 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
           ),
           centerTitle: true,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: AppColors.black,
+            ),
             onPressed: () => Navigator.pop(context),
           ),
           bottom: PreferredSize(

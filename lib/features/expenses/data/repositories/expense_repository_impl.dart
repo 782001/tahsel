@@ -124,6 +124,14 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
 
   @override
   Future<Either<Failure, List<OfflineRecord>>> getPendingExpenses() async {
-    return await offlineSyncRepository.getPendingRecords();
+    final result = await offlineSyncRepository.getPendingRecords();
+    return result.fold(
+      (failure) => Left(failure),
+      (records) {
+        // STRICT FILTER: Only return records with type 'expense'
+        final expenseRecords = records.where((r) => r.type == 'expense').toList();
+        return Right(expenseRecords);
+      },
+    );
   }
 }

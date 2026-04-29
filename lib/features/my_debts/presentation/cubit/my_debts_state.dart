@@ -5,6 +5,8 @@ enum MyDebtsStatus {
   initial,
   loading,
   loaded,
+  offlineLoaded,
+  syncSuccess,
   error,
   addingDebt,
   addingPayment,

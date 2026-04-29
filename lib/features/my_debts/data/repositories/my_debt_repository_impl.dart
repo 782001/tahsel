@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:dartz/dartz.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:tahsel/core/error/failures.dart';
 import 'package:tahsel/features/debt/domain/entities/payment_entity.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_person_entity.dart';
@@ -9,19 +11,33 @@ import 'package:tahsel/features/my_debts/data/datasources/my_debt_person_remote_
 import 'package:tahsel/features/my_debts/data/datasources/my_debt_item_remote_data_source.dart';
 import 'package:tahsel/features/my_debts/data/models/my_debt_person_model.dart';
 import 'package:tahsel/features/my_debts/data/models/my_debt_item_model.dart';
+import 'package:tahsel/features/offline_sync/data/models/offline_record.dart';
+import 'package:tahsel/features/offline_sync/domain/repositories/offline_sync_repository.dart';
 
 class MyDebtRepositoryImpl implements MyDebtRepository {
   final MyDebtPersonRemoteDataSource personRemoteDataSource;
   final MyDebtItemRemoteDataSource itemRemoteDataSource;
+  final OfflineSyncRepository offlineSyncRepository;
+  final InternetConnectionChecker connectionChecker;
 
   MyDebtRepositoryImpl({
     required this.personRemoteDataSource,
     required this.itemRemoteDataSource,
+    required this.offlineSyncRepository,
+    required this.connectionChecker,
   });
 
   @override
   Future<Either<Failure, List<MyDebtPersonEntity>>> getMyDebtPersons(String uid) async {
     try {
+      final hasConnection = await connectionChecker.hasConnection;
+      if (!hasConnection) {
+        return const Left(OfflineFailure("No internet connection"));
+      }
+      
+      // TRIGGER SYNC when online before fetching
+      await offlineSyncRepository.syncAllPendingRecords();
+      
       final persons = await personRemoteDataSource.getPersons(uid);
       return Right(persons);
     } catch (e) {
@@ -62,8 +78,44 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
   @override
   Future<Either<Failure, String>> addMyDebtItem(MyDebtItemEntity debt) async {
     try {
-      final id = await itemRemoteDataSource.addDebtItem(MyDebtItemModel.fromEntity(debt));
-      return Right(id);
+      final model = MyDebtItemModel.fromEntity(debt);
+      final hasConnection = await connectionChecker.hasConnection;
+
+      if (hasConnection) {
+        // ONLINE: Add directly to Firebase
+        final id = await itemRemoteDataSource.addDebtItem(model);
+        return Right(id);
+      } else {
+        // OFFLINE: Save to Hive for later sync
+        final localId = DateTime.now().millisecondsSinceEpoch.toString();
+        
+        // Construct payload for Hive/Firestore
+        final Map<String, dynamic> hivePayload = model.toJson();
+        
+        // CRITICAL: Sanitize payload for jsonEncode (REMOVE all Timestamp/FieldValue objects)
+        // Hive storage requires plain JSON types
+        hivePayload['timestamp'] = model.timestamp?.toIso8601String() ?? DateTime.now().toIso8601String();
+        hivePayload['lastUpdatedAt'] = model.lastUpdatedAt?.toIso8601String() ?? DateTime.now().toIso8601String();
+
+        final payloadJson = jsonEncode(hivePayload);
+        
+        final offlineRecord = OfflineRecord(
+          id: localId,
+          amount: model.remainingAmount,
+          date: model.timestamp ?? DateTime.now(),
+          customerName: model.personName ?? 'Unknown',
+          type: 'my_debt_add',
+          isSynced: false,
+          payloadJson: payloadJson,
+          collectionName: 'users/${model.uid}',
+        );
+
+        final saveResult = await offlineSyncRepository.saveOfflineRecord(offlineRecord);
+        return saveResult.fold(
+          (failure) => Left(failure),
+          (_) => Right(localId),
+        );
+      }
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -72,6 +124,14 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
   @override
   Future<Either<Failure, List<MyDebtItemEntity>>> getMyDebtItems(String uid, String personName) async {
     try {
+      final hasConnection = await connectionChecker.hasConnection;
+      if (!hasConnection) {
+        return const Left(OfflineFailure("No internet connection"));
+      }
+
+      // TRIGGER SYNC when online
+      await offlineSyncRepository.syncAllPendingRecords();
+
       final items = await itemRemoteDataSource.getDebtItems(uid, personName);
       return Right(items);
     } catch (e) {
@@ -144,6 +204,10 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
   @override
   Future<Either<Failure, List<MyDebtOperationEntity>>> getMyDebtPersonOperations(String uid, String personName) async {
     try {
+      final hasConnection = await connectionChecker.hasConnection;
+      if (!hasConnection) {
+        return const Left(OfflineFailure("No internet connection"));
+      }
       final ops = await personRemoteDataSource.getPersonOperations(uid, personName);
       return Right(ops);
     } catch (e) {
@@ -169,6 +233,19 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
+  }
+
+  @override
+  Future<Either<Failure, List<OfflineRecord>>> getPendingMyDebts() async {
+    final result = await offlineSyncRepository.getPendingRecords();
+    return result.fold(
+      (failure) => Left(failure),
+      (records) {
+        // Filter my_debt type records (including 'my_debt_add')
+        final myDebtRecords = records.where((r) => r.type.startsWith('my_debt')).toList();
+        return Right(myDebtRecords);
+      },
+    );
   }
 
   PaymentType _mapType(String type) {

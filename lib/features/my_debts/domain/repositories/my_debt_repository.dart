@@ -4,6 +4,7 @@ import 'package:tahsel/features/my_debts/domain/entities/my_debt_person_entity.d
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_item_entity.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_operation_entity.dart';
 import 'package:tahsel/features/debt/domain/entities/payment_entity.dart';
+import 'package:tahsel/features/offline_sync/data/models/offline_record.dart';
 
 abstract class MyDebtRepository {
   // Person (Supplier/etc)
@@ -35,4 +36,7 @@ abstract class MyDebtRepository {
   
   // Reports
   Future<Either<Failure, List<MyDebtOperationEntity>>> getMyDebtPersonOperations(String uid, String personName);
+
+  // Offline Sync
+  Future<Either<Failure, List<OfflineRecord>>> getPendingMyDebts();
 }

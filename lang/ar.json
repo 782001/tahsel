@@ -306,5 +306,7 @@
   "my_debts_sms_template": "عزيزي {name}، تم دفع {amount} ج.م. المتبقي: {remaining} ج.م. بتاريخ {date}. ملاحظة: {note}. شكراً لك.",
   "confirm_deletion": "تأكيد الحذف",
   "delete_debt_item_confirmation": "هل أنت متأكد من رغبتك في حذف هذا الدين؟ سيؤدي ذلك إلى تحديث رصيدك الإجمالي.",
-  "deleteDebtAfterPaid": "لا يمكن حذف الدين إلا بعد سداده بالكامل"
+  "deleteDebtAfterPaid": "لا يمكن حذف الدين إلا بعد سداده بالكامل",
+    "syncing": "قيد المزامنة..."
+
 }

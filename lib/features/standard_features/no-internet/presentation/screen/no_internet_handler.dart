@@ -4,18 +4,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../logic/connectivity_cubit.dart';
 import '../../logic/connectivity_state.dart';
 import '../widget/no_internet_animations.dart';
-import '../widget/no_internet_overlay.dart';
 import '../widget/no_internet_state_manager.dart';
 
 class NoInternetHandler extends StatefulWidget {
   final Widget child;
   final VoidCallback? onRetry;
 
-  const NoInternetHandler({
-    super.key,
-    required this.child,
-    this.onRetry,
-  });
+  const NoInternetHandler({super.key, required this.child, this.onRetry});
 
   @override
   State<NoInternetHandler> createState() => _NoInternetHandlerState();
@@ -46,12 +41,17 @@ class _NoInternetHandlerState extends State<NoInternetHandler>
     super.dispose();
   }
 
-  void _handleConnectivityChange(BuildContext context, ConnectivityState state) {
+  void _handleConnectivityChange(
+    BuildContext context,
+    ConnectivityState state,
+  ) {
     _stateManager.handleConnectivityChange(
       state: state,
       onForward: _animations.forward,
       onReverse: _animations.reverse,
-      onCheckingComplete: () => setState(() {}),
+      onCheckingComplete: () {
+        if (mounted) setState(() {});
+      },
     );
   }
 
@@ -59,7 +59,9 @@ class _NoInternetHandlerState extends State<NoInternetHandler>
     await _stateManager.handleRetry(
       cubit: _cubit,
       mounted: mounted,
-      onStartChecking: () => setState(() {}),
+      onStartChecking: () {
+        if (mounted) setState(() {});
+      },
       onRetryCallback: widget.onRetry,
     );
   }

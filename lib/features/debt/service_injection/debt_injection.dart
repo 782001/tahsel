@@ -25,7 +25,7 @@ import '../presentation/cubit/total_debts/total_debts_cubit.dart';
 
 Future<void> initDebt() async {
   // Cubit
-  sl.registerFactory(
+  sl.registerLazySingleton(
     () => DebtCubit(
       addDebtUseCase: sl(),
       getDebtsUseCase: sl(),
@@ -50,7 +50,7 @@ Future<void> initDebt() async {
     ),
   );
 
-  sl.registerFactory(
+  sl.registerLazySingleton(
     () => TotalDebtsCubit(
       getDebtsUseCase: sl(),
       calculateTotalDebtsUseCase: sl(),

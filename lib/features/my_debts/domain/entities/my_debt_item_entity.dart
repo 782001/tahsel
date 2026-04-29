@@ -16,6 +16,8 @@ class MyDebtItemEntity extends Equatable {
   final bool isPaid;
   final String? ledgerNumber;
 
+  bool get isPending => id == null || id!.isEmpty || operationId.startsWith('pending_');
+
   const MyDebtItemEntity({
     this.id,
     required this.uid,

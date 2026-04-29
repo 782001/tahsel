@@ -2,13 +2,23 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_item_entity.dart';
+import 'package:tahsel/features/my_debts/domain/entities/my_debt_operation_entity.dart';
+import 'package:tahsel/features/my_debts/domain/usecases/debt/add_my_debt_usecase.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/debt/get_my_debt_items_usecase.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/person/get_my_debt_person_operations_usecase.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/payment/pay_my_debt_item_usecase.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/debt/delete_my_debt_item_usecase.dart';
-import 'package:tahsel/features/my_debts/domain/usecases/debt/add_my_debt_usecase.dart';
-import 'package:tahsel/features/my_debts/domain/usecases/payment/distribute_my_debt_payment_usecase.dart';
+import 'package:tahsel/features/my_debts/domain/usecases/debt/get_pending_my_debts_usecase.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_state.dart';
+import 'package:tahsel/features/my_debts/domain/usecases/payment/distribute_my_debt_payment_usecase.dart';
+import 'package:tahsel/core/base_usecase/base_usecase.dart';
+import 'package:tahsel/features/offline_sync/data/models/offline_record.dart';
+import 'package:tahsel/features/offline_sync/presentation/cubit/offline_sync_cubit.dart';
+
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
 
 class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
   final GetMyDebtItemsUseCase getItemsUseCase;
@@ -17,6 +27,12 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
   final DeleteMyDebtItemUseCase deleteItemUseCase;
   final AddMyDebtUseCase addDebtUseCase;
   final DistributeMyDebtPaymentUseCase distributePaymentUseCase;
+  final GetPendingMyDebtsUseCase getPendingMyDebtsUseCase;
+  final ConnectivityCubit connectivityCubit;
+  final OfflineSyncCubit offlineSyncCubit;
+  StreamSubscription? _connectivitySubscription;
+  StreamSubscription? _syncSubscription;
+  String? _currentPersonName;
 
   MyDebtDetailsCubit({
     required this.getItemsUseCase,
@@ -25,40 +41,98 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
     required this.deleteItemUseCase,
     required this.addDebtUseCase,
     required this.distributePaymentUseCase,
-  }) : super(const MyDebtDetailsState());
+    required this.getPendingMyDebtsUseCase,
+    required this.connectivityCubit,
+    required this.offlineSyncCubit,
+  }) : super(const MyDebtDetailsState()) {
+    _listenToConnectivity();
+    _listenToSync();
+  }
+
+  void _listenToSync() {
+    _syncSubscription = offlineSyncCubit.stream.listen((syncState) {
+      if (syncState is OfflineSyncSuccess) {
+        final uid = FirebaseAuth.instance.currentUser?.uid;
+        if (uid != null && _currentPersonName != null) {
+          loadDetails(uid, _currentPersonName!);
+        }
+      }
+    });
+  }
+
+  void _listenToConnectivity() {
+    _connectivitySubscription = connectivityCubit.stream.listen((connectivityState) {
+      if (connectivityState is ConnectivityConnected || connectivityState is ConnectivityDisconnected) {
+        final uid = FirebaseAuth.instance.currentUser?.uid;
+        if (uid != null && _currentPersonName != null && state.status != MyDebtDetailsStatus.loading) {
+           loadDetails(uid, _currentPersonName!);
+        }
+      }
+    });
+  }
 
   Future<void> loadDetails(String uid, String personName) async {
+    _currentPersonName = personName;
     emit(state.copyWith(status: MyDebtDetailsStatus.loading));
 
+    // 1. Fetch pending records first
+    final pendingResult = await getPendingMyDebtsUseCase(NoParams());
+    final List<OfflineRecord> pendingRecords = pendingResult.fold((_) => [], (records) => records);
+
+    // Filter pending records for this person and map to entities
+    final filteredPending = pendingRecords
+        .where((r) => r.customerName == personName)
+        .map((r) => MyDebtItemEntity(
+              id: r.id,
+              uid: uid,
+              operationId: 'pending_${r.id}',
+              totalAmount: r.amount, 
+              paidAmount: 0,
+              remainingAmount: r.amount,
+              personName: personName,
+              details: "قيد المزامنة...", // Syncing indicator for logic
+              operationType: 'debt',
+              timestamp: r.date,
+              isPaid: false,
+            ))
+        .toList();
+
+    // 2. Fetch remote items
     final itemsResult = await getItemsUseCase(uid, personName);
     final opsResult = await getOperationsUseCase(uid, personName);
 
     itemsResult.fold(
-      (f) => emit(state.copyWith(status: MyDebtDetailsStatus.error, message: f.message)),
-      (items) {
+      (f) {
+        // OFFLINE or Error: Show ONLY pending items
+        _emitLoaded(filteredPending, []);
+      },
+      (remoteItems) {
+        // ONLINE: Show ONLY remote items
         opsResult.fold(
-          (f) => emit(state.copyWith(status: MyDebtDetailsStatus.error, message: f.message)),
-          (ops) {
-            double totalOwed = 0;
-            double totalPaid = 0;
-            
-            for (var item in items) {
-              totalOwed += item.totalAmount;
-              totalPaid += item.paidAmount;
-            }
-
-            emit(state.copyWith(
-              status: MyDebtDetailsStatus.loaded,
-              items: items,
-              operations: ops,
-              totalOwed: totalOwed,
-              totalPaid: totalPaid,
-              remainingAmount: totalOwed - totalPaid,
-            ));
-          },
+          (f) => _emitLoaded(remoteItems, []),
+          (ops) => _emitLoaded(remoteItems, ops),
         );
       },
     );
+  }
+
+  void _emitLoaded(List<MyDebtItemEntity> items, List<MyDebtOperationEntity> ops) {
+    double totalOwed = 0;
+    double totalPaid = 0;
+    
+    for (var item in items) {
+      totalOwed += item.totalAmount;
+      totalPaid += item.paidAmount;
+    }
+
+    emit(state.copyWith(
+      status: MyDebtDetailsStatus.loaded,
+      items: items,
+      operations: ops,
+      totalOwed: totalOwed,
+      totalPaid: totalPaid,
+      remainingAmount: totalOwed - totalPaid,
+    ));
   }
 
   void clearFlags() {
@@ -160,5 +234,11 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
       (f) => emit(state.copyWith(status: MyDebtDetailsStatus.error, message: f.message)),
       (_) => loadDetails(uid, personName),
     );
+  }
+  @override
+  Future<void> close() {
+    _connectivitySubscription?.cancel();
+    _syncSubscription?.cancel();
+    return super.close();
   }
 }
