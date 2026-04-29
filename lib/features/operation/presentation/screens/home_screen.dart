@@ -345,20 +345,21 @@ class _HomeScreenState extends State<HomeScreen> {
           listener: (context, state) {
             if (state is OperationSuccess) {
               final double paid = double.tryParse(_paidController.text) ?? 0.0;
-              final double remaining = _selectedMode == QuickAddMode.shop
-                  ? (double.tryParse(_debtController.text) ?? 0.0)
-                  : (totalDue - paid);
+              final double total = _selectedMode == QuickAddMode.shop
+                  ? (double.tryParse(_totalAmountController.text) ?? 0.0)
+                  : totalDue;
+              
+              // Recalculate safely: max(total - paid, 0)
+              final double remaining = (total - paid) > 0 ? (total - paid) : 0.0;
 
               if (remaining > 0) {
                 final uid = AppStrings.userToken;
                 if (uid.isNotEmpty) {
                   context.read<DebtCubit>().addDebt(
-                    uid: uid,
-                    operationId: state.operationId,
-                    totalAmount: _selectedMode == QuickAddMode.shop
-                        ? (double.tryParse(_totalAmountController.text) ?? 0.0)
-                        : totalDue,
-                    paidAmount: paid,
+                        uid: uid,
+                        operationId: state.operationId,
+                        totalAmount: total,
+                        paidAmount: paid,
                     customerName: _customerController.text.trim(),
                     productOrSessionDetails: _selectedMode == QuickAddMode.shop
                         ? _productController.text.trim()
