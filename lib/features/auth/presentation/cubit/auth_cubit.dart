@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:tahsel/core/base_usecase/base_usecase.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
@@ -32,23 +33,43 @@ class AuthCubit extends Cubit<AuthState> {
     _authSubscription = FirebaseAuth.instance.userChanges().listen((
       User? user,
     ) async {
+      final bool hasInternet =
+          await sl<InternetConnectionChecker>().hasConnection;
+
       if (user == null) {
-        if (state is! AuthUnauthenticated && state is! AuthInitial) {
+        // Only trigger logout if we ARE online and Firebase confirms no user.
+        // If offline, we trust the local session (token in SecureStorage).
+        if (hasInternet &&
+            state is! AuthUnauthenticated &&
+            state is! AuthInitial) {
           AppLogger.printMessage(
-            'Firebase Auth state changed to null - triggering forced logout',
+            'Firebase Auth state changed to null while ONLINE - triggering forced logout',
           );
           await forceLogout();
+        } else {
+          AppLogger.printMessage(
+            'Firebase Auth user is null while OFFLINE - ignoring to maintain local session',
+          );
         }
       } else {
-        // User is present, but we need to verify if they still exist on the server
-        try {
-          // Force a reload to check if user was deleted/disabled in console
-          await user.reload();
-        } catch (e) {
-          AppLogger.printMessage(
-            'User verification failed (user likely deleted from console): $e',
-          );
-          await forceLogout();
+        // User is present. We only reload to check server status if we are online.
+        if (hasInternet) {
+          try {
+            await user.reload();
+          } catch (e) {
+            // Only logout if it's NOT a network error (e.g., user-not-found, user-disabled)
+            if (e.toString().contains('network-request-failed') ||
+                e.toString().contains('connection-failed')) {
+              AppLogger.printMessage(
+                'User reload failed due to network - keeping session: $e',
+              );
+            } else {
+              AppLogger.printMessage(
+                'User verification failed for non-network reason - logging out: $e',
+              );
+              await forceLogout();
+            }
+          }
         }
       }
     });

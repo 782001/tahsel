@@ -84,7 +84,8 @@ class _SplashScreenState extends State<SplashScreen>
   /// Verifies the current Firebase session in the background.
   /// If the session is invalid (user deleted/disabled), it triggers a logout.
   void _verifySessionInBackground() async {
-    final bool hasInternet = await sl<InternetConnectionChecker>().hasConnection;
+    final bool hasInternet =
+        await sl<InternetConnectionChecker>().hasConnection;
     if (!hasInternet) return;
 
     try {
@@ -92,10 +93,17 @@ class _SplashScreenState extends State<SplashScreen>
       if (user != null) {
         await user.reload();
       } else {
-        // Firebase says no user but local said yes? Clear local session.
-        _handleInvalidSession();
+        // Firebase says no user but local said yes? Only clear if online.
+        if (hasInternet) {
+          _handleInvalidSession();
+        }
       }
     } catch (e) {
+      // Only logout if it's NOT a network error
+      if (e.toString().contains('network-request-failed') ||
+          e.toString().contains('connection-failed')) {
+        return; // Ignore network errors, keep local session
+      }
       // User likely deleted or disabled on server
       _handleInvalidSession();
     }
