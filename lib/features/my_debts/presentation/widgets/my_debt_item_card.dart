@@ -59,23 +59,23 @@ class MyDebtItemCard extends StatelessWidget {
             onLongPress: item.isPending
                 ? null
                 : () {
-                    if (item.remainingAmount > 0) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          duration: const Duration(seconds: 2),
-                          backgroundColor: AppColors.error,
-                          content: Text(
-                            AppStrings.deleteDebtAfterPaid.tr(),
-                            style: TextStyles.customStyle(
-                              color: Colors.white,
-                              fontSize: 14.sp,
-                            ),
-                          ),
-                        ),
-                      );
-                    } else {
-                      onDelete(item);
-                    }
+                    // if (item.remainingAmount > 0) {
+                    //   ScaffoldMessenger.of(context).showSnackBar(
+                    //     SnackBar(
+                    //       duration: const Duration(seconds: 2),
+                    //       backgroundColor: AppColors.error,
+                    //       content: Text(
+                    //         AppStrings.deleteDebtAfterPaid.tr(),
+                    //         style: TextStyles.customStyle(
+                    //           color: Colors.white,
+                    //           fontSize: 14.sp,
+                    //         ),
+                    //       ),
+                    //     ),
+                    //   );
+                    // } else {
+                    onDelete(item);
+                    // }
                   },
             child: Padding(
               padding: EdgeInsets.all(16.r),
@@ -171,7 +171,10 @@ class MyDebtItemCard extends StatelessWidget {
                         AppStrings.totalDueLabel.tr(),
                         item.totalAmount,
                       ),
-                      _buildAmountInfo(AppStrings.amountPaid.tr(), item.paidAmount),
+                      _buildAmountInfo(
+                        AppStrings.amountPaid.tr(),
+                        item.paidAmount,
+                      ),
                       _buildAmountInfo(
                         AppStrings.remainingDebt.tr(),
                         item.remainingAmount,
@@ -185,7 +188,9 @@ class MyDebtItemCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: OutlinedButton.icon(
-                            onPressed: item.isPending ? null : () => onPayPartial(item),
+                            onPressed: item.isPending
+                                ? null
+                                : () => onPayPartial(item),
                             icon: Icon(Icons.payments_outlined, size: 16.r),
                             label: Text(AppStrings.partialPayLabel.tr()),
                             style: OutlinedButton.styleFrom(
@@ -207,7 +212,9 @@ class MyDebtItemCard extends StatelessWidget {
                         SizedBox(width: 12.w),
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: (isFullPaying || item.isPending) ? null : () => onPayFull(item),
+                            onPressed: (isFullPaying || item.isPending)
+                                ? null
+                                : () => onPayFull(item),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryColor,
                               foregroundColor: AppColors.whiteColor,
@@ -233,7 +240,10 @@ class MyDebtItemCard extends StatelessWidget {
                                     ),
                                     const SizedBox(width: 8),
                                   ] else
-                                    Icon(Icons.check_circle_outline, size: 16.r),
+                                    Icon(
+                                      Icons.check_circle_outline,
+                                      size: 16.r,
+                                    ),
                                   const SizedBox(width: 8),
                                   Text(
                                     AppStrings.fullPaymentLabel.tr(),
