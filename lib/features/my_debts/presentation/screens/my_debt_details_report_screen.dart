@@ -709,7 +709,8 @@ class _TransactionItem extends StatelessWidget {
                               controller: amountController,
                               keyboardType: TextInputType.number,
                               onChanged: (value) {
-                                if (errorText != null) {
+                                 if (errorText != null &&
+                                    transaction.type == PaymentType.debtAdded) {
                                   setState(() => errorText = null);
                                 }
                               },
@@ -736,8 +737,8 @@ class _TransactionItem extends StatelessWidget {
                         ],
                       ),
                     ),
-                    if (errorText != null) ...[
-                      SizedBox(height: 8.h),
+                    if (errorText != null &&
+                        transaction.type == PaymentType.debtAdded) ...[                      SizedBox(height: 8.h),
                       Text(
                         errorText!,
                         style: TextStyles.customStyle(
@@ -748,7 +749,8 @@ class _TransactionItem extends StatelessWidget {
                       ),
                     ],
                     SizedBox(height: 16.h),
-                    if (minAmount > 0)
+                    if (minAmount > 0 &&
+                        transaction.type == PaymentType.debtAdded)
                       Text(
                         "${AppStrings.minValueHint.tr()} ${minAmount.toSmartAmount()}",
                         style: TextStyles.customStyle(
@@ -811,7 +813,7 @@ class _TransactionItem extends StatelessWidget {
                           }
 
                           final newAmountRounded = double.parse(
-                            newAmount.toStringAsFixed(2),
+                            newAmount!.toStringAsFixed(2),
                           );
                           final minAmountRounded = double.parse(
                             minAmount.toStringAsFixed(2),
@@ -828,7 +830,7 @@ class _TransactionItem extends StatelessWidget {
                             uid: AppStrings.userToken,
                             debtId: debtId,
                             paymentId: transaction.id ?? '',
-                            newAmount: newAmount,
+                            newAmount: newAmount!,
                             customerName: customerName,
                             note: noteController.text,
                           );

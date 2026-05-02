@@ -714,7 +714,8 @@ class _TransactionItem extends StatelessWidget {
                               controller: amountController,
                               keyboardType: TextInputType.number,
                               onChanged: (value) {
-                                if (errorText != null) {
+                                if (errorText != null &&
+                                    transaction.type == PaymentType.debtAdded) {
                                   setState(() => errorText = null);
                                 }
                               },
@@ -741,7 +742,8 @@ class _TransactionItem extends StatelessWidget {
                         ],
                       ),
                     ),
-                    if (errorText != null) ...[
+                    if (errorText != null &&
+                        transaction.type == PaymentType.debtAdded) ...[
                       SizedBox(height: 8.h),
                       Text(
                         errorText!,
@@ -753,7 +755,8 @@ class _TransactionItem extends StatelessWidget {
                       ),
                     ],
                     SizedBox(height: 16.h),
-                    if (minAmount > 0)
+                    if (minAmount > 0 &&
+                        transaction.type == PaymentType.debtAdded)
                       Text(
                         "${AppStrings.minValueHint.tr()} ${minAmount.toSmartAmount()}",
                         style: TextStyles.customStyle(
@@ -816,13 +819,14 @@ class _TransactionItem extends StatelessWidget {
                           }
 
                           final newAmountRounded = double.parse(
-                            newAmount.toStringAsFixed(2),
+                            newAmount!.toStringAsFixed(2),
                           );
                           final minAmountRounded = double.parse(
                             minAmount.toStringAsFixed(2),
                           );
 
-                          if (newAmountRounded < minAmountRounded) {
+                          if ((newAmountRounded < minAmountRounded) &&
+                              transaction.type == PaymentType.debtAdded) {
                             setState(
                               () => errorText = AppStrings.minValueError.tr(),
                             );

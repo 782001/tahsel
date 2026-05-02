@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import '../../../../core/base_usecase/base_usecase.dart';
 import '../../../../core/error/failures.dart';
@@ -10,6 +11,7 @@ class UpdatePaymentParams {
   final String paymentId;
   final double newAmount;
   final double minAmount;
+  final bool isDebtAdded;
   final String? note;
 
   UpdatePaymentParams({
@@ -18,6 +20,7 @@ class UpdatePaymentParams {
     required this.paymentId,
     required this.newAmount,
     required this.minAmount,
+    required this.isDebtAdded,
     this.note,
   });
 }
@@ -32,8 +35,8 @@ class UpdatePaymentUseCase implements BaseUseCase<void, UpdatePaymentParams> {
     final newAmountRounded = double.parse(params.newAmount.toStringAsFixed(2));
     final minAmountRounded = double.parse(params.minAmount.toStringAsFixed(2));
 
-    if (newAmountRounded < minAmountRounded) {
-      return Future.value(Left(ServerFailure(AppStrings.minValueError)));
+    if (params.isDebtAdded && (newAmountRounded < minAmountRounded)) {
+      return Future.value(Left(ServerFailure(AppStrings.minValueError.tr())));
     }
 
     return repository.updatePayment(

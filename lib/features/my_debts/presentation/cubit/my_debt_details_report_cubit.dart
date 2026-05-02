@@ -100,13 +100,16 @@ class MyDebtDetailsReportCubit extends Cubit<MyDebtDetailsReportState> {
     String? note,
   }) async {
     double minAmount = 0;
+    bool isDebtAdded = false;
     if (state is MyDebtDetailsReportLoaded) {
       final loadedState = state as MyDebtDetailsReportLoaded;
       final target = loadedState.transactions.firstWhere(
         (t) => t.id == paymentId,
       );
 
-      if (target.type == PaymentType.debtAdded) {
+      isDebtAdded = target.type == PaymentType.debtAdded;
+
+      if (isDebtAdded) {
         minAmount = loadedState.paidAmount;
       } else {
         minAmount = target.amountPaid;
@@ -121,6 +124,7 @@ class MyDebtDetailsReportCubit extends Cubit<MyDebtDetailsReportState> {
         paymentId: paymentId,
         newAmount: newAmount,
         minAmount: minAmount,
+        isDebtAdded: isDebtAdded,
         note: note,
       ),
     );

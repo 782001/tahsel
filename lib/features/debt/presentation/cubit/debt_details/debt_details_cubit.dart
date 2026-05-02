@@ -115,13 +115,16 @@ class DebtDetailsCubit extends Cubit<DebtDetailsState> {
     String? note,
   }) async {
     double minAmount = 0;
+    bool isDebtAdded = false;
     if (state is DebtDetailsLoaded) {
       final loadedState = state as DebtDetailsLoaded;
       final target = loadedState.transactions.firstWhere(
         (t) => t.id == paymentId,
       );
 
-      if (target.type == PaymentType.debtAdded) {
+      isDebtAdded = target.type == PaymentType.debtAdded;
+
+      if (isDebtAdded) {
         minAmount = loadedState.totalPaid;
       } else {
         // Business Rule: No negative adjustments (newValue >= current)
@@ -137,6 +140,7 @@ class DebtDetailsCubit extends Cubit<DebtDetailsState> {
         paymentId: paymentId,
         newAmount: newAmount,
         minAmount: minAmount,
+        isDebtAdded: isDebtAdded,
         note: note,
       ),
     );
