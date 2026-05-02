@@ -85,12 +85,14 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
                   color: AppColors.black,
                   fontSize: 16.sp,
                 ),
+                cursorColor: AppColors.primaryColor,
                 decoration: InputDecoration(
-                  hintText: AppStrings.searchCustomer.tr(),
+                  hintText: AppStrings.searchByNameOrPhone.tr(),
                   hintStyle: TextStyles.customStyle(
                     color: AppColors.blackLight,
                     fontSize: 14.sp,
                   ),
+
                   prefixIcon: Icon(Icons.search, color: AppColors.primaryColor),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(

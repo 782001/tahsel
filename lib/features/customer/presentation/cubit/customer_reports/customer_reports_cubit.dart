@@ -62,7 +62,9 @@ class CustomerReportsCubit extends Cubit<CustomerReportsState> {
     final List<CustomerEntity> customers = params['customers'];
     final String query = params['query'];
     return customers
-        .where((c) => c.name.toLowerCase().contains(query))
+        .where((c) =>
+            c.name.toLowerCase().contains(query) ||
+            (c.phoneNumber?.contains(query) ?? false))
         .toList();
   }
 

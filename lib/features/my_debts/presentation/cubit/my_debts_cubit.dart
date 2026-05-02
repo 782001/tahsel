@@ -285,7 +285,9 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
           ? _allPersons
           : _allPersons
                 .where(
-                  (p) => p.name.toLowerCase().contains(query.toLowerCase()),
+                  (p) =>
+                      p.name.toLowerCase().contains(query.toLowerCase()) ||
+                      (p.phoneNumber?.contains(query) ?? false),
                 )
                 .toList();
       _emitLoaded(filtered);

@@ -175,8 +175,13 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
       final detailsMatches = (debt.productOrSessionDetails ?? '')
           .toLowerCase()
           .contains(query);
+      final phoneNumberMatches = (debt.phoneNumber ?? '').contains(query);
 
-      if (query.isEmpty || nameMatches || ledgerMatches || detailsMatches) {
+      if (query.isEmpty ||
+          nameMatches ||
+          ledgerMatches ||
+          detailsMatches ||
+          phoneNumberMatches) {
         if (!groupedMap.containsKey(name)) {
           groupedMap[name] = [];
         }
