@@ -10,8 +10,10 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/assets.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/features/customer/presentation/cubit/customer_state.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_state.dart';
+import 'package:tahsel/features/customer/presentation/cubit/customer_cubit.dart';
 
 class MyDebtsNotificationDialog extends StatefulWidget {
   final String personName;
@@ -198,16 +200,38 @@ class _MyDebtsNotificationDialogState extends State<MyDebtsNotificationDialog> {
   }
 
   void _loadPersonPhone() {
-    final state = context.read<MyDebtsCubit>().state;
-    if (state.status == MyDebtsStatus.loaded) {
-      final person = state.persons
+    String? phone;
+
+    // First try to get from MyDebtsCubit
+    final myDebtsState = context.read<MyDebtsCubit>().state;
+    if (myDebtsState.status == MyDebtsStatus.loaded) {
+      final person = myDebtsState.persons
           .where((p) => p.name.trim() == widget.personName.trim())
           .firstOrNull;
       if (person != null &&
           person.phoneNumber != null &&
           person.phoneNumber!.isNotEmpty) {
-        _phoneController.text = person.phoneNumber!;
+        phone = person.phoneNumber;
       }
+    }
+
+    // If not found, try to get from CustomerCubit (they might be a customer too)
+    if (phone == null || phone.isEmpty) {
+      final customerState = context.read<CustomerCubit>().state;
+      if (customerState is CustomerLoaded) {
+        final customer = customerState.customers
+            .where((c) => c.name.trim() == widget.personName.trim())
+            .firstOrNull;
+        if (customer != null &&
+            customer.phoneNumber != null &&
+            customer.phoneNumber!.isNotEmpty) {
+          phone = customer.phoneNumber;
+        }
+      }
+    }
+
+    if (phone != null && phone.isNotEmpty) {
+      _phoneController.text = phone;
     }
   }
 
