@@ -638,6 +638,7 @@ class _TransactionItem extends StatelessWidget {
     );
 
     double minAmount = 0;
+    double? maxAmount;
     if (cubit.state is MyDebtDetailsReportLoaded) {
       final loadedState = cubit.state as MyDebtDetailsReportLoaded;
       if (transaction.type == PaymentType.debtAdded) {
@@ -645,6 +646,7 @@ class _TransactionItem extends StatelessWidget {
       } else {
         // Business Rule: No negative adjustments (newValue >= current)
         minAmount = transaction.amountPaid;
+        maxAmount = loadedState.remainingAmount + transaction.amountPaid;
       }
     }
 
@@ -709,8 +711,7 @@ class _TransactionItem extends StatelessWidget {
                               controller: amountController,
                               keyboardType: TextInputType.number,
                               onChanged: (value) {
-                                 if (errorText != null &&
-                                    transaction.type == PaymentType.debtAdded) {
+                                if (errorText != null) {
                                   setState(() => errorText = null);
                                 }
                               },
@@ -737,8 +738,8 @@ class _TransactionItem extends StatelessWidget {
                         ],
                       ),
                     ),
-                    if (errorText != null &&
-                        transaction.type == PaymentType.debtAdded) ...[                      SizedBox(height: 8.h),
+                    if (errorText != null) ...[
+                      SizedBox(height: 8.h),
                       Text(
                         errorText!,
                         style: TextStyles.customStyle(
@@ -813,24 +814,39 @@ class _TransactionItem extends StatelessWidget {
                           }
 
                           final newAmountRounded = double.parse(
-                            newAmount!.toStringAsFixed(2),
+                            newAmount.toStringAsFixed(2),
                           );
                           final minAmountRounded = double.parse(
                             minAmount.toStringAsFixed(2),
                           );
 
-                          if (newAmountRounded < minAmountRounded) {
+                          if ((newAmountRounded < minAmountRounded) &&
+                              transaction.type == PaymentType.debtAdded) {
                             setState(
                               () => errorText = AppStrings.minValueError.tr(),
                             );
                             return;
                           }
 
+                          if (maxAmount != null &&
+                              transaction.type != PaymentType.debtAdded) {
+                            final maxAmountRounded = double.parse(
+                              maxAmount!.toStringAsFixed(2),
+                            );
+                            if (newAmountRounded > maxAmountRounded) {
+                              setState(
+                                () => errorText =
+                                    AppStrings.paymentExceedsRemaining.tr(),
+                              );
+                              return;
+                            }
+                          }
+
                           cubit.updatePayment(
                             uid: AppStrings.userToken,
                             debtId: debtId,
                             paymentId: transaction.id ?? '',
-                            newAmount: newAmount!,
+                            newAmount: newAmount,
                             customerName: customerName,
                             note: noteController.text,
                           );

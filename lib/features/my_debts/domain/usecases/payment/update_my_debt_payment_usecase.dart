@@ -12,6 +12,7 @@ class UpdateMyDebtPaymentParams {
   final String paymentId;
   final double newAmount;
   final double minAmount;
+  final double? maxAmount;
   final bool isDebtAdded;
   final String? note;
 
@@ -22,6 +23,7 @@ class UpdateMyDebtPaymentParams {
     required this.newAmount,
     required this.minAmount,
     required this.isDebtAdded,
+    this.maxAmount,
     this.note,
   });
 }
@@ -39,6 +41,13 @@ class UpdateMyDebtPaymentUseCase
 
     if (params.isDebtAdded && (newAmountRounded < minAmountRounded)) {
       return Future.value(Left(ServerFailure(AppStrings.minValueError.tr())));
+    }
+
+    if (!params.isDebtAdded && params.maxAmount != null) {
+      final maxAmountRounded = double.parse(params.maxAmount!.toStringAsFixed(2));
+      if (newAmountRounded > maxAmountRounded) {
+        return Future.value(Left(ServerFailure(AppStrings.paymentExceedsRemaining.tr())));
+      }
     }
 
     return repository.updateMyDebtPayment(

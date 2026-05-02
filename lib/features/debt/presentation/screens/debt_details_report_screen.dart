@@ -643,6 +643,7 @@ class _TransactionItem extends StatelessWidget {
     );
 
     double minAmount = 0;
+    double? maxAmount;
     if (cubit.state is DebtDetailsLoaded) {
       final loadedState = cubit.state as DebtDetailsLoaded;
       if (transaction.type == PaymentType.debtAdded) {
@@ -650,6 +651,7 @@ class _TransactionItem extends StatelessWidget {
       } else {
         // Business Rule: No negative adjustments (newValue >= current)
         minAmount = transaction.amountPaid;
+        maxAmount = loadedState.remainingDebt + transaction.amountPaid;
       }
     }
 
@@ -714,8 +716,7 @@ class _TransactionItem extends StatelessWidget {
                               controller: amountController,
                               keyboardType: TextInputType.number,
                               onChanged: (value) {
-                                if (errorText != null &&
-                                    transaction.type == PaymentType.debtAdded) {
+                                if (errorText != null) {
                                   setState(() => errorText = null);
                                 }
                               },
@@ -742,8 +743,7 @@ class _TransactionItem extends StatelessWidget {
                         ],
                       ),
                     ),
-                    if (errorText != null &&
-                        transaction.type == PaymentType.debtAdded) ...[
+                    if (errorText != null) ...[
                       SizedBox(height: 8.h),
                       Text(
                         errorText!,
@@ -819,7 +819,7 @@ class _TransactionItem extends StatelessWidget {
                           }
 
                           final newAmountRounded = double.parse(
-                            newAmount!.toStringAsFixed(2),
+                            newAmount.toStringAsFixed(2),
                           );
                           final minAmountRounded = double.parse(
                             minAmount.toStringAsFixed(2),
@@ -831,6 +831,20 @@ class _TransactionItem extends StatelessWidget {
                               () => errorText = AppStrings.minValueError.tr(),
                             );
                             return;
+                          }
+
+                          if (maxAmount != null &&
+                              transaction.type != PaymentType.debtAdded) {
+                            final maxAmountRounded = double.parse(
+                              maxAmount!.toStringAsFixed(2),
+                            );
+                            if (newAmountRounded > maxAmountRounded) {
+                              setState(
+                                () => errorText =
+                                    AppStrings.paymentExceedsRemaining.tr(),
+                              );
+                              return;
+                            }
                           }
 
                           cubit.updatePayment(

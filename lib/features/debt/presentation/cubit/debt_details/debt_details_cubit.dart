@@ -115,6 +115,7 @@ class DebtDetailsCubit extends Cubit<DebtDetailsState> {
     String? note,
   }) async {
     double minAmount = 0;
+    double? maxAmount;
     bool isDebtAdded = false;
     if (state is DebtDetailsLoaded) {
       final loadedState = state as DebtDetailsLoaded;
@@ -129,6 +130,7 @@ class DebtDetailsCubit extends Cubit<DebtDetailsState> {
       } else {
         // Business Rule: No negative adjustments (newValue >= current)
         minAmount = target.amountPaid;
+        maxAmount = loadedState.remainingDebt + target.amountPaid;
       }
     }
 
@@ -140,6 +142,7 @@ class DebtDetailsCubit extends Cubit<DebtDetailsState> {
         paymentId: paymentId,
         newAmount: newAmount,
         minAmount: minAmount,
+        maxAmount: maxAmount,
         isDebtAdded: isDebtAdded,
         note: note,
       ),

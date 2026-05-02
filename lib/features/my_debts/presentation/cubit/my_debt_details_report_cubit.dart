@@ -100,6 +100,7 @@ class MyDebtDetailsReportCubit extends Cubit<MyDebtDetailsReportState> {
     String? note,
   }) async {
     double minAmount = 0;
+    double? maxAmount;
     bool isDebtAdded = false;
     if (state is MyDebtDetailsReportLoaded) {
       final loadedState = state as MyDebtDetailsReportLoaded;
@@ -113,6 +114,7 @@ class MyDebtDetailsReportCubit extends Cubit<MyDebtDetailsReportState> {
         minAmount = loadedState.paidAmount;
       } else {
         minAmount = target.amountPaid;
+        maxAmount = loadedState.remainingAmount + target.amountPaid;
       }
     }
 
@@ -124,6 +126,7 @@ class MyDebtDetailsReportCubit extends Cubit<MyDebtDetailsReportState> {
         paymentId: paymentId,
         newAmount: newAmount,
         minAmount: minAmount,
+        maxAmount: maxAmount,
         isDebtAdded: isDebtAdded,
         note: note,
       ),

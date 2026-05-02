@@ -158,7 +158,7 @@
   "paid_full": "Paid in full",
   "required_field": "This field is required",
   "invalid_value": "Invalid value",
-  "payment_exceeds_remaining": "Paid amount exceeds remaining amount",
+  "payment_exceeds_remaining": "Payment value cannot be greater than the remaining debt",
   "payment_success": "Payment recorded successfully",
   "full_settlement": "Full Settlement",
   "no_customer_debts": "No Customer Debts",
