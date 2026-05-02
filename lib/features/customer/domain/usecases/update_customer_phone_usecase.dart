@@ -3,14 +3,19 @@ import 'package:tahsel/core/base_usecase/base_usecase.dart';
 import '../../../../core/error/failures.dart';
 import '../repositories/customer_repository.dart';
 
-class UpdateCustomerPhoneUseCase implements BaseUseCase<void, UpdateCustomerPhoneParams> {
+class UpdateCustomerPhoneUseCase
+    implements BaseUseCase<void, UpdateCustomerPhoneParams> {
   final CustomerRepository repository;
 
   UpdateCustomerPhoneUseCase(this.repository);
 
   @override
   Future<Either<Failure, void>> call(UpdateCustomerPhoneParams params) async {
-    return await repository.updateCustomerPhone(params.uid, params.name, params.phoneNumber);
+    return await repository.updateCustomerPhone(
+      params.uid,
+      params.name,
+      params.phoneNumber,
+    );
   }
 }
 

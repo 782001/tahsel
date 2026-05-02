@@ -11,9 +11,12 @@ class GenerateInsightsParams {
   GenerateInsightsParams({required this.reports, required this.period});
 }
 
-class GenerateInsightsUseCase implements BaseUseCase<List<ProfitInsight>, GenerateInsightsParams> {
+class GenerateInsightsUseCase
+    implements BaseUseCase<List<ProfitInsight>, GenerateInsightsParams> {
   @override
-  Future<Either<Failure, List<ProfitInsight>>> call(GenerateInsightsParams params) async {
+  Future<Either<Failure, List<ProfitInsight>>> call(
+    GenerateInsightsParams params,
+  ) async {
     if (params.period == ReportPeriod.allTime) {
       return const Right([]); // Pure aggregation, no insights for all-time
     }
@@ -37,7 +40,10 @@ class GenerateInsightsUseCase implements BaseUseCase<List<ProfitInsight>, Genera
   }
 
   // Pure logic for profit growth analysis
-  ProfitInsight _getNetProfitTrendInsight(ReportsEntity reports, ReportPeriod period) {
+  ProfitInsight _getNetProfitTrendInsight(
+    ReportsEntity reports,
+    ReportPeriod period,
+  ) {
     final currentProfit = reports.totalIncome - reports.totalExpenses;
     final prevProfit = reports.prevIncome - reports.prevExpenses;
 
@@ -67,10 +73,18 @@ class GenerateInsightsUseCase implements BaseUseCase<List<ProfitInsight>, Genera
     if (difference < 1.0) {
       String key;
       switch (period) {
-        case ReportPeriod.daily: key = 'insight_profit_same_daily'; break;
-        case ReportPeriod.weekly: key = 'insight_profit_same_weekly'; break;
-        case ReportPeriod.monthly: key = 'insight_profit_same_monthly'; break;
-        case ReportPeriod.allTime: key = 'insight_profit_same_general'; break; // Placeholder or general key
+        case ReportPeriod.daily:
+          key = 'insight_profit_same_daily';
+          break;
+        case ReportPeriod.weekly:
+          key = 'insight_profit_same_weekly';
+          break;
+        case ReportPeriod.monthly:
+          key = 'insight_profit_same_monthly';
+          break;
+        case ReportPeriod.allTime:
+          key = 'insight_profit_same_general';
+          break; // Placeholder or general key
       }
       return ProfitInsight(
         status: ProfitInsightStatus.same,
@@ -83,10 +97,18 @@ class GenerateInsightsUseCase implements BaseUseCase<List<ProfitInsight>, Genera
     // Determine Prefix/Suffix based on period
     String keyPrefix = 'insight_profit_';
     switch (period) {
-      case ReportPeriod.daily: keyPrefix += 'daily_'; break;
-      case ReportPeriod.weekly: keyPrefix += 'weekly_'; break;
-      case ReportPeriod.monthly: keyPrefix += 'monthly_'; break;
-      case ReportPeriod.allTime: keyPrefix += 'general_'; break;
+      case ReportPeriod.daily:
+        keyPrefix += 'daily_';
+        break;
+      case ReportPeriod.weekly:
+        keyPrefix += 'weekly_';
+        break;
+      case ReportPeriod.monthly:
+        keyPrefix += 'monthly_';
+        break;
+      case ReportPeriod.allTime:
+        keyPrefix += 'general_';
+        break;
     }
 
     if (currentProfit > prevProfit) {
@@ -109,7 +131,8 @@ class GenerateInsightsUseCase implements BaseUseCase<List<ProfitInsight>, Genera
   ProfitInsight? _getIncomeTrendInsight(ReportsEntity reports) {
     if (reports.totalIncome > reports.prevIncome) {
       final cafeIncrease = reports.cafeIncome - reports.prevCafeIncome;
-      final psIncrease = reports.playstationIncome - reports.prevPlaystationIncome;
+      final psIncrease =
+          reports.playstationIncome - reports.prevPlaystationIncome;
 
       if (cafeIncrease > psIncrease && cafeIncrease > 0) {
         return ProfitInsight(
@@ -133,7 +156,8 @@ class GenerateInsightsUseCase implements BaseUseCase<List<ProfitInsight>, Genera
   ProfitInsight? _getExpenseTrendInsight(ReportsEntity reports) {
     if (reports.totalExpenses > reports.prevExpenses) {
       final expenseIncrease = reports.totalExpenses - reports.prevExpenses;
-      if (expenseIncrease > 100) { // Threshold for "high" increase
+      if (expenseIncrease > 100) {
+        // Threshold for "high" increase
         return ProfitInsight(
           status: ProfitInsightStatus.loss,
           difference: expenseIncrease.abs(),

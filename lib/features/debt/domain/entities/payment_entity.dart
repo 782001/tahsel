@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-enum PaymentType { partial, full, settlement, debtAdded }
+enum PaymentType { partial, full, settlement, debtAdded, adjustment, reversal }
 
 class PaymentEntity extends Equatable {
   final String? id;
@@ -10,6 +10,7 @@ class PaymentEntity extends Equatable {
   final DateTime? createdAt;
   final PaymentType type;
   final String? activityName;
+  final String? relatedTo;
 
   const PaymentEntity({
     this.id,
@@ -19,16 +20,18 @@ class PaymentEntity extends Equatable {
     this.createdAt,
     required this.type,
     this.activityName,
+    this.relatedTo,
   });
 
   @override
   List<Object?> get props => [
-        id,
-        debtId,
-        amountPaid,
-        remainingAmount,
-        createdAt,
-        type,
-        activityName,
-      ];
+    id,
+    debtId,
+    amountPaid,
+    remainingAmount,
+    createdAt,
+    type,
+    activityName,
+    relatedTo,
+  ];
 }

@@ -1,6 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/features/debt/domain/usecases/get_debt_transactions_future_use_case.dart';
+import 'package:tahsel/features/debt/domain/usecases/update_payment_usecase.dart';
+import 'package:tahsel/features/debt/domain/usecases/delete_payment_usecase.dart';
+import 'package:tahsel/features/debt/domain/usecases/get_debt_by_id_usecase.dart';
 
 import '../data/datasources/debt_remote_data_source.dart';
 import '../data/repositories/debt_repository_impl.dart';
@@ -41,13 +44,14 @@ Future<void> initDebt() async {
   sl.registerFactory(
     () => DebtDetailsCubit(
       getDebtTransactionsUseCase: sl(),
+      updatePaymentUseCase: sl(),
+      deletePaymentUseCase: sl(),
+      getDebtByIdUseCase: sl(),
     ),
   );
 
   sl.registerFactory(
-    () => GlobalPaymentsCubit(
-      getCustomerAllPaymentsUseCase: sl(),
-    ),
+    () => GlobalPaymentsCubit(getCustomerAllPaymentsUseCase: sl()),
   );
 
   sl.registerLazySingleton(
@@ -67,10 +71,15 @@ Future<void> initDebt() async {
   sl.registerLazySingleton(() => DeleteCustomerDebtUseCase(repository: sl()));
   sl.registerLazySingleton(() => DeleteDebtItemUseCase(repository: sl()));
   sl.registerLazySingleton(() => GetDebtTransactionsUseCase(sl()));
-  sl.registerLazySingleton(() => GetDebtTransactionsFutureUseCase( sl()));
-  sl.registerLazySingleton(() => GetCustomerAllPaymentsUseCase(repository: sl()));
+  sl.registerLazySingleton(() => GetDebtTransactionsFutureUseCase(sl()));
+  sl.registerLazySingleton(
+    () => GetCustomerAllPaymentsUseCase(repository: sl()),
+  );
   sl.registerLazySingleton(() => GetDebtsStreamUseCase(sl()));
   sl.registerLazySingleton(() => CalculateTotalDebtsUseCase());
+  sl.registerLazySingleton(() => UpdatePaymentUseCase(repository: sl()));
+  sl.registerLazySingleton(() => DeletePaymentUseCase(repository: sl()));
+  sl.registerLazySingleton(() => GetDebtByIdUseCase(sl()));
 
   // Repository
   sl.registerLazySingleton<DebtRepository>(

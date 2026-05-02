@@ -3,12 +3,27 @@ import '../../../../core/error/failures.dart';
 import '../entities/payment_entity.dart';
 import '../repositories/debt_repository.dart';
 
-class GetDebtTransactionsFutureUseCase {
+import '../../../../core/base_usecase/base_usecase.dart';
+
+class GetDebtTransactionsFutureUseCase
+    implements BaseUseCase<List<PaymentEntity>, GetDebtTransactionsParams> {
   final DebtRepository repository;
 
   GetDebtTransactionsFutureUseCase(this.repository);
 
-  Future<Either<Failure, List<PaymentEntity>>> call(String debtId) {
-    return repository.getDebtTransactionsFuture(debtId);
+  @override
+  Future<Either<Failure, List<PaymentEntity>>> call(
+    GetDebtTransactionsParams params,
+  ) async {
+    return await repository.getDebtTransactionsFuture(
+      params.debtId,
+      forceRefresh: params.forceRefresh,
+    );
   }
+}
+
+class GetDebtTransactionsParams {
+  final String debtId;
+  final bool forceRefresh;
+  GetDebtTransactionsParams({required this.debtId, this.forceRefresh = false});
 }

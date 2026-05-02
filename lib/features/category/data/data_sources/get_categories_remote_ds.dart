@@ -9,28 +9,18 @@ abstract class GetCategoriesBaseRemoteDataSource {
   });
 }
 
-
-class GetCategoriesRemoteDataSource
-    extends GetCategoriesBaseRemoteDataSource {
-
+class GetCategoriesRemoteDataSource extends GetCategoriesBaseRemoteDataSource {
   final DioClient dio;
-GetCategoriesRemoteDataSource(this.dio);
+  GetCategoriesRemoteDataSource(this.dio);
   @override
   Future<GetCategoriesResponseModel> GetCategories({
     required GetCategoriesParameters parameters,
   }) async {
-  
-       final response = await dio.get(
+    final response = await dio.get(
       Endpoint.getCategoriesEndpoint,
+
       //      "${Endpoint.getCategoriesEndpoint}/${parameters.productId}",
-
-
-
     );
-     return GetCategoriesResponseModel.fromJson(response.data);  
-   
-
- 
+    return GetCategoriesResponseModel.fromJson(response.data);
   }
 }
-

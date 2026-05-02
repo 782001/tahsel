@@ -8,10 +8,7 @@ class GetCustomerAllPaymentsParams {
   final String uid;
   final String customerName;
 
-  GetCustomerAllPaymentsParams({
-    required this.uid,
-    required this.customerName,
-  });
+  GetCustomerAllPaymentsParams({required this.uid, required this.customerName});
 }
 
 class GetCustomerAllPaymentsUseCase
@@ -22,7 +19,8 @@ class GetCustomerAllPaymentsUseCase
 
   @override
   Future<Either<Failure, List<PaymentEntity>>> call(
-      GetCustomerAllPaymentsParams params) {
+    GetCustomerAllPaymentsParams params,
+  ) {
     return repository.getCustomerAllPayments(params.uid, params.customerName);
   }
 }

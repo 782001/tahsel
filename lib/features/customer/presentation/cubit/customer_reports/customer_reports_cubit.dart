@@ -10,23 +10,19 @@ class CustomerReportsCubit extends Cubit<CustomerReportsState> {
   Timer? _debounce;
 
   CustomerReportsCubit({required this.getCustomersUseCase})
-      : super(CustomerReportsInitial());
+    : super(CustomerReportsInitial());
 
   Future<void> fetchCustomers(String uid) async {
     emit(CustomerReportsLoading());
     final result = await getCustomersUseCase(GetCustomersParams(uid: uid));
-    result.fold(
-      (failure) => emit(CustomerReportsError(failure.message)),
-      (customers) {
-        // Sort alphabetically by name
-        final sorted = List<CustomerEntity>.from(customers)
-          ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-        emit(CustomerReportsLoaded(
-          customers: sorted,
-          filteredCustomers: sorted,
-        ));
-      },
-    );
+    result.fold((failure) => emit(CustomerReportsError(failure.message)), (
+      customers,
+    ) {
+      // Sort alphabetically by name
+      final sorted = List<CustomerEntity>.from(customers)
+        ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      emit(CustomerReportsLoaded(customers: sorted, filteredCustomers: sorted));
+    });
   }
 
   void searchCustomers(String query) {
@@ -36,11 +32,13 @@ class CustomerReportsCubit extends Cubit<CustomerReportsState> {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () async {
       if (query.isEmpty) {
-        emit(CustomerReportsLoaded(
-          customers: currentState.customers,
-          filteredCustomers: currentState.customers,
-          searchQuery: '',
-        ));
+        emit(
+          CustomerReportsLoaded(
+            customers: currentState.customers,
+            filteredCustomers: currentState.customers,
+            searchQuery: '',
+          ),
+        );
         return;
       }
 
@@ -50,11 +48,13 @@ class CustomerReportsCubit extends Cubit<CustomerReportsState> {
         'query': query.toLowerCase(),
       });
 
-      emit(CustomerReportsLoaded(
-        customers: currentState.customers,
-        filteredCustomers: filtered,
-        searchQuery: query,
-      ));
+      emit(
+        CustomerReportsLoaded(
+          customers: currentState.customers,
+          filteredCustomers: filtered,
+          searchQuery: query,
+        ),
+      );
     });
   }
 

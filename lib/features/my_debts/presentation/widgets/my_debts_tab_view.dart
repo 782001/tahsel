@@ -23,7 +23,8 @@ class MyDebtsTabView extends StatefulWidget {
   State<MyDebtsTabView> createState() => _MyDebtsTabViewState();
 }
 
-class _MyDebtsTabViewState extends State<MyDebtsTabView> with AutomaticKeepAliveClientMixin {
+class _MyDebtsTabViewState extends State<MyDebtsTabView>
+    with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
 
@@ -72,13 +73,14 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView> with AutomaticKeepAlive
               color: AppColors.white,
             ),
           ),
-          icon:  Icon(Icons.add, color: AppColors.white),
+          icon: Icon(Icons.add, color: AppColors.white),
         ),
       ),
       body: BlocListener<MyDebtsCubit, MyDebtsState>(
         listener: (context, state) {
-          if (state.status == MyDebtsStatus.loaded && state.lastPaymentPerson != null) {
-             // Show success dialog if needed
+          if (state.status == MyDebtsStatus.loaded &&
+              state.lastPaymentPerson != null) {
+            // Show success dialog if needed
           }
           if (state.status == MyDebtsStatus.error && state.message != null) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -114,7 +116,8 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView> with AutomaticKeepAlive
                     ),
                   ),
                   const SliverToBoxAdapter(child: SizedBox(height: 16)),
-                  if (state.status == MyDebtsStatus.loading && state.persons.isEmpty)
+                  if (state.status == MyDebtsStatus.loading &&
+                      state.persons.isEmpty)
                     SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (context, index) => const MyDebtCardSkeleton(),
@@ -138,10 +141,7 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView> with AutomaticKeepAlive
                     SliverPadding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate((
-                          context,
-                          index,
-                        ) {
+                        delegate: SliverChildBuilderDelegate((context, index) {
                           if (index == state.filteredPersons.length) {
                             return const SizedBox(height: 100);
                           }

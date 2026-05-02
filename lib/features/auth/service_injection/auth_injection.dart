@@ -19,7 +19,9 @@ class AuthInjection {
     }
 
     // Cubit
-    sl.registerFactory(() => AuthCubit(loginUseCase: sl(), logoutUseCase: sl()));
+    sl.registerFactory(
+      () => AuthCubit(loginUseCase: sl(), logoutUseCase: sl()),
+    );
 
     // Use cases
     sl.registerLazySingleton(() => LoginUseCase(baseRepository: sl()));
@@ -28,18 +30,15 @@ class AuthInjection {
     // Repository
     sl.registerLazySingleton<AuthBaseRepository>(
       () => AuthRepositoryImpl(
-          remoteDataSource: sl(), 
-          secureStorage: sl(),
-          connectionChecker: sl(),
+        remoteDataSource: sl(),
+        secureStorage: sl(),
+        connectionChecker: sl(),
       ),
     );
 
     // Data sources
     sl.registerLazySingleton<AuthRemoteDataSourceBase>(
-      () => AuthRemoteDataSourceImpl(
-        firebaseAuth: sl(),
-        firestore: sl(),
-      ),
+      () => AuthRemoteDataSourceImpl(firebaseAuth: sl(), firestore: sl()),
     );
   }
 }

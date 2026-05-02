@@ -16,7 +16,8 @@ class MyDebtItemEntity extends Equatable {
   final bool isPaid;
   final String? ledgerNumber;
 
-  bool get isPending => id == null || id!.isEmpty || operationId.startsWith('pending_');
+  bool get isPending =>
+      id == null || id!.isEmpty || operationId.startsWith('pending_');
 
   const MyDebtItemEntity({
     this.id,
@@ -71,19 +72,19 @@ class MyDebtItemEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        uid,
-        operationId,
-        totalAmount,
-        paidAmount,
-        remainingAmount,
-        personName,
-        details,
-        operationType,
-        timestamp,
-        lastUpdatedAt,
-        phoneNumber,
-        isPaid,
-        ledgerNumber,
-      ];
+    id,
+    uid,
+    operationId,
+    totalAmount,
+    paidAmount,
+    remainingAmount,
+    personName,
+    details,
+    operationType,
+    timestamp,
+    lastUpdatedAt,
+    phoneNumber,
+    isPaid,
+    ledgerNumber,
+  ];
 }

@@ -22,9 +22,15 @@ class CustomerRepositoryImpl implements CustomerRepository {
   }
 
   @override
-  Future<Either<Failure, void>> saveCustomer(String uid, CustomerEntity customer) async {
+  Future<Either<Failure, void>> saveCustomer(
+    String uid,
+    CustomerEntity customer,
+  ) async {
     try {
-      await remoteDataSource.saveCustomer(uid, CustomerModel.fromEntity(customer));
+      await remoteDataSource.saveCustomer(
+        uid,
+        CustomerModel.fromEntity(customer),
+      );
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -32,7 +38,11 @@ class CustomerRepositoryImpl implements CustomerRepository {
   }
 
   @override
-  Future<Either<Failure, void>> updateCustomerPhone(String uid, String name, String phoneNumber) async {
+  Future<Either<Failure, void>> updateCustomerPhone(
+    String uid,
+    String name,
+    String phoneNumber,
+  ) async {
     try {
       await remoteDataSource.updateCustomerPhone(uid, name, phoneNumber);
       return const Right(null);
@@ -42,7 +52,11 @@ class CustomerRepositoryImpl implements CustomerRepository {
   }
 
   @override
-  Future<Either<Failure, void>> updateCustomerPreference(String uid, String name, String preference) async {
+  Future<Either<Failure, void>> updateCustomerPreference(
+    String uid,
+    String name,
+    String preference,
+  ) async {
     try {
       await remoteDataSource.updateCustomerPreference(uid, name, preference);
       return const Right(null);
@@ -57,7 +71,10 @@ class CustomerRepositoryImpl implements CustomerRepository {
     String customerName,
   ) async {
     try {
-      final operations = await remoteDataSource.getCustomerOperations(uid, customerName);
+      final operations = await remoteDataSource.getCustomerOperations(
+        uid,
+        customerName,
+      );
       return Right(operations);
     } catch (e) {
       return Left(ServerFailure(e.toString()));

@@ -33,7 +33,7 @@ class DebtsTabSelector extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           double tabWidth = (constraints.maxWidth) / _tabs.length;
-          
+
           return Stack(
             children: [
               // Animated Indicator
@@ -73,8 +73,12 @@ class DebtsTabSelector extends StatelessWidget {
                           _tabs[index].tr(),
                           style: TextStyles.customStyle(
                             fontSize: 14.sp,
-                            fontWeight: selectedIndex == index ? FontWeight.bold : FontWeight.w500,
-                            color: selectedIndex == index ? AppColors.primaryColor : AppColors.blackLight.withOpacity(0.5),
+                            fontWeight: selectedIndex == index
+                                ? FontWeight.bold
+                                : FontWeight.w500,
+                            color: selectedIndex == index
+                                ? AppColors.primaryColor
+                                : AppColors.blackLight.withOpacity(0.5),
                           ),
                         ),
                       ),

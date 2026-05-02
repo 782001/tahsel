@@ -9,4 +9,3 @@ abstract class GetCategoriesBaseRepository {
     required GetCategoriesParameters parameters,
   });
 }
-

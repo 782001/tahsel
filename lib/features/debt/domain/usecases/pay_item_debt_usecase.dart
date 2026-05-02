@@ -9,10 +9,7 @@ class PayItemDebtParams {
   final DebtEntity debt;
   final double amountToPay;
 
-  PayItemDebtParams({
-    required this.debt,
-    required this.amountToPay,
-  });
+  PayItemDebtParams({required this.debt, required this.amountToPay});
 }
 
 class PayItemDebtUseCase implements BaseUseCase<void, PayItemDebtParams> {
@@ -23,11 +20,15 @@ class PayItemDebtUseCase implements BaseUseCase<void, PayItemDebtParams> {
   @override
   Future<Either<Failure, void>> call(PayItemDebtParams params) {
     if (params.amountToPay <= 0) {
-      return Future.value(const Left(GeneralFailure('Payment amount must be greater than zero')));
+      return Future.value(
+        const Left(GeneralFailure('Payment amount must be greater than zero')),
+      );
     }
 
     if (params.amountToPay > params.debt.remainingAmount) {
-      return Future.value(const Left(GeneralFailure('Payment amount exceeds remaining debt')));
+      return Future.value(
+        const Left(GeneralFailure('Payment amount exceeds remaining debt')),
+      );
     }
 
     final newPaidAmount = params.debt.paidAmount + params.amountToPay;

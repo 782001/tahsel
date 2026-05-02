@@ -257,9 +257,15 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
 
 /// Helper function for isolate-based aggregation
 Map<String, double> _aggregateAllTimeData(Map<String, dynamic> data) {
-  final List<Map<String, dynamic>> operations = List<Map<String, dynamic>>.from(data['operations']);
-  final List<Map<String, dynamic>> expenses = List<Map<String, dynamic>>.from(data['expenses']);
-  final List<Map<String, dynamic>> debts = List<Map<String, dynamic>>.from(data['debts']);
+  final List<Map<String, dynamic>> operations = List<Map<String, dynamic>>.from(
+    data['operations'],
+  );
+  final List<Map<String, dynamic>> expenses = List<Map<String, dynamic>>.from(
+    data['expenses'],
+  );
+  final List<Map<String, dynamic>> debts = List<Map<String, dynamic>>.from(
+    data['debts'],
+  );
 
   double totalIncome = 0;
   double cafeIncome = 0;

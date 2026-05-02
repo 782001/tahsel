@@ -21,11 +21,14 @@ class OperationCubit extends Cubit<OperationState> {
 
   Future<void> addOperation(OperationEntity operation) async {
     emit(OperationLoading());
-    final result = await addOperationUseCase(AddOperationParams(operation: operation));
+    final result = await addOperationUseCase(
+      AddOperationParams(operation: operation),
+    );
 
     result.fold(
       (failure) => emit(OperationFailure(message: failure.toString())),
-      (id) => emit(OperationSuccess(message: 'operation_success', operationId: id)),
+      (id) =>
+          emit(OperationSuccess(message: 'operation_success', operationId: id)),
     );
   }
 }

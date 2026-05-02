@@ -143,7 +143,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           width: double.infinity,
                           padding: EdgeInsets.all(32.w),
                           decoration: BoxDecoration(
-                            color: AppColors.scafoldBackGround ==
+                            color:
+                                AppColors.scafoldBackGround ==
                                     const Color(0xFFF8F8F8)
                                 ? Colors.white
                                 : const Color(0xFF1E1E1E),
@@ -201,7 +202,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   prefixIcon: Icons.lock_outline,
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
-                                      return AppStrings.validationPasswordRequired
+                                      return AppStrings
+                                          .validationPasswordRequired
                                           .tr();
                                     }
                                     if (value.length < 6) {
@@ -243,9 +245,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                           final password =
                                               _passwordController.text;
                                           context.read<AuthCubit>().login(
-                                                email,
-                                                password,
-                                              );
+                                            email,
+                                            password,
+                                          );
                                         }
                                       },
                                       child: Container(
@@ -329,14 +331,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                         },
                                         child: Text(
                                           AppStrings.contactManager.tr(),
-                                          style: TextStyles.customStyle(
-                                            color: AppColors.primaryColor,
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                          ).copyWith(
-                                            decoration:
-                                                TextDecoration.underline,
-                                          ),
+                                          style:
+                                              TextStyles.customStyle(
+                                                color: AppColors.primaryColor,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                              ).copyWith(
+                                                decoration:
+                                                    TextDecoration.underline,
+                                              ),
                                         ),
                                       ),
                                     ],

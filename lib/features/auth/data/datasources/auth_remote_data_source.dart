@@ -32,7 +32,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSourceBase {
             .doc(userCredential.user!.uid)
             .get();
         final userType = doc.exists ? doc.get('userType') : 'cafe';
-        
+
         return UserModel.fromFirebaseUser(
           userCredential.user!,
           userType: userType,

@@ -131,7 +131,8 @@ class CustomerDebtCard extends StatelessWidget {
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
-                              if (description != null && description!.isNotEmpty) ...[
+                              if (description != null &&
+                                  description!.isNotEmpty) ...[
                                 const SizedBox(height: 8),
                                 Text(
                                   description!,

@@ -14,14 +14,13 @@ class GetCategoriesUseCase
 
   @override
   Future<Either<Failure, GetCategoriesResponseEntity>> call(
-      GetCategoriesParameters parameters) async {
+    GetCategoriesParameters parameters,
+  ) async {
     return await baseRepository.call(parameters: parameters);
   }
 }
 
 class GetCategoriesParameters extends Equatable {
-  
-
   const GetCategoriesParameters();
 
   @override

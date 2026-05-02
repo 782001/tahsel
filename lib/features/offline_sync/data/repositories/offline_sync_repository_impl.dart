@@ -47,14 +47,16 @@ class OfflineSyncRepositoryImpl implements OfflineSyncRepository {
   Future<Either<Failure, void>> syncAllPendingRecords() async {
     // If already syncing, wait for it to finish and then return
     if (_isSyncing) {
-      AppLogger.printMessage("[OfflineSync] Sync already in progress, waiting for completion...");
+      AppLogger.printMessage(
+        "[OfflineSync] Sync already in progress, waiting for completion...",
+      );
       await _syncCompleter?.future;
       return const Right(null);
     }
 
     _isSyncing = true;
     _syncCompleter = Completer<void>();
-    
+
     try {
       final pendingRecords = await localDataSource.getPendingRecords();
       final totalRecords = pendingRecords.length;
@@ -77,11 +79,11 @@ class OfflineSyncRepositoryImpl implements OfflineSyncRepository {
           AppLogger.printMessage(
             "[OfflineSync] Syncing record: ${record.id} (Type: ${record.type}, Collection: ${record.collectionName})",
           );
-          
+
           // Double check if record still exists (might have been deleted by another process if not for the lock)
           final records = await localDataSource.getPendingRecords();
           if (!records.any((r) => r.id == record.id)) {
-             continue;
+            continue;
           }
 
           await remoteDataSource.syncRecord(record);
@@ -106,7 +108,9 @@ class OfflineSyncRepositoryImpl implements OfflineSyncRepository {
       if (!_syncCompleter!.isCompleted) _syncCompleter!.complete();
 
       if (failureCount > 0) {
-        return Left(ServerFailure("Sync completed with $failureCount failures."));
+        return Left(
+          ServerFailure("Sync completed with $failureCount failures."),
+        );
       }
 
       return const Right(null);
@@ -124,10 +128,10 @@ class OfflineSyncRepositoryImpl implements OfflineSyncRepository {
     try {
       // 1. Sync to remote
       await remoteDataSource.syncRecord(record);
-      
+
       // 2. Mark as synced by deleting from local cache
       await localDataSource.deleteRecord(record.id);
-      
+
       return const Right(null);
     } catch (e) {
       AppLogger.printMessage("[OfflineSync] Error in syncSingleRecord: $e");

@@ -16,7 +16,8 @@ class ReportsTimeRangeSelector extends StatefulWidget {
   });
 
   @override
-  State<ReportsTimeRangeSelector> createState() => _ReportsTimeRangeSelectorState();
+  State<ReportsTimeRangeSelector> createState() =>
+      _ReportsTimeRangeSelectorState();
 }
 
 class _ReportsTimeRangeSelectorState extends State<ReportsTimeRangeSelector> {
@@ -47,7 +48,7 @@ class _ReportsTimeRangeSelectorState extends State<ReportsTimeRangeSelector> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           double tabWidth = (constraints.maxWidth) / _tabs.length;
-          
+
           return Stack(
             children: [
               // Animated Indicator with Directional Alignment for RTL support
@@ -90,8 +91,12 @@ class _ReportsTimeRangeSelectorState extends State<ReportsTimeRangeSelector> {
                           _tabs[index].tr(),
                           style: TextStyles.customStyle(
                             fontSize: 14.sp,
-                            fontWeight: _selectedIndex == index ? FontWeight.bold : FontWeight.w500,
-                            color: _selectedIndex == index ? AppColors.primaryColor : AppColors.blackLight.withOpacity(0.5),
+                            fontWeight: _selectedIndex == index
+                                ? FontWeight.bold
+                                : FontWeight.w500,
+                            color: _selectedIndex == index
+                                ? AppColors.primaryColor
+                                : AppColors.blackLight.withOpacity(0.5),
                           ),
                         ),
                       ),

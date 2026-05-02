@@ -57,7 +57,7 @@ class _PartialPaymentDialogState extends State<PartialPaymentDialog> {
     final uid = AppStrings.userToken;
     if (uid.isNotEmpty) {
       if (widget.debt != null) {
-        context.read<DebtCubit>().payItemDebt(
+        context.read<DebtCubit>().payItem(
           debt: widget.debt!,
           amount: amount,
           totalRemainingBefore: widget.totalRemaining,

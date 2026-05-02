@@ -30,7 +30,7 @@ class DebtItemCard extends StatelessWidget {
       onTap: () => Navigator.pushNamed(
         context,
         AppRoutes.debtDetails,
-        arguments: item,
+        arguments: item.entity.id,
       ),
       borderRadius: BorderRadius.circular(16.r),
       child: Container(
@@ -52,179 +52,183 @@ class DebtItemCard extends StatelessWidget {
             ),
           ],
         ),
-      child: Padding(
-        padding: EdgeInsets.all(16.r),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // --- Row 1: index badge + item desc + date ---
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Transaction number badge
-                Container(
-                  width: 28.r,
-                  height: 28.r,
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryColor.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    '$index',
-                    style: TextStyles.customStyle(
-                      color: AppColors.primaryColor,
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.itemDescription,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyles.customStyle(
-                          color: AppColors.textColor,
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      SizedBox(height: 2.h),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.calendar_today_outlined,
-                            size: 11.r,
-                            color: AppColors.disabledColor,
-                          ),
-                          SizedBox(width: 4.w),
-                          Text(
-                            item.date,
-                            style: TextStyles.customStyle(
-                              color: AppColors.disabledColor,
-                              fontSize: 11.sp,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                // Settled / pending pill
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
-                  decoration: BoxDecoration(
-                    color: isSettled
-                        ? AppColors.primaryColor.withOpacity(0.1)
-                        : AppColors.error.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20.r),
-                  ),
-                  child: Text(
-                    isSettled
-                        ? AppStrings.fullPaymentLabel.tr()
-                        : AppStrings.debtStatusOverdue.tr(),
-                    style: TextStyles.customStyle(
-                      color: isSettled
-                          ? AppColors.primaryColor
-                          : AppColors.error,
-                      fontSize: 10.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 14.h),
-            // --- Row 2: Financials ---
-            Container(
-              padding: EdgeInsets.all(12.r),
-              decoration: BoxDecoration(
-                color: AppColors.stitchSurfaceLow,
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Row(
-                children: [
-                  _FinancialCell(
-                    label: AppStrings.totalDueLabel.tr(),
-                    amount: item.totalAmount,
-                    color: AppColors.blackLight,
-                  ),
-                  _Divider(),
-                  _FinancialCell(
-                    label: AppStrings.amountPaid.tr(),
-                    amount: item.amountPaid,
-                    color: AppColors.primaryColor,
-                  ),
-                  _Divider(),
-                  _FinancialCell(
-                    label: AppStrings.remainingDebt.tr(),
-                    amount: item.remainingDebt,
-                    color: item.remainingDebt > 0
-                        ? AppColors.error
-                        : AppColors.primaryColor,
-                  ),
-                ],
-              ),
-            ),
-            if (!isSettled) ...[
-              SizedBox(height: 16.h),
+        child: Padding(
+          padding: EdgeInsets.all(16.r),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // --- Row 1: index badge + item desc + date ---
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => onPayPartial(item),
-                      icon: Icon(Icons.payments_outlined, size: 16.r),
-                      label: Text(AppStrings.partialPayLabel.tr()),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.primaryColor,
-                        side: BorderSide(
-                          color: AppColors.primaryColor.withOpacity(0.5),
-                        ),
-                        padding: EdgeInsets.symmetric(vertical: 8.h),
-                        textStyle: TextStyles.customStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
+                  // Transaction number badge
+                  Container(
+                    width: 28.r,
+                    height: 28.r,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '$index',
+                      style: TextStyles.customStyle(
+                        color: AppColors.primaryColor,
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                   SizedBox(width: 12.w),
                   Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => onPayFull(item),
-                      icon: Icon(Icons.check_circle_outline, size: 16.r),
-                      label: Text(AppStrings.fullPaymentLabel.tr()),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryColor,
-                        foregroundColor: AppColors.whiteColor,
-                        elevation: 0,
-                        padding: EdgeInsets.symmetric(vertical: 8.h),
-                        textStyle: TextStyles.customStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w600,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.itemDescription,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyles.customStyle(
+                            color: AppColors.textColor,
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.r),
+                        SizedBox(height: 2.h),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_today_outlined,
+                              size: 11.r,
+                              color: AppColors.disabledColor,
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              item.date,
+                              style: TextStyles.customStyle(
+                                color: AppColors.disabledColor,
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
+                      ],
+                    ),
+                  ),
+                  // Settled / pending pill
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 8.w,
+                      vertical: 3.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSettled
+                          ? AppColors.primaryColor.withOpacity(0.1)
+                          : AppColors.error.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20.r),
+                    ),
+                    child: Text(
+                      isSettled
+                          ? AppStrings.fullPaymentLabel.tr()
+                          : AppStrings.debtStatusOverdue.tr(),
+                      style: TextStyles.customStyle(
+                        color: isSettled
+                            ? AppColors.primaryColor
+                            : AppColors.error,
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
                 ],
               ),
+              SizedBox(height: 14.h),
+              // --- Row 2: Financials ---
+              Container(
+                padding: EdgeInsets.all(12.r),
+                decoration: BoxDecoration(
+                  color: AppColors.stitchSurfaceLow,
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Row(
+                  children: [
+                    _FinancialCell(
+                      label: AppStrings.totalDueLabel.tr(),
+                      amount: item.totalAmount,
+                      color: AppColors.blackLight,
+                    ),
+                    _Divider(),
+                    _FinancialCell(
+                      label: AppStrings.amountPaid.tr(),
+                      amount: item.amountPaid,
+                      color: AppColors.primaryColor,
+                    ),
+                    _Divider(),
+                    _FinancialCell(
+                      label: AppStrings.remainingDebt.tr(),
+                      amount: item.remainingDebt,
+                      color: item.remainingDebt > 0
+                          ? AppColors.error
+                          : AppColors.primaryColor,
+                    ),
+                  ],
+                ),
+              ),
+              if (!isSettled) ...[
+                SizedBox(height: 16.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => onPayPartial(item),
+                        icon: Icon(Icons.payments_outlined, size: 16.r),
+                        label: Text(AppStrings.partialPayLabel.tr()),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.primaryColor,
+                          side: BorderSide(
+                            color: AppColors.primaryColor.withOpacity(0.5),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: 8.h),
+                          textStyle: TextStyles.customStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => onPayFull(item),
+                        icon: Icon(Icons.check_circle_outline, size: 16.r),
+                        label: Text(AppStrings.fullPaymentLabel.tr()),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryColor,
+                          foregroundColor: AppColors.whiteColor,
+                          elevation: 0,
+                          padding: EdgeInsets.symmetric(vertical: 8.h),
+                          textStyle: TextStyles.customStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
-    ));
+    );
   }
 }
 

@@ -27,7 +27,7 @@ class NoInternetOverlay extends StatelessWidget {
           height: double.infinity,
           color: const Color(0xF2FFFFFF),
         ),
-    
+
         Center(
           child: ScaleTransition(
             scale: scaleAnimation,

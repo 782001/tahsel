@@ -7,12 +7,12 @@ class ConnectivityCubit extends Cubit<ConnectivityState> {
   final Connectivity _connectivity;
   StreamSubscription<List<ConnectivityResult>>? _subscription;
   Timer? _debounceTimer;
-  
+
   static const _debounceDuration = Duration(milliseconds: 500);
 
   ConnectivityCubit({Connectivity? connectivity})
-      : _connectivity = connectivity ?? Connectivity(),
-        super(const ConnectivityInitial()) {
+    : _connectivity = connectivity ?? Connectivity(),
+      super(const ConnectivityInitial()) {
     _initialize();
   }
 
@@ -40,9 +40,9 @@ class ConnectivityCubit extends Cubit<ConnectivityState> {
   void _handleConnectivityChange(List<ConnectivityResult> results) {
     _debounceTimer?.cancel();
     _debounceTimer = Timer(_debounceDuration, () {
-      final isConnected = results.isNotEmpty && 
-                         results.first != ConnectivityResult.none;
-      
+      final isConnected =
+          results.isNotEmpty && results.first != ConnectivityResult.none;
+
       if (isConnected) {
         if (state is! ConnectivityConnected) {
           emit(ConnectivityConnected(results.first));
@@ -57,7 +57,7 @@ class ConnectivityCubit extends Cubit<ConnectivityState> {
 
   void _handleError(Object error) {
     final errorMessage = error.toString();
-    if (state is! ConnectivityError || 
+    if (state is! ConnectivityError ||
         (state as ConnectivityError).message != errorMessage) {
       emit(ConnectivityError(errorMessage));
     }

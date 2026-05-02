@@ -8,13 +8,22 @@ part 'income_details_state.dart';
 class IncomeDetailsCubit extends Cubit<IncomeDetailsState> {
   final GetIncomeDetailsUseCase getIncomeDetailsUseCase;
 
-  IncomeDetailsCubit({required this.getIncomeDetailsUseCase}) : super(IncomeDetailsInitial());
+  IncomeDetailsCubit({required this.getIncomeDetailsUseCase})
+    : super(IncomeDetailsInitial());
 
-  Future<void> fetchIncomeDetails(DateTime startDate, DateTime endDate, {String? type}) async {
+  Future<void> fetchIncomeDetails(
+    DateTime startDate,
+    DateTime endDate, {
+    String? type,
+  }) async {
     emit(IncomeDetailsLoading());
 
     final result = await getIncomeDetailsUseCase(
-      GetIncomeDetailsParams(startDate: startDate, endDate: endDate, type: type),
+      GetIncomeDetailsParams(
+        startDate: startDate,
+        endDate: endDate,
+        type: type,
+      ),
     );
 
     result.fold(

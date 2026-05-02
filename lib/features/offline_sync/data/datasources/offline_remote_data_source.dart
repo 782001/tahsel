@@ -15,8 +15,10 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
   @override
   Future<void> syncRecord(OfflineRecord record) async {
     try {
-      AppLogger.printMessage("[OfflineSync] STARTING REAL SYNC for record: ${record.id} (Type: ${record.type})");
-      
+      AppLogger.printMessage(
+        "[OfflineSync] STARTING REAL SYNC for record: ${record.id} (Type: ${record.type})",
+      );
+
       final payload = jsonDecode(record.payloadJson) as Map<String, dynamic>;
 
       if (record.type == 'my_debt_add') {
@@ -27,15 +29,22 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
         // Simple collection sync (e.g., expenses)
         await _syncSimpleRecord(record, payload);
       }
-      
-      AppLogger.printMessage("[OfflineSync] REAL SYNC SUCCESS for record: ${record.id}");
+
+      AppLogger.printMessage(
+        "[OfflineSync] REAL SYNC SUCCESS for record: ${record.id}",
+      );
     } catch (e) {
-      AppLogger.printMessage("[OfflineSync] REAL SYNC FAILED for record: ${record.id} - Error: $e");
+      AppLogger.printMessage(
+        "[OfflineSync] REAL SYNC FAILED for record: ${record.id} - Error: $e",
+      );
       rethrow;
     }
   }
 
-  Future<void> _syncMyDebtAdd(OfflineRecord record, Map<String, dynamic> payload) async {
+  Future<void> _syncMyDebtAdd(
+    OfflineRecord record,
+    Map<String, dynamic> payload,
+  ) async {
     final uid = payload['uid'] as String;
     final personName = payload['personName'] as String;
     final operationId = payload['operationId'] as String;
@@ -46,19 +55,25 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
     final timestamp = Timestamp.fromDate(DateTime.parse(timestampStr));
 
     final userRef = firestore.collection('users').doc(uid);
-    final debtRef = userRef.collection('my_debt_items').doc(record.id); // Use Hive ID for idempotency
-    
+    final debtRef = userRef
+        .collection('my_debt_items')
+        .doc(record.id); // Use Hive ID for idempotency
+
     // 0. CHECK IF ALREADY SYNCED (To prevent duplicate FieldValue.increment)
     final existingDoc = await debtRef.get();
     if (existingDoc.exists) {
-      AppLogger.printMessage("[OfflineSync] Record ${record.id} already exists in Firestore. Skipping sync to prevent duplicate increments.");
+      AppLogger.printMessage(
+        "[OfflineSync] Record ${record.id} already exists in Firestore. Skipping sync to prevent duplicate increments.",
+      );
       return; // Already synced, repository will handle Hive deletion
     }
 
     final opRef = userRef.collection('my_debt_operations').doc(operationId);
     final personRef = userRef.collection('my_debt_persons').doc(personName);
 
-    AppLogger.printMessage("[OfflineSync] Preparing Batch for MyDebtAdd - Person: $personName, Amount: $totalAmount");
+    AppLogger.printMessage(
+      "[OfflineSync] Preparing Batch for MyDebtAdd - Person: $personName, Amount: $totalAmount",
+    );
 
     final batch = firestore.batch();
 
@@ -84,7 +99,9 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
     });
 
     // 3. Add initial transaction record
-    final initialPaymentRef = debtRef.collection('payments').doc('${record.id}_initial');
+    final initialPaymentRef = debtRef
+        .collection('payments')
+        .doc('${record.id}_initial');
     batch.set(initialPaymentRef, {
       'debtId': debtRef.id,
       'amountPaid': totalAmount,
@@ -95,12 +112,16 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
 
     // 4. Add initial payment if any
     if (paidAmount > 0) {
-      final actualPaymentRef = debtRef.collection('payments').doc('${record.id}_payment');
+      final actualPaymentRef = debtRef
+          .collection('payments')
+          .doc('${record.id}_payment');
       batch.set(actualPaymentRef, {
         'debtId': debtRef.id,
         'amountPaid': paidAmount,
         'remainingAmount': remainingAmount,
-        'createdAt': Timestamp.fromDate(DateTime.parse(timestampStr).add(const Duration(milliseconds: 1))),
+        'createdAt': Timestamp.fromDate(
+          DateTime.parse(timestampStr).add(const Duration(milliseconds: 1)),
+        ),
         'type': remainingAmount <= 0 ? 'full' : 'partial',
       });
     }
@@ -119,7 +140,10 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
     AppLogger.printMessage("[OfflineSync] Batch Committed Successfully.");
   }
 
-  Future<void> _syncDebtAdd(OfflineRecord record, Map<String, dynamic> payload) async {
+  Future<void> _syncDebtAdd(
+    OfflineRecord record,
+    Map<String, dynamic> payload,
+  ) async {
     final uid = payload['uid'] as String;
     final customerName = payload['customerName'] as String;
     final operationId = payload['operationId'] as String;
@@ -132,17 +156,21 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
     final userRef = firestore.collection('users').doc(uid);
     // Use operationId for doc ID to ensure link integrity and idempotency
     final debtRef = userRef.collection('debts').doc(operationId);
-    
+
     // 0. IDEMPOTENCY CHECK
     final existingDoc = await debtRef.get();
     if (existingDoc.exists) {
-      AppLogger.printMessage("[OfflineSync] Debt record ${operationId} already exists. Skipping sync.");
+      AppLogger.printMessage(
+        "[OfflineSync] Debt record ${operationId} already exists. Skipping sync.",
+      );
       return;
     }
 
     final opRef = userRef.collection('operations').doc(operationId);
 
-    AppLogger.printMessage("[OfflineSync] Syncing Customer Debt Add - Customer: $customerName, Amount: $totalAmount");
+    AppLogger.printMessage(
+      "[OfflineSync] Syncing Customer Debt Add - Customer: $customerName, Amount: $totalAmount",
+    );
 
     final batch = firestore.batch();
 
@@ -171,7 +199,9 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
     }
 
     // 3. Add initial transaction record to payments history
-    final initialPaymentRef = debtRef.collection('payments').doc('${operationId}_initial');
+    final initialPaymentRef = debtRef
+        .collection('payments')
+        .doc('${operationId}_initial');
     batch.set(initialPaymentRef, {
       'debtId': operationId,
       'amountPaid': totalAmount,
@@ -182,34 +212,49 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
 
     // 4. Add initial payment transaction if any
     if (paidAmount > 0) {
-      final actualPaymentRef = debtRef.collection('payments').doc('${operationId}_payment');
+      final actualPaymentRef = debtRef
+          .collection('payments')
+          .doc('${operationId}_payment');
       batch.set(actualPaymentRef, {
         'debtId': operationId,
         'amountPaid': paidAmount,
         'remainingAmount': remainingAmount,
-        'createdAt': Timestamp.fromDate(DateTime.parse(timestampStr).add(const Duration(milliseconds: 1))),
+        'createdAt': Timestamp.fromDate(
+          DateTime.parse(timestampStr).add(const Duration(milliseconds: 1)),
+        ),
         'type': remainingAmount <= 0 ? 'full' : 'partial',
       });
     }
 
     await batch.commit();
-    AppLogger.printMessage("[OfflineSync] Debt record $operationId synced successfully.");
+    AppLogger.printMessage(
+      "[OfflineSync] Debt record $operationId synced successfully.",
+    );
   }
 
-  Future<void> _syncSimpleRecord(OfflineRecord record, Map<String, dynamic> payload) async {
+  Future<void> _syncSimpleRecord(
+    OfflineRecord record,
+    Map<String, dynamic> payload,
+  ) async {
     final collectionRef = firestore.collection(record.collectionName);
 
     // Convert string dates back to Timestamps
     if (payload['createdAt'] is String) {
-      payload['createdAt'] = Timestamp.fromDate(DateTime.parse(payload['createdAt']));
+      payload['createdAt'] = Timestamp.fromDate(
+        DateTime.parse(payload['createdAt']),
+      );
     }
     if (payload['timestamp'] is String) {
-      payload['timestamp'] = Timestamp.fromDate(DateTime.parse(payload['timestamp']));
+      payload['timestamp'] = Timestamp.fromDate(
+        DateTime.parse(payload['timestamp']),
+      );
     }
 
     payload['syncedAt'] = FieldValue.serverTimestamp();
 
-    AppLogger.printMessage("[OfflineSync] Sending simple record to: ${record.collectionName}");
+    AppLogger.printMessage(
+      "[OfflineSync] Sending simple record to: ${record.collectionName}",
+    );
     await collectionRef.doc(record.id).set(payload, SetOptions(merge: true));
   }
 }

@@ -7,7 +7,11 @@ class UpdateMyDebtPersonPreferenceUseCase {
 
   UpdateMyDebtPersonPreferenceUseCase(this.repository);
 
-  Future<Either<Failure, void>> call(String uid, String name, String preference) async {
+  Future<Either<Failure, void>> call(
+    String uid,
+    String name,
+    String preference,
+  ) async {
     return await repository.updateMyDebtPersonPreference(uid, name, preference);
   }
 }

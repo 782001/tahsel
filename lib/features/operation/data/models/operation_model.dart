@@ -53,8 +53,12 @@ class OperationModel extends OperationEntity {
       'totalAmount': totalAmount,
       'paidAmount': paidAmount,
       'remainingDebt': remainingDebt,
-      'timestamp': timestamp != null ? Timestamp.fromDate(timestamp!) : FieldValue.serverTimestamp(),
-      'lastUpdatedAt': lastUpdatedAt != null ? Timestamp.fromDate(lastUpdatedAt!) : FieldValue.serverTimestamp(),
+      'timestamp': timestamp != null
+          ? Timestamp.fromDate(timestamp!)
+          : FieldValue.serverTimestamp(),
+      'lastUpdatedAt': lastUpdatedAt != null
+          ? Timestamp.fromDate(lastUpdatedAt!)
+          : FieldValue.serverTimestamp(),
       'durationMinutes': durationMinutes,
       'turnCount': turnCount,
       'rate': rate,

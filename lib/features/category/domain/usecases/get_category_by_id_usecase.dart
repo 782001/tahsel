@@ -7,21 +7,21 @@ import '../entities/get_category_by_id_entity.dart';
 import '../repositories/get_category_by_id_repo_base.dart';
 
 class GetCategoryByIdUseCase
-    extends BaseUseCase<GetCategoryByIdResponseEntity, GetCategoryByIdParameters> {
+    extends
+        BaseUseCase<GetCategoryByIdResponseEntity, GetCategoryByIdParameters> {
   final GetCategoryByIdBaseRepository baseRepository;
 
   GetCategoryByIdUseCase({required this.baseRepository});
 
   @override
   Future<Either<Failure, GetCategoryByIdResponseEntity>> call(
-      GetCategoryByIdParameters parameters) async {
+    GetCategoryByIdParameters parameters,
+  ) async {
     return await baseRepository.call(parameters: parameters);
   }
 }
 
 class GetCategoryByIdParameters extends Equatable {
-  
-
   const GetCategoryByIdParameters();
 
   @override

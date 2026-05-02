@@ -21,7 +21,10 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
-  Future<Either<Failure, void>> saveProduct(String uid, ProductEntity product) async {
+  Future<Either<Failure, void>> saveProduct(
+    String uid,
+    ProductEntity product,
+  ) async {
     try {
       await remoteDataSource.saveProduct(uid, ProductModel.fromEntity(product));
       return const Right(null);

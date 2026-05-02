@@ -50,23 +50,29 @@ class MyDebtDetailsState extends Equatable {
       totalPaid: totalPaid ?? this.totalPaid,
       remainingAmount: remainingAmount ?? this.remainingAmount,
       message: message ?? this.message,
-      lastPaymentAmount: clearPayment ? null : (lastPaymentAmount ?? this.lastPaymentAmount),
-      lastPaymentRemaining: clearPayment ? null : (lastPaymentRemaining ?? this.lastPaymentRemaining),
-      lastPaymentNote: clearPayment ? null : (lastPaymentNote ?? this.lastPaymentNote),
+      lastPaymentAmount: clearPayment
+          ? null
+          : (lastPaymentAmount ?? this.lastPaymentAmount),
+      lastPaymentRemaining: clearPayment
+          ? null
+          : (lastPaymentRemaining ?? this.lastPaymentRemaining),
+      lastPaymentNote: clearPayment
+          ? null
+          : (lastPaymentNote ?? this.lastPaymentNote),
     );
   }
 
   @override
   List<Object?> get props => [
-        status,
-        items,
-        operations,
-        totalOwed,
-        totalPaid,
-        remainingAmount,
-        message,
-        lastPaymentAmount,
-        lastPaymentRemaining,
-        lastPaymentNote,
-      ];
+    status,
+    items,
+    operations,
+    totalOwed,
+    totalPaid,
+    remainingAmount,
+    message,
+    lastPaymentAmount,
+    lastPaymentRemaining,
+    lastPaymentNote,
+  ];
 }

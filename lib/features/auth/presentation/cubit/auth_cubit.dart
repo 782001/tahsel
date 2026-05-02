@@ -38,8 +38,9 @@ class AuthCubit extends Cubit<AuthState> {
 
       if (user == null) {
         // Source of truth: Check if we have a local session stored securely
-        final String? localToken =
-            await sl<SecureStorageHelper>().getData(key: 'token');
+        final String? localToken = await sl<SecureStorageHelper>().getData(
+          key: 'token',
+        );
         final bool hasLocalSession =
             localToken != null && localToken.isNotEmpty;
 
@@ -155,9 +156,10 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> forceLogout() async {
-    // ABSOLUTE GUARD: Never force logout while offline. 
+    // ABSOLUTE GUARD: Never force logout while offline.
     // This prevents accidental logouts during network transitions or stream glitches.
-    final bool hasInternet = await sl<InternetConnectionChecker>().hasConnection;
+    final bool hasInternet =
+        await sl<InternetConnectionChecker>().hasConnection;
     if (!hasInternet) {
       AppLogger.printMessage('Blocking forced logout: Device is OFFLINE');
       return;

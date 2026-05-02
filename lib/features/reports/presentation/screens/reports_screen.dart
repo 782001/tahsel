@@ -394,21 +394,20 @@ class _ReportsViewState extends State<ReportsView> {
                                       margin: margin.clamp(0.0, 1.0),
                                     ),
 
-                                      ReportsDashboardCard(
-                                        title: AppStrings.unpaid.tr(),
-                                        subtitle: "",
-                                        amount:
-                                            data.unpaidDebts.toSmartAmount(),
-                                        type: BusinessReportType.debts,
-                                        badgeText: _selectedTimeRange == 3
-                                            ? ""
-                                            : "${AppStrings.debts.tr()}: ${data.totalDebts.toSmartAmount()} ${AppStrings.currencyEgp.tr()}  \n${AppStrings.paid.tr()}: ${data.paidDebts.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
-                                        onTap: () {
-                                          context
-                                              .read<MainLayoutCubit>()
-                                              .changeBottomNav(2);
-                                        },
-                                      ),
+                                    ReportsDashboardCard(
+                                      title: AppStrings.unpaid.tr(),
+                                      subtitle: "",
+                                      amount: data.unpaidDebts.toSmartAmount(),
+                                      type: BusinessReportType.debts,
+                                      badgeText: _selectedTimeRange == 3
+                                          ? ""
+                                          : "${AppStrings.debts.tr()}: ${data.totalDebts.toSmartAmount()} ${AppStrings.currencyEgp.tr()}  \n${AppStrings.paid.tr()}: ${data.paidDebts.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
+                                      onTap: () {
+                                        context
+                                            .read<MainLayoutCubit>()
+                                            .changeBottomNav(2);
+                                      },
+                                    ),
 
                                     // Smart Insights Section
                                     if (state.insights.length > 1) ...[

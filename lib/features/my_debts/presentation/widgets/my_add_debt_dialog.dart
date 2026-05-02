@@ -73,15 +73,15 @@ class _MyAddDebtDialogState extends State<MyAddDebtDialog> {
     final uid = AppStrings.userToken;
     if (uid.isNotEmpty) {
       context.read<MyDebtDetailsCubit>().addDebt(
-            uid: uid,
-            personName: widget.personName,
-            totalAmount: amount,
-            paidAmount: paidAmount,
-            description: _notesController.text.trim().isNotEmpty
-                ? _notesController.text.trim()
-                : AppStrings.newDebt.tr(),
-            phone: widget.phoneNumber,
-          );
+        uid: uid,
+        personName: widget.personName,
+        totalAmount: amount,
+        paidAmount: paidAmount,
+        description: _notesController.text.trim().isNotEmpty
+            ? _notesController.text.trim()
+            : AppStrings.newDebt.tr(),
+        phone: widget.phoneNumber,
+      );
     }
   }
 
@@ -211,7 +211,9 @@ class _MyAddDebtDialogState extends State<MyAddDebtDialog> {
                   child: BlocBuilder<MyDebtDetailsCubit, MyDebtDetailsState>(
                     builder: (context, state) {
                       return ElevatedButton(
-                        onPressed: state.status == MyDebtDetailsStatus.loading ? null : _submit,
+                        onPressed: state.status == MyDebtDetailsStatus.loading
+                            ? null
+                            : _submit,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryColor,
                           foregroundColor: AppColors.white,
@@ -224,7 +226,8 @@ class _MyAddDebtDialogState extends State<MyAddDebtDialog> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              if (state.status == MyDebtDetailsStatus.loading) ...[
+                              if (state.status ==
+                                  MyDebtDetailsStatus.loading) ...[
                                 ShimmerLoading(
                                   child: Container(
                                     height: 20,
@@ -305,7 +308,9 @@ class _MyAddDebtDialogState extends State<MyAddDebtDialog> {
               controller: controller,
               focusNode: focusNode,
               keyboardType: TextInputType.number,
-              textInputAction: nextFocusNode != null ? TextInputAction.next : TextInputAction.done,
+              textInputAction: nextFocusNode != null
+                  ? TextInputAction.next
+                  : TextInputAction.done,
               onSubmitted: (_) {
                 if (nextFocusNode != null) {
                   focusNode.unfocus();
@@ -328,7 +333,10 @@ class _MyAddDebtDialogState extends State<MyAddDebtDialog> {
                   fontWeight: FontWeight.bold,
                 ),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
               ),
             ),
           ),

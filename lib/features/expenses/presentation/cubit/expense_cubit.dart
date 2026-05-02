@@ -73,13 +73,17 @@ class ExpenseCubit extends Cubit<ExpenseState> {
       (months) async {
         // Merge pending records into the months list
         final List<MonthlyExpenseGroup> mergedMonths = List.from(months);
-        
+
         for (final record in pendingRecords) {
           final recordMonthKey = DateFormatter.formatNumericMonth(record.date);
-          final recordMonthName = DateFormatter.formatArabicMonthYear(record.date);
-          
-          final existingIndex = mergedMonths.indexWhere((m) => m.monthKey == recordMonthKey);
-          
+          final recordMonthName = DateFormatter.formatArabicMonthYear(
+            record.date,
+          );
+
+          final existingIndex = mergedMonths.indexWhere(
+            (m) => m.monthKey == recordMonthKey,
+          );
+
           if (existingIndex != -1) {
             final existing = mergedMonths[existingIndex];
             mergedMonths[existingIndex] = MonthlyExpenseGroup(
@@ -89,44 +93,46 @@ class ExpenseCubit extends Cubit<ExpenseState> {
               transactionCount: existing.transactionCount + 1,
             );
           } else {
-            mergedMonths.add(MonthlyExpenseGroup(
-              monthKey: recordMonthKey,
-              monthName: recordMonthName,
-              totalAmount: record.amount,
-              transactionCount: 1,
-            ));
+            mergedMonths.add(
+              MonthlyExpenseGroup(
+                monthKey: recordMonthKey,
+                monthName: recordMonthName,
+                totalAmount: record.amount,
+                transactionCount: 1,
+              ),
+            );
           }
         }
-        
+
         // Sort months by monthKey descending (newest first)
         mergedMonths.sort((a, b) => b.monthKey.compareTo(a.monthKey));
 
         // Calculate stats using the merged data
         final now = DateTime.now();
         final thisMonthKeyStr = DateFormatter.formatNumericMonth(now);
-        
+
         final lastMonth = now.month == 1
             ? DateTime(now.year - 1, 12)
             : DateTime(now.year, now.month - 1);
         final lastMonthKeyStr = DateFormatter.formatNumericMonth(lastMonth);
-        
+
         double currentTotal = 0.0;
         double prevTotal = 0.0;
-        
+
         try {
           final thisMonthGroup = mergedMonths.firstWhere(
             (m) => m.monthKey == thisMonthKeyStr,
           );
           currentTotal = thisMonthGroup.totalAmount;
         } catch (_) {}
-        
+
         try {
           final prevMonthGroup = mergedMonths.firstWhere(
             (m) => m.monthKey == lastMonthKeyStr,
           );
           prevTotal = prevMonthGroup.totalAmount;
         } catch (_) {}
-        
+
         double percentage = 0.0;
         bool isUp = false;
         if (prevTotal > 0) {
@@ -137,9 +143,9 @@ class ExpenseCubit extends Cubit<ExpenseState> {
           percentage = 100.0;
           isUp = true;
         }
-        
+
         percentage = double.parse(percentage.toStringAsFixed(1));
-        
+
         final stats = ExpenseStats(
           totalAmount: currentTotal,
           percentageChange: percentage,

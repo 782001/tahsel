@@ -21,10 +21,7 @@ class WhatsAppService {
     );
 
     if (await canLaunchUrl(whatsappUri)) {
-      return await launchUrl(
-        whatsappUri,
-        mode: LaunchMode.externalApplication,
-      );
+      return await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
     } else {
       return false;
     }
@@ -57,7 +54,15 @@ class WhatsAppService {
     final String note = params['note'] as String;
     final String template = params['template'] as String;
 
-    String message = template
+    String message = template;
+
+    // If note is empty, remove the entire line containing {note}
+    if (note.trim().isEmpty) {
+      final lines = message.split('\n');
+      message = lines.where((line) => !line.contains('{note}')).join('\n');
+    }
+
+    message = message
         .replaceAll('{name}', name)
         .replaceAll('{amount}', amount.toStringAsFixed(2))
         .replaceAll('{remaining}', remaining.toStringAsFixed(2))

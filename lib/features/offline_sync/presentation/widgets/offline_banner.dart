@@ -26,11 +26,7 @@ class OfflineBanner extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.wifi_off,
-                      color: AppColors.warning,
-                      size: 16.r,
-                    ),
+                    Icon(Icons.wifi_off, color: AppColors.warning, size: 16.r),
                     SizedBox(width: 8.w),
                     Text(
                       AppStrings.noInternetConnection.tr(),

@@ -16,7 +16,7 @@ class OperationValidator {
     if (hasDebt && trimmedName.isEmpty) {
       return AppStrings.validationCustomerNameDebtRequired;
     }
-    
+
     return null;
   }
 }

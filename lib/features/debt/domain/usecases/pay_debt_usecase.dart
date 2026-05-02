@@ -22,6 +22,10 @@ class PayDebtUseCase implements BaseUseCase<void, PayDebtParams> {
 
   @override
   Future<Either<Failure, void>> call(PayDebtParams params) {
-    return repository.payTotalDebt(params.uid, params.customerName, params.amount);
+    return repository.payTotalDebt(
+      params.uid,
+      params.customerName,
+      params.amount,
+    );
   }
 }

@@ -11,7 +11,8 @@ abstract class OfflineLocalDataSource {
 class OfflineLocalDataSourceImpl implements OfflineLocalDataSource {
   static const boxName = 'offline_records_box';
 
-  Future<Box<OfflineRecord>> get _box async => await Hive.openBox<OfflineRecord>(boxName);
+  Future<Box<OfflineRecord>> get _box async =>
+      await Hive.openBox<OfflineRecord>(boxName);
 
   @override
   Future<void> saveRecord(OfflineRecord record) async {

@@ -34,7 +34,9 @@ class ExpensesList extends StatelessWidget {
               return Padding(
                 padding: EdgeInsets.symmetric(vertical: 40.h),
                 child: Center(
-                  child: CircularProgressIndicator(color: AppColors.primaryColor),
+                  child: CircularProgressIndicator(
+                    color: AppColors.primaryColor,
+                  ),
                 ),
               );
             }
@@ -70,14 +72,18 @@ class ExpensesList extends StatelessWidget {
                         ),
                       ),
                       SizedBox(height: 12.h),
-                      ...pending.map((record) => Padding(
-                            padding: EdgeInsets.only(bottom: 12.h),
-                            child: _buildPendingRecordItem(record),
-                          )),
+                      ...pending.map(
+                        (record) => Padding(
+                          padding: EdgeInsets.only(bottom: 12.h),
+                          child: _buildPendingRecordItem(record),
+                        ),
+                      ),
                       if (months.isNotEmpty && !isOffline) ...[
                         Padding(
                           padding: EdgeInsets.symmetric(vertical: 16.h),
-                          child: Divider(color: AppColors.grey.withOpacity(0.2)),
+                          child: Divider(
+                            color: AppColors.grey.withOpacity(0.2),
+                          ),
                         ),
                         Text(
                           AppStrings.allExpenses.tr(),
@@ -193,11 +199,8 @@ class ExpensesList extends StatelessWidget {
         extentRatio: 0.25,
         children: [
           SlidableAction(
-            onPressed: (context) => _confirmDeleteMonth(
-              context,
-              month.monthKey,
-              month.monthName,
-            ),
+            onPressed: (context) =>
+                _confirmDeleteMonth(context, month.monthKey, month.monthName),
             backgroundColor: AppColors.error,
             foregroundColor: AppColors.white,
             icon: Icons.delete,
@@ -269,10 +272,7 @@ class ExpensesList extends StatelessWidget {
                     SizedBox(height: 4.h),
                     Text(
                       "${month.transactionCount} ${AppStrings.transactionCount.tr()}",
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: AppColors.grey,
-                      ),
+                      style: TextStyle(fontSize: 12.sp, color: AppColors.grey),
                     ),
                   ],
                 ),

@@ -29,22 +29,12 @@ class NoInternetAnimations {
     final scaleAnimation = Tween<double>(
       begin: 0.85,
       end: 1.0,
-    ).animate(
-      CurvedAnimation(
-        parent: controller,
-        curve: Curves.easeOutBack,
-      ),
-    );
+    ).animate(CurvedAnimation(parent: controller, curve: Curves.easeOutBack));
 
     final slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.2),
       end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: controller,
-        curve: Curves.easeOut,
-      ),
-    );
+    ).animate(CurvedAnimation(parent: controller, curve: Curves.easeOut));
 
     final colorAnimation = ColorTween(
       begin: const Color(0xFF424242),

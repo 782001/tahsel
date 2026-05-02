@@ -53,25 +53,27 @@ class _SplashScreenState extends State<SplashScreen>
   void _navigateToNext() async {
     // 1. Perform security checks (e.g., root detection, developer mode)
     await SecurityService.checkSecurity();
-    
+
     // 2. Minimum splash duration for branding
     await Future.delayed(const Duration(seconds: 2));
-    
+
     if (mounted) {
       final secureStorage = sl<SecureStorageHelper>();
-      
+
       // 3. Load local session data (PRIORITY)
       final String? token = await secureStorage.getData(key: 'token');
-      final String? userType = await secureStorage.getData(key: AppStrings.userTypeKey);
-      
+      final String? userType = await secureStorage.getData(
+        key: AppStrings.userTypeKey,
+      );
+
       if (token != null && token.isNotEmpty) {
         // SUCCESS: Local session found
         AppStrings.userToken = token;
         AppStrings.userType = userType ?? AppStrings.cafe;
-        
+
         // 4. Navigate IMMEDIATELY to Main Layout (Offline-first)
         nav().pushNamedAndRemoveUntil(AppRoutes.mainLayout);
-        
+
         // 5. BACKGROUND: Verify with Firebase if online (Optional/Non-blocking)
         _verifySessionInBackground();
       } else {
@@ -111,12 +113,12 @@ class _SplashScreenState extends State<SplashScreen>
 
   void _handleInvalidSession() async {
     await sl<LogoutUseCase>().call(NoParams());
-    
+
     // Reset global strings
     AppStrings.userToken = '';
     AppStrings.userType = AppStrings.cafe;
-    
-    // If user is already in the app, the AuthCubit listener will handle 
+
+    // If user is already in the app, the AuthCubit listener will handle
     // the redirection if it's set up, otherwise we can force a redirect here
     // but typically AuthCubit.userChanges handles this.
   }

@@ -3,14 +3,21 @@ import 'package:tahsel/core/base_usecase/base_usecase.dart';
 import '../../../../core/error/failures.dart';
 import '../repositories/customer_repository.dart';
 
-class UpdateCustomerPreferenceUseCase implements BaseUseCase<void, UpdateCustomerPreferenceParams> {
+class UpdateCustomerPreferenceUseCase
+    implements BaseUseCase<void, UpdateCustomerPreferenceParams> {
   final CustomerRepository repository;
 
   UpdateCustomerPreferenceUseCase(this.repository);
 
   @override
-  Future<Either<Failure, void>> call(UpdateCustomerPreferenceParams params) async {
-    return await repository.updateCustomerPreference(params.uid, params.name, params.preference);
+  Future<Either<Failure, void>> call(
+    UpdateCustomerPreferenceParams params,
+  ) async {
+    return await repository.updateCustomerPreference(
+      params.uid,
+      params.name,
+      params.preference,
+    );
   }
 }
 

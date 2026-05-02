@@ -8,17 +8,35 @@ import 'package:tahsel/features/offline_sync/data/models/offline_record.dart';
 
 abstract class MyDebtRepository {
   // Person (Supplier/etc)
-  Future<Either<Failure, List<MyDebtPersonEntity>>> getMyDebtPersons(String uid);
-  Future<Either<Failure, void>> saveMyDebtPerson(String uid, MyDebtPersonEntity person);
-  Future<Either<Failure, void>> updateMyDebtPersonPhone(String uid, String name, String phoneNumber);
-  Future<Either<Failure, void>> updateMyDebtPersonPreference(String uid, String name, String preference);
-  
+  Future<Either<Failure, List<MyDebtPersonEntity>>> getMyDebtPersons(
+    String uid, {
+    bool forceRefresh = false,
+  });
+  Future<Either<Failure, void>> saveMyDebtPerson(
+    String uid,
+    MyDebtPersonEntity person,
+  );
+  Future<Either<Failure, void>> updateMyDebtPersonPhone(
+    String uid,
+    String name,
+    String phoneNumber,
+  );
+  Future<Either<Failure, void>> updateMyDebtPersonPreference(
+    String uid,
+    String name,
+    String preference,
+  );
+
   // Debt Items
   Future<Either<Failure, String>> addMyDebtItem(MyDebtItemEntity debt);
-  Future<Either<Failure, List<MyDebtItemEntity>>> getMyDebtItems(String uid, String personName);
+  Future<Either<Failure, List<MyDebtItemEntity>>> getMyDebtItems(
+    String uid,
+    String personName, {
+    bool forceRefresh = false,
+  });
   Future<Either<Failure, void>> deleteMyDebtItem(String uid, String debtId);
   Future<Either<Failure, void>> markMyDebtItemAsPaid(String uid, String debtId);
-  
+
   // Payments
   Future<Either<Failure, void>> payMyDebtItem({
     required String uid,
@@ -26,17 +44,44 @@ abstract class MyDebtRepository {
     required double amount,
     String? note,
   });
-  Future<Either<Failure, List<PaymentEntity>>> getMyDebtItemPayments(String uid, String debtId);
+  Future<Either<Failure, List<PaymentEntity>>> getMyDebtItemPayments(
+    String uid,
+    String debtId, {
+    bool forceRefresh = false,
+  });
   Future<Either<Failure, void>> distributeMyDebtPayment({
     required String uid,
     required String personName,
     required double amount,
     String? note,
   });
-  
+  Future<Either<Failure, void>> updateMyDebtPayment({
+    required String uid,
+    required String debtId,
+    required String paymentId,
+    required double newAmount,
+    String? note,
+  });
+  Future<Either<Failure, void>> deleteMyDebtPayment({
+    required String uid,
+    required String debtId,
+    required String paymentId,
+  });
+
   // Reports
-  Future<Either<Failure, List<MyDebtOperationEntity>>> getMyDebtPersonOperations(String uid, String personName);
+  Future<Either<Failure, List<MyDebtOperationEntity>>>
+  getMyDebtPersonOperations(
+    String uid,
+    String personName, {
+    bool forceRefresh = false,
+  });
 
   // Offline Sync
   Future<Either<Failure, List<OfflineRecord>>> getPendingMyDebts();
+
+  Future<Either<Failure, MyDebtItemEntity?>> getMyDebtItemById(
+    String uid,
+    String debtId, {
+    bool forceRefresh = false,
+  });
 }

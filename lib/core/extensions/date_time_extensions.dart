@@ -22,12 +22,14 @@ extension DateTimeExtensions on DateTime {
   /// Checks if the DateTime is yesterday.
   bool get isYesterday {
     final yesterday = DateTime.now().subtract(const Duration(days: 1));
-    return year == yesterday.year && month == yesterday.month && day == yesterday.day;
+    return year == yesterday.year &&
+        month == yesterday.month &&
+        day == yesterday.day;
   }
-  
+
   /// Returns true if the DateTime is in the future.
   bool get isFuture => isAfter(DateTime.now());
-  
+
   /// Returns true if the DateTime is in the past.
   bool get isPast => isBefore(DateTime.now());
 }

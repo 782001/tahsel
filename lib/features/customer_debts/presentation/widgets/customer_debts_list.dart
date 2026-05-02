@@ -167,10 +167,14 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
     final Map<String, List<DebtEntity>> groupedMap = {};
     for (var debt in debts) {
       final name = debt.customerName ?? 'Unknown';
-      
+
       final nameMatches = name.toLowerCase().contains(query);
-      final ledgerMatches = (debt.ledgerNumber ?? '').toLowerCase().contains(query);
-      final detailsMatches = (debt.productOrSessionDetails ?? '').toLowerCase().contains(query);
+      final ledgerMatches = (debt.ledgerNumber ?? '').toLowerCase().contains(
+        query,
+      );
+      final detailsMatches = (debt.productOrSessionDetails ?? '')
+          .toLowerCase()
+          .contains(query);
 
       if (query.isEmpty || nameMatches || ledgerMatches || detailsMatches) {
         if (!groupedMap.containsKey(name)) {
@@ -275,7 +279,9 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
                     return CustomerDebtCard(
                       customerName: detail.customerName,
                       ledgerNumber: detail.ledgerNumber,
-                      description: detail.items.isNotEmpty ? detail.items.first.itemDescription : null,
+                      description: detail.items.isNotEmpty
+                          ? detail.items.first.itemDescription
+                          : null,
                       lastTransactionDate: detail.lastTransactionDate,
                       amount: detail.totalDebt,
                       status: detail.status.tr(),

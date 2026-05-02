@@ -19,6 +19,7 @@ class MyDebtsNotificationDialog extends StatefulWidget {
   final double remainingBalance;
   final String? note;
   final String mode; // 'whatsapp' or 'sms'
+  final String operationType; // 'payment', 'edit', 'delete'
 
   const MyDebtsNotificationDialog({
     super.key,
@@ -27,6 +28,7 @@ class MyDebtsNotificationDialog extends StatefulWidget {
     required this.remainingBalance,
     required this.mode,
     this.note,
+    this.operationType = 'payment',
   });
 
   static bool _isShowing = false;
@@ -37,6 +39,7 @@ class MyDebtsNotificationDialog extends StatefulWidget {
     required double amountPaid,
     required double remainingBalance,
     String? note,
+    String operationType = 'payment',
   }) {
     if (_isShowing) return;
 
@@ -75,6 +78,7 @@ class MyDebtsNotificationDialog extends StatefulWidget {
             amountPaid: amountPaid,
             remainingBalance: remainingBalance,
             note: note,
+            operationType: operationType,
           ),
         ),
       ).then((result) {
@@ -88,10 +92,34 @@ class MyDebtsNotificationDialog extends StatefulWidget {
             remainingBalance: remainingBalance,
             phone: result['phone'] ?? '',
             note: result['note'],
+            operationType: operationType,
           );
         }
       });
     });
+  }
+
+  /// Returns the correct template key based on operation type and channel.
+  static String _getTemplate(String operationType, String mode) {
+    if (mode == 'whatsapp') {
+      switch (operationType) {
+        case 'edit':
+          return AppStrings.whatsappEditMsgTemplate.tr();
+        case 'delete':
+          return AppStrings.whatsappDeleteMsgTemplate.tr();
+        default:
+          return AppStrings.myDebtsWhatsappTemplate.tr();
+      }
+    } else {
+      switch (operationType) {
+        case 'edit':
+          return AppStrings.smsEditMsgTemplate.tr();
+        case 'delete':
+          return AppStrings.smsDeleteMsgTemplate.tr();
+        default:
+          return AppStrings.myDebtsSmsTemplate.tr();
+      }
+    }
   }
 
   static Future<void> handleNotification({
@@ -102,10 +130,13 @@ class MyDebtsNotificationDialog extends StatefulWidget {
     required double remainingBalance,
     required String phone,
     String? note,
+    String operationType = 'payment',
   }) async {
     final messenger = ScaffoldMessenger.of(context);
 
     try {
+      final template = _getTemplate(operationType, mode);
+
       final message = await (mode == 'whatsapp'
           ? WhatsAppService.prepareMessage(
               name: personName,
@@ -113,7 +144,7 @@ class MyDebtsNotificationDialog extends StatefulWidget {
               remaining: remainingBalance,
               date: DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now()),
               note: note ?? '',
-              template: AppStrings.myDebtsWhatsappTemplate.tr(),
+              template: template,
             )
           : SmsService.prepareMessage(
               name: personName,
@@ -121,7 +152,7 @@ class MyDebtsNotificationDialog extends StatefulWidget {
               remaining: remainingBalance,
               date: DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now()),
               note: note ?? '',
-              template: AppStrings.myDebtsSmsTemplate.tr(),
+              template: template,
             ));
 
       if (mode == 'whatsapp') {
@@ -146,14 +177,13 @@ class MyDebtsNotificationDialog extends StatefulWidget {
         }
       }
     } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
   @override
-  State<MyDebtsNotificationDialog> createState() => _MyDebtsNotificationDialogState();
+  State<MyDebtsNotificationDialog> createState() =>
+      _MyDebtsNotificationDialogState();
 }
 
 class _MyDebtsNotificationDialogState extends State<MyDebtsNotificationDialog> {
@@ -216,10 +246,7 @@ class _MyDebtsNotificationDialogState extends State<MyDebtsNotificationDialog> {
     }
 
     setState(() => _isSaving = true);
-    Navigator.pop(context, {
-      'phone': phone,
-      'note': widget.note ?? '',
-    });
+    Navigator.pop(context, {'phone': phone, 'note': widget.note ?? ''});
   }
 
   @override

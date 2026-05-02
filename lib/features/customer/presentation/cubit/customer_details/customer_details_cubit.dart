@@ -8,7 +8,7 @@ class CustomerDetailsCubit extends Cubit<CustomerDetailsState> {
   final GetCustomerOperationsUseCase getCustomerOperationsUseCase;
 
   CustomerDetailsCubit({required this.getCustomerOperationsUseCase})
-      : super(CustomerDetailsInitial());
+    : super(CustomerDetailsInitial());
 
   Future<void> fetchCustomerDetails(String uid, String customerName) async {
     emit(CustomerDetailsLoading());
@@ -17,23 +17,29 @@ class CustomerDetailsCubit extends Cubit<CustomerDetailsState> {
       customerName: customerName,
     );
 
-    result.fold(
-      (failure) => emit(CustomerDetailsError(failure.message)),
-      (operations) async {
-        // Use Isolate for sorting and processing summary
-        final processedData = await compute(_processOperationsInIsolate, operations);
-        
-        emit(CustomerDetailsLoaded(
+    result.fold((failure) => emit(CustomerDetailsError(failure.message)), (
+      operations,
+    ) async {
+      // Use Isolate for sorting and processing summary
+      final processedData = await compute(
+        _processOperationsInIsolate,
+        operations,
+      );
+
+      emit(
+        CustomerDetailsLoaded(
           operations: processedData.sortedOperations,
           totalSpent: processedData.totalSpent,
           totalPaid: processedData.totalPaid,
           remaining: processedData.remaining,
-        ));
-      },
-    );
+        ),
+      );
+    });
   }
 
-  static _ProcessedData _processOperationsInIsolate(List<CustomerOperation> operations) {
+  static _ProcessedData _processOperationsInIsolate(
+    List<CustomerOperation> operations,
+  ) {
     // Sort latest first
     final sorted = List<CustomerOperation>.from(operations)
       ..sort((a, b) => b.date.compareTo(a.date));
@@ -42,7 +48,8 @@ class CustomerDetailsCubit extends Cubit<CustomerDetailsState> {
     double totalPaid = 0;
 
     for (var op in operations) {
-      if (op.type == CustomerOperationType.purchase || op.type == CustomerOperationType.debt) {
+      if (op.type == CustomerOperationType.purchase ||
+          op.type == CustomerOperationType.debt) {
         totalSpent += op.amount;
       } else if (op.type == CustomerOperationType.payment) {
         totalPaid += op.amount;

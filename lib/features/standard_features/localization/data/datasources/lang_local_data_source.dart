@@ -15,6 +15,5 @@ class LangLocalDataSourceImpl implements LangLocalDataSource {
 
   @override
   Future<String> getSavedLang() async =>
-      sl<CashHelper>().getData(key: AppStrings.locale) ??
-      AppStrings.arabicCode;
+      sl<CashHelper>().getData(key: AppStrings.locale) ?? AppStrings.arabicCode;
 }

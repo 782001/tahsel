@@ -10,7 +10,8 @@ class GetProductsParams {
   GetProductsParams({required this.uid});
 }
 
-class GetProductsUseCase implements BaseUseCase<List<ProductEntity>, GetProductsParams> {
+class GetProductsUseCase
+    implements BaseUseCase<List<ProductEntity>, GetProductsParams> {
   final ProductRepository repository;
 
   GetProductsUseCase(this.repository);

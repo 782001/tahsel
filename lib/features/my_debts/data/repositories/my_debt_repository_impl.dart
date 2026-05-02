@@ -28,17 +28,23 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
   });
 
   @override
-  Future<Either<Failure, List<MyDebtPersonEntity>>> getMyDebtPersons(String uid) async {
+  Future<Either<Failure, List<MyDebtPersonEntity>>> getMyDebtPersons(
+    String uid, {
+    bool forceRefresh = false,
+  }) async {
     try {
       final hasConnection = await connectionChecker.hasConnection;
       if (!hasConnection) {
         return const Left(OfflineFailure("No internet connection"));
       }
-      
+
       // TRIGGER SYNC when online before fetching
       await offlineSyncRepository.syncAllPendingRecords();
-      
-      final persons = await personRemoteDataSource.getPersons(uid);
+
+      final persons = await personRemoteDataSource.getPersons(
+        uid,
+        forceRefresh: forceRefresh,
+      );
       return Right(persons);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -46,9 +52,15 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
   }
 
   @override
-  Future<Either<Failure, void>> saveMyDebtPerson(String uid, MyDebtPersonEntity person) async {
+  Future<Either<Failure, void>> saveMyDebtPerson(
+    String uid,
+    MyDebtPersonEntity person,
+  ) async {
     try {
-      await personRemoteDataSource.savePerson(uid, MyDebtPersonModel.fromEntity(person));
+      await personRemoteDataSource.savePerson(
+        uid,
+        MyDebtPersonModel.fromEntity(person),
+      );
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -56,7 +68,11 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
   }
 
   @override
-  Future<Either<Failure, void>> updateMyDebtPersonPhone(String uid, String name, String phoneNumber) async {
+  Future<Either<Failure, void>> updateMyDebtPersonPhone(
+    String uid,
+    String name,
+    String phoneNumber,
+  ) async {
     try {
       await personRemoteDataSource.updatePersonPhone(uid, name, phoneNumber);
       return const Right(null);
@@ -66,9 +82,17 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
   }
 
   @override
-  Future<Either<Failure, void>> updateMyDebtPersonPreference(String uid, String name, String preference) async {
+  Future<Either<Failure, void>> updateMyDebtPersonPreference(
+    String uid,
+    String name,
+    String preference,
+  ) async {
     try {
-      await personRemoteDataSource.updatePersonPreference(uid, name, preference);
+      await personRemoteDataSource.updatePersonPreference(
+        uid,
+        name,
+        preference,
+      );
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -88,17 +112,21 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
       } else {
         // OFFLINE: Save to Hive for later sync
         final localId = DateTime.now().millisecondsSinceEpoch.toString();
-        
+
         // Construct payload for Hive/Firestore
         final Map<String, dynamic> hivePayload = model.toJson();
-        
+
         // CRITICAL: Sanitize payload for jsonEncode (REMOVE all Timestamp/FieldValue objects)
         // Hive storage requires plain JSON types
-        hivePayload['timestamp'] = model.timestamp?.toIso8601String() ?? DateTime.now().toIso8601String();
-        hivePayload['lastUpdatedAt'] = model.lastUpdatedAt?.toIso8601String() ?? DateTime.now().toIso8601String();
+        hivePayload['timestamp'] =
+            model.timestamp?.toIso8601String() ??
+            DateTime.now().toIso8601String();
+        hivePayload['lastUpdatedAt'] =
+            model.lastUpdatedAt?.toIso8601String() ??
+            DateTime.now().toIso8601String();
 
         final payloadJson = jsonEncode(hivePayload);
-        
+
         final offlineRecord = OfflineRecord(
           id: localId,
           amount: model.remainingAmount,
@@ -110,7 +138,9 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
           collectionName: 'users/${model.uid}',
         );
 
-        final saveResult = await offlineSyncRepository.saveOfflineRecord(offlineRecord);
+        final saveResult = await offlineSyncRepository.saveOfflineRecord(
+          offlineRecord,
+        );
         return saveResult.fold(
           (failure) => Left(failure),
           (_) => Right(localId),
@@ -122,7 +152,11 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
   }
 
   @override
-  Future<Either<Failure, List<MyDebtItemEntity>>> getMyDebtItems(String uid, String personName) async {
+  Future<Either<Failure, List<MyDebtItemEntity>>> getMyDebtItems(
+    String uid,
+    String personName, {
+    bool forceRefresh = false,
+  }) async {
     try {
       final hasConnection = await connectionChecker.hasConnection;
       if (!hasConnection) {
@@ -132,7 +166,11 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
       // TRIGGER SYNC when online
       await offlineSyncRepository.syncAllPendingRecords();
 
-      final items = await itemRemoteDataSource.getDebtItems(uid, personName);
+      final items = await itemRemoteDataSource.getDebtItems(
+        uid,
+        personName,
+        forceRefresh: forceRefresh,
+      );
       return Right(items);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -140,7 +178,10 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
   }
 
   @override
-  Future<Either<Failure, void>> deleteMyDebtItem(String uid, String debtId) async {
+  Future<Either<Failure, void>> deleteMyDebtItem(
+    String uid,
+    String debtId,
+  ) async {
     try {
       await itemRemoteDataSource.deleteDebtItem(uid, debtId);
       return const Right(null);
@@ -150,7 +191,10 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
   }
 
   @override
-  Future<Either<Failure, void>> markMyDebtItemAsPaid(String uid, String debtId) async {
+  Future<Either<Failure, void>> markMyDebtItemAsPaid(
+    String uid,
+    String debtId,
+  ) async {
     try {
       final items = await itemRemoteDataSource.getDebtsStream(uid).first;
       final item = items.firstWhere((e) => e.id == debtId);
@@ -194,7 +238,12 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
     String? note,
   }) async {
     try {
-      await itemRemoteDataSource.distributePayment(uid, personName, amount, note: note);
+      await itemRemoteDataSource.distributePayment(
+        uid,
+        personName,
+        amount,
+        note: note,
+      );
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -202,13 +251,62 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
   }
 
   @override
-  Future<Either<Failure, List<MyDebtOperationEntity>>> getMyDebtPersonOperations(String uid, String personName) async {
+  Future<Either<Failure, void>> updateMyDebtPayment({
+    required String uid,
+    required String debtId,
+    required String paymentId,
+    required double newAmount,
+    String? note,
+  }) async {
+    try {
+      await itemRemoteDataSource.updateMyDebtPayment(
+        uid: uid,
+        debtId: debtId,
+        paymentId: paymentId,
+        newAmount: newAmount,
+        note: note,
+      );
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteMyDebtPayment({
+    required String uid,
+    required String debtId,
+    required String paymentId,
+  }) async {
+    try {
+      await itemRemoteDataSource.deleteMyDebtPayment(
+        uid: uid,
+        debtId: debtId,
+        paymentId: paymentId,
+      );
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<MyDebtOperationEntity>>>
+  getMyDebtPersonOperations(
+    String uid,
+    String personName, {
+    bool forceRefresh = false,
+  }) async {
     try {
       final hasConnection = await connectionChecker.hasConnection;
       if (!hasConnection) {
         return const Left(OfflineFailure("No internet connection"));
       }
-      final ops = await personRemoteDataSource.getPersonOperations(uid, personName);
+      final ops = await personRemoteDataSource.getPersonOperations(
+        uid,
+        personName,
+        forceRefresh: forceRefresh,
+      );
       return Right(ops);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -216,19 +314,32 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
   }
 
   @override
-  Future<Either<Failure, List<PaymentEntity>>> getMyDebtItemPayments(String uid, String debtId) async {
+  Future<Either<Failure, List<PaymentEntity>>> getMyDebtItemPayments(
+    String uid,
+    String debtId, {
+    bool forceRefresh = false,
+  }) async {
     try {
-      final payments = await itemRemoteDataSource.getDebtItemPayments(uid, debtId);
+      final payments = await itemRemoteDataSource.getDebtItemPayments(
+        uid,
+        debtId,
+        forceRefresh: forceRefresh,
+      );
       // Map MyDebtPaymentModel to PaymentEntity since Customer Debts UI expects PaymentEntity
-      final entities = payments.map((p) => PaymentEntity(
-        id: p.id,
-        debtId: p.debtId,
-        amountPaid: p.amountPaid,
-        remainingAmount: 0.0,
-        createdAt: p.createdAt,
-        type: _mapType(p.type),
-        activityName: p.note,
-      )).toList();
+      final entities = payments
+          .map(
+            (p) => PaymentEntity(
+              id: p.id,
+              debtId: p.debtId,
+              amountPaid: p.amountPaid,
+              remainingAmount: 0.0,
+              createdAt: p.createdAt,
+              type: _mapType(p.type),
+              activityName: p.note,
+              relatedTo: p.relatedTo,
+            ),
+          )
+          .toList();
       return Right(entities);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -238,14 +349,13 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
   @override
   Future<Either<Failure, List<OfflineRecord>>> getPendingMyDebts() async {
     final result = await offlineSyncRepository.getPendingRecords();
-    return result.fold(
-      (failure) => Left(failure),
-      (records) {
-        // Filter my_debt type records (including 'my_debt_add')
-        final myDebtRecords = records.where((r) => r.type.startsWith('my_debt')).toList();
-        return Right(myDebtRecords);
-      },
-    );
+    return result.fold((failure) => Left(failure), (records) {
+      // Filter my_debt type records (including 'my_debt_add')
+      final myDebtRecords = records
+          .where((r) => r.type.startsWith('my_debt'))
+          .toList();
+      return Right(myDebtRecords);
+    });
   }
 
   PaymentType _mapType(String type) {
@@ -258,8 +368,30 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
         return PaymentType.settlement;
       case 'debtAdded':
         return PaymentType.debtAdded;
+      case 'adjustment':
+        return PaymentType.adjustment;
+      case 'reversal':
+        return PaymentType.reversal;
       default:
         return PaymentType.partial;
+    }
+  }
+
+  @override
+  Future<Either<Failure, MyDebtItemEntity?>> getMyDebtItemById(
+    String uid,
+    String debtId, {
+    bool forceRefresh = false,
+  }) async {
+    try {
+      final result = await itemRemoteDataSource.getMyDebtItemById(
+        uid,
+        debtId,
+        forceRefresh: forceRefresh,
+      );
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
     }
   }
 }

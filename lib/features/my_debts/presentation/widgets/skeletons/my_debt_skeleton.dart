@@ -30,7 +30,11 @@ class MyDebtCardSkeleton extends StatelessWidget {
                     ShimmerPlaceholder(width: 100.w, height: 14.h),
                   ],
                 ),
-                ShimmerPlaceholder(width: 60.w, height: 24.h, borderRadius: 8.r),
+                ShimmerPlaceholder(
+                  width: 60.w,
+                  height: 24.h,
+                  borderRadius: 8.r,
+                ),
               ],
             ),
             SizedBox(height: 16.h),
@@ -58,7 +62,11 @@ class MyDebtCardSkeleton extends StatelessWidget {
             const Divider(height: 24),
             Row(
               children: [
-                ShimmerPlaceholder(width: 14.r, height: 14.r, borderRadius: 2.r),
+                ShimmerPlaceholder(
+                  width: 14.r,
+                  height: 14.r,
+                  borderRadius: 2.r,
+                ),
                 SizedBox(width: 6.w),
                 ShimmerPlaceholder(width: 200.w, height: 14.h),
               ],

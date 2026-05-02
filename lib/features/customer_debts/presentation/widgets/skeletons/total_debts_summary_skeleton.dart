@@ -21,7 +21,11 @@ class TotalDebtsSummarySkeleton extends StatelessWidget {
           children: [
             Row(
               children: [
-                ShimmerPlaceholder(width: 40.r, height: 40.r, borderRadius: 12.r),
+                ShimmerPlaceholder(
+                  width: 40.r,
+                  height: 40.r,
+                  borderRadius: 12.r,
+                ),
                 SizedBox(width: 12.w),
                 ShimmerPlaceholder(width: 120.w, height: 20.h),
               ],
@@ -31,7 +35,11 @@ class TotalDebtsSummarySkeleton extends StatelessWidget {
             SizedBox(height: 8.h),
             Row(
               children: [
-                ShimmerPlaceholder(width: 16.r, height: 16.r, borderRadius: 2.r),
+                ShimmerPlaceholder(
+                  width: 16.r,
+                  height: 16.r,
+                  borderRadius: 2.r,
+                ),
                 SizedBox(width: 6.w),
                 ShimmerPlaceholder(width: 100.w, height: 16.h),
               ],

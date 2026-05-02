@@ -17,7 +17,7 @@ class AppLocalizations {
   static const LocalizationsDelegate<AppLocalizations> delegate =
       AppLocalizationsDelegate();
 
-  /// Static initialization for a specific locale. 
+  /// Static initialization for a specific locale.
   /// This can be called from Cubit/State Management before the UI rebuilds.
   static Future<AppLocalizations> init(Locale locale) async {
     final localization = AppLocalizations(locale);
@@ -29,8 +29,9 @@ class AppLocalizations {
   late Map<String, String> _localizedStrings;
 
   Future<void> load() async {
-    String jsonString =
-        await rootBundle.loadString('lang/${locale.languageCode}.json');
+    String jsonString = await rootBundle.loadString(
+      'lang/${locale.languageCode}.json',
+    );
     Map<String, dynamic> jsonMap = json.decode(jsonString);
     _localizedStrings = jsonMap.map<String, String>((key, value) {
       return MapEntry(key, value.toString());
@@ -39,7 +40,11 @@ class AppLocalizations {
   }
 
   /// Static translation helper for String extensions
-  static String tr(String key, {List<String>? args, Map<String, String>? namedArgs}) {
+  static String tr(
+    String key, {
+    List<String>? args,
+    Map<String, String>? namedArgs,
+  }) {
     String value = _instance?._localizedStrings[key] ?? key;
 
     // Handle positional arguments: {0}, {1}, etc.

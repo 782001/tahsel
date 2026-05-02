@@ -20,7 +20,7 @@ class ExpenseFetchSuccess extends ExpenseState {
   final List<OfflineRecord> pendingRecords;
 
   const ExpenseFetchSuccess({
-    required this.months, 
+    required this.months,
     required this.stats,
     this.pendingRecords = const [],
   });
@@ -35,7 +35,7 @@ class ExpenseMonthDetailsSuccess extends ExpenseState {
   final String monthName;
 
   const ExpenseMonthDetailsSuccess({
-    required this.expenses, 
+    required this.expenses,
     required this.monthKey,
     required this.monthName,
   });

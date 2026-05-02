@@ -32,7 +32,8 @@ class CustomerEntity extends Equatable {
       id: id ?? this.id,
       name: name ?? this.name,
       phoneNumber: phoneNumber ?? this.phoneNumber,
-      notificationPreference: notificationPreference ?? this.notificationPreference,
+      notificationPreference:
+          notificationPreference ?? this.notificationPreference,
       lastUsedAt: lastUsedAt ?? this.lastUsedAt,
       totalTransactions: totalTransactions ?? this.totalTransactions,
       ledgerNumber: ledgerNumber ?? this.ledgerNumber,
@@ -41,12 +42,12 @@ class CustomerEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        phoneNumber,
-        notificationPreference,
-        lastUsedAt,
-        totalTransactions,
-        ledgerNumber,
-      ];
+    id,
+    name,
+    phoneNumber,
+    notificationPreference,
+    lastUsedAt,
+    totalTransactions,
+    ledgerNumber,
+  ];
 }

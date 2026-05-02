@@ -18,23 +18,19 @@ class ProductCubit extends Cubit<ProductState> {
   Future<void> fetchProducts(String uid) async {
     emit(ProductLoading());
     final result = await getProductsUseCase(GetProductsParams(uid: uid));
-    result.fold(
-      (failure) => emit(ProductError(failure.message)),
-      (products) {
-        _allProducts = products;
-        emit(ProductLoaded(products));
-      },
-    );
+    result.fold((failure) => emit(ProductError(failure.message)), (products) {
+      _allProducts = products;
+      emit(ProductLoaded(products));
+    });
   }
 
   Future<void> saveProduct(String uid, String name) async {
-    final product = ProductEntity(
-      name: name,
-      lastUsedAt: DateTime.now(),
-    );
-    
+    final product = ProductEntity(name: name, lastUsedAt: DateTime.now());
+
     // We don't await this if we want to be fast, but usually UI expects some feedback or just quiet update
-    final result = await saveProductUseCase(SaveProductParams(uid: uid, product: product));
+    final result = await saveProductUseCase(
+      SaveProductParams(uid: uid, product: product),
+    );
     result.fold(
       (failure) => null, // Silently fail for now or log
       (_) {

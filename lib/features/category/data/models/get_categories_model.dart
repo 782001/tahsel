@@ -26,8 +26,9 @@ class GetCategoriesCategoryItemModel extends GetCategoriesCategoryItemEntity {
       id: json['id'] as String?,
       name: json['name'] as String?,
       slug: json['slug'] as String?,
-      images:
-          (json['images'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      images: (json['images'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
       price: (json['price'] as num?)?.toDouble(),
       discountPrice: (json['discountPrice'] as num?)?.toDouble(),
       stock: json['stock'] as int?,
@@ -72,23 +73,21 @@ class GetCategoriesDataModel extends GetCategoriesDataEntity {
 
   factory GetCategoriesDataModel.fromJson(Map<String, dynamic> json) {
     return GetCategoriesDataModel(
-      category:
-          (json['category'] as List<dynamic>?)
-              ?.map(
-                (e) => GetCategoriesCategoryItemModel.fromJson(
-                  e as Map<String, dynamic>,
-                ),
-              )
-              .toList(),
+      category: (json['category'] as List<dynamic>?)
+          ?.map(
+            (e) => GetCategoriesCategoryItemModel.fromJson(
+              e as Map<String, dynamic>,
+            ),
+          )
+          .toList(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'category':
-          category
-              ?.map((e) => (e as GetCategoriesCategoryItemModel).toJson())
-              .toList(),
+      'category': category
+          ?.map((e) => (e as GetCategoriesCategoryItemModel).toJson())
+          .toList(),
     };
   }
 }
@@ -100,12 +99,11 @@ class GetCategoriesResponseModel extends GetCategoriesResponseEntity {
     return GetCategoriesResponseModel(
       success: json['success'] as bool?,
       message: json['message'] as String?,
-      data:
-          json['data'] != null
-              ? GetCategoriesDataModel.fromJson(
-                json['data'] as Map<String, dynamic>,
-              )
-              : null,
+      data: json['data'] != null
+          ? GetCategoriesDataModel.fromJson(
+              json['data'] as Map<String, dynamic>,
+            )
+          : null,
     );
   }
 
@@ -117,4 +115,3 @@ class GetCategoriesResponseModel extends GetCategoriesResponseEntity {
     };
   }
 }
-

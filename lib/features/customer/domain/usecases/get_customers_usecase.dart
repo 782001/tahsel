@@ -10,13 +10,16 @@ class GetCustomersParams {
   GetCustomersParams({required this.uid});
 }
 
-class GetCustomersUseCase implements BaseUseCase<List<CustomerEntity>, GetCustomersParams> {
+class GetCustomersUseCase
+    implements BaseUseCase<List<CustomerEntity>, GetCustomersParams> {
   final CustomerRepository repository;
 
   GetCustomersUseCase(this.repository);
 
   @override
-  Future<Either<Failure, List<CustomerEntity>>> call(GetCustomersParams params) {
+  Future<Either<Failure, List<CustomerEntity>>> call(
+    GetCustomersParams params,
+  ) {
     return repository.getCustomers(params.uid);
   }
 }

@@ -20,7 +20,15 @@ class ExpenseEntity extends Equatable {
   });
 
   @override
-  List<Object?> get props => [id, uid, amount, category, description, createdAt, monthKey];
+  List<Object?> get props => [
+    id,
+    uid,
+    amount,
+    category,
+    description,
+    createdAt,
+    monthKey,
+  ];
 }
 
 class MonthlyExpenseGroup extends Equatable {
@@ -37,5 +45,10 @@ class MonthlyExpenseGroup extends Equatable {
   });
 
   @override
-  List<Object?> get props => [monthKey, monthName, totalAmount, transactionCount];
+  List<Object?> get props => [
+    monthKey,
+    monthName,
+    totalAmount,
+    transactionCount,
+  ];
 }

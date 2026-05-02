@@ -51,8 +51,7 @@ class AppColors {
   static Color get textColor2 =>
       isDark ? const Color(0xFFBBDEFB) : const Color(0xFF1E56A0);
 
-  static Color get subTitleColor =>
-      isDark ? Colors.white70 : Colors.black54;
+  static Color get subTitleColor => isDark ? Colors.white70 : Colors.black54;
 
   static Color get iconeye =>
       isDark ? const Color(0xFF424242) : const Color(0xFFF6F6F6);

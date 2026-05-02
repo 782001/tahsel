@@ -50,10 +50,10 @@ class _CustomerGlobalPaymentsScreenState
               ? widget.customerDetail.items.first.entity.uid
               : "";
           await context.read<GlobalPaymentsCubit>().loadCustomerPayments(
-                uid: uid,
-                customerName: widget.customerDetail.customerName,
-                forceRefresh: true,
-              );
+            uid: uid,
+            customerName: widget.customerDetail.customerName,
+            forceRefresh: true,
+          );
         },
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(
@@ -320,17 +320,33 @@ class _CustomerGlobalPaymentsScreenState
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Activity Name
-              Text(
-                isAddition
-                    ? AppStrings.debtAdded.tr()
-                    : AppStrings.paymentReceived.tr(),
-                textAlign: TextAlign.start,
-                style: TextStyles.customStyle(
-                  color: AppColors.textColor,
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.bold,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isAddition
+                        ? AppStrings.debtAdded.tr()
+                        : AppStrings.paymentReceived.tr(),
+                    textAlign: TextAlign.start,
+                    style: TextStyles.customStyle(
+                      color: AppColors.textColor,
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (transaction.activityName != null &&
+                      transaction.activityName!.isNotEmpty) ...[
+                    SizedBox(height: 4.h),
+                    Text(
+                      transaction.activityName!,
+                      style: TextStyles.customStyle(
+                        color: AppColors.primaryColor,
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ],
               ),
 
               // Amount

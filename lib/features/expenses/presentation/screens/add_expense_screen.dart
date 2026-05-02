@@ -83,9 +83,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           duration: const Duration(milliseconds: 500),
-          content: Text(
-            AppStrings.validationFieldRequired.tr(),
-          ),
+          content: Text(AppStrings.validationFieldRequired.tr()),
         ),
       );
       return;

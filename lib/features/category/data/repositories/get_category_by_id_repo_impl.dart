@@ -25,4 +25,3 @@ class GetCategoryByIdRepository extends GetCategoryByIdBaseRepository {
     }
   }
 }
-

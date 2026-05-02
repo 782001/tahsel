@@ -144,7 +144,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
 
                         SizedBox(height: 32.h),
-                        
+
                         SizedBox(height: 32.h),
 
                         // Logout button

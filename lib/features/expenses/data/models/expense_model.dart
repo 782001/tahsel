@@ -15,7 +15,7 @@ class ExpenseModel extends ExpenseEntity {
   factory ExpenseModel.fromJson(Map<String, dynamic> json, String id) {
     final createdAtData = json['createdAt'];
     DateTime createdAtDate;
-    
+
     if (createdAtData is Timestamp) {
       createdAtDate = createdAtData.toDate();
     } else if (createdAtData is String) {
@@ -26,7 +26,8 @@ class ExpenseModel extends ExpenseEntity {
 
     String monthKeyVal = json['monthKey'] as String? ?? '';
     if (monthKeyVal.isEmpty) {
-      monthKeyVal = "${createdAtDate.year}/${createdAtDate.month.toString().padLeft(2, '0')}";
+      monthKeyVal =
+          "${createdAtDate.year}/${createdAtDate.month.toString().padLeft(2, '0')}";
     }
 
     return ExpenseModel(
@@ -46,7 +47,9 @@ class ExpenseModel extends ExpenseEntity {
       'amount': amount,
       'category': category,
       'description': description,
-      'createdAt': Timestamp.fromDate(createdAt), // Always store as Timestamp for Firestore queries
+      'createdAt': Timestamp.fromDate(
+        createdAt,
+      ), // Always store as Timestamp for Firestore queries
       'monthKey': monthKey,
     };
   }

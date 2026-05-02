@@ -12,11 +12,15 @@ class GetDebtsUseCase implements BaseUseCase<List<DebtEntity>, GetDebtsParams> {
 
   @override
   Future<Either<Failure, List<DebtEntity>>> call(GetDebtsParams params) async {
-    return await repository.getDebts(params.uid);
+    return await repository.getDebts(
+      params.uid,
+      forceRefresh: params.forceRefresh,
+    );
   }
 }
 
 class GetDebtsParams {
   final String uid;
-  GetDebtsParams({required this.uid});
+  final bool forceRefresh;
+  GetDebtsParams({required this.uid, this.forceRefresh = false});
 }

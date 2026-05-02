@@ -7,8 +7,11 @@ abstract class OfflineSyncState extends Equatable {
 }
 
 class OfflineSyncInitial extends OfflineSyncState {}
+
 class OfflineSyncInProgress extends OfflineSyncState {}
+
 class OfflineSyncSuccess extends OfflineSyncState {}
+
 class OfflineSyncFailure extends OfflineSyncState {
   final String message;
   const OfflineSyncFailure(this.message);

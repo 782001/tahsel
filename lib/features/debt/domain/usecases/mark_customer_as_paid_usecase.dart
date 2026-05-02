@@ -3,7 +3,8 @@ import '../../../../core/base_usecase/base_usecase.dart';
 import '../../../../core/error/failures.dart';
 import '../repositories/debt_repository.dart';
 
-class MarkCustomerAsPaidUseCase implements BaseUseCase<void, MarkCustomerAsPaidParams> {
+class MarkCustomerAsPaidUseCase
+    implements BaseUseCase<void, MarkCustomerAsPaidParams> {
   final DebtRepository repository;
 
   MarkCustomerAsPaidUseCase({required this.repository});

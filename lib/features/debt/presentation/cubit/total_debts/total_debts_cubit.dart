@@ -1,8 +1,9 @@
 import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/features/debt/domain/entities/debt_entity.dart';
-import '../../../../debt/domain/usecases/get_debts_usecase.dart';
-import '../../../domain/usecases/calculate_total_debts_usecase.dart';
+import 'package:tahsel/features/debt/domain/usecases/get_debts_usecase.dart';
+import 'package:tahsel/features/debt/domain/usecases/calculate_total_debts_usecase.dart';
 import 'total_debts_state.dart';
 
 class TotalDebtsCubit extends Cubit<TotalDebtsState> {
@@ -20,19 +21,21 @@ class TotalDebtsCubit extends Cubit<TotalDebtsState> {
     }
 
     emit(TotalDebtsLoading());
-    
+
     final result = await getDebtsUseCase(GetDebtsParams(uid: uid));
-    
+
     await result.fold(
       (failure) async => emit(TotalDebtsError(failure.message)),
       (debts) async {
         try {
           final totalResult = await calculateTotalDebtsUseCase(debts);
           if (!isClosed) {
-            emit(TotalDebtsLoaded(
-              totalAmount: totalResult.totalAmount,
-              customerCount: totalResult.customerCount,
-            ));
+            emit(
+              TotalDebtsLoaded(
+                totalAmount: totalResult.totalAmount,
+                customerCount: totalResult.customerCount,
+              ),
+            );
           }
         } catch (e) {
           if (!isClosed) {
@@ -50,14 +53,15 @@ class TotalDebtsCubit extends Cubit<TotalDebtsState> {
     try {
       final totalResult = await calculateTotalDebtsUseCase(debts);
       if (!isClosed) {
-        emit(TotalDebtsLoaded(
-          totalAmount: totalResult.totalAmount,
-          customerCount: totalResult.customerCount,
-        ));
+        emit(
+          TotalDebtsLoaded(
+            totalAmount: totalResult.totalAmount,
+            customerCount: totalResult.customerCount,
+          ),
+        );
       }
     } catch (e) {
       // Silently ignore — the current total stays as-is
     }
   }
 }
-

@@ -172,7 +172,7 @@ class TransactionDetailCard extends StatelessWidget {
 
                   SizedBox(height: 16.h),
                   const Divider(height: 1),
-                  
+
                   // Debt Breakdown Section
                   if (hasDebt) ...[
                     SizedBox(height: 12.h),
@@ -191,17 +191,17 @@ class TransactionDetailCard extends StatelessWidget {
                                 ),
                               ),
                               SizedBox(height: 4.h),
-                                FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    "${operation.paidAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
-                                    style: TextStyles.customStyle(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.success,
-                                    ),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  "${operation.paidAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
+                                  style: TextStyles.customStyle(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.success,
                                   ),
                                 ),
+                              ),
                             ],
                           ),
                         ),
@@ -224,17 +224,17 @@ class TransactionDetailCard extends StatelessWidget {
                                 ),
                               ),
                               SizedBox(height: 4.h),
-                                FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    "${operation.remainingDebt.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
-                                    style: TextStyles.customStyle(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.error,
-                                    ),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  "${operation.remainingDebt.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
+                                  style: TextStyles.customStyle(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.error,
                                   ),
                                 ),
+                              ),
                             ],
                           ),
                         ),

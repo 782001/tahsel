@@ -39,21 +39,21 @@ class OperationEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        uid,
-        type,
-        subType,
-        customerName,
-        phoneNumber,
-        productName,
-        totalAmount,
-        paidAmount,
-        remainingDebt,
-        timestamp,
-        lastUpdatedAt,
-        durationMinutes,
-        turnCount,
-        rate,
-        ledgerNumber,
-      ];
+    id,
+    uid,
+    type,
+    subType,
+    customerName,
+    phoneNumber,
+    productName,
+    totalAmount,
+    paidAmount,
+    remainingDebt,
+    timestamp,
+    lastUpdatedAt,
+    durationMinutes,
+    turnCount,
+    rate,
+    ledgerNumber,
+  ];
 }

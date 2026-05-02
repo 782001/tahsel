@@ -14,6 +14,7 @@ class MyDebtItemCard extends StatelessWidget {
   final Function(MyDebtItemEntity) onPayPartial;
   final Function(MyDebtItemEntity) onPayFull;
   final Function(MyDebtItemEntity) onDelete;
+  final VoidCallback? onRefresh;
   final bool isFullPaying;
 
   const MyDebtItemCard({
@@ -23,6 +24,7 @@ class MyDebtItemCard extends StatelessWidget {
     required this.onPayPartial,
     required this.onPayFull,
     required this.onDelete,
+    this.onRefresh,
     this.isFullPaying = false,
   });
 
@@ -53,8 +55,12 @@ class MyDebtItemCard extends StatelessWidget {
                     Navigator.pushNamed(
                       context,
                       AppRoutes.myDebtDetailsReport,
-                      arguments: item,
-                    );
+                      arguments: item.id,
+                    ).then((_) {
+                      if (context.mounted && onRefresh != null) {
+                        onRefresh!();
+                      }
+                    });
                   },
             onLongPress: item.isPending
                 ? null

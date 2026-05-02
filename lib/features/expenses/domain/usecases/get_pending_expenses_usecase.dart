@@ -4,7 +4,8 @@ import '../../../../core/error/failures.dart';
 import '../../../offline_sync/data/models/offline_record.dart';
 import '../repositories/expense_repository.dart';
 
-class GetPendingExpensesUseCase implements BaseUseCase<List<OfflineRecord>, NoParams> {
+class GetPendingExpensesUseCase
+    implements BaseUseCase<List<OfflineRecord>, NoParams> {
   final ExpenseRepository repository;
 
   GetPendingExpensesUseCase(this.repository);

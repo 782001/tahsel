@@ -40,12 +40,20 @@ class TransactionCardSkeleton extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    ShimmerPlaceholder(width: 14.r, height: 14.r, borderRadius: 2.r),
+                    ShimmerPlaceholder(
+                      width: 14.r,
+                      height: 14.r,
+                      borderRadius: 2.r,
+                    ),
                     SizedBox(width: 6.w),
                     ShimmerPlaceholder(width: 150.w, height: 12.h),
                   ],
                 ),
-                ShimmerPlaceholder(width: 16.r, height: 16.r, borderRadius: 2.r),
+                ShimmerPlaceholder(
+                  width: 16.r,
+                  height: 16.r,
+                  borderRadius: 2.r,
+                ),
               ],
             ),
           ],

@@ -22,7 +22,8 @@ class OperationRepositoryImpl implements OperationRepository {
 
   @override
   Future<Either<Failure, String>> addOperation(
-      OperationEntity operation) async {
+    OperationEntity operation,
+  ) async {
     try {
       final model = OperationModel.fromEntity(operation);
 
@@ -30,7 +31,7 @@ class OperationRepositoryImpl implements OperationRepository {
       // This prevents duplicates if the same data is sent multiple times within a short window.
       final transactionDate = model.timestamp ?? DateTime.now();
       final localId = _generateIdempotencyKey(model, transactionDate);
-      
+
       final Map<String, dynamic> hivePayload = {
         'uid': model.uid,
         'type': model.type,
@@ -60,20 +61,18 @@ class OperationRepositoryImpl implements OperationRepository {
       );
 
       // Save to local cache first
-      final saveResult =
-          await offlineSyncRepository.saveOfflineRecord(offlineRecord);
-
-      return saveResult.fold(
-        (failure) => Left(failure),
-        (_) async {
-          // 2. Immediate prioritized sync if online
-          final hasConnection = await connectionChecker.hasConnection;
-          if (hasConnection) {
-            await offlineSyncRepository.syncSingleRecord(offlineRecord);
-          }
-          return Right(localId);
-        },
+      final saveResult = await offlineSyncRepository.saveOfflineRecord(
+        offlineRecord,
       );
+
+      return saveResult.fold((failure) => Left(failure), (_) async {
+        // 2. Immediate prioritized sync if online
+        final hasConnection = await connectionChecker.hasConnection;
+        if (hasConnection) {
+          await offlineSyncRepository.syncSingleRecord(offlineRecord);
+        }
+        return Right(localId);
+      });
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -82,7 +81,8 @@ class OperationRepositoryImpl implements OperationRepository {
   String _generateIdempotencyKey(OperationModel model, DateTime date) {
     // Round to the nearest second to collapse millisecond double-taps
     final timeKey = date.millisecondsSinceEpoch ~/ 1000;
-    final fingerprint = '${model.uid}_${model.type}_${model.totalAmount}_${model.customerName}_$timeKey';
+    final fingerprint =
+        '${model.uid}_${model.type}_${model.totalAmount}_${model.customerName}_$timeKey';
     return 'op_${fingerprint.hashCode.toString()}';
   }
 }

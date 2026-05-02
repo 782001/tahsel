@@ -10,6 +10,7 @@ class PaymentModel extends PaymentEntity {
     super.createdAt,
     required super.type,
     super.activityName,
+    super.relatedTo,
   });
 
   factory PaymentModel.fromJson(Map<String, dynamic> json, String id) {
@@ -21,8 +22,12 @@ class PaymentModel extends PaymentEntity {
       createdAt: json['createdAt'] != null
           ? (json['createdAt'] as Timestamp).toDate()
           : null,
-      type: PaymentType.values.byName(json['type'] ?? 'partial'),
+      type: PaymentType.values.firstWhere(
+        (e) => e.name == json['type'],
+        orElse: () => PaymentType.partial,
+      ),
       activityName: json['activityName'],
+      relatedTo: json['relatedTo'],
     );
   }
 
@@ -34,6 +39,7 @@ class PaymentModel extends PaymentEntity {
       'createdAt': createdAt ?? FieldValue.serverTimestamp(),
       'type': type.name,
       'activityName': activityName,
+      'relatedTo': relatedTo,
     };
   }
 
@@ -46,6 +52,7 @@ class PaymentModel extends PaymentEntity {
       createdAt: entity.createdAt,
       type: entity.type,
       activityName: entity.activityName,
+      relatedTo: entity.relatedTo,
     );
   }
 }

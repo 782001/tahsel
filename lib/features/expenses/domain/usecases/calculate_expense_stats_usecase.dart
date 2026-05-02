@@ -26,15 +26,19 @@ class CalculateExpenseStatsUseCase {
     final now = DateTime.now();
     final firstDayCurrentMonth = DateTime(now.year, now.month, 1);
     final firstDayPrevMonth = DateTime(now.year, now.month - 1, 1);
-    final lastDayPrevMonth = firstDayCurrentMonth.subtract(const Duration(milliseconds: 1));
+    final lastDayPrevMonth = firstDayCurrentMonth.subtract(
+      const Duration(milliseconds: 1),
+    );
 
     double currentMonthTotal = 0.0;
     double prevMonthTotal = 0.0;
 
     for (final e in expenses) {
-      if (e.createdAt.isAfter(firstDayCurrentMonth) || e.createdAt.isAtSameMomentAs(firstDayCurrentMonth)) {
+      if (e.createdAt.isAfter(firstDayCurrentMonth) ||
+          e.createdAt.isAtSameMomentAs(firstDayCurrentMonth)) {
         currentMonthTotal += e.amount;
-      } else if (e.createdAt.isAfter(firstDayPrevMonth) && e.createdAt.isBefore(lastDayPrevMonth)) {
+      } else if (e.createdAt.isAfter(firstDayPrevMonth) &&
+          e.createdAt.isBefore(lastDayPrevMonth)) {
         prevMonthTotal += e.amount;
       }
     }
@@ -43,7 +47,8 @@ class CalculateExpenseStatsUseCase {
     bool isIncrease = false;
 
     if (prevMonthTotal > 0) {
-      percentageChange = ((currentMonthTotal - prevMonthTotal) / prevMonthTotal) * 100;
+      percentageChange =
+          ((currentMonthTotal - prevMonthTotal) / prevMonthTotal) * 100;
       if (percentageChange > 0) {
         isIncrease = true;
       } else {

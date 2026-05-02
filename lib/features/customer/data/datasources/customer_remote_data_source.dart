@@ -7,8 +7,15 @@ abstract class CustomerRemoteDataSource {
   Future<List<CustomerModel>> getCustomers(String uid);
   Future<void> saveCustomer(String uid, CustomerModel customer);
   Future<void> updateCustomerPhone(String uid, String name, String phoneNumber);
-  Future<void> updateCustomerPreference(String uid, String name, String preference);
-  Future<List<CustomerOperation>> getCustomerOperations(String uid, String customerName);
+  Future<void> updateCustomerPreference(
+    String uid,
+    String name,
+    String preference,
+  );
+  Future<List<CustomerOperation>> getCustomerOperations(
+    String uid,
+    String customerName,
+  );
 }
 
 class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
@@ -68,14 +75,26 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
   }
 
   @override
-  Future<void> updateCustomerPhone(String uid, String name, String phoneNumber) async {
+  Future<void> updateCustomerPhone(
+    String uid,
+    String name,
+    String phoneNumber,
+  ) async {
     try {
-      final collection = firestore.collection('users').doc(uid).collection('customers');
+      final collection = firestore
+          .collection('users')
+          .doc(uid)
+          .collection('customers');
       final normalizedName = name.trim();
-      final existing = await collection.where('name', isEqualTo: normalizedName).limit(1).get();
+      final existing = await collection
+          .where('name', isEqualTo: normalizedName)
+          .limit(1)
+          .get();
 
       if (existing.docs.isNotEmpty) {
-        await existing.docs.first.reference.update({'phoneNumber': phoneNumber});
+        await existing.docs.first.reference.update({
+          'phoneNumber': phoneNumber,
+        });
       }
     } catch (e) {
       FirebaseErrorHandler.handle(e);
@@ -84,14 +103,26 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
   }
 
   @override
-  Future<void> updateCustomerPreference(String uid, String name, String preference) async {
+  Future<void> updateCustomerPreference(
+    String uid,
+    String name,
+    String preference,
+  ) async {
     try {
-      final collection = firestore.collection('users').doc(uid).collection('customers');
+      final collection = firestore
+          .collection('users')
+          .doc(uid)
+          .collection('customers');
       final normalizedName = name.trim();
-      final existing = await collection.where('name', isEqualTo: normalizedName).limit(1).get();
+      final existing = await collection
+          .where('name', isEqualTo: normalizedName)
+          .limit(1)
+          .get();
 
       if (existing.docs.isNotEmpty) {
-        await existing.docs.first.reference.update({'notificationPreference': preference});
+        await existing.docs.first.reference.update({
+          'notificationPreference': preference,
+        });
       }
     } catch (e) {
       FirebaseErrorHandler.handle(e);
@@ -117,10 +148,10 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
 
       for (var doc in opsSnapshot.docs) {
         final data = doc.data();
-        final type = data['remainingDebt'] > 0 
-            ? CustomerOperationType.debt 
+        final type = data['remainingDebt'] > 0
+            ? CustomerOperationType.debt
             : CustomerOperationType.purchase;
-            
+
         operations.add(
           CustomerOperation(
             id: doc.id,
@@ -142,7 +173,7 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
       for (var debtDoc in debtsSnapshot.docs) {
         final debtData = debtDoc.data();
         final activityName = debtData['operationType'] as String;
-        
+
         final paymentsSnapshot = await debtDoc.reference
             .collection('payments')
             .get();

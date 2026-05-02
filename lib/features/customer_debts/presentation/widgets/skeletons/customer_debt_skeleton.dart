@@ -20,7 +20,11 @@ class CustomerDebtCardSkeleton extends StatelessWidget {
           children: [
             Row(
               children: [
-                ShimmerPlaceholder(width: 48.r, height: 48.r, shape: BoxShape.circle),
+                ShimmerPlaceholder(
+                  width: 48.r,
+                  height: 48.r,
+                  shape: BoxShape.circle,
+                ),
                 SizedBox(width: 12.w),
                 Expanded(
                   child: Column(
@@ -32,7 +36,11 @@ class CustomerDebtCardSkeleton extends StatelessWidget {
                     ],
                   ),
                 ),
-                ShimmerPlaceholder(width: 60.w, height: 24.h, borderRadius: 8.r),
+                ShimmerPlaceholder(
+                  width: 60.w,
+                  height: 24.h,
+                  borderRadius: 8.r,
+                ),
               ],
             ),
             SizedBox(height: 16.h),

@@ -7,7 +7,10 @@ import 'package:tahsel/core/utils/date_formatter.dart';
 abstract class ExpenseRemoteDataSource {
   Future<String> addExpense(ExpenseModel expense);
   Future<List<ExpenseModel>> getExpenses(String uid);
-  Future<List<MonthlyExpenseGroup>> getMonthlyAggregates(String uid, List<String> monthKeys);
+  Future<List<MonthlyExpenseGroup>> getMonthlyAggregates(
+    String uid,
+    List<String> monthKeys,
+  );
   Future<List<ExpenseModel>> getExpensesByMonth(String uid, String monthKey);
   Future<void> deleteExpense(String uid, String expenseId);
   Future<void> deleteMonthExpenses(String uid, String monthKey);
@@ -25,11 +28,11 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
           .collection('users')
           .doc(expense.uid)
           .collection('expenses');
-      
+
       final docRef = (expense.id != null && expense.id!.isNotEmpty)
           ? collectionRef.doc(expense.id)
           : collectionRef.doc();
-      
+
       await docRef.set(expense.toJson());
       return docRef.id;
     } catch (e) {
@@ -58,7 +61,10 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
   }
 
   @override
-  Future<List<MonthlyExpenseGroup>> getMonthlyAggregates(String uid, List<String> monthKeys) async {
+  Future<List<MonthlyExpenseGroup>> getMonthlyAggregates(
+    String uid,
+    List<String> monthKeys,
+  ) async {
     try {
       final snapshot = await firestore
           .collection('users')
@@ -71,7 +77,7 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
         final expense = ExpenseModel.fromJson(doc.data(), doc.id);
         final amount = expense.amount;
         final monthKey = expense.monthKey;
-        
+
         if (grouped.containsKey(monthKey)) {
           final existing = grouped[monthKey]!;
           grouped[monthKey] = MonthlyExpenseGroup(
@@ -81,7 +87,10 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
             transactionCount: existing.transactionCount + 1,
           );
         } else {
-          final date = DateTime(expense.createdAt.year, expense.createdAt.month);
+          final date = DateTime(
+            expense.createdAt.year,
+            expense.createdAt.month,
+          );
           final monthName = DateFormatter.formatNumericMonth(date);
           grouped[monthKey] = MonthlyExpenseGroup(
             monthKey: monthKey,
@@ -94,7 +103,7 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
 
       final List<MonthlyExpenseGroup> results = grouped.values.toList();
       results.sort((a, b) => b.monthKey.compareTo(a.monthKey));
-      
+
       return results;
     } catch (e) {
       FirebaseErrorHandler.handle(e);
@@ -103,7 +112,10 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
   }
 
   @override
-  Future<List<ExpenseModel>> getExpensesByMonth(String uid, String monthKey) async {
+  Future<List<ExpenseModel>> getExpensesByMonth(
+    String uid,
+    String monthKey,
+  ) async {
     try {
       final snapshot = await firestore
           .collection('users')
@@ -115,7 +127,7 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
       final expenses = snapshot.docs
           .map((doc) => ExpenseModel.fromJson(doc.data(), doc.id))
           .toList();
-          
+
       // Sort manually to avoid needing a composite index
       expenses.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return expenses;

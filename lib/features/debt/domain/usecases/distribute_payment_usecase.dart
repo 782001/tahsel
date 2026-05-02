@@ -15,10 +15,17 @@ class DistributedPaymentResult {
 }
 
 class DistributePaymentUseCase {
-  List<DistributedPaymentResult> call(List<DebtEntity> debts, double paymentAmount) {
+  List<DistributedPaymentResult> call(
+    List<DebtEntity> debts,
+    double paymentAmount,
+  ) {
     // Sort debts by timestamp to ensure FIFO (oldest first)
     final sortedDebts = List<DebtEntity>.from(debts)
-      ..sort((a, b) => (a.timestamp ?? DateTime.now()).compareTo(b.timestamp ?? DateTime.now()));
+      ..sort(
+        (a, b) => (a.timestamp ?? DateTime.now()).compareTo(
+          b.timestamp ?? DateTime.now(),
+        ),
+      );
 
     List<DistributedPaymentResult> results = [];
     double remainingToDistribute = paymentAmount;
@@ -37,7 +44,8 @@ class DistributePaymentUseCase {
 
       final newPaidAmount = debt.paidAmount + paymentForThisItem;
       final newRemainingAmount = debt.totalAmount - newPaidAmount;
-      final isPaid = newRemainingAmount <= 1e-9; // Use small epsilon for double precision
+      final isPaid =
+          newRemainingAmount <= 1e-9; // Use small epsilon for double precision
 
       final updatedDebt = debt.copyWith(
         paidAmount: newPaidAmount,
@@ -45,12 +53,14 @@ class DistributePaymentUseCase {
         isPaid: isPaid,
       );
 
-      results.add(DistributedPaymentResult(
-        updatedDebt: updatedDebt,
-        amountToPay: paymentForThisItem,
-        remainingAfter: newRemainingAmount,
-        isFullPayment: isPaid,
-      ));
+      results.add(
+        DistributedPaymentResult(
+          updatedDebt: updatedDebt,
+          amountToPay: paymentForThisItem,
+          remainingAfter: newRemainingAmount,
+          isFullPayment: isPaid,
+        ),
+      );
     }
 
     return results;

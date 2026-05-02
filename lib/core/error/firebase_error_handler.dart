@@ -10,7 +10,7 @@ class FirebaseErrorHandler {
   static void handle(dynamic e) async {
     if (e is FirebaseAuthException || e is FirebaseException) {
       final String code = _getErrorCode(e);
-      
+
       AppLogger.printMessage('Firebase Error Detected: $code');
 
       final authErrorCodes = [
@@ -25,19 +25,24 @@ class FirebaseErrorHandler {
 
       if (authErrorCodes.contains(code)) {
         // CRITICAL FIX: Only logout if we are ONLINE.
-        // If offline, errors like 'permission-denied' can happen due to 
+        // If offline, errors like 'permission-denied' can happen due to
         // network sync issues or token refresh failures, which should NOT log out the user.
-        final bool hasInternet = await sl<InternetConnectionChecker>().hasConnection;
-        
+        final bool hasInternet =
+            await sl<InternetConnectionChecker>().hasConnection;
+
         if (hasInternet) {
-          AppLogger.printMessage('Auth-related error detected while ONLINE, forcing logout...');
+          AppLogger.printMessage(
+            'Auth-related error detected while ONLINE, forcing logout...',
+          );
           try {
             sl<AuthCubit>().forceLogout();
           } catch (err) {
             AppLogger.printMessage('Failed to trigger forceLogout: $err');
           }
         } else {
-          AppLogger.printMessage('Auth-related error ($code) detected while OFFLINE - IGNORING to preserve session');
+          AppLogger.printMessage(
+            'Auth-related error ($code) detected while OFFLINE - IGNORING to preserve session',
+          );
         }
       }
     }

@@ -22,29 +22,31 @@ class LocaleCubit extends Cubit<LocaleState> {
 
   Future<void> getSavedLang() async {
     final response = await getSavedLangUseCase.call(const NoParams());
-    response.fold((failure) => AppLogger.printMessage(AppStrings.cacheFailure), (
-      value,
-    ) async {
-      currentLangCode = value;
-      AppStrings.currentLang = value;
-      final locale = Locale(currentLangCode);
-      await AppLocalizations.init(locale);
-      emit(ChangeLocaleState(locale));
-    });
+    response.fold(
+      (failure) => AppLogger.printMessage(AppStrings.cacheFailure),
+      (value) async {
+        currentLangCode = value;
+        AppStrings.currentLang = value;
+        final locale = Locale(currentLangCode);
+        await AppLocalizations.init(locale);
+        emit(ChangeLocaleState(locale));
+      },
+    );
   }
 
   Future<void> _changeLang(String langCode) async {
     final response = await changeLangUseCase.call(langCode);
-    response.fold((failure) => AppLogger.printMessage(AppStrings.cacheFailure), (
-      value,
-    ) async {
-      currentLangCode = langCode;
-      AppStrings.currentLang = langCode;
+    response.fold(
+      (failure) => AppLogger.printMessage(AppStrings.cacheFailure),
+      (value) async {
+        currentLangCode = langCode;
+        AppStrings.currentLang = langCode;
 
-      final locale = Locale(currentLangCode);
-      await AppLocalizations.init(locale); // Pre-load translations
-      emit(ChangeLocaleState(locale));
-    });
+        final locale = Locale(currentLangCode);
+        await AppLocalizations.init(locale); // Pre-load translations
+        emit(ChangeLocaleState(locale));
+      },
+    );
   }
 
   void toEnglish() => _changeLang(AppStrings.englishCode);

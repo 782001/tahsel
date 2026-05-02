@@ -74,7 +74,9 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
 
     emit(state.copyWith(status: MyDebtsStatus.loading, clearMessage: true));
 
-    final result = await getPersonsUseCase(uid);
+    final result = await getPersonsUseCase(
+      GetMyDebtPersonsParams(uid: uid, forceRefresh: forceRefresh),
+    );
     final pendingResult = await getPendingMyDebtsUseCase(NoParams());
     final List<OfflineRecord> pendingRecords = pendingResult.fold(
       (_) => [],
@@ -202,15 +204,12 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
 
     final result = await addDebtUseCase(debt);
     if (isClosed) return;
-    result.fold(
-      (failure) {
-        AppLogger.printMessage(failure.message);
-        emit(
+    result.fold((failure) {
+      AppLogger.printMessage(failure.message);
+      emit(
         state.copyWith(status: MyDebtsStatus.error, message: failure.message),
       );
-      },
-      (_) => loadPersons(uid, forceRefresh: true),
-    );
+    }, (_) => loadPersons(uid, forceRefresh: true));
   }
 
   Future<void> payTotalDebt({
@@ -261,12 +260,17 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
     final sanitizedName = name.replaceAll('/', ' ').trim();
     // Optimistic Update
     final updated = _allPersons.map((p) {
-      if (p.name == sanitizedName) return p.copyWith(notificationPreference: preference);
+      if (p.name == sanitizedName)
+        return p.copyWith(notificationPreference: preference);
       return p;
     }).toList();
     _emitLoaded(updated);
 
-    final result = await updatePreferenceUseCase(uid, sanitizedName, preference);
+    final result = await updatePreferenceUseCase(
+      uid,
+      sanitizedName,
+      preference,
+    );
     result.fold(
       (failure) => loadPersons(uid, forceRefresh: true), // Rollback
       (_) => null,

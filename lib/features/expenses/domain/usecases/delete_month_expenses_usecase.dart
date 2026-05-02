@@ -3,7 +3,8 @@ import '../../../../core/base_usecase/base_usecase.dart';
 import '../../../../core/error/failures.dart';
 import '../repositories/expense_repository.dart';
 
-class DeleteMonthExpensesUseCase implements BaseUseCase<void, DeleteMonthParams> {
+class DeleteMonthExpensesUseCase
+    implements BaseUseCase<void, DeleteMonthParams> {
   final ExpenseRepository repository;
 
   DeleteMonthExpensesUseCase(this.repository);

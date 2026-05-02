@@ -99,8 +99,8 @@ class ReportsRepositoryImpl implements ReportsRepository {
 
       final double income = (data['income'] ?? 0).toDouble();
       final double cafeIncome = (data['cafeIncome'] ?? 0).toDouble();
-      final double playstationIncome =
-          (data['playstationIncome'] ?? 0).toDouble();
+      final double playstationIncome = (data['playstationIncome'] ?? 0)
+          .toDouble();
       final double expenses = (data['expenses'] ?? 0).toDouble();
       final double totalDebts = (data['totalDebts'] ?? 0).toDouble();
       final double paidDebts = (data['paidDebts'] ?? 0).toDouble();

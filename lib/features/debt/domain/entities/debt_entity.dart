@@ -70,19 +70,19 @@ class DebtEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        uid,
-        operationId,
-        totalAmount,
-        paidAmount,
-        remainingAmount,
-        customerName,
-        productOrSessionDetails,
-        operationType,
-        timestamp,
-        lastUpdatedAt,
-        phoneNumber,
-        isPaid,
-        ledgerNumber,
-      ];
+    id,
+    uid,
+    operationId,
+    totalAmount,
+    paidAmount,
+    remainingAmount,
+    customerName,
+    productOrSessionDetails,
+    operationType,
+    timestamp,
+    lastUpdatedAt,
+    phoneNumber,
+    isPaid,
+    ledgerNumber,
+  ];
 }

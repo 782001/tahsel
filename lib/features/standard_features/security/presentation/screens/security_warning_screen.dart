@@ -22,7 +22,7 @@ class SecurityWarningScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
-  
+
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 24.w),
@@ -36,7 +36,7 @@ class SecurityWarningScreen extends StatelessWidget {
               ),
               SizedBox(height: 32.h),
               TextWidget(
-                 AppStrings.securityWarningTitle.tr(),
+                AppStrings.securityWarningTitle.tr(),
                 style: TextStyles.font28WeightBoldWhite().copyWith(
                   color: AppColors.textColor,
                 ),
@@ -44,7 +44,7 @@ class SecurityWarningScreen extends StatelessWidget {
               ),
               SizedBox(height: 16.h),
               TextWidget(
-                 AppStrings.securityWarningDescription.tr(),
+                AppStrings.securityWarningDescription.tr(),
                 style: TextStyles.font16Weight400Text(),
                 textAlign: TextAlign.center,
               ),
@@ -96,7 +96,7 @@ class SecurityWarningScreen extends StatelessWidget {
               ),
               SizedBox(height: 48.h),
               TextWidget(
-                 AppStrings.securityWarningFooter.tr(),
+                AppStrings.securityWarningFooter.tr(),
                 style: TextStyles.font14Weight400RightAligned().copyWith(
                   color: AppColors.textColor2.withOpacity(0.7),
                 ),

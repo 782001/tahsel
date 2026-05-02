@@ -27,8 +27,9 @@ class GetCategoryByIdCategoryItemModel
       id: json['id'] as String?,
       name: json['name'] as String?,
       slug: json['slug'] as String?,
-      images:
-          (json['images'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      images: (json['images'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
       price: (json['price'] as num?)?.toDouble(),
       discountPrice: (json['discountPrice'] as num?)?.toDouble(),
       stock: json['stock'] as int?,
@@ -73,23 +74,21 @@ class GetCategoryByIdDataModel extends GetCategoryByIdDataEntity {
 
   factory GetCategoryByIdDataModel.fromJson(Map<String, dynamic> json) {
     return GetCategoryByIdDataModel(
-      category:
-          (json['category'] as List<dynamic>?)
-              ?.map(
-                (e) => GetCategoryByIdCategoryItemModel.fromJson(
-                  e as Map<String, dynamic>,
-                ),
-              )
-              .toList(),
+      category: (json['category'] as List<dynamic>?)
+          ?.map(
+            (e) => GetCategoryByIdCategoryItemModel.fromJson(
+              e as Map<String, dynamic>,
+            ),
+          )
+          .toList(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'category':
-          category
-              ?.map((e) => (e as GetCategoryByIdCategoryItemModel).toJson())
-              .toList(),
+      'category': category
+          ?.map((e) => (e as GetCategoryByIdCategoryItemModel).toJson())
+          .toList(),
     };
   }
 }
@@ -101,12 +100,11 @@ class GetCategoryByIdResponseModel extends GetCategoryByIdResponseEntity {
     return GetCategoryByIdResponseModel(
       success: json['success'] as bool?,
       message: json['message'] as String?,
-      data:
-          json['data'] != null
-              ? GetCategoryByIdDataModel.fromJson(
-                json['data'] as Map<String, dynamic>,
-              )
-              : null,
+      data: json['data'] != null
+          ? GetCategoryByIdDataModel.fromJson(
+              json['data'] as Map<String, dynamic>,
+            )
+          : null,
     );
   }
 
@@ -118,4 +116,3 @@ class GetCategoryByIdResponseModel extends GetCategoryByIdResponseEntity {
     };
   }
 }
-

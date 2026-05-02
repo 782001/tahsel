@@ -41,7 +41,7 @@ class ExpenseCard extends StatelessWidget {
               color: AppColors.shadowColor,
               blurRadius: 12,
               offset: Offset(0, 4),
-            )
+            ),
           ],
         ),
         child: Stack(
@@ -159,7 +159,7 @@ class ExpenseCard extends StatelessWidget {
               color: AppColors.shadowColor,
               blurRadius: 12,
               offset: Offset(0, 4),
-            )
+            ),
           ],
         ),
         child: Stack(

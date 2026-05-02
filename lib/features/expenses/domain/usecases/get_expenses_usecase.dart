@@ -9,7 +9,8 @@ class GetExpensesParams {
   GetExpensesParams({required this.uid});
 }
 
-class GetExpensesUseCase implements BaseUseCase<List<ExpenseEntity>, GetExpensesParams> {
+class GetExpensesUseCase
+    implements BaseUseCase<List<ExpenseEntity>, GetExpensesParams> {
   final ExpenseRepository repository;
 
   GetExpensesUseCase({required this.repository});

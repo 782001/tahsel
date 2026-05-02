@@ -9,18 +9,18 @@ class ReportsEntity extends Equatable {
   final double paidDebts;
   final double unpaidDebts;
   final double netProfit;
-  
+
   // New: Breakdowns for Cafe & PlayStation
   final double cafeIncome;
   final double playstationIncome;
-  
+
   // Dashboard indicators (Now using Absolute Difference in EGP)
   final double incomeDiff;
   final double expenseDiff;
   final double profitDiff;
   final double cafeDiff;
   final double playstationDiff;
-  
+
   final bool isIncomeIncrease;
   final bool isExpenseIncrease;
   final bool isProfitIncrease;
@@ -60,29 +60,29 @@ class ReportsEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        totalIncome,
-        totalExpenses,
-        totalDebts,
-        paidDebts,
-        unpaidDebts,
-        netProfit,
-        prevIncome,
-        prevExpenses,
-        prevCafeIncome,
-        prevPlaystationIncome,
-        cafeIncome,
-        playstationIncome,
-        incomeDiff,
-        expenseDiff,
-        profitDiff,
-        cafeDiff,
-        playstationDiff,
-        isIncomeIncrease,
-        isExpenseIncrease,
-        isProfitIncrease,
-        isCafeIncrease,
-        isPlaystationIncrease,
-      ];
+    totalIncome,
+    totalExpenses,
+    totalDebts,
+    paidDebts,
+    unpaidDebts,
+    netProfit,
+    prevIncome,
+    prevExpenses,
+    prevCafeIncome,
+    prevPlaystationIncome,
+    cafeIncome,
+    playstationIncome,
+    incomeDiff,
+    expenseDiff,
+    profitDiff,
+    cafeDiff,
+    playstationDiff,
+    isIncomeIncrease,
+    isExpenseIncrease,
+    isProfitIncrease,
+    isCafeIncrease,
+    isPlaystationIncrease,
+  ];
 
   ReportsEntity copyWith({
     double? totalIncome,
@@ -118,7 +118,8 @@ class ReportsEntity extends Equatable {
       prevIncome: prevIncome ?? this.prevIncome,
       prevExpenses: prevExpenses ?? this.prevExpenses,
       prevCafeIncome: prevCafeIncome ?? this.prevCafeIncome,
-      prevPlaystationIncome: prevPlaystationIncome ?? this.prevPlaystationIncome,
+      prevPlaystationIncome:
+          prevPlaystationIncome ?? this.prevPlaystationIncome,
       cafeIncome: cafeIncome ?? this.cafeIncome,
       playstationIncome: playstationIncome ?? this.playstationIncome,
       incomeDiff: incomeDiff ?? this.incomeDiff,
@@ -130,7 +131,8 @@ class ReportsEntity extends Equatable {
       isExpenseIncrease: isExpenseIncrease ?? this.isExpenseIncrease,
       isProfitIncrease: isProfitIncrease ?? this.isProfitIncrease,
       isCafeIncrease: isCafeIncrease ?? this.isCafeIncrease,
-      isPlaystationIncrease: isPlaystationIncrease ?? this.isPlaystationIncrease,
+      isPlaystationIncrease:
+          isPlaystationIncrease ?? this.isPlaystationIncrease,
     );
   }
 }

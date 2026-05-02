@@ -8,11 +8,11 @@ import '../../../debt/domain/entities/debt_entity.dart';
 /// A customer may have multiple [DebtItem]s from different days.
 class DebtItem {
   final String itemDescription; // ما أخذه الزبون
-  final double amountPaid;      // المبلغ المدفوع
-  final double remainingDebt;   // المتبقي / الديون
-  final String date;            // تاريخ العملية
+  final double amountPaid; // المبلغ المدفوع
+  final double remainingDebt; // المتبقي / الديون
+  final String date; // تاريخ العملية
   final DateTime lastUpdatedAt; // Latest activity timestamp
-  final DebtEntity entity;      // Original entity for updates
+  final DebtEntity entity; // Original entity for updates
 
   const DebtItem({
     required this.itemDescription,
@@ -57,9 +57,12 @@ class CustomerDebtDetail {
     this.ledgerNumber,
   });
 
-  factory CustomerDebtDetail.fromEntities(String name, List<DebtEntity> entities) {
+  factory CustomerDebtDetail.fromEntities(
+    String name,
+    List<DebtEntity> entities,
+  ) {
     final items = entities.map((e) => DebtItem.fromEntity(e)).toList();
-    
+
     // Extract ledger number from the first entity that has it
     String? ledger;
     for (var entity in entities) {
@@ -78,8 +81,11 @@ class CustomerDebtDetail {
     }
 
     // Logic for status
-    double totalRemaining = items.fold(0.0, (sum, item) => sum + item.remainingDebt);
-    
+    double totalRemaining = items.fold(
+      0.0,
+      (sum, item) => sum + item.remainingDebt,
+    );
+
     String status = AppStrings.debtStatusBalance;
     Color statusColor = AppColors.info;
 
@@ -107,9 +113,7 @@ class CustomerDebtDetail {
   double get totalDebt =>
       items.fold(0, (sum, item) => sum + item.remainingDebt);
 
-  double get totalPaid =>
-      items.fold(0, (sum, item) => sum + item.amountPaid);
+  double get totalPaid => items.fold(0, (sum, item) => sum + item.amountPaid);
 
-  String get lastTransactionDate =>
-      items.isNotEmpty ? items.last.date : '';
+  String get lastTransactionDate => items.isNotEmpty ? items.last.date : '';
 }

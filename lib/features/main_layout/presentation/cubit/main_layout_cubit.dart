@@ -15,7 +15,6 @@ import 'package:tahsel/features/reports/domain/usecases/cleanup_old_reports_usec
 import 'package:tahsel/features/reports/presentation/screens/reports_screen.dart';
 import 'package:tahsel/features/settings/presentation/screens/settings_screen.dart';
 
-
 class MainLayoutCubit extends Cubit<MainLayoutState> {
   final CleanupOldReportsUseCase cleanupOldReportsUseCase;
   final CashHelper cashHelper;
@@ -58,7 +57,10 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
           if (doc.exists) {
             final type = doc.get(AppStrings.userTypeKey) ?? AppStrings.cafe;
             _userType = type;
-            await secureStorage.saveData(key: AppStrings.userTypeKey, value: type);
+            await secureStorage.saveData(
+              key: AppStrings.userTypeKey,
+              value: type,
+            );
             emit(MainLayoutUserTypeLoaded(_userType));
           }
         } catch (e) {
@@ -75,12 +77,12 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
   int currentIndex = 0;
 
   List<Widget> get screens => [
-        const HomeScreen(),
-        const ExpensesScreen(),
-        const UnifiedDebtsScreen(),
-        const ReportsScreen(),
-        const SettingsScreen(),
-      ];
+    const HomeScreen(),
+    const ExpensesScreen(),
+    const UnifiedDebtsScreen(),
+    const ReportsScreen(),
+    const SettingsScreen(),
+  ];
 
   void changeBottomNav(int index) {
     currentIndex = index;

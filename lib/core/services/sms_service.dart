@@ -32,7 +32,15 @@ class SmsService {
     final note = data['note'] as String;
     final template = data['template'] as String;
 
-    String message = template
+    String message = template;
+
+    // If note is empty, remove the entire line containing {note}
+    if (note.trim().isEmpty) {
+      final lines = message.split('\n');
+      message = lines.where((line) => !line.contains('{note}')).join('\n');
+    }
+
+    message = message
         .replaceAll('{name}', name)
         .replaceAll('{amount}', amount.toStringAsFixed(2))
         .replaceAll('{remaining}', remaining.toStringAsFixed(2))

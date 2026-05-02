@@ -18,7 +18,8 @@ class UnifiedDebtsScreen extends StatefulWidget {
   State<UnifiedDebtsScreen> createState() => _UnifiedDebtsScreenState();
 }
 
-class _UnifiedDebtsScreenState extends State<UnifiedDebtsScreen> with SingleTickerProviderStateMixin {
+class _UnifiedDebtsScreenState extends State<UnifiedDebtsScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -73,10 +74,7 @@ class _UnifiedDebtsScreenState extends State<UnifiedDebtsScreen> with SingleTick
           ),
           body: TabBarView(
             controller: _tabController,
-            children: const [
-              CustomerDebtsScreen(),
-              MyDebtsTabView(),
-            ],
+            children: const [CustomerDebtsScreen(), MyDebtsTabView()],
           ),
         ),
       ),

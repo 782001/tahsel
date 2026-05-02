@@ -8,6 +8,8 @@ class MyDebtPaymentModel extends MyDebtPaymentEntity {
     required super.amountPaid,
     required super.type,
     super.note,
+    super.relatedTo,
+    required super.remainingAmount,
     required super.createdAt,
   });
 
@@ -18,7 +20,11 @@ class MyDebtPaymentModel extends MyDebtPaymentEntity {
       amountPaid: (json['amountPaid'] ?? 0).toDouble(),
       type: json['type'] ?? '',
       note: json['note'],
-      createdAt: (json['createdAt'] as Timestamp).toDate(),
+      relatedTo: json['relatedTo'],
+      remainingAmount: (json['remainingAmount'] ?? 0).toDouble(),
+      createdAt: json['createdAt'] != null
+          ? (json['createdAt'] as Timestamp).toDate()
+          : DateTime.now(),
     );
   }
 
@@ -28,6 +34,8 @@ class MyDebtPaymentModel extends MyDebtPaymentEntity {
       'amountPaid': amountPaid,
       'type': type,
       'note': note,
+      'relatedTo': relatedTo,
+      'remainingAmount': remainingAmount,
       'createdAt': Timestamp.fromDate(createdAt),
     };
   }
@@ -39,6 +47,8 @@ class MyDebtPaymentModel extends MyDebtPaymentEntity {
       amountPaid: entity.amountPaid,
       type: entity.type,
       note: entity.note,
+      relatedTo: entity.relatedTo,
+      remainingAmount: entity.remainingAmount,
       createdAt: entity.createdAt,
     );
   }

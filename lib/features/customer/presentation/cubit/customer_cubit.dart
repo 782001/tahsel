@@ -24,25 +24,29 @@ class CustomerCubit extends Cubit<CustomerState> {
   Future<void> fetchCustomers(String uid) async {
     emit(CustomerLoading());
     final result = await getCustomersUseCase(GetCustomersParams(uid: uid));
-    result.fold(
-      (failure) => emit(CustomerError(failure.message)),
-      (customers) {
-        _allCustomers = customers;
-        emit(CustomerLoaded(customers));
-      },
-    );
+    result.fold((failure) => emit(CustomerError(failure.message)), (customers) {
+      _allCustomers = customers;
+      emit(CustomerLoaded(customers));
+    });
   }
 
-  Future<void> saveCustomer(String uid, String name, {String? ledgerNumber, String? phoneNumber}) async {
+  Future<void> saveCustomer(
+    String uid,
+    String name, {
+    String? ledgerNumber,
+    String? phoneNumber,
+  }) async {
     final customer = CustomerEntity(
       name: name,
       lastUsedAt: DateTime.now(),
       ledgerNumber: ledgerNumber,
       phoneNumber: phoneNumber,
     );
-    
+
     // We don't await this if we want to be fast, but usually UI expects some feedback or just quiet update
-    final result = await saveCustomerUseCase(SaveCustomerParams(uid: uid, customer: customer));
+    final result = await saveCustomerUseCase(
+      SaveCustomerParams(uid: uid, customer: customer),
+    );
     result.fold(
       (failure) => null, // Silently fail for now or log
       (_) {
@@ -52,7 +56,11 @@ class CustomerCubit extends Cubit<CustomerState> {
     );
   }
 
-  Future<void> updateCustomerPhone(String uid, String name, String phoneNumber) async {
+  Future<void> updateCustomerPhone(
+    String uid,
+    String name,
+    String phoneNumber,
+  ) async {
     // Optimistic Update
     if (state is CustomerLoaded) {
       final currentLoaded = state as CustomerLoaded;
@@ -75,7 +83,11 @@ class CustomerCubit extends Cubit<CustomerState> {
     );
   }
 
-  Future<void> updateCustomerPreference(String uid, String name, String preference) async {
+  Future<void> updateCustomerPreference(
+    String uid,
+    String name,
+    String preference,
+  ) async {
     // Optimistic Update
     if (state is CustomerLoaded) {
       final currentLoaded = state as CustomerLoaded;
@@ -90,7 +102,11 @@ class CustomerCubit extends Cubit<CustomerState> {
     }
 
     final result = await updateCustomerPreferenceUseCase(
-      UpdateCustomerPreferenceParams(uid: uid, name: name, preference: preference),
+      UpdateCustomerPreferenceParams(
+        uid: uid,
+        name: name,
+        preference: preference,
+      ),
     );
     result.fold(
       (failure) => fetchCustomers(uid), // Rollback/Refresh on failure

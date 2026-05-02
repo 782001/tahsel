@@ -37,7 +37,9 @@ Future<void> initDependencies() async {
     sl.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
   }
   if (!sl.isRegistered<FirebaseFirestore>()) {
-    sl.registerLazySingleton<FirebaseFirestore>(() => FirebaseFirestore.instance);
+    sl.registerLazySingleton<FirebaseFirestore>(
+      () => FirebaseFirestore.instance,
+    );
   }
 
   //! Features

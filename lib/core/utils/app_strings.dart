@@ -1,6 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:tahsel/core/services/injection_container.dart';
-
 class AppStrings {
   static const String noRouteFound = 'No Route Found';
   static const String cachedRandomQuote = 'CACHED_RANDOM_QUOTE';
@@ -297,10 +294,30 @@ class AppStrings {
   static const String manualEntry = "manual_entry";
   static const String selectFromContacts = "select_from_contacts";
   static const String whatsappMsgTemplate = "whatsapp_msg_template";
+  static const String whatsappEditMsgTemplate = "whatsapp_edit_msg_template";
+  static const String whatsappDeleteMsgTemplate =
+      "whatsapp_delete_msg_template";
   static const String noPhoneError = "no_phone_error";
   static const String skipNotification = "skip_notification";
   static const String sendNow = "send_now";
   static const String smsMsgTemplate = "sms_msg_template";
+  static const String smsEditMsgTemplate = "sms_edit_msg_template";
+  static const String smsDeleteMsgTemplate = "sms_delete_msg_template";
+  static const String adjustment = "adjustment";
+  static const String reversal = "reversal";
+  static const String modifiedAmount = "modified_amount";
+  static const String revertedTransaction = "reverted_transaction";
+  static const String debtUpdated = "debt_updated";
+  static const String debtReversed = "debt_reversed";
+  static const String editNotAllowed = "edit_not_allowed";
+  static const String deleteNotAllowed = "delete_not_allowed";
+  static const String invalidAmount = "invalid_amount";
+  static const String whatsappAdjustmentMsgTemplate =
+      "whatsapp_adjustment_msg_template";
+  static const String whatsappReversalMsgTemplate =
+      "whatsapp_reversal_msg_template";
+  static const String smsAdjustmentMsgTemplate = "sms_adjustment_msg_template";
+  static const String smsReversalMsgTemplate = "sms_reversal_msg_template";
   static const String permissionDenied = "permission_denied";
   static const String permissionDeniedDesc = "permission_denied_desc";
   static const String notificationChannel = "notification_channel";
@@ -349,7 +366,8 @@ class AppStrings {
   static const String addMyDebt = "add_my_debt";
   static const String cannotDeleteUnpaidDebt = "cannot_delete_unpaid_debt";
   static const String confirmDeleteMyDebtTitle = "confirm_delete_my_debt_title";
-  static const String confirmDeleteMyDebtMessage = "confirm_delete_my_debt_message";
+  static const String confirmDeleteMyDebtMessage =
+      "confirm_delete_my_debt_message";
   static const String deleteMyDebtSuccess = "delete_my_debt_success";
   static const String deleteMyDebtFailed = "delete_my_debt_failed";
   static const String iOweTo = "i_owe_to";
@@ -358,7 +376,25 @@ class AppStrings {
   static const String myDebtsWhatsappTemplate = "my_debts_whatsapp_template";
   static const String myDebtsSmsTemplate = "my_debts_sms_template";
   static const String confirmDeletion = "confirm_deletion";
-  static const String deleteDebtItemConfirmation = "delete_debt_item_confirmation";
+  static const String deleteDebtItemConfirmation =
+      "delete_debt_item_confirmation";
   static const String deleteDebtAfterPaid = "deleteDebtAfterPaid";
   static const String syncing = "syncing";
+  static const String edit = "edit";
+  static const String deleteTransactionConfirmation =
+      "delete_transaction_confirmation";
+  static const String editTransaction = "edit_transaction";
+  static const String editTransactionSubtitle = "edit_transaction_subtitle";
+  static const String deleteTransactionError = "delete_transaction_error";
+  static const String editDebtAmount = "edit_debt_amount";
+  static const String editDebtAmountSuccess = "edit_debt_amount_success";
+  static const String editDebtAmountFailed = "edit_debt_amount_failed";
+  static const String editPayment = "edit_payment";
+  static const String editPaymentSuccess = "edit_payment_success";
+  static const String editPaymentFailed = "edit_payment_failed";
+  static const String deletePaymentError = "delete_payment_error";
+  static const String deletePaymentSuccess = "delete_payment_success";
+  static const String editSuccess = "edit_success";
+  static const String minValueError = "min_value_error";
+  static const String minValueHint = "min_value_hint";
 }

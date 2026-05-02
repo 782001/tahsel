@@ -5,9 +5,18 @@ import 'package:tahsel/features/my_debts/data/models/my_debt_payment_model.dart'
 
 abstract class MyDebtItemRemoteDataSource {
   Future<String> addDebtItem(MyDebtItemModel debt);
-  Future<List<MyDebtItemModel>> getDebtItems(String uid, String personName);
+  Future<List<MyDebtItemModel>> getDebtItems(
+    String uid,
+    String personName, {
+    bool forceRefresh = false,
+  });
   Future<void> payDebtItem(MyDebtItemModel debt, MyDebtPaymentModel payment);
-  Future<void> distributePayment(String uid, String personName, double amount, {String? note});
+  Future<void> distributePayment(
+    String uid,
+    String personName,
+    double amount, {
+    String? note,
+  });
   Future<void> markPersonAsPaid(String uid, String personName);
   Future<void> payItem({
     required String uid,
@@ -17,7 +26,28 @@ abstract class MyDebtItemRemoteDataSource {
   });
   Future<void> deleteDebtItem(String uid, String debtId);
   Stream<List<MyDebtItemModel>> getDebtsStream(String uid);
-  Future<List<MyDebtPaymentModel>> getDebtItemPayments(String uid, String debtId);
+  Future<List<MyDebtPaymentModel>> getDebtItemPayments(
+    String uid,
+    String debtId, {
+    bool forceRefresh = false,
+  });
+  Future<void> updateMyDebtPayment({
+    required String uid,
+    required String debtId,
+    required String paymentId,
+    required double newAmount,
+    String? note,
+  });
+  Future<void> deleteMyDebtPayment({
+    required String uid,
+    required String debtId,
+    required String paymentId,
+  });
+  Future<MyDebtItemModel?> getMyDebtItemById(
+    String uid,
+    String debtId, {
+    bool forceRefresh = false,
+  });
 }
 
 class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
@@ -26,12 +56,42 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
   MyDebtItemRemoteDataSourceImpl({required this.firestore});
 
   @override
+  Future<MyDebtItemModel?> getMyDebtItemById(
+    String uid,
+    String debtId, {
+    bool forceRefresh = false,
+  }) async {
+    try {
+      final doc = await firestore
+          .collection('users')
+          .doc(uid)
+          .collection('my_debt_items')
+          .doc(debtId)
+          .get(
+            GetOptions(
+              source: forceRefresh ? Source.server : Source.serverAndCache,
+            ),
+          );
+
+      if (doc.exists) {
+        return MyDebtItemModel.fromJson(doc.data()!, doc.id);
+      }
+      return null;
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      rethrow;
+    }
+  }
+
+  @override
   Future<String> addDebtItem(MyDebtItemModel debt) async {
     try {
       final userRef = firestore.collection('users').doc(debt.uid);
-      
+
       final debtRef = userRef.collection('my_debt_items').doc();
-      final opRef = userRef.collection('my_debt_operations').doc(debt.operationId);
+      final opRef = userRef
+          .collection('my_debt_operations')
+          .doc(debt.operationId);
 
       final batch = firestore.batch();
 
@@ -47,8 +107,8 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         'totalAmount': debt.totalAmount,
         'paidAmount': debt.paidAmount,
         'remainingDebt': debt.remainingAmount,
-        'timestamp': debt.timestamp != null 
-            ? Timestamp.fromDate(debt.timestamp!) 
+        'timestamp': debt.timestamp != null
+            ? Timestamp.fromDate(debt.timestamp!)
             : FieldValue.serverTimestamp(),
         'lastUpdatedAt': FieldValue.serverTimestamp(),
       });
@@ -59,8 +119,8 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         'debtId': debtRef.id,
         'amountPaid': debt.totalAmount,
         'remainingAmount': debt.totalAmount,
-        'createdAt': debt.timestamp != null 
-            ? Timestamp.fromDate(debt.timestamp!) 
+        'createdAt': debt.timestamp != null
+            ? Timestamp.fromDate(debt.timestamp!)
             : FieldValue.serverTimestamp(),
         'type': 'debtAdded',
       });
@@ -72,19 +132,23 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           'debtId': debtRef.id,
           'amountPaid': debt.paidAmount,
           'remainingAmount': debt.remainingAmount,
-          'createdAt': debt.timestamp != null 
-              ? Timestamp.fromDate(debt.timestamp!.add(const Duration(milliseconds: 1))) 
+          'createdAt': debt.timestamp != null
+              ? Timestamp.fromDate(
+                  debt.timestamp!.add(const Duration(milliseconds: 1)),
+                )
               : FieldValue.serverTimestamp(),
           'type': debt.remainingAmount <= 0 ? 'full' : 'partial',
         });
       }
 
       // 5. Update person doc with totals
-      final personRef = userRef.collection('my_debt_persons').doc(debt.personName);
+      final personRef = userRef
+          .collection('my_debt_persons')
+          .doc(debt.personName);
       final Map<String, dynamic> personUpdate = {
         'name': debt.personName,
-        'lastUsedAt': debt.timestamp != null 
-            ? Timestamp.fromDate(debt.timestamp!) 
+        'lastUsedAt': debt.timestamp != null
+            ? Timestamp.fromDate(debt.timestamp!)
             : FieldValue.serverTimestamp(),
         'totalDebtAmount': FieldValue.increment(debt.totalAmount),
         'totalRemainingDebt': FieldValue.increment(debt.remainingAmount),
@@ -106,7 +170,11 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
   }
 
   @override
-  Future<List<MyDebtItemModel>> getDebtItems(String uid, String personName) async {
+  Future<List<MyDebtItemModel>> getDebtItems(
+    String uid,
+    String personName, {
+    bool forceRefresh = false,
+  }) async {
     try {
       final snapshot = await firestore
           .collection('users')
@@ -114,8 +182,12 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           .collection('my_debt_items')
           .where('personName', isEqualTo: personName)
           .orderBy('timestamp', descending: true)
-          .get();
-      
+          .get(
+            GetOptions(
+              source: forceRefresh ? Source.server : Source.serverAndCache,
+            ),
+          );
+
       return snapshot.docs
           .map((doc) => MyDebtItemModel.fromJson(doc.data(), doc.id))
           .toList();
@@ -126,7 +198,10 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
   }
 
   @override
-  Future<void> payDebtItem(MyDebtItemModel debt, MyDebtPaymentModel payment) async {
+  Future<void> payDebtItem(
+    MyDebtItemModel debt,
+    MyDebtPaymentModel payment,
+  ) async {
     try {
       final uid = debt.uid;
       final debtRef = firestore
@@ -149,7 +224,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
             .doc(debt.operationId);
         batch.update(opRef, {
           'paidAmount': debt.paidAmount,
-          'remainingDebt': debt.remainingAmount, 
+          'remainingDebt': debt.remainingAmount,
           'lastUpdatedAt': FieldValue.serverTimestamp(),
         });
       }
@@ -173,7 +248,12 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
   }
 
   @override
-  Future<void> distributePayment(String uid, String personName, double amount, {String? note}) async {
+  Future<void> distributePayment(
+    String uid,
+    String personName,
+    double amount, {
+    String? note,
+  }) async {
     try {
       final snapshot = await firestore
           .collection('users')
@@ -197,7 +277,8 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         final operationId = debtData['operationId'] as String?;
         final currentTotal = (debtData['totalAmount'] as num).toDouble();
         final currentPaid = (debtData['paidAmount'] as num).toDouble();
-        final currentRemaining = (debtData['remainingAmount'] as num).toDouble();
+        final currentRemaining = (debtData['remainingAmount'] as num)
+            .toDouble();
 
         double paymentForThisItem = 0;
         if (remainingToPay >= currentRemaining) {
@@ -227,10 +308,14 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
 
         if (operationId != null && operationId.isNotEmpty) {
           batch.update(
-            firestore.collection('users').doc(uid).collection('my_debt_operations').doc(operationId),
+            firestore
+                .collection('users')
+                .doc(uid)
+                .collection('my_debt_operations')
+                .doc(operationId),
             {
               'paidAmount': newPaidAmount,
-              'remainingDebt': newRemainingAmount, 
+              'remainingDebt': newRemainingAmount,
               'lastUpdatedAt': FieldValue.serverTimestamp(),
             },
           );
@@ -301,10 +386,14 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
 
         if (operationId != null && operationId.isNotEmpty) {
           batch.update(
-            firestore.collection('users').doc(uid).collection('my_debt_operations').doc(operationId),
+            firestore
+                .collection('users')
+                .doc(uid)
+                .collection('my_debt_operations')
+                .doc(operationId),
             {
               'paidAmount': currentTotal,
-              'remainingDebt': 0.0, 
+              'remainingDebt': 0.0,
               'lastUpdatedAt': FieldValue.serverTimestamp(),
             },
           );
@@ -313,7 +402,8 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         final paymentRef = debtRef.collection('payments').doc();
         batch.set(paymentRef, {
           'debtId': debtId,
-          'amountPaid': currentTotal - (debtData['paidAmount'] as num).toDouble(),
+          'amountPaid':
+              currentTotal - (debtData['paidAmount'] as num).toDouble(),
           'remainingAmount': 0.0,
           'createdAt': FieldValue.serverTimestamp(),
           'type': 'settlement',
@@ -435,12 +525,12 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
 
       // 1. Get payments to delete
       final paymentsSnapshot = await debtRef.collection('payments').get();
-      
+
       final List<DocumentReference> allRefs = [];
       for (var paymentDoc in paymentsSnapshot.docs) {
         allRefs.add(paymentDoc.reference);
       }
-      
+
       // 2. Add the debt doc itself
       allRefs.add(debtRef);
 
@@ -454,7 +544,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         for (var ref in chunk) {
           batch.delete(ref);
         }
-        
+
         // On the last batch (or only batch), update the person doc
         if (i + 500 >= allRefs.length) {
           final personRef = firestore
@@ -469,7 +559,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
             'lastUsedAt': FieldValue.serverTimestamp(),
           });
         }
-        
+
         await batch.commit();
       }
     } catch (e) {
@@ -486,13 +576,19 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         .collection('my_debt_items')
         .orderBy('timestamp', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => MyDebtItemModel.fromJson(doc.data(), doc.id))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => MyDebtItemModel.fromJson(doc.data(), doc.id))
+              .toList(),
+        );
   }
 
   @override
-  Future<List<MyDebtPaymentModel>> getDebtItemPayments(String uid, String debtId) async {
+  Future<List<MyDebtPaymentModel>> getDebtItemPayments(
+    String uid,
+    String debtId, {
+    bool forceRefresh = false,
+  }) async {
     try {
       final snapshot = await firestore
           .collection('users')
@@ -500,8 +596,16 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           .collection('my_debt_items')
           .doc(debtId)
           .collection('payments')
+          .where(
+            'type',
+            whereIn: ['debtAdded', 'partial', 'full', 'adjustment', 'reversal'],
+          )
           .orderBy('createdAt', descending: true)
-          .get();
+          .get(
+            GetOptions(
+              source: forceRefresh ? Source.server : Source.serverAndCache,
+            ),
+          );
 
       return snapshot.docs
           .map((doc) => MyDebtPaymentModel.fromJson(doc.data(), doc.id))
@@ -509,6 +613,193 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;
+    }
+  }
+
+  @override
+  Future<void> updateMyDebtPayment({
+    required String uid,
+    required String debtId,
+    required String paymentId,
+    required double newAmount,
+    String? note,
+  }) async {
+    try {
+      final debtRef = firestore
+          .collection('users')
+          .doc(uid)
+          .collection('my_debt_items')
+          .doc(debtId);
+
+      await firestore.runTransaction((transaction) async {
+        final debtSnap = await transaction.get(debtRef);
+        if (!debtSnap.exists) throw Exception('Debt not found');
+
+        final paymentsSnapshot = await debtRef
+            .collection('payments')
+            .orderBy('createdAt', descending: true)
+            .get();
+        final allPayments = paymentsSnapshot.docs
+            .map((doc) => MyDebtPaymentModel.fromJson(doc.data(), doc.id))
+            .toList();
+
+        final targetPayment = allPayments.firstWhere((p) => p.id == paymentId);
+        final String relatedTo = targetPayment.type == 'debtAdded'
+            ? 'debt'
+            : 'payment';
+
+        // RULE 3 validation for debtAdded
+        if (targetPayment.type == 'debtAdded') {
+          final paymentsAfter = allPayments
+              .where(
+                (p) =>
+                    (p.type == 'partial' || p.type == 'full') &&
+                    p.createdAt.isAfter(targetPayment.createdAt),
+              )
+              .toList();
+
+          if (paymentsAfter.isNotEmpty) {
+            final nearestPayment = paymentsAfter.last;
+            if (newAmount < nearestPayment.amountPaid) {
+              throw Exception('invalid_amount');
+            }
+          }
+        }
+
+        final delta = newAmount - targetPayment.amountPaid;
+        if (delta == 0) return;
+
+        // Direct Mutation: Update the same item
+        final paymentRef = debtRef.collection('payments').doc(paymentId);
+        transaction.update(paymentRef, {
+          'amountPaid': newAmount,
+          'note': note ?? targetPayment.note,
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        });
+
+        // Update stored totals
+        if (relatedTo == 'debt') {
+          transaction.update(debtRef, {
+            'totalAmount': FieldValue.increment(delta),
+            'remainingAmount': FieldValue.increment(delta),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          });
+        } else {
+          transaction.update(debtRef, {
+            'paidAmount': FieldValue.increment(delta),
+            'remainingAmount': FieldValue.increment(-delta),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+
+        // Update person doc
+        final personName = debtSnap.data()?['personName'] as String;
+        final personRef = firestore
+            .collection('users')
+            .doc(uid)
+            .collection('my_debt_persons')
+            .doc(personName);
+        if (relatedTo == 'debt') {
+          transaction.update(personRef, {
+            'totalDebtAmount': FieldValue.increment(delta),
+            'totalRemainingDebt': FieldValue.increment(delta),
+          });
+        } else {
+          transaction.update(personRef, {
+            'totalRemainingDebt': FieldValue.increment(-delta),
+          });
+        }
+      });
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> deleteMyDebtPayment({
+    required String uid,
+    required String debtId,
+    required String paymentId,
+  }) async {
+    try {
+      final debtRef = firestore
+          .collection('users')
+          .doc(uid)
+          .collection('my_debt_items')
+          .doc(debtId);
+      final paymentRef = debtRef.collection('payments').doc(paymentId);
+
+      await firestore.runTransaction((transaction) async {
+        final debtSnap = await transaction.get(debtRef);
+        if (!debtSnap.exists) throw Exception('Debt not found');
+
+        final paymentsSnapshot = await debtRef
+            .collection('payments')
+            .orderBy('createdAt', descending: true)
+            .get();
+        final allPayments = paymentsSnapshot.docs
+            .map((doc) => MyDebtPaymentModel.fromJson(doc.data(), doc.id))
+            .toList();
+
+        final targetPayment = allPayments.firstWhere((p) => p.id == paymentId);
+        final String relatedTo = targetPayment.type == 'debtAdded'
+            ? 'debt'
+            : 'payment';
+
+        if (targetPayment.type == 'debtAdded') {
+          // RULE 2: Check for newer payments
+          final hasNewerPayments = allPayments.any(
+            (p) =>
+                (p.type == 'partial' || p.type == 'full') &&
+                p.createdAt.isAfter(targetPayment.createdAt),
+          );
+          if (hasNewerPayments) {
+            throw Exception('delete_not_allowed');
+          }
+        }
+
+        // Direct Mutation: Delete the same item
+        transaction.delete(paymentRef);
+
+        // Update stored totals
+        final amountToDelete = targetPayment.amountPaid;
+        if (relatedTo == 'debt') {
+          transaction.update(debtRef, {
+            'totalAmount': FieldValue.increment(-amountToDelete),
+            'remainingAmount': FieldValue.increment(-amountToDelete),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          });
+        } else {
+          transaction.update(debtRef, {
+            'paidAmount': FieldValue.increment(-amountToDelete),
+            'remainingAmount': FieldValue.increment(amountToDelete),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+
+        // Update person doc
+        final personName = debtSnap.data()?['personName'] as String;
+        final personRef = firestore
+            .collection('users')
+            .doc(uid)
+            .collection('my_debt_persons')
+            .doc(personName);
+        if (relatedTo == 'debt') {
+          transaction.update(personRef, {
+            'totalDebtAmount': FieldValue.increment(-amountToDelete),
+            'totalRemainingDebt': FieldValue.increment(-amountToDelete),
+          });
+        } else {
+          transaction.update(personRef, {
+            'totalRemainingDebt': FieldValue.increment(amountToDelete),
+            'lastUsedAt': FieldValue.serverTimestamp(),
+          });
+        }
+      });
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      throw Exception('Failed to delete payment: $e');
     }
   }
 }

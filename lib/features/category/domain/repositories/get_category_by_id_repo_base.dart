@@ -9,4 +9,3 @@ abstract class GetCategoryByIdBaseRepository {
     required GetCategoryByIdParameters parameters,
   });
 }
-

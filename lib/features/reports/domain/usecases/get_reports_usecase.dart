@@ -11,7 +11,8 @@ class GetReportsParams {
   GetReportsParams({required this.startDate, required this.endDate});
 }
 
-class GetReportsUseCase implements BaseUseCase<ReportsEntity, GetReportsParams> {
+class GetReportsUseCase
+    implements BaseUseCase<ReportsEntity, GetReportsParams> {
   final ReportsRepository repository;
 
   GetReportsUseCase(this.repository);

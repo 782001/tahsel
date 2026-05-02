@@ -24,16 +24,17 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
   Future<Either<Failure, String>> addExpense(ExpenseEntity expense) async {
     try {
       final model = ExpenseModel.fromEntity(expense);
-      
+
       // 1. GENERATE DETERMINISTIC ID (Idempotency Key)
       // Rounded to nearest second to prevent race conditions from double-clicks
       final timeKey = model.createdAt.millisecondsSinceEpoch ~/ 1000;
-      final fingerprint = '${model.uid}_${model.amount}_${model.category}_${model.description}_$timeKey';
+      final fingerprint =
+          '${model.uid}_${model.amount}_${model.category}_${model.description}_$timeKey';
       final deterministicId = 'exp_${fingerprint.hashCode.toString()}';
-      
+
       // 2. ALWAYS handle as an offline record first for 100% data consistency.
       final localId = deterministicId;
-      
+
       // We manually construct the Hive payload to avoid jsonEncode failing on Firestore Timestamps.
       final Map<String, dynamic> hivePayload = {
         'uid': model.uid,
@@ -43,9 +44,9 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
         'createdAt': model.createdAt.toIso8601String(), // Safe for JSON/Hive
         'monthKey': model.monthKey,
       };
-      
+
       final payloadJson = jsonEncode(hivePayload);
-      
+
       final offlineRecord = OfflineRecord(
         id: localId,
         amount: model.amount,
@@ -58,21 +59,20 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
       );
 
       // Save to local cache first
-      final saveResult = await offlineSyncRepository.saveOfflineRecord(offlineRecord);
-      
-      return saveResult.fold(
-        (failure) => Left(failure),
-        (_) async {
-          // 2. CHECK CONNECTION: If online, trigger IMMEDIATE prioritized sync
-          final hasConnection = await connectionChecker.hasConnection;
-          if (hasConnection) {
-            // This sync call converts 'createdAt' String back to Timestamp and adds 'syncedAt'
-            await offlineSyncRepository.syncSingleRecord(offlineRecord);
-          }
-          
-          return Right(localId);
-        },
+      final saveResult = await offlineSyncRepository.saveOfflineRecord(
+        offlineRecord,
       );
+
+      return saveResult.fold((failure) => Left(failure), (_) async {
+        // 2. CHECK CONNECTION: If online, trigger IMMEDIATE prioritized sync
+        final hasConnection = await connectionChecker.hasConnection;
+        if (hasConnection) {
+          // This sync call converts 'createdAt' String back to Timestamp and adds 'syncedAt'
+          await offlineSyncRepository.syncSingleRecord(offlineRecord);
+        }
+
+        return Right(localId);
+      });
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -89,9 +89,15 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
   }
 
   @override
-  Future<Either<Failure, List<MonthlyExpenseGroup>>> getMonthlyExpenses(String uid, List<String> monthKeys) async {
+  Future<Either<Failure, List<MonthlyExpenseGroup>>> getMonthlyExpenses(
+    String uid,
+    List<String> monthKeys,
+  ) async {
     try {
-      final result = await remoteDataSource.getMonthlyAggregates(uid, monthKeys);
+      final result = await remoteDataSource.getMonthlyAggregates(
+        uid,
+        monthKeys,
+      );
       return Right(result);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -99,7 +105,10 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
   }
 
   @override
-  Future<Either<Failure, List<ExpenseEntity>>> getExpensesByMonth(String uid, String monthKey) async {
+  Future<Either<Failure, List<ExpenseEntity>>> getExpensesByMonth(
+    String uid,
+    String monthKey,
+  ) async {
     try {
       final result = await remoteDataSource.getExpensesByMonth(uid, monthKey);
       return Right(result);
@@ -109,7 +118,10 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
   }
 
   @override
-  Future<Either<Failure, void>> deleteExpense(String uid, String expenseId) async {
+  Future<Either<Failure, void>> deleteExpense(
+    String uid,
+    String expenseId,
+  ) async {
     try {
       await remoteDataSource.deleteExpense(uid, expenseId);
       return const Right(null);
@@ -119,7 +131,10 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
   }
 
   @override
-  Future<Either<Failure, void>> deleteMonthExpenses(String uid, String monthKey) async {
+  Future<Either<Failure, void>> deleteMonthExpenses(
+    String uid,
+    String monthKey,
+  ) async {
     try {
       await remoteDataSource.deleteMonthExpenses(uid, monthKey);
       return const Right(null);
@@ -131,13 +146,10 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
   @override
   Future<Either<Failure, List<OfflineRecord>>> getPendingExpenses() async {
     final result = await offlineSyncRepository.getPendingRecords();
-    return result.fold(
-      (failure) => Left(failure),
-      (records) {
-        // STRICT FILTER: Only return records with type 'expense'
-        final expenseRecords = records.where((r) => r.type == 'expense').toList();
-        return Right(expenseRecords);
-      },
-    );
+    return result.fold((failure) => Left(failure), (records) {
+      // STRICT FILTER: Only return records with type 'expense'
+      final expenseRecords = records.where((r) => r.type == 'expense').toList();
+      return Right(expenseRecords);
+    });
   }
 }

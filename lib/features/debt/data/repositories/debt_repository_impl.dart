@@ -34,9 +34,11 @@ class DebtRepositoryImpl implements DebtRepository {
       } else {
         // OFFLINE: Save to Hive for later sync
         final Map<String, dynamic> hivePayload = model.toJson();
-        
+
         // Sanitize for JSON encoding (REMOVE Timestamps/FieldValues)
-        hivePayload['timestamp'] = model.timestamp?.toIso8601String() ?? DateTime.now().toIso8601String();
+        hivePayload['timestamp'] =
+            model.timestamp?.toIso8601String() ??
+            DateTime.now().toIso8601String();
         hivePayload['lastUpdatedAt'] = DateTime.now().toIso8601String();
 
         final payloadJson = jsonEncode(hivePayload);
@@ -52,7 +54,9 @@ class DebtRepositoryImpl implements DebtRepository {
           collectionName: 'users/${model.uid}/debts',
         );
 
-        final saveResult = await offlineSyncRepository.saveOfflineRecord(offlineRecord);
+        final saveResult = await offlineSyncRepository.saveOfflineRecord(
+          offlineRecord,
+        );
         return saveResult.fold(
           (failure) => Left(failure),
           (_) => Right(debt.operationId),
@@ -64,9 +68,15 @@ class DebtRepositoryImpl implements DebtRepository {
   }
 
   @override
-  Future<Either<Failure, List<DebtEntity>>> getDebts(String uid) async {
+  Future<Either<Failure, List<DebtEntity>>> getDebts(
+    String uid, {
+    bool forceRefresh = false,
+  }) async {
     try {
-      final result = await remoteDataSource.getDebts(uid);
+      final result = await remoteDataSource.getDebts(
+        uid,
+        forceRefresh: forceRefresh,
+      );
       return Right(result);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -147,9 +157,15 @@ class DebtRepositoryImpl implements DebtRepository {
   }
 
   @override
-  Future<Either<Failure, List<PaymentEntity>>> getDebtTransactionsFuture(String debtId) async {
+  Future<Either<Failure, List<PaymentEntity>>> getDebtTransactionsFuture(
+    String debtId, {
+    bool forceRefresh = false,
+  }) async {
     try {
-      final result = await remoteDataSource.getDebtTransactionsFuture(debtId);
+      final result = await remoteDataSource.getDebtTransactionsFuture(
+        debtId,
+        forceRefresh: forceRefresh,
+      );
       return Right(result);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -175,5 +191,63 @@ class DebtRepositoryImpl implements DebtRepository {
   @override
   Stream<List<DebtEntity>> getDebtsStream(String uid) {
     return remoteDataSource.getDebtsStream(uid);
+  }
+
+  @override
+  Future<Either<Failure, void>> updatePayment({
+    required String uid,
+    required String debtId,
+    required String paymentId,
+    required double newAmount,
+    String? note,
+  }) async {
+    try {
+      await remoteDataSource.updatePayment(
+        uid: uid,
+        debtId: debtId,
+        paymentId: paymentId,
+        newAmount: newAmount,
+        note: note,
+      );
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deletePayment({
+    required String uid,
+    required String debtId,
+    required String paymentId,
+  }) async {
+    try {
+      await remoteDataSource.deletePayment(
+        uid: uid,
+        debtId: debtId,
+        paymentId: paymentId,
+      );
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, DebtEntity?>> getDebtById(
+    String uid,
+    String debtId, {
+    bool forceRefresh = false,
+  }) async {
+    try {
+      final result = await remoteDataSource.getDebtById(
+        uid,
+        debtId,
+        forceRefresh: forceRefresh,
+      );
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
   }
 }

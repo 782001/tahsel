@@ -10,21 +10,23 @@ import '../domain/usecases/calculate_expense_stats_usecase.dart';
 import '../domain/usecases/get_expenses_usecase.dart';
 import '../domain/usecases/get_monthly_expenses_usecase.dart';
 import '../domain/usecases/get_expenses_by_month_usecase.dart';
-import '../domain/usecases/delete_expense_usecase.dart';  
+import '../domain/usecases/delete_expense_usecase.dart';
 import '../domain/usecases/get_pending_expenses_usecase.dart';
 
 Future<void> initExpense() async {
   // Cubit
-  sl.registerLazySingleton(() => ExpenseCubit(
-        addExpenseUseCase: sl(),
-        getExpensesUseCase: sl(),
-        getMonthlyExpensesUseCase: sl(),
-        getExpensesByMonthUseCase: sl(),
-        calculateStatsUseCase: sl(),
-        deleteExpenseUseCase: sl(),
-        deleteMonthExpensesUseCase: sl(),
-        getPendingExpensesUseCase: sl(),
-      ));
+  sl.registerLazySingleton(
+    () => ExpenseCubit(
+      addExpenseUseCase: sl(),
+      getExpensesUseCase: sl(),
+      getMonthlyExpensesUseCase: sl(),
+      getExpensesByMonthUseCase: sl(),
+      calculateStatsUseCase: sl(),
+      deleteExpenseUseCase: sl(),
+      deleteMonthExpensesUseCase: sl(),
+      getPendingExpensesUseCase: sl(),
+    ),
+  );
 
   // Use cases
   sl.registerLazySingleton(() => AddExpenseUseCase(repository: sl()));
@@ -38,15 +40,17 @@ Future<void> initExpense() async {
 
   // Repository
   sl.registerLazySingleton<ExpenseRepository>(
-      () => ExpenseRepositoryImpl(
-            remoteDataSource: sl(),
-            offlineSyncRepository: sl(),
-            connectionChecker: sl(),
-          ));
+    () => ExpenseRepositoryImpl(
+      remoteDataSource: sl(),
+      offlineSyncRepository: sl(),
+      connectionChecker: sl(),
+    ),
+  );
 
   // Data sources
   sl.registerLazySingleton<ExpenseRemoteDataSource>(
-      () => ExpenseRemoteDataSourceImpl(firestore: sl()));
+    () => ExpenseRemoteDataSourceImpl(firestore: sl()),
+  );
 
   // External
   if (!sl.isRegistered<FirebaseFirestore>()) {

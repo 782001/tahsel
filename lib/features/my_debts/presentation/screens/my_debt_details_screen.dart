@@ -168,9 +168,7 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
             note: state.lastPaymentNote,
           );
 
-          context.read<MyDebtsCubit>().loadPersons(
-            AppStrings.userToken,
-          );
+          context.read<MyDebtsCubit>().loadPersons(AppStrings.userToken);
           context.read<MyDebtDetailsCubit>().clearFlags();
         } else if (state.status == MyDebtDetailsStatus.error &&
             state.message != null) {
@@ -254,12 +252,14 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
                             children: [
                               Expanded(
                                 child: ElevatedButton.icon(
-                                  onPressed: (state.items.isEmpty || state.items.any((i) => i.isPending))
+                                  onPressed:
+                                      (state.items.isEmpty ||
+                                          state.items.any((i) => i.isPending))
                                       ? null
                                       : () => _onPayPartial(
-                                            context,
-                                            state.remainingAmount,
-                                          ),
+                                          context,
+                                          state.remainingAmount,
+                                        ),
                                   icon: const Icon(
                                     Icons.payment_rounded,
                                     size: 18,
@@ -280,12 +280,14 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
                               SizedBox(width: 12.w),
                               Expanded(
                                 child: OutlinedButton.icon(
-                                  onPressed: (state.items.isEmpty || state.items.any((i) => i.isPending))
+                                  onPressed:
+                                      (state.items.isEmpty ||
+                                          state.items.any((i) => i.isPending))
                                       ? null
                                       : () => _onPayFull(
-                                            context,
-                                            state.remainingAmount,
-                                          ),
+                                          context,
+                                          state.remainingAmount,
+                                        ),
                                   icon: const Icon(
                                     Icons.check_circle_rounded,
                                     size: 18,
@@ -381,6 +383,7 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
                           onPayPartial: (i) => _onPayItemPartial(context, i),
                           onPayFull: (i) => _onPayItemFull(context, i),
                           onDelete: (i) => _onDeleteItem(context, i),
+                          onRefresh: _loadData,
                         ),
                       );
                     }, childCount: state.items.length),

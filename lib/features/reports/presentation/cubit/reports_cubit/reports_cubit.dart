@@ -25,10 +25,16 @@ class ReportsCubit extends Cubit<ReportsState> {
   }) async {
     emit(ReportsLoading());
 
-    final result = await getReportsUseCase(GetReportsParams(startDate: startDate, endDate: endDate));
+    final result = await getReportsUseCase(
+      GetReportsParams(startDate: startDate, endDate: endDate),
+    );
 
-    result.fold((failure) => emit(ReportsError(failure.message)), (reports) async {
-      final insightsResult = await generateInsightsUseCase(GenerateInsightsParams(reports: reports, period: period));
+    result.fold((failure) => emit(ReportsError(failure.message)), (
+      reports,
+    ) async {
+      final insightsResult = await generateInsightsUseCase(
+        GenerateInsightsParams(reports: reports, period: period),
+      );
       insightsResult.fold(
         (failure) => emit(ReportsError(failure.message)),
         (insights) => emit(ReportsSuccess(reports, insights)),
@@ -77,7 +83,8 @@ class ReportsCubit extends Cubit<ReportsState> {
 
     result.fold(
       (failure) => emit(ReportsError(failure.message)),
-      (reports) => emit(ReportsSuccess(reports, [])), // Pure aggregation, no insights
+      (reports) =>
+          emit(ReportsSuccess(reports, [])), // Pure aggregation, no insights
     );
   }
 }

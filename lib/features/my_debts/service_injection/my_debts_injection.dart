@@ -8,14 +8,17 @@ import 'package:tahsel/features/my_debts/domain/usecases/debt/delete_my_debt_ite
 import 'package:tahsel/features/my_debts/domain/usecases/debt/get_my_debt_item_payments_usecase.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/debt/get_my_debt_items_usecase.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/debt/get_pending_my_debts_usecase.dart';
+import 'package:tahsel/features/my_debts/domain/usecases/payment/delete_my_debt_payment_usecase.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/payment/distribute_my_debt_payment_usecase.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/payment/pay_my_debt_item_usecase.dart';
+import 'package:tahsel/features/my_debts/domain/usecases/payment/update_my_debt_payment_usecase.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/person/get_my_debt_person_operations_usecase.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/person/get_my_debt_persons_usecase.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/person/update_my_debt_person_preference_usecase.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_report_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
+import 'package:tahsel/features/my_debts/domain/usecases/get_my_debt_by_id_usecase.dart';
 
 class MyDebtsInjection {
   static void init(GetIt sl) {
@@ -47,20 +50,36 @@ class MyDebtsInjection {
     );
 
     sl.registerFactory(
-      () => MyDebtDetailsReportCubit(getMyDebtItemPaymentsUseCase: sl()),
+      () => MyDebtDetailsReportCubit(
+        getMyDebtItemPaymentsUseCase: sl(),
+        updateMyDebtPaymentUseCase: sl(),
+        deleteMyDebtPaymentUseCase: sl(),
+        getMyDebtByIdUseCase: sl(),
+      ),
     );
 
     // Use cases
-    sl.registerLazySingleton(() => GetMyDebtPersonsUseCase(sl()));
+    sl.registerLazySingleton(() => GetMyDebtPersonsUseCase(repository: sl()));
     sl.registerLazySingleton(() => AddMyDebtUseCase(sl()));
     sl.registerLazySingleton(() => PayMyDebtItemUseCase(sl()));
     sl.registerLazySingleton(() => DistributeMyDebtPaymentUseCase(sl()));
     sl.registerLazySingleton(() => UpdateMyDebtPersonPreferenceUseCase(sl()));
-    sl.registerLazySingleton(() => GetMyDebtItemsUseCase(sl()));
-    sl.registerLazySingleton(() => GetMyDebtPersonOperationsUseCase(sl()));
+    sl.registerLazySingleton(() => GetMyDebtItemsUseCase(repository: sl()));
+    sl.registerLazySingleton(
+      () => GetMyDebtPersonOperationsUseCase(repository: sl()),
+    );
     sl.registerLazySingleton(() => DeleteMyDebtItemUseCase(sl()));
-    sl.registerLazySingleton(() => GetMyDebtItemPaymentsUseCase(sl()));
+    sl.registerLazySingleton(
+      () => GetMyDebtItemPaymentsUseCase(repository: sl()),
+    );
+    sl.registerLazySingleton(
+      () => UpdateMyDebtPaymentUseCase(repository: sl()),
+    );
+    sl.registerLazySingleton(
+      () => DeleteMyDebtPaymentUseCase(repository: sl()),
+    );
     sl.registerLazySingleton(() => GetPendingMyDebtsUseCase(sl()));
+    sl.registerLazySingleton(() => GetMyDebtByIdUseCase(sl()));
 
     // Repository
     sl.registerLazySingleton<MyDebtRepository>(

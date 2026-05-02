@@ -19,7 +19,8 @@ class MyDebtPersonModel extends MyDebtPersonEntity {
       id: id,
       name: (json['name'] as String?) ?? id ?? '',
       phoneNumber: json['phoneNumber'] as String?,
-      notificationPreference: json['notificationPreference'] as String? ?? 'none',
+      notificationPreference:
+          json['notificationPreference'] as String? ?? 'none',
       lastUsedAt: (json['lastUsedAt'] as Timestamp).toDate(),
       totalTransactions: json['totalTransactions'] as int? ?? 1,
       ledgerNumber: json['ledgerNumber'] as String?,

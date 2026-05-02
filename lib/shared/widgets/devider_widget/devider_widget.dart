@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
 class DeviderWidget extends StatelessWidget {
-  const DeviderWidget({
-    super.key,
-  });
+  const DeviderWidget({super.key});
 
   @override
   Widget build(BuildContext context) {

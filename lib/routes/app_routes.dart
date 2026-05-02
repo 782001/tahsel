@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tahsel/features/customer_debts/data/models/debt_item_model.dart';
 import 'package:tahsel/features/debt/presentation/screens/customer_global_payments_screen.dart';
 import 'package:tahsel/features/standard_features/security/presentation/screens/security_warning_screen.dart';
 import 'package:tahsel/features/splash/splash_screen.dart';
@@ -12,7 +13,6 @@ import 'package:tahsel/features/expenses/presentation/screens/add_expense_screen
 import 'package:tahsel/features/reports/presentation/screens/income_details_screen.dart';
 import 'package:tahsel/features/debt/presentation/screens/debt_details_report_screen.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_details/debt_details_cubit.dart';
-import 'package:tahsel/features/customer_debts/data/models/debt_item_model.dart';
 import 'package:tahsel/features/debt/presentation/cubit/global_payments/global_payments_cubit.dart';
 import 'package:tahsel/features/customer/presentation/screens/customers_list_screen.dart';
 import 'package:tahsel/features/customer/presentation/screens/customer_report_details_screen.dart';
@@ -20,7 +20,6 @@ import 'package:tahsel/features/my_debts/presentation/screens/add_my_debt_screen
 import 'package:tahsel/features/my_debts/presentation/screens/my_debt_details_screen.dart';
 import 'package:tahsel/features/my_debts/presentation/screens/my_debt_details_report_screen.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_person_entity.dart';
-import 'package:tahsel/features/my_debts/domain/entities/my_debt_item_entity.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_report_cubit.dart';
 
@@ -53,9 +52,7 @@ class AppRoutes {
           ),
         );
       case login:
-        return MaterialPageRoute(
-          builder: (_) => const LoginScreen(),
-        );
+        return MaterialPageRoute(builder: (_) => const LoginScreen());
       case securityWarning:
         final args = settings.arguments as Map<String, dynamic>?;
         return MaterialPageRoute(
@@ -65,9 +62,7 @@ class AppRoutes {
           ),
         );
       case addExpense:
-        return MaterialPageRoute(
-          builder: (_) => const AddExpenseScreen(),
-        );
+        return MaterialPageRoute(builder: (_) => const AddExpenseScreen());
       case incomeDetails:
         final args = settings.arguments as Map<String, dynamic>;
         return MaterialPageRoute(
@@ -80,11 +75,11 @@ class AppRoutes {
           ),
         );
       case debtDetails:
-        final debt = settings.arguments as DebtItem;
+        final debtId = settings.arguments as String;
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
             create: (context) => di.sl<DebtDetailsCubit>(),
-            child: DebtDetailsReportScreen(debt: debt),
+            child: DebtDetailsReportScreen(debtId: debtId),
           ),
         );
       case customerGlobalPayments:
@@ -97,9 +92,7 @@ class AppRoutes {
         );
       case customersList:
         final uid = settings.arguments as String;
-        return MaterialPageRoute(
-          builder: (_) => CustomersListScreen(uid: uid),
-        );
+        return MaterialPageRoute(builder: (_) => CustomersListScreen(uid: uid));
       case customerReportDetails:
         final args = settings.arguments as Map<String, dynamic>;
         return MaterialPageRoute(
@@ -109,9 +102,7 @@ class AppRoutes {
           ),
         );
       case addMyDebt:
-        return MaterialPageRoute(
-          builder: (_) => const AddMyDebtScreen(),
-        );
+        return MaterialPageRoute(builder: (_) => const AddMyDebtScreen());
       case myDebtDetails:
         final person = settings.arguments as MyDebtPersonEntity;
         return MaterialPageRoute(
@@ -121,11 +112,11 @@ class AppRoutes {
           ),
         );
       case myDebtDetailsReport:
-        final debt = settings.arguments as MyDebtItemEntity;
+        final debtId = settings.arguments as String;
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
             create: (context) => di.sl<MyDebtDetailsReportCubit>(),
-            child: MyDebtDetailsReportScreen(debt: debt),
+            child: MyDebtDetailsReportScreen(debtId: debtId),
           ),
         );
       default:
@@ -143,12 +134,13 @@ class AppRoutes {
     return {
       splash: (_) => const SplashScreen(),
       mainLayout: (_) => BlocProvider(
-            create: (context) => di.sl<MainLayoutCubit>(),
-            child: const MainLayoutScreen(),
-          ),
+        create: (context) => di.sl<MainLayoutCubit>(),
+        child: const MainLayoutScreen(),
+      ),
       login: (_) => const LoginScreen(),
       securityWarning: (context) {
-        final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+        final args =
+            ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
         return SecurityWarningScreen(
           isRooted: args?['isRooted'] ?? false,
           isDevMode: args?['isDevMode'] ?? false,

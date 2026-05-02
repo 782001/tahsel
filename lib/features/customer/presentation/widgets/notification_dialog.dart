@@ -1,11 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
-import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/sms_service.dart';
 import 'package:tahsel/core/services/whatsapp_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
@@ -21,6 +19,7 @@ class NotificationDialog extends StatefulWidget {
   final double remainingBalance;
   final String? note;
   final String mode; // 'whatsapp' or 'sms'
+  final String operationType; // 'payment', 'edit', 'delete'
 
   const NotificationDialog({
     super.key,
@@ -29,6 +28,7 @@ class NotificationDialog extends StatefulWidget {
     required this.remainingBalance,
     required this.mode,
     this.note,
+    this.operationType = 'payment',
   });
 
   static bool _isShowing = false;
@@ -40,6 +40,7 @@ class NotificationDialog extends StatefulWidget {
     required double amountPaid,
     required double remainingBalance,
     String? note,
+    String operationType = 'payment',
   }) {
     if (_isShowing) return;
 
@@ -78,6 +79,7 @@ class NotificationDialog extends StatefulWidget {
             amountPaid: amountPaid,
             remainingBalance: remainingBalance,
             note: note,
+            operationType: operationType,
           ),
         ),
       ).then((result) {
@@ -91,6 +93,7 @@ class NotificationDialog extends StatefulWidget {
             remainingBalance: remainingBalance,
             phone: result['phone'] ?? '',
             note: result['note'],
+            operationType: operationType,
           );
         }
       });
@@ -98,6 +101,29 @@ class NotificationDialog extends StatefulWidget {
   }
 
   /// STATIC HELPER to handle the sending logic after the dialog is popped
+  /// Returns the correct template key based on operation type and channel.
+  static String _getTemplateKey(String operationType, String mode) {
+    if (mode == 'whatsapp') {
+      switch (operationType) {
+        case 'edit':
+          return AppStrings.whatsappEditMsgTemplate;
+        case 'delete':
+          return AppStrings.whatsappDeleteMsgTemplate;
+        default:
+          return AppStrings.whatsappMsgTemplate;
+      }
+    } else {
+      switch (operationType) {
+        case 'edit':
+          return AppStrings.smsEditMsgTemplate;
+        case 'delete':
+          return AppStrings.smsDeleteMsgTemplate;
+        default:
+          return AppStrings.smsMsgTemplate;
+      }
+    }
+  }
+
   static Future<void> handleNotification({
     required BuildContext context,
     required String mode,
@@ -106,15 +132,17 @@ class NotificationDialog extends StatefulWidget {
     required double remainingBalance,
     required String phone,
     String? note,
+    String operationType = 'payment',
   }) async {
     final messenger = ScaffoldMessenger.of(context);
     final cubit = context.read<CustomerCubit>();
     final uid = AppStrings.userToken;
 
     try {
-      if (uid != null) {
-        cubit.updateCustomerPhone(uid, customerName, phone);
-      }
+      cubit.updateCustomerPhone(uid, customerName, phone);
+
+      final templateKey = _getTemplateKey(operationType, mode);
+      final template = templateKey.tr();
 
       final message = await (mode == 'whatsapp'
           ? WhatsAppService.prepareMessage(
@@ -122,14 +150,16 @@ class NotificationDialog extends StatefulWidget {
               amount: amountPaid,
               remaining: remainingBalance,
               date: DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now()),
-              note: note ?? '',
+              note: (note ?? '').tr(),
+              template: template,
             )
           : SmsService.prepareMessage(
               name: customerName,
               amount: amountPaid,
               remaining: remainingBalance,
               date: DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now()),
-              note: note ?? '',
+              note: (note ?? '').tr(),
+              template: template,
             ));
 
       if (mode == 'whatsapp') {
@@ -154,9 +184,7 @@ class NotificationDialog extends StatefulWidget {
         }
       }
     } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
@@ -224,10 +252,7 @@ class _NotificationDialogState extends State<NotificationDialog> {
     }
 
     setState(() => _isSaving = true);
-    Navigator.pop(context, {
-      'phone': phone,
-      'note': widget.note ?? '',
-    });
+    Navigator.pop(context, {'phone': phone, 'note': widget.note ?? ''});
   }
 
   @override
@@ -302,7 +327,8 @@ class _NotificationDialogState extends State<NotificationDialog> {
                         ? Border.all(color: AppColors.error)
                         : null,
                   ),
-                  child: TextField(cursorColor: AppColors.primaryColor,
+                  child: TextField(
+                    cursorColor: AppColors.primaryColor,
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
                     style: TextStyles.customStyle(

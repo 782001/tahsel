@@ -211,10 +211,12 @@ class _HomeScreenState extends State<HomeScreen> {
       final customerName = _customerController.text.trim();
       double totalAmount = double.tryParse(_totalAmountController.text) ?? 0.0;
       double paidAmount = double.tryParse(_paidController.text) ?? 0.0;
-      
+
       // CRITICAL: Always recalculate debt from source inputs during submit
       // Do NOT depend on the UI controller text which might be out of sync or hidden
-      double remainingDebt = (totalAmount - paidAmount) > 0 ? (totalAmount - paidAmount) : 0.0;
+      double remainingDebt = (totalAmount - paidAmount) > 0
+          ? (totalAmount - paidAmount)
+          : 0.0;
 
       if (productName.isEmpty) {
         validationMsg = AppStrings.validationProductNameRequired.tr();
@@ -348,18 +350,20 @@ class _HomeScreenState extends State<HomeScreen> {
               final double total = _selectedMode == QuickAddMode.shop
                   ? (double.tryParse(_totalAmountController.text) ?? 0.0)
                   : totalDue;
-              
+
               // Recalculate safely: max(total - paid, 0)
-              final double remaining = (total - paid) > 0 ? (total - paid) : 0.0;
+              final double remaining = (total - paid) > 0
+                  ? (total - paid)
+                  : 0.0;
 
               if (remaining > 0) {
                 final uid = AppStrings.userToken;
                 if (uid.isNotEmpty) {
                   context.read<DebtCubit>().addDebt(
-                        uid: uid,
-                        operationId: state.operationId,
-                        totalAmount: total,
-                        paidAmount: paid,
+                    uid: uid,
+                    operationId: state.operationId,
+                    totalAmount: total,
+                    paidAmount: paid,
                     customerName: _customerController.text.trim(),
                     productOrSessionDetails: _selectedMode == QuickAddMode.shop
                         ? _productController.text.trim()

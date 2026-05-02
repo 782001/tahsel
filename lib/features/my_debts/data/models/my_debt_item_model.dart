@@ -52,8 +52,12 @@ class MyDebtItemModel extends MyDebtItemEntity {
       'personName': personName,
       'details': details,
       'operationType': operationType,
-      'timestamp': timestamp != null ? Timestamp.fromDate(timestamp!) : FieldValue.serverTimestamp(),
-      'lastUpdatedAt': lastUpdatedAt != null ? Timestamp.fromDate(lastUpdatedAt!) : FieldValue.serverTimestamp(),
+      'timestamp': timestamp != null
+          ? Timestamp.fromDate(timestamp!)
+          : FieldValue.serverTimestamp(),
+      'lastUpdatedAt': lastUpdatedAt != null
+          ? Timestamp.fromDate(lastUpdatedAt!)
+          : FieldValue.serverTimestamp(),
       'phoneNumber': phoneNumber,
       'isPaid': isPaid,
       'ledgerNumber': ledgerNumber,

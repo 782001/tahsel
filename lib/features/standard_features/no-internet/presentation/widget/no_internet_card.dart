@@ -44,7 +44,7 @@ class NoInternetCard extends StatelessWidget {
           AnimatedBuilder(
             animation: colorAnimation,
             builder: (context, _) => TextWidget(
-               "noInternetTitle".tr(),
+              "noInternetTitle".tr(),
               style: TextStyles.appbartext().copyWith(
                 color: colorAnimation.value,
                 fontWeight: FontWeight.w600,
@@ -54,7 +54,7 @@ class NoInternetCard extends StatelessWidget {
           ),
           SizedBox(height: 12.h),
           TextWidget(
-             "noInternetDescription".tr(),
+            "noInternetDescription".tr(),
             textAlign: TextAlign.center,
             style: TextStyles.font14Weight400RightAligned().copyWith(
               color: const Color(0xFF616161),
@@ -62,7 +62,6 @@ class NoInternetCard extends StatelessWidget {
             ),
           ),
           SizedBox(height: 28.h),
-         
         ],
       ),
     );

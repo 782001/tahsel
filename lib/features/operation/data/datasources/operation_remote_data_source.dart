@@ -18,11 +18,11 @@ class OperationRemoteDataSourceImpl implements OperationRemoteDataSource {
           .collection('users')
           .doc(operation.uid)
           .collection('operations');
-      
+
       final docRef = (operation.id != null && operation.id!.isNotEmpty)
           ? collectionRef.doc(operation.id)
           : collectionRef.doc();
-      
+
       await docRef.set(operation.toJson());
       return docRef.id;
     } catch (e) {

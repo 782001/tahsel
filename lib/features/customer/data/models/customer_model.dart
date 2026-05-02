@@ -17,7 +17,8 @@ class CustomerModel extends CustomerEntity {
       id: id,
       name: json['name'] as String,
       phoneNumber: json['phoneNumber'] as String?,
-      notificationPreference: json['notificationPreference'] as String? ?? 'none',
+      notificationPreference:
+          json['notificationPreference'] as String? ?? 'none',
       lastUsedAt: (json['lastUsedAt'] as Timestamp).toDate(),
       totalTransactions: json['totalTransactions'] as int? ?? 1,
       ledgerNumber: json['ledgerNumber'] as String?,

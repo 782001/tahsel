@@ -51,4 +51,3 @@ class GetCategoryByIdResponseEntity {
 
   GetCategoryByIdResponseEntity({this.success, this.message, this.data});
 }
-

@@ -11,23 +11,22 @@ import '../presentation/cubit/customer_cubit.dart';
 import '../presentation/cubit/customer_reports/customer_reports_cubit.dart';
 import '../presentation/cubit/customer_details/customer_details_cubit.dart';
 
-
 void initCustomerInjection() {
   // Cubit
-  sl.registerFactory(() => CustomerCubit(
-        getCustomersUseCase: sl(),
-        saveCustomerUseCase: sl(),
-        updateCustomerPhoneUseCase: sl(),
-        updateCustomerPreferenceUseCase: sl(),
-      ));
+  sl.registerFactory(
+    () => CustomerCubit(
+      getCustomersUseCase: sl(),
+      saveCustomerUseCase: sl(),
+      updateCustomerPhoneUseCase: sl(),
+      updateCustomerPreferenceUseCase: sl(),
+    ),
+  );
 
-  sl.registerFactory(() => CustomerReportsCubit(
-        getCustomersUseCase: sl(),
-      ));
+  sl.registerFactory(() => CustomerReportsCubit(getCustomersUseCase: sl()));
 
-  sl.registerFactory(() => CustomerDetailsCubit(
-        getCustomerOperationsUseCase: sl(),
-      ));
+  sl.registerFactory(
+    () => CustomerDetailsCubit(getCustomerOperationsUseCase: sl()),
+  );
 
   // Use cases
   sl.registerLazySingleton(() => GetCustomersUseCase(sl()));

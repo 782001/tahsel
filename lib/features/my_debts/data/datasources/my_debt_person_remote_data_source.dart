@@ -4,11 +4,22 @@ import 'package:tahsel/features/my_debts/data/models/my_debt_person_model.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_operation_entity.dart';
 
 abstract class MyDebtPersonRemoteDataSource {
-  Future<List<MyDebtPersonModel>> getPersons(String uid);
+  Future<List<MyDebtPersonModel>> getPersons(
+    String uid, {
+    bool forceRefresh = false,
+  });
   Future<void> savePerson(String uid, MyDebtPersonModel person);
   Future<void> updatePersonPhone(String uid, String name, String phoneNumber);
-  Future<void> updatePersonPreference(String uid, String name, String preference);
-  Future<List<MyDebtOperationEntity>> getPersonOperations(String uid, String personName);
+  Future<void> updatePersonPreference(
+    String uid,
+    String name,
+    String preference,
+  );
+  Future<List<MyDebtOperationEntity>> getPersonOperations(
+    String uid,
+    String personName, {
+    bool forceRefresh = false,
+  });
 }
 
 class MyDebtPersonRemoteDataSourceImpl implements MyDebtPersonRemoteDataSource {
@@ -17,14 +28,21 @@ class MyDebtPersonRemoteDataSourceImpl implements MyDebtPersonRemoteDataSource {
   MyDebtPersonRemoteDataSourceImpl({required this.firestore});
 
   @override
-  Future<List<MyDebtPersonModel>> getPersons(String uid) async {
+  Future<List<MyDebtPersonModel>> getPersons(
+    String uid, {
+    bool forceRefresh = false,
+  }) async {
     try {
       final snapshot = await firestore
           .collection('users')
           .doc(uid)
           .collection('my_debt_persons')
           .orderBy('lastUsedAt', descending: true)
-          .get();
+          .get(
+            GetOptions(
+              source: forceRefresh ? Source.server : Source.serverAndCache,
+            ),
+          );
 
       return snapshot.docs
           .map((doc) => MyDebtPersonModel.fromJson(doc.data(), id: doc.id))
@@ -62,9 +80,16 @@ class MyDebtPersonRemoteDataSourceImpl implements MyDebtPersonRemoteDataSource {
   }
 
   @override
-  Future<void> updatePersonPhone(String uid, String name, String phoneNumber) async {
+  Future<void> updatePersonPhone(
+    String uid,
+    String name,
+    String phoneNumber,
+  ) async {
     try {
-      final collection = firestore.collection('users').doc(uid).collection('my_debt_persons');
+      final collection = firestore
+          .collection('users')
+          .doc(uid)
+          .collection('my_debt_persons');
       final normalizedName = name.trim();
       final docRef = collection.doc(normalizedName);
       await docRef.update({'phoneNumber': phoneNumber});
@@ -75,9 +100,16 @@ class MyDebtPersonRemoteDataSourceImpl implements MyDebtPersonRemoteDataSource {
   }
 
   @override
-  Future<void> updatePersonPreference(String uid, String name, String preference) async {
+  Future<void> updatePersonPreference(
+    String uid,
+    String name,
+    String preference,
+  ) async {
     try {
-      final collection = firestore.collection('users').doc(uid).collection('my_debt_persons');
+      final collection = firestore
+          .collection('users')
+          .doc(uid)
+          .collection('my_debt_persons');
       final normalizedName = name.trim();
       final docRef = collection.doc(normalizedName);
       await docRef.update({'notificationPreference': preference});
@@ -90,25 +122,29 @@ class MyDebtPersonRemoteDataSourceImpl implements MyDebtPersonRemoteDataSource {
   @override
   Future<List<MyDebtOperationEntity>> getPersonOperations(
     String uid,
-    String personName,
-  ) async {
+    String personName, {
+    bool forceRefresh = false,
+  }) async {
     try {
       final userRef = firestore.collection('users').doc(uid);
+      final getOptions = GetOptions(
+        source: forceRefresh ? Source.server : Source.serverAndCache,
+      );
 
       // 1. Fetch from operations collection
       final opsSnapshot = await userRef
           .collection('my_debt_operations')
           .where('personName', isEqualTo: personName)
-          .get();
+          .get(getOptions);
 
       List<MyDebtOperationEntity> operations = [];
 
       for (var doc in opsSnapshot.docs) {
         final data = doc.data();
-        final type = (data['remainingDebt'] ?? 0) > 0 
-            ? MyDebtOperationType.debt 
+        final type = (data['remainingDebt'] ?? 0) > 0
+            ? MyDebtOperationType.debt
             : MyDebtOperationType.purchase;
-            
+
         operations.add(
           MyDebtOperationEntity(
             id: doc.id,
@@ -125,15 +161,15 @@ class MyDebtPersonRemoteDataSourceImpl implements MyDebtPersonRemoteDataSource {
       final debtsSnapshot = await userRef
           .collection('my_debt_items')
           .where('personName', isEqualTo: personName)
-          .get();
+          .get(getOptions);
 
       for (var debtDoc in debtsSnapshot.docs) {
         final debtData = debtDoc.data();
         final activityName = debtData['operationType'] as String;
-        
+
         final paymentsSnapshot = await debtDoc.reference
             .collection('payments')
-            .get();
+            .get(getOptions);
 
         for (var paymentDoc in paymentsSnapshot.docs) {
           final pData = paymentDoc.data();
