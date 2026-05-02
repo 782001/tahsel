@@ -33,7 +33,7 @@ class CustomerAutocompleteField extends StatelessWidget {
   Widget build(BuildContext context) {
     return RawAutocomplete<CustomerEntity>(
       textEditingController: controller,
-      focusNode: focusNode ?? FocusNode(),
+      focusNode: focusNode,
       optionsBuilder: (TextEditingValue textEditingValue) {
         return context.read<CustomerCubit>().getSuggestions(
           textEditingValue.text,
@@ -81,6 +81,7 @@ class CustomerAutocompleteField extends StatelessWidget {
               ),
             );
           },
+          
       optionsViewBuilder: (context, onSelected, options) {
         return Align(
           alignment: Alignment.topLeft,
@@ -97,29 +98,58 @@ class CustomerAutocompleteField extends StatelessWidget {
 
                 return SizedBox(
                   width: fieldWidth,
-                  child: ListView.separated(
-                    padding: EdgeInsets.zero,
-                    shrinkWrap: true,
-                    itemCount: options.length,
-                    separatorBuilder: (context, index) => Divider(
-                      height: 1,
-                      color: AppColors.blackLight.withOpacity(0.1),
-                    ),
-                    itemBuilder: (context, index) {
-                      final CustomerEntity option = options.elementAt(index);
-                      return ListTile(
-                        title: Text(
-                          option.name,
-                          style: TextStyle(
-                            color: AppColors.black,
-                            fontWeight: FontWeight.w500,
+                  child: Stack(
+                    children: [
+                      ListView.separated(
+                        padding: const EdgeInsets.only(top: 16),
+                        shrinkWrap: true,
+                        itemCount: options.length,
+                        separatorBuilder: (context, index) => Divider(
+                          height: 1,
+                          color: AppColors.blackLight.withOpacity(0.1),
+                        ),
+                        itemBuilder: (context, index) {
+                          final CustomerEntity option = options.elementAt(index);
+                          return ListTile(
+                            title: Text(
+                              option.name,
+                              style: TextStyle(
+                                color: AppColors.black,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            onTap: () {
+                              onSelected(option);
+                            },
+                          );
+                        },
+                      ),
+                      Positioned(
+                        top: 4,
+                        right: 4,
+                        child: InkWell(
+                          onTap: () {
+                            Future.delayed(const Duration(milliseconds: 50), () {
+                              if (context.mounted) {
+                                FocusScope.of(context).unfocus();
+                              }
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: AppColors.blackLight.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.close,
+                              size: 22,
+                              color: AppColors.blackLight,
+                            ),
                           ),
                         ),
-                        onTap: () {
-                          onSelected(option);
-                        },
-                      );
-                    },
+                      ),
+                    ],
                   ),
                 );
               },
