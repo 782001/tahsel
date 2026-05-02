@@ -453,8 +453,17 @@ class _TransactionItem extends StatelessWidget {
     bool canEdit = false;
     bool canDelete = false;
 
+    List<PaymentEntity>? transactions;
     if (state is DebtDetailsLoaded) {
-      final index = state.transactions.indexOf(transaction);
+      transactions = state.transactions;
+    } else if (state is DebtDetailsUpdateSuccess) {
+      transactions = state.transactions;
+    } else if (state is DebtDetailsDeleteSuccess) {
+      transactions = state.transactions;
+    }
+
+    if (transactions != null) {
+      final index = transactions.indexOf(transaction);
       // Rule 1: Only latest 2 items
       final bool isLatest2 = index >= 0 && index < 2;
 
@@ -464,7 +473,7 @@ class _TransactionItem extends StatelessWidget {
 
         // Rule 2: For 'Add Debt' items, check for newer payments
         if (transaction.type == PaymentType.debtAdded) {
-          final hasNewerPayments = state.transactions.any(
+          final hasNewerPayments = transactions.any(
             (t) =>
                 (t.type == PaymentType.partial ||
                     t.type == PaymentType.full ||
