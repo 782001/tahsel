@@ -20,6 +20,9 @@ import 'package:tahsel/features/operation/presentation/widgets/quick_add_turn_fo
 import 'package:tahsel/shared/widgets/buttons/quick_action_button.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+
 import '../../../customer/presentation/cubit/customer_cubit.dart';
 import '../../../debt/presentation/cubit/debt_cubit.dart';
 import '../../../debt/presentation/cubit/debt_state.dart';
@@ -125,6 +128,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _updateShopDebt() {
     if (_selectedMode != QuickAddMode.shop) return;
+    // Only auto-calculate debt if in Shop mode.
+    // In Cafe mode, debt is entered manually.
+    if (!context.read<MainLayoutCubit>().isShop) return;
 
     final totalText = _totalAmountController.text;
     final paidText = _paidController.text;
@@ -132,8 +138,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final total = double.tryParse(totalText) ?? 0.0;
     final paid = double.tryParse(paidText) ?? 0.0;
 
-    // Synchronous calculation for immediate UI response
-    // Logic: remaining = max(total - paid, 0)
     final remaining = (total - paid) > 0 ? (total - paid) : 0.0;
 
     if (mounted && _debtController.text != remaining.toStringAsFixed(1)) {
@@ -205,24 +209,40 @@ class _HomeScreenState extends State<HomeScreen> {
     String? validationMsg;
     double paid = double.tryParse(_paidController.text) ?? 0.0;
     OperationEntity operation;
+    final isShopAccount = context.read<MainLayoutCubit>().isShop;
 
     if (_selectedMode == QuickAddMode.shop) {
-      final productName = _productController.text.trim();
+      String productName = _productController.text.trim();
       final customerName = _customerController.text.trim();
-      double totalAmount = double.tryParse(_totalAmountController.text) ?? 0.0;
+      double totalAmount = 0.0;
       double paidAmount = double.tryParse(_paidController.text) ?? 0.0;
+      double remainingDebt = 0.0;
 
-      // CRITICAL: Always recalculate debt from source inputs during submit
-      // Do NOT depend on the UI controller text which might be out of sync or hidden
-      double remainingDebt = (totalAmount - paidAmount) > 0
-          ? (totalAmount - paidAmount)
-          : 0.0;
+      if (isShopAccount) {
+        totalAmount = double.tryParse(_totalAmountController.text) ?? 0.0;
+        remainingDebt = (totalAmount - paidAmount) > 0
+            ? (totalAmount - paidAmount)
+            : 0.0;
 
-      if (productName.isEmpty) {
-        validationMsg = AppStrings.validationProductNameRequired.tr();
-      } else if (totalAmount <= 0) {
-        validationMsg = AppStrings.validationInvalidAmount.tr();
+        if (productName.isEmpty) {
+          validationMsg = AppStrings.validationProductNameRequired.tr();
+        } else if (totalAmount <= 0) {
+          validationMsg = AppStrings.validationInvalidAmount.tr();
+        }
       } else {
+        // Cafe mode logic
+        if (productName.isEmpty) {
+          productName = AppStrings.defaultProductName.tr();
+        }
+        remainingDebt = double.tryParse(_debtController.text) ?? 0.0;
+        totalAmount = paidAmount + remainingDebt;
+
+        if (paidAmount <= 0 && remainingDebt <= 0) {
+          validationMsg = AppStrings.validationInvalidAmount.tr();
+        }
+      }
+
+      if (validationMsg == null) {
         final errorKey = OperationValidator.validateCustomerName(
           name: customerName,
           totalAmount: totalAmount,
@@ -331,51 +351,28 @@ class _HomeScreenState extends State<HomeScreen> {
             if (state is DebtAddSuccess) {
               AppLogger.printMessage('Debt recorded with ID: ${state.debtId}');
             } else if (state is DebtFailure) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  duration: const Duration(milliseconds: 500),
-                  content: Text(
-                    '${AppStrings.operationFailed.tr()}: ${state.message}',
+              if (context.read<ConnectivityCubit>().state
+                  is ConnectivityConnected) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    duration: const Duration(milliseconds: 500),
+                    content: Text(
+                      '${AppStrings.operationFailed.tr()}: ${state.message}',
+                    ),
+                    backgroundColor: AppColors.orange,
                   ),
-                  backgroundColor: AppColors.orange,
-                ),
-              );
+                );
+              }
             }
           },
         ),
         BlocListener<OperationCubit, OperationState>(
           listener: (context, state) {
             if (state is OperationSuccess) {
-              final double paid = double.tryParse(_paidController.text) ?? 0.0;
-              final double total = _selectedMode == QuickAddMode.shop
-                  ? (double.tryParse(_totalAmountController.text) ?? 0.0)
-                  : totalDue;
-
-              // Recalculate safely: max(total - paid, 0)
-              final double remaining = (total - paid) > 0
-                  ? (total - paid)
-                  : 0.0;
-
-              if (remaining > 0) {
-                final uid = AppStrings.userToken;
-                if (uid.isNotEmpty) {
-                  context.read<DebtCubit>().addDebt(
-                    uid: uid,
-                    operationId: state.operationId,
-                    totalAmount: total,
-                    paidAmount: paid,
-                    customerName: _customerController.text.trim(),
-                    productOrSessionDetails: _selectedMode == QuickAddMode.shop
-                        ? _productController.text.trim()
-                        : (_psSubMode == PlayStationMode.time
-                              ? AppStrings.psSessionTime.tr()
-                              : AppStrings.psSessionTurn.tr()),
-                    operationType: _selectedMode == QuickAddMode.shop
-                        ? AppStrings.shop
-                        : AppStrings.playStation,
-                    ledgerNumber: _ledgerController.text.trim(),
-                  );
-                }
+              final uid = AppStrings.userToken;
+              if (uid.isNotEmpty) {
+                // Refresh debts since AddOperationUseCase now handles side-effect creation of debts
+                context.read<DebtCubit>().getDebts(uid, forceRefresh: true);
               }
 
               ScaffoldMessenger.of(context).showSnackBar(
@@ -387,7 +384,6 @@ class _HomeScreenState extends State<HomeScreen> {
               );
 
               // Save customer for autocomplete
-              final uid = AppStrings.userToken;
               final customerName = _customerController.text.trim();
               if (uid.isNotEmpty && customerName.isNotEmpty) {
                 context.read<CustomerCubit>().saveCustomer(

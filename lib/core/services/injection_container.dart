@@ -45,8 +45,8 @@ Future<void> initDependencies() async {
   //! Features
   await CategoryDI.init();
   AuthInjection.init(sl);
-  await initOperation();
   await initDebt();
+  await initOperation();
   initCustomerInjection();
   initProductInjection();
   await initExpense();

@@ -341,5 +341,9 @@
   "delete_payment_success": "تم حذف المعاملة بنجاح",
   "edit_success": "تم التعديل بنجاح",
   "min_value_error": "القيمة يجب أن تكون أكبر أو تساوي الحد الأدنى",
-  "min_value_hint": "أقل قيمة ممكن إدخالها هي: "
+  "min_value_hint": "أقل قيمة ممكن إدخالها هي: ",
+  "remaining_label": "الباقي",
+  "debt_label": "دين",
+  "default_product_name": "منتج",
+  "optional": "اختياري"
 }

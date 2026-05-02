@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tahsel/core/services/injection_container.dart';
+import 'package:tahsel/features/debt/domain/repositories/debt_repository.dart';
 
 import '../data/datasources/operation_remote_data_source.dart';
 import '../data/repositories/operation_repository_impl.dart';
@@ -18,7 +19,12 @@ Future<void> initOperation() async {
   );
 
   // Use cases
-  sl.registerLazySingleton(() => AddOperationUseCase(repository: sl()));
+  sl.registerLazySingleton(
+    () => AddOperationUseCase(
+      repository: sl<OperationRepository>(),
+      debtRepository: sl<DebtRepository>(),
+    ),
+  );
   sl.registerLazySingleton(() => CalculateRemainingDebtUseCase());
 
   // Repository

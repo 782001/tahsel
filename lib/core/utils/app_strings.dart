@@ -397,4 +397,8 @@ class AppStrings {
   static const String editSuccess = "edit_success";
   static const String minValueError = "min_value_error";
   static const String minValueHint = "min_value_hint";
+  static const String remainingLabel = "remaining_label";
+  static const String debtLabel = "debt_label";
+  static const String defaultProductName = "default_product_name";
+  static const String optional = "optional";
 }

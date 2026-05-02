@@ -130,43 +130,48 @@ class QuickAddShopForm extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           ProductAutocompleteField(
-            hint: AppStrings.productNameHint.tr(),
+            hint: isShop
+                ? AppStrings.productNameHint.tr()
+                : "${AppStrings.productName.tr()} (${AppStrings.optional.tr()})",
             controller: productController,
             icon: Icons.shopping_bag_outlined,
             focusNode: productFocus,
             textInputAction: productInputAction,
-            onSubmitted: (_) => totalAmountFocus.requestFocus(),
+            onSubmitted: (_) => isShop
+                ? totalAmountFocus.requestFocus()
+                : paidFocus.requestFocus(),
           ),
           const SizedBox(height: 20),
           Row(
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      AppStrings.totalDueLabel.tr(),
-                      style: TextStyles.customStyle(
-                        color: AppColors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14.sp,
+              if (isShop)
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppStrings.totalDueLabel.tr(),
+                        style: TextStyles.customStyle(
+                          color: AppColors.black,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14.sp,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    QuickAddTextField(
-                      hint: AppStrings.totalAmountHint.tr(),
-                      hintFontSize: 12.sp,
-                      controller: totalAmountController,
-                      // icon: Icons.payments_outlined,
-                      isNumber: true,
-                      focusNode: totalAmountFocus,
-                      textInputAction: totalAmountInputAction,
-                      onSubmitted: (_) => paidFocus.requestFocus(),
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                      QuickAddTextField(
+                        hint: AppStrings.totalAmountHint.tr(),
+                        hintFontSize: 12.sp,
+                        controller: totalAmountController,
+                        // icon: Icons.payments_outlined,
+                        isNumber: true,
+                        focusNode: totalAmountFocus,
+                        textInputAction: totalAmountInputAction,
+                        onSubmitted: (_) => paidFocus.requestFocus(),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              SizedBox(width: 16.w),
+              if (isShop) SizedBox(width: 16.w),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -187,55 +192,85 @@ class QuickAddShopForm extends StatelessWidget {
                       isNumber: true,
                       focusNode: paidFocus,
                       textInputAction: paidInputAction,
-                      onSubmitted: (_) => debtFocus.requestFocus(),
+                      onSubmitted: (_) => isShop
+                          ? debtFocus.requestFocus()
+                          : debtFocus.requestFocus(),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
-          SizedBox(height: 12.h),
-          ValueListenableBuilder<TextEditingValue>(
-            valueListenable: debtController,
-            builder: (context, value, child) {
-              final debt = double.tryParse(value.text) ?? 0.0;
-              if (debt <= 0) return const SizedBox.shrink();
-              return FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryColor.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+              if (!isShop) ...[
+                SizedBox(width: 16.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Icons.info_outline,
-                        size: 14,
-                        color: AppColors.primaryColor,
-                      ),
-                      const SizedBox(width: 6),
                       Text(
-                        "${AppStrings.remainingDebt.tr()}: ${value.text} ${AppStrings.currencyEgp.tr()}",
+                        AppStrings.remainingDebt.tr(),
                         style: TextStyles.customStyle(
-                          color: AppColors.primaryColor,
-                          fontWeight: FontWeight.w600,
+                          color: AppColors.black,
+                          fontWeight: FontWeight.bold,
                           fontSize: 14.sp,
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 8.h),
+                      QuickAddTextField(
+                        hint: '0.00',
+                        controller: debtController,
+                        isNumber: true,
+                        focusNode: debtFocus,
+                        textInputAction: debtInputAction,
+                        onSubmitted: onDebtSubmitted,
                       ),
                     ],
                   ),
                 ),
-              );
-            },
+              ],
+            ],
           ),
+          if (isShop) SizedBox(height: 12.h),
+          if (isShop)
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: debtController,
+              builder: (context, value, child) {
+                final debt = double.tryParse(value.text) ?? 0.0;
+                if (debt <= 0) return const SizedBox.shrink();
+                return FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryColor.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 14,
+                          color: AppColors.primaryColor,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          "${AppStrings.remainingDebt.tr()}: ${value.text} ${AppStrings.currencyEgp.tr()}",
+                          style: TextStyles.customStyle(
+                            color: AppColors.primaryColor,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14.sp,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
         ],
       ),
     );

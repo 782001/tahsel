@@ -1,29 +1,28 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tahsel/core/services/injection_container.dart';
-import 'package:tahsel/features/debt/domain/usecases/get_debt_transactions_future_use_case.dart';
-import 'package:tahsel/features/debt/domain/usecases/update_payment_usecase.dart';
 import 'package:tahsel/features/debt/domain/usecases/delete_payment_usecase.dart';
 import 'package:tahsel/features/debt/domain/usecases/get_debt_by_id_usecase.dart';
+import 'package:tahsel/features/debt/domain/usecases/get_debt_transactions_future_use_case.dart';
+import 'package:tahsel/features/debt/domain/usecases/update_payment_usecase.dart';
 
 import '../data/datasources/debt_remote_data_source.dart';
 import '../data/repositories/debt_repository_impl.dart';
 import '../domain/repositories/debt_repository.dart';
 import '../domain/usecases/add_debt_usecase.dart';
+import '../domain/usecases/calculate_total_debts_usecase.dart';
 import '../domain/usecases/delete_customer_debt_usecase.dart';
 import '../domain/usecases/delete_debt_item_usecase.dart';
+import '../domain/usecases/get_customer_all_payments_usecase.dart';
+import '../domain/usecases/get_debt_transactions_use_case.dart';
+import '../domain/usecases/get_debts_stream_usecase.dart';
 import '../domain/usecases/get_debts_usecase.dart';
 import '../domain/usecases/mark_customer_as_paid_usecase.dart';
 import '../domain/usecases/mark_item_as_paid_usecase.dart';
 import '../domain/usecases/pay_debt_usecase.dart';
 import '../domain/usecases/pay_item_debt_usecase.dart';
-import '../domain/usecases/get_debt_transactions_use_case.dart';
-import '../domain/usecases/get_debt_transactions_future_use_case.dart';
 import '../presentation/cubit/debt_cubit.dart';
 import '../presentation/cubit/debt_details/debt_details_cubit.dart';
-import '../domain/usecases/get_customer_all_payments_usecase.dart';
 import '../presentation/cubit/global_payments/global_payments_cubit.dart';
-import '../domain/usecases/get_debts_stream_usecase.dart';
-import '../domain/usecases/calculate_total_debts_usecase.dart';
 import '../presentation/cubit/total_debts/total_debts_cubit.dart';
 
 Future<void> initDebt() async {

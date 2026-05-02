@@ -341,5 +341,9 @@
   "delete_payment_success": "Transaction deleted successfully",
   "edit_success": "Edited successfully",
   "min_value_error": "Value must be greater than or equal to minimum allowed",
-  "min_value_hint": "Minimum allowed value is: "
+  "min_value_hint": "Minimum allowed value is: ",
+  "remaining_label": "Remaining",
+  "debt_label": "Debt",
+  "default_product_name": "Product",
+  "optional": "Optional"
 }
