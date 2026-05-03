@@ -100,6 +100,63 @@
 خلّي حساباتك واضحة، وحقك محفوظ، وتعاملاتك سهلة 👍
 
 لو حابب تجرب التطبيق أو تعرف تفاصيل أكتر ابعتلي رسالة 📩
+---
+<img width="375" height="812" alt="Screenshot_20260503-163329" src="https://github.com/user-attachments/assets/a3a4f924-ba02-403f-9581-e5d382da1c04" />
+<img width="375" height="812" alt="Screenshot_20260503-163317" src="https://github.com/user-attachments/assets/7a13a156-3a85-477d-b54b-797ef4e5c0f4" />
+<img width="375" height="812" alt="Screenshot_20260503-163308" src="https://github.com/user-attachments/assets/11a8f50d-018d-4f3e-a024-e9ea1d1e0cfa" />
+<img width="375" height="812" alt="Screenshot_20260503-163249" src="https://github.com/user-attachments/assets/86ca19ab-1cbc-4b28-9549-a61f90101995" />
+<img width="375" height="812" alt="Screenshot_20260503-163242" src="https://github.com/user-attachments/assets/0e00439c-c427-43c0-9aee-b90d07317e55" />
+<img width="375" height="812" alt="Screenshot_20260503-163234" src="https://github.com/user-attachments/assets/eb37989c-2626-486c-9b30-3e8f00df55e9" />
+<img width="375" height="812" alt="Screenshot_20260503-163221" src="https://github.com/user-attachments/assets/2edb7e54-1a5e-4463-a4c2-aefcf1b14483" />
+<img width="375" height="812" alt="Screenshot_20260503-163215" src="https://github.com/user-attachments/assets/1991d7fa-4fde-4caf-ab12-722c5b13aa53" />
+<img width="375" height="812" alt="Screenshot_20260503-163142" src="https://github.com/user-attachments/assets/93dc4365-6064-4574-87e8-f793fe6ac0ae" />
+<img width="375" height="812" alt="Screenshot_20260503-163134" src="https://github.com/user-attachments/assets/0e9d689a-0b37-4b36-a12a-a9039054c140" />
+<img width="375" height="812" alt="Screenshot_20260503-163127" src="https://github.com/user-attachments/assets/f71e7b47-1aa5-489a-83fe-fe103a084671" />
+<img width="375" height="812" alt="Screenshot_20260503-163117" src="https://github.com/user-attachments/assets/84213308-4d91-4079-8f5b-2af263cb6b64" />
+<img width="375" height="812" alt="Screenshot_20260503-163111" src="https://github.com/user-attachments/assets/2ba7e383-9e9e-41d7-84e9-65868ea77272" />
+<img width="375" height="812" alt="Screenshot_20260503-163019" src="https://github.com/user-attachments/assets/7118420e-c936-47d3-a3ee-5d706b069dd7" />
+<img width="375" height="812" alt="Screenshot_20260503-163007" src="https://github.com/user-attachments/assets/778dd47d-d0f1-4594-991c-7554723f8240" />
+<img width="375" height="812" alt="Screenshot_20260503-162949" src="https://github.com/user-attachments/assets/9b491c6c-809b-4297-82b1-e86ab439efb4" />
+<img width="375" height="812" alt="Screenshot_20260503-162932" src="https://github.com/user-attachments/assets/052ff96a-2bbf-4911-859f-bdd3fe5f8c33" />
+<img width="375" height="812" alt="Screenshot_20260503-162842" src="https://github.com/user-attachments/assets/52b7384c-43e4-4a92-a52a-80f9484d0d8d" />
+<img width="720" height="1600" alt="WhatsApp Image 2026-04-21 at 1 55 37 PM" src="https://github.com/user-attachments/assets/51ed7ae6-e7c5-4907-b2df-e0ff60c47ede" />
+<img width="375" height="812" alt="Screenshot_20260503-164458" src="https://github.com/user-attachments/assets/b9cd8eef-77e5-4162-a891-9a10daf378e3" />
+<img width="375" height="812" alt="Screenshot_20260503-164443" src="https://github.com/user-attachments/assets/0b4959b3-f392-493a-803d-d57e982313ab" />
+<img width="375" height="812" alt="Screenshot_20260503-164357" src="https://github.com/user-attachments/assets/ba4eb4cb-33a6-4a89-b0b0-c994c713d07c" />
+<img width="375" height="812" alt="Screenshot_20260503-164350" src="https://github.com/user-attachments/assets/60a42027-82e6-4506-a69f-48369477ccb6" />
+<img width="375" height="812" alt="Screenshot_20260503-164340" src="https://github.com/user-attachments/assets/211ef570-f596-48c5-8209-b46bfe020bc9" />
+<img width="375" height="812" alt="Screenshot_20260503-164330" src="https://github.com/user-attachments/assets/3a883e66-968c-437f-9477-019b164cea2b" />
+<img width="375" height="812" alt="Screenshot_20260503-164326" src="https://github.com/user-attachments/assets/93229bb1-eada-4d0e-98ae-018e0876dc5c" />
+<img width="375" height="812" alt="Screenshot_20260503-164321" src="https://github.com/user-attachments/assets/df97f292-59fa-4af8-98db-45a945d91c87" />
+<img width="375" height="812" alt="Screenshot_20260503-164300" src="https://github.com/user-attachments/assets/82ca3645-3959-4e78-ab5a-840a0b6ace7a" />
+<img width="375" height="812" alt="Screenshot_20260503-164237" src="https://github.com/user-attachments/assets/eb99594f-14be-423a-9f5e-a3140a79c8b2" />
+<img width="375" height="812" alt="Screenshot_20260503-164229" src="https://github.com/user-attachments/assets/8197cfeb-142b-40ee-81fb-80ebddb56de4" />
+<img width="375" height="812" alt="Screenshot_20260503-164221" src="https://github.com/user-attachments/assets/9b4688aa-cdd9-4f95-9f41-6a4ebfbe1ea0" />
+<img width="375" height="812" alt="Screenshot_20260503-164139" src="https://github.com/user-attachments/assets/4d300aba-2ab1-44fc-ab01-dbe8340006f4" />
+<img width="375" height="812" alt="Screenshot_20260503-164129" src="https://github.com/user-attachments/assets/1a6ded6c-eb6a-4e3c-8a4f-f658363b01db" />
+<img width="375" height="812" alt="Screenshot_20260503-164118" src="https://github.com/user-attachments/assets/5782389f-1517-411b-ae19-3a891bd37668" />
+<img width="375" height="812" alt="Screenshot_20260503-164111" src="https://github.com/user-attachments/assets/8c1e5cac-bfc4-417d-bb43-5a65aadb4c4c" />
+<img width="375" height="812" alt="Screenshot_20260503-164054" src="https://github.com/user-attachments/assets/ddaaf16a-1cf6-49e1-a332-1d509ea8de9c" />
+<img width="375" height="812" alt="Screenshot_20260503-163938" src="https://github.com/user-attachments/assets/3ab28eb0-4849-45f6-b1fb-9c082d081a1a" />
+<img width="375" height="812" alt="Screenshot_20260503-163923" src="https://github.com/user-attachments/assets/8b5e612a-5ee5-40d9-9163-be547054a7bb" />
+<img width="375" height="812" alt="Screenshot_20260503-163908" src="https://github.com/user-attachments/assets/b784d59e-0a88-4a0e-8120-42d779db9107" />
+<img width="375" height="812" alt="Screenshot_20260503-163752" src="https://github.com/user-attachments/assets/520e3aa8-85c9-49a8-8ea4-e0378710a220" />
+<img width="375" height="812" alt="Screenshot_20260503-163743" src="https://github.com/user-attachments/assets/466ecd7d-ef2f-426f-a2c5-5df2501c2497" />
+<img width="375" height="812" alt="Screenshot_20260503-163633" src="https://github.com/user-attachments/assets/84c8a254-2148-4a7f-9c29-98f1de607586" />
+<img width="375" height="812" alt="Screenshot_20260503-163625" src="https://github.com/user-attachments/assets/46217a15-c194-41dd-bb19-b69afcddb292" />
+<img width="375" height="812" alt="Screenshot_20260503-163607" src="https://github.com/user-attachments/assets/23900a6e-33b8-4198-a288-15a0ea0175cb" />
+<img width="375" height="812" alt="Screenshot_20260503-163558" src="https://github.com/user-attachments/assets/3af21be7-e3d1-4654-8a2f-ca04351e0ed3" />
+<img width="375" height="812" alt="Screenshot_20260503-163544" src="https://github.com/user-attachments/assets/1c0bfa8f-cd3a-4d45-afe0-e1149e89ed4d" />
+<img width="375" height="812" alt="Screenshot_20260503-163538" src="https://github.com/user-attachments/assets/6517cd67-7906-45d6-a9d2-6b23a5696110" />
+<img width="375" height="812" alt="Screenshot_20260503-163533" src="https://github.com/user-attachments/assets/cbc04c68-5b4c-4097-a16e-7fdc659c407b" />
+<img width="375" height="812" alt="Screenshot_20260503-163528" src="https://github.com/user-attachments/assets/dd4d31f3-edbc-4645-b660-0e94ab17f574" />
+<img width="375" height="812" alt="Screenshot_20260503-163523" src="https://github.com/user-attachments/assets/3d0db021-8791-4625-8d74-2b740f426388" />
+<img width="375" height="812" alt="Screenshot_20260503-163512" src="https://github.com/user-attachments/assets/c09f5114-8634-44d5-9515-08e52549d850" />
+<img width="375" height="812" alt="Screenshot_20260503-163456" src="https://github.com/user-attachments/assets/4181e1d8-7aae-4bb9-aa13-fe7dbdc319d9" />
+<img width="375" height="812" alt="Screenshot_20260503-163359" src="https://github.com/user-attachments/assets/cc423b18-1c9f-4178-ac7f-28085d7b86b4" />
+<img width="375" height="812" alt="Screenshot_20260503-163338" src="https://github.com/user-attachments/assets/b94c1f56-c712-479b-b277-ee5367b32c8a" />
+
+---
 
 ---
 
@@ -694,6 +751,7 @@ if (keystorePropertiesFile.exists()) {
 Then, use `keystoreProperties.getProperty("...")` within your `signingConfigs`.
 
 ---
+
 
 This setup allows you to copy the folder structure and utilities into any Flutter project and get started immediately.
 
