@@ -4,7 +4,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
-import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/expenses/domain/entities/expense_entity.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
@@ -13,7 +12,6 @@ import 'package:tahsel/features/expenses/presentation/screens/month_expenses_scr
 import 'package:tahsel/features/offline_sync/data/models/offline_record.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
-import 'package:tahsel/features/expenses/domain/entities/expense_stats.dart';
 
 class ExpensesList extends StatelessWidget {
   const ExpensesList({super.key});

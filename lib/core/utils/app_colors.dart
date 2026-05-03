@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:tahsel/core/services/injection_container.dart';
-import 'package:tahsel/core/services/navigator_service.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_cubit.dart';
 
 class AppColors {

@@ -836,12 +836,13 @@ class _TransactionItem extends StatelessWidget {
                           if (maxAmount != null &&
                               transaction.type != PaymentType.debtAdded) {
                             final maxAmountRounded = double.parse(
-                              maxAmount!.toStringAsFixed(2),
+                              maxAmount.toStringAsFixed(2),
                             );
                             if (newAmountRounded > maxAmountRounded) {
                               setState(
-                                () => errorText =
-                                    AppStrings.paymentExceedsRemaining.tr(),
+                                () => errorText = AppStrings
+                                    .paymentExceedsRemaining
+                                    .tr(),
                               );
                               return;
                             }

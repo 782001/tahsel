@@ -8,7 +8,6 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_state.dart';
 import 'package:tahsel/shared/widgets/shimmer/shimmer_loading.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class MyAddDebtDialog extends StatefulWidget {
   final String personName;

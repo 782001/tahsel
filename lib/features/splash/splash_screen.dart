@@ -132,10 +132,10 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+      value:  SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light, // White icons on blue
-        statusBarBrightness: Brightness.dark, // iOS light text
+        statusBarIconBrightness:AppColors.isDark? Brightness.light:Brightness.dark, // Dark icons
+        statusBarBrightness: AppColors.isDark? Brightness.dark:Brightness.light, // iOS dark text
       ),
       child: Scaffold(
         backgroundColor: AppColors.primaryColor,
