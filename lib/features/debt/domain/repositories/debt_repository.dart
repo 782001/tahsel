@@ -45,6 +45,7 @@ abstract class DebtRepository {
     String uid,
     String customerName,
   );
+  Future<Either<Failure, List<PaymentEntity>>> getAllUserPayments(String uid);
   Stream<List<DebtEntity>> getDebtsStream(String uid);
   Future<Either<Failure, DebtEntity?>> getDebtById(
     String uid,

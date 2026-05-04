@@ -4,6 +4,7 @@ import '../../domain/entities/payment_entity.dart';
 class PaymentModel extends PaymentEntity {
   const PaymentModel({
     super.id,
+    super.uid,
     required super.debtId,
     required super.amountPaid,
     required super.remainingAmount,
@@ -16,6 +17,7 @@ class PaymentModel extends PaymentEntity {
   factory PaymentModel.fromJson(Map<String, dynamic> json, String id) {
     return PaymentModel(
       id: id,
+      uid: json['uid'],
       debtId: json['debtId'] ?? '',
       amountPaid: (json['amountPaid'] ?? 0).toDouble(),
       remainingAmount: (json['remainingAmount'] ?? 0).toDouble(),
@@ -33,6 +35,7 @@ class PaymentModel extends PaymentEntity {
 
   Map<String, dynamic> toJson() {
     return {
+      'uid': uid,
       'debtId': debtId,
       'amountPaid': amountPaid,
       'remainingAmount': remainingAmount,
@@ -46,6 +49,7 @@ class PaymentModel extends PaymentEntity {
   factory PaymentModel.fromEntity(PaymentEntity entity) {
     return PaymentModel(
       id: entity.id,
+      uid: entity.uid,
       debtId: entity.debtId,
       amountPaid: entity.amountPaid,
       remainingAmount: entity.remainingAmount,

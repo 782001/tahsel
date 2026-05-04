@@ -1,5 +1,6 @@
 {
   "no_data": "لا يوجد بيانات",
+  "unknown": "غير معروف",
   "cannot_delete_unpaid_debt": "لا يمكن حذف دين غير مسدد بالكامل",
   "swipe_down": "اسحب لأسفل",
   "download_failed": "فشل التحميل",
@@ -345,5 +346,8 @@
   "remaining_label": "الباقي",
   "debt_label": "دين",
   "default_product_name": "منتج",
-  "optional": "اختياري"
+  "optional": "اختياري",
+  "collectedAmount": "حصلت كام",
+  "totalCollected": "الإجمالي المحصل",
+  "noCollectedData": "لا توجد بيانات تحصيل حتى الآن"
 }

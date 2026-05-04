@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/customer_debts_header.dart';
@@ -13,6 +14,7 @@ import '../../../../shared/widgets/text_fields/custom_search_field.dart';
 import '../../../debt/presentation/cubit/debt_cubit.dart';
 import '../../../debt/presentation/cubit/debt_state.dart';
 import '../../../debt/presentation/cubit/total_debts/total_debts_cubit.dart';
+import '../../../../routes/app_routes.dart';
 import '../widgets/total_debts_summary_card.dart';
 
 class CustomerDebtsScreen extends StatefulWidget {
@@ -76,6 +78,62 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen>
                     const SliverToBoxAdapter(child: CustomerDebtsHeader()),
                     if (!isOffline) ...[
                       const SliverToBoxAdapter(child: TotalDebtsSummaryCard()),
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: InkWell(
+                            onTap: () {
+                              final uid = AppStrings.userToken;
+                              if (uid.isNotEmpty) {
+                                Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.monthlyCollected,
+                                  arguments: uid,
+                                );
+                              }
+                            },
+                            borderRadius: BorderRadius.circular(12.r),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 16,
+                                horizontal: 16,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryColor.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12.r),
+                                border: Border.all(
+                                  color: AppColors.primaryColor.withOpacity(0.2),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.analytics_rounded,
+                                    color: AppColors.primaryColor,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      AppStrings.collectedAmount.tr(),
+                                      style: TextStyle(
+                                        color: AppColors.primaryColor,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16.sp,
+                                      ),
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.arrow_forward_ios,
+                                    size: 14,
+                                    color: AppColors.primaryColor,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 16)),
                       SliverToBoxAdapter(
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 24),

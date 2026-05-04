@@ -4,6 +4,8 @@ import 'package:tahsel/features/debt/domain/usecases/delete_payment_usecase.dart
 import 'package:tahsel/features/debt/domain/usecases/get_debt_by_id_usecase.dart';
 import 'package:tahsel/features/debt/domain/usecases/get_debt_transactions_future_use_case.dart';
 import 'package:tahsel/features/debt/domain/usecases/update_payment_usecase.dart';
+import 'package:tahsel/features/debt/domain/usecases/get_monthly_collected_amounts_usecase.dart';
+import 'package:tahsel/features/debt/presentation/cubit/monthly_collected/monthly_collected_cubit.dart';
 
 import '../data/datasources/debt_remote_data_source.dart';
 import '../data/repositories/debt_repository_impl.dart';
@@ -60,6 +62,10 @@ Future<void> initDebt() async {
     ),
   );
 
+  sl.registerFactory(
+    () => MonthlyCollectedCubit(getMonthlyCollectedAmountsUseCase: sl()),
+  );
+
   // Use cases
   sl.registerLazySingleton(() => AddDebtUseCase(repository: sl()));
   sl.registerLazySingleton(() => GetDebtsUseCase(repository: sl()));
@@ -79,6 +85,7 @@ Future<void> initDebt() async {
   sl.registerLazySingleton(() => UpdatePaymentUseCase(repository: sl()));
   sl.registerLazySingleton(() => DeletePaymentUseCase(repository: sl()));
   sl.registerLazySingleton(() => GetDebtByIdUseCase(sl()));
+  sl.registerLazySingleton(() => GetMonthlyCollectedAmountsUseCase(sl()));
 
   // Repository
   sl.registerLazySingleton<DebtRepository>(

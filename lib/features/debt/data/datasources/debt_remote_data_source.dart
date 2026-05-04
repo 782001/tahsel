@@ -34,6 +34,7 @@ abstract class DebtRemoteDataSource {
     String uid,
     String customerName,
   );
+  Future<List<PaymentModel>> getAllUserPayments(String uid);
   Stream<List<DebtModel>> getDebtsStream(String uid);
   Future<DebtModel?> getDebtById(
     String uid,
@@ -131,6 +132,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           .collection('payments')
           .doc('${debt.operationId}_initial');
       batch.set(initialPaymentRef, {
+        'uid': debt.uid,
         'debtId': debt.operationId,
         'amountPaid': debt.totalAmount, // Debt amount
         'remainingAmount': debt.totalAmount, // Before payment applied
@@ -146,6 +148,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             .collection('payments')
             .doc('${debt.operationId}_payment');
         batch.set(actualPaymentRef, {
+          'uid': debt.uid,
           'debtId': debt.operationId,
           'amountPaid': debt.paidAmount,
           'remainingAmount': debt.remainingAmount,
@@ -311,6 +314,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         // Add payment record to sub-collection
         final paymentRef = debtRef.collection('payments').doc();
         batch.set(paymentRef, {
+          'uid': uid,
           'debtId': debtId,
           'amountPaid': paymentForThisItem,
           'remainingAmount': newRemainingAmount,
@@ -562,6 +566,47 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       throw Exception('Failed to fetch customer payments: $e');
+    }
+  }
+
+  @override
+  Future<List<PaymentModel>> getAllUserPayments(String uid) async {
+    try {
+      final debtsSnapshot = await firestore
+          .collection('users')
+          .doc(uid)
+          .collection('debts')
+          .get();
+
+      List<PaymentModel> allPayments = [];
+      final paymentFutures = debtsSnapshot.docs.map((debtDoc) async {
+        final debtData = debtDoc.data();
+        final customerName = debtData['customerName'] ?? '';
+        final debtName = debtData['productOrSessionDetails'] ?? '';
+        
+        final paymentsSnapshot = await debtDoc.reference
+            .collection('payments')
+            .get();
+            
+        return paymentsSnapshot.docs.map((paymentDoc) {
+          final paymentData = paymentDoc.data();
+          // Inject parent debt info for easier display in global analytics
+          paymentData['relatedTo'] = customerName;
+          paymentData['activityName'] = debtName;
+          
+          return PaymentModel.fromJson(paymentData, paymentDoc.id);
+        }).toList();
+      });
+
+      final results = await Future.wait(paymentFutures);
+      for (var list in results) {
+        allPayments.addAll(list);
+      }
+
+      return allPayments;
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      throw Exception('Failed to fetch all user payments: $e');
     }
   }
 

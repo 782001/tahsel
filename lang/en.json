@@ -1,5 +1,6 @@
 {
   "no_data": "No Data",
+  "unknown": "Unknown",
   "cannot_delete_unpaid_debt": "Cannot delete a debt that is not fully paid",
   "swipe_down": "Swipe down",
   "download_failed": "Download failed",
@@ -345,5 +346,8 @@
   "remaining_label": "Remaining",
   "debt_label": "Debt",
   "default_product_name": "Product",
-  "optional": "Optional"
+  "optional": "Optional",
+  "collectedAmount": "Collected Amount",
+  "totalCollected": "Total Collected",
+  "noCollectedData": "No collected data yet"
 }

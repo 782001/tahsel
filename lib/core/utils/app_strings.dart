@@ -9,6 +9,7 @@ class AppStrings {
   static const String arabicCode = "ar";
   static const String englishCode = "en";
   static const String locale = "locale";
+  static const String unknown = "unknown";
 
   // Auth Screen
   static const String login = "login";
@@ -400,4 +401,7 @@ class AppStrings {
   static const String debtLabel = "debt_label";
   static const String defaultProductName = "default_product_name";
   static const String optional = "optional";
+  static const String collectedAmount = "collectedAmount";
+  static const String totalCollected = "totalCollected";
+  static const String noCollectedData = "noCollectedData";
 }

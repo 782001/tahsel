@@ -4,6 +4,7 @@ enum PaymentType { partial, full, settlement, debtAdded, adjustment, reversal }
 
 class PaymentEntity extends Equatable {
   final String? id;
+  final String? uid;
   final String debtId;
   final double amountPaid;
   final double remainingAmount;
@@ -14,6 +15,7 @@ class PaymentEntity extends Equatable {
 
   const PaymentEntity({
     this.id,
+    this.uid,
     required this.debtId,
     required this.amountPaid,
     required this.remainingAmount,
@@ -26,6 +28,7 @@ class PaymentEntity extends Equatable {
   @override
   List<Object?> get props => [
     id,
+    uid,
     debtId,
     amountPaid,
     remainingAmount,

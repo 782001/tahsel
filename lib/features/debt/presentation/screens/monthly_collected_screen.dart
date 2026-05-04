@@ -1,0 +1,274 @@
+import 'package:animate_do/animate_do.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
+import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/features/customer_debts/presentation/widgets/skeletons/customer_debt_skeleton.dart';
+
+import '../../../../core/extensions/number_extensions.dart';
+import '../../../../core/extensions/string_extensions.dart';
+import '../../../../core/services/injection_container.dart';
+import '../../../../core/utils/app_strings.dart';
+import '../../../../routes/app_routes.dart';
+import '../../domain/entities/monthly_collected_amount.dart';
+import '../cubit/monthly_collected/monthly_collected_cubit.dart';
+import '../cubit/monthly_collected/monthly_collected_state.dart';
+
+class MonthlyCollectedScreen extends StatelessWidget {
+  final String uid;
+
+  const MonthlyCollectedScreen({super.key, required this.uid});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => sl<MonthlyCollectedCubit>()..loadMonthlyData(uid),
+      child: Scaffold(
+        backgroundColor: AppColors.scafoldBackGround,
+        appBar: AppBar(
+          title: Text(
+            AppStrings.collectedAmount.tr(),
+            style: TextStyle(
+              color: AppColors.textColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 20.sp,
+            ),
+          ),
+          centerTitle: true,
+          elevation: 0,
+          backgroundColor: AppColors.scafoldBackGround,
+          leading: IconButton(
+            icon: Icon(
+              Icons.arrow_back_ios_new,
+              color: AppColors.textColor,
+              size: 20.r,
+            ),
+            onPressed: () => Navigator.pop(context),
+          ),
+          iconTheme: IconThemeData(color: AppColors.primaryColor),
+        ),
+        body: BlocBuilder<MonthlyCollectedCubit, MonthlyCollectedState>(
+          builder: (context, state) {
+            if (state is MonthlyCollectedLoading) {
+              return ListView.builder(
+                padding: EdgeInsets.all(16.w),
+                itemBuilder: (context, index) =>
+                    const CustomerDebtCardSkeleton(),
+                itemCount: 5,
+              );
+            } else if (state is MonthlyCollectedError) {
+              return Center(
+                child: Padding(
+                  padding: EdgeInsets.all(20.w),
+                  child: Text(
+                    state.message,
+                    textAlign: TextAlign.center,
+                    style: TextStyles.customStyle(
+                      fontSize: 20.sp,
+                      color: AppColors.error,
+                    ),
+                  ),
+                ),
+              );
+            } else if (state is MonthlyCollectedSuccess) {
+              if (state.data.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.analytics_outlined,
+                        size: 80.sp,
+                        color: AppColors.grey.withValues(alpha: 0.5),
+                      ),
+                      SizedBox(height: 20.h),
+                      Text(
+                        AppStrings.noCollectedData.tr(),
+                        style: TextStyles.customStyle(fontSize: 20.sp),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return Column(
+                children: [
+                  // Total Collected Summary Header
+                  _buildSummaryHeader(state.data),
+
+                  Expanded(
+                    child: ListView.builder(
+                      padding: EdgeInsets.all(16.w),
+                      itemCount: state.data.length,
+                      itemBuilder: (context, index) {
+                        final item = state.data[index];
+                        return FadeInUp(
+                          duration: Duration(milliseconds: 300 + (index * 50)),
+                          child: _buildMonthCard(context, item),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              );
+            }
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryHeader(List<MonthlyCollectedAmount> data) {
+    final total = data.fold(0.0, (sum, item) => sum + item.totalAmount);
+
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primaryColor,
+            AppColors.primaryColor.withOpacity(0.8),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryColor.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Text(
+            AppStrings.totalCollected.tr(),
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: 14.sp,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            "${total.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 28.sp,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMonthCard(BuildContext context, MonthlyCollectedAmount item) {
+    final monthName = _getMonthName(item.month, context);
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 12.h),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColors.grey.withOpacity(0.1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12.r),
+          onTap: () {
+            Navigator.pushNamed(
+              context,
+              AppRoutes.monthlyCollectedTransactions,
+              arguments: item,
+            );
+          },
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(10.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Icon(
+                    Icons.calendar_month_outlined,
+                    color: AppColors.primaryColor,
+                    size: 24.sp,
+                  ),
+                ),
+                SizedBox(width: 16.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "$monthName ${item.year}",
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.black,
+                        ),
+                      ),
+                      SizedBox(height: 2.h),
+                      Text(
+                        "${item.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: AppColors.primaryColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Simple indicator for high collection months
+                _buildPerformanceIndicator(item.totalAmount),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 14.sp,
+                  color: AppColors.grey,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPerformanceIndicator(double amount) {
+    // Simple visual flair: show a green arrow if amount is significant
+    if (amount > 1000) {
+      return Padding(
+        padding: EdgeInsets.only(left: 8.w, right: 12.w),
+        child: Icon(Icons.trending_up, color: AppColors.green, size: 20.sp),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
+  String _getMonthName(int month, BuildContext context) {
+    // Month is 1-indexed (1=Jan, 12=Dec)
+    final date = DateTime(2024, month);
+    return DateFormat.MMMM(
+      Localizations.localeOf(context).languageCode,
+    ).format(date);
+  }
+}

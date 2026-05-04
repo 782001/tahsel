@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:tahsel/features/customer_debts/data/models/debt_item_model.dart';
 import 'package:tahsel/features/debt/presentation/screens/customer_global_payments_screen.dart';
+import 'package:tahsel/features/debt/presentation/screens/monthly_collected_screen.dart';
+import 'package:tahsel/features/debt/presentation/screens/monthly_collected_transactions_screen.dart';
+import 'package:tahsel/features/debt/domain/entities/monthly_collected_amount.dart';
 import 'package:tahsel/features/standard_features/security/presentation/screens/security_warning_screen.dart';
 import 'package:tahsel/features/splash/splash_screen.dart';
 import 'package:tahsel/features/main_layout/presentation/screens/main_layout_screen.dart';
@@ -39,6 +42,8 @@ class AppRoutes {
   static const String addMyDebt = '/add-my-debt';
   static const String myDebtDetails = '/my-debt-details';
   static const String myDebtDetailsReport = '/my-debt-details-report';
+  static const String monthlyCollected = '/monthly-collected';
+  static const String monthlyCollectedTransactions = '/monthly-collected-transactions';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -118,6 +123,16 @@ class AppRoutes {
             create: (context) => di.sl<MyDebtDetailsReportCubit>(),
             child: MyDebtDetailsReportScreen(debtId: debtId),
           ),
+        );
+      case monthlyCollected:
+        final uid = settings.arguments as String;
+        return MaterialPageRoute(
+          builder: (_) => MonthlyCollectedScreen(uid: uid),
+        );
+      case monthlyCollectedTransactions:
+        final data = settings.arguments as MonthlyCollectedAmount;
+        return MaterialPageRoute(
+          builder: (_) => MonthlyCollectedTransactionsScreen(monthlyData: data),
         );
       default:
         return MaterialPageRoute(
