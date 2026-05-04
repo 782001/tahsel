@@ -58,6 +58,15 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView>
           heroTag: 'add_my_debt_fab',
           backgroundColor: AppColors.primaryColor,
           onPressed: () {
+            // if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+            //   ScaffoldMessenger.of(context).showSnackBar(
+            //     SnackBar(
+            //       content: Text(AppStrings.noInternetConnection.tr()),
+            //       backgroundColor: AppColors.error,
+            //     ),
+            //   );
+            //   return;
+            // }
             sl<NavigatorService>().pushNamed(AppRoutes.addMyDebt).then((_) {
               if (context.mounted) {
                 _loadData();

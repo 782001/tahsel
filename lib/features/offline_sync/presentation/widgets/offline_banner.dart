@@ -10,7 +10,7 @@ import '../../../../core/extensions/string_extensions.dart';
 class OfflineBanner extends StatelessWidget {
   final Widget child;
 
-  const OfflineBanner({Key? key, required this.child}) : super(key: key);
+  const OfflineBanner({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {

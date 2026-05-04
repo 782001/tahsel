@@ -7,6 +7,9 @@ import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/shared/widgets/no_internet_view.dart';
 
 import '../cubit/income_cubit/income_details_cubit.dart';
 import '../widgets/income_summary_card.dart';
@@ -57,126 +60,153 @@ class IncomeDetailsScreen extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
           ),
         ),
-        body: BlocBuilder<IncomeDetailsCubit, IncomeDetailsState>(
-          builder: (context, state) {
-            if (state is IncomeDetailsLoading) {
-              return Center(
-                child: CircularProgressIndicator(color: AppColors.primaryColor),
-              );
-            } else if (state is IncomeDetailsError) {
-              return Center(
-                child: Padding(
-                  padding: EdgeInsets.all(24.r),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline_rounded,
-                        color: AppColors.error,
-                        size: 60.sp,
-                      ),
-                      SizedBox(height: 16.h),
-                      Text(
-                        state.message,
-                        style: TextStyle(
-                          color: AppColors.error,
-                          fontSize: 16.sp,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: 24.h),
-                      ElevatedButton(
-                        onPressed: () => context
-                            .read<IncomeDetailsCubit>()
-                            .fetchIncomeDetails(startDate, endDate, type: type),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryColor,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                        ),
-                        child: Text(AppStrings.tryAgain.tr()),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            } else if (state is IncomeDetailsLoaded) {
-              final totalIncome = state.operations.fold<double>(
-                0,
-                (sum, op) => sum + op.totalAmount,
-              );
-              final dateRangeStr = _formatDateRange(
-                context,
-                startDate,
-                endDate,
-              );
-
-              return RefreshIndicator(
-                color: AppColors.primaryColor,
-                onRefresh: () => context
-                    .read<IncomeDetailsCubit>()
-                    .fetchIncomeDetails(startDate, endDate, type: type),
-                child: CustomScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(
-                    parent: BouncingScrollPhysics(),
-                  ),
-                  slivers: [
-                    // Summary Section
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 16.h),
-                        child: IncomeSummaryCard(
-                          totalIncome: totalIncome,
-                          count: state.operations.length,
-                          dateRange: dateRangeStr,
-                        ),
-                      ),
-                    ),
-
-                    // List or Empty State
-                    if (state.operations.isEmpty)
-                      SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.insert_chart_outlined_rounded,
-                                size: 80.sp,
-                                color: AppColors.blackLight.withValues(alpha:0.1),
-                              ),
-                              SizedBox(height: 16.h),
-                              Text(
-                                AppStrings.noIncomeData.tr(),
-                                style: TextStyle(
-                                  color: AppColors.blackLight.withValues(alpha:0.4),
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    else
-                      SliverPadding(
-                        padding: EdgeInsets.fromLTRB(24.w, 8.h, 24.w, 24.h),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) => TransactionDetailCard(
-                              operation: state.operations[index],
-                            ),
-                            childCount: state.operations.length,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+        body: BlocBuilder<ConnectivityCubit, ConnectivityState>(
+          builder: (context, connectivityState) {
+            if (connectivityState is ConnectivityDisconnected) {
+              return NoInternetView(
+                onRetry: () {
+                  context.read<ConnectivityCubit>().checkConnectivity();
+                },
               );
             }
-            return const SizedBox.shrink();
+            return BlocBuilder<IncomeDetailsCubit, IncomeDetailsState>(
+              builder: (context, state) {
+                if (state is IncomeDetailsLoading) {
+                  return Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.primaryColor,
+                    ),
+                  );
+                } else if (state is IncomeDetailsError) {
+                  return Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24.r),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error_outline_rounded,
+                            color: AppColors.error,
+                            size: 60.sp,
+                          ),
+                          SizedBox(height: 16.h),
+                          Text(
+                            state.message,
+                            style: TextStyle(
+                              color: AppColors.error,
+                              fontSize: 16.sp,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          SizedBox(height: 24.h),
+                          ElevatedButton(
+                            onPressed:
+                                () => context
+                                    .read<IncomeDetailsCubit>()
+                                    .fetchIncomeDetails(
+                                      startDate,
+                                      endDate,
+                                      type: type,
+                                    ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryColor,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                            ),
+                            child: Text(AppStrings.tryAgain.tr()),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                } else if (state is IncomeDetailsLoaded) {
+                  final totalIncome = state.operations.fold<double>(
+                    0,
+                    (sum, op) => sum + op.totalAmount,
+                  );
+                  final dateRangeStr = _formatDateRange(
+                    context,
+                    startDate,
+                    endDate,
+                  );
+
+                  return RefreshIndicator(
+                    color: AppColors.primaryColor,
+                    onRefresh:
+                        () => context
+                            .read<IncomeDetailsCubit>()
+                            .fetchIncomeDetails(
+                              startDate,
+                              endDate,
+                              type: type,
+                            ),
+                    child: CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: BouncingScrollPhysics(),
+                      ),
+                      slivers: [
+                        // Summary Section
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 16.h),
+                            child: IncomeSummaryCard(
+                              totalIncome: totalIncome,
+                              count: state.operations.length,
+                              dateRange: dateRangeStr,
+                            ),
+                          ),
+                        ),
+
+                        // List or Empty State
+                        if (state.operations.isEmpty)
+                          SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.insert_chart_outlined_rounded,
+                                    size: 80.sp,
+                                    color: AppColors.blackLight.withValues(
+                                      alpha: 0.1,
+                                    ),
+                                  ),
+                                  SizedBox(height: 16.h),
+                                  Text(
+                                    AppStrings.noIncomeData.tr(),
+                                    style: TextStyle(
+                                      color: AppColors.blackLight.withValues(
+                                        alpha: 0.4,
+                                      ),
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        else
+                          SliverPadding(
+                            padding: EdgeInsets.fromLTRB(24.w, 8.h, 24.w, 24.h),
+                            sliver: SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) => TransactionDetailCard(
+                                  operation: state.operations[index],
+                                ),
+                                childCount: state.operations.length,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            );
           },
         ),
       ),

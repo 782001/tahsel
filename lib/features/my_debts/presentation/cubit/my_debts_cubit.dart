@@ -260,8 +260,9 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
     final sanitizedName = name.replaceAll('/', ' ').trim();
     // Optimistic Update
     final updated = _allPersons.map((p) {
-      if (p.name == sanitizedName)
+      if (p.name == sanitizedName) {
         return p.copyWith(notificationPreference: preference);
+      }
       return p;
     }).toList();
     _emitLoaded(updated);

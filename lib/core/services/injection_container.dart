@@ -3,7 +3,6 @@ import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/auth/service_injection/auth_injection.dart';
-import 'package:tahsel/features/category/service_injection/category_injection.dart';
 import 'package:tahsel/features/operation/service_injection/operation_injection.dart';
 import 'package:tahsel/features/customer/service_injection/customer_injection.dart';
 import 'package:tahsel/features/product/service_injection/product_injection.dart';
@@ -43,7 +42,7 @@ Future<void> initDependencies() async {
   }
 
   //! Features
-  await CategoryDI.init();
+
   AuthInjection.init(sl);
   await initDebt();
   await initOperation();

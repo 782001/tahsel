@@ -14,6 +14,9 @@ import '../../../customer_debts/data/models/debt_item_model.dart';
 import '../../domain/entities/payment_entity.dart';
 import '../cubit/global_payments/global_payments_cubit.dart';
 import '../cubit/global_payments/global_payments_state.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/shared/widgets/no_internet_view.dart';
 
 class CustomerGlobalPaymentsScreen extends StatefulWidget {
   final CustomerDebtDetail customerDetail;
@@ -43,28 +46,40 @@ class _CustomerGlobalPaymentsScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
-      body: RefreshIndicator(
-        color: AppColors.primaryColor,
-        onRefresh: () async {
-          final uid = widget.customerDetail.items.isNotEmpty
-              ? widget.customerDetail.items.first.entity.uid
-              : "";
-          await context.read<GlobalPaymentsCubit>().loadCustomerPayments(
-            uid: uid,
-            customerName: widget.customerDetail.customerName,
-            forceRefresh: true,
+      body: BlocBuilder<ConnectivityCubit, ConnectivityState>(
+        builder: (context, connectivityState) {
+          if (connectivityState is ConnectivityDisconnected) {
+            return NoInternetView(
+              onRetry: () {
+                context.read<ConnectivityCubit>().checkConnectivity();
+              },
+            );
+          }
+          return RefreshIndicator(
+            color: AppColors.primaryColor,
+            onRefresh: () async {
+              final uid =
+                  widget.customerDetail.items.isNotEmpty
+                      ? widget.customerDetail.items.first.entity.uid
+                      : "";
+              await context.read<GlobalPaymentsCubit>().loadCustomerPayments(
+                uid: uid,
+                customerName: widget.customerDetail.customerName,
+                forceRefresh: true,
+              );
+            },
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              slivers: [
+                _buildSliverAppBar(),
+                _buildSummarySection(),
+                _buildTransactionList(),
+              ],
+            ),
           );
         },
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(
-            parent: BouncingScrollPhysics(),
-          ),
-          slivers: [
-            _buildSliverAppBar(),
-            _buildSummarySection(),
-            _buildTransactionList(),
-          ],
-        ),
       ),
     );
   }

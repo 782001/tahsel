@@ -8,6 +8,8 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_state.dart';
 import 'package:tahsel/shared/widgets/shimmer/shimmer_loading.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 
 class MyPartialPaymentDialog extends StatefulWidget {
   final String personName;
@@ -40,6 +42,11 @@ class _MyPartialPaymentDialogState extends State<MyPartialPaymentDialog> {
 
   void _submit() {
     final amountText = _amountController.text.trim();
+    
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      setState(() => _errorText = AppStrings.noInternetConnection.tr());
+      return;
+    }
     if (amountText.isEmpty) {
       setState(() => _errorText = AppStrings.requiredField.tr());
       return;

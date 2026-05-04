@@ -6,6 +6,8 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_cubit.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_state.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 
 class AddDebtDialog extends StatefulWidget {
   final String customerName;
@@ -47,6 +49,11 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
   void _submit() {
     final amountText = _amountController.text.trim();
     final paidText = _paidAmountController.text.trim();
+    
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      setState(() => _errorText = AppStrings.noInternetConnection.tr());
+      return;
+    }
 
     if (amountText.isEmpty) {
       setState(() => _errorText = AppStrings.validationFieldRequired.tr());

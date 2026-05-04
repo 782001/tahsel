@@ -1,6 +1,8 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
-import 'dart:convert';
+
 import '../models/offline_record.dart';
 
 abstract class OfflineRemoteDataSource {
@@ -161,7 +163,7 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
     final existingDoc = await debtRef.get();
     if (existingDoc.exists) {
       AppLogger.printMessage(
-        "[OfflineSync] Debt record ${operationId} already exists. Skipping sync.",
+        "[OfflineSync] Debt record $operationId already exists. Skipping sync.",
       );
       return;
     }
