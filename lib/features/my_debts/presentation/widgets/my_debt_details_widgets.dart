@@ -4,7 +4,6 @@ import 'package:tahsel/core/extensions/extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
-import 'package:tahsel/features/my_debts/domain/entities/my_debt_person_entity.dart';
 
 class MyDebtHeaderBanner extends StatelessWidget {
   final String personName;

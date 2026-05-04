@@ -55,16 +55,16 @@ class _NoInternetHandlerState extends State<NoInternetHandler>
     );
   }
 
-  Future<void> _handleRetry() async {
-    await _stateManager.handleRetry(
-      cubit: _cubit,
-      mounted: mounted,
-      onStartChecking: () {
-        if (mounted) setState(() {});
-      },
-      onRetryCallback: widget.onRetry,
-    );
-  }
+  // Future<void> _handleRetry() async {
+  //   await _stateManager.handleRetry(
+  //     cubit: _cubit,
+  //     mounted: mounted,
+  //     onStartChecking: () {
+  //       if (mounted) setState(() {});
+  //     },
+  //     onRetryCallback: widget.onRetry,
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {

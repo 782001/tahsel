@@ -70,7 +70,7 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
       return;
     }
 
-    final remainingAmount = amount - paidAmount;
+    // final remainingAmount = amount - paidAmount;
 
     final uid = AppStrings.userToken;
     if (uid.isNotEmpty) {

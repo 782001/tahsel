@@ -22,7 +22,7 @@ class MyDebtCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<MyDebtsCubit, MyDebtsState>(
       builder: (context, state) {
-        final isProcessing = state.processingId == person.name;
+        // final isProcessing = state.processingId == person.name;
         final isOffline = state.status == MyDebtsStatus.offlineLoaded;
         final totalPaid = person.totalDebtAmount - person.totalRemainingDebt;
 

@@ -27,7 +27,7 @@ class EmptyWidget extends StatelessWidget {
             SizedBox(height: topHeight, width: double.infinity),
             SizedBox(height: 24.h),
             TextWidget(
-              title ?? AppStrings.no_data.tr(),
+              title ?? AppStrings.noData.tr(),
               style: TextStyle(
                 fontSize: 18.sp,
                 fontWeight: FontWeight.w600,
@@ -37,7 +37,7 @@ class EmptyWidget extends StatelessWidget {
             ),
             SizedBox(height: 8.h),
             TextWidget(
-              subTitle ?? AppStrings.sorry_no_data.tr(),
+              subTitle ?? AppStrings.sorryNoData.tr(),
               style: TextStyle(color: AppColors.blackLight),
               textAlign: TextAlign.center,
             ),

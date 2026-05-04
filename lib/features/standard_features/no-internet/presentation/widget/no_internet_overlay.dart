@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+
 import 'no_internet_card.dart';
-import 'package:tahsel/shared/widgets/buttons/theme_toggle_button.dart';
 
 class NoInternetOverlay extends StatelessWidget {
   final Animation<double> scaleAnimation;

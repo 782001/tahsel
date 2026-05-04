@@ -1,9 +1,7 @@
 import 'dart:async';
 
 import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tahsel/core/utils/app_logger.dart';
 
 import '../../../standard_features/no-internet/logic/connectivity_cubit.dart';
 import '../../../standard_features/no-internet/logic/connectivity_state.dart';

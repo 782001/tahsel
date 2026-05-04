@@ -14,7 +14,6 @@ import 'package:tahsel/features/my_debts/presentation/widgets/my_debts_summary_c
 import 'package:tahsel/features/my_debts/presentation/widgets/skeletons/my_debt_skeleton.dart';
 import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/text_fields/custom_search_field.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class MyDebtsTabView extends StatefulWidget {
   const MyDebtsTabView({super.key});

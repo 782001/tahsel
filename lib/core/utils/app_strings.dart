@@ -23,11 +23,10 @@ class AppStrings {
   ///---------Language-------------
 
   static const String language = "language";
-  static String no_data = "no_data";
-  static String sorry_no_data = "sorry_no_data";
-  static const String swipe_down = "swipe_down";
-  static const String download_failed = "download_failed";
-  static const String slide_to_load_more = "slide_to_load_more";
+  static const String sorryNoData = "sorry_no_data";
+  static const String swipeDown = "swipe_down";
+  static const String downloadFailed = "download_failed";
+  static const String slideToLoadMore = "slide_to_load_more";
 
   // Security Warning Screen
   static const String securityWarningTitle = "security_warning_title";

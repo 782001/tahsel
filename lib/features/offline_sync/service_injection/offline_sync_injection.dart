@@ -1,8 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
-import '../../standard_features/no-internet/logic/connectivity_cubit.dart';
 import '../data/datasources/offline_local_data_source.dart';
 import '../data/datasources/offline_remote_data_source.dart';
 import '../data/models/offline_record.dart';
