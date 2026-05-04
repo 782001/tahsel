@@ -39,14 +39,16 @@ class MyDebtItemCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(AppColors.isDark ? 0.2 : 0.03),
+              color: Colors.black.withValues(
+                alpha: AppColors.isDark ? 0.2 : 0.03,
+              ),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Material(
-          color: Colors.transparent,
+          color: AppColors.transparent,
           child: InkWell(
             borderRadius: BorderRadius.circular(16.r),
             onTap: item.isPending
@@ -99,7 +101,9 @@ class MyDebtItemCard extends StatelessWidget {
                               vertical: 4.h,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.primaryColor.withOpacity(0.1),
+                              color: AppColors.primaryColor.withValues(
+                                alpha: 0.1,
+                              ),
                               borderRadius: BorderRadius.circular(20.r),
                             ),
                             child: Text(
@@ -119,7 +123,7 @@ class MyDebtItemCard extends StatelessWidget {
                                 vertical: 2.h,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.error.withOpacity(0.1),
+                                color: AppColors.error.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(4.r),
                               ),
                               child: Row(
@@ -202,7 +206,9 @@ class MyDebtItemCard extends StatelessWidget {
                             style: OutlinedButton.styleFrom(
                               foregroundColor: AppColors.primaryColor,
                               side: BorderSide(
-                                color: AppColors.primaryColor.withOpacity(0.5),
+                                color: AppColors.primaryColor.withValues(
+                                  alpha: 0.5,
+                                ),
                               ),
                               padding: EdgeInsets.symmetric(vertical: 8.h),
                               textStyle: TextStyles.customStyle(

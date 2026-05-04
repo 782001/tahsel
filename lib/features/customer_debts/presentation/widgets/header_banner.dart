@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/routes/app_routes.dart';
 
@@ -33,7 +34,7 @@ class HeaderBanner extends StatelessWidget {
                   width: 52.r,
                   height: 52.r,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.25),
+                    color: AppColors.whiteOpacity(0.25),
                     shape: BoxShape.circle,
                   ),
                   alignment: Alignment.center,
@@ -70,7 +71,7 @@ class HeaderBanner extends StatelessWidget {
                             vertical: 3.h,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: AppColors.whiteOpacity(0.2),
                             borderRadius: BorderRadius.circular(20.r),
                           ),
                           child: Text(
@@ -87,7 +88,7 @@ class HeaderBanner extends StatelessWidget {
                 ),
                 Icon(
                   Icons.arrow_forward_ios,
-                  color: Colors.white.withOpacity(0.5),
+                  color: AppColors.whiteOpacity(0.5),
                   size: 16.r,
                 ),
               ],

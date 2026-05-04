@@ -40,13 +40,13 @@ class DebtItemCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16.r),
           border: Border.all(
             color: isSettled
-                ? AppColors.primaryColor.withOpacity(0.2)
-                : AppColors.error.withOpacity(0.15),
+                ? AppColors.primaryColor.withValues(alpha: 0.2)
+                : AppColors.error.withValues(alpha: 0.15),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -66,7 +66,7 @@ class DebtItemCard extends StatelessWidget {
                     width: 28.r,
                     height: 28.r,
                     decoration: BoxDecoration(
-                      color: AppColors.primaryColor.withOpacity(0.1),
+                      color: AppColors.primaryColor.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
@@ -124,8 +124,8 @@ class DebtItemCard extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: isSettled
-                          ? AppColors.primaryColor.withOpacity(0.1)
-                          : AppColors.error.withOpacity(0.1),
+                          ? AppColors.primaryColor.withValues(alpha: 0.1)
+                          : AppColors.error.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20.r),
                     ),
                     child: Text(
@@ -187,7 +187,9 @@ class DebtItemCard extends StatelessWidget {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.primaryColor,
                           side: BorderSide(
-                            color: AppColors.primaryColor.withOpacity(0.5),
+                            color: AppColors.primaryColor.withValues(
+                              alpha: 0.5,
+                            ),
                           ),
                           padding: EdgeInsets.symmetric(vertical: 8.h),
                           textStyle: TextStyles.customStyle(
@@ -285,7 +287,7 @@ class _Divider extends StatelessWidget {
     return Container(
       height: 32,
       width: 1,
-      color: AppColors.disabledColor.withOpacity(0.2),
+      color: AppColors.disabledColor.withValues(alpha: 0.2),
       margin: EdgeInsets.symmetric(horizontal: 4.w),
     );
   }

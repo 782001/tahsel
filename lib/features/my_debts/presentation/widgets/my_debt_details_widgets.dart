@@ -30,7 +30,7 @@ class MyDebtHeaderBanner extends StatelessWidget {
             top: -20.h,
             child: CircleAvatar(
               radius: 60.r,
-              backgroundColor: Colors.white.withOpacity(0.05),
+              backgroundColor: AppColors.whiteOpacity(0.05),
             ),
           ),
           Center(
@@ -41,7 +41,7 @@ class MyDebtHeaderBanner extends StatelessWidget {
                 Text(
                   AppStrings.totalIOwe.tr(),
                   style: TextStyles.customStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: AppColors.whiteOpacity(0.8),
                     fontSize: 14.sp,
                   ),
                 ),
@@ -94,7 +94,7 @@ class MyDebtSummaryRow extends StatelessWidget {
           Container(
             width: 1,
             height: 40.h,
-            color: AppColors.disabledColor.withOpacity(0.2),
+            color: AppColors.disabledColor.withValues(alpha: 0.2),
           ),
           _buildSummaryItem(
             AppStrings.remainingDebt.tr(),

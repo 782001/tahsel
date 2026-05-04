@@ -68,7 +68,7 @@ class NotificationDialog extends StatefulWidget {
         isScrollControlled: true,
         isDismissible: false,
         enableDrag: false,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         builder: (ctx) => Padding(
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(ctx).viewInsets.bottom,

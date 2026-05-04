@@ -425,7 +425,9 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
             borderRadius: BorderRadius.circular(12),
             border: isSelected
                 ? null
-                : Border.all(color: AppColors.disabledColor.withOpacity(0.2)),
+                : Border.all(
+                    color: AppColors.disabledColor.withValues(alpha: 0.2),
+                  ),
           ),
           child: Center(
             child: Text(

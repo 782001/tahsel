@@ -54,7 +54,7 @@ class ReportsDashboardCard extends StatelessWidget {
                   ? null
                   : [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.03),
+                        color: Colors.black.withValues(alpha:0.03),
                         blurRadius: 10,
                         spreadRadius: 0,
                         offset: const Offset(0, 4),
@@ -81,8 +81,8 @@ class ReportsDashboardCard extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: isAccentCard
-                                ? AppColors.whiteColor.withOpacity(0.1)
-                                : contentColor.withOpacity(0.05),
+                                ? AppColors.whiteColor.withValues(alpha:0.1)
+                                : contentColor.withValues(alpha:0.05),
                             borderRadius: BorderRadius.circular(8.r),
                           ),
                           child: Text(
@@ -93,8 +93,8 @@ class ReportsDashboardCard extends StatelessWidget {
                               fontSize: 15.sp,
                               fontWeight: FontWeight.w600,
                               color: isAccentCard
-                                  ? AppColors.whiteColor.withOpacity(0.8)
-                                  : contentColor.withOpacity(0.8),
+                                  ? AppColors.whiteColor.withValues(alpha:0.8)
+                                  : contentColor.withValues(alpha:0.8),
                             ),
                           ),
                         ),
@@ -106,7 +106,7 @@ class ReportsDashboardCard extends StatelessWidget {
                           vertical: 4.h,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.whiteColor.withOpacity(0.2),
+                          color: AppColors.whiteColor.withValues(alpha:0.2),
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                         child: Text(
@@ -125,8 +125,8 @@ class ReportsDashboardCard extends StatelessWidget {
                       padding: EdgeInsets.all(10.r),
                       decoration: BoxDecoration(
                         color: isAccentCard
-                            ? AppColors.whiteColor.withOpacity(0.2)
-                            : contentColor.withOpacity(0.1),
+                            ? AppColors.whiteColor.withValues(alpha:0.2)
+                            : contentColor.withValues(alpha:0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -146,8 +146,8 @@ class ReportsDashboardCard extends StatelessWidget {
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
                     color: isAccentCard
-                        ? AppColors.whiteColor.withOpacity(0.7)
-                        : AppColors.blackLight.withOpacity(0.6),
+                        ? AppColors.whiteColor.withValues(alpha:0.7)
+                        : AppColors.blackLight.withValues(alpha:0.6),
                   ),
                 ),
                 SizedBox(height: 8.h),
@@ -174,8 +174,8 @@ class ReportsDashboardCard extends StatelessWidget {
                           fontSize: 14.sp,
                           fontWeight: FontWeight.bold,
                           color: isAccentCard
-                              ? AppColors.whiteColor.withOpacity(0.6)
-                              : AppColors.blackLight.withOpacity(0.4),
+                              ? AppColors.whiteColor.withValues(alpha:0.6)
+                              : AppColors.blackLight.withValues(alpha:0.4),
                         ),
                       ),
                     ],
@@ -194,13 +194,13 @@ class ReportsDashboardCard extends StatelessWidget {
       case BusinessReportType.playstation:
         return AppColors.primaryColor;
       case BusinessReportType.debts:
-        return AppColors.warning.withOpacity(0.05);
+        return AppColors.warning.withValues(alpha:0.05);
       case BusinessReportType.cafe:
-        return AppColors.primaryColor.withOpacity(0.05);
+        return AppColors.primaryColor.withValues(alpha:0.05);
       case BusinessReportType.income:
-        return AppColors.primaryColor.withOpacity(0.08); // Stronger tint
+        return AppColors.primaryColor.withValues(alpha:0.08); // Stronger tint
       case BusinessReportType.expense:
-        return AppColors.error.withOpacity(0.08); // Stronger tint
+        return AppColors.error.withValues(alpha:0.08); // Stronger tint
     }
   }
 

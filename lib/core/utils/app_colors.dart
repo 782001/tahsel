@@ -134,4 +134,7 @@ class AppColors {
     blurRadius: 10,
     offset: Offset(0, 4),
   );
+  static Color whiteOpacity(double opacity) {
+    return Colors.white.withValues(alpha: opacity);
+  }
 }

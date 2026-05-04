@@ -81,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: 384,
                   height: 384,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryColor.withOpacity(0.05),
+                    color: AppColors.primaryColor.withValues(alpha: 0.05),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -106,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius: BorderRadius.circular(16.r),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.04),
+                                color: Colors.black.withValues(alpha: 0.04),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
                               ),
@@ -151,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius: BorderRadius.circular(16.r),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.04),
+                                color: Colors.black.withValues(alpha: 0.04),
                                 blurRadius: 24,
                                 offset: const Offset(0, 8),
                               ),
@@ -261,7 +261,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           boxShadow: [
                                             BoxShadow(
                                               color: AppColors.primaryColor
-                                                  .withOpacity(0.3),
+                                                  .withValues(alpha: 0.3),
                                               blurRadius: 8,
                                               offset: const Offset(0, 4),
                                             ),
@@ -301,7 +301,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     border: Border(
                                       top: BorderSide(
                                         color: AppColors.disabledColor
-                                            .withOpacity(0.1),
+                                            .withValues(alpha: 0.1),
                                       ),
                                     ),
                                   ),

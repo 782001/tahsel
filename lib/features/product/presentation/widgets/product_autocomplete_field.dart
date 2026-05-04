@@ -52,14 +52,14 @@ class ProductAutocompleteField extends StatelessWidget {
                 hintText: hint,
                 errorText: errorText,
                 hintStyle: TextStyle(
-                  color: AppColors.blackLight.withOpacity(0.5),
+                  color: AppColors.blackLight.withValues(alpha: 0.5),
                   fontWeight: FontWeight.normal,
                 ),
                 prefixIcon: icon != null
                     ? Icon(icon, color: AppColors.blackLight)
                     : null,
                 filled: true,
-                fillColor: AppColors.stitchSurfaceHigh.withOpacity(0.5),
+                fillColor: AppColors.stitchSurfaceHigh.withValues(alpha: 0.5),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide.none,
@@ -96,7 +96,7 @@ class ProductAutocompleteField extends StatelessWidget {
                         itemCount: options.length,
                         separatorBuilder: (context, index) => Divider(
                           height: 1,
-                          color: AppColors.blackLight.withOpacity(0.1),
+                          color: AppColors.blackLight.withValues(alpha: 0.1),
                         ),
                         itemBuilder: (context, index) {
                           final ProductEntity option = options.elementAt(index);
@@ -119,16 +119,21 @@ class ProductAutocompleteField extends StatelessWidget {
                         right: 4,
                         child: InkWell(
                           onTap: () {
-                            Future.delayed(const Duration(milliseconds: 50), () {
-                              if (context.mounted) {
-                                FocusScope.of(context).unfocus();
-                              }
-                            });
+                            Future.delayed(
+                              const Duration(milliseconds: 50),
+                              () {
+                                if (context.mounted) {
+                                  FocusScope.of(context).unfocus();
+                                }
+                              },
+                            );
                           },
                           child: Container(
                             padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
-                              color: AppColors.blackLight.withOpacity(0.1),
+                              color: AppColors.blackLight.withValues(
+                                alpha: 0.1,
+                              ),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(

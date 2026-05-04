@@ -31,8 +31,8 @@ class MyDebtsSummaryCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(20.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(
-                    AppColors.isDark ? 0.3 : 0.05,
+                  color: Colors.black.withValues(
+                    alpha: AppColors.isDark ? 0.3 : 0.05,
                   ),
                   blurRadius: 15,
                   offset: const Offset(0, 5),
@@ -40,8 +40,8 @@ class MyDebtsSummaryCard extends StatelessWidget {
               ],
               border: Border.all(
                 color: AppColors.isDark
-                    ? Colors.white.withOpacity(0.05)
-                    : Colors.transparent,
+                    ? AppColors.whiteOpacity(0.05)
+                    : AppColors.transparent,
               ),
             ),
             child: Column(
@@ -52,7 +52,7 @@ class MyDebtsSummaryCard extends StatelessWidget {
                     Container(
                       padding: EdgeInsets.all(8.r),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryColor.withOpacity(0.1),
+                        color: AppColors.primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12.r),
                       ),
                       child: Icon(

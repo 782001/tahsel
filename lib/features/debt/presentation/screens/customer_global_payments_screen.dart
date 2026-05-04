@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:tahsel/core/extensions/extensions.dart';
+import 'package:tahsel/shared/widgets/shimmer/transaction_skeleton.dart';
 
 import '../../../../core/config/locale/app_localizations.dart';
 import '../../../../core/utils/app_colors.dart';
@@ -13,7 +14,6 @@ import '../../../customer_debts/data/models/debt_item_model.dart';
 import '../../domain/entities/payment_entity.dart';
 import '../cubit/global_payments/global_payments_cubit.dart';
 import '../cubit/global_payments/global_payments_state.dart';
-import 'package:tahsel/shared/widgets/shimmer/transaction_skeleton.dart';
 
 class CustomerGlobalPaymentsScreen extends StatefulWidget {
   final CustomerDebtDetail customerDetail;
@@ -88,7 +88,7 @@ class _CustomerGlobalPaymentsScreenState
               top: -20.h,
               child: CircleAvatar(
                 radius: 80.r,
-                backgroundColor: Colors.white.withOpacity(0.05),
+                backgroundColor: AppColors.whiteOpacity(0.05),
               ),
             ),
             Center(
@@ -114,13 +114,13 @@ class _CustomerGlobalPaymentsScreenState
                           vertical: 4.h,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
+                          color: AppColors.whiteOpacity(0.15),
                           borderRadius: BorderRadius.circular(20.r),
                         ),
                         child: Text(
                           "${AppLocalizations.tr(AppStrings.ledgerNumber)}: ${widget.customerDetail.ledgerNumber}",
                           style: TextStyles.customStyle(
-                            color: Colors.white.withOpacity(0.9),
+                            color: AppColors.whiteOpacity(0.9),
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w500,
                           ),
@@ -166,8 +166,8 @@ class _CustomerGlobalPaymentsScreenState
                 borderRadius: BorderRadius.circular(24.r),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(
-                      AppColors.isDark ? 0.2 : 0.05,
+                    color: Colors.black.withValues(
+                      alpha: AppColors.isDark ? 0.2 : 0.05,
                     ),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
@@ -187,7 +187,7 @@ class _CustomerGlobalPaymentsScreenState
                   Container(
                     height: 50.h,
                     width: 1.w,
-                    color: AppColors.disabledColor.withOpacity(0.1),
+                    color: AppColors.disabledColor.withValues(alpha: 0.1),
                   ),
                   Expanded(
                     child: _buildSummaryItem(
@@ -313,7 +313,9 @@ class _CustomerGlobalPaymentsScreenState
       decoration: BoxDecoration(
         color: AppColors.debtCardSurface,
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppColors.disabledColor.withOpacity(0.05)),
+        border: Border.all(
+          color: AppColors.disabledColor.withValues(alpha: 0.05),
+        ),
       ),
       child: Column(
         children: [
@@ -400,7 +402,7 @@ class _CustomerGlobalPaymentsScreenState
                 Icon(
                   Icons.verified_outlined,
                   size: 16.r,
-                  color: AppColors.success.withOpacity(0.5),
+                  color: AppColors.success.withValues(alpha: 0.5),
                 ),
             ],
           ),

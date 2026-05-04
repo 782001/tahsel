@@ -23,7 +23,7 @@ class QuickAddSubTabHeader extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -71,13 +71,13 @@ class _SubTab extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           color: isActive
-              ? AppColors.stitchSurfaceHigh.withOpacity(0.5)
+              ? AppColors.stitchSurfaceHigh.withValues(alpha: 0.5)
               : AppColors.whiteColor,
           borderRadius: BorderRadius.circular(12),
           boxShadow: isActive
               ? [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 4,
                     offset: const Offset(0, 1),
                   ),

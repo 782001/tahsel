@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
-import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -50,15 +50,15 @@ class TransactionDetailCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha:0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
         border: Border.all(
           color: hasDebt
-              ? AppColors.error.withOpacity(0.3)
-              : Colors.transparent,
+              ? AppColors.error.withValues(alpha:0.3)
+              : AppColors.transparent,
           width: 1,
         ),
       ),
@@ -71,7 +71,7 @@ class TransactionDetailCard extends StatelessWidget {
               Container(
                 width: double.infinity,
                 padding: EdgeInsets.symmetric(vertical: 4.h),
-                color: AppColors.error.withOpacity(0.3),
+                color: AppColors.error.withValues(alpha:0.3),
                 child: Center(
                   child: Text(
                     AppStrings.remainingDebt.tr(),
@@ -99,7 +99,7 @@ class TransactionDetailCard extends StatelessWidget {
                               (isPlaystation
                                       ? AppColors.primaryColor
                                       : AppColors.green)
-                                  .withOpacity(0.1),
+                                  .withValues(alpha:0.1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -134,7 +134,7 @@ class TransactionDetailCard extends StatelessWidget {
                               style: TextStyles.customStyle(
                                 fontSize: 13.sp,
                                 fontWeight: FontWeight.w500,
-                                color: AppColors.blackLight.withOpacity(0.6),
+                                color: AppColors.blackLight.withValues(alpha:0.6),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -161,7 +161,7 @@ class TransactionDetailCard extends StatelessWidget {
                               style: TextStyles.customStyle(
                                 fontSize: 11.sp,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.primaryColor.withOpacity(0.6),
+                                color: AppColors.primaryColor.withValues(alpha:0.6),
                               ),
                             ),
                           ],
@@ -187,7 +187,7 @@ class TransactionDetailCard extends StatelessWidget {
                                 style: TextStyles.customStyle(
                                   fontSize: 11.sp,
                                   fontWeight: FontWeight.w500,
-                                  color: AppColors.blackLight.withOpacity(0.5),
+                                  color: AppColors.blackLight.withValues(alpha:0.5),
                                 ),
                               ),
                               SizedBox(height: 4.h),
@@ -208,7 +208,7 @@ class TransactionDetailCard extends StatelessWidget {
                         Container(
                           width: 1,
                           height: 30.h,
-                          color: AppColors.blackLight.withOpacity(0.1),
+                          color: AppColors.blackLight.withValues(alpha:0.1),
                         ),
                         SizedBox(width: 16.w),
                         Expanded(
@@ -220,7 +220,7 @@ class TransactionDetailCard extends StatelessWidget {
                                 style: TextStyles.customStyle(
                                   fontSize: 11.sp,
                                   fontWeight: FontWeight.w500,
-                                  color: AppColors.blackLight.withOpacity(0.5),
+                                  color: AppColors.blackLight.withValues(alpha:0.5),
                                 ),
                               ),
                               SizedBox(height: 4.h),
@@ -253,7 +253,7 @@ class TransactionDetailCard extends StatelessWidget {
                           Icon(
                             Icons.calendar_today_rounded,
                             size: 12.sp,
-                            color: AppColors.blackLight.withOpacity(0.4),
+                            color: AppColors.blackLight.withValues(alpha:0.4),
                           ),
                           SizedBox(width: 4.w),
                           Text(
@@ -263,14 +263,14 @@ class TransactionDetailCard extends StatelessWidget {
                             style: TextStyles.customStyle(
                               fontSize: 11.sp,
                               fontWeight: FontWeight.w500,
-                              color: AppColors.blackLight.withOpacity(0.5),
+                              color: AppColors.blackLight.withValues(alpha:0.5),
                             ),
                           ),
                           SizedBox(width: 12.w),
                           Icon(
                             Icons.access_time_rounded,
                             size: 12.sp,
-                            color: AppColors.blackLight.withOpacity(0.4),
+                            color: AppColors.blackLight.withValues(alpha:0.4),
                           ),
                           SizedBox(width: 4.w),
                           Text(
@@ -280,7 +280,7 @@ class TransactionDetailCard extends StatelessWidget {
                             style: TextStyles.customStyle(
                               fontSize: 11.sp,
                               fontWeight: FontWeight.w500,
-                              color: AppColors.blackLight.withOpacity(0.5),
+                              color: AppColors.blackLight.withValues(alpha:0.5),
                             ),
                           ),
                         ],
@@ -294,8 +294,8 @@ class TransactionDetailCard extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: hasDebt
-                              ? AppColors.error.withOpacity(0.05)
-                              : AppColors.success.withOpacity(0.05),
+                              ? AppColors.error.withValues(alpha:0.05)
+                              : AppColors.success.withValues(alpha:0.05),
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                         child: Text(

@@ -70,7 +70,7 @@ class CustomerDebtCard extends StatelessWidget {
           ],
         ),
         child: Material(
-          color: Colors.transparent,
+          color: AppColors.transparent,
           child: InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(12),
@@ -80,7 +80,7 @@ class CustomerDebtCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -137,7 +137,9 @@ class CustomerDebtCard extends StatelessWidget {
                                 Text(
                                   description!,
                                   style: TextStyles.customStyle(
-                                    color: AppColors.textColor.withOpacity(0.8),
+                                    color: AppColors.textColor.withValues(
+                                      alpha: 0.8,
+                                    ),
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -169,7 +171,7 @@ class CustomerDebtCard extends StatelessWidget {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: statusColor.withOpacity(0.1),
+                                  color: statusColor.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(

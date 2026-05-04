@@ -25,13 +25,13 @@ class AppearanceCard extends StatelessWidget {
         padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 16.w),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primaryColor.withOpacity(0.1)
+              ? AppColors.primaryColor.withValues(alpha: 0.1)
               : AppColors.surface,
           borderRadius: BorderRadius.circular(16.r),
           border: isSelected
               ? Border.all(color: AppColors.primaryColor, width: 1.5)
               : Border.all(
-                  color: AppColors.disabledColor.withOpacity(0.1),
+                  color: AppColors.disabledColor.withValues(alpha: 0.1),
                   width: 1,
                 ),
           boxShadow: [

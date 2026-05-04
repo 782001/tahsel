@@ -129,7 +129,7 @@ class _DropDownCustomTextfailedState extends State<DropDownCustomTextfailed> {
                         ),
                         color: isSelected
                             ? const Color(0XFFDDE4DE)
-                            : Colors.transparent,
+                            : AppColors.transparent,
                         child: Text(
                           item,
                           textAlign: TextAlign.right,

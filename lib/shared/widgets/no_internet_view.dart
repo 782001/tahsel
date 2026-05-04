@@ -20,13 +20,13 @@ class NoInternetView extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(24.w),
               decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.05),
+                color: AppColors.error.withValues(alpha: 0.05),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.wifi_off_rounded,
                 size: 80.sp,
-                color: AppColors.error.withOpacity(0.8),
+                color: AppColors.error.withValues(alpha: 0.8),
               ),
             ),
             24.verticalSpace,

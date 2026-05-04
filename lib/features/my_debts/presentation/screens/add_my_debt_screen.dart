@@ -107,7 +107,7 @@ class _AddMyDebtScreenState extends State<AddMyDebtScreen> {
                   borderRadius: BorderRadius.circular(24.r),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.02),
+                      color: Colors.black.withValues(alpha:0.02),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -297,9 +297,9 @@ class _AddMyDebtScreenState extends State<AddMyDebtScreen> {
     return Container(
       padding: EdgeInsets.all(16.r),
       decoration: BoxDecoration(
-        color: AppColors.primaryColor.withOpacity(0.05),
+        color: AppColors.primaryColor.withValues(alpha:0.05),
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: AppColors.primaryColor.withOpacity(0.1)),
+        border: Border.all(color: AppColors.primaryColor.withValues(alpha:0.1)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

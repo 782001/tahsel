@@ -89,7 +89,7 @@ class _LanguageSectionState extends State<LanguageSection> {
                         boxShadow: _isArabic
                             ? [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
+                                  color: Colors.black.withValues(alpha: 0.1),
                                   blurRadius: 10,
                                   offset: const Offset(0, 2),
                                 ),
@@ -122,12 +122,14 @@ class _LanguageSectionState extends State<LanguageSection> {
                     child: Container(
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: !_isArabic ? Colors.white : Colors.transparent,
+                        color: !_isArabic
+                            ? Colors.white
+                            : AppColors.transparent,
                         borderRadius: BorderRadius.circular(26),
                         boxShadow: !_isArabic
                             ? [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
+                                  color: Colors.black.withValues(alpha: 0.05),
                                   blurRadius: 10,
                                   offset: const Offset(0, 2),
                                 ),

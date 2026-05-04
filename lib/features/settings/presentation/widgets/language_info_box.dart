@@ -13,7 +13,7 @@ class LanguageInfoBox extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
-        color: AppColors.primaryColor.withOpacity(0.05),
+        color: AppColors.primaryColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16.r),
       ),
       child: Row(

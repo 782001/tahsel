@@ -7,7 +7,6 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/settings/presentation/widgets/appearance_card.dart';
 import 'package:tahsel/features/settings/presentation/widgets/language_option.dart';
-
 import 'package:tahsel/features/settings/presentation/widgets/logout_button.dart';
 import 'package:tahsel/features/settings/presentation/widgets/section_header.dart';
 import 'package:tahsel/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
@@ -41,7 +40,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   width: 300,
                   height: 300,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryColor.withOpacity(0.05),
+                    color: AppColors.primaryColor.withValues(alpha:0.05),
                     shape: BoxShape.circle,
                   ),
                 ),

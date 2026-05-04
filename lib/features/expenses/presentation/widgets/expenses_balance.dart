@@ -91,8 +91,8 @@ class ExpensesBalance extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: isIncrease
-                        ? AppColors.errorContainer.withOpacity(0.8)
-                        : AppColors.green.withOpacity(0.1),
+                        ? AppColors.errorContainer.withValues(alpha: 0.8)
+                        : AppColors.green.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(24.r),
                   ),
                   child: Row(

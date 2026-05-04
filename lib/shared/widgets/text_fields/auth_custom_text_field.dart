@@ -110,7 +110,7 @@ class _AuthTextFormFieldState extends State<AuthTextFormField> {
                   color: AppColors.textColor2,
                 ),
                 filled: true,
-                fillColor: AppColors.textColor.withOpacity(0.1),
+                fillColor: AppColors.textColor.withValues(alpha: 0.1),
                 contentPadding: EdgeInsets.symmetric(
                   vertical: 14.h,
                   horizontal: 16.w,

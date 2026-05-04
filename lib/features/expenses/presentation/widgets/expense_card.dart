@@ -3,6 +3,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+
 import '../../../../core/utils/app_colors.dart';
 
 class ExpenseCard extends StatelessWidget {
@@ -73,7 +74,7 @@ class ExpenseCard extends StatelessWidget {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: AppColors.stitchBlue.withOpacity(0.08),
+                        color: AppColors.stitchBlue.withValues(alpha:0.08),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(icon, color: AppColors.stitchBlue, size: 20),
@@ -187,7 +188,7 @@ class ExpenseCard extends StatelessWidget {
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
-                    color: AppColors.stitchBlue.withOpacity(0.08),
+                    color: AppColors.stitchBlue.withValues(alpha:0.08),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(icon, color: AppColors.stitchBlue, size: 24),

@@ -22,7 +22,7 @@ class ReportsOperationalMarginCard extends StatelessWidget {
       margin: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
       padding: EdgeInsets.all(24.r),
       decoration: BoxDecoration(
-        color: AppColors.stitchSurfaceLow.withOpacity(0.5),
+        color: AppColors.stitchSurfaceLow.withValues(alpha:0.5),
         borderRadius: BorderRadius.circular(24.r),
       ),
       child: Column(
@@ -40,7 +40,7 @@ class ReportsOperationalMarginCard extends StatelessWidget {
                       style: TextStyles.customStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.blackLight.withOpacity(0.5),
+                        color: AppColors.blackLight.withValues(alpha:0.5),
                       ),
                     ),
                     SizedBox(height: 4.h),
@@ -69,7 +69,7 @@ class ReportsOperationalMarginCard extends StatelessWidget {
                       style: TextStyles.customStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.blackLight.withOpacity(0.5),
+                        color: AppColors.blackLight.withValues(alpha:0.5),
                       ),
                     ),
                     SizedBox(height: 4.h),

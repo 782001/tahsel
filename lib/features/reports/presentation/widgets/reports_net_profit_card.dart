@@ -29,7 +29,7 @@ class ReportsNetProfitCard extends StatelessWidget {
             style: TextStyles.customStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w600,
-              color: AppColors.blackLight.withOpacity(0.6),
+              color: AppColors.blackLight.withValues(alpha:0.6),
             ),
           ),
           SizedBox(height: 8.h),
@@ -65,7 +65,7 @@ class ReportsNetProfitCard extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
             decoration: BoxDecoration(
               color: (isPositive ? AppColors.primaryColor : AppColors.error)
-                  .withOpacity(0.1),
+                  .withValues(alpha:0.1),
               borderRadius: BorderRadius.circular(12.r),
             ),
             child: FittedBox(

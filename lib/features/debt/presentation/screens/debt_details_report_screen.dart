@@ -79,7 +79,7 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
           ),
           centerTitle: true,
           elevation: 0,
-          backgroundColor: Colors.transparent,
+          backgroundColor: AppColors.transparent,
           leading: IconButton(
             icon: Icon(
               Icons.arrow_back_ios_new,
@@ -239,9 +239,9 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
           colors: isSettled
               ? [
                   AppColors.primaryColor,
-                  AppColors.primaryColor.withOpacity(0.8),
+                  AppColors.primaryColor.withValues(alpha: 0.8),
                 ]
-              : [AppColors.error.withOpacity(0.9), AppColors.error],
+              : [AppColors.error.withValues(alpha: 0.9), AppColors.error],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -249,7 +249,7 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
         boxShadow: [
           BoxShadow(
             color: (isSettled ? AppColors.primaryColor : AppColors.error)
-                .withOpacity(0.3),
+                .withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -282,7 +282,7 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
                         vertical: 2.h,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: AppColors.whiteOpacity(0.2),
                         borderRadius: BorderRadius.circular(8.r),
                       ),
                       child: Text(
@@ -304,7 +304,7 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyles.customStyle(
-                            color: Colors.white.withOpacity(0.8),
+                            color: AppColors.whiteOpacity(0.8),
                             fontSize: 12.sp,
                           ),
                         ),
@@ -315,7 +315,7 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: AppColors.whiteOpacity(0.2),
                   borderRadius: BorderRadius.circular(20.r),
                 ),
                 child: Text(
@@ -411,7 +411,7 @@ class _SummaryItem extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyles.customStyle(
-              color: Colors.white.withOpacity(0.7),
+              color: AppColors.whiteOpacity(0.7),
               fontSize: 11.sp,
             ),
           ),
@@ -537,7 +537,7 @@ class _TransactionItem extends StatelessWidget {
             borderRadius: BorderRadius.circular(16.r),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.02),
+                color: Colors.black.withValues(alpha: 0.02),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -551,7 +551,7 @@ class _TransactionItem extends StatelessWidget {
                 decoration: BoxDecoration(
                   color:
                       (isDebtAdded ? AppColors.error : AppColors.primaryColor)
-                          .withOpacity(0.1),
+                          .withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Icon(

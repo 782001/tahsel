@@ -52,7 +52,7 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView>
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       floatingActionButton: Builder(
         builder: (context) => FloatingActionButton.extended(
           heroTag: 'add_my_debt_fab',

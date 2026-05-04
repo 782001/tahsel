@@ -57,7 +57,7 @@ class QuickAddTextField extends StatelessWidget {
         hintText: hint,
         errorText: errorText,
         hintStyle: TextStyles.customStyle(
-          color: AppColors.blackLight.withOpacity(0.5),
+          color: AppColors.blackLight.withValues(alpha: 0.5),
           fontWeight: FontWeight.normal,
           fontSize: hintFontSize ?? 14,
         ),
@@ -87,7 +87,7 @@ class QuickAddTextField extends StatelessWidget {
           fontWeight: FontWeight.bold,
         ),
         filled: true,
-        fillColor: AppColors.stitchSurfaceHigh.withOpacity(0.5),
+        fillColor: AppColors.stitchSurfaceHigh.withValues(alpha: 0.5),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,

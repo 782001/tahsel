@@ -145,13 +145,13 @@ class IncomeDetailsScreen extends StatelessWidget {
                               Icon(
                                 Icons.insert_chart_outlined_rounded,
                                 size: 80.sp,
-                                color: AppColors.blackLight.withOpacity(0.1),
+                                color: AppColors.blackLight.withValues(alpha:0.1),
                               ),
                               SizedBox(height: 16.h),
                               Text(
                                 AppStrings.noIncomeData.tr(),
                                 style: TextStyle(
-                                  color: AppColors.blackLight.withOpacity(0.4),
+                                  color: AppColors.blackLight.withValues(alpha:0.4),
                                   fontSize: 16.sp,
                                   fontWeight: FontWeight.bold,
                                 ),

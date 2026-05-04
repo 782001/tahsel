@@ -91,7 +91,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
               color: AppColors.disabledColor,
             ),
             filled: true,
-            fillColor: AppColors.stitchSurfaceHigh.withOpacity(0.5),
+            fillColor: AppColors.stitchSurfaceHigh.withValues(alpha: 0.5),
             prefixIcon: widget.prefixIcon != null
                 ? Icon(
                     widget.prefixIcon,

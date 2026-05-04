@@ -111,7 +111,7 @@ class _ReportsViewState extends State<ReportsView> {
                                   borderRadius: BorderRadius.circular(16.r),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.primaryColor.withOpacity(
+                                      color: AppColors.primaryColor.withValues(alpha:
                                         0.3,
                                       ),
                                       blurRadius: 10,
@@ -124,7 +124,7 @@ class _ReportsViewState extends State<ReportsView> {
                                     Container(
                                       padding: EdgeInsets.all(10.w),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.2),
+                                        color: AppColors.whiteOpacity(0.2),
                                         shape: BoxShape.circle,
                                       ),
                                       child: Icon(
@@ -150,7 +150,7 @@ class _ReportsViewState extends State<ReportsView> {
                                           Text(
                                             AppStrings.customersReportDesc.tr(),
                                             style: TextStyles.customStyle(
-                                              color: Colors.white.withOpacity(
+                                              color: AppColors.whiteOpacity(
                                                 0.8,
                                               ),
                                               fontSize: 12.sp,
@@ -574,16 +574,16 @@ class _ReportsViewState extends State<ReportsView> {
       width: double.infinity,
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: insight.color.withOpacity(0.1),
+        color: insight.color.withValues(alpha:0.1),
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: insight.color.withOpacity(0.2), width: 1),
+        border: Border.all(color: insight.color.withValues(alpha:0.2), width: 1),
       ),
       child: Row(
         children: [
           Container(
             padding: EdgeInsets.all(6.w),
             decoration: BoxDecoration(
-              color: insight.color.withOpacity(0.1),
+              color: insight.color.withValues(alpha:0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(

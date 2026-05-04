@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
-import 'package:tahsel/core/extensions/string_extensions.dart';
 
 class IncomeSummaryCard extends StatelessWidget {
   final double totalIncome;
@@ -27,7 +27,7 @@ class IncomeSummaryCard extends StatelessWidget {
         gradient: LinearGradient(
           colors: [
             AppColors.primaryColor,
-            AppColors.primaryColor.withOpacity(0.8),
+            AppColors.primaryColor.withValues(alpha:0.8),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -35,7 +35,7 @@ class IncomeSummaryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24.r),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryColor.withOpacity(0.3),
+            color: AppColors.primaryColor.withValues(alpha:0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -52,13 +52,13 @@ class IncomeSummaryCard extends StatelessWidget {
                 style: TextStyles.customStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white.withOpacity(0.9),
+                  color: AppColors.whiteOpacity(0.9),
                 ),
               ),
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: AppColors.whiteOpacity(0.2),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: FittedBox(
@@ -96,7 +96,7 @@ class IncomeSummaryCard extends StatelessWidget {
                   style: TextStyles.customStyle(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white.withOpacity(0.8),
+                    color: AppColors.whiteOpacity(0.8),
                   ),
                 ),
               ],
@@ -107,7 +107,7 @@ class IncomeSummaryCard extends StatelessWidget {
             children: [
               Icon(
                 Icons.calendar_today_rounded,
-                color: Colors.white.withOpacity(0.7),
+                color: AppColors.whiteOpacity(0.7),
                 size: 14.sp,
               ),
               SizedBox(width: 8.w),
@@ -119,7 +119,7 @@ class IncomeSummaryCard extends StatelessWidget {
                   style: TextStyles.customStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w500,
-                    color: Colors.white.withOpacity(0.7),
+                    color: AppColors.whiteOpacity(0.7),
                   ),
                 ),
               ),

@@ -67,7 +67,7 @@ class _ReportsTimeRangeSelectorState extends State<ReportsTimeRangeSelector> {
                     borderRadius: BorderRadius.circular(20.r),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha:0.05),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -96,7 +96,7 @@ class _ReportsTimeRangeSelectorState extends State<ReportsTimeRangeSelector> {
                                 : FontWeight.w500,
                             color: _selectedIndex == index
                                 ? AppColors.primaryColor
-                                : AppColors.blackLight.withOpacity(0.5),
+                                : AppColors.blackLight.withValues(alpha:0.5),
                           ),
                         ),
                       ),

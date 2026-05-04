@@ -44,7 +44,7 @@ class CustomButton extends StatelessWidget {
             borderRadius: BorderRadius.circular((borderRadius ?? 12).r),
           ),
           elevation: 1,
-          shadowColor: AppColors.actionButton.withOpacity(0.3),
+          shadowColor: AppColors.actionButton.withValues(alpha: 0.3),
         ),
         child: FittedBox(
           fit: BoxFit.scaleDown,

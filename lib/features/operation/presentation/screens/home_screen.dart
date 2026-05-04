@@ -17,11 +17,10 @@ import 'package:tahsel/features/operation/presentation/widgets/quick_add_sub_tab
 import 'package:tahsel/features/operation/presentation/widgets/quick_add_summary_card.dart';
 import 'package:tahsel/features/operation/presentation/widgets/quick_add_time_form.dart';
 import 'package:tahsel/features/operation/presentation/widgets/quick_add_turn_form.dart';
-import 'package:tahsel/shared/widgets/buttons/quick_action_button.dart';
-import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
-
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/shared/widgets/buttons/quick_action_button.dart';
+import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 
 import '../../../customer/presentation/cubit/customer_cubit.dart';
 import '../../../debt/presentation/cubit/debt_cubit.dart';
@@ -609,7 +608,7 @@ class _HomeScreenState extends State<HomeScreen> {
               if (state is OperationLoading ||
                   context.watch<DebtCubit>().state is DebtLoading)
                 Container(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withValues(alpha:0.3),
                   child: Center(
                     child: CircularProgressIndicator(
                       color: AppColors.primaryColor,

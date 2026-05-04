@@ -75,7 +75,7 @@ class AddExpenseField extends StatelessWidget {
               hintStyle: TextStyles.customStyle(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w500,
-                color: AppColors.blackLight.withOpacity(0.4),
+                color: AppColors.blackLight.withValues(alpha: 0.4),
               ),
               prefixIcon: prefixText != null
                   ? Padding(

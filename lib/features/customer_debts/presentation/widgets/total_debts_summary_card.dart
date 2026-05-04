@@ -2,12 +2,12 @@ import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/features/customer_debts/presentation/widgets/skeletons/total_debts_summary_skeleton.dart';
 
 import '../../../../core/extensions/string_extensions.dart';
 import '../../../../core/utils/app_colors.dart';
 import '../../../../core/utils/app_strings.dart';
 import '../../../../core/utils/styles.dart';
-import 'package:tahsel/features/customer_debts/presentation/widgets/skeletons/total_debts_summary_skeleton.dart';
 import '../../../debt/presentation/cubit/total_debts/total_debts_cubit.dart';
 import '../../../debt/presentation/cubit/total_debts/total_debts_state.dart';
 
@@ -51,8 +51,8 @@ class _TotalDebtsSummaryCardState extends State<TotalDebtsSummaryCard> {
                 borderRadius: BorderRadius.circular(20.r),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(
-                      AppColors.isDark ? 0.3 : 0.05,
+                    color: Colors.black.withValues(
+                      alpha: AppColors.isDark ? 0.3 : 0.05,
                     ),
                     blurRadius: 15,
                     offset: const Offset(0, 5),
@@ -60,8 +60,8 @@ class _TotalDebtsSummaryCardState extends State<TotalDebtsSummaryCard> {
                 ],
                 border: Border.all(
                   color: AppColors.isDark
-                      ? Colors.white.withOpacity(0.05)
-                      : Colors.transparent,
+                      ? AppColors.whiteOpacity(0.05)
+                      : AppColors.transparent,
                 ),
               ),
               child: Column(
@@ -72,7 +72,7 @@ class _TotalDebtsSummaryCardState extends State<TotalDebtsSummaryCard> {
                       Container(
                         padding: EdgeInsets.all(8.r),
                         decoration: BoxDecoration(
-                          color: AppColors.error.withOpacity(0.1),
+                          color: AppColors.error.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12.r),
                         ),
                         child: Icon(

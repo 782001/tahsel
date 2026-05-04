@@ -10,10 +10,10 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/assets.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/features/customer/presentation/cubit/customer_cubit.dart';
 import 'package:tahsel/features/customer/presentation/cubit/customer_state.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_state.dart';
-import 'package:tahsel/features/customer/presentation/cubit/customer_cubit.dart';
 
 class MyDebtsNotificationDialog extends StatefulWidget {
   final String personName;
@@ -69,7 +69,7 @@ class MyDebtsNotificationDialog extends StatefulWidget {
         isScrollControlled: true,
         isDismissible: false,
         enableDrag: false,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         builder: (ctx) => Padding(
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(ctx).viewInsets.bottom,
