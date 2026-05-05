@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -64,7 +63,7 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
             style: TextStyles.customStyle(
               color: AppColors.black,
               fontWeight: FontWeight.bold,
-              fontSize: 20.sp,
+              fontSize: 20,
             ),
           ),
           centerTitle: true,
@@ -83,14 +82,14 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
                 controller: _searchController,
                 style: TextStyles.customStyle(
                   color: AppColors.black,
-                  fontSize: 16.sp,
+                  fontSize: 16,
                 ),
                 cursorColor: AppColors.primaryColor,
                 decoration: InputDecoration(
                   hintText: AppStrings.searchByNameOrPhone.tr(),
                   hintStyle: TextStyles.customStyle(
                     color: AppColors.blackLight,
-                    fontSize: 14.sp,
+                    fontSize: 14,
                   ),
 
                   prefixIcon: Icon(Icons.search, color: AppColors.primaryColor),
@@ -171,7 +170,7 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
                           AppStrings.noData.tr(),
                           style: TextStyles.customStyle(
                             color: AppColors.blackLight,
-                            fontSize: 16.sp,
+                            fontSize: 16,
                           ),
                         ),
                       ],
@@ -222,7 +221,7 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyles.customStyle(
                                         color: AppColors.black,
-                                        fontSize: 18.sp,
+                                        fontSize: 18,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -254,7 +253,7 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
                                                 '${customer.totalTransactions} ${AppStrings.operations.tr()}',
                                                 style: TextStyles.customStyle(
                                                   color: AppColors.primaryColor,
-                                                  fontSize: 12.sp,
+                                                  fontSize: 12,
                                                   fontWeight: FontWeight.w500,
                                                 ),
                                               ),
@@ -279,7 +278,7 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
                                               overflow: TextOverflow.ellipsis,
                                               style: TextStyles.customStyle(
                                                 color: AppColors.blackLight,
-                                                fontSize: 12.sp,
+                                                fontSize: 12,
                                               ),
                                             ),
                                           ),

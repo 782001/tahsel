@@ -34,9 +34,9 @@ class BuildMyDebtDetailsSummaryCard extends StatelessWidget {
           colors: isSettled
               ? [
                   AppColors.primaryColor,
-                  AppColors.primaryColor.withValues(alpha:0.8),
+                  AppColors.primaryColor.withValues(alpha: 0.8),
                 ]
-              : [AppColors.error.withValues(alpha:0.9), AppColors.error],
+              : [AppColors.error.withValues(alpha: 0.9), AppColors.error],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -44,7 +44,7 @@ class BuildMyDebtDetailsSummaryCard extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: (isSettled ? AppColors.primaryColor : AppColors.error)
-                .withValues(alpha:0.3),
+                .withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -66,7 +66,7 @@ class BuildMyDebtDetailsSummaryCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyles.customStyle(
                         color: Colors.white,
-                        fontSize: 20.sp,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -86,7 +86,7 @@ class BuildMyDebtDetailsSummaryCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyles.customStyle(
                           color: Colors.white,
-                          fontSize: 14.sp,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -106,7 +106,7 @@ class BuildMyDebtDetailsSummaryCard extends StatelessWidget {
                       : AppStrings.debtStatusOverdue.tr(),
                   style: TextStyles.customStyle(
                     color: Colors.white,
-                    fontSize: 10.sp,
+                    fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

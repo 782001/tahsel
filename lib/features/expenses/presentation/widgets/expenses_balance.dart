@@ -38,7 +38,7 @@ class ExpensesBalance extends StatelessWidget {
               Text(
                 AppStrings.totalExpensesThisMonth.tr(),
                 style: TextStyles.customStyle(
-                  fontSize: 14.sp,
+                  fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: AppColors.blackLight,
                   letterSpacing: 0.5,
@@ -55,7 +55,7 @@ class ExpensesBalance extends StatelessWidget {
                     Text(
                       amountMain,
                       style: TextStyles.customStyle(
-                        fontSize: 56.sp,
+                        fontSize: 56,
                         fontWeight: FontWeight.w800,
                         color: AppColors.black,
                         height: 1.0,
@@ -65,7 +65,7 @@ class ExpensesBalance extends StatelessWidget {
                     Text(
                       amountDecimal,
                       style: TextStyles.customStyle(
-                        fontSize: 24.sp,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: AppColors.blackLight,
                       ),
@@ -74,7 +74,7 @@ class ExpensesBalance extends StatelessWidget {
                     Text(
                       AppStrings.currencyEgp.tr(),
                       style: TextStyles.customStyle(
-                        fontSize: 20.sp,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: AppColors.blackLight,
                       ),
@@ -109,7 +109,7 @@ class ExpensesBalance extends StatelessWidget {
                             ? "${AppStrings.comparisonLastMonth.tr()} $percentage%"
                             : "${AppStrings.comparisonLastMonth.tr()} $percentage%",
                         style: TextStyles.customStyle(
-                          fontSize: 13.sp,
+                          fontSize: 13,
                           fontWeight: FontWeight.bold,
                           color: isIncrease ? AppColors.error : AppColors.green,
                         ),

@@ -22,7 +22,7 @@ class ReportsOperationalMarginCard extends StatelessWidget {
       margin: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
       padding: EdgeInsets.all(24.r),
       decoration: BoxDecoration(
-        color: AppColors.stitchSurfaceLow.withValues(alpha:0.5),
+        color: AppColors.stitchSurfaceLow.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(24.r),
       ),
       child: Column(
@@ -38,9 +38,9 @@ class ReportsOperationalMarginCard extends StatelessWidget {
                     Text(
                       AppStrings.netProfit.tr(),
                       style: TextStyles.customStyle(
-                        fontSize: 12.sp,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.blackLight.withValues(alpha:0.5),
+                        color: AppColors.blackLight.withValues(alpha: 0.5),
                       ),
                     ),
                     SizedBox(height: 4.h),
@@ -50,7 +50,7 @@ class ReportsOperationalMarginCard extends StatelessWidget {
                       child: Text(
                         "$amount ${AppStrings.currencyEgp.tr()}",
                         style: TextStyles.customStyle(
-                          fontSize: 24.sp,
+                          fontSize: 24,
                           fontWeight: FontWeight.w900,
                           color: AppColors.black,
                         ),
@@ -67,9 +67,9 @@ class ReportsOperationalMarginCard extends StatelessWidget {
                     Text(
                       AppStrings.operationalMargin.tr(),
                       style: TextStyles.customStyle(
-                        fontSize: 12.sp,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.blackLight.withValues(alpha:0.5),
+                        color: AppColors.blackLight.withValues(alpha: 0.5),
                       ),
                     ),
                     SizedBox(height: 4.h),
@@ -78,7 +78,7 @@ class ReportsOperationalMarginCard extends StatelessWidget {
                       child: Text(
                         "${(margin * 100).toInt()}%",
                         style: TextStyles.customStyle(
-                          fontSize: 16.sp,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: AppColors.black,
                         ),

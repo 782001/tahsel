@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/customer_debts_header.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/customer_debts_list.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
@@ -10,11 +11,11 @@ import 'package:tahsel/features/standard_features/no-internet/logic/connectivity
 import 'package:tahsel/shared/widgets/no_internet_view.dart';
 
 import '../../../../core/utils/app_colors.dart';
+import '../../../../routes/app_routes.dart';
 import '../../../../shared/widgets/text_fields/custom_search_field.dart';
 import '../../../debt/presentation/cubit/debt_cubit.dart';
 import '../../../debt/presentation/cubit/debt_state.dart';
 import '../../../debt/presentation/cubit/total_debts/total_debts_cubit.dart';
-import '../../../../routes/app_routes.dart';
 import '../widgets/total_debts_summary_card.dart';
 
 class CustomerDebtsScreen extends StatefulWidget {
@@ -99,10 +100,14 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen>
                                 horizontal: 16,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.primaryColor.withValues(alpha: 0.1),
+                                color: AppColors.primaryColor.withValues(
+                                  alpha: 0.1,
+                                ),
                                 borderRadius: BorderRadius.circular(12.r),
                                 border: Border.all(
-                                  color: AppColors.primaryColor.withValues(alpha:0.2),
+                                  color: AppColors.primaryColor.withValues(
+                                    alpha: 0.2,
+                                  ),
                                 ),
                               ),
                               child: Row(
@@ -115,10 +120,10 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen>
                                   Expanded(
                                     child: Text(
                                       AppStrings.collectedAmount.tr(),
-                                      style: TextStyle(
+                                      style: TextStyles.customStyle(
                                         color: AppColors.primaryColor,
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 16.sp,
+                                        fontSize: 16,
                                       ),
                                     ),
                                   ),

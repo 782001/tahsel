@@ -42,14 +42,14 @@ class MyNotificationPreferenceToggle extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.notifications_active_outlined,
-                    size: 18.sp,
+                    size: 18,
                     color: AppColors.primaryColor,
                   ),
                   SizedBox(width: 8.w),
                   Text(
                     AppStrings.notificationChannel.tr(),
                     style: TextStyles.customStyle(
-                      fontSize: 14.sp,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textColor,
                     ),
@@ -65,7 +65,7 @@ class MyNotificationPreferenceToggle extends StatelessWidget {
                       value: 'none',
                       label: Text(
                         AppStrings.none.tr(),
-                        style: TextStyle(fontSize: 12.sp),
+                        style: TextStyles.customStyle(fontSize: 12),
                       ),
                       icon: const Icon(Icons.notifications_off_outlined),
                     ),
@@ -73,7 +73,7 @@ class MyNotificationPreferenceToggle extends StatelessWidget {
                       value: 'whatsapp',
                       label: Text(
                         AppStrings.whatsapp.tr(),
-                        style: TextStyle(fontSize: 12.sp),
+                        style: TextStyles.customStyle(fontSize: 12),
                       ),
                       icon: Image.asset(
                         Assets.imagesWhatsapp,
@@ -85,7 +85,7 @@ class MyNotificationPreferenceToggle extends StatelessWidget {
                       value: 'sms',
                       label: Text(
                         AppStrings.sms.tr(),
-                        style: TextStyle(fontSize: 12.sp),
+                        style: TextStyles.customStyle(fontSize: 12),
                       ),
                       icon: const Icon(Icons.sms_outlined),
                     ),

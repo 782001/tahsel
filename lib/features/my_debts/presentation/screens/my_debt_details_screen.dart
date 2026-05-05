@@ -173,7 +173,7 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
               AppStrings.cancel.tr(),
               style: TextStyles.customStyle(
                 color: AppColors.disabledColor,
-                fontSize: 16.sp,
+                fontSize: 16,
               ),
             ),
           ),
@@ -193,7 +193,7 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
               AppStrings.delete.tr(),
               style: TextStyles.customStyle(
                 color: AppColors.error,
-                fontSize: 16.sp,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -249,7 +249,7 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
                 AppStrings.addMyDebt.tr(),
                 style: TextStyles.customStyle(
                   color: AppColors.whiteColor,
-                  fontSize: 16.sp,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -263,7 +263,7 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
                       widget.person.name,
                       style: TextStyles.customStyle(
                         color: AppColors.textColor,
-                        fontSize: 18.sp,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -306,7 +306,7 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
                         widget.person.name,
                         style: TextStyles.customStyle(
                           color: Colors.white,
-                          fontSize: 18.sp,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -436,7 +436,7 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
                               AppStrings.activityDetails.tr(),
                               style: TextStyles.customStyle(
                                 color: AppColors.textColor,
-                                fontSize: 16.sp,
+                                fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -456,7 +456,7 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
                                 '${state.items.length} ${AppStrings.transactionCount.tr()}',
                                 style: TextStyles.customStyle(
                                   color: AppColors.primaryColor,
-                                  fontSize: 11.sp,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/styles.dart';
 
 enum PlayStationMode { time, turn }
 
@@ -87,7 +88,7 @@ class _SubTab extends StatelessWidget {
         child: Center(
           child: Text(
             title,
-            style: TextStyle(
+            style: TextStyles.customStyle(
               fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
               color: isActive ? AppColors.primaryColor : AppColors.blackLight,
             ),

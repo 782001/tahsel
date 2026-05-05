@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:tahsel/core/utils/date_formatter.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/date_formatter.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/expenses/domain/entities/expense_entity.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
@@ -79,11 +79,17 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   }
 
   void _submit() {
-    if (_amountController.text.isEmpty || _nameController.text.isEmpty) {
+    final amount = _amountController.text.toDoubleOrNull();
+
+    if (amount == null || _nameController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           duration: const Duration(milliseconds: 500),
-          content: Text(AppStrings.validationFieldRequired.tr()),
+          content: Text(
+            amount == null
+                ? AppStrings.validationInvalidAmount.tr()
+                : AppStrings.validationFieldRequired.tr(),
+          ),
         ),
       );
       return;
@@ -91,7 +97,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
     final expense = ExpenseEntity(
       uid: AppStrings.userToken,
-      amount: double.parse(_amountController.text),
+      amount: amount,
       category: _nameController.text,
       description: _descController.text,
       createdAt: _selectedDate,
@@ -115,7 +121,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         title: Text(
           AppStrings.addNewExpense.tr(),
           style: TextStyles.customStyle(
-            fontSize: 20.sp,
+            fontSize: 20,
             fontWeight: FontWeight.w800,
             color: AppColors.black,
           ),

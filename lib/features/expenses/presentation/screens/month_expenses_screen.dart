@@ -5,6 +5,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/date_formatter.dart';
+import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_state.dart';
 import 'package:tahsel/features/expenses/presentation/widgets/expense_card.dart';
@@ -49,8 +50,8 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
           centerTitle: true,
           title: Text(
             widget.monthName,
-            style: TextStyle(
-              fontSize: 20.sp,
+            style: TextStyles.customStyle(
+              fontSize: 20,
               fontWeight: FontWeight.w700,
               color: AppColors.black,
             ),
@@ -112,7 +113,7 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
                   return Center(
                     child: Text(
                       AppStrings.noData.tr(),
-                      style: const TextStyle(color: AppColors.grey),
+                      style: TextStyles.customStyle(color: AppColors.grey),
                     ),
                   );
                 }
@@ -172,7 +173,7 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               AppStrings.cancel.tr(),
-              style: TextStyle(color: AppColors.blackLight),
+              style: TextStyles.customStyle(color: AppColors.blackLight),
             ),
           ),
           TextButton(
@@ -187,7 +188,7 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
             },
             child: Text(
               AppStrings.delete.tr(),
-              style: TextStyle(color: AppColors.error),
+              style: TextStyles.customStyle(color: AppColors.error),
             ),
           ),
         ],

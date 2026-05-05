@@ -6,11 +6,11 @@ import 'package:tahsel/core/widgets/exit_confirmation_dialog.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_state.dart';
 import 'package:tahsel/features/main_layout/presentation/widgets/bottom_nav_bar.dart';
+import 'package:tahsel/features/offline_sync/presentation/widgets/offline_banner.dart';
+import 'package:tahsel/features/offline_sync/presentation/widgets/sync_status_listener.dart';
 import 'package:tahsel/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_cubit.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_state.dart';
-import 'package:tahsel/features/offline_sync/presentation/widgets/offline_banner.dart';
-import 'package:tahsel/features/offline_sync/presentation/widgets/sync_status_listener.dart';
 
 class MainLayoutScreen extends StatelessWidget {
   const MainLayoutScreen({super.key});

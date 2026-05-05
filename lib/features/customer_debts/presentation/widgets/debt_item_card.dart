@@ -74,7 +74,7 @@ class DebtItemCard extends StatelessWidget {
                       '$index',
                       style: TextStyles.customStyle(
                         color: AppColors.primaryColor,
-                        fontSize: 12.sp,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -90,7 +90,7 @@ class DebtItemCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyles.customStyle(
                             color: AppColors.textColor,
-                            fontSize: 15.sp,
+                            fontSize: 15,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -107,7 +107,7 @@ class DebtItemCard extends StatelessWidget {
                               item.date,
                               style: TextStyles.customStyle(
                                 color: AppColors.disabledColor,
-                                fontSize: 11.sp,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -136,7 +136,7 @@ class DebtItemCard extends StatelessWidget {
                         color: isSettled
                             ? AppColors.primaryColor
                             : AppColors.error,
-                        fontSize: 10.sp,
+                        fontSize: 10,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -193,7 +193,7 @@ class DebtItemCard extends StatelessWidget {
                           ),
                           padding: EdgeInsets.symmetric(vertical: 8.h),
                           textStyle: TextStyles.customStyle(
-                            fontSize: 12.sp,
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
                           shape: RoundedRectangleBorder(
@@ -214,7 +214,7 @@ class DebtItemCard extends StatelessWidget {
                           elevation: 0,
                           padding: EdgeInsets.symmetric(vertical: 8.h),
                           textStyle: TextStyles.customStyle(
-                            fontSize: 12.sp,
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
                           shape: RoundedRectangleBorder(
@@ -256,7 +256,7 @@ class _FinancialCell extends StatelessWidget {
             label,
             style: TextStyles.customStyle(
               color: AppColors.disabledColor,
-              fontSize: 10.sp,
+              fontSize: 10,
               fontWeight: FontWeight.w500,
             ),
             textAlign: TextAlign.center,
@@ -268,7 +268,7 @@ class _FinancialCell extends StatelessWidget {
               '${amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
               style: TextStyles.customStyle(
                 color: color,
-                fontSize: 13.sp,
+                fontSize: 13,
                 fontWeight: FontWeight.w800,
               ),
               textAlign: TextAlign.center,

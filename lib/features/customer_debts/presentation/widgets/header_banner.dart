@@ -44,7 +44,7 @@ class HeaderBanner extends StatelessWidget {
                         : '؟',
                     style: TextStyles.customStyle(
                       color: Colors.white,
-                      fontSize: 22.sp,
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -58,7 +58,7 @@ class HeaderBanner extends StatelessWidget {
                         detail.customerName,
                         style: TextStyles.customStyle(
                           color: Colors.white,
-                          fontSize: 20.sp,
+                          fontSize: 20,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -78,7 +78,7 @@ class HeaderBanner extends StatelessWidget {
                             detail.ledgerNumber ?? "",
                             style: TextStyles.customStyle(
                               color: Colors.white,
-                              fontSize: 11.sp,
+                              fontSize: 11,
                               fontWeight: FontWeight.w600,
                             ),
                           ),

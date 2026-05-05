@@ -80,7 +80,7 @@ class _MyDebtDetailsReportScreenState extends State<MyDebtDetailsReportScreen> {
             AppStrings.debtDetails.tr(),
             style: TextStyles.customStyle(
               color: AppColors.textColor,
-              fontSize: 18.sp,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -184,7 +184,7 @@ class _MyDebtDetailsReportScreenState extends State<MyDebtDetailsReportScreen> {
                                 AppStrings.noTransactions.tr(),
                                 style: TextStyles.customStyle(
                                   color: AppColors.disabledColor,
-                                  fontSize: 14.sp,
+                                  fontSize: 14,
                                 ),
                               ),
                             ),
@@ -218,7 +218,7 @@ class _MyDebtDetailsReportScreenState extends State<MyDebtDetailsReportScreen> {
                                   state.message,
                                   style: TextStyles.customStyle(
                                     color: AppColors.error,
-                                    fontSize: 13.sp,
+                                    fontSize: 13,
                                   ),
                                 ),
                                 SizedBox(height: 16.h),

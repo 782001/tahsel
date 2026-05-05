@@ -288,7 +288,7 @@ class _NotificationDialogState extends State<NotificationDialog> {
                       : AppStrings.sms.tr(),
                   style: TextStyles.customStyle(
                     color: AppColors.textColor,
-                    fontSize: 18.sp,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -300,7 +300,7 @@ class _NotificationDialogState extends State<NotificationDialog> {
             AppStrings.customerPhone.tr(),
             style: TextStyles.customStyle(
               color: AppColors.disabledColor,
-              fontSize: 14.sp,
+              fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -323,7 +323,7 @@ class _NotificationDialogState extends State<NotificationDialog> {
                     style: TextStyles.customStyle(
                       color: AppColors.textColor,
                       fontWeight: FontWeight.w400,
-                      fontSize: 16.sp,
+                      fontSize: 16,
                     ),
                     decoration: InputDecoration(
                       hintText: '01xxxxxxxxx',
@@ -352,7 +352,10 @@ class _NotificationDialogState extends State<NotificationDialog> {
             SizedBox(height: 8.h),
             Text(
               _errorText!,
-              style: TextStyle(color: AppColors.error, fontSize: 12.sp),
+              style: TextStyles.customStyle(
+                color: AppColors.error,
+                fontSize: 12,
+              ),
             ),
           ],
           SizedBox(height: 24.h),
@@ -366,7 +369,7 @@ class _NotificationDialogState extends State<NotificationDialog> {
                     style: TextStyles.customStyle(
                       color: AppColors.disabledColor,
                       fontWeight: FontWeight.bold,
-                      fontSize: 12.sp,
+                      fontSize: 12,
                     ),
                   ),
                 ),
@@ -398,7 +401,7 @@ class _NotificationDialogState extends State<NotificationDialog> {
                           style: TextStyles.customStyle(
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
-                            fontSize: 12.sp,
+                            fontSize: 12,
                           ),
                         ),
                 ),

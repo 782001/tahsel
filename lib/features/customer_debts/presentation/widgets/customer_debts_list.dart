@@ -259,7 +259,9 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
                   child: Center(
                     child: Text(
                       AppStrings.noCustomerDebts.tr(),
-                      style: const TextStyle(color: AppColors.grey),
+                      style:  TextStyles.customStyle(
+                        color: AppColors.grey,
+                      ),
                     ),
                   ),
                 );

@@ -5,6 +5,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/expenses/domain/entities/expense_entity.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_state.dart';
@@ -49,7 +50,7 @@ class ExpensesList extends StatelessWidget {
                     padding: EdgeInsets.symmetric(vertical: 40.h),
                     child: Text(
                       AppStrings.noData.tr(),
-                      style: const TextStyle(color: AppColors.grey),
+                      style:  TextStyles.customStyle(color: AppColors.grey),
                     ),
                   ),
                 );
@@ -63,8 +64,8 @@ class ExpensesList extends StatelessWidget {
                     if (pending.isNotEmpty) ...[
                       Text(
                         AppStrings.pendingUpload.tr(),
-                        style: TextStyle(
-                          fontSize: 14.sp,
+                        style: TextStyles.customStyle(
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: AppColors.primaryColor,
                         ),
@@ -85,8 +86,8 @@ class ExpensesList extends StatelessWidget {
                         ),
                         Text(
                           AppStrings.allExpenses.tr(),
-                          style: TextStyle(
-                            fontSize: 14.sp,
+                          style: TextStyles.customStyle(
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: AppColors.black,
                           ),
@@ -160,8 +161,8 @@ class ExpensesList extends StatelessWidget {
               children: [
                 Text(
                   record.customerName,
-                  style: TextStyle(
-                    fontSize: 16.sp,
+                  style: TextStyles.customStyle(
+                    fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: AppColors.black,
                   ),
@@ -169,8 +170,8 @@ class ExpensesList extends StatelessWidget {
                 SizedBox(height: 4.h),
                 Text(
                   AppStrings.waitingForInternet.tr(),
-                  style: TextStyle(
-                    fontSize: 12.sp,
+                  style: TextStyles.customStyle(
+                    fontSize: 12,
                     color: AppColors.error,
                     fontWeight: FontWeight.w500,
                   ),
@@ -180,8 +181,8 @@ class ExpensesList extends StatelessWidget {
           ),
           Text(
             "${record.amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}",
-            style: TextStyle(
-              fontSize: 16.sp,
+            style: TextStyles.customStyle(
+              fontSize: 16,
               fontWeight: FontWeight.w700,
               color: AppColors.error,
             ),
@@ -263,8 +264,8 @@ class ExpensesList extends StatelessWidget {
                   children: [
                     Text(
                       month.monthName,
-                      style: TextStyle(
-                        fontSize: 16.sp,
+                      style: TextStyles.customStyle(
+                        fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: AppColors.black,
                       ),
@@ -272,7 +273,7 @@ class ExpensesList extends StatelessWidget {
                     SizedBox(height: 4.h),
                     Text(
                       "${month.transactionCount} ${AppStrings.transactionCount.tr()}",
-                      style: TextStyle(fontSize: 12.sp, color: AppColors.grey),
+                      style: TextStyles.customStyle(fontSize: 12, color: AppColors.grey),
                     ),
                   ],
                 ),
@@ -284,8 +285,8 @@ class ExpensesList extends StatelessWidget {
                   children: [
                     Text(
                       "${month.totalAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}",
-                      style: TextStyle(
-                        fontSize: 16.sp,
+                      style: TextStyles.customStyle(
+                        fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: AppColors.primaryColor,
                       ),
@@ -323,7 +324,7 @@ class ExpensesList extends StatelessWidget {
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               AppStrings.cancel.tr(),
-              style: TextStyle(color: AppColors.blackLight),
+              style: TextStyles.customStyle(color: AppColors.blackLight),
             ),
           ),
           TextButton(
@@ -333,7 +334,7 @@ class ExpensesList extends StatelessWidget {
             },
             child: Text(
               AppStrings.delete.tr(),
-              style: TextStyle(color: AppColors.error),
+              style: TextStyles.customStyle(color: AppColors.error),
             ),
           ),
         ],

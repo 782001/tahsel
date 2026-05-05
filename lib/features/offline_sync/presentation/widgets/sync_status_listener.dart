@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/utils/styles.dart';
 
 import '../../../../core/extensions/string_extensions.dart';
 import '../../../../core/utils/app_colors.dart';
@@ -36,7 +37,7 @@ class SyncStatusListener extends StatelessWidget {
                   SizedBox(width: 12.w),
                   Text(
                     AppStrings.syncingData.tr(),
-                    style: const TextStyle(color: Colors.white),
+                    style:  TextStyles.customStyle(color: Colors.white),
                   ),
                 ],
               ),

@@ -25,7 +25,7 @@ class NoInternetView extends StatelessWidget {
               ),
               child: Icon(
                 Icons.wifi_off_rounded,
-                size: 80.sp,
+                size: 80,
                 color: AppColors.error.withValues(alpha: 0.8),
               ),
             ),
@@ -33,7 +33,7 @@ class NoInternetView extends StatelessWidget {
             Text(
               "noInternetTitle".tr(),
               style: TextStyles.customStyle(
-                fontSize: 22.sp,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: AppColors.black,
               ),
@@ -43,7 +43,7 @@ class NoInternetView extends StatelessWidget {
             Text(
               "noInternetDescription".tr(),
               style: TextStyles.customStyle(
-                fontSize: 14.sp,
+                fontSize: 14,
                 color: AppColors.primaryColor,
                 fontWeight: FontWeight.w500,
 
@@ -69,7 +69,7 @@ class NoInternetView extends StatelessWidget {
             //     child: Text(
             //       "tryAgain".tr(),
             //       style: TextStyles.customStyle(
-            //         fontSize: 16.sp,
+            //         fontSize: 16,
             //         fontWeight: FontWeight.bold,
             //         color: Colors.white,
             //       ),

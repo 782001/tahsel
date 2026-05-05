@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/utils/styles.dart';
 
 import '../../domain/entities/customer_entity.dart';
 import '../cubit/customer_cubit.dart';
@@ -48,14 +49,14 @@ class CustomerAutocompleteField extends StatelessWidget {
               focusNode: fieldFocusNode,
               textInputAction: textInputAction,
               onSubmitted: onSubmitted,
-              style: TextStyle(
+              style: TextStyles.customStyle(
                 fontWeight: FontWeight.w600,
                 color: AppColors.black,
               ),
               decoration: InputDecoration(
                 hintText: hint,
                 errorText: errorText,
-                hintStyle: TextStyle(
+                hintStyle: TextStyles.customStyle(
                   color: AppColors.blackLight.withValues(alpha: 0.5),
                   fontWeight: FontWeight.normal,
                 ),
@@ -115,7 +116,7 @@ class CustomerAutocompleteField extends StatelessWidget {
                           return ListTile(
                             title: Text(
                               option.name,
-                              style: TextStyle(
+                              style: TextStyles.customStyle(
                                 color: AppColors.black,
                                 fontWeight: FontWeight.w500,
                               ),

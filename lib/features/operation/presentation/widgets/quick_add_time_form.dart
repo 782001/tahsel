@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/customer/presentation/widgets/customer_autocomplete_field.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 
@@ -46,9 +47,9 @@ class QuickAddTimeForm extends StatelessWidget {
       children: [
         Text(
           AppStrings.customerName.tr(),
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyles.customStyle(fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         CustomerAutocompleteField(
           hint: AppStrings.customerNameHint.tr(),
           controller: customerController,
@@ -59,7 +60,7 @@ class QuickAddTimeForm extends StatelessWidget {
           textInputAction: customerInputAction,
           onSubmitted: onCustomerSubmitted ?? (_) => nextFocus.requestFocus(),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
         Row(
           children: [
             Expanded(
@@ -68,7 +69,7 @@ class QuickAddTimeForm extends StatelessWidget {
                 children: [
                   Text(
                     AppStrings.pricePerHour.tr(),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyles.customStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   QuickAddTextField(
@@ -83,16 +84,16 @@ class QuickAddTimeForm extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     AppStrings.timeDuration.tr(),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyles.customStyle(fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(height: 8),
+                const  SizedBox(height: 8),
                   _buildCounterField(value: '$durationMinutes'),
                 ],
               ),
@@ -113,15 +114,18 @@ class QuickAddTimeForm extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(Icons.add, color: Color(0xFF2E7D32)),
+            icon: Icon(Icons.add, color: Color(0xFF2E7D32)),
             onPressed: onDurationAdd,
           ),
           Text(
             value,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyles.customStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           IconButton(
-            icon: const Icon(Icons.remove, color: Colors.red),
+            icon: Icon(Icons.remove, color: Colors.red),
             onPressed: onDurationRemove,
           ),
         ],

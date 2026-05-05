@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/styles.dart';
 
 class QuickAddSummaryCard extends StatelessWidget {
   final double totalDue;
@@ -32,13 +33,16 @@ class QuickAddSummaryCard extends StatelessWidget {
         children: [
           Text(
             label ?? AppStrings.totalDueLabel.tr(),
-            style: TextStyle(color: AppColors.blackLight, fontSize: 14),
+            style: TextStyles.customStyle(
+              color: AppColors.blackLight,
+              fontSize: 14,
+            ),
           ),
           const SizedBox(height: 4),
           FittedBox(
             child: Text(
               '${totalDue.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
-              style: TextStyle(
+              style: TextStyles.customStyle(
                 fontSize: 48,
                 fontWeight: FontWeight.w900,
                 color: AppColors.black,

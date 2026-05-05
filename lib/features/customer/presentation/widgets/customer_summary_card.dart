@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -82,7 +81,7 @@ class CustomerSummaryCard extends StatelessWidget {
           textAlign: TextAlign.center,
           style: TextStyles.customStyle(
             color: color.withAlpha(200),
-            fontSize: (isLarge ? 16 : 14).sp,
+            fontSize: (isLarge ? 16 : 14),
             fontWeight: isLarge ? FontWeight.bold : FontWeight.normal,
           ),
         ),
@@ -94,7 +93,7 @@ class CustomerSummaryCard extends StatelessWidget {
           textAlign: TextAlign.center,
           style: TextStyles.customStyle(
             color: color,
-            fontSize: (isLarge ? 28 : 20).sp,
+            fontSize: (isLarge ? 28 : 20),
             fontWeight: FontWeight.bold,
           ),
         ),

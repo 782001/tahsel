@@ -76,7 +76,7 @@ class MyDebtItemCard extends StatelessWidget {
                     //         AppStrings.deleteDebtAfterPaid.tr(),
                     //         style: TextStyles.customStyle(
                     //           color: Colors.white,
-                    //           fontSize: 14.sp,
+                    //           fontSize: 14,
                     //         ),
                     //       ),
                     //     ),
@@ -110,7 +110,7 @@ class MyDebtItemCard extends StatelessWidget {
                               '#$index',
                               style: TextStyles.customStyle(
                                 color: AppColors.primaryColor,
-                                fontSize: 12.sp,
+                                fontSize: 12,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -141,7 +141,7 @@ class MyDebtItemCard extends StatelessWidget {
                                     "قيد المزامنة...",
                                     style: TextStyles.customStyle(
                                       color: AppColors.error,
-                                      fontSize: 10.sp,
+                                      fontSize: 10,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -157,7 +157,7 @@ class MyDebtItemCard extends StatelessWidget {
                             : '',
                         style: TextStyles.customStyle(
                           color: AppColors.subTitleColor,
-                          fontSize: 12.sp,
+                          fontSize: 12,
                         ),
                       ),
                     ],
@@ -169,7 +169,7 @@ class MyDebtItemCard extends StatelessWidget {
                         : AppStrings.noDescription.tr(),
                     style: TextStyles.customStyle(
                       color: AppColors.textColor,
-                      fontSize: 14.sp,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -212,7 +212,7 @@ class MyDebtItemCard extends StatelessWidget {
                               ),
                               padding: EdgeInsets.symmetric(vertical: 8.h),
                               textStyle: TextStyles.customStyle(
-                                fontSize: 12.sp,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w600,
                               ),
                               shape: RoundedRectangleBorder(
@@ -260,7 +260,7 @@ class MyDebtItemCard extends StatelessWidget {
                                   Text(
                                     AppStrings.fullPaymentLabel.tr(),
                                     style: TextStyles.customStyle(
-                                      fontSize: 12.sp,
+                                      fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                       color: AppColors.whiteColor,
                                     ),
@@ -294,7 +294,7 @@ class MyDebtItemCard extends StatelessWidget {
           label,
           style: TextStyles.customStyle(
             color: AppColors.subTitleColor,
-            fontSize: 10.sp,
+            fontSize: 10,
           ),
         ),
         SizedBox(height: 4.h),
@@ -302,7 +302,7 @@ class MyDebtItemCard extends StatelessWidget {
           '${amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
           style: TextStyles.customStyle(
             color: isRemaining ? AppColors.error : AppColors.textColor,
-            fontSize: 14.sp,
+            fontSize: 14,
             fontWeight: FontWeight.bold,
           ),
         ),

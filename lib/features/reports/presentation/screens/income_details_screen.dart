@@ -6,6 +6,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
@@ -45,18 +46,14 @@ class IncomeDetailsScreen extends StatelessWidget {
           centerTitle: true,
           title: Text(
             _getScreenTitle(context, type, period),
-            style: TextStyle(
+            style: TextStyles.customStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
-              fontSize: 18.sp,
+              fontSize: 18,
             ),
           ),
           leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_new,
-              color: Colors.white,
-              size: 20.sp,
-            ),
+            icon: Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -87,27 +84,26 @@ class IncomeDetailsScreen extends StatelessWidget {
                           Icon(
                             Icons.error_outline_rounded,
                             color: AppColors.error,
-                            size: 60.sp,
+                            size: 60,
                           ),
                           SizedBox(height: 16.h),
                           Text(
                             state.message,
-                            style: TextStyle(
+                            style: TextStyles.customStyle(
                               color: AppColors.error,
-                              fontSize: 16.sp,
+                              fontSize: 16,
                             ),
                             textAlign: TextAlign.center,
                           ),
                           SizedBox(height: 24.h),
                           ElevatedButton(
-                            onPressed:
-                                () => context
-                                    .read<IncomeDetailsCubit>()
-                                    .fetchIncomeDetails(
-                                      startDate,
-                                      endDate,
-                                      type: type,
-                                    ),
+                            onPressed: () => context
+                                .read<IncomeDetailsCubit>()
+                                .fetchIncomeDetails(
+                                  startDate,
+                                  endDate,
+                                  type: type,
+                                ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryColor,
                               shape: RoundedRectangleBorder(
@@ -133,14 +129,9 @@ class IncomeDetailsScreen extends StatelessWidget {
 
                   return RefreshIndicator(
                     color: AppColors.primaryColor,
-                    onRefresh:
-                        () => context
-                            .read<IncomeDetailsCubit>()
-                            .fetchIncomeDetails(
-                              startDate,
-                              endDate,
-                              type: type,
-                            ),
+                    onRefresh: () => context
+                        .read<IncomeDetailsCubit>()
+                        .fetchIncomeDetails(startDate, endDate, type: type),
                     child: CustomScrollView(
                       physics: const AlwaysScrollableScrollPhysics(
                         parent: BouncingScrollPhysics(),
@@ -149,7 +140,12 @@ class IncomeDetailsScreen extends StatelessWidget {
                         // Summary Section
                         SliverToBoxAdapter(
                           child: Padding(
-                            padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 16.h),
+                            padding: EdgeInsets.fromLTRB(
+                              24.w,
+                              24.h,
+                              24.w,
+                              16.h,
+                            ),
                             child: IncomeSummaryCard(
                               totalIncome: totalIncome,
                               count: state.operations.length,
@@ -168,7 +164,7 @@ class IncomeDetailsScreen extends StatelessWidget {
                                 children: [
                                   Icon(
                                     Icons.insert_chart_outlined_rounded,
-                                    size: 80.sp,
+                                    size: 80,
                                     color: AppColors.blackLight.withValues(
                                       alpha: 0.1,
                                     ),
@@ -176,11 +172,11 @@ class IncomeDetailsScreen extends StatelessWidget {
                                   SizedBox(height: 16.h),
                                   Text(
                                     AppStrings.noIncomeData.tr(),
-                                    style: TextStyle(
+                                    style: TextStyles.customStyle(
                                       color: AppColors.blackLight.withValues(
                                         alpha: 0.4,
                                       ),
-                                      fontSize: 16.sp,
+                                      fontSize: 16,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),

@@ -1,7 +1,7 @@
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/assets.dart';
+import 'package:tahsel/core/utils/responsive_text.dart';
 
 void showSuccessToast(String message) {
   Fluttertoast.showToast(
@@ -12,7 +12,7 @@ void showSuccessToast(String message) {
     timeInSecForIosWeb: 1,
     backgroundColor: AppColors.green,
     textColor: AppColors.whiteColor,
-    fontSize: 14.sp,
+    fontSize: getResponsiveFontSize(fontSize: 14),
   );
 }
 
@@ -25,6 +25,6 @@ void showfailureToast(String message) {
     timeInSecForIosWeb: 1,
     backgroundColor: AppColors.redColor,
     textColor: AppColors.whiteColor,
-    fontSize: 14.sp,
+    fontSize: getResponsiveFontSize(fontSize: 14),
   );
 }

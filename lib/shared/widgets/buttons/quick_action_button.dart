@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/utils/styles.dart';
 
 class QuickActionButton extends StatelessWidget {
   final String label;
@@ -23,7 +24,7 @@ class QuickActionButton extends StatelessWidget {
         icon: Icon(icon, color: AppColors.whiteColor),
         label: Text(
           label,
-          style: TextStyle(
+          style: TextStyles.customStyle(
             color: AppColors.whiteColor,
             fontSize: 18,
             fontWeight: FontWeight.bold,

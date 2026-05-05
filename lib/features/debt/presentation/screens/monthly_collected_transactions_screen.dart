@@ -31,7 +31,7 @@ class MonthlyCollectedTransactionsScreen extends StatelessWidget {
           style: TextStyles.customStyle(
             color: AppColors.textColor,
             fontWeight: FontWeight.bold,
-            fontSize: 20.sp,
+            fontSize: 20,
           ),
         ),
         centerTitle: true,
@@ -87,17 +87,17 @@ class MonthlyCollectedTransactionsScreen extends StatelessWidget {
         children: [
           Text(
             AppStrings.totalCollected.tr(),
-            style: TextStyle(
+            style: TextStyles.customStyle(
               color: Colors.white.withValues(alpha: 0.8),
-              fontSize: 14.sp,
+              fontSize: 14,
             ),
           ),
           SizedBox(height: 8.h),
           Text(
             "${monthlyData.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
-            style: TextStyle(
+            style: TextStyles.customStyle(
               color: Colors.white,
-              fontSize: 24.sp,
+              fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -144,8 +144,8 @@ class MonthlyCollectedTransactionsScreen extends StatelessWidget {
                       children: [
                         // Text(
                         //   "${AppStrings.customerName.tr()}: ",
-                        //   style: TextStyle(
-                        //     fontSize: 12.sp,
+                        //   style: TextStyles.customStyle(
+                        //     fontSize: 12,
                         //     color: AppColors.grey,
                         //     fontWeight: FontWeight.w500,
                         //   ),
@@ -153,8 +153,8 @@ class MonthlyCollectedTransactionsScreen extends StatelessWidget {
                         Expanded(
                           child: Text(
                             payment.relatedTo ?? AppStrings.unknown.tr(),
-                            style: TextStyle(
-                              fontSize: 15.sp,
+                            style: TextStyles.customStyle(
+                              fontSize: 15,
                               fontWeight: FontWeight.w800,
                               color: AppColors.primaryColor,
                             ),
@@ -170,16 +170,16 @@ class MonthlyCollectedTransactionsScreen extends StatelessWidget {
                         children: [
                           Text(
                             "●  ",
-                            style: TextStyle(
-                              fontSize: 11.sp,
+                            style: TextStyles.customStyle(
+                              fontSize: 11,
                               color: AppColors.grey,
                             ),
                           ),
                           Expanded(
                             child: Text(
                               payment.activityName!,
-                              style: TextStyle(
-                                fontSize: 13.sp,
+                              style: TextStyles.customStyle(
+                                fontSize: 13,
                                 color: AppColors.black,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -198,8 +198,8 @@ class MonthlyCollectedTransactionsScreen extends StatelessWidget {
                 children: [
                   Text(
                     "+${payment.amountPaid.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
-                    style: TextStyle(
-                      fontSize: 16.sp,
+                    style: TextStyles.customStyle(
+                      fontSize: 16,
                       fontWeight: FontWeight.w900,
                       color: AppColors.green,
                     ),
@@ -207,8 +207,8 @@ class MonthlyCollectedTransactionsScreen extends StatelessWidget {
                   SizedBox(height: 2.h),
                   Text(
                     _getPaymentTypeLabel(payment.type),
-                    style: TextStyle(
-                      fontSize: 11.sp,
+                    style: TextStyles.customStyle(
+                      fontSize: 11,
                       color: AppColors.grey,
                       fontWeight: FontWeight.w600,
                     ),
@@ -223,11 +223,14 @@ class MonthlyCollectedTransactionsScreen extends StatelessWidget {
           Row(
             children: [
               // Date
-              Icon(Icons.access_time, size: 14.sp, color: AppColors.grey),
+              Icon(Icons.access_time, size: 14, color: AppColors.grey),
               SizedBox(width: 6.w),
               Text(
                 dateStr,
-                style: TextStyle(fontSize: 11.sp, color: AppColors.grey),
+                style: TextStyles.customStyle(
+                  fontSize: 11,
+                  color: AppColors.grey,
+                ),
               ),
               const Spacer(),
               // Remaining Balance info
@@ -239,8 +242,8 @@ class MonthlyCollectedTransactionsScreen extends StatelessWidget {
                 ),
                 child: Text(
                   "${AppStrings.remaining.tr()}: ${payment.remainingAmount.toSmartAmount()}",
-                  style: TextStyle(
-                    fontSize: 10.sp,
+                  style: TextStyles.customStyle(
+                    fontSize: 10,
                     color: AppColors.grey,
                     fontWeight: FontWeight.w500,
                   ),

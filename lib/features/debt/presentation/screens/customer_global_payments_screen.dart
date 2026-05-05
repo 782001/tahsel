@@ -4,6 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:tahsel/core/extensions/extensions.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/shared/widgets/no_internet_view.dart';
 import 'package:tahsel/shared/widgets/shimmer/transaction_skeleton.dart';
 
 import '../../../../core/config/locale/app_localizations.dart';
@@ -14,9 +17,6 @@ import '../../../customer_debts/data/models/debt_item_model.dart';
 import '../../domain/entities/payment_entity.dart';
 import '../cubit/global_payments/global_payments_cubit.dart';
 import '../cubit/global_payments/global_payments_state.dart';
-import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
-import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
-import 'package:tahsel/shared/widgets/no_internet_view.dart';
 
 class CustomerGlobalPaymentsScreen extends StatefulWidget {
   final CustomerDebtDetail customerDetail;
@@ -58,10 +58,9 @@ class _CustomerGlobalPaymentsScreenState
           return RefreshIndicator(
             color: AppColors.primaryColor,
             onRefresh: () async {
-              final uid =
-                  widget.customerDetail.items.isNotEmpty
-                      ? widget.customerDetail.items.first.entity.uid
-                      : "";
+              final uid = widget.customerDetail.items.isNotEmpty
+                  ? widget.customerDetail.items.first.entity.uid
+                  : "";
               await context.read<GlobalPaymentsCubit>().loadCustomerPayments(
                 uid: uid,
                 customerName: widget.customerDetail.customerName,
@@ -117,7 +116,7 @@ class _CustomerGlobalPaymentsScreenState
                       widget.customerDetail.customerName,
                       style: TextStyles.customStyle(
                         color: Colors.white,
-                        fontSize: 24.sp,
+                        fontSize: 24,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -136,7 +135,7 @@ class _CustomerGlobalPaymentsScreenState
                           "${AppLocalizations.tr(AppStrings.ledgerNumber)}: ${widget.customerDetail.ledgerNumber}",
                           style: TextStyles.customStyle(
                             color: AppColors.whiteOpacity(0.9),
-                            fontSize: 12.sp,
+                            fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -156,7 +155,7 @@ class _CustomerGlobalPaymentsScreenState
         AppLocalizations.tr(AppStrings.globalPaymentsReport),
         style: TextStyles.customStyle(
           color: Colors.white,
-          fontSize: 18.sp,
+          fontSize: 18,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -235,7 +234,7 @@ class _CustomerGlobalPaymentsScreenState
           title,
           style: TextStyles.customStyle(
             color: AppColors.disabledColor,
-            fontSize: 12.sp,
+            fontSize: 12,
           ),
         ),
         SizedBox(height: 4.h),
@@ -243,7 +242,7 @@ class _CustomerGlobalPaymentsScreenState
           amount.toSmartAmount(),
           style: TextStyles.customStyle(
             color: color,
-            fontSize: 20.sp,
+            fontSize: 20,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -273,7 +272,7 @@ class _CustomerGlobalPaymentsScreenState
                 state.message,
                 style: TextStyles.customStyle(
                   color: AppColors.error,
-                  fontSize: 13.sp,
+                  fontSize: 13,
                 ),
               ),
             ),
@@ -287,7 +286,7 @@ class _CustomerGlobalPaymentsScreenState
                 AppLocalizations.tr(AppStrings.noTransactions),
                 style: TextStyles.customStyle(
                   color: AppColors.disabledColor,
-                  fontSize: 14.sp,
+                  fontSize: 14,
                 ),
               ),
             );
@@ -347,7 +346,7 @@ class _CustomerGlobalPaymentsScreenState
                     textAlign: TextAlign.start,
                     style: TextStyles.customStyle(
                       color: AppColors.textColor,
-                      fontSize: 14.sp,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -358,7 +357,7 @@ class _CustomerGlobalPaymentsScreenState
                       transaction.activityName!,
                       style: TextStyles.customStyle(
                         color: AppColors.primaryColor,
-                        fontSize: 12.sp,
+                        fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -374,7 +373,7 @@ class _CustomerGlobalPaymentsScreenState
                     "${isAddition ? '+' : '-'}${transaction.amountPaid.toSmartAmount()}",
                     style: TextStyles.customStyle(
                       color: typeColor,
-                      fontSize: 18.sp,
+                      fontSize: 18,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -383,7 +382,7 @@ class _CustomerGlobalPaymentsScreenState
                     "${AppLocalizations.tr(AppStrings.remaining)}: ${transaction.remainingAmount.toSmartAmount()}",
                     style: TextStyles.customStyle(
                       color: AppColors.disabledColor,
-                      fontSize: 11.sp,
+                      fontSize: 11,
                     ),
                   ),
                 ],
@@ -408,7 +407,7 @@ class _CustomerGlobalPaymentsScreenState
                     dateStr,
                     style: TextStyles.customStyle(
                       color: AppColors.disabledColor,
-                      fontSize: 11.sp,
+                      fontSize: 11,
                     ),
                   ),
                 ],

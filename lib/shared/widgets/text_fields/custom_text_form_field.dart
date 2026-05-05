@@ -79,14 +79,14 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
           maxLines: widget.maxLines,
           cursorColor: AppColors.primaryColor,
           style: TextStyles.customStyle(
-            fontSize: widget.fontSize ?? 16.sp,
+            fontSize: widget.fontSize ?? 16,
             fontWeight: FontWeight.w500,
             color: AppColors.textColor,
           ),
           decoration: InputDecoration(
             hintText: widget.hintText,
             hintStyle: TextStyles.customStyle(
-              fontSize: widget.hintFontSize ?? 14.sp,
+              fontSize: widget.hintFontSize ?? 14,
               fontWeight: FontWeight.w400,
               color: AppColors.disabledColor,
             ),
@@ -96,7 +96,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
                 ? Icon(
                     widget.prefixIcon,
                     color: AppColors.primaryColor,
-                    size: 20.sp,
+                    size: 20,
                   )
                 : widget.prefixText != null
                 ? Row(
@@ -106,7 +106,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
                       Text(
                         widget.prefixText!,
                         style: TextStyles.customStyle(
-                          fontSize: 16.sp,
+                          fontSize: 16,
                           fontWeight: FontWeight.w500,
                           color: AppColors.orange,
                         ),
@@ -120,7 +120,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
                     icon: Icon(
                       _obscureText ? Icons.visibility_off : Icons.visibility,
                       color: AppColors.disabledColor,
-                      size: 20.sp,
+                      size: 20,
                     ),
                     onPressed: () {
                       setState(() {

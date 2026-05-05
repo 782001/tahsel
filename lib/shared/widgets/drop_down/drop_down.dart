@@ -134,7 +134,7 @@ class _DropDownCustomTextfailedState extends State<DropDownCustomTextfailed> {
                           item,
                           textAlign: TextAlign.right,
                           style: TextStyles.font16Weight400Text().copyWith(
-                            fontSize: 15.sp,
+                            fontSize: 15,
                           ),
                         ),
                       ),

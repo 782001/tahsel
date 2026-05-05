@@ -42,7 +42,7 @@ class MyDebtHeaderBanner extends StatelessWidget {
                   AppStrings.totalIOwe.tr(),
                   style: TextStyles.customStyle(
                     color: AppColors.whiteOpacity(0.8),
-                    fontSize: 14.sp,
+                    fontSize: 14,
                   ),
                 ),
                 SizedBox(height: 8.h),
@@ -50,7 +50,7 @@ class MyDebtHeaderBanner extends StatelessWidget {
                   '${totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                   style: TextStyles.customStyle(
                     color: Colors.white,
-                    fontSize: 32.sp,
+                    fontSize: 32,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -117,13 +117,13 @@ class MyDebtSummaryRow extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(icon, size: 14.sp, color: color),
+            Icon(icon, size: 14, color: color),
             SizedBox(width: 4.w),
             Text(
               label,
               style: TextStyles.customStyle(
                 color: AppColors.subTitleColor,
-                fontSize: 12.sp,
+                fontSize: 12,
               ),
             ),
           ],
@@ -133,7 +133,7 @@ class MyDebtSummaryRow extends StatelessWidget {
           '${amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
           style: TextStyles.customStyle(
             color: color,
-            fontSize: 16.sp,
+            fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
         ),

@@ -46,7 +46,7 @@ class SummaryCard extends StatelessWidget {
                 label,
                 style: TextStyles.customStyle(
                   color: AppColors.disabledColor,
-                  fontSize: 11.sp,
+                  fontSize: 11,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -57,7 +57,7 @@ class SummaryCard extends StatelessWidget {
             amount.toStringAsFixed(1),
             style: TextStyles.customStyle(
               color: color,
-              fontSize: 20.sp,
+              fontSize: 20,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -65,7 +65,7 @@ class SummaryCard extends StatelessWidget {
             AppStrings.currencyEgp.tr(),
             style: TextStyles.customStyle(
               color: color.withValues(alpha: 0.6),
-              fontSize: 11.sp,
+              fontSize: 11,
               fontWeight: FontWeight.w600,
             ),
           ),

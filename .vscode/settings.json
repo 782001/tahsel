@@ -6,16 +6,16 @@
 //     "java.configuration.updateBuildConfiguration": "interactive"
 // }
 {
+  "dart.removeUnusedImports": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit",
+    "source.organizeImports": "always"
+  },
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "[dart]": {
     "editor.codeActionsOnSave": {
-        "source.fixAll": "explicit",
-        "source.organizeImports": "always"
-    },
-    "java.configuration.updateBuildConfiguration": "interactive",
-    "[dart]": {
-        "editor.codeActionsOnSave": {
-            "source.fixAll": "explicit", // Ensure the same behavior for Dart files
-            "source.organizeImports": "always"
-        }
-    },
-    "dart.removeUnusedImports": true
+      "source.fixAll": "explicit", // Ensure the same behavior for Dart files
+      "source.organizeImports": "always"
+    }
+  }
 }

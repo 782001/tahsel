@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_state.dart';
-import 'package:tahsel/shared/widgets/shimmer/shimmer_loading.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/shared/widgets/shimmer/shimmer_loading.dart';
 
 class MyPartialPaymentDialog extends StatefulWidget {
   final String personName;
@@ -42,7 +41,7 @@ class _MyPartialPaymentDialogState extends State<MyPartialPaymentDialog> {
 
   void _submit() {
     final amountText = _amountController.text.trim();
-    
+
     if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
       setState(() => _errorText = AppStrings.noInternetConnection.tr());
       return;
@@ -142,7 +141,7 @@ class _MyPartialPaymentDialogState extends State<MyPartialPaymentDialog> {
                         AppStrings.currencyEgp.tr(),
                         style: TextStyles.customStyle(
                           color: AppColors.disabledColor,
-                          fontSize: 16.sp,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -153,14 +152,14 @@ class _MyPartialPaymentDialogState extends State<MyPartialPaymentDialog> {
                           keyboardType: TextInputType.number,
                           style: TextStyles.customStyle(
                             color: AppColors.textColor,
-                            fontSize: 24.sp,
+                            fontSize: 24,
                             fontWeight: FontWeight.bold,
                           ),
                           decoration: InputDecoration(
                             hintText: '0.00',
                             hintStyle: TextStyles.customStyle(
                               color: AppColors.disabledColor,
-                              fontSize: 24.sp,
+                              fontSize: 24,
                               fontWeight: FontWeight.bold,
                             ),
                             border: InputBorder.none,
@@ -180,7 +179,7 @@ class _MyPartialPaymentDialogState extends State<MyPartialPaymentDialog> {
                 //   AppStrings.notes.tr(),
                 //   style: TextStyles.customStyle(
                 //     color: AppColors.disabledColor,
-                //     fontSize: 12.sp,
+                //     fontSize: 12,
                 //     fontWeight: FontWeight.bold,
                 //     letterSpacing: 1.1,
                 //   ),
@@ -197,14 +196,14 @@ class _MyPartialPaymentDialogState extends State<MyPartialPaymentDialog> {
                 //     cursorColor: AppColors.primaryColor,
                 //     style: TextStyles.customStyle(
                 //       color: AppColors.textColor,
-                //       fontSize: 16.sp,
+                //       fontSize: 16,
                 //       fontWeight: FontWeight.bold,
                 //     ),
                 //     decoration: InputDecoration(
                 //       hintText: AppStrings.notes.tr(),
                 //       hintStyle: TextStyles.customStyle(
                 //         color: AppColors.disabledColor,
-                //         fontSize: 16.sp,
+                //         fontSize: 16,
                 //         fontWeight: FontWeight.bold,
                 //       ),
                 //       border: InputBorder.none,

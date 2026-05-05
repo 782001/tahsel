@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
@@ -76,7 +75,7 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView>
           label: Text(
             AppStrings.addNewDebt.tr(),
             style: TextStyles.customStyle(
-              fontSize: 16.sp,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
               color: AppColors.white,
             ),
@@ -140,7 +139,7 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView>
                           AppStrings.noData.tr(),
                           style: TextStyles.customStyle(
                             color: AppColors.subTitleColor,
-                            fontSize: 16.sp,
+                            fontSize: 16,
                           ),
                         ),
                       ),

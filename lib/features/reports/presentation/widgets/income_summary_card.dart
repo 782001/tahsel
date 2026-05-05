@@ -50,7 +50,7 @@ class IncomeSummaryCard extends StatelessWidget {
               Text(
                 AppStrings.totalIncome.tr(),
                 style: TextStyles.customStyle(
-                  fontSize: 16.sp,
+                  fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: AppColors.whiteOpacity(0.9),
                 ),
@@ -66,7 +66,7 @@ class IncomeSummaryCard extends StatelessWidget {
                   child: Text(
                     "$count ${AppStrings.operations.tr()}",
                     style: TextStyles.customStyle(
-                      fontSize: 12.sp,
+                      fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -85,7 +85,7 @@ class IncomeSummaryCard extends StatelessWidget {
                 Text(
                   totalIncome.toSmartAmount(),
                   style: TextStyles.customStyle(
-                    fontSize: 32.sp,
+                    fontSize: 32,
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
                   ),
@@ -94,7 +94,7 @@ class IncomeSummaryCard extends StatelessWidget {
                 Text(
                   AppStrings.currencyEgp.tr(),
                   style: TextStyles.customStyle(
-                    fontSize: 18.sp,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: AppColors.whiteOpacity(0.8),
                   ),
@@ -108,7 +108,7 @@ class IncomeSummaryCard extends StatelessWidget {
               Icon(
                 Icons.calendar_today_rounded,
                 color: AppColors.whiteOpacity(0.7),
-                size: 14.sp,
+                size: 14,
               ),
               SizedBox(width: 8.w),
               Expanded(
@@ -117,7 +117,7 @@ class IncomeSummaryCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyles.customStyle(
-                    fontSize: 13.sp,
+                    fontSize: 13,
                     fontWeight: FontWeight.w500,
                     color: AppColors.whiteOpacity(0.7),
                   ),

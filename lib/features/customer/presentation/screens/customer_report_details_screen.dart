@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
@@ -82,7 +81,7 @@ class _CustomerDetailsBody extends StatelessWidget {
                     child: Text(
                       AppStrings.allOperations.tr(),
                       style: TextStyles.customStyle(
-                        fontSize: 18.sp,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: AppColors.black,
                       ),
@@ -161,7 +160,7 @@ class _CustomerDetailsBody extends StatelessWidget {
                 child: Text(
                   op.details!,
                   style: TextStyles.customStyle(
-                    fontSize: 12.sp,
+                    fontSize: 12,
                     color: AppColors.blackLight,
                   ),
                   maxLines: 1,
@@ -173,7 +172,7 @@ class _CustomerDetailsBody extends StatelessWidget {
             Text(
               '${isPayment ? "-" : "+"}${op.amount.toStringAsFixed(2)} ${AppStrings.currencyEgp.tr()}',
               style: TextStyles.customStyle(
-                fontSize: 16.sp,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: isPayment ? AppColors.success : AppColors.redColor,
               ),
@@ -186,11 +185,11 @@ class _CustomerDetailsBody extends StatelessWidget {
             const SizedBox(height: 4),
             Row(
               children: [
-                Text(' • ', style: TextStyle(color: AppColors.blackLight)),
+                Text(' • ', style: TextStyles.customStyle(color: AppColors.blackLight)),
                 Text(
                   typeLabel,
                   style: TextStyles.customStyle(
-                    fontSize: 12.sp,
+                    fontSize: 12,
                     color: AppColors.blackLight,
                   ),
                 ),
@@ -200,7 +199,7 @@ class _CustomerDetailsBody extends StatelessWidget {
             Text(
               DateFormat('yyyy/MM/dd hh:mm a').format(op.date),
               style: TextStyles.customStyle(
-                fontSize: 11.sp,
+                fontSize: 11,
                 color: AppColors.blackLight.withAlpha(150),
               ),
             ),

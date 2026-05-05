@@ -34,11 +34,11 @@ class LanguageOption extends StatelessWidget {
                   width: 1.5,
                 )
               : null,
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
               color: AppColors.shadowColor,
               blurRadius: 10,
-              offset: const Offset(0, 4),
+              offset: Offset(0, 4),
             ),
           ],
         ),

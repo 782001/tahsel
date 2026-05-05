@@ -30,10 +30,10 @@ class MonthlyCollectedScreen extends StatelessWidget {
         appBar: AppBar(
           title: Text(
             AppStrings.collectedAmount.tr(),
-            style: TextStyle(
+            style: TextStyles.customStyle(
               color: AppColors.textColor,
               fontWeight: FontWeight.bold,
-              fontSize: 20.sp,
+              fontSize: 20,
             ),
           ),
           centerTitle: true,
@@ -66,7 +66,7 @@ class MonthlyCollectedScreen extends StatelessWidget {
                     state.message,
                     textAlign: TextAlign.center,
                     style: TextStyles.customStyle(
-                      fontSize: 20.sp,
+                      fontSize: 20,
                       color: AppColors.error,
                     ),
                   ),
@@ -80,13 +80,13 @@ class MonthlyCollectedScreen extends StatelessWidget {
                     children: [
                       Icon(
                         Icons.analytics_outlined,
-                        size: 80.sp,
+                        size: 80,
                         color: AppColors.grey.withValues(alpha: 0.5),
                       ),
                       SizedBox(height: 20.h),
                       Text(
                         AppStrings.noCollectedData.tr(),
-                        style: TextStyles.customStyle(fontSize: 20.sp),
+                        style: TextStyles.customStyle(fontSize: 20),
                       ),
                     ],
                   ),
@@ -132,7 +132,7 @@ class MonthlyCollectedScreen extends StatelessWidget {
         gradient: LinearGradient(
           colors: [
             AppColors.primaryColor,
-            AppColors.primaryColor.withValues(alpha:0.8),
+            AppColors.primaryColor.withValues(alpha: 0.8),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -140,7 +140,7 @@ class MonthlyCollectedScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryColor.withValues(alpha:0.3),
+            color: AppColors.primaryColor.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -150,17 +150,17 @@ class MonthlyCollectedScreen extends StatelessWidget {
         children: [
           Text(
             AppStrings.totalCollected.tr(),
-            style: TextStyle(
-              color: Colors.white.withValues(alpha:0.9),
-              fontSize: 14.sp,
+            style: TextStyles.customStyle(
+              color: Colors.white.withValues(alpha: 0.9),
+              fontSize: 14,
             ),
           ),
           SizedBox(height: 8.h),
           Text(
             "${total.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
-            style: TextStyle(
+            style: TextStyles.customStyle(
               color: Colors.white,
-              fontSize: 28.sp,
+              fontSize: 28,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -177,10 +177,10 @@ class MonthlyCollectedScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: AppColors.grey.withValues(alpha:0.1)),
+        border: Border.all(color: AppColors.grey.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha:0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -204,13 +204,13 @@ class MonthlyCollectedScreen extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.all(10.w),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryColor.withValues(alpha:0.1),
+                    color: AppColors.primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Icon(
                     Icons.calendar_month_outlined,
                     color: AppColors.primaryColor,
-                    size: 24.sp,
+                    size: 24,
                   ),
                 ),
                 SizedBox(width: 16.w),
@@ -220,8 +220,8 @@ class MonthlyCollectedScreen extends StatelessWidget {
                     children: [
                       Text(
                         "$monthName ${item.year}",
-                        style: TextStyle(
-                          fontSize: 16.sp,
+                        style: TextStyles.customStyle(
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: AppColors.black,
                         ),
@@ -229,8 +229,8 @@ class MonthlyCollectedScreen extends StatelessWidget {
                       SizedBox(height: 2.h),
                       Text(
                         "${item.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
-                        style: TextStyle(
-                          fontSize: 14.sp,
+                        style: TextStyles.customStyle(
+                          fontSize: 14,
                           color: AppColors.primaryColor,
                           fontWeight: FontWeight.w600,
                         ),
@@ -240,11 +240,7 @@ class MonthlyCollectedScreen extends StatelessWidget {
                 ),
                 // Simple indicator for high collection months
                 _buildPerformanceIndicator(item.totalAmount),
-                Icon(
-                  Icons.arrow_forward_ios,
-                  size: 14.sp,
-                  color: AppColors.grey,
-                ),
+                Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.grey),
               ],
             ),
           ),

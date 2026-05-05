@@ -43,7 +43,7 @@ class AddExpenseField extends StatelessWidget {
           child: Text(
             label,
             style: TextStyles.customStyle(
-              fontSize: 14.sp,
+              fontSize: 14,
               fontWeight: FontWeight.w600,
               color: AppColors.blackLight,
             ),
@@ -66,14 +66,14 @@ class AddExpenseField extends StatelessWidget {
                 ? const TextInputType.numberWithOptions(decimal: true)
                 : TextInputType.text,
             style: TextStyles.customStyle(
-              fontSize: 16.sp,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
               color: AppColors.black,
             ),
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyles.customStyle(
-                fontSize: 14.sp,
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.blackLight.withValues(alpha: 0.4),
               ),
@@ -83,7 +83,7 @@ class AddExpenseField extends StatelessWidget {
                       child: Text(
                         prefixText!,
                         style: TextStyles.customStyle(
-                          fontSize: 16.sp,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: AppColors.stitchOrange,
                         ),

@@ -164,7 +164,7 @@ class _AuthTextFormFieldState extends State<AuthTextFormField> {
                 isDense: true,
                 errorStyle: TextStyles.font14Weight400RightAligned().copyWith(
                   color: Colors.red,
-                  fontSize: 12.sp,
+                  fontSize: 12,
                 ),
               ),
               validator: widget.validator,

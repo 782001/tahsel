@@ -10,7 +10,8 @@ class MyDebtDetailsSummaryItem extends StatelessWidget {
   final String value;
   final bool isHighlighted;
 
-  const MyDebtDetailsSummaryItem({super.key, 
+  const MyDebtDetailsSummaryItem({
+    super.key,
     required this.label,
     required this.value,
     this.isHighlighted = false,
@@ -28,7 +29,7 @@ class MyDebtDetailsSummaryItem extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyles.customStyle(
               color: AppColors.whiteOpacity(0.7),
-              fontSize: 11.sp,
+              fontSize: 11,
             ),
           ),
           SizedBox(height: 4.h),
@@ -38,7 +39,7 @@ class MyDebtDetailsSummaryItem extends StatelessWidget {
               '$value ${AppStrings.currencyEgp.tr()}',
               style: TextStyles.customStyle(
                 color: Colors.white,
-                fontSize: isHighlighted ? 16.sp : 14.sp,
+                fontSize: isHighlighted ? 16 : 14,
                 fontWeight: isHighlighted ? FontWeight.w900 : FontWeight.w700,
               ),
             ),

@@ -283,7 +283,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             Icon(
                                               Icons.arrow_forward,
                                               color: Colors.white,
-                                              size: 20.sp,
+                                              size: 20,
                                             ),
                                           ],
                                         ),

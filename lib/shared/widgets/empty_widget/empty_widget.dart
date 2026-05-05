@@ -4,6 +4,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_constants.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/shared/widgets/fields/text_widget.dart';
 
 class EmptyWidget extends StatelessWidget {
@@ -28,8 +29,8 @@ class EmptyWidget extends StatelessWidget {
             SizedBox(height: 24.h),
             TextWidget(
               title ?? AppStrings.noData.tr(),
-              style: TextStyle(
-                fontSize: 18.sp,
+              style: TextStyles.customStyle(
+                fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: AppColors.blackLight,
               ),
@@ -38,7 +39,7 @@ class EmptyWidget extends StatelessWidget {
             SizedBox(height: 8.h),
             TextWidget(
               subTitle ?? AppStrings.sorryNoData.tr(),
-              style: TextStyle(color: AppColors.blackLight),
+              style: TextStyles.customStyle(color: AppColors.blackLight),
               textAlign: TextAlign.center,
             ),
           ],

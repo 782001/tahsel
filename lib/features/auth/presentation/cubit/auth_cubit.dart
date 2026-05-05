@@ -12,6 +12,7 @@ import 'package:tahsel/core/storage/secure_storage_helper.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/auth/domain/entities/user_entity.dart';
 import 'package:tahsel/routes/app_routes.dart';
 
@@ -177,7 +178,7 @@ class AuthCubit extends Cubit<AuthState> {
         SnackBar(
           content: Text(
             AppStrings.sessionExpired.tr(),
-            style: TextStyle(color: AppColors.white),
+            style: TextStyles.customStyle(color: AppColors.white),
           ),
           backgroundColor: AppColors.error,
         ),

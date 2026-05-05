@@ -68,7 +68,7 @@ class QuickAddTextField extends StatelessWidget {
                 padding: const EdgeInsets.all(16.0),
                 child: Text(
                   prefixText!,
-                  style: TextStyle(
+                  style: TextStyles.customStyle(
                     color: AppColors.stitchOrange,
                     fontWeight: FontWeight.bold,
                   ),
@@ -82,7 +82,7 @@ class QuickAddTextField extends StatelessWidget {
               )
             : null,
         suffixText: suffixText,
-        suffixStyle: TextStyle(
+        suffixStyle: TextStyles.customStyle(
           color: AppColors.blackLight,
           fontWeight: FontWeight.bold,
         ),

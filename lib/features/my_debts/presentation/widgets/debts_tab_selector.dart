@@ -72,7 +72,7 @@ class DebtsTabSelector extends StatelessWidget {
                         child: Text(
                           _tabs[index].tr(),
                           style: TextStyles.customStyle(
-                            fontSize: 14.sp,
+                            fontSize: 14,
                             fontWeight: selectedIndex == index
                                 ? FontWeight.bold
                                 : FontWeight.w500,

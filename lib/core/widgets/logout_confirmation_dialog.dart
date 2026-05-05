@@ -45,14 +45,14 @@ class LogoutConfirmationDialog extends StatelessWidget {
             child: Icon(
               Icons.logout_rounded,
               color: AppColors.error,
-              size: 40.sp,
+              size: 40,
             ),
           ),
           20.verticalSpace,
           Text(
             AppStrings.logoutAppTitle.tr(),
             style: TextStyles.customStyle(
-              fontSize: 18.sp,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
               color: AppColors.black,
             ),
@@ -62,7 +62,7 @@ class LogoutConfirmationDialog extends StatelessWidget {
             AppStrings.logoutAppMessage.tr(),
             textAlign: TextAlign.center,
             style: TextStyles.customStyle(
-              fontSize: 14.sp,
+              fontSize: 14,
               fontWeight: FontWeight.normal,
               color: AppColors.blackLight,
             ),
@@ -83,7 +83,7 @@ class LogoutConfirmationDialog extends StatelessWidget {
                   child: Text(
                     AppStrings.cancel.tr(),
                     style: TextStyles.customStyle(
-                      fontSize: 14.sp,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: AppColors.blackLight,
                     ),
@@ -105,7 +105,7 @@ class LogoutConfirmationDialog extends StatelessWidget {
                   child: Text(
                     AppStrings.confirm.tr(),
                     style: TextStyles.customStyle(
-                      fontSize: 14.sp,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
                     ),

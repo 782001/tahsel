@@ -49,7 +49,7 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
   void _submit() {
     final amountText = _amountController.text.trim();
     final paidText = _paidAmountController.text.trim();
-    
+
     if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
       setState(() => _errorText = AppStrings.noInternetConnection.tr());
       return;
@@ -334,7 +334,10 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
                   const SizedBox(height: 8),
                   Text(
                     _errorText!,
-                    style: TextStyle(color: AppColors.error, fontSize: 12),
+                    style: TextStyles.customStyle(
+                      color: AppColors.error,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
 

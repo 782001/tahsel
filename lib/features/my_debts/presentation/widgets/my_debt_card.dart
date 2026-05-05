@@ -79,7 +79,7 @@ class MyDebtCard extends StatelessWidget {
                                       person.name,
                                       style: TextStyles.customStyle(
                                         color: AppColors.textColor,
-                                        fontSize: 18.sp,
+                                        fontSize: 18,
                                         fontWeight: FontWeight.bold,
                                       ),
                                       maxLines: 1,
@@ -105,7 +105,7 @@ class MyDebtCard extends StatelessWidget {
                                         AppStrings.syncing.tr(),
                                         style: TextStyles.customStyle(
                                           color: AppColors.error,
-                                          fontSize: 10.sp,
+                                          fontSize: 10,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -119,7 +119,7 @@ class MyDebtCard extends StatelessWidget {
                                   person.phoneNumber!,
                                   style: TextStyles.customStyle(
                                     color: AppColors.subTitleColor,
-                                    fontSize: 12.sp,
+                                    fontSize: 12,
                                   ),
                                 ),
                             ],
@@ -150,14 +150,14 @@ class MyDebtCard extends StatelessWidget {
                         Icon(
                           Icons.calendar_today_outlined,
                           color: AppColors.disabledColor,
-                          size: 14.sp,
+                          size: 14,
                         ),
                         SizedBox(width: 6.w),
                         Text(
                           '${AppStrings.lastTransactionDate.tr()}: ${DateFormat('yyyy/MM/dd').format(person.lastUsedAt)}',
                           style: TextStyles.customStyle(
                             color: AppColors.disabledColor,
-                            fontSize: 12.sp,
+                            fontSize: 12,
                           ),
                         ),
                       ],
@@ -187,7 +187,7 @@ class MyDebtCard extends StatelessWidget {
         text.tr(),
         style: TextStyles.customStyle(
           color: color,
-          fontSize: 12.sp,
+          fontSize: 12,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -202,7 +202,7 @@ class MyDebtCard extends StatelessWidget {
           label,
           style: TextStyles.customStyle(
             color: AppColors.subTitleColor,
-            fontSize: 12.sp,
+            fontSize: 12,
           ),
         ),
         SizedBox(height: 4.h),
@@ -210,7 +210,7 @@ class MyDebtCard extends StatelessWidget {
           '${amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
           style: TextStyles.customStyle(
             color: color,
-            fontSize: 14.sp,
+            fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
         ),

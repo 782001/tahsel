@@ -58,7 +58,7 @@ class MyDebtsSummaryCard extends StatelessWidget {
                       child: Icon(
                         Icons.payments_outlined,
                         color: AppColors.primaryColor,
-                        size: 24.sp,
+                        size: 24,
                       ),
                     ),
                     SizedBox(width: 12.w),
@@ -66,7 +66,7 @@ class MyDebtsSummaryCard extends StatelessWidget {
                       AppStrings.whatIOweOutside.tr(),
                       style: TextStyles.customStyle(
                         color: AppColors.textColor,
-                        fontSize: 16.sp,
+                        fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -77,7 +77,7 @@ class MyDebtsSummaryCard extends StatelessWidget {
                   '${state.totalOwed.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
                   style: TextStyles.customStyle(
                     color: AppColors.primaryColor,
-                    fontSize: 28.sp,
+                    fontSize: 28,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -112,7 +112,7 @@ class MyDebtsSummaryCard extends StatelessWidget {
           text,
           style: TextStyles.customStyle(
             color: AppColors.disabledColor,
-            fontSize: 14.sp,
+            fontSize: 14,
           ),
         ),
       ],

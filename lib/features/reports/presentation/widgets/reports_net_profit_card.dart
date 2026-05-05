@@ -27,9 +27,9 @@ class ReportsNetProfitCard extends StatelessWidget {
           Text(
             AppStrings.netProfit.tr(),
             style: TextStyles.customStyle(
-              fontSize: 14.sp,
+              fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: AppColors.blackLight.withValues(alpha:0.6),
+              color: AppColors.blackLight.withValues(alpha: 0.6),
             ),
           ),
           SizedBox(height: 8.h),
@@ -43,7 +43,7 @@ class ReportsNetProfitCard extends StatelessWidget {
                 Text(
                   amount,
                   style: TextStyles.customStyle(
-                    fontSize: 42.sp,
+                    fontSize: 42,
                     fontWeight: FontWeight.w900,
                     color: AppColors.black,
                   ),
@@ -52,7 +52,7 @@ class ReportsNetProfitCard extends StatelessWidget {
                 Text(
                   AppStrings.currencyEgp.tr(),
                   style: TextStyles.customStyle(
-                    fontSize: 18.sp,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: AppColors.blackLight,
                   ),
@@ -65,7 +65,7 @@ class ReportsNetProfitCard extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
             decoration: BoxDecoration(
               color: (isPositive ? AppColors.primaryColor : AppColors.error)
-                  .withValues(alpha:0.1),
+                  .withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12.r),
             ),
             child: FittedBox(
@@ -74,7 +74,7 @@ class ReportsNetProfitCard extends StatelessWidget {
                 "$comparisonText  ${isPositive ? '↑↑' : '↓↓'}",
                 textAlign: TextAlign.center,
                 style: TextStyles.customStyle(
-                  fontSize: 15.sp,
+                  fontSize: 15,
                   fontWeight: FontWeight.bold,
                   color: isPositive ? AppColors.primaryColor : AppColors.error,
                 ),

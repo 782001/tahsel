@@ -78,7 +78,7 @@ class _TotalDebtsSummaryCardState extends State<TotalDebtsSummaryCard> {
                         child: Icon(
                           Icons.account_balance_wallet_outlined,
                           color: AppColors.error,
-                          size: 24.sp,
+                          size: 24,
                         ),
                       ),
                       SizedBox(width: 12.w),
@@ -86,7 +86,7 @@ class _TotalDebtsSummaryCardState extends State<TotalDebtsSummaryCard> {
                         AppStrings.totalDebts.tr(),
                         style: TextStyles.customStyle(
                           color: AppColors.textColor,
-                          fontSize: 16.sp,
+                          fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -97,7 +97,7 @@ class _TotalDebtsSummaryCardState extends State<TotalDebtsSummaryCard> {
                     '${state.totalAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
                     style: TextStyles.customStyle(
                       color: AppColors.error,
-                      fontSize: 28.sp,
+                      fontSize: 28,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -108,14 +108,14 @@ class _TotalDebtsSummaryCardState extends State<TotalDebtsSummaryCard> {
                         Icon(
                           Icons.people_alt_outlined,
                           color: AppColors.disabledColor,
-                          size: 16.sp,
+                          size: 16,
                         ),
                         SizedBox(width: 6.w),
                         Text(
                           '${state.customerCount} ${AppStrings.customers.tr()}',
                           style: TextStyles.customStyle(
                             color: AppColors.disabledColor,
-                            fontSize: 14.sp,
+                            fontSize: 14,
                           ),
                         ),
                       ],

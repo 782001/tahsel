@@ -153,7 +153,7 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
                       _getTransactionTitle(),
                       style: TextStyles.customStyle(
                         color: AppColors.textColor,
-                        fontSize: 14.sp,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -164,7 +164,7 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
                         transaction.activityName!,
                         style: TextStyles.customStyle(
                           color: AppColors.primaryColor,
-                          fontSize: 12.sp,
+                          fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -174,7 +174,7 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
                       dateStr,
                       style: TextStyles.customStyle(
                         color: AppColors.disabledColor,
-                        fontSize: 11.sp,
+                        fontSize: 11,
                       ),
                     ),
                   ],
@@ -191,7 +191,7 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
                         color: isDebtAdded
                             ? AppColors.error
                             : AppColors.primaryColor,
-                        fontSize: 15.sp,
+                        fontSize: 15,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -202,7 +202,7 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
                       '${AppStrings.remaining.tr()}: ${transaction.remainingAmount.toSmartAmount()}',
                       style: TextStyles.customStyle(
                         color: AppColors.disabledColor,
-                        fontSize: 10.sp,
+                        fontSize: 10,
                       ),
                     ),
                   ),
@@ -267,7 +267,7 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
                       AppStrings.editPayment.tr(),
                       style: TextStyles.customStyle(
                         color: AppColors.textColor,
-                        fontSize: 20.sp,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -276,7 +276,7 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
                       AppStrings.amountPaid.tr(),
                       style: TextStyles.customStyle(
                         color: AppColors.disabledColor,
-                        fontSize: 12.sp,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.1,
                       ),
@@ -297,7 +297,7 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
                             AppStrings.currencyEgp.tr(),
                             style: TextStyles.customStyle(
                               color: AppColors.disabledColor,
-                              fontSize: 16.sp,
+                              fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -313,14 +313,14 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
                               },
                               style: TextStyles.customStyle(
                                 color: AppColors.textColor,
-                                fontSize: 24.sp,
+                                fontSize: 24,
                                 fontWeight: FontWeight.bold,
                               ),
                               decoration: InputDecoration(
                                 hintText: '0.00',
                                 hintStyle: TextStyles.customStyle(
                                   color: AppColors.disabledColor,
-                                  fontSize: 24.sp,
+                                  fontSize: 24,
                                   fontWeight: FontWeight.bold,
                                 ),
                                 border: InputBorder.none,
@@ -340,7 +340,7 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
                         errorText!,
                         style: TextStyles.customStyle(
                           color: AppColors.error,
-                          fontSize: 12.sp,
+                          fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -352,7 +352,7 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
                         "${AppStrings.minValueHint.tr()} ${minAmount.toSmartAmount()}",
                         style: TextStyles.customStyle(
                           color: AppColors.primaryColor,
-                          fontSize: 10.sp,
+                          fontSize: 10,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -361,7 +361,7 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
                       AppStrings.notes.tr(),
                       style: TextStyles.customStyle(
                         color: AppColors.disabledColor,
-                        fontSize: 12.sp,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.1,
                       ),
@@ -378,14 +378,14 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
                         cursorColor: AppColors.primaryColor,
                         style: TextStyles.customStyle(
                           color: AppColors.textColor,
-                          fontSize: 16.sp,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                         decoration: InputDecoration(
                           hintText: AppStrings.notes.tr(),
                           hintStyle: TextStyles.customStyle(
                             color: AppColors.disabledColor,
-                            fontSize: 16.sp,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                           border: InputBorder.none,
@@ -470,7 +470,7 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
                         child: Text(
                           AppStrings.confirm.tr(),
                           style: TextStyles.customStyle(
-                            fontSize: 18.sp,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
@@ -489,7 +489,7 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
                         child: Text(
                           AppStrings.cancel.tr(),
                           style: TextStyles.customStyle(
-                            fontSize: 18.sp,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: AppColors.disabledColor,
                           ),
@@ -528,7 +528,7 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
             child: Text(
               AppStrings.cancel.tr(),
               style: TextStyles.customStyle(
-                fontSize: 14.sp,
+                fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: AppColors.disabledColor,
               ),
@@ -559,7 +559,7 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
             child: Text(
               AppStrings.delete.tr(),
               style: TextStyles.customStyle(
-                fontSize: 14.sp,
+                fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: AppColors.white,
               ),

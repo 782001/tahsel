@@ -38,7 +38,7 @@ class _PartialPaymentDialogState extends State<PartialPaymentDialog> {
 
   void _submit() {
     final amountText = _amountController.text.trim();
-    
+
     if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
       setState(() => _errorText = AppStrings.noInternetConnection.tr());
       return;
@@ -174,7 +174,10 @@ class _PartialPaymentDialogState extends State<PartialPaymentDialog> {
                 const SizedBox(height: 8),
                 Text(
                   _errorText!,
-                  style: TextStyle(color: AppColors.error, fontSize: 12),
+                  style: TextStyles.customStyle(
+                    color: AppColors.error,
+                    fontSize: 12,
+                  ),
                 ),
               ],
               const SizedBox(height: 24),

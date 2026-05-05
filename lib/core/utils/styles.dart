@@ -78,17 +78,17 @@ class TextStyles {
   }
 
   static TextStyle customStyle({
-    required double fontSize,
+    double? fontSize,
     FontWeight? fontWeight,
     Color? color,
     double? letterSpacing,
     double? height,
   }) {
     return TextStyle(
-      fontSize: getResponsiveFontSize(fontSize: fontSize),
+      fontSize: getResponsiveFontSize(fontSize: fontSize ?? 14),
       fontWeight: fontWeight,
       fontFamily: AppConstants.fontFamily,
-      color: color ?? AppColors.blackReal,
+      color: color,
       letterSpacing: letterSpacing,
       height: height,
     );

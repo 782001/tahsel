@@ -34,11 +34,11 @@ class AppearanceCard extends StatelessWidget {
                   color: AppColors.disabledColor.withValues(alpha: 0.1),
                   width: 1,
                 ),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
               color: AppColors.shadowColor,
               blurRadius: 10,
-              offset: const Offset(0, 4),
+              offset: Offset(0, 4),
             ),
           ],
         ),

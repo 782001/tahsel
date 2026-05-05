@@ -167,7 +167,7 @@ class CustomerDebtDetailScreen extends StatelessWidget {
                 currentDetail.customerName,
                 style: TextStyles.customStyle(
                   color: Colors.white,
-                  fontSize: 18.sp,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -196,7 +196,7 @@ class CustomerDebtDetailScreen extends StatelessWidget {
               AppStrings.addNewDebt.tr(),
               style: TextStyles.customStyle(
                 color: AppColors.whiteColor,
-                fontSize: 16.sp,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -220,7 +220,7 @@ class CustomerDebtDetailScreen extends StatelessWidget {
                   currentDetail.customerName,
                   style: TextStyles.customStyle(
                     color: Colors.white,
-                    fontSize: 18.sp,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -339,7 +339,7 @@ class CustomerDebtDetailScreen extends StatelessWidget {
                         AppStrings.activityDetails.tr(),
                         style: TextStyles.customStyle(
                           color: AppColors.black,
-                          fontSize: 16.sp,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -357,7 +357,7 @@ class CustomerDebtDetailScreen extends StatelessWidget {
                           '${currentDetail.items.length} ${AppStrings.transactionCount.tr()}',
                           style: TextStyles.customStyle(
                             color: AppColors.primaryColor,
-                            fontSize: 11.sp,
+                            fontSize: 11,
                             fontWeight: FontWeight.w600,
                           ),
                         ),

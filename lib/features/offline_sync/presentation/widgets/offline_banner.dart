@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import '../../../standard_features/no-internet/logic/connectivity_cubit.dart';
-import '../../../standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/core/utils/styles.dart';
+
+import '../../../../core/extensions/string_extensions.dart';
 import '../../../../core/utils/app_colors.dart';
 import '../../../../core/utils/app_strings.dart';
-import '../../../../core/extensions/string_extensions.dart';
+import '../../../standard_features/no-internet/logic/connectivity_cubit.dart';
+import '../../../standard_features/no-internet/logic/connectivity_state.dart';
 
 class OfflineBanner extends StatelessWidget {
   final Widget child;
@@ -30,9 +32,9 @@ class OfflineBanner extends StatelessWidget {
                     SizedBox(width: 8.w),
                     Text(
                       AppStrings.noInternetConnection.tr(),
-                      style: TextStyle(
+                      style: TextStyles.customStyle(
                         color: AppColors.warning,
-                        fontSize: 12.sp,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

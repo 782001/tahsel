@@ -61,7 +61,7 @@ class _ReportsViewState extends State<ReportsView> {
                     AppStrings.reports.tr(),
                     style: TextStyles.customStyle(
                       color: AppColors.black,
-                      fontSize: 25.sp,
+                      fontSize: 25,
                       fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.center,
@@ -111,8 +111,8 @@ class _ReportsViewState extends State<ReportsView> {
                                   borderRadius: BorderRadius.circular(16.r),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.primaryColor.withValues(alpha:
-                                        0.3,
+                                      color: AppColors.primaryColor.withValues(
+                                        alpha: 0.3,
                                       ),
                                       blurRadius: 10,
                                       offset: const Offset(0, 4),
@@ -130,7 +130,7 @@ class _ReportsViewState extends State<ReportsView> {
                                       child: Icon(
                                         Icons.people_alt_rounded,
                                         color: Colors.white,
-                                        size: 24.sp,
+                                        size: 24,
                                       ),
                                     ),
                                     16.horizontalSpace,
@@ -143,7 +143,7 @@ class _ReportsViewState extends State<ReportsView> {
                                             AppStrings.myCustomers.tr(),
                                             style: TextStyles.customStyle(
                                               color: Colors.white,
-                                              fontSize: 18.sp,
+                                              fontSize: 18,
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
@@ -153,7 +153,7 @@ class _ReportsViewState extends State<ReportsView> {
                                               color: AppColors.whiteOpacity(
                                                 0.8,
                                               ),
-                                              fontSize: 12.sp,
+                                              fontSize: 12,
                                             ),
                                           ),
                                         ],
@@ -302,7 +302,7 @@ class _ReportsViewState extends State<ReportsView> {
                                       child: Text(
                                         AppStrings.activityDetails.tr(),
                                         style: TextStyles.customStyle(
-                                          fontSize: 16.sp,
+                                          fontSize: 16,
                                           fontWeight: FontWeight.bold,
                                           color: AppColors.black,
                                         ),
@@ -418,7 +418,7 @@ class _ReportsViewState extends State<ReportsView> {
                                         child: Text(
                                           AppStrings.smartInsights.tr(),
                                           style: TextStyles.customStyle(
-                                            fontSize: 16.sp,
+                                            fontSize: 16,
                                             fontWeight: FontWeight.bold,
                                             color: AppColors.black,
                                           ),
@@ -574,16 +574,19 @@ class _ReportsViewState extends State<ReportsView> {
       width: double.infinity,
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: insight.color.withValues(alpha:0.1),
+        color: insight.color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: insight.color.withValues(alpha:0.2), width: 1),
+        border: Border.all(
+          color: insight.color.withValues(alpha: 0.2),
+          width: 1,
+        ),
       ),
       child: Row(
         children: [
           Container(
             padding: EdgeInsets.all(6.w),
             decoration: BoxDecoration(
-              color: insight.color.withValues(alpha:0.1),
+              color: insight.color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -593,7 +596,7 @@ class _ReportsViewState extends State<ReportsView> {
                         ? Icons.trending_flat_rounded
                         : Icons.trending_up_rounded),
               color: insight.color,
-              size: 20.sp,
+              size: 20,
             ),
           ),
           12.horizontalSpace,
@@ -601,7 +604,7 @@ class _ReportsViewState extends State<ReportsView> {
             child: Text(
               insight.getMessage(context.read<MainLayoutCubit>().isShop),
               style: TextStyles.customStyle(
-                fontSize: 13.sp,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: insight.color,
               ),

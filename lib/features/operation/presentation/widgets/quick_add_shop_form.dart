@@ -81,7 +81,7 @@ class QuickAddShopForm extends StatelessWidget {
             style: TextStyles.customStyle(
               color: AppColors.black,
               fontWeight: FontWeight.bold,
-              fontSize: 16.sp,
+              fontSize: 16,
             ),
           ),
           const SizedBox(height: 8),
@@ -105,7 +105,7 @@ class QuickAddShopForm extends StatelessWidget {
               style: TextStyles.customStyle(
                 color: AppColors.black,
                 fontWeight: FontWeight.bold,
-                fontSize: 16.sp,
+                fontSize: 16,
               ),
             ),
             const SizedBox(height: 8),
@@ -125,7 +125,7 @@ class QuickAddShopForm extends StatelessWidget {
             style: TextStyles.customStyle(
               color: AppColors.black,
               fontWeight: FontWeight.bold,
-              fontSize: 16.sp,
+              fontSize: 16,
             ),
           ),
           const SizedBox(height: 8),
@@ -154,13 +154,13 @@ class QuickAddShopForm extends StatelessWidget {
                         style: TextStyles.customStyle(
                           color: AppColors.black,
                           fontWeight: FontWeight.bold,
-                          fontSize: 14.sp,
+                          fontSize: 14,
                         ),
                       ),
                       const SizedBox(height: 8),
                       QuickAddTextField(
                         hint: AppStrings.totalAmountHint.tr(),
-                        hintFontSize: 12.sp,
+                        hintFontSize: 12,
                         controller: totalAmountController,
                         // icon: Icons.payments_outlined,
                         isNumber: true,
@@ -171,7 +171,7 @@ class QuickAddShopForm extends StatelessWidget {
                     ],
                   ),
                 ),
-              if (isShop) SizedBox(width: 16.w),
+              if (isShop) const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,10 +181,10 @@ class QuickAddShopForm extends StatelessWidget {
                       style: TextStyles.customStyle(
                         color: AppColors.black,
                         fontWeight: FontWeight.bold,
-                        fontSize: 14.sp,
+                        fontSize: 14,
                       ),
                     ),
-                    SizedBox(height: 8.h),
+                    const SizedBox(height: 8),
                     QuickAddTextField(
                       hint: '0.00',
                       controller: paidController,
@@ -200,7 +200,7 @@ class QuickAddShopForm extends StatelessWidget {
                 ),
               ),
               if (!isShop) ...[
-                SizedBox(width: 16.w),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -210,10 +210,10 @@ class QuickAddShopForm extends StatelessWidget {
                         style: TextStyles.customStyle(
                           color: AppColors.black,
                           fontWeight: FontWeight.bold,
-                          fontSize: 14.sp,
+                          fontSize: 14,
                         ),
                       ),
-                      SizedBox(height: 8.h),
+                      const SizedBox(height: 8),
                       QuickAddTextField(
                         hint: '0.00',
                         controller: debtController,
@@ -228,7 +228,7 @@ class QuickAddShopForm extends StatelessWidget {
               ],
             ],
           ),
-          if (isShop) SizedBox(height: 12.h),
+          if (isShop) const SizedBox(height: 12),
           if (isShop)
             ValueListenableBuilder<TextEditingValue>(
               valueListenable: debtController,
@@ -260,7 +260,7 @@ class QuickAddShopForm extends StatelessWidget {
                           style: TextStyles.customStyle(
                             color: AppColors.primaryColor,
                             fontWeight: FontWeight.w600,
-                            fontSize: 14.sp,
+                            fontSize: 14,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 
 class BottomNavBar extends StatelessWidget {
@@ -21,12 +21,12 @@ class BottomNavBar extends StatelessWidget {
       unselectedItemColor: AppColors.blackLight,
       showSelectedLabels: true,
       showUnselectedLabels: true,
-      selectedLabelStyle: TextStyle(
-        fontSize: 12.sp,
+      selectedLabelStyle: TextStyles.customStyle(
+        fontSize: 12,
         fontWeight: FontWeight.bold,
       ),
-      unselectedLabelStyle: TextStyle(
-        fontSize: 12.sp,
+      unselectedLabelStyle: TextStyles.customStyle(
+        fontSize: 12,
         fontWeight: FontWeight.w500,
       ),
       items: [
