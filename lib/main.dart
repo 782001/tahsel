@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -28,6 +29,15 @@ import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_state.dart';
 import 'package:tahsel/firebase_options.dart';
 import 'package:tahsel/routes/app_routes.dart';
+
+class AppScrollBehavior extends MaterialScrollBehavior {
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.trackpad,
+      };
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -128,6 +138,7 @@ class MyApp extends StatelessWidget {
                     navigatorKey: sl<NavigatorService>().navigatorKey,
                     debugShowCheckedModeBanner: false,
                     title: 'تحصيل',
+                    scrollBehavior: AppScrollBehavior(),
                     locale: localeState.locale,
                     themeMode: themeState.themeMode,
                     supportedLocales: AppLocalizationsSetup.supportedLocales,
