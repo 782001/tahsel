@@ -127,7 +127,7 @@ class _ReportsViewState extends State<ReportsView> {
                                         color: AppColors.whiteOpacity(0.2),
                                         shape: BoxShape.circle,
                                       ),
-                                      child: Icon(
+                                      child: const Icon(
                                         Icons.people_alt_rounded,
                                         color: Colors.white,
                                         size: 24,

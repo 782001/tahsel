@@ -240,7 +240,11 @@ class MonthlyCollectedScreen extends StatelessWidget {
                 ),
                 // Simple indicator for high collection months
                 _buildPerformanceIndicator(item.totalAmount),
-                Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.grey),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  size: 14,
+                  color: AppColors.grey,
+                ),
               ],
             ),
           ),

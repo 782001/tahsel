@@ -117,7 +117,7 @@ class CustomerDebtDetailScreen extends StatelessWidget {
         } else if (state is DebtFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              duration: Duration(milliseconds: 500),
+              duration: const Duration(milliseconds: 500),
               content: Text(state.message),
               backgroundColor: AppColors.redColor,
             ),
@@ -172,7 +172,7 @@ class CustomerDebtDetailScreen extends StatelessWidget {
                 ),
               ),
               leading: IconButton(
-                icon: Icon(
+                icon: const Icon(
                   Icons.arrow_back_ios_new_rounded,
                   color: Colors.white,
                 ),
@@ -225,7 +225,7 @@ class CustomerDebtDetailScreen extends StatelessWidget {
                   ),
                 ),
                 leading: IconButton(
-                  icon: Icon(
+                  icon: const Icon(
                     Icons.arrow_back_ios_new_rounded,
                     color: Colors.white,
                   ),

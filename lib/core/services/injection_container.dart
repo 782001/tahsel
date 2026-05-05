@@ -1,19 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:get_it/get_it.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/auth/service_injection/auth_injection.dart';
-import 'package:tahsel/features/operation/service_injection/operation_injection.dart';
 import 'package:tahsel/features/customer/service_injection/customer_injection.dart';
-import 'package:tahsel/features/product/service_injection/product_injection.dart';
 import 'package:tahsel/features/debt/service_injection/debt_injection.dart';
 import 'package:tahsel/features/expenses/service_injection/expense_injection.dart';
-import 'package:tahsel/features/offline_sync/service_injection/offline_sync_injection.dart';
-import 'package:tahsel/features/reports/service_injection/reports_injection.dart';
-import 'package:tahsel/features/my_debts/service_injection/my_debts_injection.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
+import 'package:tahsel/features/my_debts/service_injection/my_debts_injection.dart';
+import 'package:tahsel/features/offline_sync/service_injection/offline_sync_injection.dart';
+import 'package:tahsel/features/operation/service_injection/operation_injection.dart';
+import 'package:tahsel/features/product/service_injection/product_injection.dart';
+import 'package:tahsel/features/reports/service_injection/reports_injection.dart';
 import 'package:vault_kit/vault_kit.dart';
-import 'package:get_it/get_it.dart';
+
 import '../../core/dio_client/dio_client.dart';
 import '../../core/services/navigator_service.dart';
 import '../../core/storage/cashhelper.dart';
@@ -24,9 +26,8 @@ import '../../features/standard_features/localization/domain/repositories/lang_r
 import '../../features/standard_features/localization/domain/usecases/change_lang.dart';
 import '../../features/standard_features/localization/domain/usecases/get_saved_lang.dart';
 import '../../features/standard_features/localization/presentation/cubit/locale_cubit.dart';
-import '../../features/standard_features/theme/presentation/cubit/theme_cubit.dart';
 import '../../features/standard_features/no-internet/logic/connectivity_cubit.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../features/standard_features/theme/presentation/cubit/theme_cubit.dart';
 
 final sl = GetIt.instance;
 
@@ -143,7 +144,7 @@ Future<void> initDependencies() async {
     () => CashHelper(sl<SharedPreferences>()),
   );
 
-  final vault = VaultKit();
+  final vault = const VaultKit();
   sl.registerLazySingleton<SecureStorageHelper>(
     () => SecureStorageHelper(vault, sl<SharedPreferences>()),
   );

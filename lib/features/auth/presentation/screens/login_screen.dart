@@ -280,7 +280,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                               ),
                                             ),
                                             SizedBox(width: 8.w),
-                                            Icon(
+                                            const Icon(
                                               Icons.arrow_forward,
                                               color: Colors.white,
                                               size: 20,

@@ -364,10 +364,10 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               if (state is DebtLoading) ...[
-                                SizedBox(
+                                const SizedBox(
                                   height: 20,
                                   width: 20,
-                                  child: const CircularProgressIndicator(
+                                  child: CircularProgressIndicator(
                                     color: Colors.white,
                                     strokeWidth: 2,
                                   ),

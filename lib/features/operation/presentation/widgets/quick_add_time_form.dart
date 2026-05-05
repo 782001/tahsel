@@ -49,7 +49,7 @@ class QuickAddTimeForm extends StatelessWidget {
           AppStrings.customerName.tr(),
           style: TextStyles.customStyle(fontWeight: FontWeight.bold),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         CustomerAutocompleteField(
           hint: AppStrings.customerNameHint.tr(),
           controller: customerController,
@@ -60,7 +60,7 @@ class QuickAddTimeForm extends StatelessWidget {
           textInputAction: customerInputAction,
           onSubmitted: onCustomerSubmitted ?? (_) => nextFocus.requestFocus(),
         ),
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
         Row(
           children: [
             Expanded(
@@ -84,7 +84,7 @@ class QuickAddTimeForm extends StatelessWidget {
                 ],
               ),
             ),
-            SizedBox(width: 16),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,7 +93,7 @@ class QuickAddTimeForm extends StatelessWidget {
                     AppStrings.timeDuration.tr(),
                     style: TextStyles.customStyle(fontWeight: FontWeight.bold),
                   ),
-                const  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   _buildCounterField(value: '$durationMinutes'),
                 ],
               ),
@@ -114,7 +114,7 @@ class QuickAddTimeForm extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: Icon(Icons.add, color: Color(0xFF2E7D32)),
+            icon: const Icon(Icons.add, color: Color(0xFF2E7D32)),
             onPressed: onDurationAdd,
           ),
           Text(
@@ -125,7 +125,7 @@ class QuickAddTimeForm extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: Icon(Icons.remove, color: Colors.red),
+            icon: const Icon(Icons.remove, color: Colors.red),
             onPressed: onDurationRemove,
           ),
         ],

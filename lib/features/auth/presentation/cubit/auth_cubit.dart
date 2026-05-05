@@ -146,7 +146,7 @@ class AuthCubit extends Cubit<AuthState> {
 
   Future<void> logout() async {
     emit(AuthLoading());
-    await logoutUseCase.call(NoParams());
+    await logoutUseCase.call(const NoParams());
     await _clearSessionData();
     emit(AuthUnauthenticated());
 
@@ -168,7 +168,7 @@ class AuthCubit extends Cubit<AuthState> {
 
     if (state is AuthUnauthenticated) return;
 
-    await logoutUseCase.call(NoParams());
+    await logoutUseCase.call(const NoParams());
     await _clearSessionData();
     emit(AuthUnauthenticated());
 

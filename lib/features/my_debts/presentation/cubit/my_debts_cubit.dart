@@ -77,7 +77,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
     final result = await getPersonsUseCase(
       GetMyDebtPersonsParams(uid: uid, forceRefresh: forceRefresh),
     );
-    final pendingResult = await getPendingMyDebtsUseCase(NoParams());
+    final pendingResult = await getPendingMyDebtsUseCase(const NoParams());
     final List<OfflineRecord> pendingRecords = pendingResult.fold(
       (_) => [],
       (records) => records,

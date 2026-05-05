@@ -409,7 +409,7 @@ class _MyDebtsNotificationDialogState extends State<MyDebtsNotificationDialog> {
                       ? SizedBox(
                           height: 20.h,
                           width: 20.h,
-                          child: CircularProgressIndicator(
+                          child: const CircularProgressIndicator(
                             color: Colors.white,
                             strokeWidth: 2,
                           ),

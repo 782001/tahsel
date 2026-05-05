@@ -49,7 +49,7 @@ class QuickAddTurnForm extends StatelessWidget {
           AppStrings.customerName.tr(),
           style: TextStyles.customStyle(fontWeight: FontWeight.bold),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         CustomerAutocompleteField(
           hint: AppStrings.customerNameHint.tr(),
           controller: customerController,
@@ -60,7 +60,7 @@ class QuickAddTurnForm extends StatelessWidget {
           textInputAction: customerInputAction,
           onSubmitted: onCustomerSubmitted ?? (_) => nextFocus.requestFocus(),
         ),
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
         Row(
           children: [
             Expanded(
@@ -71,7 +71,7 @@ class QuickAddTurnForm extends StatelessWidget {
                     AppStrings.pricePerTurn.tr(),
                     style: TextStyles.customStyle(fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   QuickAddTextField(
                     hint: '0.00',
                     controller: turnRateController,
@@ -84,7 +84,7 @@ class QuickAddTurnForm extends StatelessWidget {
                 ],
               ),
             ),
-            SizedBox(width: 16),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,7 +93,7 @@ class QuickAddTurnForm extends StatelessWidget {
                     AppStrings.turnCount.tr(),
                     style: TextStyles.customStyle(fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   _buildCounterField(value: '$matchCount'),
                 ],
               ),
@@ -114,7 +114,7 @@ class QuickAddTurnForm extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: Icon(Icons.add, color: Color(0xFF2E7D32)),
+            icon: const Icon(Icons.add, color: Color(0xFF2E7D32)),
             onPressed: onAdd,
           ),
           Text(
@@ -125,7 +125,7 @@ class QuickAddTurnForm extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: Icon(Icons.remove, color: Colors.red),
+            icon: const Icon(Icons.remove, color: Colors.red),
             onPressed: onRemove,
           ),
         ],

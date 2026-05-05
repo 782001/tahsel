@@ -87,7 +87,7 @@ class _PartialPaymentDialogState extends State<PartialPaymentDialog> {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              duration: Duration(milliseconds: 500),
+              duration: const Duration(milliseconds: 500),
               content: Text(AppStrings.paymentSuccess.tr()),
             ),
           );

@@ -7,12 +7,12 @@ class DeviderWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: ShapeDecoration(
+      decoration: const ShapeDecoration(
         shape: RoundedRectangleBorder(
           side: BorderSide(
             width: .5,
             strokeAlign: BorderSide.strokeAlignCenter,
-            color: const Color(0x194A4E9C),
+            color: Color(0x194A4E9C),
           ),
         ),
       ),

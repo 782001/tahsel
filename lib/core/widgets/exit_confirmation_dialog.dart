@@ -25,7 +25,7 @@ class ExitConfirmationDialog extends StatelessWidget {
         color: AppColors.whiteColor,
         shape: BoxShape.rectangle,
         borderRadius: BorderRadius.circular(20.r),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: Colors.black26,
             blurRadius: 10.0,

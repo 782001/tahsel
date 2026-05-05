@@ -223,7 +223,7 @@ class MonthlyCollectedTransactionsScreen extends StatelessWidget {
           Row(
             children: [
               // Date
-              Icon(Icons.access_time, size: 14, color: AppColors.grey),
+              const Icon(Icons.access_time, size: 14, color: AppColors.grey),
               SizedBox(width: 6.w),
               Text(
                 dateStr,

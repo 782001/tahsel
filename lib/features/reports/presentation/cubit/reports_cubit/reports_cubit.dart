@@ -79,12 +79,13 @@ class ReportsCubit extends Cubit<ReportsState> {
   Future<void> fetchAllTime() async {
     emit(ReportsLoading());
 
-    final result = await getAllTimeReportsUseCase(NoParams());
+    final result = await getAllTimeReportsUseCase(const NoParams());
 
     result.fold(
       (failure) => emit(ReportsError(failure.message)),
-      (reports) =>
-          emit(ReportsSuccess(reports, [])), // Pure aggregation, no insights
+      (reports) => emit(
+        ReportsSuccess(reports, const []),
+      ), // Pure aggregation, no insights
     );
   }
 }

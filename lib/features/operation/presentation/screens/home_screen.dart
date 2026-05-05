@@ -257,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (validationMsg != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            duration: Duration(milliseconds: 500),
+            duration: const Duration(milliseconds: 500),
             content: Text(validationMsg),
             backgroundColor: AppColors.orange,
           ),
@@ -299,7 +299,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (validationMsg != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            duration: Duration(milliseconds: 500),
+            duration: const Duration(milliseconds: 500),
             content: Text(validationMsg),
             backgroundColor: AppColors.orange,
           ),
@@ -608,7 +608,7 @@ class _HomeScreenState extends State<HomeScreen> {
               if (state is OperationLoading ||
                   context.watch<DebtCubit>().state is DebtLoading)
                 Container(
-                  color: Colors.black.withValues(alpha:0.3),
+                  color: Colors.black.withValues(alpha: 0.3),
                   child: Center(
                     child: CircularProgressIndicator(
                       color: AppColors.primaryColor,

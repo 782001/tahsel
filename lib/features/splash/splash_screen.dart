@@ -112,7 +112,7 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   void _handleInvalidSession() async {
-    await sl<LogoutUseCase>().call(NoParams());
+    await sl<LogoutUseCase>().call(const NoParams());
 
     // Reset global strings
     AppStrings.userToken = '';
@@ -132,10 +132,14 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value:  SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: AppColors.transparent,
-        statusBarIconBrightness:AppColors.isDark? Brightness.light:Brightness.dark, // Dark icons
-        statusBarBrightness: AppColors.isDark? Brightness.dark:Brightness.light, // iOS dark text
+        statusBarIconBrightness: AppColors.isDark
+            ? Brightness.light
+            : Brightness.dark, // Dark icons
+        statusBarBrightness: AppColors.isDark
+            ? Brightness.dark
+            : Brightness.light, // iOS dark text
       ),
       child: Scaffold(
         backgroundColor: AppColors.primaryColor,

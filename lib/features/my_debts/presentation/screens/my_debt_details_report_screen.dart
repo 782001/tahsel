@@ -152,7 +152,7 @@ class _MyDebtDetailsReportScreenState extends State<MyDebtDetailsReportScreen> {
                         );
                       }
                       // Loading or initial
-                      return SliverToBoxAdapter(
+                      return const SliverToBoxAdapter(
                         child: BuildMyDebtDetailsSummarySkeleton(),
                       );
                     },

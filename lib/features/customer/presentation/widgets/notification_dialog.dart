@@ -391,7 +391,7 @@ class _NotificationDialogState extends State<NotificationDialog> {
                       ? SizedBox(
                           height: 20.h,
                           width: 20.h,
-                          child: CircularProgressIndicator(
+                          child: const CircularProgressIndicator(
                             color: Colors.white,
                             strokeWidth: 2,
                           ),

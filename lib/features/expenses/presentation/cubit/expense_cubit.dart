@@ -41,7 +41,7 @@ class ExpenseCubit extends Cubit<ExpenseState> {
     emit(ExpenseLoading());
 
     // Always fetch pending records first
-    final pendingResult = await getPendingExpensesUseCase(NoParams());
+    final pendingResult = await getPendingExpensesUseCase(const NoParams());
     final List<OfflineRecord> pendingRecords = pendingResult.fold(
       (_) => [],
       (records) => records,
@@ -171,7 +171,7 @@ class ExpenseCubit extends Cubit<ExpenseState> {
     emit(ExpenseLoading());
 
     // 1. Fetch pending records to filter for this month
-    final pendingResult = await getPendingExpensesUseCase(NoParams());
+    final pendingResult = await getPendingExpensesUseCase(const NoParams());
     final pendingRecords = pendingResult.fold((_) => [], (records) => records);
 
     // Convert relevant pending records to ExpenseEntity objects
