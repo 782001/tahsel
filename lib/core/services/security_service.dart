@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_jailbreak_detection/flutter_jailbreak_detection.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
 import 'package:tahsel/routes/app_routes.dart';
@@ -19,6 +20,7 @@ class SecurityService {
 
   /// Check if the device is jailbroken or rooted
   static Future<bool> isJailbroken() async {
+    if (kIsWeb || !Platform.isAndroid && !Platform.isIOS) return false;
     try {
       return await FlutterJailbreakDetection.jailbroken;
     } catch (e) {
@@ -28,6 +30,7 @@ class SecurityService {
 
   /// Check if developer mode / ADB is enabled (Android only)
   static Future<bool> isDeveloperModeEnabled() async {
+    if (!Platform.isAndroid) return false;
     try {
       return await FlutterJailbreakDetection.developerMode;
     } catch (e) {
@@ -37,6 +40,7 @@ class SecurityService {
 
   /// Check for VPN active
   static Future<bool> isVpnActive() async {
+    if (kIsWeb) return false;
     try {
       List<NetworkInterface> interfaces = await NetworkInterface.list(
         includeLoopback: false,

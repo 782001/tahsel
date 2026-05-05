@@ -23,11 +23,16 @@ import 'package:tahsel/features/standard_features/localization/presentation/cubi
 import 'package:tahsel/features/standard_features/no-internet/no_internet.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_cubit.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_state.dart';
+import 'package:tahsel/firebase_options.dart';
 import 'package:tahsel/routes/app_routes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  if (Firebase.apps.isEmpty) {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  }
   await initializeDateFormatting();
 
   SecurityService.isEnabled = false;

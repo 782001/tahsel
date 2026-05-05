@@ -404,4 +404,8 @@ class AppStrings {
   static const String collectedAmount = "collectedAmount";
   static const String totalCollected = "totalCollected";
   static const String noCollectedData = "noCollectedData";
+  static String contactPickingNotSupportedWindows =
+      "contactPickingNotSupportedWindows";
+  static String contactPickingNotSupportedPlatform =
+      "contactPickingNotSupportedPlatform";
 }

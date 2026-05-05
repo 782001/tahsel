@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/contact_service.dart';
 import 'package:tahsel/core/services/sms_service.dart';
 import 'package:tahsel/core/services/whatsapp_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
@@ -224,23 +224,12 @@ class _NotificationDialogState extends State<NotificationDialog> {
   }
 
   Future<void> _pickFromContacts() async {
-    try {
-      if (await FlutterContacts.requestPermission(readonly: true)) {
-        final contact = await FlutterContacts.openExternalPick();
-        if (contact != null) {
-          final fullContact = await FlutterContacts.getContact(contact.id);
-          if (fullContact != null && fullContact.phones.isNotEmpty) {
-            setState(() {
-              _phoneController.text = fullContact.phones.first.number;
-              _errorText = null;
-            });
-          }
-        }
-      } else {
-        setState(() => _errorText = AppStrings.permissionDenied.tr());
-      }
-    } catch (e) {
-      setState(() => _errorText = e.toString());
+    final contact = await ContactService.pickContact(context);
+    if (contact != null && contact['phone'] != null) {
+      setState(() {
+        _phoneController.text = contact['phone']!;
+        _errorText = null;
+      });
     }
   }
 

@@ -15,7 +15,7 @@ import 'package:tahsel/features/standard_features/no-internet/logic/connectivity
 class MyNotificationPreferenceToggle extends StatelessWidget {
   final MyDebtPersonEntity person;
 
-  const MyNotificationPreferenceToggle({required this.person});
+  const MyNotificationPreferenceToggle({super.key, required this.person});
 
   @override
   Widget build(BuildContext context) {
@@ -95,7 +95,8 @@ class MyNotificationPreferenceToggle extends StatelessWidget {
                     if (newSelection.isEmpty) return;
                     final uid = AppStrings.userToken;
                     if (uid.isNotEmpty) {
-                      if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+                      if (context.read<ConnectivityCubit>().state
+                          is ConnectivityDisconnected) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(AppStrings.noInternetConnection.tr()),

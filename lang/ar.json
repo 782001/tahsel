@@ -349,5 +349,7 @@
   "optional": "اختياري",
   "collectedAmount": "حصلت كام",
   "totalCollected": "الإجمالي المحصل",
+    "contactPickingNotSupportedWindows": "اختيار جهات الاتصال غير مدعوم على نظام ويندوز حتى الآن",
+  "contactPickingNotSupportedPlatform": "اختيار جهات الاتصال غير مدعوم على هذا النظام",
   "noCollectedData": "لا توجد بيانات تحصيل حتى الآن"
 }

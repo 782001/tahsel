@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:path_provider/path_provider.dart';
 import '../data/datasources/offline_local_data_source.dart';
 import '../data/datasources/offline_remote_data_source.dart';
 import '../data/models/offline_record.dart';
@@ -12,7 +14,12 @@ import '../presentation/cubit/offline_sync_cubit.dart';
 class OfflineSyncInjection {
   static Future<void> init(GetIt sl) async {
     // Initialize Hive and Register Adapter
-    await Hive.initFlutter();
+    if (kIsWeb) {
+      await Hive.initFlutter();
+    } else {
+      final appDocumentDir = await getApplicationDocumentsDirectory();
+      await Hive.initFlutter(appDocumentDir.path);
+    }
     Hive.registerAdapter(OfflineRecordAdapter());
 
     // Data Sources

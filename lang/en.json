@@ -349,5 +349,8 @@
   "optional": "Optional",
   "collectedAmount": "Collected Amount",
   "totalCollected": "Total Collected",
-  "noCollectedData": "No collected data yet"
+  "noCollectedData": "No collected data yet",
+  "contactPickingNotSupportedWindows": "Contact picking is not supported on Windows yet.",
+  "contactPickingNotSupportedPlatform": "Contact picking is not supported on this platform."
+
 }

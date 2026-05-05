@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
@@ -5,6 +8,18 @@ import 'package:tahsel/core/utils/app_strings.dart';
 
 class ContactService {
   static Future<Map<String, String>?> pickContact(BuildContext context) async {
+    if (kIsWeb || !Platform.isAndroid && !Platform.isIOS) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            Platform.isWindows
+                ? AppStrings.contactPickingNotSupportedWindows.tr()
+                : AppStrings.contactPickingNotSupportedPlatform.tr(),
+          ),
+        ),
+      );
+      return null;
+    }
     try {
       if (await FlutterContacts.requestPermission(readonly: true)) {
         final contact = await FlutterContacts.openExternalPick();

@@ -12,7 +12,7 @@ import 'package:tahsel/features/customer/presentation/cubit/customer_state.dart'
 class NotificationPreferenceToggle extends StatelessWidget {
   final String customerName;
 
-  const NotificationPreferenceToggle({required this.customerName});
+  const NotificationPreferenceToggle({super.key, required this.customerName});
 
   @override
   Widget build(BuildContext context) {

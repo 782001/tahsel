@@ -132,7 +132,7 @@ class MonthlyCollectedScreen extends StatelessWidget {
         gradient: LinearGradient(
           colors: [
             AppColors.primaryColor,
-            AppColors.primaryColor.withOpacity(0.8),
+            AppColors.primaryColor.withValues(alpha:0.8),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -140,7 +140,7 @@ class MonthlyCollectedScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryColor.withOpacity(0.3),
+            color: AppColors.primaryColor.withValues(alpha:0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -151,7 +151,7 @@ class MonthlyCollectedScreen extends StatelessWidget {
           Text(
             AppStrings.totalCollected.tr(),
             style: TextStyle(
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withValues(alpha:0.9),
               fontSize: 14.sp,
             ),
           ),
@@ -177,10 +177,10 @@ class MonthlyCollectedScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: AppColors.grey.withOpacity(0.1)),
+        border: Border.all(color: AppColors.grey.withValues(alpha:0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha:0.05),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -204,7 +204,7 @@ class MonthlyCollectedScreen extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.all(10.w),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryColor.withOpacity(0.1),
+                    color: AppColors.primaryColor.withValues(alpha:0.1),
                     borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Icon(

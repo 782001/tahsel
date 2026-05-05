@@ -99,10 +99,10 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen>
                                 horizontal: 16,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.primaryColor.withOpacity(0.1),
+                                color: AppColors.primaryColor.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12.r),
                                 border: Border.all(
-                                  color: AppColors.primaryColor.withOpacity(0.2),
+                                  color: AppColors.primaryColor.withValues(alpha:0.2),
                                 ),
                               ),
                               child: Row(

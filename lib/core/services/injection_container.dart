@@ -145,7 +145,7 @@ Future<void> initDependencies() async {
 
   final vault = VaultKit();
   sl.registerLazySingleton<SecureStorageHelper>(
-    () => SecureStorageHelper(vault),
+    () => SecureStorageHelper(vault, sl<SharedPreferences>()),
   );
 
   /// --------------------------
