@@ -46,7 +46,7 @@ extension ContextExtensions on BuildContext {
         content: Text(message),
         backgroundColor: backgroundColor,
         behavior: SnackBarBehavior.floating,
-        duration: Duration(milliseconds: 500),
+        duration: const Duration(milliseconds: 500),
       ),
     );
   }
