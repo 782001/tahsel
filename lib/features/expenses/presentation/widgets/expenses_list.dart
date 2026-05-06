@@ -6,6 +6,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/features/customer_debts/presentation/widgets/skeletons/customer_debt_skeleton.dart';
 import 'package:tahsel/features/expenses/domain/entities/expense_entity.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_state.dart';
@@ -30,12 +31,13 @@ class ExpensesList extends StatelessWidget {
               current is ExpenseFailure,
           builder: (context, state) {
             if (state is ExpenseLoading) {
-              return Padding(
-                padding: EdgeInsets.symmetric(vertical: 40.h),
-                child: Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.primaryColor,
-                  ),
+              return SizedBox(
+                height: MediaQuery.of(context).size.height * 0.3,
+                child: ListView.builder(
+                  padding: EdgeInsets.all(16.w),
+                  itemBuilder: (context, index) =>
+                      const CustomerDebtCardSkeleton(),
+                  itemCount: 3,
                 ),
               );
             }
@@ -50,7 +52,7 @@ class ExpensesList extends StatelessWidget {
                     padding: EdgeInsets.symmetric(vertical: 40.h),
                     child: Text(
                       AppStrings.noData.tr(),
-                      style:  TextStyles.customStyle(color: AppColors.grey),
+                      style: TextStyles.customStyle(color: AppColors.grey),
                     ),
                   ),
                 );
@@ -273,7 +275,10 @@ class ExpensesList extends StatelessWidget {
                     SizedBox(height: 4.h),
                     Text(
                       "${month.transactionCount} ${AppStrings.transactionCount.tr()}",
-                      style: TextStyles.customStyle(fontSize: 12, color: AppColors.grey),
+                      style: TextStyles.customStyle(
+                        fontSize: 12,
+                        color: AppColors.grey,
+                      ),
                     ),
                   ],
                 ),

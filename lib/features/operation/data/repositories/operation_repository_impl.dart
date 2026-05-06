@@ -1,13 +1,15 @@
 import 'dart:convert';
+
 import 'package:dartz/dartz.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
+
+import '../../../../core/error/failures.dart';
+import '../../../offline_sync/data/models/offline_record.dart';
+import '../../../offline_sync/domain/repositories/offline_sync_repository.dart';
 import '../../domain/entities/operation_entity.dart';
 import '../../domain/repositories/operation_repository.dart';
 import '../datasources/operation_remote_data_source.dart';
 import '../models/operation_model.dart';
-import '../../../offline_sync/domain/repositories/offline_sync_repository.dart';
-import '../../../offline_sync/data/models/offline_record.dart';
-import '../../../../core/error/failures.dart';
 
 class OperationRepositoryImpl implements OperationRepository {
   final OperationRemoteDataSource remoteDataSource;

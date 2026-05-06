@@ -59,20 +59,24 @@ class MonthlyCollectedScreen extends StatelessWidget {
                 itemCount: 5,
               );
             } else if (state is MonthlyCollectedError) {
-              return Center(
-                child: Padding(
-                  padding: EdgeInsets.all(20.w),
-                  child: Text(
-                    state.message,
-                    textAlign: TextAlign.center,
-                    style: TextStyles.customStyle(
-                      fontSize: 20,
-                      color: AppColors.error,
-                    ),
+               return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.analytics_outlined,
+                        size: 80,
+                        color: AppColors.grey.withValues(alpha: 0.5),
+                      ),
+                      SizedBox(height: 20.h),
+                      Text(
+                        AppStrings.noCollectedData.tr(),
+                        style: TextStyles.customStyle(fontSize: 20),
+                      ),
+                    ],
                   ),
-                ),
-              );
-            } else if (state is MonthlyCollectedSuccess) {
+                );
+             } else if (state is MonthlyCollectedSuccess) {
               if (state.data.isEmpty) {
                 return Center(
                   child: Column(

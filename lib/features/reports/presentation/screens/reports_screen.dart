@@ -8,6 +8,7 @@ import 'package:tahsel/core/services/navigator_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/features/customer_debts/presentation/widgets/skeletons/customer_debt_skeleton.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:tahsel/features/reports/domain/entities/profit_insight.dart';
 import 'package:tahsel/features/reports/presentation/cubit/reports_cubit/reports_cubit.dart';
@@ -176,11 +177,12 @@ class _ReportsViewState extends State<ReportsView> {
                             builder: (context, state) {
                               if (state is ReportsLoading) {
                                 return SizedBox(
-                                  height: 400.h,
-                                  child: Center(
-                                    child: CircularProgressIndicator(
-                                      color: AppColors.primaryColor,
-                                    ),
+                                  height: 450.h,
+                                  child: ListView.builder(
+                                    padding: EdgeInsets.all(16.w),
+                                    itemBuilder: (context, index) =>
+                                        const CustomerDebtCardSkeleton(),
+                                    itemCount: 4,
                                   ),
                                 );
                               } else if (state is ReportsError) {
@@ -191,11 +193,20 @@ class _ReportsViewState extends State<ReportsView> {
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
                                       children: [
-                                        Text(state.message),
-                                        TextButton(
-                                          onPressed: () =>
-                                              _onTabChanged(_selectedTimeRange),
-                                          child: Text(AppStrings.tryAgain.tr()),
+                                        Icon(
+                                          Icons.search_off,
+                                          size: 64,
+                                          color: AppColors.blackLight.withAlpha(
+                                            100,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          AppStrings.noData.tr(),
+                                          style: TextStyles.customStyle(
+                                            color: AppColors.blackLight,
+                                            fontSize: 16,
+                                          ),
                                         ),
                                       ],
                                     ),

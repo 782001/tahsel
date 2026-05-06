@@ -1,15 +1,17 @@
 import 'dart:convert';
+
 import 'package:dartz/dartz.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
+
+import '../../../../core/error/failures.dart';
+import '../../../offline_sync/data/models/offline_record.dart';
+import '../../../offline_sync/domain/repositories/offline_sync_repository.dart';
 import '../../domain/entities/debt_entity.dart';
 import '../../domain/entities/payment_entity.dart';
 import '../../domain/repositories/debt_repository.dart';
 import '../datasources/debt_remote_data_source.dart';
 import '../models/debt_model.dart';
 import '../models/payment_model.dart';
-import 'package:internet_connection_checker/internet_connection_checker.dart';
-import '../../../offline_sync/data/models/offline_record.dart';
-import '../../../offline_sync/domain/repositories/offline_sync_repository.dart';
-import '../../../../core/error/failures.dart';
 
 class DebtRepositoryImpl implements DebtRepository {
   final DebtRemoteDataSource remoteDataSource;

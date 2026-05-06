@@ -236,7 +236,14 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
         }
 
         if (state is DebtFailure) {
-          return SliverFillRemaining(child: Center(child: Text(state.message)));
+          return SliverFillRemaining(
+            child: Center(
+              child: Text(
+                AppStrings.noCustomerDebts.tr(),
+                style: TextStyles.customStyle(color: AppColors.grey),
+              ),
+            ),
+          );
         }
 
         if (state is DebtsFetchSuccess) {
@@ -259,9 +266,7 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
                   child: Center(
                     child: Text(
                       AppStrings.noCustomerDebts.tr(),
-                      style:  TextStyles.customStyle(
-                        color: AppColors.grey,
-                      ),
+                      style: TextStyles.customStyle(color: AppColors.grey),
                     ),
                   ),
                 );
