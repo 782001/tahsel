@@ -12,6 +12,7 @@ import '../domain/usecases/get_monthly_expenses_usecase.dart';
 import '../domain/usecases/get_expenses_by_month_usecase.dart';
 import '../domain/usecases/delete_expense_usecase.dart';
 import '../domain/usecases/get_pending_expenses_usecase.dart';
+import '../domain/usecases/group_expenses_by_day_usecase.dart';
 
 Future<void> initExpense() async {
   // Cubit
@@ -25,6 +26,7 @@ Future<void> initExpense() async {
       deleteExpenseUseCase: sl(),
       deleteMonthExpensesUseCase: sl(),
       getPendingExpensesUseCase: sl(),
+      groupExpensesByDayUseCase: sl(),
     ),
   );
 
@@ -37,6 +39,7 @@ Future<void> initExpense() async {
   sl.registerLazySingleton(() => DeleteExpenseUseCase(sl()));
   sl.registerLazySingleton(() => DeleteMonthExpensesUseCase(sl()));
   sl.registerLazySingleton(() => GetPendingExpensesUseCase(sl()));
+  sl.registerLazySingleton(() => GroupExpensesByDayUseCase());
 
   // Repository
   sl.registerLazySingleton<ExpenseRepository>(

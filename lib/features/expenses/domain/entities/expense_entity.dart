@@ -52,3 +52,16 @@ class MonthlyExpenseGroup extends Equatable {
     transactionCount,
   ];
 }
+
+class DayExpenseGroup extends Equatable {
+  final DateTime date;
+  final List<ExpenseEntity> expenses;
+
+  const DayExpenseGroup({
+    required this.date,
+    required this.expenses,
+  });
+
+  @override
+  List<Object?> get props => [date, expenses];
+}

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/config/locale/app_localizations.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/date_formatter.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/features/customer_debts/presentation/widgets/skeletons/customer_debt_skeleton.dart';
+import 'package:tahsel/features/expenses/domain/entities/expense_entity.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_state.dart';
 import 'package:tahsel/features/expenses/presentation/widgets/expense_card.dart';
@@ -79,7 +82,6 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
                   backgroundColor: AppColors.success,
                 ),
               );
-              // Refresh details
               context.read<ExpenseCubit>().fetchMonthDetails(
                 AppStrings.userToken,
                 widget.monthKey,
@@ -95,16 +97,12 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
             }
           },
           child: BlocBuilder<ExpenseCubit, ExpenseState>(
-            buildWhen: (previous, current) =>
-                current is ExpenseLoading ||
-                current is ExpenseMonthDetailsSuccess ||
-                current is ExpenseFailure,
             builder: (context, state) {
               if (state is ExpenseLoading) {
-                return Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.primaryColor,
-                  ),
+                return ListView.builder(
+                  padding: EdgeInsets.symmetric(vertical: 24.h),
+                  itemCount: 8,
+                  itemBuilder: (context, index) => const CustomerDebtCardSkeleton(),
                 );
               } else if (state is ExpenseFailure) {
                 return Center(child: Text(state.message));
@@ -112,45 +110,109 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
                 if (state.expenses.isEmpty) {
                   return Center(
                     child: Text(
-                      AppStrings.noData.tr(),
+                      AppLocalizations.tr(AppStrings.noData),
                       style: TextStyles.customStyle(color: AppColors.grey),
                     ),
                   );
                 }
-                return ListView.separated(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 24.w,
-                    vertical: 24.h,
+
+                // Flatten the groups for efficient Sliver scrolling
+                final List<dynamic> items = [];
+                for (final group in state.expenses) {
+                  items.add(group.date);
+                  items.addAll(group.expenses);
+                }
+
+                final String locale = AppStrings.currentLang;
+
+                return SizedBox.expand(
+                  child: CustomScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    slivers: [
+                      SliverPadding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 24.w,
+                          vertical: 24.h,
+                        ),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              if (index >= items.length) return null;
+                              final item = items[index];
+
+                              // Header Item
+                              if (item is DateTime) {
+                                final dateStr = DateFormatter.formatLocalizedDate(
+                                  item,
+                                  locale,
+                                );
+                                return Container(
+                                  width: double.infinity,
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: 8.h,
+                                    horizontal: 12.w,
+                                  ),
+                                  margin: EdgeInsets.only(
+                                    bottom: 8.h,
+                                    top: index == 0 ? 0 : 12.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.stitchBlue.withValues(alpha: 0.05),
+                                    borderRadius: BorderRadius.circular(8.r),
+                                  ),
+                                  child: Text(
+                                    dateStr,
+                                    style: TextStyles.customStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.stitchBlue,
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              // Expense Item
+                              if (item is ExpenseEntity) {
+                                final expense = item;
+                                IconData iconData = Icons.money;
+                                
+                                // Safe translation call
+                                final categoryStr = AppLocalizations.tr(expense.category);
+
+                                if (categoryStr == AppLocalizations.tr(AppStrings.operations)) {
+                                  iconData = Icons.build_outlined;
+                                } else if (categoryStr == AppLocalizations.tr(AppStrings.employees)) {
+                                  iconData = Icons.people_outline;
+                                } else if (categoryStr == AppLocalizations.tr(AppStrings.rents) ||
+                                    categoryStr == AppLocalizations.tr(AppStrings.rent)) {
+                                  iconData = Icons.home_outlined;
+                                } else if (categoryStr == AppLocalizations.tr(AppStrings.salaries)) {
+                                  iconData = Icons.attach_money_outlined;
+                                }
+
+                                return Padding(
+                                  padding: EdgeInsets.only(bottom: 8.h),
+                                  child: ExpenseCard(
+                                    icon: iconData,
+                                    title: categoryStr,
+                                    subtitle: expense.description,
+                                    amount: expense.amount,
+                                    date: DateFormatter.formatNumericDate(
+                                      expense.createdAt,
+                                    ),
+                                    onDelete: () =>
+                                        _confirmDelete(context, expense.id ?? ''),
+                                  ),
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            },
+                            childCount: items.length,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  itemCount: state.expenses.length,
-                  separatorBuilder: (context, index) => SizedBox(height: 12.h),
-                  itemBuilder: (context, index) {
-                    final expense = state.expenses[index];
-
-                    IconData iconData = Icons.money;
-                    if (expense.category.tr() == AppStrings.operations.tr()) {
-                      iconData = Icons.build_outlined;
-                    } else if (expense.category.tr() ==
-                        AppStrings.employees.tr()) {
-                      iconData = Icons.people_outline;
-                    } else if (expense.category.tr() == AppStrings.rents.tr() ||
-                        expense.category.tr() == AppStrings.rent.tr()) {
-                      iconData = Icons.home_outlined;
-                    } else if (expense.category.tr() ==
-                        AppStrings.salaries.tr()) {
-                      iconData = Icons.attach_money_outlined;
-                    }
-
-                    return ExpenseCard(
-                      icon: iconData,
-                      title: expense.category
-                          .tr(), // Using translation for display
-                      subtitle: expense.description,
-                      amount: expense.amount,
-                      date: DateFormatter.formatNumericDate(expense.createdAt),
-                      onDelete: () => _confirmDelete(context, expense.id ?? ''),
-                    );
-                  },
                 );
               }
               return const SizedBox();

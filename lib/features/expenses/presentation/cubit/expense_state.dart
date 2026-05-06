@@ -30,7 +30,7 @@ class ExpenseFetchSuccess extends ExpenseState {
 }
 
 class ExpenseMonthDetailsSuccess extends ExpenseState {
-  final List<ExpenseEntity> expenses;
+  final List<DayExpenseGroup> expenses;
   final String monthKey;
   final String monthName;
 

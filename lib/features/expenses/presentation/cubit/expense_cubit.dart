@@ -14,6 +14,7 @@ import '../../domain/usecases/get_expenses_by_month_usecase.dart';
 import '../../domain/usecases/get_expenses_usecase.dart';
 import '../../domain/usecases/get_monthly_expenses_usecase.dart';
 import '../../domain/usecases/get_pending_expenses_usecase.dart';
+import '../../domain/usecases/group_expenses_by_day_usecase.dart';
 import 'expense_state.dart';
 
 class ExpenseCubit extends Cubit<ExpenseState> {
@@ -25,6 +26,7 @@ class ExpenseCubit extends Cubit<ExpenseState> {
   final DeleteExpenseUseCase deleteExpenseUseCase;
   final DeleteMonthExpensesUseCase deleteMonthExpensesUseCase;
   final GetPendingExpensesUseCase getPendingExpensesUseCase;
+  final GroupExpensesByDayUseCase groupExpensesByDayUseCase;
 
   ExpenseCubit({
     required this.addExpenseUseCase,
@@ -35,6 +37,7 @@ class ExpenseCubit extends Cubit<ExpenseState> {
     required this.deleteExpenseUseCase,
     required this.deleteMonthExpensesUseCase,
     required this.getPendingExpensesUseCase,
+    required this.groupExpensesByDayUseCase,
   }) : super(ExpenseInitial());
 
   Future<void> fetchMonths(String uid) async {
@@ -199,12 +202,13 @@ class ExpenseCubit extends Cubit<ExpenseState> {
     );
 
     result.fold(
-      (failure) {
+      (failure) async {
         // If it's a connection failure but we HAVE pending items for this month, show them!
         if (filteredPending.isNotEmpty) {
+          final grouped = await groupExpensesByDayUseCase(filteredPending);
           emit(
             ExpenseMonthDetailsSuccess(
-              expenses: filteredPending,
+              expenses: grouped,
               monthKey: monthKey,
               monthName: monthName,
             ),
@@ -213,12 +217,13 @@ class ExpenseCubit extends Cubit<ExpenseState> {
           emit(ExpenseFailure(message: failure.message));
         }
       },
-      (remoteExpenses) {
+      (remoteExpenses) async {
         // Combine remote synced expenses + local pending expenses
         final combined = [...filteredPending, ...remoteExpenses];
+        final grouped = await groupExpensesByDayUseCase(combined);
         emit(
           ExpenseMonthDetailsSuccess(
-            expenses: combined,
+            expenses: grouped,
             monthKey: monthKey,
             monthName: monthName,
           ),

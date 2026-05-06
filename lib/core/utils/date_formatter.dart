@@ -12,4 +12,11 @@ class DateFormatter {
   static String formatArabicMonthYear(DateTime date) {
     return DateFormat('MMMM yyyy', 'ar').format(date);
   }
+
+  static String formatLocalizedDate(DateTime date, String locale) {
+    if (locale == 'ar') {
+      return DateFormat('d MMMM yyyy', 'ar').format(date);
+    }
+    return DateFormat('MMMM d, yyyy', 'en').format(date);
+  }
 }
