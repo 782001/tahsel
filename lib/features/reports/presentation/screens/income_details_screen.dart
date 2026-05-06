@@ -225,6 +225,8 @@ class IncomeDetailsScreen extends StatelessWidget {
 
     if (type == null) {
       return "${AppStrings.totalIncome.tr()} ($periodStr)";
+    } else if (periodStr.isEmpty) {
+      return isShop ? AppStrings.shopIncome.tr() : AppStrings.cafeIncome.tr();
     } else if (type.toLowerCase() == AppStrings.shop.toLowerCase()) {
       return isShop
           ? "${AppStrings.shopIncome.tr()} ($periodStr)"

@@ -201,39 +201,66 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
   Future<void> payDebt(DebtModel debt, PaymentModel payment) async {
     try {
       final uid = debt.uid;
-      final debtRef = firestore
-          .collection('users')
-          .doc(uid)
-          .collection('debts')
-          .doc(debt.id);
+      final debtRef = _getDebtRef(uid, debt.id, debt.operationId);
 
-      final paymentRef = debtRef.collection('payments').doc();
+      await firestore.runTransaction((transaction) async {
+        // 1. ALL READS FIRST
+        final debtSnap = await transaction.get(debtRef);
+        if (!debtSnap.exists) {
+          throw Exception("Debt document not found: ${debtRef.path}");
+        }
 
-      final batch = firestore.batch();
+        DocumentSnapshot? opSnap;
+        final operationId = debt.operationId;
+        if (operationId.isNotEmpty) {
+          final opRef = firestore
+              .collection('users')
+              .doc(uid)
+              .collection('operations')
+              .doc(operationId);
+          opSnap = await transaction.get(opRef);
+        }
 
-      var debtData = debt.toJson();
-      debtData['lastUpdatedAt'] = FieldValue.serverTimestamp();
-      batch.update(debtRef, debtData);
-      batch.set(paymentRef, payment.toJson());
+        // 2. ALL WRITES SECOND
+        final debtData = debtSnap.data() as Map<String, dynamic>;
+        final currentPaid = (debtData['paidAmount'] as num).toDouble();
+        final currentTotal = (debtData['totalAmount'] as num).toDouble();
+        
+        final newPaidAmount = currentPaid + payment.amountPaid;
+        final newRemainingAmount = currentTotal - newPaidAmount;
+        final isPaid = newRemainingAmount <= 1e-9;
 
-      // Update the operation record to keep reports consistent
-      if (debt.operationId.isNotEmpty) {
-        final opRef = firestore
-            .collection('users')
-            .doc(uid)
-            .collection('operations')
-            .doc(debt.operationId);
-        batch.update(opRef, {
-          'paidAmount': debt.paidAmount,
-          'remainingDebt': debt.remainingAmount,
+        // Update Debt document
+        transaction.update(debtRef, {
+          'paidAmount': newPaidAmount,
+          'remainingAmount': newRemainingAmount,
+          'isPaid': isPaid,
           'lastUpdatedAt': FieldValue.serverTimestamp(),
         });
-      }
 
-      await batch.commit();
+        // Update Linked Operation if it exists
+        if (opSnap != null && opSnap.exists) {
+          transaction.update(opSnap.reference, {
+            'paidAmount': newPaidAmount,
+            'remainingDebt': newRemainingAmount,
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+
+        // Record the payment in sub-collection
+        final paymentRef = debtRef.collection('payments').doc();
+        transaction.set(paymentRef, {
+          'uid': uid,
+          'debtId': debtRef.id,
+          'amountPaid': payment.amountPaid,
+          'remainingAmount': newRemainingAmount,
+          'createdAt': FieldValue.serverTimestamp(),
+          'type': isPaid ? PaymentType.full.name : PaymentType.partial.name,
+        });
+      });
     } catch (e) {
       FirebaseErrorHandler.handle(e);
-      throw Exception('Failed to record payment: $e');
+      throw Exception('Failed to process payment: $e');
     }
   }
 
@@ -255,75 +282,81 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
       if (snapshot.docs.isEmpty) return;
 
-      final batch = firestore.batch();
-      double remainingToPay = amount;
-
-      for (var doc in snapshot.docs) {
-        if (remainingToPay <= 0) break;
-
-        final debtData = doc.data();
-        final debtId = doc.id;
-        final operationId = debtData['operationId'] as String?;
-        final currentTotal = (debtData['totalAmount'] as num).toDouble();
-        final currentPaid = (debtData['paidAmount'] as num).toDouble();
-        final currentRemaining = (debtData['remainingAmount'] as num)
-            .toDouble();
-
-        double paymentForThisItem = 0;
-        if (remainingToPay >= currentRemaining) {
-          paymentForThisItem = currentRemaining;
-          remainingToPay -= currentRemaining;
-        } else {
-          paymentForThisItem = remainingToPay;
-          remainingToPay = 0;
-        }
-
-        final newPaidAmount = currentPaid + paymentForThisItem;
-        final newRemainingAmount = currentTotal - newPaidAmount;
-        final isPaid = newRemainingAmount <= 0;
-
-        final debtRef = firestore
-            .collection('users')
-            .doc(uid)
-            .collection('debts')
-            .doc(debtId);
-
-        batch.update(debtRef, {
-          'paidAmount': newPaidAmount,
-          'remainingAmount': newRemainingAmount,
-          'isPaid': isPaid,
-          'lastUpdatedAt': FieldValue.serverTimestamp(),
-        });
-
-        // Also update the linked operation record for real-time consistency in Reports
-        if (operationId != null && operationId.isNotEmpty) {
-          batch.update(
-            firestore
+      await firestore.runTransaction((transaction) async {
+        // 1. ALL READS FIRST
+        final Map<String, DocumentSnapshot> opSnaps = {};
+        for (var doc in snapshot.docs) {
+          final operationId = doc.data()['operationId'] as String?;
+          if (operationId != null && operationId.isNotEmpty) {
+            final opRef = firestore
                 .collection('users')
                 .doc(uid)
                 .collection('operations')
-                .doc(operationId),
-            {
-              'paidAmount': newPaidAmount,
-              'remainingDebt': newRemainingAmount,
-              'lastUpdatedAt': FieldValue.serverTimestamp(),
-            },
-          );
+                .doc(operationId);
+            opSnaps[operationId] = await transaction.get(opRef);
+          }
         }
 
-        // Add payment record to sub-collection
-        final paymentRef = debtRef.collection('payments').doc();
-        batch.set(paymentRef, {
-          'uid': uid,
-          'debtId': debtId,
-          'amountPaid': paymentForThisItem,
-          'remainingAmount': newRemainingAmount,
-          'createdAt': FieldValue.serverTimestamp(),
-          'type': isPaid ? PaymentType.full.name : PaymentType.partial.name,
-        });
-      }
+        // 2. ALL WRITES SECOND
+        double remainingToPay = amount;
 
-      await batch.commit();
+        for (var docSnap in snapshot.docs) {
+          if (remainingToPay <= 0) break;
+
+          final debtData = docSnap.data();
+          final debtId = docSnap.id;
+          final operationId = debtData['operationId'] as String?;
+          final currentTotal = (debtData['totalAmount'] as num).toDouble();
+          final currentPaid = (debtData['paidAmount'] as num).toDouble();
+          final currentRemaining = (debtData['remainingAmount'] as num).toDouble();
+
+          double paymentForThisItem = 0;
+          if (remainingToPay >= currentRemaining) {
+            paymentForThisItem = currentRemaining;
+            remainingToPay -= currentRemaining;
+          } else {
+            paymentForThisItem = remainingToPay;
+            remainingToPay = 0;
+          }
+
+          final newPaidAmount = currentPaid + paymentForThisItem;
+          final newRemainingAmount = currentTotal - newPaidAmount;
+          final isPaid = newRemainingAmount <= 1e-9;
+
+          final debtRef = docSnap.reference;
+
+          // Update debt record
+          transaction.update(debtRef, {
+            'paidAmount': newPaidAmount,
+            'remainingAmount': newRemainingAmount,
+            'isPaid': isPaid,
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          });
+
+          // Update the linked operation record if it exists and was read successfully
+          if (operationId != null && opSnaps.containsKey(operationId)) {
+            final opSnap = opSnaps[operationId]!;
+            if (opSnap.exists) {
+              transaction.update(opSnap.reference, {
+                'paidAmount': newPaidAmount,
+                'remainingDebt': newRemainingAmount,
+                'lastUpdatedAt': FieldValue.serverTimestamp(),
+              });
+            }
+          }
+
+          // Add payment record
+          final paymentRef = debtRef.collection('payments').doc();
+          transaction.set(paymentRef, {
+            'uid': uid,
+            'debtId': debtId,
+            'amountPaid': paymentForThisItem,
+            'remainingAmount': newRemainingAmount,
+            'createdAt': FieldValue.serverTimestamp(),
+            'type': isPaid ? PaymentType.full.name : PaymentType.partial.name,
+          });
+        }
+      });
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       throw Exception('Failed to pay total debt: $e');
@@ -343,56 +376,63 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
       if (snapshot.docs.isEmpty) return;
 
-      final batch = firestore.batch();
-
-      for (var doc in snapshot.docs) {
-        final debtData = doc.data();
-        final debtId = doc.id;
-        final operationId = debtData['operationId'] as String?;
-        final currentTotal = (debtData['totalAmount'] as num).toDouble();
-
-        final debtRef = firestore
-            .collection('users')
-            .doc(uid)
-            .collection('debts')
-            .doc(debtId);
-
-        batch.update(debtRef, {
-          'paidAmount': currentTotal,
-          'remainingAmount': 0.0,
-          'isPaid': true,
-          'lastUpdatedAt': FieldValue.serverTimestamp(),
-        });
-
-        // Sync with operations for Report accuracy
-        if (operationId != null && operationId.isNotEmpty) {
-          batch.update(
-            firestore
+      await firestore.runTransaction((transaction) async {
+        // 1. ALL READS FIRST
+        final Map<String, DocumentSnapshot> opSnaps = {};
+        for (var doc in snapshot.docs) {
+          final operationId = doc.data()['operationId'] as String?;
+          if (operationId != null && operationId.isNotEmpty) {
+            final opRef = firestore
                 .collection('users')
                 .doc(uid)
                 .collection('operations')
-                .doc(operationId),
-            {
-              'paidAmount': currentTotal,
-              'remainingDebt': 0.0,
-              'lastUpdatedAt': FieldValue.serverTimestamp(),
-            },
-          );
+                .doc(operationId);
+            opSnaps[operationId] = await transaction.get(opRef);
+          }
         }
 
-        // Add payment record to sub-collection
-        final paymentRef = debtRef.collection('payments').doc();
-        batch.set(paymentRef, {
-          'debtId': debtId,
-          'amountPaid':
-              currentTotal - (debtData['paidAmount'] as num).toDouble(),
-          'remainingAmount': 0.0,
-          'createdAt': FieldValue.serverTimestamp(),
-          'type': PaymentType.settlement.name,
-        });
-      }
+        // 2. ALL WRITES SECOND
+        for (var docSnap in snapshot.docs) {
+          final debtData = docSnap.data();
+          final debtId = docSnap.id;
+          final operationId = debtData['operationId'] as String?;
+          final currentTotal = (debtData['totalAmount'] as num).toDouble();
+          final currentPaid = (debtData['paidAmount'] as num).toDouble();
 
-      await batch.commit();
+          final debtRef = docSnap.reference;
+
+          // Update debt record
+          transaction.update(debtRef, {
+            'paidAmount': currentTotal,
+            'remainingAmount': 0.0,
+            'isPaid': true,
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          });
+
+          // Update the linked operation record if it exists and was read
+          if (operationId != null && opSnaps.containsKey(operationId)) {
+            final opSnap = opSnaps[operationId]!;
+            if (opSnap.exists) {
+              transaction.update(opSnap.reference, {
+                'paidAmount': currentTotal,
+                'remainingDebt': 0.0,
+                'lastUpdatedAt': FieldValue.serverTimestamp(),
+              });
+            }
+          }
+
+          // Add payment record
+          final paymentRef = debtRef.collection('payments').doc();
+          transaction.set(paymentRef, {
+            'uid': uid,
+            'debtId': debtId,
+            'amountPaid': currentTotal - currentPaid,
+            'remainingAmount': 0.0,
+            'createdAt': FieldValue.serverTimestamp(),
+            'type': PaymentType.settlement.name,
+          });
+        }
+      });
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       throw Exception('Failed to mark customer as paid: $e');
@@ -453,26 +493,41 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           .collection('debts')
           .doc(debtId);
 
+      // 1. Get associated operation ID first
+      final debtDoc = await debtRef.get();
+      if (!debtDoc.exists) return;
+
+      final operationId = debtDoc.data()?['operationId'] as String?;
+
+      // 2. Fetch all payment references
       final paymentsSnapshot = await debtRef.collection('payments').get();
-
+      
       final List<DocumentReference> allRefs = [];
-      for (var paymentDoc in paymentsSnapshot.docs) {
-        allRefs.add(paymentDoc.reference);
+      for (var doc in paymentsSnapshot.docs) {
+        allRefs.add(doc.reference);
       }
-      allRefs.add(debtRef);
 
-      // Batch delete in chunks of 500
-      for (var i = 0; i < allRefs.length; i += 500) {
-        final chunk = allRefs.sublist(
-          i,
-          i + 500 > allRefs.length ? allRefs.length : i + 500,
-        );
-        final batch = firestore.batch();
-        for (var ref in chunk) {
-          batch.delete(ref);
-        }
-        await batch.commit();
+      final batch = firestore.batch();
+
+      // 3. Delete payments
+      for (var ref in allRefs) {
+        batch.delete(ref);
       }
+
+      // 4. Delete operation record if it exists
+      if (operationId != null && operationId.isNotEmpty) {
+        final opRef = firestore
+            .collection('users')
+            .doc(uid)
+            .collection('operations')
+            .doc(operationId);
+        batch.delete(opRef);
+      }
+
+      // 5. Delete debt document
+      batch.delete(debtRef);
+
+      await batch.commit();
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       throw Exception('Failed to delete debt item: $e');
@@ -820,6 +875,22 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;
+    }
+  }
+
+  /// Private helper to get a Debt reference with fallback
+  DocumentReference _getDebtRef(String uid, String? id, String? operationId) {
+    final debtsCollection = firestore
+        .collection('users')
+        .doc(uid)
+        .collection('debts');
+
+    if (id != null && id.isNotEmpty) {
+      return debtsCollection.doc(id);
+    } else if (operationId != null && operationId.isNotEmpty) {
+      return debtsCollection.doc(operationId);
+    } else {
+      throw Exception("Cannot resolve Debt reference: Both id and operationId are empty.");
     }
   }
 }

@@ -20,8 +20,10 @@ class DebtModel extends DebtEntity {
   });
 
   factory DebtModel.fromJson(Map<String, dynamic> json, String id) {
+    // If ID is empty or null, fallback to operationId as it's our authoritative local key
+    final effectiveId = id.isNotEmpty ? id : (json['operationId'] ?? '');
     return DebtModel(
-      id: id,
+      id: effectiveId,
       uid: json['uid'] ?? '',
       operationId: json['operationId'] ?? '',
       totalAmount: (json['totalAmount'] ?? 0).toDouble(),

@@ -182,10 +182,12 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
     payload['syncedAt'] = FieldValue.serverTimestamp();
     batch.set(debtRef, payload);
 
-    // 2. Sync with operations ONLY if it doesn't look like a Quick Add (id starts with op_)
-    // or if we want to be safe, we just set it since it's a batch and will overwrite with same data.
-    if (!operationId.startsWith('op_')) {
-      batch.set(opRef, {
+    // 2. Sync with operations
+    // We use SetOptions(merge: true) to preserve extra fields (like durationMinutes) 
+    // if the operation record was already synced separately.
+    batch.set(
+      opRef,
+      {
         'uid': uid,
         'type': payload['operationType'] ?? 'debt',
         'customerName': customerName,
@@ -197,8 +199,9 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
         'lastUpdatedAt': FieldValue.serverTimestamp(),
         'syncedAt': FieldValue.serverTimestamp(),
         'ledgerNumber': payload['ledgerNumber'],
-      });
-    }
+      },
+      SetOptions(merge: true),
+    );
 
     // 3. Add initial transaction record to payments history
     final initialPaymentRef = debtRef

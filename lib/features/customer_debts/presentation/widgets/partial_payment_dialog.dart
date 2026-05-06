@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/debt/domain/entities/debt_entity.dart';
@@ -83,6 +84,7 @@ class _PartialPaymentDialogState extends State<PartialPaymentDialog> {
   Widget build(BuildContext context) {
     return BlocListener<DebtCubit, DebtState>(
       listener: (context, state) {
+        AppLogger.printMessage("$_errorText");
         if (state is DebtPaymentSuccess) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(

@@ -19,69 +19,73 @@ class ReportsNetProfitCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            AppStrings.netProfit.tr(),
-            style: TextStyles.customStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppColors.blackLight.withValues(alpha: 0.6),
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              AppStrings.netProfit.tr(),
+              style: TextStyles.customStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.blackLight.withValues(alpha: 0.6),
+              ),
             ),
-          ),
-          SizedBox(height: 8.h),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text(
-                  amount,
-                  style: TextStyles.customStyle(
-                    fontSize: 42,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.black,
-                  ),
-                ),
-                SizedBox(width: 8.w),
-                Text(
-                  AppStrings.currencyEgp.tr(),
-                  style: TextStyles.customStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.blackLight,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 8.h),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-            decoration: BoxDecoration(
-              color: (isPositive ? AppColors.primaryColor : AppColors.error)
-                  .withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: FittedBox(
+            SizedBox(height: 8.h),
+            FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text(
-                "$comparisonText  ${isPositive ? '↑↑' : '↓↓'}",
-                textAlign: TextAlign.center,
-                style: TextStyles.customStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: isPositive ? AppColors.primaryColor : AppColors.error,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    amount,
+                    style: TextStyles.customStyle(
+                      fontSize: 42,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.black,
+                    ),
+                  ),
+                  SizedBox(width: 8.w),
+                  Text(
+                    AppStrings.currencyEgp.tr(),
+                    style: TextStyles.customStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.blackLight,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 8.h),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+              decoration: BoxDecoration(
+                color: (isPositive ? AppColors.primaryColor : AppColors.error)
+                    .withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  "$comparisonText  ${isPositive ? '↑↑' : '↓↓'}",
+                  textAlign: TextAlign.center,
+                  style: TextStyles.customStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: isPositive
+                        ? AppColors.primaryColor
+                        : AppColors.error,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
