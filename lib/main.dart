@@ -22,6 +22,7 @@ import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart'
 import 'package:tahsel/features/offline_sync/presentation/cubit/offline_sync_cubit.dart';
 import 'package:tahsel/features/operation/presentation/cubit/operation_cubit.dart';
 import 'package:tahsel/features/product/presentation/cubit/product_cubit.dart';
+import 'package:tahsel/features/update/presentation/cubit/update_cubit.dart';
 import 'package:tahsel/features/standard_features/error/presentation/screens/error_screen.dart';
 import 'package:tahsel/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/no_internet.dart';
@@ -102,6 +103,8 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (context) => di.sl<OperationCubit>()),
         BlocProvider(create: (context) => di.sl<DebtCubit>()),
         BlocProvider(create: (context) => di.sl<MyDebtsCubit>()),
+        // Update Feature
+        BlocProvider(create: (context) => di.sl<UpdateCubit>()),
       ],
       child: BlocBuilder<ThemeCubit, ThemeState>(
         builder: (context, themeState) {

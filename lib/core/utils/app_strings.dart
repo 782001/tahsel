@@ -408,4 +408,14 @@ class AppStrings {
       "contactPickingNotSupportedWindows";
   static String contactPickingNotSupportedPlatform =
       "contactPickingNotSupportedPlatform";
+
+  // Update System
+  static const String newUpdateAvailable = "new_update_available";
+  static const String version = "version";
+  static const String updateNow = "update_now";
+  static const String updateLater = "update_later";
+  static const String downloading = "downloading";
+  static const String updateFailed = "update_failed";
+  static const String updateReadyToInstall = "update_ready_to_install";
+  static const String updateReadyToOpen = "update_ready_to_open";
 }

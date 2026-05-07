@@ -351,6 +351,13 @@
   "totalCollected": "Total Collected",
   "noCollectedData": "No collected data yet",
   "contactPickingNotSupportedWindows": "Contact picking is not supported on Windows yet.",
-  "contactPickingNotSupportedPlatform": "Contact picking is not supported on this platform."
-
+  "contactPickingNotSupportedPlatform": "Contact picking is not supported on this platform.",
+  "new_update_available": "New Update Available",
+  "version": "Version",
+  "update_now": "Update Now",
+  "update_later": "Update Later",
+  "downloading": "Downloading...",
+  "update_failed": "Update Failed",
+  "update_ready_to_install": "Update downloaded. Installing...",
+  "update_ready_to_open": "Update downloaded. Opening folder..."
 }

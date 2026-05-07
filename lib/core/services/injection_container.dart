@@ -14,6 +14,12 @@ import 'package:tahsel/features/offline_sync/service_injection/offline_sync_inje
 import 'package:tahsel/features/operation/service_injection/operation_injection.dart';
 import 'package:tahsel/features/product/service_injection/product_injection.dart';
 import 'package:tahsel/features/reports/service_injection/reports_injection.dart';
+import 'package:tahsel/features/update/data/datasources/update_remote_data_source.dart';
+import 'package:tahsel/features/update/data/repositories/update_repository_impl.dart';
+import 'package:tahsel/features/update/domain/repositories/update_repository.dart';
+import 'package:tahsel/features/update/domain/usecases/check_update_usecase.dart';
+import 'package:tahsel/features/update/domain/usecases/download_update_usecase.dart';
+import 'package:tahsel/features/update/presentation/cubit/update_cubit.dart';
 import 'package:vault_kit/vault_kit.dart';
 
 import '../../core/dio_client/dio_client.dart';
@@ -156,6 +162,22 @@ Future<void> initDependencies() async {
 
   // Register NavigatorService as singleton
   sl.registerLazySingleton<NavigatorService>(() => NavigatorService());
+
+  // --- Update Feature ---
+  sl.registerLazySingleton<UpdateRemoteDataSource>(
+    () => UpdateRemoteDataSourceImpl(firestore: sl(), dio: sl<DioClient>().dio),
+  );
+  sl.registerLazySingleton<UpdateRepository>(
+    () => UpdateRepositoryImpl(remoteDataSource: sl()),
+  );
+  sl.registerLazySingleton(() => CheckUpdateUseCase(sl()));
+  sl.registerLazySingleton(() => DownloadUpdateUseCase(sl()));
+  sl.registerFactory(
+    () => UpdateCubit(
+      checkUpdateUseCase: sl(),
+      downloadUpdateUseCase: sl(),
+    ),
+  );
 
   // PRELOAD: Session data for offline-first start
   try {

@@ -349,7 +349,15 @@
   "optional": "اختياري",
   "collectedAmount": "حصلت كام",
   "totalCollected": "الإجمالي المحصل",
-    "contactPickingNotSupportedWindows": "اختيار جهات الاتصال غير مدعوم على نظام ويندوز حتى الآن",
+  "contactPickingNotSupportedWindows": "اختيار جهات الاتصال غير مدعوم على نظام ويندوز حتى الآن",
   "contactPickingNotSupportedPlatform": "اختيار جهات الاتصال غير مدعوم على هذا النظام",
-  "noCollectedData": "لا توجد بيانات تحصيل حتى الآن"
+  "noCollectedData": "لا توجد بيانات تحصيل حتى الآن",
+  "new_update_available": "تحديث جديد متاح",
+  "version": "الإصدار",
+  "update_now": "تحديث الآن",
+  "update_later": "تحديث لاحقاً",
+  "downloading": "جاري التحميل...",
+  "update_failed": "فشل التحديث",
+  "update_ready_to_install": "تم تحميل التحديث. جاري التثبيت...",
+  "update_ready_to_open": "تم تحميل التحديث. جاري فتح المجلد..."
 }

@@ -44,18 +44,20 @@ class SecurityWarningScreen extends StatelessWidget {
               SizedBox(height: 16.h),
               TextWidget(
                 AppStrings.securityWarningDescription.tr(),
-                style: TextStyles.font16Weight400Text(),
+                style: TextStyles.font16Weight400Text().copyWith(
+                  color: AppColors.subTitleColor,
+                ),
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 40.h),
               Container(
                 padding: EdgeInsets.all(20.h),
                 decoration: BoxDecoration(
-                  color: AppColors.cardCustomer,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(16.r),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
+                      color: Colors.black.withValues(alpha: AppColors.isDark ? 0.3 : 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 5),
                     ),
@@ -67,28 +69,16 @@ class SecurityWarningScreen extends StatelessWidget {
                       _buildConditionItem(
                         context,
                         icon: Icons.dangerous_rounded,
-                        title: Loc.tr(
-                          context,
-                          AppStrings.securityWarningRootedTitle,
-                        ),
-                        subtitle: Loc.tr(
-                          context,
-                          AppStrings.securityWarningRootedSubtitle,
-                        ),
+                        title: AppStrings.securityWarningRootedTitle.tr(),
+                        subtitle: AppStrings.securityWarningRootedSubtitle.tr(),
                       ),
-                    if (isRooted && isDevMode) Divider(height: 32.h),
+                    if (isRooted && isDevMode) Divider(height: 32.h, color: AppColors.dividerColor),
                     if (isDevMode)
                       _buildConditionItem(
                         context,
                         icon: Icons.developer_mode_rounded,
-                        title: Loc.tr(
-                          context,
-                          AppStrings.securityWarningDevModeTitle,
-                        ),
-                        subtitle: Loc.tr(
-                          context,
-                          AppStrings.securityWarningDevModeSubtitle,
-                        ),
+                        title: AppStrings.securityWarningDevModeTitle.tr(),
+                        subtitle: AppStrings.securityWarningDevModeSubtitle.tr(),
                       ),
                   ],
                 ),
@@ -97,7 +87,7 @@ class SecurityWarningScreen extends StatelessWidget {
               TextWidget(
                 AppStrings.securityWarningFooter.tr(),
                 style: TextStyles.font14Weight400RightAligned().copyWith(
-                  color: AppColors.textColor2.withValues(alpha: 0.7),
+                  color: AppColors.textColor.withValues(alpha: 0.6),
                 ),
                 textAlign: TextAlign.center,
               ),

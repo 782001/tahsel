@@ -54,6 +54,7 @@ class DioClient {
   }
 
   final Dio _dio;
+  Dio get dio => _dio;
 
   String? language;
 

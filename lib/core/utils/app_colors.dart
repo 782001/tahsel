@@ -110,6 +110,9 @@ class AppColors {
   static Color get errorText =>
       isDark ? const Color(0xFFFF8A80) : const Color(0xFFB71C1C);
 
+  static Color get dividerColor =>
+      isDark ? Colors.white10 : Colors.black12;
+
   // --- Static Constants & Common Colors ---
   static const Color redColor = Color(0xFFF21616);
   static const Color orange100 = Color(0xFFEE9300);

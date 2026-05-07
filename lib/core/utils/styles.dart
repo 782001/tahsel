@@ -59,6 +59,33 @@ class TextStyles {
     );
   }
 
+  static TextStyle font18WeightBoldText() {
+    return TextStyle(
+      fontSize: getResponsiveFontSize(fontSize: 18),
+      fontWeight: FontWeight.bold,
+      fontFamily: AppConstants.fontFamily,
+      color: AppColors.textColor,
+    );
+  }
+
+  static TextStyle font14WeightBoldText() {
+    return TextStyle(
+      fontSize: getResponsiveFontSize(fontSize: 14),
+      fontWeight: FontWeight.bold,
+      fontFamily: AppConstants.fontFamily,
+      color: AppColors.textColor,
+    );
+  }
+
+  static TextStyle font14Weight500Action() {
+    return TextStyle(
+      fontSize: getResponsiveFontSize(fontSize: 14),
+      fontWeight: FontWeight.w500,
+      fontFamily: AppConstants.fontFamily,
+      color: AppColors.actionButton,
+    );
+  }
+
   static TextStyle font28WeightBoldWhite() {
     return TextStyle(
       fontSize: getResponsiveFontSize(fontSize: 28),

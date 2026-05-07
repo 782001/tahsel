@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/widgets/exit_confirmation_dialog.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_state.dart';
@@ -11,61 +12,87 @@ import 'package:tahsel/features/offline_sync/presentation/widgets/sync_status_li
 import 'package:tahsel/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_cubit.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_state.dart';
+import 'package:tahsel/features/update/presentation/cubit/update_cubit.dart';
+import 'package:tahsel/features/update/presentation/widgets/update_dialog.dart';
 
-class MainLayoutScreen extends StatelessWidget {
+class MainLayoutScreen extends StatefulWidget {
   const MainLayoutScreen({super.key});
 
   @override
+  State<MainLayoutScreen> createState() => _MainLayoutScreenState();
+}
+
+class _MainLayoutScreenState extends State<MainLayoutScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Trigger update check
+    context.read<UpdateCubit>().checkForUpdate();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ThemeCubit, ThemeState>(
-      builder: (context, themeState) {
-        return BlocBuilder<LocaleCubit, LocaleState>(
-          builder: (context, localeState) {
-            return BlocConsumer<MainLayoutCubit, MainLayoutState>(
-              listener: (context, state) {},
-              builder: (context, state) {
-                var cubit = BlocProvider.of<MainLayoutCubit>(context);
+    return BlocListener<UpdateCubit, UpdateState>(
+      listener: (context, state) {
+        if (state is UpdateAvailable) {
+          showDialog(
+            context: context,
+            barrierDismissible: !state.versionInfo.forceUpdate,
+            builder: (context) => UpdateDialog(versionInfo: state.versionInfo),
+          );
+        } else if (state is UpdateError) {
+          AppLogger.printMessage("DEBUG: UpdateCubit Error: ${state.message}");
+        } else if (state is UpdateNotAvailable) {
+          AppLogger.printMessage("DEBUG: UpdateCubit: No update available.");
+        }
+      },
+      child: BlocBuilder<ThemeCubit, ThemeState>(
+        builder: (context, themeState) {
+          return BlocBuilder<LocaleCubit, LocaleState>(
+            builder: (context, localeState) {
+              return BlocConsumer<MainLayoutCubit, MainLayoutState>(
+                listener: (context, state) {},
+                builder: (context, state) {
+                  var cubit = BlocProvider.of<MainLayoutCubit>(context);
 
-                return PopScope(
-                  canPop: false,
-                  onPopInvokedWithResult: (didPop, result) async {
-                    if (didPop) return;
+                  return PopScope(
+                    canPop: false,
+                    onPopInvokedWithResult: (didPop, result) async {
+                      if (didPop) return;
 
-                    // 1. If not on Home tab (index 0), go back to Home
-                    if (cubit.currentIndex != 0) {
-                      cubit.changeBottomNav(0);
-                      return;
-                    }
+                      if (cubit.currentIndex != 0) {
+                        cubit.changeBottomNav(0);
+                        return;
+                      }
 
-                    // 2. If already on Home tab, show exit confirmation dialog
-                    final shouldExit = await showDialog<bool>(
-                      context: context,
-                      builder: (context) => const ExitConfirmationDialog(),
-                    );
+                      final shouldExit = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => const ExitConfirmationDialog(),
+                      );
 
-                    if (shouldExit ?? false) {
-                      // Final exit from the app
-                      SystemNavigator.pop();
-                    }
-                  },
-                  child: Scaffold(
-                    extendBody: true,
-                    backgroundColor: AppColors.scafoldBackGround,
-                    body: SafeArea(
-                      child: SyncStatusListener(
-                        child: OfflineBanner(
-                          child: cubit.screens[cubit.currentIndex],
+                      if (shouldExit ?? false) {
+                        SystemNavigator.pop();
+                      }
+                    },
+                    child: Scaffold(
+                      extendBody: true,
+                      backgroundColor: AppColors.scafoldBackGround,
+                      body: SafeArea(
+                        child: SyncStatusListener(
+                          child: OfflineBanner(
+                            child: cubit.screens[cubit.currentIndex],
+                          ),
                         ),
                       ),
+                      bottomNavigationBar: BottomNavBar(cubit: cubit),
                     ),
-                    bottomNavigationBar: BottomNavBar(cubit: cubit),
-                  ),
-                );
-              },
-            );
-          },
-        );
-      },
+                  );
+                },
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }
