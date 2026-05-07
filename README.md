@@ -99,8 +99,7 @@
 
 خلّي حساباتك واضحة، وحقك محفوظ، وتعاملاتك سهلة 👍
 
-لو حابب تجرب التطبيق أو تعرف تفاصيل أكتر ابعتلي رسالة 📩
----
+## لو حابب تجرب التطبيق أو تعرف تفاصيل أكتر ابعتلي رسالة 📩
 
 <table>
   <tr>
@@ -760,7 +759,12 @@ Then, use `keystoreProperties.getProperty("...")` within your `signingConfigs`.
 
 ---
 
-
 This setup allows you to copy the folder structure and utilities into any Flutter project and get started immediately.
 
 ---
+
+**use PS F:\myApps\tahsel> to run the build script:**
+
+```dart
+powershell -ExecutionPolicy Bypass -File build_release.ps1
+```
