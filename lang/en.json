@@ -359,5 +359,5 @@
   "downloading": "Downloading...",
   "update_failed": "Update Failed",
   "update_ready_to_install": "Update downloaded. Installing...",
-  "update_ready_to_open": "Update downloaded. Opening folder..."
+  "update_ready_to_open": "Update downloaded. Please open the folder..."
 }

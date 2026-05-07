@@ -359,5 +359,5 @@
   "downloading": "جاري التحميل...",
   "update_failed": "فشل التحديث",
   "update_ready_to_install": "تم تحميل التحديث. جاري التثبيت...",
-  "update_ready_to_open": "تم تحميل التحديث. جاري فتح المجلد..."
+  "update_ready_to_open": "تم تحميل التحديث. يرجى فتح المجلد..."
 }
