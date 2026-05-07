@@ -17,9 +17,10 @@ class ExpenseModel extends ExpenseEntity {
     DateTime createdAtDate;
 
     if (createdAtData is Timestamp) {
-      createdAtDate = createdAtData.toDate();
+      // toDate() returns UTC if stored as UTC, but we convert to local for UI
+      createdAtDate = createdAtData.toDate().toLocal();
     } else if (createdAtData is String) {
-      createdAtDate = DateTime.parse(createdAtData);
+      createdAtDate = DateTime.parse(createdAtData).toLocal();
     } else {
       createdAtDate = DateTime.now();
     }
