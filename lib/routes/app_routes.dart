@@ -4,6 +4,7 @@ import 'package:tahsel/features/debt/presentation/screens/customer_global_paymen
 import 'package:tahsel/features/debt/presentation/screens/monthly_collected_screen.dart';
 import 'package:tahsel/features/debt/presentation/screens/monthly_collected_transactions_screen.dart';
 import 'package:tahsel/features/debt/domain/entities/monthly_collected_amount.dart';
+import 'package:tahsel/features/reports/presentation/cubit/reports_cubit/reports_cubit.dart';
 import 'package:tahsel/features/standard_features/security/presentation/screens/security_warning_screen.dart';
 import 'package:tahsel/features/splash/splash_screen.dart';
 import 'package:tahsel/features/main_layout/presentation/screens/main_layout_screen.dart';
@@ -51,8 +52,11 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const SplashScreen());
       case mainLayout:
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (context) => di.sl<MainLayoutCubit>(),
+          builder: (_) => MultiBlocProvider(
+            providers: [
+              BlocProvider(create: (context) => di.sl<MainLayoutCubit>()),
+              BlocProvider(create: (context) => di.sl<ReportsCubit>()),
+            ],
             child: const MainLayoutScreen(),
           ),
         );
@@ -148,8 +152,11 @@ class AppRoutes {
   static Map<String, WidgetBuilder> get routes {
     return {
       splash: (_) => const SplashScreen(),
-      mainLayout: (_) => BlocProvider(
-        create: (context) => di.sl<MainLayoutCubit>(),
+      mainLayout: (_) => MultiBlocProvider(
+        providers: [
+          BlocProvider(create: (context) => di.sl<MainLayoutCubit>()),
+          BlocProvider(create: (context) => di.sl<ReportsCubit>()),
+        ],
         child: const MainLayoutScreen(),
       ),
       login: (_) => const LoginScreen(),

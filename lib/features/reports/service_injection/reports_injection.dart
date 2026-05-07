@@ -15,7 +15,7 @@ import '../presentation/cubit/reports_cubit/reports_cubit.dart';
 class ReportsInjection {
   static void init(GetIt sl) {
     // Cubit
-    sl.registerFactory(
+    sl.registerLazySingleton(
       () => ReportsCubit(
         getReportsUseCase: sl(),
         generateInsightsUseCase: sl(),

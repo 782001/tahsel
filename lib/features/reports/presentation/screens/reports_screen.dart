@@ -23,15 +23,26 @@ import 'package:tahsel/features/standard_features/no-internet/logic/connectivity
 import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/no_internet_view.dart';
 
-class ReportsScreen extends StatelessWidget {
+class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
 
   @override
+  State<ReportsScreen> createState() => _ReportsScreenState();
+}
+
+class _ReportsScreenState extends State<ReportsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    final cubit = context.read<ReportsCubit>();
+    if (cubit.state is ReportsInitial) {
+      cubit.fetchToday();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => sl<ReportsCubit>()..fetchToday(),
-      child: const ReportsView(),
-    );
+    return const ReportsView();
   }
 }
 
@@ -82,7 +93,7 @@ class _ReportsViewState extends State<ReportsView> {
                   child: RefreshIndicator(
                     color: AppColors.primaryColor,
                     onRefresh: () async {
-                      _onTabChanged(_selectedTimeRange);
+                      await _onTabChanged(_selectedTimeRange, forceRefresh: true);
                     },
                     child: SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(
@@ -483,21 +494,21 @@ class _ReportsViewState extends State<ReportsView> {
     );
   }
 
-  void _onTabChanged(int index) {
+  Future<void> _onTabChanged(int index, {bool forceRefresh = false}) async {
     setState(() => _selectedTimeRange = index);
     final cubit = context.read<ReportsCubit>();
     switch (index) {
       case 0:
-        cubit.fetchToday();
+        cubit.fetchToday(forceRefresh: forceRefresh);
         break;
       case 1:
-        cubit.fetchCurrentWeek();
+        cubit.fetchCurrentWeek(forceRefresh: forceRefresh);
         break;
       case 2:
-        cubit.fetchCurrentMonth();
+        cubit.fetchCurrentMonth(forceRefresh: forceRefresh);
         break;
       case 3:
-        cubit.fetchAllTime();
+        await cubit.fetchAllTime(forceRefresh: forceRefresh);
         break;
     }
   }

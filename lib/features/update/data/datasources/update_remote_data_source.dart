@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
 import 'package:open_filex/open_filex.dart';
@@ -33,10 +34,15 @@ class UpdateRemoteDataSourceImpl implements UpdateRemoteDataSource {
     AppLogger.printMessage("DEBUG: Checking for update...");
     AppLogger.printMessage("DEBUG: Current Build Number: $currentBuildNumber");
 
-    final doc = await firestore.collection('app_config').doc('version_control').get();
+    final doc = await firestore
+        .collection('app_config')
+        .doc('version_control')
+        .get();
 
     if (!doc.exists) {
-      AppLogger.printMessage("DEBUG: Firestore document 'app_config/version_control' does not exist.");
+      AppLogger.printMessage(
+        "DEBUG: Firestore document 'app_config/version_control' does not exist.",
+      );
       return null;
     }
 
@@ -47,13 +53,15 @@ class UpdateRemoteDataSourceImpl implements UpdateRemoteDataSource {
     }
 
     final latestAppVersion = AppVersionModel.fromFirestore(data);
-    AppLogger.printMessage("DEBUG: Latest Version from Firestore: ${latestAppVersion.latestVersion}");
+    AppLogger.printMessage(
+      "DEBUG: Latest Version from Firestore: ${latestAppVersion.latestVersion}",
+    );
 
     if (latestAppVersion.latestVersion > currentBuildNumber) {
       AppLogger.printMessage("DEBUG: Update available!");
       return latestAppVersion;
     }
-    
+
     AppLogger.printMessage("DEBUG: No update available.");
     return null;
   }
@@ -83,7 +91,10 @@ class UpdateRemoteDataSourceImpl implements UpdateRemoteDataSource {
       await OpenFilex.open(filePath);
     } else if (Platform.isWindows) {
       // Open the folder and select the file
-      await Process.run('explorer.exe', ['/select,', filePath.replaceAll('/', '\\')]);
+      await Process.run('explorer.exe', [
+        '/select,',
+        filePath.replaceAll('/', '\\'),
+      ]);
     }
   }
 

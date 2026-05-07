@@ -14,6 +14,7 @@ import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/auth/domain/entities/user_entity.dart';
+import 'package:tahsel/features/reports/presentation/cubit/reports_cubit/reports_cubit.dart';
 import 'package:tahsel/routes/app_routes.dart';
 
 import '../../domain/usecases/login_usecase.dart';
@@ -197,7 +198,8 @@ class AuthCubit extends Cubit<AuthState> {
     await secureStorage.deleteData(key: 'token');
     await secureStorage.deleteData(key: 'email');
     await secureStorage.deleteData(key: AppStrings.userTypeKey);
-    // Alternatively, use secureStorage.clearAll() if you want to wipe everything
-    // await secureStorage.clearAll();
+
+    // Clear feature caches
+    sl<ReportsCubit>().clearCache();
   }
 }

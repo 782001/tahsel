@@ -9,7 +9,6 @@ import 'package:tahsel/core/services/navigator_service.dart';
 import 'package:tahsel/core/services/security_service.dart';
 import 'package:tahsel/core/storage/secure_storage_helper.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
-import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/assets.dart';
 import 'package:tahsel/features/auth/domain/usecases/logout_usecase.dart';
@@ -52,14 +51,11 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   void _navigateToNext() async {
-    AppLogger.printMessage("DEBUG: SplashScreen _navigateToNext started");
     // 1. Perform security checks (e.g., root detection, developer mode)
     await SecurityService.checkSecurity();
-    AppLogger.printMessage("DEBUG: Security checks completed");
 
     // 2. Minimum splash duration for branding
     await Future.delayed(const Duration(seconds: 2));
-    AppLogger.printMessage("DEBUG: Splash delay completed");
 
     if (mounted) {
       final secureStorage = sl<SecureStorageHelper>();

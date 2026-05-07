@@ -12,6 +12,9 @@ class ReportsCubit extends Cubit<ReportsState> {
   final GenerateInsightsUseCase generateInsightsUseCase;
   final GetAllTimeReportsUseCase getAllTimeReportsUseCase;
 
+  // Cache to store reports for each period
+  final Map<String, ReportsSuccess> _cache = {};
+
   ReportsCubit({
     required this.getReportsUseCase,
     required this.generateInsightsUseCase,
@@ -22,7 +25,16 @@ class ReportsCubit extends Cubit<ReportsState> {
     required DateTime startDate,
     required DateTime endDate,
     required ReportPeriod period,
+    bool forceRefresh = false,
   }) async {
+    final cacheKey = period.toString();
+
+    // Return cached data if available and not forcing refresh
+    if (!forceRefresh && _cache.containsKey(cacheKey)) {
+      emit(_cache[cacheKey]!);
+      return;
+    }
+
     emit(ReportsLoading());
 
     final result = await getReportsUseCase(
@@ -35,29 +47,42 @@ class ReportsCubit extends Cubit<ReportsState> {
       final insightsResult = await generateInsightsUseCase(
         GenerateInsightsParams(reports: reports, period: period),
       );
-      insightsResult.fold(
-        (failure) => emit(ReportsError(failure.message)),
-        (insights) => emit(ReportsSuccess(reports, insights)),
-      );
+      insightsResult.fold((failure) => emit(ReportsError(failure.message)), (
+        insights,
+      ) {
+        final successState = ReportsSuccess(reports, insights, period);
+        _cache[cacheKey] = successState;
+        emit(successState);
+      });
     });
   }
 
-  void fetchToday() {
+  void fetchToday({bool forceRefresh = false}) {
     final now = DateTime.now();
     final start = DateTime(now.year, now.month, now.day);
     final end = DateTime(now.year, now.month, now.day + 1);
-    fetchReports(startDate: start, endDate: end, period: ReportPeriod.daily);
+    fetchReports(
+      startDate: start,
+      endDate: end,
+      period: ReportPeriod.daily,
+      forceRefresh: forceRefresh,
+    );
   }
 
-  void fetchYesterday() {
+  void fetchYesterday({bool forceRefresh = false}) {
     final now = DateTime.now();
     final yesterday = now.subtract(const Duration(days: 1));
     final start = DateTime(yesterday.year, yesterday.month, yesterday.day);
     final end = DateTime(yesterday.year, yesterday.month, yesterday.day + 1);
-    fetchReports(startDate: start, endDate: end, period: ReportPeriod.daily);
+    fetchReports(
+      startDate: start,
+      endDate: end,
+      period: ReportPeriod.daily,
+      forceRefresh: forceRefresh,
+    );
   }
 
-  void fetchCurrentWeek() {
+  void fetchCurrentWeek({bool forceRefresh = false}) {
     final now = DateTime.now();
     final start = now.subtract(Duration(days: now.weekday % 7));
     final startDate = DateTime(start.year, start.month, start.day);
@@ -66,26 +91,44 @@ class ReportsCubit extends Cubit<ReportsState> {
       startDate: startDate,
       endDate: end,
       period: ReportPeriod.weekly,
+      forceRefresh: forceRefresh,
     );
   }
 
-  void fetchCurrentMonth() {
+  void fetchCurrentMonth({bool forceRefresh = false}) {
     final now = DateTime.now();
     final start = DateTime(now.year, now.month, 1);
     final end = DateTime(now.year, now.month, now.day + 1);
-    fetchReports(startDate: start, endDate: end, period: ReportPeriod.monthly);
+    fetchReports(
+      startDate: start,
+      endDate: end,
+      period: ReportPeriod.monthly,
+      forceRefresh: forceRefresh,
+    );
   }
 
-  Future<void> fetchAllTime() async {
+  Future<void> fetchAllTime({bool forceRefresh = false}) async {
+    const cacheKey = 'allTime';
+
+    if (!forceRefresh && _cache.containsKey(cacheKey)) {
+      emit(_cache[cacheKey]!);
+      return;
+    }
+
     emit(ReportsLoading());
 
     final result = await getAllTimeReportsUseCase(const NoParams());
 
-    result.fold(
-      (failure) => emit(ReportsError(failure.message)),
-      (reports) => emit(
-        ReportsSuccess(reports, const []),
-      ), // Pure aggregation, no insights
-    );
+    result.fold((failure) => emit(ReportsError(failure.message)), (reports) {
+      final successState =
+          ReportsSuccess(reports, const [], ReportPeriod.allTime);
+      _cache[cacheKey] = successState;
+      emit(successState);
+    });
+  }
+
+  /// Clears the cache, useful on logout or when global state changes significantly
+  void clearCache() {
+    _cache.clear();
   }
 }

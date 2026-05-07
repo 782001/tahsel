@@ -15,9 +15,12 @@ class ReportsLoading extends ReportsState {}
 class ReportsSuccess extends ReportsState {
   final ReportsEntity reports;
   final List<ProfitInsight> insights;
-  const ReportsSuccess(this.reports, this.insights);
+  final ReportPeriod period;
+
+  const ReportsSuccess(this.reports, this.insights, this.period);
+
   @override
-  List<Object?> get props => [reports, insights];
+  List<Object?> get props => [reports, insights, period];
 }
 
 class ReportsError extends ReportsState {
