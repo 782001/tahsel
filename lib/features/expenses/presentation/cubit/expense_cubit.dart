@@ -281,4 +281,8 @@ class ExpenseCubit extends Cubit<ExpenseState> {
       await fetchMonths(uid);
     });
   }
+
+  void clearData() {
+    emit(ExpenseInitial());
+  }
 }

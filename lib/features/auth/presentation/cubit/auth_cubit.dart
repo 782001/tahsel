@@ -15,6 +15,12 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/auth/domain/entities/user_entity.dart';
 import 'package:tahsel/features/reports/presentation/cubit/reports_cubit/reports_cubit.dart';
+import 'package:tahsel/features/customer/presentation/cubit/customer_cubit.dart';
+import 'package:tahsel/features/product/presentation/cubit/product_cubit.dart';
+import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
+import 'package:tahsel/features/debt/presentation/cubit/debt_cubit.dart';
+import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
+import 'package:tahsel/features/operation/presentation/cubit/operation_cubit.dart';
 import 'package:tahsel/routes/app_routes.dart';
 
 import '../../domain/usecases/login_usecase.dart';
@@ -201,5 +207,11 @@ class AuthCubit extends Cubit<AuthState> {
 
     // Clear feature caches
     sl<ReportsCubit>().clearCache();
+    sl<CustomerCubit>().clearData();
+    sl<ProductCubit>().clearData();
+    sl<ExpenseCubit>().clearData();
+    sl<DebtCubit>().clearData();
+    sl<MyDebtsCubit>().clearData();
+    sl<OperationCubit>().clearData();
   }
 }

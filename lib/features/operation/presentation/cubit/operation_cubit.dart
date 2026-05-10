@@ -31,4 +31,8 @@ class OperationCubit extends Cubit<OperationState> {
           emit(OperationSuccess(message: 'operation_success', operationId: id)),
     );
   }
+
+  void clearData() {
+    emit(OperationInitial());
+  }
 }

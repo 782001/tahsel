@@ -313,4 +313,9 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
     _syncSubscription?.cancel();
     return super.close();
   }
+
+  void clearData() {
+    _allPersons.clear();
+    emit(const MyDebtsState());
+  }
 }

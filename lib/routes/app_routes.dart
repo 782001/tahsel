@@ -55,7 +55,7 @@ class AppRoutes {
           builder: (_) => MultiBlocProvider(
             providers: [
               BlocProvider(create: (context) => di.sl<MainLayoutCubit>()),
-              BlocProvider(create: (context) => di.sl<ReportsCubit>()),
+              BlocProvider.value(value: di.sl<ReportsCubit>()),
             ],
             child: const MainLayoutScreen(),
           ),
@@ -155,7 +155,7 @@ class AppRoutes {
       mainLayout: (_) => MultiBlocProvider(
         providers: [
           BlocProvider(create: (context) => di.sl<MainLayoutCubit>()),
-          BlocProvider(create: (context) => di.sl<ReportsCubit>()),
+          BlocProvider.value(value: di.sl<ReportsCubit>()),
         ],
         child: const MainLayoutScreen(),
       ),

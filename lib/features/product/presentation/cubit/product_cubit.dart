@@ -46,4 +46,9 @@ class ProductCubit extends Cubit<ProductState> {
         .where((c) => c.name.toLowerCase().contains(query.toLowerCase()))
         .toList();
   }
+
+  void clearData() {
+    _allProducts.clear();
+    emit(ProductInitial());
+  }
 }

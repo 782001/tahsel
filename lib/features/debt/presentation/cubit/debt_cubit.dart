@@ -201,6 +201,10 @@ class DebtCubit extends Cubit<DebtState> {
       getDebts(uid, forceRefresh: true);
     });
   }
+
+  void clearData() {
+    emit(DebtInitial());
+  }
 }
 
 class _AddCustomerDebtParams {

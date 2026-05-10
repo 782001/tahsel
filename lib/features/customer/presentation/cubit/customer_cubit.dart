@@ -120,4 +120,9 @@ class CustomerCubit extends Cubit<CustomerState> {
         .where((c) => c.name.toLowerCase().contains(query.toLowerCase()))
         .toList();
   }
+
+  void clearData() {
+    _allCustomers.clear();
+    emit(CustomerInitial());
+  }
 }
