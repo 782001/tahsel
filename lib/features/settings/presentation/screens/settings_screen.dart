@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/injection_container.dart';
+import 'package:tahsel/core/storage/secure_storage_helper.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -21,6 +23,17 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  String userEmail = '';
+  @override
+  void initState() {
+    sl<SecureStorageHelper>().getData(key: 'email').then((value) {
+      setState(() {
+        userEmail = value!;
+      });
+    });
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<LocaleCubit, LocaleState>(
@@ -40,7 +53,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   width: 300,
                   height: 300,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryColor.withValues(alpha:0.05),
+                    color: AppColors.primaryColor.withValues(alpha: 0.05),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -147,6 +160,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                         // Logout button
                         const LogoutButton(),
+
+                        SizedBox(height: 16.h),
+
+                        // Display email
+                        Center(
+                          child: Text(
+                            userEmail,
+                            style: TextStyles.customStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.sandText,
+                            ),
+                          ),
+                        ),
 
                         // Space for bottom nav
                         SizedBox(height: 100.h),
