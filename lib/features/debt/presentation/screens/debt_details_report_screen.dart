@@ -880,7 +880,9 @@ class _TransactionItem extends StatelessWidget {
                             customerName: customerName,
                             note: noteController.text,
                           );
-                          Navigator.pop(dialogContext);
+                          if (Navigator.canPop(dialogContext)) {
+                            Navigator.pop(dialogContext);
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryColor,
@@ -929,6 +931,17 @@ class _TransactionItem extends StatelessWidget {
   }
 
   void _showDeleteDialog(BuildContext context) {
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppStrings.noInternetConnection.tr()),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+    final connectivityCubit = context.read<ConnectivityCubit>();
+
     final cubit = context.read<DebtDetailsCubit>();
     showDialog(
       context: context,
@@ -949,8 +962,7 @@ class _TransactionItem extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
-              if (context.read<ConnectivityCubit>().state
-                  is ConnectivityDisconnected) {
+              if (connectivityCubit.state is ConnectivityDisconnected) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(AppStrings.noInternetConnection.tr()),
@@ -966,7 +978,9 @@ class _TransactionItem extends StatelessWidget {
                 customerName: customerName,
                 amountBeingDeleted: transaction.amountPaid,
               );
-              Navigator.pop(dialogContext);
+              if (Navigator.canPop(dialogContext)) {
+                Navigator.pop(dialogContext);
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             child: Text(

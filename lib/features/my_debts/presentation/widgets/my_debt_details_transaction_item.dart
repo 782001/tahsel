@@ -516,7 +516,10 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
       );
       return;
     }
+    
+    final connectivityCubit = context.read<ConnectivityCubit>();
     final cubit = context.read<MyDebtDetailsReportCubit>();
+    
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -536,9 +539,8 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
-              if (context.read<ConnectivityCubit>().state
-                  is ConnectivityDisconnected) {
-                ScaffoldMessenger.of(context).showSnackBar(
+              if (connectivityCubit.state is ConnectivityDisconnected) {
+                ScaffoldMessenger.of(dialogContext).showSnackBar(
                   SnackBar(
                     content: Text(AppStrings.noInternetConnection.tr()),
                     backgroundColor: AppColors.error,
@@ -553,7 +555,9 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
                 customerName: customerName,
                 amountBeingDeleted: transaction.amountPaid,
               );
-              Navigator.pop(dialogContext);
+              if (Navigator.canPop(dialogContext)) {
+                Navigator.pop(dialogContext);
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             child: Text(
