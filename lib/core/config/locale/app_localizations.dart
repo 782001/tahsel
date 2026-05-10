@@ -54,6 +54,7 @@ class AppLocalizations {
       }
 
       // Explicitly support historical placeholders used in the project.
+      // ignore: prefer_is_empty
       if (args.length >= 1) {
         value = value.replaceAll('{percentage}', args[0]);
         value = value.replaceAll('{difference}', args[0]);

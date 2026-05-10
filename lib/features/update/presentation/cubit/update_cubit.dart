@@ -1,6 +1,7 @@
 import 'dart:io';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:equatable/equatable.dart';
+
 import '../../data/models/app_version_model.dart';
 import '../../domain/usecases/check_update_usecase.dart';
 import '../../domain/usecases/download_update_usecase.dart';
@@ -14,9 +15,9 @@ class UpdateCubit extends Cubit<UpdateState> {
   UpdateCubit({
     required CheckUpdateUseCase checkUpdateUseCase,
     required DownloadUpdateUseCase downloadUpdateUseCase,
-  })  : _checkUpdateUseCase = checkUpdateUseCase,
-        _downloadUpdateUseCase = downloadUpdateUseCase,
-        super(UpdateInitial());
+  }) : _checkUpdateUseCase = checkUpdateUseCase,
+       _downloadUpdateUseCase = downloadUpdateUseCase,
+       super(UpdateInitial());
 
   Future<void> checkForUpdate() async {
     emit(UpdateChecking());

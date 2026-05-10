@@ -34,6 +34,7 @@ class ContactService {
             } else {
               // Let user select one if multiple numbers
               phone = await showDialog<String>(
+                // ignore: use_build_context_synchronously
                 context: context,
                 builder: (ctx) => AlertDialog(
                   title: Text(AppStrings.selectFromContacts.tr()),
@@ -61,12 +62,14 @@ class ContactService {
           }
         }
       } else {
+        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppStrings.permissionDenied.tr())),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(
+        // ignore: use_build_context_synchronously
         context,
       ).showSnackBar(SnackBar(content: Text(e.toString())));
     }

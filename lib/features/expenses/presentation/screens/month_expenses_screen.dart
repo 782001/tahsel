@@ -40,6 +40,7 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // ignore: deprecated_member_use
     return WillPopScope(
       onWillPop: () async {
         context.read<ExpenseCubit>().fetchMonths(AppStrings.userToken);

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
-import 'package:tahsel/core/services/translation_helper.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -57,7 +56,9 @@ class SecurityWarningScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16.r),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: AppColors.isDark ? 0.3 : 0.05),
+                      color: Colors.black.withValues(
+                        alpha: AppColors.isDark ? 0.3 : 0.05,
+                      ),
                       blurRadius: 10,
                       offset: const Offset(0, 5),
                     ),
@@ -72,13 +73,15 @@ class SecurityWarningScreen extends StatelessWidget {
                         title: AppStrings.securityWarningRootedTitle.tr(),
                         subtitle: AppStrings.securityWarningRootedSubtitle.tr(),
                       ),
-                    if (isRooted && isDevMode) Divider(height: 32.h, color: AppColors.dividerColor),
+                    if (isRooted && isDevMode)
+                      Divider(height: 32.h, color: AppColors.dividerColor),
                     if (isDevMode)
                       _buildConditionItem(
                         context,
                         icon: Icons.developer_mode_rounded,
                         title: AppStrings.securityWarningDevModeTitle.tr(),
-                        subtitle: AppStrings.securityWarningDevModeSubtitle.tr(),
+                        subtitle: AppStrings.securityWarningDevModeSubtitle
+                            .tr(),
                       ),
                   ],
                 ),
