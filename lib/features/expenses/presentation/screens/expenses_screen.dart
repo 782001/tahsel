@@ -74,33 +74,36 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     AppStrings.userToken,
                   );
                 },
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(
-                    parent: AlwaysScrollableScrollPhysics(),
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.only(bottom: 110.h),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const ExpensesBalance(),
-                        const ExpensesList(),
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 24.w,
-                            vertical: 20.h,
-                          ),
-                          child: QuickActionButton(
-                            label: AppStrings.addExpense.tr(),
-                            icon: Icons.add,
-                            onPressed: () {
-                              nav().pushNamed(AppRoutes.addExpense);
-                            },
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(
+                          parent: AlwaysScrollableScrollPhysics(),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.only(bottom: 20.h),
+                          child: const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [ExpensesBalance(), ExpensesList()],
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 24.w,
+                        vertical: 20.h,
+                      ),
+                      child: QuickActionButton(
+                        label: AppStrings.addExpense.tr(),
+                        icon: Icons.add,
+                        onPressed: () {
+                          nav().pushNamed(AppRoutes.addExpense);
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

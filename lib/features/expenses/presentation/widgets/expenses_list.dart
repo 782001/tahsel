@@ -37,7 +37,7 @@ class ExpensesList extends StatelessWidget {
                   padding: EdgeInsets.all(16.w),
                   itemBuilder: (context, index) =>
                       const CustomerDebtCardSkeleton(),
-                  itemCount: 3,
+                  itemCount: 2,
                 ),
               );
             }

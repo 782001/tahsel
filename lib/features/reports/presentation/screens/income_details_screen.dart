@@ -114,7 +114,14 @@ class IncomeDetailsScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(12.r),
                               ),
                             ),
-                            child: Text(AppStrings.tryAgain.tr()),
+                            child: Text(
+                              AppStrings.tryAgain.tr(),
+                              style: TextStyles.customStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
                           ),
                         ],
                       ),
