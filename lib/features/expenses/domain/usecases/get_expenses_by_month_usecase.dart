@@ -33,7 +33,7 @@ class GetExpensesByMonthParams {
   GetExpensesByMonthParams({
     required this.uid,
     required this.monthKey,
-    this.limit = 20,
+    this.limit = 15,
     this.lastDoc,
   });
 }

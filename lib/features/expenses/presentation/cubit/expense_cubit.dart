@@ -296,7 +296,7 @@ class ExpenseCubit extends Cubit<ExpenseState> {
 
     // 2. Fetch remote expenses (First Page)
     final result = await getExpensesByMonthUseCase(
-      GetExpensesByMonthParams(uid: uid, monthKey: monthKey, limit: 20),
+      GetExpensesByMonthParams(uid: uid, monthKey: monthKey, limit: 15),
     );
 
     result.fold(
@@ -362,7 +362,7 @@ class ExpenseCubit extends Cubit<ExpenseState> {
       GetExpensesByMonthParams(
         uid: uid,
         monthKey: currentState.monthKey,
-        limit: 20,
+        limit: 15,
         lastDoc: currentState.lastDoc,
       ),
     );

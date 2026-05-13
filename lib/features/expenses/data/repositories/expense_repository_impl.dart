@@ -1,17 +1,19 @@
 import 'dart:convert';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:tahsel/core/error/failures.dart';
 import 'package:tahsel/core/utils/date_formatter.dart';
 import 'package:tahsel/features/expenses/domain/entities/expense_paginated_list.dart';
 import 'package:tahsel/features/expenses/domain/entities/monthly_paginated_list.dart';
+
+import '../../../offline_sync/data/models/offline_record.dart';
+import '../../../offline_sync/domain/repositories/offline_sync_repository.dart';
 import '../../domain/entities/expense_entity.dart';
 import '../../domain/repositories/expense_repository.dart';
 import '../datasources/expense_remote_data_source.dart';
 import '../models/expense_model.dart';
-import '../../../offline_sync/domain/repositories/offline_sync_repository.dart';
-import '../../../offline_sync/data/models/offline_record.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ExpenseRepositoryImpl implements ExpenseRepository {
   final ExpenseRemoteDataSource remoteDataSource;
@@ -123,10 +125,9 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
         }
       }).toList();
 
-      return Right(MonthlyPaginatedList(
-        months: formattedMonths,
-        lastDoc: result.lastDoc,
-      ));
+      return Right(
+        MonthlyPaginatedList(months: formattedMonths, lastDoc: result.lastDoc),
+      );
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -136,7 +137,7 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
   Future<Either<Failure, ExpensePaginatedList>> getExpensesByMonth(
     String uid,
     String monthKey, {
-    int limit = 20,
+    int limit = 15,
     Object? lastDoc,
   }) async {
     try {
@@ -146,10 +147,12 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
         limit: limit,
         lastDoc: lastDoc as DocumentSnapshot?,
       );
-      return Right(ExpensePaginatedList(
-        expenses: result.expenses,
-        lastDoc: result.lastDoc,
-      ));
+      return Right(
+        ExpensePaginatedList(
+          expenses: result.expenses,
+          lastDoc: result.lastDoc,
+        ),
+      );
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

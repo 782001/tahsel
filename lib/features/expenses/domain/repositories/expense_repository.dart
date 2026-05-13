@@ -1,9 +1,10 @@
 import 'package:dartz/dartz.dart';
 import 'package:tahsel/features/expenses/domain/entities/monthly_paginated_list.dart';
-import '../entities/expense_entity.dart';
-import '../entities/expense_paginated_list.dart';
+
 import '../../../../core/error/failures.dart';
 import '../../../offline_sync/data/models/offline_record.dart';
+import '../entities/expense_entity.dart';
+import '../entities/expense_paginated_list.dart';
 
 abstract class ExpenseRepository {
   Future<Either<Failure, String>> addExpense(ExpenseEntity expense);
@@ -16,7 +17,7 @@ abstract class ExpenseRepository {
   Future<Either<Failure, ExpensePaginatedList>> getExpensesByMonth(
     String uid,
     String monthKey, {
-    int limit = 20,
+    int limit = 15,
     Object? lastDoc,
   });
   Future<Either<Failure, void>> deleteExpense(String uid, String expenseId);

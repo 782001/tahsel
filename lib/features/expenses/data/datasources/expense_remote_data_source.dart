@@ -31,7 +31,7 @@ abstract class ExpenseRemoteDataSource {
   Future<ExpensePaginationResult> getExpensesByMonth(
     String uid,
     String monthKey, {
-    int limit = 20,
+    int limit = 15,
     DocumentSnapshot? lastDoc,
   });
   Future<void> deleteExpense(String uid, String expenseId);
@@ -138,7 +138,7 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
               .where('monthKey', whereIn: [monthKey, oldKey])
               .count()
               .get();
-          
+
           var actualCount = countQuery.count ?? 0;
 
           // 2. Fallback: Check by Date Range if monthKey count is 0 (For legacy data)
@@ -153,7 +153,10 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
 
                 final rangeCount = await userRef
                     .collection('expenses')
-                    .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+                    .where(
+                      'createdAt',
+                      isGreaterThanOrEqualTo: Timestamp.fromDate(start),
+                    )
                     .where('createdAt', isLessThan: Timestamp.fromDate(end))
                     .count()
                     .get();
@@ -165,10 +168,14 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
           // Idempotent Update: Only write if the count is actually different
           if (actualCount != count) {
             count = actualCount;
-            userRef.collection('summaries').doc(doc.id).update({
-              'transactionCount': count,
-              'lastUpdatedAt': FieldValue.serverTimestamp(),
-            }).catchError((_) {});
+            userRef
+                .collection('summaries')
+                .doc(doc.id)
+                .update({
+                  'transactionCount': count,
+                  'lastUpdatedAt': FieldValue.serverTimestamp(),
+                })
+                .catchError((_) {});
           }
         }
 
@@ -209,7 +216,7 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
   Future<ExpensePaginationResult> getExpensesByMonth(
     String uid,
     String monthKey, {
-    int limit = 20,
+    int limit = 15,
     DocumentSnapshot? lastDoc,
   }) async {
     try {
