@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 
@@ -46,6 +47,9 @@ class ReportsRepositoryImpl implements ReportsRepository {
       final double currentTotalDebts = (currentData['totalDebts'] ?? 0).toDouble();
       final double currentPaidDebts = (currentData['paidDebts'] ?? 0).toDouble();
       final double currentUnpaidDebts = (currentData['unpaidDebts'] ?? 0).toDouble();
+      final int currentTotalCount = (currentData['totalCount'] ?? 0).toInt();
+      final int currentCafeCount = (currentData['cafeCount'] ?? 0).toInt();
+      final int currentPSCount = (currentData['playstationCount'] ?? 0).toInt();
       final double currentProfit = currentIncome - currentExpenses;
 
       // Previous Data
@@ -70,6 +74,9 @@ class ReportsRepositoryImpl implements ReportsRepository {
         paidDebts: currentPaidDebts,
         unpaidDebts: currentUnpaidDebts,
         netProfit: currentProfit,
+        totalCount: currentTotalCount,
+        cafeCount: currentCafeCount,
+        playstationCount: currentPSCount,
         prevIncome: prevIncome,
         prevExpenses: prevExpenses,
         prevCafeIncome: prevCafeIncome,
@@ -104,6 +111,9 @@ class ReportsRepositoryImpl implements ReportsRepository {
       final double totalDebts = (data['totalDebts'] ?? 0).toDouble();
       final double paidDebts = (data['paidDebts'] ?? 0).toDouble();
       final double unpaidDebts = (data['unpaidDebts'] ?? 0).toDouble();
+      final int totalCount = (data['totalCount'] ?? 0).toInt();
+      final int cafeCount = (data['cafeCount'] ?? 0).toInt();
+      final int psCount = (data['playstationCount'] ?? 0).toInt();
       final double profit = income - expenses;
 
       final reports = ReportsEntity(
@@ -115,6 +125,9 @@ class ReportsRepositoryImpl implements ReportsRepository {
         paidDebts: paidDebts,
         unpaidDebts: unpaidDebts,
         netProfit: profit,
+        totalCount: totalCount,
+        cafeCount: cafeCount,
+        playstationCount: psCount,
         // No comparison for all-time aggregation
         incomeDiff: 0,
         expenseDiff: 0,
@@ -133,22 +146,33 @@ class ReportsRepositoryImpl implements ReportsRepository {
   }
 
   @override
-  Future<Either<Failure, List<OperationEntity>>> getIncomeDetails(
+  Future<Either<Failure, (List<OperationEntity>, DocumentSnapshot?)>> getIncomeDetails(
     DateTime startDate,
     DateTime endDate, {
     String? type,
+    int limit = 15,
+    DocumentSnapshot? lastDoc,
   }) async {
     try {
       final results = await dataSource.getIncomeDetails(
         startDate,
         endDate,
         type: type,
+        limit: limit,
+        lastDoc: lastDoc,
       );
-      final List<OperationEntity> operations = results.map((data) {
+
+      final List<OperationEntity> operations = results.map((result) {
+        final data = result['data'] as Map<String, dynamic>;
         final id = data['id'] as String;
         return OperationModel.fromJson(data, id);
       }).toList();
-      return Right(operations);
+
+      final DocumentSnapshot? lastSnapshot = results.isNotEmpty 
+          ? results.last['snapshot'] as DocumentSnapshot 
+          : null;
+
+      return Right((operations, lastSnapshot));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

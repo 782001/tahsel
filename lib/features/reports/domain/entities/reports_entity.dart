@@ -10,6 +10,11 @@ class ReportsEntity extends Equatable {
   final double unpaidDebts;
   final double netProfit;
 
+  // Breakdowns for counts
+  final int totalCount;
+  final int cafeCount;
+  final int playstationCount;
+
   // New: Breakdowns for Cafe & PlayStation
   final double cafeIncome;
   final double playstationIncome;
@@ -40,6 +45,9 @@ class ReportsEntity extends Equatable {
     required this.paidDebts,
     required this.unpaidDebts,
     required this.netProfit,
+    this.totalCount = 0,
+    this.cafeCount = 0,
+    this.playstationCount = 0,
     this.prevIncome = 0,
     this.prevExpenses = 0,
     this.prevCafeIncome = 0,
@@ -66,6 +74,9 @@ class ReportsEntity extends Equatable {
     paidDebts,
     unpaidDebts,
     netProfit,
+    totalCount,
+    cafeCount,
+    playstationCount,
     prevIncome,
     prevExpenses,
     prevCafeIncome,

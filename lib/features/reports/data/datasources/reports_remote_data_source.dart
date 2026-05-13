@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/summary_helper.dart';
+
 import '../../../../core/error/firebase_error_handler.dart';
 import '../models/summary_model.dart';
 
@@ -16,6 +17,8 @@ abstract class ReportsRemoteDataSource {
     DateTime start,
     DateTime end, {
     String? type,
+    int limit = 15,
+    DocumentSnapshot? lastDoc,
   });
   Future<int> cleanupOldReports();
   Future<SummaryModel> getSummary(String uid, String key);
@@ -58,20 +61,38 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
       if (uid.isEmpty) return {};
 
       // 1. Try to get from summaries first
-      final summaryKey = _getSummaryKey(periodKey, start);
-      final summary = await getSummary(uid, summaryKey);
+      // We only use the summary if the requested start date aligns with the period start
+      bool isPeriodStart = false;
+      if (periodKey == 'daily') {
+        isPeriodStart = start.hour == 0 && start.minute == 0;
+      } else if (periodKey == 'monthly') {
+        isPeriodStart = start.day == 1;
+      } else if (periodKey == 'weekly') {
+        // Weekly start date is already calculated as start of week in cubit
+        isPeriodStart = true;
+      } else if (periodKey == 'all_time' || periodKey == 'allTime') {
+        isPeriodStart = true;
+      }
 
-      // If summary has data, return it
-      if (summary.transactionCount > 0 || summary.totalExpenses > 0) {
-        return {
-          'totalIncome': summary.totalIncome,
-          'cafeIncome': summary.cafeIncome,
-          'playstationIncome': summary.playstationIncome,
-          'totalExpenses': summary.totalExpenses,
-          'totalDebts': summary.totalDebts,
-          'paidDebts': summary.paidDebts,
-          'unpaidDebts': summary.unpaidDebts,
-        };
+      final summaryKey = _getSummaryKey(periodKey, start);
+      if (isPeriodStart) {
+        final summary = await getSummary(uid, summaryKey);
+
+        // If summary has been fully synced/calculated, return it
+        if (summary.isSynced) {
+          return {
+            'totalIncome': summary.totalIncome,
+            'cafeIncome': summary.cafeIncome,
+            'playstationIncome': summary.playstationIncome,
+            'totalExpenses': summary.totalExpenses,
+            'totalDebts': summary.totalDebts,
+            'paidDebts': summary.paidDebts,
+            'unpaidDebts': summary.unpaidDebts,
+            'totalCount': summary.transactionCount.toDouble(),
+            'cafeCount': summary.cafeCount.toDouble(),
+            'playstationCount': summary.playstationCount.toDouble(),
+          };
+        }
       }
 
       // 2. Fallback to old calculation if no summary found (e.g. legacy data)
@@ -90,6 +111,9 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
       double totalIncome = 0;
       double cafeIncome = 0;
       double playstationIncome = 0;
+      int totalCount = operationsSnapshot.docs.length;
+      int cafeCount = 0;
+      int playstationCount = 0;
 
       for (var doc in operationsSnapshot.docs) {
         final data = doc.data();
@@ -99,8 +123,11 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
         totalIncome += totalAmount;
         if (type == AppStrings.shop.toLowerCase() || type == 'cafe') {
           cafeIncome += totalAmount;
-        } else if (type == AppStrings.playStation.toLowerCase() || type == 'playstation') {
+          cafeCount++;
+        } else if (type == AppStrings.playStation.toLowerCase() ||
+            type == 'playstation') {
           playstationIncome += totalAmount;
+          playstationCount++;
         }
       }
 
@@ -153,25 +180,32 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
         'totalDebts': totalDebts,
         'paidDebts': paidDebts,
         'unpaidDebts': unpaidDebts,
+        'totalCount': totalCount.toDouble(),
+        'cafeCount': cafeCount.toDouble(),
+        'playstationCount': playstationCount.toDouble(),
       };
 
       // 3. AUTO-CACHE: Save the calculated summary to Firestore for future O(1) access
       // This migrates legacy data on-the-fly to the optimized format
-      try {
-        await firestore
-            .collection('users')
-            .doc(uid)
-            .collection('summaries')
-            .doc(summaryKey)
-            .set({
-          ...result,
-          'transactionCount':
-              operationsSnapshot.docs.length + expensesSnapshot.docs.length,
-          'lastUpdatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
-      } catch (e) {
-        // Log error but don't fail the report view
-        AppLogger.printMessage('Failed to auto-cache summary: $e');
+      if (isPeriodStart) {
+        try {
+          await firestore
+              .collection('users')
+              .doc(uid)
+              .collection('summaries')
+              .doc(summaryKey)
+              .set({
+                ...result,
+                'transactionCount': totalCount,
+                'cafeCount': cafeCount,
+                'playstationCount': playstationCount,
+                'isSynced': true,
+                'lastUpdatedAt': FieldValue.serverTimestamp(),
+              }, SetOptions(merge: true));
+        } catch (e) {
+          // Log error but don't fail the report view
+          AppLogger.printMessage('Failed to auto-cache summary: $e');
+        }
       }
 
       return result;
@@ -189,7 +223,7 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
 
       // Try summary first
       final summary = await getSummary(uid, SummaryHelper.getAllTimeKey());
-      if (summary.transactionCount > 0 || summary.totalExpenses > 0) {
+      if (summary.isSynced) {
         return {
           'totalIncome': summary.totalIncome,
           'cafeIncome': summary.cafeIncome,
@@ -198,6 +232,9 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
           'totalDebts': summary.totalDebts,
           'paidDebts': summary.paidDebts,
           'unpaidDebts': summary.unpaidDebts,
+          'totalCount': summary.transactionCount.toDouble(),
+          'cafeCount': summary.cafeCount.toDouble(),
+          'playstationCount': summary.playstationCount.toDouble(),
         };
       }
 
@@ -221,6 +258,8 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
     DateTime start,
     DateTime end, {
     String? type,
+    int limit = 15,
+    DocumentSnapshot? lastDoc,
   }) async {
     try {
       final uid = AppStrings.userToken;
@@ -236,11 +275,17 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
         query = query.where('type', isEqualTo: type);
       }
 
-      final snapshot = await query.get();
+      if (lastDoc != null) {
+        query = query.startAfterDocument(lastDoc);
+      }
+
+      final snapshot = await query.limit(limit).get();
       return snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
-        return data;
+        // Also attach the actual document snapshot to the data map so repository can extract it
+        // Note: Repository will need to handle this to get the lastDoc
+        return {'data': data, 'snapshot': doc};
       }).toList();
     } catch (e) {
       FirebaseErrorHandler.handle(e);

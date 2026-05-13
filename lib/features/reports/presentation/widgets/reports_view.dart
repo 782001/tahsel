@@ -264,6 +264,8 @@ class _ReportsViewState extends State<ReportsView> {
                                             'isShop': context
                                                 .read<MainLayoutCubit>()
                                                 .isShop,
+                                            'totalIncome': data.totalIncome,
+                                            'totalCount': data.totalCount,
                                           },
                                         );
                                       },
@@ -352,6 +354,8 @@ class _ReportsViewState extends State<ReportsView> {
                                               'isShop': context
                                                   .read<MainLayoutCubit>()
                                                   .isShop,
+                                              'totalIncome': data.cafeIncome,
+                                              'totalCount': data.cafeCount,
                                             },
                                           );
                                         },
@@ -385,6 +389,8 @@ class _ReportsViewState extends State<ReportsView> {
                                               'isShop': context
                                                   .read<MainLayoutCubit>()
                                                   .isShop,
+                                              'totalIncome': data.playstationIncome,
+                                              'totalCount': data.playstationCount,
                                             },
                                           );
                                         },

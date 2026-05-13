@@ -9,6 +9,9 @@ class SummaryModel {
   final double paidDebts;
   final double unpaidDebts;
   final int transactionCount;
+  final int cafeCount;
+  final int playstationCount;
+  final bool isSynced;
   final DateTime lastUpdatedAt;
 
   SummaryModel({
@@ -20,6 +23,9 @@ class SummaryModel {
     required this.paidDebts,
     required this.unpaidDebts,
     required this.transactionCount,
+    this.cafeCount = 0,
+    this.playstationCount = 0,
+    this.isSynced = false,
     required this.lastUpdatedAt,
   });
 
@@ -33,6 +39,9 @@ class SummaryModel {
       paidDebts: (json['paidDebts'] ?? 0).toDouble(),
       unpaidDebts: (json['unpaidDebts'] ?? 0).toDouble(),
       transactionCount: (json['transactionCount'] ?? 0).toInt(),
+      cafeCount: (json['cafeCount'] ?? 0).toInt(),
+      playstationCount: (json['playstationCount'] ?? 0).toInt(),
+      isSynced: json['isSynced'] as bool? ?? false,
       lastUpdatedAt: (json['lastUpdatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
@@ -47,6 +56,9 @@ class SummaryModel {
       paidDebts: 0,
       unpaidDebts: 0,
       transactionCount: 0,
+      cafeCount: 0,
+      playstationCount: 0,
+      isSynced: false,
       lastUpdatedAt: DateTime.now(),
     );
   }
@@ -61,6 +73,9 @@ class SummaryModel {
       'paidDebts': paidDebts,
       'unpaidDebts': unpaidDebts,
       'transactionCount': transactionCount,
+      'cafeCount': cafeCount,
+      'playstationCount': playstationCount,
+      'isSynced': isSynced,
       'lastUpdatedAt': FieldValue.serverTimestamp(),
     };
   }
@@ -74,6 +89,9 @@ class SummaryModel {
     double? paidDebts,
     double? unpaidDebts,
     int? transactionCount,
+    int? cafeCount,
+    int? playstationCount,
+    bool? isSynced,
     DateTime? lastUpdatedAt,
   }) {
     return SummaryModel(
@@ -85,6 +103,9 @@ class SummaryModel {
       paidDebts: paidDebts ?? this.paidDebts,
       unpaidDebts: unpaidDebts ?? this.unpaidDebts,
       transactionCount: transactionCount ?? this.transactionCount,
+      cafeCount: cafeCount ?? this.cafeCount,
+      playstationCount: playstationCount ?? this.playstationCount,
+      isSynced: isSynced ?? this.isSynced,
       lastUpdatedAt: lastUpdatedAt ?? this.lastUpdatedAt,
     );
   }

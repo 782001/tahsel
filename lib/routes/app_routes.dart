@@ -4,6 +4,7 @@ import 'package:tahsel/features/debt/presentation/screens/customer_global_paymen
 import 'package:tahsel/features/debt/presentation/screens/monthly_collected_screen.dart';
 import 'package:tahsel/features/debt/presentation/screens/monthly_collected_transactions_screen.dart';
 import 'package:tahsel/features/debt/domain/entities/monthly_collected_amount.dart';
+import 'package:tahsel/features/reports/presentation/cubit/income_cubit/income_details_cubit.dart';
 import 'package:tahsel/features/reports/presentation/cubit/reports_cubit/reports_cubit.dart';
 import 'package:tahsel/features/standard_features/security/presentation/screens/security_warning_screen.dart';
 import 'package:tahsel/features/splash/splash_screen.dart';
@@ -75,12 +76,22 @@ class AppRoutes {
       case incomeDetails:
         final args = settings.arguments as Map<String, dynamic>;
         return MaterialPageRoute(
-          builder: (_) => IncomeDetailsScreen(
-            startDate: args['startDate'] as DateTime,
-            endDate: args['endDate'] as DateTime,
-            period: args['period'] as String,
-            isShop: args['isShop'] as bool,
-            type: args['type'] as String?,
+          builder: (_) => BlocProvider(
+            create: (context) => di.sl<IncomeDetailsCubit>()
+              ..fetchIncomeDetails(
+                args['startDate'] as DateTime,
+                args['endDate'] as DateTime,
+                type: args['type'] as String?,
+              ),
+            child: IncomeDetailsScreen(
+              startDate: args['startDate'] as DateTime,
+              endDate: args['endDate'] as DateTime,
+              period: args['period'] as String,
+              isShop: args['isShop'] as bool,
+              totalIncome: (args['totalIncome'] as num).toDouble(),
+              totalCount: args['totalCount'] as int,
+              type: args['type'] as String?,
+            ),
           ),
         );
       case debtDetails:

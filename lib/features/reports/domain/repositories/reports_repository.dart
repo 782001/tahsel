@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import '../entities/reports_entity.dart';
 import '../../../operation/domain/entities/operation_entity.dart';
@@ -10,10 +11,12 @@ abstract class ReportsRepository {
     String periodKey,
   );
   Future<Either<Failure, ReportsEntity>> getAllTimeReports();
-  Future<Either<Failure, List<OperationEntity>>> getIncomeDetails(
+  Future<Either<Failure, (List<OperationEntity>, DocumentSnapshot?)>> getIncomeDetails(
     DateTime startDate,
     DateTime endDate, {
     String? type,
+    int limit = 15,
+    DocumentSnapshot? lastDoc,
   });
   Future<Either<Failure, int>> cleanupOldReports();
 }
