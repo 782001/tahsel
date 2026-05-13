@@ -340,7 +340,7 @@ class ExpenseCubit extends Cubit<ExpenseState> {
             monthKey: monthKey,
             monthName: monthName,
             lastDoc: paginatedList.lastDoc,
-            hasReachedMax: paginatedList.expenses.length < 20,
+            hasReachedMax: paginatedList.expenses.length < 15,
             stats: previousStats,
           ),
         );
@@ -401,7 +401,7 @@ class ExpenseCubit extends Cubit<ExpenseState> {
           currentState.copyWith(
             expenses: grouped,
             lastDoc: paginatedList.lastDoc,
-            hasReachedMax: paginatedList.expenses.length < 20,
+            hasReachedMax: paginatedList.expenses.length < 15,
             isPaginationLoading: false,
           ),
         );
