@@ -345,6 +345,10 @@ class AppStrings {
   static const String purchase = "purchase";
   static const String customerReport = "customer_report";
   static const String totalSpent = "total_spent";
+  static const String totalPurchases = "total_purchases";
+  static const String totalPaid = "total_paid";
+  static const String remainingAmount = "remaining_amount";
+  static const String egp = "egp";
   static const String myDebts = "my_debts";
   static const String myDebtsTab = "my_debts_tab";
   static const String customerDebtsTab = "customer_debts_tab";

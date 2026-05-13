@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
-import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/features/customer/presentation/widgets/customer_summary_row.dart';
 
 class CustomerSummaryCard extends StatelessWidget {
   final double totalSpent;
@@ -18,86 +18,54 @@ class CustomerSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 4,
-      shadowColor: AppColors.shadowColor.withAlpha(50),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          color: AppColors.primaryColor,
-        ),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: _buildSummaryItem(
-                    context,
-                    AppStrings.totalSpent.tr(),
-                    totalSpent,
-                    Colors.white.withAlpha(200),
-                  ),
-                ),
-                Expanded(
-                  child: _buildSummaryItem(
-                    context,
-                    AppStrings.paid.tr(),
-                    totalPaid,
-                    Colors.white.withAlpha(200),
-                  ),
-                ),
-              ],
-            ),
-            const Divider(color: Colors.white24, height: 32),
-            _buildSummaryItem(
-              context,
-              AppStrings.remainingBalance.tr(),
-              remaining,
-              Colors.white,
-              isLarge: true,
-            ),
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primaryColor,
+            AppColors.primaryColor.withAlpha(200),
           ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryColor.withAlpha(80),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-    );
-  }
-
-  Widget _buildSummaryItem(
-    BuildContext context,
-    String label,
-    double amount,
-    Color color, {
-    bool isLarge = false,
-  }) {
-    return Column(
-      children: [
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-          style: TextStyles.customStyle(
-            color: color.withAlpha(200),
-            fontSize: (isLarge ? 16 : 14),
-            fontWeight: isLarge ? FontWeight.bold : FontWeight.normal,
+      child: Column(
+        children: [
+          CustomerSummaryRow(
+            label: AppStrings.totalPurchases.tr(),
+            value: totalSpent,
+            isWhite: true,
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          '${amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-          style: TextStyles.customStyle(
-            color: color,
-            fontSize: (isLarge ? 28 : 20),
-            fontWeight: FontWeight.bold,
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Divider(color: Colors.white24),
           ),
-        ),
-      ],
+          CustomerSummaryRow(
+            label: AppStrings.totalPaid.tr(),
+            value: totalPaid,
+            isWhite: true,
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Divider(color: Colors.white24),
+          ),
+          CustomerSummaryRow(
+            label: AppStrings.remainingAmount.tr(),
+            value: remaining,
+            isWhite: true,
+            isBold: true,
+          ),
+        ],
+      ),
     );
   }
 }

@@ -23,8 +23,11 @@ class CustomerCubit extends Cubit<CustomerState> {
 
   Future<void> fetchCustomers(String uid) async {
     emit(CustomerLoading());
-    final result = await getCustomersUseCase(GetCustomersParams(uid: uid));
-    result.fold((failure) => emit(CustomerError(failure.message)), (customers) {
+    final result = await getCustomersUseCase(
+      GetCustomersParams(uid: uid, limit: 100),
+    );
+    result.fold((failure) => emit(CustomerError(failure.message)), (paginated) {
+      final customers = paginated.$1;
       _allCustomers = customers;
       emit(CustomerLoaded(customers));
     });

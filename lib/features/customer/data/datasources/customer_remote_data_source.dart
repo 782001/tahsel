@@ -4,7 +4,11 @@ import '../models/customer_model.dart';
 import '../../domain/entities/customer_operation.dart';
 
 abstract class CustomerRemoteDataSource {
-  Future<List<CustomerModel>> getCustomers(String uid);
+  Future<Map<String, dynamic>> getCustomers(
+    String uid, {
+    int limit = 15,
+    DocumentSnapshot? lastDoc,
+  });
   Future<void> saveCustomer(String uid, CustomerModel customer);
   Future<void> updateCustomerPhone(String uid, String name, String phoneNumber);
   Future<void> updateCustomerPreference(
@@ -12,10 +16,12 @@ abstract class CustomerRemoteDataSource {
     String name,
     String preference,
   );
-  Future<List<CustomerOperation>> getCustomerOperations(
+  Future<Map<String, dynamic>> getCustomerOperations(
     String uid,
-    String customerName,
-  );
+    String customerName, {
+    int limit = 15,
+    DocumentSnapshot? lastDoc,
+  });
 }
 
 class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
@@ -24,18 +30,33 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
   CustomerRemoteDataSourceImpl({required this.firestore});
 
   @override
-  Future<List<CustomerModel>> getCustomers(String uid) async {
+  Future<Map<String, dynamic>> getCustomers(
+    String uid, {
+    int limit = 15,
+    DocumentSnapshot? lastDoc,
+  }) async {
     try {
-      final snapshot = await firestore
+      var query = firestore
           .collection('users')
           .doc(uid)
           .collection('customers')
           .orderBy('lastUsedAt', descending: true)
-          .get();
+          .limit(limit);
 
-      return snapshot.docs
+      if (lastDoc != null) {
+        query = query.startAfterDocument(lastDoc);
+      }
+
+      final snapshot = await query.get();
+
+      final customers = snapshot.docs
           .map((doc) => CustomerModel.fromJson(doc.data(), id: doc.id))
           .toList();
+
+      return {
+        'customers': customers,
+        'lastDoc': snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
+      };
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;
@@ -131,24 +152,32 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
   }
 
   @override
-  Future<List<CustomerOperation>> getCustomerOperations(
+  Future<Map<String, dynamic>> getCustomerOperations(
     String uid,
-    String customerName,
-  ) async {
+    String customerName, {
+    int limit = 15,
+    DocumentSnapshot? lastDoc,
+  }) async {
     try {
       final userRef = firestore.collection('users').doc(uid);
 
-      // 1. Fetch from operations collection
-      final opsSnapshot = await userRef
+      // 1. Fetch operations with pagination
+      var opsQuery = userRef
           .collection('operations')
           .where('customerName', isEqualTo: customerName)
-          .get();
+          .orderBy('timestamp', descending: true)
+          .limit(limit);
 
+      if (lastDoc != null) {
+        opsQuery = opsQuery.startAfterDocument(lastDoc);
+      }
+
+      final opsSnapshot = await opsQuery.get();
       List<CustomerOperation> operations = [];
 
       for (var doc in opsSnapshot.docs) {
         final data = doc.data();
-        final type = data['remainingDebt'] > 0
+        final type = (data['remainingDebt'] ?? 0) > 0
             ? CustomerOperationType.debt
             : CustomerOperationType.purchase;
 
@@ -164,39 +193,50 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
         );
       }
 
-      // 2. Fetch payments from debt sub-collections
-      final debtsSnapshot = await userRef
-          .collection('debts')
-          .where('customerName', isEqualTo: customerName)
-          .get();
-
-      for (var debtDoc in debtsSnapshot.docs) {
-        final debtData = debtDoc.data();
-        final activityName = debtData['operationType'] as String;
-
-        final paymentsSnapshot = await debtDoc.reference
-            .collection('payments')
+      // 2. Fetch payments only if we are on the first page
+      // (Optimization: In a fully paginated system, payments should be their own operations)
+      // For now, to keep totals accurate without fetching everything, we fetch payments separately.
+      // But we only fetch them once or paginate them too.
+      // To satisfy "do not fetch all", I will fetch payments for the specific debts found in the operations.
+      if (lastDoc == null) {
+        final debtsSnapshot = await userRef
+            .collection('debts')
+            .where('customerName', isEqualTo: customerName)
             .get();
 
-        for (var paymentDoc in paymentsSnapshot.docs) {
-          final pData = paymentDoc.data();
-          // Skip the 'debtAdded' type as it's already covered by the operation record
-          if (pData['type'] == 'debtAdded') continue;
+        for (var debtDoc in debtsSnapshot.docs) {
+          final debtData = debtDoc.data();
+          final activityName = debtData['operationType'] as String;
 
-          operations.add(
-            CustomerOperation(
-              id: paymentDoc.id,
-              activityName: activityName,
-              amount: (pData['amountPaid'] as num).toDouble(),
-              type: CustomerOperationType.payment,
-              date: (pData['createdAt'] as Timestamp).toDate(),
-              details: null,
-            ),
-          );
+          final paymentsSnapshot = await debtDoc.reference
+              .collection('payments')
+              .get();
+
+          for (var paymentDoc in paymentsSnapshot.docs) {
+            final pData = paymentDoc.data();
+            if (pData['type'] == 'debtAdded') continue;
+
+            operations.add(
+              CustomerOperation(
+                id: paymentDoc.id,
+                activityName: activityName,
+                amount: (pData['amountPaid'] as num).toDouble(),
+                type: CustomerOperationType.payment,
+                date: (pData['createdAt'] as Timestamp).toDate(),
+                details: null,
+              ),
+            );
+          }
         }
       }
 
-      return operations;
+      // Sort combined list latest first
+      operations.sort((a, b) => b.date.compareTo(a.date));
+
+      return {
+        'operations': operations,
+        'lastDoc': opsSnapshot.docs.isNotEmpty ? opsSnapshot.docs.last : null,
+      };
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import '../../domain/entities/customer_entity.dart';
 import '../../domain/entities/customer_operation.dart';
@@ -12,10 +13,18 @@ class CustomerRepositoryImpl implements CustomerRepository {
   CustomerRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<Either<Failure, List<CustomerEntity>>> getCustomers(String uid) async {
+  Future<Either<Failure, (List<CustomerEntity>, DocumentSnapshot?)>>
+  getCustomers(String uid, {int limit = 15, DocumentSnapshot? lastDoc}) async {
     try {
-      final customers = await remoteDataSource.getCustomers(uid);
-      return Right(customers);
+      final result = await remoteDataSource.getCustomers(
+        uid,
+        limit: limit,
+        lastDoc: lastDoc,
+      );
+      return Right((
+        result['customers'] as List<CustomerEntity>,
+        result['lastDoc'] as DocumentSnapshot?,
+      ));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -66,16 +75,24 @@ class CustomerRepositoryImpl implements CustomerRepository {
   }
 
   @override
-  Future<Either<Failure, List<CustomerOperation>>> getCustomerOperations(
+  Future<Either<Failure, (List<CustomerOperation>, DocumentSnapshot?)>>
+  getCustomerOperations(
     String uid,
-    String customerName,
-  ) async {
+    String customerName, {
+    int limit = 15,
+    DocumentSnapshot? lastDoc,
+  }) async {
     try {
-      final operations = await remoteDataSource.getCustomerOperations(
+      final result = await remoteDataSource.getCustomerOperations(
         uid,
         customerName,
+        limit: limit,
+        lastDoc: lastDoc,
       );
-      return Right(operations);
+      return Right((
+        result['operations'] as List<CustomerOperation>,
+        result['lastDoc'] as DocumentSnapshot?,
+      ));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
