@@ -8,11 +8,13 @@ class GetReportsParams {
   final DateTime startDate;
   final DateTime endDate;
   final String periodKey;
+  final bool forceRefresh;
 
   GetReportsParams({
     required this.startDate,
     required this.endDate,
     required this.periodKey,
+    this.forceRefresh = false,
   });
 }
 
@@ -28,6 +30,7 @@ class GetReportsUseCase
       params.startDate,
       params.endDate,
       params.periodKey,
+      forceRefresh: params.forceRefresh,
     );
   }
 }

@@ -8,9 +8,10 @@ abstract class ReportsRepository {
   Future<Either<Failure, ReportsEntity>> getReports(
     DateTime startDate,
     DateTime endDate,
-    String periodKey,
-  );
-  Future<Either<Failure, ReportsEntity>> getAllTimeReports();
+    String periodKey, {
+    bool forceRefresh = false,
+  });
+  Future<Either<Failure, ReportsEntity>> getAllTimeReports({bool forceRefresh = false});
   Future<Either<Failure, (List<OperationEntity>, DocumentSnapshot?)>> getIncomeDetails(
     DateTime startDate,
     DateTime endDate, {

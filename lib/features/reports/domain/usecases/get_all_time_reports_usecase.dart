@@ -4,13 +4,18 @@ import '../../../../core/error/failures.dart';
 import '../entities/reports_entity.dart';
 import '../repositories/reports_repository.dart';
 
-class GetAllTimeReportsUseCase implements BaseUseCase<ReportsEntity, NoParams> {
+class GetAllTimeReportsParams {
+  final bool forceRefresh;
+  GetAllTimeReportsParams({this.forceRefresh = false});
+}
+
+class GetAllTimeReportsUseCase implements BaseUseCase<ReportsEntity, GetAllTimeReportsParams> {
   final ReportsRepository repository;
 
   GetAllTimeReportsUseCase(this.repository);
 
   @override
-  Future<Either<Failure, ReportsEntity>> call(NoParams params) {
-    return repository.getAllTimeReports();
+  Future<Either<Failure, ReportsEntity>> call(GetAllTimeReportsParams params) {
+    return repository.getAllTimeReports(forceRefresh: params.forceRefresh);
   }
 }

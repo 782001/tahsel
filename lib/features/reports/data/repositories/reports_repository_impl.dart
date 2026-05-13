@@ -18,11 +18,17 @@ class ReportsRepositoryImpl implements ReportsRepository {
   Future<Either<Failure, ReportsEntity>> getReports(
     DateTime startDate,
     DateTime endDate,
-    String periodKey,
-  ) async {
+    String periodKey, {
+    bool forceRefresh = false,
+  }) async {
     try {
       // 1. Fetch Current Period Data
-      final currentData = await dataSource.getPeriodData(startDate, endDate, periodKey);
+      final currentData = await dataSource.getPeriodData(
+        startDate,
+        endDate,
+        periodKey,
+        forceRefresh: forceRefresh,
+      );
 
       // 2. Fetch Previous Period Data for Comparison
       final duration = endDate.difference(startDate);
@@ -30,10 +36,13 @@ class ReportsRepositoryImpl implements ReportsRepository {
       final prevEndDate = endDate.subtract(duration);
 
       // Note: We use the same periodKey for comparison data
+      // We don't necessarily need forceRefresh for the previous period unless the user specifically wants it,
+      // but for consistency we'll use it if passed.
       final prevData = await dataSource.getPeriodData(
         prevStartDate,
         prevEndDate,
         periodKey,
+        forceRefresh: forceRefresh,
       );
 
       // Mapping keys from DataSource to Entity
@@ -100,9 +109,9 @@ class ReportsRepositoryImpl implements ReportsRepository {
   }
 
   @override
-  Future<Either<Failure, ReportsEntity>> getAllTimeReports() async {
+  Future<Either<Failure, ReportsEntity>> getAllTimeReports({bool forceRefresh = false}) async {
     try {
-      final data = await dataSource.getAllTimeData();
+      final data = await dataSource.getAllTimeData(forceRefresh: forceRefresh);
 
       final double income = (data['totalIncome'] ?? 0).toDouble();
       final double cafeIncome = (data['cafeIncome'] ?? 0).toDouble();

@@ -7,12 +7,13 @@ import '../../../../core/error/firebase_error_handler.dart';
 import '../models/summary_model.dart';
 
 abstract class ReportsRemoteDataSource {
-  Future<Map<String, double>> getPeriodData(
+  Future<Map<String, dynamic>> getPeriodData(
     DateTime start,
     DateTime end,
-    String periodKey,
-  );
-  Future<Map<String, double>> getAllTimeData();
+    String periodKey, {
+    bool forceRefresh = false,
+  });
+  Future<Map<String, dynamic>> getAllTimeData({bool forceRefresh = false});
   Future<List<Map<String, dynamic>>> getIncomeDetails(
     DateTime start,
     DateTime end, {
@@ -51,16 +52,18 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
   }
 
   @override
-  Future<Map<String, double>> getPeriodData(
+  Future<Map<String, dynamic>> getPeriodData(
     DateTime start,
     DateTime end,
-    String periodKey,
-  ) async {
+    String periodKey, {
+    bool forceRefresh = false,
+  }) async {
     try {
       final uid = AppStrings.userToken;
       if (uid.isEmpty) return {};
 
-      // 1. Try to get from summaries first
+      final summaryKey = _getSummaryKey(periodKey, start);
+
       // We only use the summary if the requested start date aligns with the period start
       bool isPeriodStart = false;
       if (periodKey == 'daily') {
@@ -68,14 +71,13 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
       } else if (periodKey == 'monthly') {
         isPeriodStart = start.day == 1;
       } else if (periodKey == 'weekly') {
-        // Weekly start date is already calculated as start of week in cubit
         isPeriodStart = true;
       } else if (periodKey == 'all_time' || periodKey == 'allTime') {
         isPeriodStart = true;
       }
 
-      final summaryKey = _getSummaryKey(periodKey, start);
-      if (isPeriodStart) {
+      // 1. Try Optimized Summary Cache First
+      if (isPeriodStart && !forceRefresh) {
         final summary = await getSummary(uid, summaryKey);
 
         // If summary has been fully synced/calculated, return it
@@ -95,7 +97,7 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
         }
       }
 
-      // 2. Fallback to old calculation if no summary found (e.g. legacy data)
+      // 2. Fallback to manual calculation if no summary found or forceRefresh is true
       final startTimestamp = Timestamp.fromDate(start);
       final endTimestamp = Timestamp.fromDate(end);
 
@@ -186,7 +188,6 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
       };
 
       // 3. AUTO-CACHE: Save the calculated summary to Firestore for future O(1) access
-      // This migrates legacy data on-the-fly to the optimized format
       if (isPeriodStart) {
         try {
           await firestore
@@ -203,7 +204,6 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
                 'lastUpdatedAt': FieldValue.serverTimestamp(),
               }, SetOptions(merge: true));
         } catch (e) {
-          // Log error but don't fail the report view
           AppLogger.printMessage('Failed to auto-cache summary: $e');
         }
       }
@@ -216,36 +216,36 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
   }
 
   @override
-  Future<Map<String, double>> getAllTimeData() async {
+  Future<Map<String, dynamic>> getAllTimeData({bool forceRefresh = false}) async {
     try {
       final uid = AppStrings.userToken;
       if (uid.isEmpty) return {};
 
       // Try summary first
-      final summary = await getSummary(uid, SummaryHelper.getAllTimeKey());
-      if (summary.isSynced) {
-        return {
-          'totalIncome': summary.totalIncome,
-          'cafeIncome': summary.cafeIncome,
-          'playstationIncome': summary.playstationIncome,
-          'totalExpenses': summary.totalExpenses,
-          'totalDebts': summary.totalDebts,
-          'paidDebts': summary.paidDebts,
-          'unpaidDebts': summary.unpaidDebts,
-          'totalCount': summary.transactionCount.toDouble(),
-          'cafeCount': summary.cafeCount.toDouble(),
-          'playstationCount': summary.playstationCount.toDouble(),
-        };
+      if (!forceRefresh) {
+        final summary = await getSummary(uid, SummaryHelper.getAllTimeKey());
+        if (summary.isSynced) {
+          return {
+            'totalIncome': summary.totalIncome,
+            'cafeIncome': summary.cafeIncome,
+            'playstationIncome': summary.playstationIncome,
+            'totalExpenses': summary.totalExpenses,
+            'totalDebts': summary.totalDebts,
+            'paidDebts': summary.paidDebts,
+            'unpaidDebts': summary.unpaidDebts,
+            'totalCount': summary.transactionCount.toDouble(),
+            'cafeCount': summary.cafeCount.toDouble(),
+            'playstationCount': summary.playstationCount.toDouble(),
+          };
+        }
       }
 
-      // Fallback (expensive!)
-      // For brevity, I'll just use a very wide range or just sum all docs
-      // But in production, we should really have the all_time summary.
-      // I'll implement a basic fallback by calling getPeriodData with a wide range
-      return getPeriodData(
+      // Fallback
+      return await getPeriodData(
         DateTime(2020, 1, 1),
         DateTime(2100, 1, 1),
         'all_time',
+        forceRefresh: forceRefresh,
       );
     } catch (e) {
       FirebaseErrorHandler.handle(e);
