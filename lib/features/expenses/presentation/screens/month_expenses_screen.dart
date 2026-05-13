@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:tahsel/core/config/locale/app_localizations.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -12,6 +12,7 @@ import 'package:tahsel/features/expenses/domain/entities/expense_entity.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_state.dart';
 import 'package:tahsel/features/expenses/presentation/widgets/expense_card.dart';
+import 'package:tahsel/features/offline_sync/presentation/cubit/offline_sync_cubit.dart';
 
 class MonthExpensesScreen extends StatefulWidget {
   final String monthKey;
@@ -28,14 +29,36 @@ class MonthExpensesScreen extends StatefulWidget {
 }
 
 class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     context.read<ExpenseCubit>().fetchMonthDetails(
       AppStrings.userToken,
       widget.monthKey,
       widget.monthName,
     );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_isBottom) {
+      context.read<ExpenseCubit>().loadMoreExpenses(AppStrings.userToken);
+    }
+  }
+
+  bool get _isBottom {
+    if (!_scrollController.hasClients) return false;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.offset;
+    return currentScroll >= (maxScroll * 0.9);
   }
 
   @override
@@ -72,38 +95,47 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
             },
           ),
         ),
-        body: BlocListener<ExpenseCubit, ExpenseState>(
-          listenWhen: (previous, current) =>
-              current is ExpenseDeleteSuccess || current is ExpenseFailure,
-          listener: (context, state) {
-            if (state is ExpenseDeleteSuccess) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(AppStrings.deleteSuccess.tr()),
-                  backgroundColor: AppColors.success,
-                ),
-              );
-              context.read<ExpenseCubit>().fetchMonthDetails(
-                AppStrings.userToken,
-                widget.monthKey,
-                widget.monthName,
-              );
-            } else if (state is ExpenseFailure) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.message),
-                  backgroundColor: AppColors.error,
-                ),
-              );
-            }
-          },
+        body: MultiBlocListener(
+          listeners: [
+            BlocListener<ExpenseCubit, ExpenseState>(
+              listenWhen: (previous, current) =>
+                  current is ExpenseDeleteSuccess || current is ExpenseFailure,
+              listener: (context, state) {
+                if (state is ExpenseDeleteSuccess) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(AppStrings.deleteSuccess.tr()),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                  // We no longer auto-refresh details here.
+                  // The user can refresh manually if they want to verify the deletion on the server.
+                } else if (state is ExpenseFailure) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.message),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              },
+            ),
+            BlocListener<OfflineSyncCubit, OfflineSyncState>(
+              listener: (context, state) {
+                if (state is OfflineSyncSuccess) {
+                  // We no longer auto-refresh details here to respect user preference for manual refresh.
+                }
+              },
+            ),
+          ],
           child: BlocBuilder<ExpenseCubit, ExpenseState>(
             builder: (context, state) {
               if (state is ExpenseLoading) {
                 return ListView.builder(
                   padding: EdgeInsets.symmetric(vertical: 24.h),
                   itemCount: 8,
-                  itemBuilder: (context, index) => const CustomerDebtCardSkeleton(),
+                  itemBuilder: (context, index) =>
+                      const CustomerDebtCardSkeleton(),
                 );
               } else if (state is ExpenseFailure) {
                 return Center(child: Text(state.message));
@@ -111,7 +143,7 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
                 if (state.expenses.isEmpty) {
                   return Center(
                     child: Text(
-                      AppLocalizations.tr(AppStrings.noData),
+                      AppStrings.noData.tr(),
                       style: TextStyles.customStyle(color: AppColors.grey),
                     ),
                   );
@@ -120,33 +152,49 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
                 // Flatten the groups for efficient Sliver scrolling
                 final List<dynamic> items = [];
                 for (final group in state.expenses) {
-                  items.add(group.date);
+                  items.add(group);
                   items.addAll(group.expenses);
                 }
 
                 final String locale = AppStrings.currentLang;
 
                 return SizedBox.expand(
-                  child: CustomScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    slivers: [
-                      SliverPadding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 24.w,
-                          vertical: 24.h,
-                        ),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
+                  child: RefreshIndicator(
+                    color: AppColors.primaryColor,
+                    onRefresh: () async {
+                      await context.read<ExpenseCubit>().fetchMonthDetails(
+                        AppStrings.userToken,
+                        widget.monthKey,
+                        widget.monthName,
+                        forceRefresh: true,
+                      );
+                    },
+                    child: CustomScrollView(
+                      controller: _scrollController,
+                      physics: const BouncingScrollPhysics(
+                        parent: AlwaysScrollableScrollPhysics(),
+                      ),
+                      slivers: [
+                        SliverPadding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 24.w,
+                            vertical: 24.h,
+                          ),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
                               if (index >= items.length) return null;
                               final item = items[index];
 
                               // Header Item
-                              if (item is DateTime) {
-                                final dateStr = DateFormatter.formatLocalizedDate(
-                                  item,
-                                  locale,
-                                );
+                              if (item is DayExpenseGroup) {
+                                final dateStr =
+                                    DateFormatter.formatLocalizedDate(
+                                      item.date,
+                                      locale,
+                                    );
                                 return Container(
                                   width: double.infinity,
                                   padding: EdgeInsets.symmetric(
@@ -158,16 +206,32 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
                                     top: index == 0 ? 0 : 12.h,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.stitchBlue.withValues(alpha: 0.05),
+                                    color: AppColors.stitchBlue.withValues(
+                                      alpha: 0.05,
+                                    ),
                                     borderRadius: BorderRadius.circular(8.r),
                                   ),
-                                  child: Text(
-                                    dateStr,
-                                    style: TextStyles.customStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.stitchBlue,
-                                    ),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        dateStr,
+                                        style: TextStyles.customStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.stitchBlue,
+                                        ),
+                                      ),
+                                      Text(
+                                        "${item.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
+                                        style: TextStyles.customStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.primaryColor,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 );
                               }
@@ -176,18 +240,21 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
                               if (item is ExpenseEntity) {
                                 final expense = item;
                                 IconData iconData = Icons.money;
-                                
-                                // Safe translation call
-                                final categoryStr = AppLocalizations.tr(expense.category);
 
-                                if (categoryStr == AppLocalizations.tr(AppStrings.operations)) {
+                                // Safe translation call
+                                final categoryStr = expense.category.tr();
+
+                                if (categoryStr == AppStrings.operations.tr()) {
                                   iconData = Icons.build_outlined;
-                                } else if (categoryStr == AppLocalizations.tr(AppStrings.employees)) {
+                                } else if (categoryStr ==
+                                    AppStrings.employees.tr()) {
                                   iconData = Icons.people_outline;
-                                } else if (categoryStr == AppLocalizations.tr(AppStrings.rents) ||
-                                    categoryStr == AppLocalizations.tr(AppStrings.rent)) {
+                                } else if (categoryStr ==
+                                        AppStrings.rents.tr() ||
+                                    categoryStr == AppStrings.rent.tr()) {
                                   iconData = Icons.home_outlined;
-                                } else if (categoryStr == AppLocalizations.tr(AppStrings.salaries)) {
+                                } else if (categoryStr ==
+                                    AppStrings.salaries.tr()) {
                                   iconData = Icons.attach_money_outlined;
                                 }
 
@@ -201,18 +268,31 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
                                     date: DateFormatter.formatNumericDate(
                                       expense.createdAt,
                                     ),
-                                    onDelete: () =>
-                                        _confirmDelete(context, expense.id ?? ''),
+                                    onDelete: () => _confirmDelete(
+                                      context,
+                                      expense.id ?? '',
+                                    ),
                                   ),
                                 );
                               }
                               return const SizedBox.shrink();
-                            },
-                            childCount: items.length,
+                            }, childCount: items.length),
                           ),
                         ),
-                      ),
-                    ],
+                        SliverToBoxAdapter(
+                          child: state.isPaginationLoading
+                              ? Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 20.h),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: AppColors.primaryColor,
+                                    ),
+                                  ),
+                                )
+                              : const SizedBox.shrink(),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               }

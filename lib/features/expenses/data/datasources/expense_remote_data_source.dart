@@ -1,17 +1,39 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tahsel/core/utils/date_formatter.dart';
+import 'package:tahsel/core/utils/summary_helper.dart';
+
 import '../../../../core/error/firebase_error_handler.dart';
 import '../../domain/entities/expense_entity.dart';
 import '../models/expense_model.dart';
-import 'package:tahsel/core/utils/date_formatter.dart';
+
+class MonthlyPaginationResult {
+  final List<MonthlyExpenseGroup> months;
+  final DocumentSnapshot? lastDoc;
+
+  MonthlyPaginationResult({required this.months, this.lastDoc});
+}
+
+class ExpensePaginationResult {
+  final List<ExpenseModel> expenses;
+  final DocumentSnapshot? lastDoc;
+
+  ExpensePaginationResult({required this.expenses, this.lastDoc});
+}
 
 abstract class ExpenseRemoteDataSource {
   Future<String> addExpense(ExpenseModel expense);
   Future<List<ExpenseModel>> getExpenses(String uid);
-  Future<List<MonthlyExpenseGroup>> getMonthlyAggregates(
+  Future<MonthlyPaginationResult> getMonthlyAggregates(
+    String uid, {
+    int limit = 15,
+    DocumentSnapshot? lastDoc,
+  });
+  Future<ExpensePaginationResult> getExpensesByMonth(
     String uid,
-    List<String> monthKeys,
-  );
-  Future<List<ExpenseModel>> getExpensesByMonth(String uid, String monthKey);
+    String monthKey, {
+    int limit = 20,
+    DocumentSnapshot? lastDoc,
+  });
   Future<void> deleteExpense(String uid, String expenseId);
   Future<void> deleteMonthExpenses(String uid, String monthKey);
 }
@@ -24,16 +46,30 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
   @override
   Future<String> addExpense(ExpenseModel expense) async {
     try {
-      final collectionRef = firestore
-          .collection('users')
-          .doc(expense.uid)
-          .collection('expenses');
+      final userRef = firestore.collection('users').doc(expense.uid);
+      final collectionRef = userRef.collection('expenses');
 
       final docRef = (expense.id != null && expense.id!.isNotEmpty)
           ? collectionRef.doc(expense.id)
           : collectionRef.doc();
 
-      await docRef.set(expense.toJson());
+      final batch = firestore.batch();
+
+      // 1. Set the expense document
+      batch.set(docRef, expense.toJson());
+
+      // 2. Update Summaries
+      final summaryKeys = SummaryHelper.getSummaryKeys(expense.createdAt);
+      for (final key in summaryKeys) {
+        final summaryRef = userRef.collection('summaries').doc(key);
+        batch.set(summaryRef, {
+          'totalExpenses': FieldValue.increment(expense.amount),
+          'transactionCount': FieldValue.increment(1),
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
+
+      await batch.commit();
       return docRef.id;
     } catch (e) {
       FirebaseErrorHandler.handle(e);
@@ -61,50 +97,108 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
   }
 
   @override
-  Future<List<MonthlyExpenseGroup>> getMonthlyAggregates(
-    String uid,
-    List<String> monthKeys,
-  ) async {
+  Future<MonthlyPaginationResult> getMonthlyAggregates(
+    String uid, {
+    int limit = 15,
+    DocumentSnapshot? lastDoc,
+  }) async {
     try {
-      final snapshot = await firestore
-          .collection('users')
-          .doc(uid)
-          .collection('expenses')
-          .get();
+      final userRef = firestore.collection('users').doc(uid);
 
-      final Map<String, MonthlyExpenseGroup> grouped = {};
+      // Query summaries collection for monthly docs
+      // Doc IDs are like 'monthly_2026-05'
+      var query = userRef
+          .collection('summaries')
+          .where(FieldPath.documentId, isGreaterThanOrEqualTo: 'monthly_')
+          .where(FieldPath.documentId, isLessThanOrEqualTo: 'monthly_\uf8ff')
+          .orderBy(FieldPath.documentId, descending: true)
+          .limit(limit);
+
+      if (lastDoc != null) {
+        query = query.startAfterDocument(lastDoc);
+      }
+
+      final snapshot = await query.get();
+      final List<MonthlyExpenseGroup> results = [];
+
       for (final doc in snapshot.docs) {
-        final expense = ExpenseModel.fromJson(doc.data(), doc.id);
-        final amount = expense.amount;
-        final monthKey = expense.monthKey;
+        final data = doc.data();
+        final monthKey = doc.id.replaceFirst('monthly_', '');
 
-        if (grouped.containsKey(monthKey)) {
-          final existing = grouped[monthKey]!;
-          grouped[monthKey] = MonthlyExpenseGroup(
-            monthKey: monthKey,
-            monthName: existing.monthName,
-            totalAmount: existing.totalAmount + amount,
-            transactionCount: existing.transactionCount + 1,
-          );
-        } else {
-          final date = DateTime(
-            expense.createdAt.year,
-            expense.createdAt.month,
-          );
-          final monthName = DateFormatter.formatNumericMonth(date);
-          grouped[monthKey] = MonthlyExpenseGroup(
-            monthKey: monthKey,
-            monthName: monthName,
-            totalAmount: amount,
-            transactionCount: 1,
+        final totalExpenses = (data['totalExpenses'] ?? 0).toDouble();
+        var count = (data['transactionCount'] ?? 0).toInt();
+
+        // PROACTIVE REPAIR: Ensure transaction count is accurate
+        // We verify the summary count against actual records once if the month has expenses.
+        if (totalExpenses > 0) {
+          // 1. Try counting by monthKey first (Fast)
+          final oldKey = monthKey.replaceAll('-', '/');
+          final countQuery = await userRef
+              .collection('expenses')
+              .where('monthKey', whereIn: [monthKey, oldKey])
+              .count()
+              .get();
+          
+          var actualCount = countQuery.count ?? 0;
+
+          // 2. Fallback: Check by Date Range if monthKey count is 0 (For legacy data)
+          if (actualCount == 0) {
+            try {
+              final parts = monthKey.split(monthKey.contains('-') ? '-' : '/');
+              if (parts.length == 2) {
+                final year = int.parse(parts[0]);
+                final month = int.parse(parts[1]);
+                final start = DateTime(year, month, 1);
+                final end = DateTime(year, month + 1, 1);
+
+                final rangeCount = await userRef
+                    .collection('expenses')
+                    .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+                    .where('createdAt', isLessThan: Timestamp.fromDate(end))
+                    .count()
+                    .get();
+                actualCount = rangeCount.count ?? 0;
+              }
+            } catch (_) {}
+          }
+
+          // Idempotent Update: Only write if the count is actually different
+          if (actualCount != count) {
+            count = actualCount;
+            userRef.collection('summaries').doc(doc.id).update({
+              'transactionCount': count,
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
+            }).catchError((_) {});
+          }
+        }
+
+        if (totalExpenses > 0 || count > 0) {
+          String formattedName = monthKey;
+          try {
+            final parts = monthKey.split(monthKey.contains('-') ? '-' : '/');
+            if (parts.length == 2) {
+              final year = int.parse(parts[0]);
+              final monthValue = int.parse(parts[1]);
+              final date = DateTime(year, monthValue);
+              formattedName = DateFormatter.formatArabicMonthYear(date);
+            }
+          } catch (_) {}
+
+          results.add(
+            MonthlyExpenseGroup(
+              monthKey: monthKey,
+              monthName: formattedName,
+              totalAmount: totalExpenses,
+              transactionCount: count,
+            ),
           );
         }
       }
 
-      final List<MonthlyExpenseGroup> results = grouped.values.toList();
-      results.sort((a, b) => b.monthKey.compareTo(a.monthKey));
-
-      return results;
+      return MonthlyPaginationResult(
+        months: results,
+        lastDoc: snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
+      );
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       throw Exception('Failed to fetch monthly aggregates: $e');
@@ -112,25 +206,36 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
   }
 
   @override
-  Future<List<ExpenseModel>> getExpensesByMonth(
+  Future<ExpensePaginationResult> getExpensesByMonth(
     String uid,
-    String monthKey,
-  ) async {
+    String monthKey, {
+    int limit = 20,
+    DocumentSnapshot? lastDoc,
+  }) async {
     try {
-      final snapshot = await firestore
+      final monthKeyOld = monthKey.replaceAll('-', '/');
+      var query = firestore
           .collection('users')
           .doc(uid)
           .collection('expenses')
-          .where('monthKey', isEqualTo: monthKey)
-          .get();
+          .where('monthKey', whereIn: [monthKey, monthKeyOld])
+          .orderBy('createdAt', descending: true)
+          .limit(limit);
+
+      if (lastDoc != null) {
+        query = query.startAfterDocument(lastDoc);
+      }
+
+      final snapshot = await query.get();
 
       final expenses = snapshot.docs
           .map((doc) => ExpenseModel.fromJson(doc.data(), doc.id))
           .toList();
 
-      // Sort manually to avoid needing a composite index
-      expenses.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return expenses;
+      return ExpensePaginationResult(
+        expenses: expenses,
+        lastDoc: snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
+      );
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       throw Exception('Failed to fetch expenses by month: $e');
@@ -140,12 +245,30 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
   @override
   Future<void> deleteExpense(String uid, String expenseId) async {
     try {
-      await firestore
-          .collection('users')
-          .doc(uid)
-          .collection('expenses')
-          .doc(expenseId)
-          .delete();
+      final userRef = firestore.collection('users').doc(uid);
+      final expenseRef = userRef.collection('expenses').doc(expenseId);
+
+      final expenseDoc = await expenseRef.get();
+      if (!expenseDoc.exists) return;
+
+      final expense = ExpenseModel.fromJson(expenseDoc.data()!, expenseId);
+      final batch = firestore.batch();
+
+      // 1. Delete document
+      batch.delete(expenseRef);
+
+      // 2. Update Summaries (Decrement)
+      final summaryKeys = SummaryHelper.getSummaryKeys(expense.createdAt);
+      for (final key in summaryKeys) {
+        final summaryRef = userRef.collection('summaries').doc(key);
+        batch.set(summaryRef, {
+          'totalExpenses': FieldValue.increment(-expense.amount),
+          'transactionCount': FieldValue.increment(-1),
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
+
+      await batch.commit();
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       throw Exception('Failed to delete expense: $e');
@@ -155,17 +278,67 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
   @override
   Future<void> deleteMonthExpenses(String uid, String monthKey) async {
     try {
-      final snapshot = await firestore
-          .collection('users')
-          .doc(uid)
+      final userRef = firestore.collection('users').doc(uid);
+      final snapshot = await userRef
           .collection('expenses')
           .where('monthKey', isEqualTo: monthKey)
           .get();
 
+      if (snapshot.docs.isEmpty) return;
+
       final batch = firestore.batch();
+      double totalAmountRemoved = 0;
+      Map<String, Map<String, double>> dailyWeeklyAmounts = {};
+
       for (final doc in snapshot.docs) {
+        final expense = ExpenseModel.fromJson(doc.data(), doc.id);
+        totalAmountRemoved += expense.amount;
+
+        // Track per-day/per-week for summary updates
+        final keys = SummaryHelper.getSummaryKeys(expense.createdAt);
+        for (final key in keys) {
+          // We exclude monthly and all_time from this loop to handle them once at the end
+          if (key.startsWith('daily_') || key.startsWith('weekly_')) {
+            if (!dailyWeeklyAmounts.containsKey(key)) {
+              dailyWeeklyAmounts[key] = {'amount': 0, 'count': 0};
+            }
+            dailyWeeklyAmounts[key]!['amount'] =
+                dailyWeeklyAmounts[key]!['amount']! + expense.amount;
+            dailyWeeklyAmounts[key]!['count'] =
+                dailyWeeklyAmounts[key]!['count']! + 1;
+          }
+        }
+
         batch.delete(doc.reference);
       }
+
+      // Update Daily & Weekly Summaries
+      dailyWeeklyAmounts.forEach((key, data) {
+        final summaryRef = userRef.collection('summaries').doc(key);
+        batch.set(summaryRef, {
+          'totalExpenses': FieldValue.increment(-data['amount']!),
+          'transactionCount': FieldValue.increment(-(data['count']!).toInt()),
+        }, SetOptions(merge: true));
+      });
+
+      // Update Monthly Summary
+      final monthlyRef = userRef
+          .collection('summaries')
+          .doc('monthly_$monthKey');
+      batch.set(monthlyRef, {
+        'totalExpenses': FieldValue.increment(-totalAmountRemoved),
+        'transactionCount': FieldValue.increment(-snapshot.docs.length),
+      }, SetOptions(merge: true));
+
+      // Update All-Time Summary
+      final allTimeRef = userRef
+          .collection('summaries')
+          .doc(SummaryHelper.getAllTimeKey());
+      batch.set(allTimeRef, {
+        'totalExpenses': FieldValue.increment(-totalAmountRemoved),
+        'transactionCount': FieldValue.increment(-snapshot.docs.length),
+      }, SetOptions(merge: true));
+
       await batch.commit();
     } catch (e) {
       FirebaseErrorHandler.handle(e);

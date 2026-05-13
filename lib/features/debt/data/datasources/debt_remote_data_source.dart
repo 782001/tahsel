@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../../core/error/firebase_error_handler.dart';
+import '../../../../core/utils/summary_helper.dart';
 import '../../domain/entities/payment_entity.dart';
 import '../models/debt_model.dart';
 import '../models/payment_model.dart';
@@ -163,6 +164,21 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         });
       }
 
+      // 5. Update Summaries
+      final summaryKeys = SummaryHelper.getSummaryKeys(debt.timestamp ?? DateTime.now());
+      for (final key in summaryKeys) {
+        final summaryRef = userRef.collection('summaries').doc(key);
+        batch.set(
+          summaryRef,
+          {
+            'totalDebts': FieldValue.increment(debt.remainingAmount),
+            'unpaidDebts': FieldValue.increment(debt.remainingAmount),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      }
+
       await batch.commit();
       return debtRef.id;
     } catch (e) {
@@ -257,6 +273,27 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           'createdAt': FieldValue.serverTimestamp(),
           'type': isPaid ? PaymentType.full.name : PaymentType.partial.name,
         });
+
+        // Update Summaries
+        final summaryKeys = SummaryHelper.getSummaryKeys(debt.timestamp ?? DateTime.now());
+        for (final key in summaryKeys) {
+          final summaryRef = firestore
+              .collection('users')
+              .doc(uid)
+              .collection('summaries')
+              .doc(key);
+          
+          transaction.set(
+            summaryRef,
+            {
+              'totalDebts': FieldValue.increment(-payment.amountPaid),
+              'unpaidDebts': FieldValue.increment(-payment.amountPaid),
+              if (isPaid) 'paidDebts': FieldValue.increment(currentTotal),
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          );
+        }
       });
     } catch (e) {
       FirebaseErrorHandler.handle(e);
@@ -304,7 +341,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           if (remainingToPay <= 0) break;
 
           final debtData = docSnap.data();
-          final debtId = docSnap.id;
+          // final debtId = docSnap.id;
           final operationId = debtData['operationId'] as String?;
           final currentTotal = (debtData['totalAmount'] as num).toDouble();
           final currentPaid = (debtData['paidAmount'] as num).toDouble();
@@ -345,16 +382,28 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             }
           }
 
-          // Add payment record
-          final paymentRef = debtRef.collection('payments').doc();
-          transaction.set(paymentRef, {
-            'uid': uid,
-            'debtId': debtId,
-            'amountPaid': paymentForThisItem,
-            'remainingAmount': newRemainingAmount,
-            'createdAt': FieldValue.serverTimestamp(),
-            'type': isPaid ? PaymentType.full.name : PaymentType.partial.name,
-          });
+          // Update Summaries
+          final summaryKeys = SummaryHelper.getSummaryKeys(
+            (debtData['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+          );
+          for (final key in summaryKeys) {
+            final summaryRef = firestore
+                .collection('users')
+                .doc(uid)
+                .collection('summaries')
+                .doc(key);
+
+            transaction.set(
+              summaryRef,
+              {
+                'totalDebts': FieldValue.increment(-paymentForThisItem),
+                'unpaidDebts': FieldValue.increment(-paymentForThisItem),
+                if (isPaid) 'paidDebts': FieldValue.increment(currentTotal),
+                'lastUpdatedAt': FieldValue.serverTimestamp(),
+              },
+              SetOptions(merge: true),
+            );
+          }
         }
       });
     } catch (e) {
@@ -423,14 +472,38 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
           // Add payment record
           final paymentRef = debtRef.collection('payments').doc();
+          final amountToPay = currentTotal - currentPaid;
           transaction.set(paymentRef, {
             'uid': uid,
             'debtId': debtId,
-            'amountPaid': currentTotal - currentPaid,
+            'amountPaid': amountToPay,
             'remainingAmount': 0.0,
             'createdAt': FieldValue.serverTimestamp(),
             'type': PaymentType.settlement.name,
           });
+
+          // Update Summaries
+          final summaryKeys = SummaryHelper.getSummaryKeys(
+            (debtData['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+          );
+          for (final key in summaryKeys) {
+            final summaryRef = firestore
+                .collection('users')
+                .doc(uid)
+                .collection('summaries')
+                .doc(key);
+
+            transaction.set(
+              summaryRef,
+              {
+                'totalDebts': FieldValue.increment(-amountToPay),
+                'unpaidDebts': FieldValue.increment(-amountToPay),
+                'paidDebts': FieldValue.increment(currentTotal),
+                'lastUpdatedAt': FieldValue.serverTimestamp(),
+              },
+              SetOptions(merge: true),
+            );
+          }
         }
       });
     } catch (e) {
@@ -454,7 +527,31 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
       // Firestore batch limit is 500 writes, so we chunk
       final List<DocumentReference> allRefs = [];
 
+      // Track summary decrements
+      final Map<String, Map<String, double>> summaryUpdates = {};
+
       for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final timestamp = (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+        final remaining = (data['remainingAmount'] as num?)?.toDouble() ?? 0.0;
+        final total = (data['totalAmount'] as num?)?.toDouble() ?? 0.0;
+        final isPaid = (data['isPaid'] as bool?) ?? false;
+
+        final keys = SummaryHelper.getSummaryKeys(timestamp);
+        for (final key in keys) {
+          summaryUpdates.putIfAbsent(key, () => {
+            'totalDebts': 0.0,
+            'unpaidDebts': 0.0,
+            'paidDebts': 0.0,
+          });
+          summaryUpdates[key]!['totalDebts'] = (summaryUpdates[key]!['totalDebts'] ?? 0) - remaining;
+          if (!isPaid) {
+            summaryUpdates[key]!['unpaidDebts'] = (summaryUpdates[key]!['unpaidDebts'] ?? 0) - remaining;
+          } else {
+            summaryUpdates[key]!['paidDebts'] = (summaryUpdates[key]!['paidDebts'] ?? 0) - total;
+          }
+        }
+
         // Collect payment sub-collection docs
         final paymentsSnapshot = await doc.reference
             .collection('payments')
@@ -476,6 +573,25 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         for (var ref in chunk) {
           batch.delete(ref);
         }
+
+        // Only add summary updates to the FIRST batch to avoid double-decrement if we have multiple chunks
+        // Actually, we should only do this once.
+        if (i == 0) {
+          summaryUpdates.forEach((key, updates) {
+            final summaryRef = firestore.collection('users').doc(uid).collection('summaries').doc(key);
+            batch.set(
+              summaryRef,
+              {
+                'totalDebts': FieldValue.increment(updates['totalDebts']!),
+                'unpaidDebts': FieldValue.increment(updates['unpaidDebts']!),
+                'paidDebts': FieldValue.increment(updates['paidDebts']!),
+                'lastUpdatedAt': FieldValue.serverTimestamp(),
+              },
+              SetOptions(merge: true),
+            );
+          });
+        }
+
         await batch.commit();
       }
     } catch (e) {
@@ -526,6 +642,32 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
       // 5. Delete debt document
       batch.delete(debtRef);
+
+      // 6. Update Summaries (Decrement)
+      final timestamp = (debtDoc.data()?['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+      final remainingAmount = (debtDoc.data()?['remainingAmount'] as num?)?.toDouble() ?? 0.0;
+      final totalAmount = (debtDoc.data()?['totalAmount'] as num?)?.toDouble() ?? 0.0;
+      final isPaid = (debtDoc.data()?['isPaid'] as bool?) ?? false;
+
+      final summaryKeys = SummaryHelper.getSummaryKeys(timestamp);
+      for (final key in summaryKeys) {
+        final summaryRef = firestore
+            .collection('users')
+            .doc(uid)
+            .collection('summaries')
+            .doc(key);
+        
+        batch.set(
+          summaryRef,
+          {
+            'totalDebts': FieldValue.increment(-remainingAmount),
+            if (!isPaid) 'unpaidDebts': FieldValue.increment(-remainingAmount),
+            if (isPaid) 'paidDebts': FieldValue.increment(-totalAmount),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      }
 
       await batch.commit();
     } catch (e) {
@@ -780,6 +922,30 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             });
           }
         }
+
+        // Update Summaries
+        final summaryKeys = SummaryHelper.getSummaryKeys(
+          (debtSnap.data()?['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        );
+        for (final key in summaryKeys) {
+          final summaryRef = firestore
+              .collection('users')
+              .doc(uid)
+              .collection('summaries')
+              .doc(key);
+
+          final double summaryDelta = relatedTo == 'debt' ? delta : -delta;
+
+          transaction.set(
+            summaryRef,
+            {
+              'totalDebts': FieldValue.increment(summaryDelta),
+              'unpaidDebts': FieldValue.increment(summaryDelta),
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          );
+        }
       });
     } catch (e) {
       FirebaseErrorHandler.handle(e);
@@ -870,6 +1036,30 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
               'remainingDebt': FieldValue.increment(amountToDelete),
             });
           }
+        }
+
+        // Update Summaries
+        final summaryKeys = SummaryHelper.getSummaryKeys(
+          (debtSnap.data()?['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        );
+        for (final key in summaryKeys) {
+          final summaryRef = firestore
+              .collection('users')
+              .doc(uid)
+              .collection('summaries')
+              .doc(key);
+
+          final double summaryDelta = relatedTo == 'debt' ? -amountToDelete : amountToDelete;
+
+          transaction.set(
+            summaryRef,
+            {
+              'totalDebts': FieldValue.increment(summaryDelta),
+              'unpaidDebts': FieldValue.increment(summaryDelta),
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          );
         }
       });
     } catch (e) {

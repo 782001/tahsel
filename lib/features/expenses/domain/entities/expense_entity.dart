@@ -62,6 +62,8 @@ class DayExpenseGroup extends Equatable {
     required this.expenses,
   });
 
+  double get totalAmount => expenses.fold(0.0, (sum, e) => sum + e.amount);
+
   @override
   List<Object?> get props => [date, expenses];
 }

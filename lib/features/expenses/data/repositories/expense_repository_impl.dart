@@ -2,12 +2,16 @@ import 'dart:convert';
 import 'package:dartz/dartz.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:tahsel/core/error/failures.dart';
+import 'package:tahsel/core/utils/date_formatter.dart';
+import 'package:tahsel/features/expenses/domain/entities/expense_paginated_list.dart';
+import 'package:tahsel/features/expenses/domain/entities/monthly_paginated_list.dart';
 import '../../domain/entities/expense_entity.dart';
 import '../../domain/repositories/expense_repository.dart';
 import '../datasources/expense_remote_data_source.dart';
 import '../models/expense_model.dart';
 import '../../../offline_sync/domain/repositories/offline_sync_repository.dart';
 import '../../../offline_sync/data/models/offline_record.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ExpenseRepositoryImpl implements ExpenseRepository {
   final ExpenseRemoteDataSource remoteDataSource;
@@ -89,29 +93,63 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
   }
 
   @override
-  Future<Either<Failure, List<MonthlyExpenseGroup>>> getMonthlyExpenses(
-    String uid,
-    List<String> monthKeys,
-  ) async {
+  Future<Either<Failure, MonthlyPaginatedList>> getMonthlyExpenses(
+    String uid, {
+    int limit = 15,
+    Object? lastDoc,
+  }) async {
     try {
       final result = await remoteDataSource.getMonthlyAggregates(
         uid,
-        monthKeys,
+        limit: limit,
+        lastDoc: lastDoc as DocumentSnapshot?,
       );
-      return Right(result);
+
+      // Format month names for the UI
+      final formattedMonths = result.months.map((group) {
+        try {
+          final parts = group.monthKey.split('-');
+          final date = DateTime(int.parse(parts[0]), int.parse(parts[1]));
+          final localizedName = DateFormatter.formatArabicMonthYear(date);
+
+          return MonthlyExpenseGroup(
+            monthKey: group.monthKey,
+            monthName: localizedName,
+            totalAmount: group.totalAmount,
+            transactionCount: group.transactionCount,
+          );
+        } catch (_) {
+          return group;
+        }
+      }).toList();
+
+      return Right(MonthlyPaginatedList(
+        months: formattedMonths,
+        lastDoc: result.lastDoc,
+      ));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, List<ExpenseEntity>>> getExpensesByMonth(
+  Future<Either<Failure, ExpensePaginatedList>> getExpensesByMonth(
     String uid,
-    String monthKey,
-  ) async {
+    String monthKey, {
+    int limit = 20,
+    Object? lastDoc,
+  }) async {
     try {
-      final result = await remoteDataSource.getExpensesByMonth(uid, monthKey);
-      return Right(result);
+      final result = await remoteDataSource.getExpensesByMonth(
+        uid,
+        monthKey,
+        limit: limit,
+        lastDoc: lastDoc as DocumentSnapshot?,
+      );
+      return Right(ExpensePaginatedList(
+        expenses: result.expenses,
+        lastDoc: result.lastDoc,
+      ));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

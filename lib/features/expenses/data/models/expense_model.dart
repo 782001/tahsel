@@ -28,7 +28,7 @@ class ExpenseModel extends ExpenseEntity {
     String monthKeyVal = json['monthKey'] as String? ?? '';
     if (monthKeyVal.isEmpty) {
       monthKeyVal =
-          "${createdAtDate.year}/${createdAtDate.month.toString().padLeft(2, '0')}";
+          "${createdAtDate.year}-${createdAtDate.month.toString().padLeft(2, '0')}";
     }
 
     return ExpenseModel(

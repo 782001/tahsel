@@ -350,18 +350,18 @@ class _CustomerGlobalPaymentsScreenState
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  if (transaction.activityName != null &&
-                      transaction.activityName!.isNotEmpty) ...[
-                    SizedBox(height: 4.h),
-                    Text(
-                      transaction.activityName!,
-                      style: TextStyles.customStyle(
-                        color: AppColors.primaryColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
+                  // if (transaction.activityName != null &&
+                  //     transaction.activityName!.isNotEmpty) ...[
+                  //   SizedBox(height: 4.h),
+                  //   Text(
+                  //     transaction.activityName!,
+                  //     style: TextStyles.customStyle(
+                  //       color: AppColors.primaryColor,
+                  //       fontSize: 12,
+                  //       fontWeight: FontWeight.w500,
+                  //     ),
+                  //   ),
+                  // ],
                 ],
               ),
 

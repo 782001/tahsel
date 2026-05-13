@@ -23,6 +23,13 @@ class ExpensesBalance extends StatelessWidget {
           totalAmount = state.stats.totalAmount;
           percentage = state.stats.percentageChange;
           isIncrease = state.stats.isIncrease;
+        } else if (state is ExpenseMonthDetailsSuccess) {
+          totalAmount = state.stats?.totalAmount ?? 0.0;
+        } else if (state is ExpenseLoading && state.previousStats != null) {
+          // Use previous stats during loading to prevent zero-flicker
+          totalAmount = state.previousStats!.totalAmount;
+          percentage = state.previousStats!.percentageChange;
+          isIncrease = state.previousStats!.isIncrease;
         }
 
         final amountString = totalAmount.toStringAsFixed(1);

@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/summary_helper.dart';
 
 import '../models/offline_record.dart';
 
@@ -28,7 +30,7 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
       } else if (record.type == 'debt_add') {
         await _syncDebtAdd(record, payload);
       } else {
-        // Simple collection sync (e.g., expenses)
+        // Simple collection sync (e.g., expenses, operations)
         await _syncSimpleRecord(record, payload);
       }
 
@@ -61,32 +63,25 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
         .collection('my_debt_items')
         .doc(record.id); // Use Hive ID for idempotency
 
-    // 0. CHECK IF ALREADY SYNCED (To prevent duplicate FieldValue.increment)
+    // 0. CHECK IF ALREADY SYNCED
     final existingDoc = await debtRef.get();
     if (existingDoc.exists) {
       AppLogger.printMessage(
-        "[OfflineSync] Record ${record.id} already exists in Firestore. Skipping sync to prevent duplicate increments.",
+        "[OfflineSync] Record ${record.id} already exists. Skipping.",
       );
-      return; // Already synced, repository will handle Hive deletion
+      return;
     }
 
     final opRef = userRef.collection('my_debt_operations').doc(operationId);
     final personRef = userRef.collection('my_debt_persons').doc(personName);
 
-    AppLogger.printMessage(
-      "[OfflineSync] Preparing Batch for MyDebtAdd - Person: $personName, Amount: $totalAmount",
-    );
-
     final batch = firestore.batch();
 
-    // 1. Add to debts collection
-    // We update the timestamp to real Timestamp object
     payload['timestamp'] = timestamp;
     payload['lastUpdatedAt'] = FieldValue.serverTimestamp();
     payload['syncedAt'] = FieldValue.serverTimestamp();
     batch.set(debtRef, payload);
 
-    // 2. Add to operations collection
     batch.set(opRef, {
       'uid': uid,
       'type': payload['operationType'] ?? 'debt',
@@ -100,7 +95,6 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
       'syncedAt': FieldValue.serverTimestamp(),
     });
 
-    // 3. Add initial transaction record
     final initialPaymentRef = debtRef
         .collection('payments')
         .doc('${record.id}_initial');
@@ -112,7 +106,6 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
       'type': 'debtAdded',
     });
 
-    // 4. Add initial payment if any
     if (paidAmount > 0) {
       final actualPaymentRef = debtRef
           .collection('payments')
@@ -128,7 +121,6 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
       });
     }
 
-    // 5. Update person doc with totals
     batch.set(personRef, {
       'name': personName,
       'lastUsedAt': timestamp,
@@ -137,9 +129,7 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
       'totalTransactions': FieldValue.increment(1),
     }, SetOptions(merge: true));
 
-    AppLogger.printMessage("[OfflineSync] Committing Batch to Firestore...");
     await batch.commit();
-    AppLogger.printMessage("[OfflineSync] Batch Committed Successfully.");
   }
 
   Future<void> _syncDebtAdd(
@@ -153,38 +143,29 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
     final paidAmount = (payload['paidAmount'] as num).toDouble();
     final remainingAmount = (payload['remainingAmount'] as num).toDouble();
     final timestampStr = payload['timestamp'] as String;
-    final timestamp = Timestamp.fromDate(DateTime.parse(timestampStr));
+    final timestampDate = DateTime.parse(timestampStr);
+    final timestamp = Timestamp.fromDate(timestampDate);
 
     final userRef = firestore.collection('users').doc(uid);
-    // Use operationId for doc ID to ensure link integrity and idempotency
     final debtRef = userRef.collection('debts').doc(operationId);
 
     // 0. IDEMPOTENCY CHECK
     final existingDoc = await debtRef.get();
     if (existingDoc.exists) {
       AppLogger.printMessage(
-        "[OfflineSync] Debt record $operationId already exists. Skipping sync.",
+        "[OfflineSync] Debt record $operationId already exists. Skipping.",
       );
       return;
     }
 
     final opRef = userRef.collection('operations').doc(operationId);
-
-    AppLogger.printMessage(
-      "[OfflineSync] Syncing Customer Debt Add - Customer: $customerName, Amount: $totalAmount",
-    );
-
     final batch = firestore.batch();
 
-    // 1. Prepare Debt Payload
     payload['timestamp'] = timestamp;
     payload['lastUpdatedAt'] = FieldValue.serverTimestamp();
     payload['syncedAt'] = FieldValue.serverTimestamp();
     batch.set(debtRef, payload);
 
-    // 2. Sync with operations
-    // We use SetOptions(merge: true) to preserve extra fields (like durationMinutes) 
-    // if the operation record was already synced separately.
     batch.set(
       opRef,
       {
@@ -203,7 +184,6 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
       SetOptions(merge: true),
     );
 
-    // 3. Add initial transaction record to payments history
     final initialPaymentRef = debtRef
         .collection('payments')
         .doc('${operationId}_initial');
@@ -215,7 +195,6 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
       'type': 'debtAdded',
     });
 
-    // 4. Add initial payment transaction if any
     if (paidAmount > 0) {
       final actualPaymentRef = debtRef
           .collection('payments')
@@ -225,41 +204,102 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
         'amountPaid': paidAmount,
         'remainingAmount': remainingAmount,
         'createdAt': Timestamp.fromDate(
-          DateTime.parse(timestampStr).add(const Duration(milliseconds: 1)),
+          timestampDate.add(const Duration(milliseconds: 1)),
         ),
         'type': remainingAmount <= 0 ? 'full' : 'partial',
       });
     }
 
+    // 5. Update Summaries
+    final summaryKeys = SummaryHelper.getSummaryKeys(timestampDate);
+    for (final key in summaryKeys) {
+      final summaryRef = userRef.collection('summaries').doc(key);
+      batch.set(
+        summaryRef,
+        {
+          'totalDebts': FieldValue.increment(remainingAmount),
+          'unpaidDebts': FieldValue.increment(remainingAmount),
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    }
+
     await batch.commit();
-    AppLogger.printMessage(
-      "[OfflineSync] Debt record $operationId synced successfully.",
-    );
   }
 
   Future<void> _syncSimpleRecord(
     OfflineRecord record,
     Map<String, dynamic> payload,
   ) async {
-    final collectionRef = firestore.collection(record.collectionName);
+    final collectionPath = record.collectionName;
+    final docId = record.id;
+    final docRef = firestore.doc('$collectionPath/$docId');
 
-    // Convert string dates back to Timestamps
+    // 0. IDEMPOTENCY CHECK
+    final existingDoc = await docRef.get();
+    if (existingDoc.exists) {
+      AppLogger.printMessage("[OfflineSync] Simple record $docId already exists. Skipping.");
+      return;
+    }
+
+    // Parse Dates
+    DateTime? timestampDate;
     if (payload['createdAt'] is String) {
-      payload['createdAt'] = Timestamp.fromDate(
-        DateTime.parse(payload['createdAt']),
-      );
+      timestampDate = DateTime.parse(payload['createdAt']);
+      payload['createdAt'] = Timestamp.fromDate(timestampDate);
     }
     if (payload['timestamp'] is String) {
-      payload['timestamp'] = Timestamp.fromDate(
-        DateTime.parse(payload['timestamp']),
-      );
+      timestampDate = DateTime.parse(payload['timestamp']);
+      payload['timestamp'] = Timestamp.fromDate(timestampDate);
     }
 
     payload['syncedAt'] = FieldValue.serverTimestamp();
+    
+    final batch = firestore.batch();
+    batch.set(docRef, payload, SetOptions(merge: true));
 
-    AppLogger.printMessage(
-      "[OfflineSync] Sending simple record to: ${record.collectionName}",
-    );
-    await collectionRef.doc(record.id).set(payload, SetOptions(merge: true));
+    // Handle Summary Updates for Operations and Expenses
+    final uid = payload['uid'] as String?;
+    if (uid != null && timestampDate != null) {
+      final userRef = firestore.collection('users').doc(uid);
+      final summaryKeys = SummaryHelper.getSummaryKeys(timestampDate);
+
+      if (collectionPath.contains('operations')) {
+        final totalAmount = (payload['totalAmount'] as num?)?.toDouble() ?? 0;
+        final type = (payload['type'] as String?)?.toLowerCase() ?? '';
+        final isShop = type == AppStrings.shop.toLowerCase() || type == 'cafe';
+        final isPS = type == AppStrings.playStation.toLowerCase() || type == 'playstation';
+
+        for (final key in summaryKeys) {
+          batch.set(
+            userRef.collection('summaries').doc(key),
+            {
+              'totalIncome': FieldValue.increment(totalAmount),
+              if (isShop) 'cafeIncome': FieldValue.increment(totalAmount),
+              if (isPS) 'playstationIncome': FieldValue.increment(totalAmount),
+              'transactionCount': FieldValue.increment(1),
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          );
+        }
+      } else if (collectionPath.contains('expenses')) {
+        final amount = (payload['amount'] as num?)?.toDouble() ?? 0;
+        for (final key in summaryKeys) {
+          batch.set(
+            userRef.collection('summaries').doc(key),
+            {
+              'totalExpenses': FieldValue.increment(amount),
+              'transactionCount': FieldValue.increment(1),
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          );
+        }
+      }
+    }
+
+    await batch.commit();
   }
 }

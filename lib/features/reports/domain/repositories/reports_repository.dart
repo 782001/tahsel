@@ -7,6 +7,7 @@ abstract class ReportsRepository {
   Future<Either<Failure, ReportsEntity>> getReports(
     DateTime startDate,
     DateTime endDate,
+    String periodKey,
   );
   Future<Either<Failure, ReportsEntity>> getAllTimeReports();
   Future<Either<Failure, List<OperationEntity>>> getIncomeDetails(

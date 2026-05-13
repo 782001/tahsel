@@ -17,42 +17,42 @@ class ReportsRepositoryImpl implements ReportsRepository {
   Future<Either<Failure, ReportsEntity>> getReports(
     DateTime startDate,
     DateTime endDate,
+    String periodKey,
   ) async {
     try {
       // 1. Fetch Current Period Data
-      final currentData = await dataSource.getPeriodData(startDate, endDate);
+      final currentData = await dataSource.getPeriodData(startDate, endDate, periodKey);
 
       // 2. Fetch Previous Period Data for Comparison
       final duration = endDate.difference(startDate);
       final prevStartDate = startDate.subtract(duration);
       final prevEndDate = endDate.subtract(duration);
 
+      // Note: We use the same periodKey for comparison data
       final prevData = await dataSource.getPeriodData(
         prevStartDate,
         prevEndDate,
+        periodKey,
       );
 
+      // Mapping keys from DataSource to Entity
+      // Consistent keys: totalIncome, cafeIncome, playstationIncome, totalExpenses, totalDebts, paidDebts, unpaidDebts
+      
       // Current Data
-      final double currentIncome = (currentData['income'] ?? 0).toDouble();
-      final double currentCafeIncome = (currentData['cafeIncome'] ?? 0)
-          .toDouble();
-      final double currentPlaystationIncome =
-          (currentData['playstationIncome'] ?? 0).toDouble();
-      final double currentExpenses = (currentData['expenses'] ?? 0).toDouble();
-      final double currentTotalDebts = (currentData['totalDebts'] ?? 0)
-          .toDouble();
-      final double currentPaidDebts = (currentData['paidDebts'] ?? 0)
-          .toDouble();
-      final double currentUnpaidDebts = (currentData['unpaidDebts'] ?? 0)
-          .toDouble();
+      final double currentIncome = (currentData['totalIncome'] ?? 0).toDouble();
+      final double currentCafeIncome = (currentData['cafeIncome'] ?? 0).toDouble();
+      final double currentPlaystationIncome = (currentData['playstationIncome'] ?? 0).toDouble();
+      final double currentExpenses = (currentData['totalExpenses'] ?? 0).toDouble();
+      final double currentTotalDebts = (currentData['totalDebts'] ?? 0).toDouble();
+      final double currentPaidDebts = (currentData['paidDebts'] ?? 0).toDouble();
+      final double currentUnpaidDebts = (currentData['unpaidDebts'] ?? 0).toDouble();
       final double currentProfit = currentIncome - currentExpenses;
 
       // Previous Data
-      final double prevIncome = (prevData['income'] ?? 0).toDouble();
+      final double prevIncome = (prevData['totalIncome'] ?? 0).toDouble();
       final double prevCafeIncome = (prevData['cafeIncome'] ?? 0).toDouble();
-      final double prevPlaystationIncome = (prevData['playstationIncome'] ?? 0)
-          .toDouble();
-      final double prevExpenses = (prevData['expenses'] ?? 0).toDouble();
+      final double prevPlaystationIncome = (prevData['playstationIncome'] ?? 0).toDouble();
+      final double prevExpenses = (prevData['totalExpenses'] ?? 0).toDouble();
       final double prevProfit = prevIncome - prevExpenses;
 
       final double incomeDiff = currentIncome - prevIncome;
@@ -97,11 +97,10 @@ class ReportsRepositoryImpl implements ReportsRepository {
     try {
       final data = await dataSource.getAllTimeData();
 
-      final double income = (data['income'] ?? 0).toDouble();
+      final double income = (data['totalIncome'] ?? 0).toDouble();
       final double cafeIncome = (data['cafeIncome'] ?? 0).toDouble();
-      final double playstationIncome = (data['playstationIncome'] ?? 0)
-          .toDouble();
-      final double expenses = (data['expenses'] ?? 0).toDouble();
+      final double playstationIncome = (data['playstationIncome'] ?? 0).toDouble();
+      final double expenses = (data['totalExpenses'] ?? 0).toDouble();
       final double totalDebts = (data['totalDebts'] ?? 0).toDouble();
       final double paidDebts = (data['paidDebts'] ?? 0).toDouble();
       final double unpaidDebts = (data['unpaidDebts'] ?? 0).toDouble();

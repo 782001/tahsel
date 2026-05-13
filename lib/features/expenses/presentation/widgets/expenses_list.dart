@@ -15,6 +15,8 @@ import 'package:tahsel/features/offline_sync/data/models/offline_record.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 
+import '../../../../core/utils/app_logger.dart';
+
 class ExpensesList extends StatelessWidget {
   const ExpensesList({super.key});
 
@@ -115,7 +117,13 @@ class ExpensesList extends StatelessWidget {
             }
 
             if (state is ExpenseFailure) {
-              return Center(child: Text(state.message));
+              AppLogger.printMessage(state.message);
+              return Center(
+                child: Text(
+                  state.message,
+                  style: TextStyles.customStyle(color: AppColors.error),
+                ),
+              );
             }
 
             return const SizedBox.shrink();

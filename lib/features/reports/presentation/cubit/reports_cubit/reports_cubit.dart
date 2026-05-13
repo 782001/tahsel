@@ -38,7 +38,11 @@ class ReportsCubit extends Cubit<ReportsState> {
     emit(ReportsLoading());
 
     final result = await getReportsUseCase(
-      GetReportsParams(startDate: startDate, endDate: endDate),
+      GetReportsParams(
+        startDate: startDate,
+        endDate: endDate,
+        periodKey: period.name,
+      ),
     );
 
     result.fold((failure) => emit(ReportsError(failure.message)), (
@@ -132,3 +136,5 @@ class ReportsCubit extends Cubit<ReportsState> {
     _cache.clear();
   }
 }
+
+

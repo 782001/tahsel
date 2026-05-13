@@ -7,8 +7,13 @@ import '../repositories/reports_repository.dart';
 class GetReportsParams {
   final DateTime startDate;
   final DateTime endDate;
+  final String periodKey;
 
-  GetReportsParams({required this.startDate, required this.endDate});
+  GetReportsParams({
+    required this.startDate,
+    required this.endDate,
+    required this.periodKey,
+  });
 }
 
 class GetReportsUseCase
@@ -19,6 +24,10 @@ class GetReportsUseCase
 
   @override
   Future<Either<Failure, ReportsEntity>> call(GetReportsParams params) {
-    return repository.getReports(params.startDate, params.endDate);
+    return repository.getReports(
+      params.startDate,
+      params.endDate,
+      params.periodKey,
+    );
   }
 }
