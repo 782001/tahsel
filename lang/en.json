@@ -359,5 +359,15 @@
   "downloading": "Downloading...",
   "update_failed": "Update Failed",
   "update_ready_to_install": "Update downloaded. Installing...",
-  "update_ready_to_open": "Update downloaded. Please open the folder..."
+  "update_ready_to_open": "Update downloaded. Please open the folder...",
+  "earnings_comparison": "Earnings Comparison",
+  "earnings_today": "Today's Earnings",
+  "earnings_yesterday": "Yesterday's Earnings",
+  "earnings_this_week": "This Week's Earnings",
+  "earnings_last_week": "Last Week's Earnings",
+  "earnings_this_month": "This Month's Earnings",
+  "earnings_last_month": "Last Month's Earnings",
+  "difference": "Difference",
+  "increase": "Increase",
+  "decrease": "Decrease"
 }

@@ -418,4 +418,15 @@ class AppStrings {
   static const String updateFailed = "update_failed";
   static const String updateReadyToInstall = "update_ready_to_install";
   static const String updateReadyToOpen = "update_ready_to_open";
+  // Comparison Labels
+  static const String earningsComparison = "earnings_comparison";
+  static const String earningsToday = "earnings_today";
+  static const String earningsYesterday = "earnings_yesterday";
+  static const String earningsThisWeek = "earnings_this_week";
+  static const String earningsLastWeek = "earnings_last_week";
+  static const String earningsThisMonth = "earnings_this_month";
+  static const String earningsLastMonth = "earnings_last_month";
+  static const String difference = "difference";
+  static const String increase = "increase";
+  static const String decrease = "decrease";
 }

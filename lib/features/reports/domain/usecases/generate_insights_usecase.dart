@@ -54,6 +54,8 @@ class GenerateInsightsUseCase
       return const ProfitInsight(
         status: ProfitInsightStatus.none,
         difference: 0,
+        currentValue: 0,
+        previousValue: 0,
         netProfit: 0,
         messageKey: 'insight_no_previous_data',
       );
@@ -64,6 +66,8 @@ class GenerateInsightsUseCase
       return const ProfitInsight(
         status: ProfitInsightStatus.none,
         difference: 0,
+        currentValue: 0,
+        previousValue: 0,
         netProfit: 0,
         messageKey: 'insight_profit_zero',
       );
@@ -89,6 +93,8 @@ class GenerateInsightsUseCase
       return ProfitInsight(
         status: ProfitInsightStatus.same,
         difference: 0,
+        currentValue: currentProfit,
+        previousValue: prevProfit,
         netProfit: currentProfit,
         messageKey: key,
       );
@@ -115,6 +121,8 @@ class GenerateInsightsUseCase
       return ProfitInsight(
         status: ProfitInsightStatus.increase,
         difference: difference,
+        currentValue: currentProfit,
+        previousValue: prevProfit,
         netProfit: currentProfit,
         messageKey: '${keyPrefix}increase',
       );
@@ -122,6 +130,8 @@ class GenerateInsightsUseCase
       return ProfitInsight(
         status: ProfitInsightStatus.loss,
         difference: difference,
+        currentValue: currentProfit,
+        previousValue: prevProfit,
         netProfit: currentProfit,
         messageKey: '${keyPrefix}decrease',
       );
@@ -138,6 +148,8 @@ class GenerateInsightsUseCase
         return ProfitInsight(
           status: ProfitInsightStatus.increase,
           difference: cafeIncrease.abs(),
+          currentValue: reports.cafeIncome,
+          previousValue: reports.prevCafeIncome,
           netProfit: 0,
           messageKey: 'insight_income_up_cafe',
         );
@@ -145,6 +157,8 @@ class GenerateInsightsUseCase
         return ProfitInsight(
           status: ProfitInsightStatus.increase,
           difference: psIncrease.abs(),
+          currentValue: reports.playstationIncome,
+          previousValue: reports.prevPlaystationIncome,
           netProfit: 0,
           messageKey: 'insight_income_up_ps',
         );
@@ -161,6 +175,8 @@ class GenerateInsightsUseCase
         return ProfitInsight(
           status: ProfitInsightStatus.loss,
           difference: expenseIncrease.abs(),
+          currentValue: reports.totalExpenses,
+          previousValue: reports.prevExpenses,
           netProfit: 0,
           messageKey: 'insight_expenses_up_high',
         );
@@ -176,6 +192,8 @@ class GenerateInsightsUseCase
         return ProfitInsight(
           status: ProfitInsightStatus.same,
           difference: reports.playstationIncome,
+          currentValue: reports.playstationIncome,
+          previousValue: 0, // Not a comparison per se
           netProfit: 0,
           messageKey: 'insight_ps_low_contribution',
         );

@@ -359,5 +359,15 @@
   "downloading": "جاري التحميل...",
   "update_failed": "فشل التحديث",
   "update_ready_to_install": "تم تحميل التحديث. جاري التثبيت...",
-  "update_ready_to_open": "تم تحميل التحديث. يرجى فتح المجلد..."
+  "update_ready_to_open": "تم تحميل التحديث. يرجى فتح المجلد...",
+  "earnings_comparison": "مقارنة الأرباح",
+  "earnings_today": "أرباح اليوم",
+  "earnings_yesterday": "أرباح الأمس",
+  "earnings_this_week": "أرباح هذا الأسبوع",
+  "earnings_last_week": "أرباح الأسبوع الماضي",
+  "earnings_this_month": "أرباح هذا الشهر",
+  "earnings_last_month": "أرباح الشهر الماضي",
+  "difference": "الفرق",
+  "increase": "زيادة",
+  "decrease": "انخفاض"
 }
