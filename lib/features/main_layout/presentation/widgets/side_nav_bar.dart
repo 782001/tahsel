@@ -15,7 +15,7 @@ class SideNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: MediaQuery.of(context).size.width * 0.3,
+      width: MediaQuery.of(context).size.width * 0.25,
       constraints: const BoxConstraints(minWidth: 260, maxWidth: 500),
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -156,7 +156,7 @@ class SideNavBar extends StatelessWidget {
       child: Text(
         title,
         style: TextStyles.customStyle(
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: FontWeight.bold,
           color: AppColors.disabledColor,
           letterSpacing: 1.2,

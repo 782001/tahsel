@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -89,19 +90,19 @@ class ExpensesList extends StatelessWidget {
                           gridDelegate:
                               const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
-                            mainAxisExtent: 90,
+                            mainAxisExtent: 110,
                             mainAxisSpacing: 16,
                             crossAxisSpacing: 16,
                           ),
                           itemCount: pending.length,
                           itemBuilder: (context, index) =>
-                              _buildPendingRecordItem(pending[index]),
+                              _buildPendingRecordItem(pending[index], true),
                         )
                       else
                         ...pending.map(
                           (record) => Padding(
                             padding: EdgeInsets.only(bottom: 12.h),
-                            child: _buildPendingRecordItem(record),
+                            child: _buildPendingRecordItem(record, false),
                           ),
                         ),
                       if (months.isNotEmpty && !isOffline) ...[
@@ -130,14 +131,14 @@ class ExpensesList extends StatelessWidget {
                               gridDelegate:
                                   const SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 2,
-                                mainAxisExtent: 100,
+                                mainAxisExtent: 110,
                                 mainAxisSpacing: 16,
                                 crossAxisSpacing: 16,
                               ),
                               itemCount: months.length,
                               itemBuilder: (context, index) {
                                 final month = months[index];
-                                return _buildMonthItem(context, month);
+                                return _buildMonthItem(context, month, true);
                               },
                             )
                           : ListView.separated(
@@ -148,7 +149,7 @@ class ExpensesList extends StatelessWidget {
                                   SizedBox(height: 12.h),
                               itemBuilder: (context, index) {
                                 final month = months[index];
-                                return _buildMonthItem(context, month);
+                                return _buildMonthItem(context, month, false);
                               },
                             ),
                   ],
@@ -173,9 +174,9 @@ class ExpensesList extends StatelessWidget {
     );
   }
 
-  Widget _buildPendingRecordItem(OfflineRecord record) {
+  Widget _buildPendingRecordItem(OfflineRecord record, bool isDesktop) {
     return Container(
-      padding: EdgeInsets.all(16.r),
+      padding: EdgeInsets.all(isDesktop ? 16 : 16.r),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(16.r),
@@ -193,7 +194,7 @@ class ExpensesList extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.all(12.r),
+            padding: EdgeInsets.all(isDesktop ? 10 : 12.r),
             decoration: BoxDecoration(
               color: AppColors.error.withValues(alpha: 0.1),
               shape: BoxShape.circle,
@@ -201,13 +202,14 @@ class ExpensesList extends StatelessWidget {
             child: Icon(
               Icons.cloud_off_outlined,
               color: AppColors.error,
-              size: 24.r,
+              size: isDesktop ? 24 : 24.r,
             ),
           ),
-          SizedBox(width: 16.w),
+          SizedBox(width: isDesktop ? 16 : 16.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
                   record.customerName,
@@ -216,8 +218,10 @@ class ExpensesList extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                     color: AppColors.black,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                SizedBox(height: 4.h),
+                const SizedBox(height: 2),
                 Text(
                   AppStrings.waitingForInternet.tr(),
                   style: TextStyles.customStyle(
@@ -225,6 +229,8 @@ class ExpensesList extends StatelessWidget {
                     color: AppColors.error,
                     fontWeight: FontWeight.w500,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -242,12 +248,16 @@ class ExpensesList extends StatelessWidget {
     );
   }
 
-  Widget _buildMonthItem(BuildContext context, MonthlyExpenseGroup month) {
+  Widget _buildMonthItem(
+    BuildContext context,
+    MonthlyExpenseGroup month,
+    bool isDesktop,
+  ) {
     return Slidable(
       key: ValueKey(month.monthKey),
       endActionPane: ActionPane(
         motion: const ScrollMotion(),
-        extentRatio: 0.25,
+        extentRatio: isDesktop ? 0.15 : 0.25,
         children: [
           SlidableAction(
             onPressed: (context) =>
@@ -279,7 +289,7 @@ class ExpensesList extends StatelessWidget {
         },
         borderRadius: BorderRadius.circular(16.r),
         child: Container(
-          padding: EdgeInsets.all(16.r),
+          padding: EdgeInsets.all(isDesktop ? 16 : 16.r),
           decoration: BoxDecoration(
             color: AppColors.white,
             borderRadius: BorderRadius.circular(16.r),
@@ -292,10 +302,9 @@ class ExpensesList extends StatelessWidget {
             ],
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: EdgeInsets.all(12.r),
+                padding: EdgeInsets.all(isDesktop ? 10 : 12.r),
                 decoration: BoxDecoration(
                   color: AppColors.primaryColor.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
@@ -303,14 +312,15 @@ class ExpensesList extends StatelessWidget {
                 child: Icon(
                   Icons.calendar_month_outlined,
                   color: AppColors.primaryColor,
-                  size: 24.r,
+                  size: isDesktop ? 24 : 24.r,
                 ),
               ),
-              SizedBox(width: 16.w),
+              SizedBox(width: isDesktop ? 16 : 16.w),
               Expanded(
-                flex: 3,
+                flex: 4,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       month.monthName,
@@ -319,34 +329,42 @@ class ExpensesList extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                         color: AppColors.black,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    SizedBox(height: 4.h),
+                    const SizedBox(height: 2),
                     Text(
                       "${month.transactionCount} ${AppStrings.transactionCount.tr()}",
                       style: TextStyles.customStyle(
                         fontSize: 12,
                         color: AppColors.grey,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
               Expanded(
                 flex: 5,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      "${month.totalAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}",
+                      "${month.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
                       style: TextStyles.customStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: AppColors.primaryColor,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     Icon(
                       Icons.arrow_forward_ios,
-                      size: 14.r,
+                      size: isDesktop ? 14 : 14.r,
                       color: AppColors.grey,
                     ),
                   ],

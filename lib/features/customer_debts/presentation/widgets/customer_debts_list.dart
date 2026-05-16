@@ -5,6 +5,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/customer/presentation/widgets/notification_dialog.dart';
 import 'package:tahsel/features/customer_debts/data/models/debt_item_model.dart';
 import 'package:tahsel/features/customer_debts/presentation/screens/customer_debt_detail_screen.dart';
@@ -134,7 +135,10 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
     );
   }
 
-  void _navigateToDetail(BuildContext context, CustomerDebtDetail detail) async {
+  void _navigateToDetail(
+    BuildContext context,
+    CustomerDebtDetail detail,
+  ) async {
     final cubit = context.read<DebtCubit>();
     final isShop = context.read<MainLayoutCubit>().isShop;
     final hasChanged = await Navigator.push<bool>(
@@ -154,7 +158,6 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
       }
     }
   }
-
 
   static List<CustomerDebtDetail> _filterAndGroupDebts(
     Map<String, dynamic> params,
@@ -264,48 +267,44 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
             );
           }
 
+          final isDesktop = ResponsiveLayout.isDesktop(context);
+
+          if (isDesktop) {
+            return SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisExtent: 130,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                          ),
+                      itemCount: customers.length,
+                      itemBuilder: (context, index) =>
+                          _buildDebtCard(context, customers[index], state),
+                    ),
+                    _buildFooter(state),
+                  ],
+                ),
+              ),
+            );
+          }
+
           return SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate((context, index) {
                 if (index == customers.length) {
-                  if (state.isPaginationLoading) {
-                    return Padding(
-                      padding: EdgeInsets.symmetric(vertical: 32.h),
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primaryColor,
-                          strokeWidth: 2,
-                        ),
-                      ),
-                    );
-                  }
-                  return const SizedBox(height: 100);
+                  return _buildFooter(state);
                 }
 
-                final detail = customers[index];
-                final debtEntity = detail.items.first.entity;
-
-                return CustomerDebtCard(
-                  customerName: detail.customerName,
-                  ledgerNumber: detail.ledgerNumber,
-                  description: detail.items.isNotEmpty
-                      ? detail.items.first.itemDescription
-                      : null,
-                  lastTransactionDate: detail.lastTransactionDate,
-                  amount: detail.totalDebt,
-                  status: detail.status.tr(),
-                  statusColor: detail.statusColor,
-                  onTap: () => _navigateToDetail(context, detail),
-                  onPartialPayment: () => _showPartialPaymentModal(
-                    context,
-                    detail.customerName,
-                    detail.totalDebt,
-                    debtEntity,
-                  ),
-                  onFullPayment: () => _onPayFull(context, debtEntity),
-                  onDelete: () => _onDeleteDebt(context, debtEntity),
-                );
+                return _buildDebtCard(context, customers[index], state);
               }, childCount: customers.length + 1),
             ),
           );
@@ -314,5 +313,48 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
         return const SliverToBoxAdapter(child: SizedBox.shrink());
       },
     );
+  }
+
+  Widget _buildDebtCard(
+    BuildContext context,
+    CustomerDebtDetail detail,
+    DebtsFetchSuccess state,
+  ) {
+    final debtEntity = detail.items.first.entity;
+    return CustomerDebtCard(
+      customerName: detail.customerName,
+      ledgerNumber: detail.ledgerNumber,
+      description: detail.items.isNotEmpty
+          ? detail.items.first.itemDescription
+          : null,
+      lastTransactionDate: detail.lastTransactionDate,
+      amount: detail.totalDebt,
+      status: detail.status.tr(),
+      statusColor: detail.statusColor,
+      onTap: () => _navigateToDetail(context, detail),
+      onPartialPayment: () => _showPartialPaymentModal(
+        context,
+        detail.customerName,
+        detail.totalDebt,
+        debtEntity,
+      ),
+      onFullPayment: () => _onPayFull(context, debtEntity),
+      onDelete: () => _onDeleteDebt(context, debtEntity),
+    );
+  }
+
+  Widget _buildFooter(DebtsFetchSuccess state) {
+    if (state.isPaginationLoading) {
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: 32.h),
+        child: Center(
+          child: CircularProgressIndicator(
+            color: AppColors.primaryColor,
+            strokeWidth: 2,
+          ),
+        ),
+      );
+    }
+    return const SizedBox(height: 100);
   }
 }

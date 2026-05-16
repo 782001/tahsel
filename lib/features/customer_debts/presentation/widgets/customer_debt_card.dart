@@ -4,6 +4,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 class CustomerDebtCard extends StatelessWidget {
   final String customerName;
@@ -36,7 +37,9 @@ class CustomerDebtCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
+      padding: EdgeInsets.only(
+        bottom: ResponsiveLayout.isDesktop(context) ? 0 : 12.0,
+      ),
       child: Slidable(
         key: ValueKey(customerName),
         endActionPane: ActionPane(
@@ -105,85 +108,99 @@ class CustomerDebtCard extends StatelessWidget {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(20.0),
+                    padding: const EdgeInsets.all(16.0),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         // Customer info column
                         Expanded(
+                          flex: 3,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
                                 customerName,
                                 style: TextStyles.customStyle(
                                   color: AppColors.textColor,
-                                  fontSize: 18,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 '${AppStrings.lastTransactionPrefix.tr()} $lastTransactionDate',
                                 style: TextStyles.customStyle(
                                   color: AppColors.disabledColor,
-                                  fontSize: 12,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w500,
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                               if (description != null &&
                                   description!.isNotEmpty) ...[
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 6),
                                 Text(
                                   description!,
                                   style: TextStyles.customStyle(
                                     color: AppColors.textColor.withValues(
                                       alpha: 0.8,
                                     ),
-                                    fontSize: 13,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.w500,
                                   ),
-                                  maxLines: 2,
+                                  maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ],
                             ],
                           ),
                         ),
+                        const SizedBox(width: 8),
                         // Amount + status badge column
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              '${amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
-                              style: TextStyles.customStyle(
-                                color: statusColor,
-                                fontSize: 22,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            if (ledgerNumber != null &&
-                                ledgerNumber!.isNotEmpty)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: statusColor.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
+                        Flexible(
+                          flex: 2,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              FittedBox(
                                 child: Text(
-                                  ledgerNumber ?? "",
+                                  '${amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
                                   style: TextStyles.customStyle(
                                     color: statusColor,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
                                   ),
                                 ),
                               ),
-                          ],
+                              const SizedBox(height: 4),
+                              if (ledgerNumber != null &&
+                                  ledgerNumber!.isNotEmpty)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: statusColor.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    ledgerNumber ?? "",
+                                    style: TextStyles.customStyle(
+                                      color: statusColor,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
                       ],
                     ),

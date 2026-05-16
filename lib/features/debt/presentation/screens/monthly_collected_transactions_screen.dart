@@ -2,14 +2,15 @@ import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:tahsel/features/debt/domain/entities/monthly_collected_amount.dart';
+import 'package:tahsel/features/debt/domain/entities/payment_entity.dart';
 
 import '../../../../core/extensions/number_extensions.dart';
 import '../../../../core/extensions/string_extensions.dart';
 import '../../../../core/utils/app_colors.dart';
 import '../../../../core/utils/app_strings.dart';
 import '../../../../core/utils/styles.dart';
-import '../../domain/entities/monthly_collected_amount.dart';
-import '../../domain/entities/payment_entity.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 class MonthlyCollectedTransactionsScreen extends StatelessWidget {
   final MonthlyCollectedAmount monthlyData;
@@ -21,6 +22,7 @@ class MonthlyCollectedTransactionsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
     final monthName = _getMonthName(monthlyData.month, context);
 
     return Scaffold(
@@ -46,32 +48,69 @@ class MonthlyCollectedTransactionsScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Column(
-        children: [
-          _buildSummaryHeader(),
-          Expanded(
-            child: ListView.builder(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-              itemCount: monthlyData.payments.length,
-              itemBuilder: (context, index) {
-                final payment = monthlyData.payments[index];
-                return FadeInUp(
-                  duration: Duration(milliseconds: 300 + (index * 30)),
-                  child: _buildTransactionCard(context, payment),
-                );
-              },
-            ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: isDesktop ? 32 : 0,
+            vertical: 8.h,
           ),
-        ],
+          child: Column(
+            children: [
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 800),
+                  child: _buildSummaryHeader(isDesktop),
+                ),
+              ),
+              if (isDesktop)
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisExtent: 160,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                  ),
+                  itemCount: monthlyData.payments.length,
+                  itemBuilder: (context, index) {
+                    final payment = monthlyData.payments[index];
+                    return FadeInUp(
+                      duration: Duration(milliseconds: 300 + (index * 30)),
+                      child: _buildTransactionCard(context, payment, isDesktop),
+                    );
+                  },
+                )
+              else
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                  itemCount: monthlyData.payments.length,
+                  itemBuilder: (context, index) {
+                    final payment = monthlyData.payments[index];
+                    return FadeInUp(
+                      duration: Duration(milliseconds: 300 + (index * 30)),
+                      child: _buildTransactionCard(context, payment, isDesktop),
+                    );
+                  },
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildSummaryHeader() {
+  Widget _buildSummaryHeader(bool isDesktop) {
     return Container(
       width: double.infinity,
-      margin: EdgeInsets.all(16.w),
-      padding: EdgeInsets.all(20.w),
+      margin: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 16 : 16.w,
+        vertical: isDesktop ? 8 : 16.h,
+      ),
+      padding: EdgeInsets.all(isDesktop ? 32 : 20.w),
       decoration: BoxDecoration(
         color: AppColors.primaryColor,
         borderRadius: BorderRadius.circular(16.r),
@@ -89,7 +128,7 @@ class MonthlyCollectedTransactionsScreen extends StatelessWidget {
             AppStrings.totalCollected.tr(),
             style: TextStyles.customStyle(
               color: Colors.white.withValues(alpha: 0.8),
-              fontSize: 14,
+              fontSize: isDesktop ? 16 : 14,
             ),
           ),
           SizedBox(height: 8.h),
@@ -97,7 +136,7 @@ class MonthlyCollectedTransactionsScreen extends StatelessWidget {
             "${monthlyData.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
             style: TextStyles.customStyle(
               color: Colors.white,
-              fontSize: 24,
+              fontSize: isDesktop ? 32 : 24,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -106,7 +145,11 @@ class MonthlyCollectedTransactionsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTransactionCard(BuildContext context, PaymentEntity payment) {
+  Widget _buildTransactionCard(
+    BuildContext context,
+    PaymentEntity payment,
+    bool isDesktop,
+  ) {
     final dateStr = payment.createdAt != null
         ? DateFormat(
             'dd MMM yyyy, hh:mm a',
@@ -115,8 +158,8 @@ class MonthlyCollectedTransactionsScreen extends StatelessWidget {
         : '';
 
     return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
-      padding: EdgeInsets.all(16.w),
+      margin: EdgeInsets.only(bottom: isDesktop ? 0 : 12.h),
+      padding: EdgeInsets.all(isDesktop ? 16 : 16.w),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12.r),
@@ -131,111 +174,103 @@ class MonthlyCollectedTransactionsScreen extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               // Customer Name & Activity
               Expanded(
+                flex: 3,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Row(
-                      children: [
-                        // Text(
-                        //   "${AppStrings.customerName.tr()}: ",
-                        //   style: TextStyles.customStyle(
-                        //     fontSize: 12,
-                        //     color: AppColors.grey,
-                        //     fontWeight: FontWeight.w500,
-                        //   ),
-                        // ),
-                        Expanded(
-                          child: Text(
-                            payment.relatedTo ?? AppStrings.unknown.tr(),
-                            style: TextStyles.customStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.primaryColor,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      payment.relatedTo ?? AppStrings.unknown.tr(),
+                      style: TextStyles.customStyle(
+                        fontSize: isDesktop ? 15 : 15,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primaryColor,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     if (payment.activityName != null &&
                         payment.activityName!.isNotEmpty) ...[
-                      SizedBox(height: 6.h),
-                      Row(
-                        children: [
-                          Text(
-                            "●  ",
-                            style: TextStyles.customStyle(
-                              fontSize: 11,
-                              color: AppColors.grey,
-                            ),
-                          ),
-                          Expanded(
-                            child: Text(
-                              payment.activityName!,
-                              style: TextStyles.customStyle(
-                                fontSize: 13,
-                                color: AppColors.black,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
+                      const SizedBox(height: 4),
+                      Text(
+                        payment.activityName!,
+                        style: TextStyles.customStyle(
+                          fontSize: isDesktop ? 13 : 13,
+                          color: AppColors.black,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
               // Amount
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    "+${payment.amountPaid.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
-                    style: TextStyles.customStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.green,
+              Flexible(
+                flex: 2,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FittedBox(
+                      child: Text(
+                        "+${payment.amountPaid.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
+                        style: TextStyles.customStyle(
+                          fontSize: isDesktop ? 16 : 16,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.green,
+                        ),
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 2.h),
-                  Text(
-                    _getPaymentTypeLabel(payment.type),
-                    style: TextStyles.customStyle(
-                      fontSize: 11,
-                      color: AppColors.grey,
-                      fontWeight: FontWeight.w600,
+                    const SizedBox(height: 2),
+                    Text(
+                      _getPaymentTypeLabel(payment.type),
+                      style: TextStyles.customStyle(
+                        fontSize: 10,
+                        color: AppColors.grey,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: isDesktop ? 10 : 12.h),
           const Divider(height: 1),
-          SizedBox(height: 12.h),
+          SizedBox(height: isDesktop ? 10 : 12.h),
           Row(
             children: [
               // Date
               const Icon(Icons.access_time, size: 14, color: AppColors.grey),
-              SizedBox(width: 6.w),
-              Text(
-                dateStr,
-                style: TextStyles.customStyle(
-                  fontSize: 11,
-                  color: AppColors.grey,
+              SizedBox(width: isDesktop ? 6 : 6.w),
+              Expanded(
+                child: Text(
+                  dateStr,
+                  style: TextStyles.customStyle(
+                    fontSize: 10,
+                    color: AppColors.grey,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const Spacer(),
               // Remaining Balance info
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isDesktop ? 8 : 8.w,
+                  vertical: isDesktop ? 4 : 4.h,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.grey.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(4.r),
@@ -243,7 +278,7 @@ class MonthlyCollectedTransactionsScreen extends StatelessWidget {
                 child: Text(
                   "${AppStrings.remaining.tr()}: ${payment.remainingAmount.toSmartAmount()}",
                   style: TextStyles.customStyle(
-                    fontSize: 10,
+                    fontSize: 9,
                     color: AppColors.grey,
                     fontWeight: FontWeight.w500,
                   ),

@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/skeletons/customer_debt_skeleton.dart';
 
 import '../../../../core/extensions/number_extensions.dart';
@@ -23,6 +24,8 @@ class MonthlyCollectedScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
+
     return BlocProvider(
       create: (context) => sl<MonthlyCollectedCubit>()..loadMonthlyData(uid),
       child: Scaffold(
@@ -52,12 +55,31 @@ class MonthlyCollectedScreen extends StatelessWidget {
         body: BlocBuilder<MonthlyCollectedCubit, MonthlyCollectedState>(
           builder: (context, state) {
             if (state is MonthlyCollectedLoading) {
-              return ListView.builder(
-                padding: EdgeInsets.all(16.w),
-                itemBuilder: (context, index) =>
-                    const CustomerDebtCardSkeleton(),
-                itemCount: 5,
-              );
+              return isDesktop
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
+                      ),
+                      child: GridView.builder(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              mainAxisExtent: 220,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                            ),
+                        itemBuilder: (context, index) =>
+                            const CustomerDebtCardSkeleton(),
+                        itemCount: 6,
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: EdgeInsets.all(16.w),
+                      itemBuilder: (context, index) =>
+                          const CustomerDebtCardSkeleton(),
+                      itemCount: 5,
+                    );
             } else if (state is MonthlyCollectedError) {
               return Center(
                 child: Column(
@@ -100,25 +122,64 @@ class MonthlyCollectedScreen extends StatelessWidget {
                 );
               }
 
-              return Column(
-                children: [
-                  // Total Collected Summary Header
-                  _buildSummaryHeader(state.data),
-
-                  Expanded(
-                    child: ListView.builder(
-                      padding: EdgeInsets.all(16.w),
-                      itemCount: state.data.length,
-                      itemBuilder: (context, index) {
-                        final item = state.data[index];
-                        return FadeInUp(
-                          duration: Duration(milliseconds: 300 + (index * 30)),
-                          child: _buildMonthCard(context, item),
-                        );
-                      },
-                    ),
+              return SingleChildScrollView(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isDesktop ? 32 : 0,
+                    vertical: 16.h,
                   ),
-                ],
+                  child: Column(
+                    children: [
+                      // Total Collected Summary Header
+                      Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 800),
+                          child: _buildSummaryHeader(state.data, isDesktop),
+                        ),
+                      ),
+
+                      if (isDesktop)
+                        GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: const EdgeInsets.all(16),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisExtent: 100,
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
+                              ),
+                          itemCount: state.data.length,
+                          itemBuilder: (context, index) {
+                            final item = state.data[index];
+                            return FadeInUp(
+                              duration: Duration(
+                                milliseconds: 300 + (index * 30),
+                              ),
+                              child: _buildMonthCard(context, item, isDesktop),
+                            );
+                          },
+                        )
+                      else
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: EdgeInsets.all(16.w),
+                          itemCount: state.data.length,
+                          itemBuilder: (context, index) {
+                            final item = state.data[index];
+                            return FadeInUp(
+                              duration: Duration(
+                                milliseconds: 300 + (index * 30),
+                              ),
+                              child: _buildMonthCard(context, item, isDesktop),
+                            );
+                          },
+                        ),
+                    ],
+                  ),
+                ),
               );
             }
             return const SizedBox.shrink();
@@ -128,13 +189,19 @@ class MonthlyCollectedScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSummaryHeader(List<MonthlyCollectedAmount> data) {
+  Widget _buildSummaryHeader(
+    List<MonthlyCollectedAmount> data,
+    bool isDesktop,
+  ) {
     final total = data.fold(0.0, (sum, item) => sum + item.totalAmount);
 
     return Container(
       width: double.infinity,
-      margin: EdgeInsets.all(16.w),
-      padding: EdgeInsets.all(20.w),
+      margin: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 16 : 16.w,
+        vertical: isDesktop ? 8 : 16.h,
+      ),
+      padding: EdgeInsets.all(isDesktop ? 32 : 20.w),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -159,7 +226,7 @@ class MonthlyCollectedScreen extends StatelessWidget {
             AppStrings.totalCollected.tr(),
             style: TextStyles.customStyle(
               color: Colors.white.withValues(alpha: 0.9),
-              fontSize: 14,
+              fontSize: isDesktop ? 16 : 14,
             ),
           ),
           SizedBox(height: 8.h),
@@ -167,7 +234,7 @@ class MonthlyCollectedScreen extends StatelessWidget {
             "${total.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
             style: TextStyles.customStyle(
               color: Colors.white,
-              fontSize: 28,
+              fontSize: isDesktop ? 36 : 28,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -176,11 +243,15 @@ class MonthlyCollectedScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMonthCard(BuildContext context, MonthlyCollectedAmount item) {
+  Widget _buildMonthCard(
+    BuildContext context,
+    MonthlyCollectedAmount item,
+    bool isDesktop,
+  ) {
     final monthName = _getMonthName(item.month, context);
 
     return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
+      margin: EdgeInsets.only(bottom: isDesktop ? 0 : 12.h),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12.r),
@@ -205,11 +276,14 @@ class MonthlyCollectedScreen extends StatelessWidget {
             );
           },
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+            padding: EdgeInsets.symmetric(
+              horizontal: isDesktop ? 16 : 16.w,
+              vertical: isDesktop ? 12 : 16.h,
+            ),
             child: Row(
               children: [
                 Container(
-                  padding: EdgeInsets.all(10.w),
+                  padding: EdgeInsets.all(isDesktop ? 10 : 10.w),
                   decoration: BoxDecoration(
                     color: AppColors.primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8.r),
@@ -217,13 +291,14 @@ class MonthlyCollectedScreen extends StatelessWidget {
                   child: Icon(
                     Icons.calendar_month_outlined,
                     color: AppColors.primaryColor,
-                    size: 24,
+                    size: isDesktop ? 24 : 24.r,
                   ),
                 ),
-                SizedBox(width: 16.w),
+                SizedBox(width: isDesktop ? 16 : 16.w),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         "$monthName ${item.year}",
@@ -232,8 +307,10 @@ class MonthlyCollectedScreen extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                           color: AppColors.black,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      SizedBox(height: 2.h),
+                      const SizedBox(height: 2),
                       Text(
                         "${item.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
                         style: TextStyles.customStyle(
@@ -241,15 +318,17 @@ class MonthlyCollectedScreen extends StatelessWidget {
                           color: AppColors.primaryColor,
                           fontWeight: FontWeight.w600,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
                 ),
                 // Simple indicator for high collection months
                 _buildPerformanceIndicator(item.totalAmount),
-                const Icon(
+                Icon(
                   Icons.arrow_forward_ios,
-                  size: 14,
+                  size: isDesktop ? 14 : 14.r,
                   color: AppColors.grey,
                 ),
               ],
@@ -265,7 +344,7 @@ class MonthlyCollectedScreen extends StatelessWidget {
     if (amount > 1000) {
       return Padding(
         padding: EdgeInsets.only(left: 8.w, right: 12.w),
-        child: Icon(Icons.trending_up, color: AppColors.green, size: 20.sp),
+        child: const Icon(Icons.trending_up, color: AppColors.green, size: 20),
       );
     }
     return const SizedBox.shrink();

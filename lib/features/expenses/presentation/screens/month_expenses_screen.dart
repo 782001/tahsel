@@ -253,22 +253,19 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
                                   gridDelegate:
                                       const SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: 2,
-                                    mainAxisExtent: 100,
+                                    mainAxisExtent: 120,
                                     crossAxisSpacing: 16,
-                                    mainAxisSpacing: 8,
+                                    mainAxisSpacing: 16,
                                   ),
                                   itemCount: item.length,
                                   itemBuilder: (context, idx) =>
-                                      _buildExpenseItem(context, item[idx]),
+                                      _buildExpenseItem(context, item[idx], isDesktop),
                                 );
                               }
 
                               // Expense Item (Mobile)
                               if (item is ExpenseEntity) {
-                                return Padding(
-                                  padding: EdgeInsets.only(bottom: 8.h),
-                                  child: _buildExpenseItem(context, item),
-                                );
+                                return _buildExpenseItem(context, item, isDesktop);
                               }
                               return const SizedBox.shrink();
                             }, childCount: items.length),
@@ -299,7 +296,11 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
     );
   }
 
-  Widget _buildExpenseItem(BuildContext context, ExpenseEntity expense) {
+  Widget _buildExpenseItem(
+    BuildContext context,
+    ExpenseEntity expense,
+    bool isDesktop,
+  ) {
     IconData iconData = Icons.money;
 
     // Safe translation call
@@ -316,17 +317,20 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
       iconData = Icons.attach_money_outlined;
     }
 
-    return ExpenseCard(
-      icon: iconData,
-      title: categoryStr,
-      subtitle: expense.description,
-      amount: expense.amount,
-      date: DateFormatter.formatNumericDate(
-        expense.createdAt,
-      ),
-      onDelete: () => _confirmDelete(
-        context,
-        expense.id ?? '',
+    return Padding(
+      padding: EdgeInsets.only(bottom: isDesktop ? 0 : 8.h),
+      child: ExpenseCard(
+        icon: iconData,
+        title: categoryStr,
+        subtitle: expense.description,
+        amount: expense.amount,
+        date: DateFormatter.formatNumericDate(
+          expense.createdAt,
+        ),
+        onDelete: () => _confirmDelete(
+          context,
+          expense.id ?? '',
+        ),
       ),
     );
   }
