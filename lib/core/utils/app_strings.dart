@@ -433,4 +433,7 @@ class AppStrings {
   static const String difference = "difference";
   static const String increase = "increase";
   static const String decrease = "decrease";
+  static const String mainMenu = "main_menu";
+  static const String other = "other";
+  static const String appName = "app_name";
 }

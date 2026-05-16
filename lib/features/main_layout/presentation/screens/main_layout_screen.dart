@@ -6,7 +6,9 @@ import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/widgets/exit_confirmation_dialog.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_state.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/main_layout/presentation/widgets/bottom_nav_bar.dart';
+import 'package:tahsel/features/main_layout/presentation/widgets/side_nav_bar.dart';
 import 'package:tahsel/features/offline_sync/presentation/widgets/offline_banner.dart';
 import 'package:tahsel/features/offline_sync/presentation/widgets/sync_status_listener.dart';
 import 'package:tahsel/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
@@ -77,14 +79,26 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
                     child: Scaffold(
                       extendBody: true,
                       backgroundColor: AppColors.scafoldBackGround,
+                      bottomNavigationBar: ResponsiveLayout.isDesktop(context)
+                          ? null
+                          : BottomNavBar(cubit: cubit),
                       body: SafeArea(
                         child: SyncStatusListener(
                           child: OfflineBanner(
-                            child: cubit.screens[cubit.currentIndex],
+                            child: ResponsiveLayout(
+                              mobile: cubit.screens[cubit.currentIndex],
+                              desktop: Row(
+                                children: [
+                                  SideNavBar(cubit: cubit),
+                                  Expanded(
+                                    child: cubit.screens[cubit.currentIndex],
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                      bottomNavigationBar: BottomNavBar(cubit: cubit),
                     ),
                   );
                 },
