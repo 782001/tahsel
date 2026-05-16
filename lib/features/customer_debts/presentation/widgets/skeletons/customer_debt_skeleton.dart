@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/shared/widgets/shimmer/shimmer_loading.dart';
 
 class CustomerDebtCardSkeleton extends StatelessWidget {
@@ -8,9 +9,14 @@ class CustomerDebtCardSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
     return ShimmerLoading(
       child: Container(
-        margin: EdgeInsets.only(bottom: 12.h, left: 24.w, right: 24.w),
+        margin: EdgeInsets.only(
+          bottom: 12.h,
+          left: isDesktop ? 0 : 24.w,
+          right: isDesktop ? 0 : 24.w,
+        ),
         padding: EdgeInsets.all(16.r),
         decoration: BoxDecoration(
           color: AppColors.debtCardSurface,
@@ -47,8 +53,13 @@ class CustomerDebtCardSkeleton extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                ShimmerPlaceholder(width: 120.w, height: 16.h),
-                ShimmerPlaceholder(width: 100.w, height: 20.h),
+                Flexible(
+                  child: ShimmerPlaceholder(width: 120.w, height: 16.h),
+                ),
+                SizedBox(width: 16.w),
+                Flexible(
+                  child: ShimmerPlaceholder(width: 100.w, height: 20.h),
+                ),
               ],
             ),
           ],

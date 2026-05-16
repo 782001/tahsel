@@ -6,6 +6,7 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/date_formatter.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/expenses/domain/entities/expense_entity.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_state.dart';
@@ -149,63 +150,74 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           }
         },
         builder: (context, state) {
+          final isDesktop = ResponsiveLayout.isDesktop(context);
           return SafeArea(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                children: [
-                  SizedBox(height: 24.h),
-                  AddExpenseField(
-                    label: AppStrings.amountLabel.tr(),
-                    hint: "0.00",
-                    controller: _amountController,
-                    prefixText: AppStrings.currencyEgp.tr(),
-                    suffixIcon: Icons.account_balance_wallet_outlined,
-                    isNumber: true,
-                    focusNode: _amountFocus,
-                    textInputAction: TextInputAction.next,
-                    onSubmitted: (_) => _nameFocus.requestFocus(),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isDesktop ? 800 : double.infinity,
+                ),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.symmetric(horizontal: isDesktop ? 40 : 0),
+                  child: Column(
+                    children: [
+                      (isDesktop ? 40 : 24).verticalSpace,
+                      AddExpenseField(
+                        label: AppStrings.amountLabel.tr(),
+                        hint: "0.00",
+                        controller: _amountController,
+                        prefixText: AppStrings.currencyEgp.tr(),
+                        suffixIcon: Icons.account_balance_wallet_outlined,
+                        isNumber: true,
+                        focusNode: _amountFocus,
+                        textInputAction: TextInputAction.next,
+                        onSubmitted: (_) => _nameFocus.requestFocus(),
+                      ),
+                      (isDesktop ? 24 : 16).verticalSpace,
+                      AddExpenseField(
+                        label: AppStrings.expenseNameLabel.tr(),
+                        hint: AppStrings.expenseNamePlaceholder.tr(),
+                        controller: _nameController,
+                        suffixIcon: Icons.folder_outlined,
+                        focusNode: _nameFocus,
+                        textInputAction: TextInputAction.next,
+                        onSubmitted: (_) => _descFocus.requestFocus(),
+                      ),
+                      (isDesktop ? 24 : 16).verticalSpace,
+                      AddExpenseField(
+                        label: AppStrings.descriptionLabel.tr(),
+                        hint: AppStrings.descriptionPlaceholder.tr(),
+                        controller: _descController,
+                        suffixIcon: Icons.description_outlined,
+                        focusNode: _descFocus,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _submit(),
+                      ),
+                      (isDesktop ? 24 : 16).verticalSpace,
+                      AddExpenseField(
+                        label: AppStrings.dateLabel.tr(),
+                        hint: "",
+                        controller: _dateController,
+                        suffixIcon: Icons.calendar_today_outlined,
+                        readOnly: true,
+                        onTap: () => _selectDate(context),
+                      ),
+                      (isDesktop ? 60 : 40).verticalSpace,
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isDesktop ? 0 : 24.w,
+                        ),
+                        child: QuickActionButton(
+                          label: AppStrings.addExpense.tr(),
+                          icon: Icons.check_circle_outline,
+                          onPressed: _submit,
+                        ),
+                      ),
+                      (isDesktop ? 60 : 48).verticalSpace,
+                    ],
                   ),
-                  SizedBox(height: 16.h),
-                  AddExpenseField(
-                    label: AppStrings.expenseNameLabel.tr(),
-                    hint: AppStrings.expenseNamePlaceholder.tr(),
-                    controller: _nameController,
-                    suffixIcon: Icons.folder_outlined,
-                    focusNode: _nameFocus,
-                    textInputAction: TextInputAction.next,
-                    onSubmitted: (_) => _descFocus.requestFocus(),
-                  ),
-                  SizedBox(height: 16.h),
-                  AddExpenseField(
-                    label: AppStrings.descriptionLabel.tr(),
-                    hint: AppStrings.descriptionPlaceholder.tr(),
-                    controller: _descController,
-                    suffixIcon: Icons.description_outlined,
-                    focusNode: _descFocus,
-                    textInputAction: TextInputAction.done,
-                    onSubmitted: (_) => _submit(),
-                  ),
-                  SizedBox(height: 16.h),
-                  AddExpenseField(
-                    label: AppStrings.dateLabel.tr(),
-                    hint: "",
-                    controller: _dateController,
-                    suffixIcon: Icons.calendar_today_outlined,
-                    readOnly: true,
-                    onTap: () => _selectDate(context),
-                  ),
-                  SizedBox(height: 40.h),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
-                    child: QuickActionButton(
-                      label: AppStrings.addExpense.tr(),
-                      icon: Icons.check_circle_outline,
-                      onPressed: _submit,
-                    ),
-                  ),
-                  SizedBox(height: 48.h),
-                ],
+                ),
               ),
             ),
           );

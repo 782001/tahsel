@@ -15,6 +15,8 @@ import 'package:tahsel/features/offline_sync/data/models/offline_record.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 
+import 'package:tahsel/core/widgets/responsive_layout.dart';
+
 import '../../../../core/utils/app_logger.dart';
 
 class ExpensesList extends StatelessWidget {
@@ -60,8 +62,13 @@ class ExpensesList extends StatelessWidget {
                 );
               }
 
+              final isDesktop = ResponsiveLayout.isDesktop(context);
+
               return Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isDesktop ? 32 : 24.w,
+                  vertical: 12.h,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -75,12 +82,28 @@ class ExpensesList extends StatelessWidget {
                         ),
                       ),
                       SizedBox(height: 12.h),
-                      ...pending.map(
-                        (record) => Padding(
-                          padding: EdgeInsets.only(bottom: 12.h),
-                          child: _buildPendingRecordItem(record),
+                      if (isDesktop)
+                        GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisExtent: 90,
+                            mainAxisSpacing: 16,
+                            crossAxisSpacing: 16,
+                          ),
+                          itemCount: pending.length,
+                          itemBuilder: (context, index) =>
+                              _buildPendingRecordItem(pending[index]),
+                        )
+                      else
+                        ...pending.map(
+                          (record) => Padding(
+                            padding: EdgeInsets.only(bottom: 12.h),
+                            child: _buildPendingRecordItem(record),
+                          ),
                         ),
-                      ),
                       if (months.isNotEmpty && !isOffline) ...[
                         Padding(
                           padding: EdgeInsets.symmetric(vertical: 16.h),
@@ -100,17 +123,34 @@ class ExpensesList extends StatelessWidget {
                       ],
                     ],
                     if (!isOffline)
-                      ListView.separated(
-                        itemCount: months.length,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        separatorBuilder: (context, index) =>
-                            SizedBox(height: 12.h),
-                        itemBuilder: (context, index) {
-                          final month = months[index];
-                          return _buildMonthItem(context, month);
-                        },
-                      ),
+                      isDesktop
+                          ? GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisExtent: 100,
+                                mainAxisSpacing: 16,
+                                crossAxisSpacing: 16,
+                              ),
+                              itemCount: months.length,
+                              itemBuilder: (context, index) {
+                                final month = months[index];
+                                return _buildMonthItem(context, month);
+                              },
+                            )
+                          : ListView.separated(
+                              itemCount: months.length,
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              separatorBuilder: (context, index) =>
+                                  SizedBox(height: 12.h),
+                              itemBuilder: (context, index) {
+                                final month = months[index];
+                                return _buildMonthItem(context, month);
+                              },
+                            ),
                   ],
                 ),
               );

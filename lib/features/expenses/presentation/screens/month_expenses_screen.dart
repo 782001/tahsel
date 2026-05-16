@@ -13,6 +13,7 @@ import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_state.dart';
 import 'package:tahsel/features/expenses/presentation/widgets/expense_card.dart';
 import 'package:tahsel/features/offline_sync/presentation/cubit/offline_sync_cubit.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 class MonthExpensesScreen extends StatefulWidget {
   final String monthKey;
@@ -149,11 +150,19 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
                   );
                 }
 
+                final isDesktop = ResponsiveLayout.isDesktop(context);
+
                 // Flatten the groups for efficient Sliver scrolling
                 final List<dynamic> items = [];
                 for (final group in state.expenses) {
                   items.add(group);
-                  items.addAll(group.expenses);
+                  if (isDesktop) {
+                    // On desktop, we keep the expenses list as a single item
+                    // so we can render it in a grid within the day section
+                    items.add(group.expenses);
+                  } else {
+                    items.addAll(group.expenses);
+                  }
                 }
 
                 final String locale = AppStrings.currentLang;
@@ -177,7 +186,7 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
                       slivers: [
                         SliverPadding(
                           padding: EdgeInsets.symmetric(
-                            horizontal: 24.w,
+                            horizontal: isDesktop ? 32 : 24.w,
                             vertical: 24.h,
                           ),
                           sliver: SliverList(
@@ -236,43 +245,29 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
                                 );
                               }
 
-                              // Expense Item
+                              // Expense Grid (Desktop)
+                              if (item is List<ExpenseEntity>) {
+                                return GridView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  gridDelegate:
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    mainAxisExtent: 100,
+                                    crossAxisSpacing: 16,
+                                    mainAxisSpacing: 8,
+                                  ),
+                                  itemCount: item.length,
+                                  itemBuilder: (context, idx) =>
+                                      _buildExpenseItem(context, item[idx]),
+                                );
+                              }
+
+                              // Expense Item (Mobile)
                               if (item is ExpenseEntity) {
-                                final expense = item;
-                                IconData iconData = Icons.money;
-
-                                // Safe translation call
-                                final categoryStr = expense.category.tr();
-
-                                if (categoryStr == AppStrings.operations.tr()) {
-                                  iconData = Icons.build_outlined;
-                                } else if (categoryStr ==
-                                    AppStrings.employees.tr()) {
-                                  iconData = Icons.people_outline;
-                                } else if (categoryStr ==
-                                        AppStrings.rents.tr() ||
-                                    categoryStr == AppStrings.rent.tr()) {
-                                  iconData = Icons.home_outlined;
-                                } else if (categoryStr ==
-                                    AppStrings.salaries.tr()) {
-                                  iconData = Icons.attach_money_outlined;
-                                }
-
                                 return Padding(
                                   padding: EdgeInsets.only(bottom: 8.h),
-                                  child: ExpenseCard(
-                                    icon: iconData,
-                                    title: categoryStr,
-                                    subtitle: expense.description,
-                                    amount: expense.amount,
-                                    date: DateFormatter.formatNumericDate(
-                                      expense.createdAt,
-                                    ),
-                                    onDelete: () => _confirmDelete(
-                                      context,
-                                      expense.id ?? '',
-                                    ),
-                                  ),
+                                  child: _buildExpenseItem(context, item),
                                 );
                               }
                               return const SizedBox.shrink();
@@ -300,6 +295,38 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
             },
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildExpenseItem(BuildContext context, ExpenseEntity expense) {
+    IconData iconData = Icons.money;
+
+    // Safe translation call
+    final categoryStr = expense.category.tr();
+
+    if (categoryStr == AppStrings.operations.tr()) {
+      iconData = Icons.build_outlined;
+    } else if (categoryStr == AppStrings.employees.tr()) {
+      iconData = Icons.people_outline;
+    } else if (categoryStr == AppStrings.rents.tr() ||
+        categoryStr == AppStrings.rent.tr()) {
+      iconData = Icons.home_outlined;
+    } else if (categoryStr == AppStrings.salaries.tr()) {
+      iconData = Icons.attach_money_outlined;
+    }
+
+    return ExpenseCard(
+      icon: iconData,
+      title: categoryStr,
+      subtitle: expense.description,
+      amount: expense.amount,
+      date: DateFormatter.formatNumericDate(
+        expense.createdAt,
+      ),
+      onDelete: () => _confirmDelete(
+        context,
+        expense.id ?? '',
       ),
     );
   }
