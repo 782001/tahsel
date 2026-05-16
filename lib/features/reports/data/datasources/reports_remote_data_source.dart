@@ -93,6 +93,7 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
             'totalCount': summary.transactionCount.toDouble(),
             'cafeCount': summary.cafeCount.toDouble(),
             'playstationCount': summary.playstationCount.toDouble(),
+            'debtCustomersCount': summary.debtCustomersCount.toDouble(),
           };
         }
       }

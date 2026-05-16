@@ -11,6 +11,7 @@ import 'package:tahsel/routes/app_routes.dart';
 class DebtItemCard extends StatelessWidget {
   final DebtItem item;
   final int index;
+  final Function(dynamic)? onRefresh;
   final Function(DebtItem) onPayPartial;
   final Function(DebtItem) onPayFull;
 
@@ -20,18 +21,29 @@ class DebtItemCard extends StatelessWidget {
     required this.index,
     required this.onPayPartial,
     required this.onPayFull,
+    this.onRefresh,
   });
+
 
   @override
   Widget build(BuildContext context) {
     final bool isSettled = item.remainingDebt <= 0;
 
     return InkWell(
-      onTap: () => Navigator.pushNamed(
-        context,
-        AppRoutes.debtDetails,
-        arguments: item.entity.id,
-      ),
+      key: ValueKey(item.entity.id),
+      onTap: () async {
+        final result = await Navigator.pushNamed(
+          context,
+          AppRoutes.debtDetails,
+          arguments: item.entity.id,
+        );
+
+        if (onRefresh != null) {
+          onRefresh!(result);
+        }
+      },
+
+
       borderRadius: BorderRadius.circular(16.r),
       child: Container(
         margin: EdgeInsets.only(bottom: 12.h),

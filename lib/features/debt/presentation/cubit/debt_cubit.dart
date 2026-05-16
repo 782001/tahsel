@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/debt/domain/entities/debt_entity.dart';
 import 'package:tahsel/features/debt/domain/usecases/add_debt_usecase.dart';
 import 'package:tahsel/features/debt/domain/usecases/delete_customer_debt_usecase.dart';
 import 'package:tahsel/features/debt/domain/usecases/delete_debt_item_usecase.dart';
+import 'package:tahsel/features/debt/domain/usecases/get_customer_debts_usecase.dart';
+import 'package:tahsel/features/debt/domain/usecases/get_debts_paginated_usecase.dart';
 import 'package:tahsel/features/debt/domain/usecases/get_debts_usecase.dart';
 import 'package:tahsel/features/debt/domain/usecases/mark_customer_as_paid_usecase.dart';
 import 'package:tahsel/features/debt/domain/usecases/mark_item_as_paid_usecase.dart';
@@ -15,22 +18,26 @@ import 'debt_state.dart';
 class DebtCubit extends Cubit<DebtState> {
   final AddDebtUseCase addDebtUseCase;
   final GetDebtsUseCase getDebtsUseCase;
+  final GetDebtsPaginatedUseCase getDebtsPaginatedUseCase;
   final PayDebtUseCase payDebtUseCase;
   final MarkCustomerAsPaidUseCase markCustomerAsPaidUseCase;
   final PayItemDebtUseCase payItemDebtUseCase;
   final MarkItemAsPaidUseCase markItemAsPaidUseCase;
   final DeleteCustomerDebtUseCase deleteCustomerDebtUseCase;
   final DeleteDebtItemUseCase deleteDebtItemUseCase;
+  final GetCustomerDebtsUseCase getCustomerDebtsUseCase;
 
   DebtCubit({
     required this.addDebtUseCase,
     required this.getDebtsUseCase,
+    required this.getDebtsPaginatedUseCase,
     required this.payDebtUseCase,
     required this.markCustomerAsPaidUseCase,
     required this.payItemDebtUseCase,
     required this.markItemAsPaidUseCase,
     required this.deleteCustomerDebtUseCase,
     required this.deleteDebtItemUseCase,
+    required this.getCustomerDebtsUseCase,
   }) : super(DebtInitial());
 
   Future<void> addDebt({
@@ -74,16 +81,78 @@ class DebtCubit extends Cubit<DebtState> {
   Future<void> getDebts(String uid, {bool forceRefresh = false}) async {
     if (!forceRefresh &&
         state is DebtsFetchSuccess &&
-        (state as DebtsFetchSuccess).debts.isNotEmpty) {
+        (state as DebtsFetchSuccess).debts.isNotEmpty &&
+        !(state as DebtsFetchSuccess).hasMore) {
       return;
     }
+    
     emit(DebtLoading());
-    final result = await getDebtsUseCase(
-      GetDebtsParams(uid: uid, forceRefresh: forceRefresh),
+    
+    final result = await getDebtsPaginatedUseCase(
+      uid: uid,
+      limit: 15,
+      forceRefresh: forceRefresh,
     );
+    
     result.fold(
       (failure) => emit(DebtFailure(message: failure.message)),
-      (debts) => emit(DebtsFetchSuccess(debts: debts)),
+      (paginatedResult) => emit(DebtsFetchSuccess(
+        debts: paginatedResult.items,
+        lastDocument: paginatedResult.lastDocument,
+        hasMore: paginatedResult.hasMore,
+      )),
+    );
+  }
+
+  Future<void> loadMoreDebts(String uid) async {
+    final currentState = state;
+    if (currentState is! DebtsFetchSuccess || 
+        !currentState.hasMore || 
+        currentState.isPaginationLoading) {
+      return;
+    }
+
+    emit(currentState.copyWith(isPaginationLoading: true));
+
+    final result = await getDebtsPaginatedUseCase(
+      uid: uid,
+      limit: 15,
+      lastDocument: currentState.lastDocument,
+    );
+
+    result.fold(
+      (failure) {
+        // Silently fail or update state to not loading
+        emit(currentState.copyWith(isPaginationLoading: false));
+      },
+      (paginatedResult) {
+        final List<DebtEntity> updatedDebts = List.from(currentState.debts)
+          ..addAll(paginatedResult.items);
+        emit(DebtsFetchSuccess(
+          debts: updatedDebts,
+          lastDocument: paginatedResult.lastDocument,
+          hasMore: paginatedResult.hasMore,
+          isPaginationLoading: false,
+        ));
+      },
+    );
+  }
+
+  Future<List<DebtEntity>> fetchCustomerDebts(String customerName, {bool forceRefresh = false}) async {
+    final uid = AppStrings.userToken;
+    if (uid.isEmpty) return [];
+
+    final result = await getCustomerDebtsUseCase(
+      GetCustomerDebtsParams(
+        uid: uid,
+        customerName: customerName,
+        forceRefresh: forceRefresh,
+      ),
+    );
+
+    return result.fold(
+      (failure) => [],
+      (debts) => debts,
     );
   }
 

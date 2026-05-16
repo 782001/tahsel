@@ -1,9 +1,11 @@
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 
 import '../../../../core/error/failures.dart';
+import '../../../../core/usecases/pagination_params.dart';
 import '../../../offline_sync/data/models/offline_record.dart';
 import '../../../offline_sync/domain/repositories/offline_sync_repository.dart';
 import '../../domain/entities/debt_entity.dart';
@@ -12,6 +14,8 @@ import '../../domain/repositories/debt_repository.dart';
 import '../datasources/debt_remote_data_source.dart';
 import '../models/debt_model.dart';
 import '../models/payment_model.dart';
+// Removed redundant import
+
 
 class DebtRepositoryImpl implements DebtRepository {
   final DebtRemoteDataSource remoteDataSource;
@@ -77,6 +81,44 @@ class DebtRepositoryImpl implements DebtRepository {
     try {
       final result = await remoteDataSource.getDebts(
         uid,
+        forceRefresh: forceRefresh,
+      );
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<DebtEntity>>> getCustomerDebts(
+    String uid,
+    String customerName, {
+    bool forceRefresh = false,
+  }) async {
+    try {
+      final result = await remoteDataSource.getCustomerDebts(
+        uid,
+        customerName,
+        forceRefresh: forceRefresh,
+      );
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, PaginatedResult<DebtEntity>>> getDebtsPaginated(
+    String uid, {
+    int limit = 15,
+    DocumentSnapshot? lastDocument,
+    bool forceRefresh = false,
+  }) async {
+    try {
+      final result = await remoteDataSource.getDebtsPaginated(
+        uid,
+        limit: limit,
+        lastDocument: lastDocument,
         forceRefresh: forceRefresh,
       );
       return Right(result);
@@ -154,19 +196,41 @@ class DebtRepositoryImpl implements DebtRepository {
   }
 
   @override
-  Stream<List<PaymentEntity>> getDebtTransactions(String debtId) {
-    return remoteDataSource.getDebtTransactions(debtId);
+  Stream<List<PaymentEntity>> getDebtTransactions(String uid, String debtId) {
+    return remoteDataSource.getDebtTransactions(uid, debtId);
   }
 
   @override
   Future<Either<Failure, List<PaymentEntity>>> getDebtTransactionsFuture(
+    String uid,
     String debtId, {
     bool forceRefresh = false,
   }) async {
     try {
       final result = await remoteDataSource.getDebtTransactionsFuture(
+        uid,
         debtId,
         forceRefresh: forceRefresh,
+      );
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, PaginatedResult<PaymentEntity>>> getDebtTransactionsPaginated(
+    String uid,
+    String debtId, {
+    int limit = 15,
+    DocumentSnapshot? lastDocument,
+  }) async {
+    try {
+      final result = await remoteDataSource.getDebtTransactionsPaginated(
+        uid,
+        debtId,
+        limit: limit,
+        lastDocument: lastDocument,
       );
       return Right(result);
     } catch (e) {
@@ -191,9 +255,47 @@ class DebtRepositoryImpl implements DebtRepository {
   }
 
   @override
+  Future<Either<Failure, PaginatedResult<PaymentEntity>>> getCustomerAllPaymentsPaginated(
+    String uid,
+    String customerName, {
+    int limit = 15,
+    DocumentSnapshot? lastDocument,
+  }) async {
+    try {
+      final result = await remoteDataSource.getCustomerAllPaymentsPaginated(
+        uid,
+        customerName,
+        limit: limit,
+        lastDocument: lastDocument,
+      );
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, List<PaymentEntity>>> getAllUserPayments(String uid) async {
     try {
       final result = await remoteDataSource.getAllUserPayments(uid);
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, PaginatedResult<PaymentEntity>>> getAllUserPaymentsPaginated(
+    String uid, {
+    int limit = 15,
+    DocumentSnapshot? lastDocument,
+  }) async {
+    try {
+      final result = await remoteDataSource.getAllUserPaymentsPaginated(
+        uid,
+        limit: limit,
+        lastDocument: lastDocument,
+      );
       return Right(result);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -258,6 +360,21 @@ class DebtRepositoryImpl implements DebtRepository {
         forceRefresh: forceRefresh,
       );
       return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, TotalDebtsResult>> getDebtSummary(String uid) async {
+    try {
+      final summaryData = await remoteDataSource.getDebtSummary(uid);
+      return Right(
+        TotalDebtsResult(
+          totalAmount: (summaryData['unpaidDebts'] ?? 0.0).toDouble(),
+          customerCount: (summaryData['debtCustomersCount'] ?? 0).toInt(),
+        ),
+      );
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

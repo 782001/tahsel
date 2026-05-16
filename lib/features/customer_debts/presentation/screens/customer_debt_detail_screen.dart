@@ -13,6 +13,7 @@ import 'package:tahsel/features/customer_debts/presentation/widgets/debt_item_ca
 import 'package:tahsel/features/customer_debts/presentation/widgets/header_banner.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/notification_preference_toggle.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/partial_payment_dialog.dart';
+import 'package:tahsel/features/customer_debts/presentation/widgets/skeletons/customer_debt_skeleton.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/summary_row.dart';
 import 'package:tahsel/features/debt/domain/entities/debt_entity.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_cubit.dart';
@@ -22,7 +23,7 @@ import 'package:tahsel/features/standard_features/no-internet/logic/connectivity
 import 'package:tahsel/shared/widgets/no_internet_view.dart';
 import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
-class CustomerDebtDetailScreen extends StatelessWidget {
+class CustomerDebtDetailScreen extends StatefulWidget {
   final CustomerDebtDetail detail;
   final bool isShop;
 
@@ -31,6 +32,72 @@ class CustomerDebtDetailScreen extends StatelessWidget {
     required this.detail,
     required this.isShop,
   });
+
+  @override
+  State<CustomerDebtDetailScreen> createState() =>
+      _CustomerDebtDetailScreenState();
+}
+
+class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
+  late CustomerDebtDetail currentDetail;
+  bool _isLoading = true;
+  bool _hasChanged = false;
+
+
+  @override
+  void initState() {
+    super.initState();
+    currentDetail = widget.detail;
+    _fetchDebts('initial');
+  }
+
+  Future<void> _fetchDebts([dynamic result]) async {
+    // If no changes were made (result is explicitly false), do nothing
+    if (result == false) return;
+
+    // If the result is a DebtEntity, we can update locally without refetching
+    if (result is DebtEntity) {
+      _updateLocalItem(result);
+      return;
+    }
+
+    // Determine if this is the first load (from initState) or a refresh
+    final bool isInitial = result == 'initial';
+    final bool forceRefresh = !isInitial;
+    
+    final debts = await context.read<DebtCubit>().fetchCustomerDebts(
+      widget.detail.customerName,
+      forceRefresh: forceRefresh,
+    );
+    if (mounted) {
+      if (!isInitial) {
+        _hasChanged = true;
+      }
+      final processedDetail = await compute(_processDebtsOnIsolate, {
+        'name': widget.detail.customerName,
+        'entities': debts,
+      });
+      setState(() {
+        currentDetail = processedDetail;
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _updateLocalItem(DebtEntity updatedDebt) {
+    final List<DebtEntity> updatedEntities = currentDetail.items.map((item) {
+      return item.entity.id == updatedDebt.id ? updatedDebt : item.entity;
+    }).toList();
+
+    setState(() {
+      currentDetail = CustomerDebtDetail.fromEntities(
+        currentDetail.customerName,
+        updatedEntities,
+      );
+      _hasChanged = true; // Propagate change to previous screen (customer list)
+    });
+  }
+
 
   void _onPayPartial(
     BuildContext context,
@@ -51,7 +118,7 @@ class CustomerDebtDetailScreen extends StatelessWidget {
           totalRemaining: totalDebt,
         ),
       ),
-    );
+    ).then((_) => _fetchDebts());
   }
 
   void _onPayFull(BuildContext context, String customerName, double totalDebt) {
@@ -61,12 +128,15 @@ class CustomerDebtDetailScreen extends StatelessWidget {
     }
     final uid = AppStrings.userToken;
     if (uid.isNotEmpty) {
-      context.read<DebtCubit>().markAsPaid(
-        uid: uid,
-        customerName: customerName,
-        totalAmount: totalDebt,
-        note: AppStrings.fullSettlement.tr(),
-      );
+      context
+          .read<DebtCubit>()
+          .markAsPaid(
+            uid: uid,
+            customerName: customerName,
+            totalAmount: totalDebt,
+            note: AppStrings.fullSettlement.tr(),
+          )
+          .then((_) => _fetchDebts());
     }
   }
 
@@ -82,11 +152,11 @@ class CustomerDebtDetailScreen extends StatelessWidget {
         value: cubit,
         child: AddDebtDialog(
           customerName: customerName,
-          isShop: isShop,
-          ledgerNumber: detail.ledgerNumber,
+          isShop: widget.isShop,
+          ledgerNumber: currentDetail.ledgerNumber,
         ),
       ),
-    );
+    ).then((_) => _fetchDebts());
   }
 
   @override
@@ -114,6 +184,8 @@ class CustomerDebtDetailScreen extends StatelessWidget {
               note: state.note,
             );
           }
+          // Refresh data after success
+          _fetchDebts();
         } else if (state is DebtFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -124,29 +196,66 @@ class CustomerDebtDetailScreen extends StatelessWidget {
           );
         }
       },
-      child: BlocBuilder<DebtCubit, DebtState>(
-        builder: (context, state) {
-          if (state is DebtsFetchSuccess) {
-            // Using a simple where for now, but compute could be used for large lists
-            final customerDebts = state.debts
-                .where((d) => d.customerName == detail.customerName)
-                .toList();
+      child: _isLoading
+          ? Scaffold(
+              backgroundColor: AppColors.scafoldBackGround,
+             
+              body: CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  // ── Collapsible App Bar ─────────────────────────────────────────
+                  SliverAppBar(
+                    expandedHeight: 180.h,
+                    pinned: true,
+                    backgroundColor: AppColors.primaryColor,
+                    centerTitle: true,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(
+                        bottom: Radius.circular(24.r),
+                      ),
+                    ),
+                    title: Text(
+                      currentDetail.customerName,
+                      style: TextStyles.customStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    leading: IconButton(
+                      icon: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white,
+                      ),
+                    onPressed: () => Navigator.pop(context, _hasChanged),
 
-            return FutureBuilder<CustomerDebtDetail>(
-              future: compute(_processDebtsOnIsolate, {
-                'name': detail.customerName,
-                'entities': customerDebts,
-              }),
-              builder: (context, snapshot) {
-                final currentDetail = snapshot.data ?? detail;
-                return _buildScaffold(context, currentDetail);
-              },
-            );
-          }
-
-          return _buildScaffold(context, detail);
-        },
-      ),
+                    ),
+                    flexibleSpace: FlexibleSpaceBar(
+                      background: HeaderBanner(detail: currentDetail),
+                    ),
+                    // bottom: PreferredSize(
+                    //   preferredSize: const Size.fromHeight(0),
+                    //   child: Container(
+                    //     height: 20.h,
+                    //     decoration: BoxDecoration(
+                    //       color: AppColors.scafoldBackGround,
+                    //       borderRadius: BorderRadius.vertical(
+                    //         top: Radius.circular(24.r),
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
+                  ),
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => const CustomerDebtCardSkeleton(),
+                      childCount: 5,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : _buildScaffold(context, currentDetail),
     );
   }
 
@@ -176,7 +285,8 @@ class CustomerDebtDetailScreen extends StatelessWidget {
                   Icons.arrow_back_ios_new_rounded,
                   color: Colors.white,
                 ),
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => Navigator.pop(context, _hasChanged),
+
               ),
             ),
             body: NoInternetView(
@@ -229,7 +339,8 @@ class CustomerDebtDetailScreen extends StatelessWidget {
                     Icons.arrow_back_ios_new_rounded,
                     color: Colors.white,
                   ),
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => Navigator.pop(context, _hasChanged),
+
                 ),
                 flexibleSpace: FlexibleSpaceBar(
                   background: HeaderBanner(detail: currentDetail),
@@ -397,7 +508,9 @@ class CustomerDebtDetailScreen extends StatelessWidget {
                           totalRemainingBefore: currentDetail.totalDebt,
                         );
                       },
+                      onRefresh: _fetchDebts,
                     ),
+
                   );
                 }, childCount: currentDetail.items.length),
               ),

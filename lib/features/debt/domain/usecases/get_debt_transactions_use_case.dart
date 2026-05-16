@@ -6,7 +6,7 @@ class GetDebtTransactionsUseCase {
 
   GetDebtTransactionsUseCase(this.repository);
 
-  Stream<List<PaymentEntity>> call(String debtId) {
-    return repository.getDebtTransactions(debtId);
+  Stream<List<PaymentEntity>> call(String uid, String debtId) {
+    return repository.getDebtTransactions(uid, debtId);
   }
 }

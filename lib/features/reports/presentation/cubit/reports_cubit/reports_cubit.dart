@@ -1,5 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tahsel/core/base_usecase/base_usecase.dart';
 
 import '../../../domain/entities/reports_entity.dart';
 import '../../../domain/usecases/generate_insights_usecase.dart';

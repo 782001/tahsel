@@ -98,7 +98,7 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
             paidAmount: 0,
             remainingAmount: r.amount,
             personName: personName,
-            details: "قيد المزامنة...", // Syncing indicator for logic
+            details: AppStrings.syncing.tr(), // Syncing indicator for logic
             operationType: 'debt',
             timestamp: r.date,
             isPaid: false,

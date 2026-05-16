@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/debt_entity.dart';
 
@@ -22,10 +23,33 @@ class DebtAddSuccess extends DebtState {
 
 class DebtsFetchSuccess extends DebtState {
   final List<DebtEntity> debts;
-  const DebtsFetchSuccess({required this.debts});
+  final DocumentSnapshot? lastDocument;
+  final bool hasMore;
+  final bool isPaginationLoading;
+
+  const DebtsFetchSuccess({
+    required this.debts,
+    this.lastDocument,
+    this.hasMore = false,
+    this.isPaginationLoading = false,
+  });
+
+  DebtsFetchSuccess copyWith({
+    List<DebtEntity>? debts,
+    DocumentSnapshot? lastDocument,
+    bool? hasMore,
+    bool? isPaginationLoading,
+  }) {
+    return DebtsFetchSuccess(
+      debts: debts ?? this.debts,
+      lastDocument: lastDocument ?? this.lastDocument,
+      hasMore: hasMore ?? this.hasMore,
+      isPaginationLoading: isPaginationLoading ?? this.isPaginationLoading,
+    );
+  }
 
   @override
-  List<Object?> get props => [debts];
+  List<Object?> get props => [debts, lastDocument, hasMore, isPaginationLoading];
 }
 
 class DebtPaymentSuccess extends DebtState {

@@ -25,10 +25,3 @@ class CalculateTotalDebtsUseCase {
     );
   }
 }
-
-class TotalDebtsResult {
-  final double totalAmount;
-  final int customerCount;
-
-  TotalDebtsResult({required this.totalAmount, required this.customerCount});
-}

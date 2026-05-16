@@ -30,6 +30,7 @@ class DebtDetailsCubit extends Cubit<DebtDetailsState> {
   }) : super(DebtDetailsInitial());
 
   Future<void> loadTransactions(
+    String uid,
     String debtId, {
     bool forceRefresh = false,
   }) async {
@@ -42,7 +43,11 @@ class DebtDetailsCubit extends Cubit<DebtDetailsState> {
     emit(DebtDetailsLoading());
 
     final result = await getDebtTransactionsUseCase(
-      GetDebtTransactionsParams(debtId: debtId, forceRefresh: forceRefresh),
+      GetDebtTransactionsParams(
+        uid: uid,
+        debtId: debtId,
+        forceRefresh: forceRefresh,
+      ),
     );
 
     // Also fetch the debt itself to ensure we have the latest description/name
@@ -156,7 +161,7 @@ class DebtDetailsCubit extends Cubit<DebtDetailsState> {
         sl<DebtCubit>().getDebts(uid, forceRefresh: true);
 
         // Reload current transactions to get fresh totals
-        await loadTransactions(debtId, forceRefresh: true);
+        await loadTransactions(uid, debtId, forceRefresh: true);
 
         if (state is DebtDetailsLoaded) {
           final loadedState = state as DebtDetailsLoaded;
@@ -198,7 +203,7 @@ class DebtDetailsCubit extends Cubit<DebtDetailsState> {
         sl<DebtCubit>().getDebts(uid, forceRefresh: true);
 
         // Reload current transactions
-        await loadTransactions(debtId, forceRefresh: true);
+        await loadTransactions(uid, debtId, forceRefresh: true);
 
         if (state is DebtDetailsLoaded) {
           final loadedState = state as DebtDetailsLoaded;

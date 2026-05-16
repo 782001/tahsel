@@ -1,6 +1,9 @@
+// ignore_for_file: avoid_types_as_parameter_names, unused_element
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../../core/error/firebase_error_handler.dart';
+import '../../../../core/usecases/pagination_params.dart';
 import '../../../../core/utils/summary_helper.dart';
 import '../../domain/entities/payment_entity.dart';
 import '../models/debt_model.dart';
@@ -9,6 +12,11 @@ import '../models/payment_model.dart';
 abstract class DebtRemoteDataSource {
   Future<String> addDebt(DebtModel debt);
   Future<List<DebtModel>> getDebts(String uid, {bool forceRefresh = false});
+  Future<List<DebtModel>> getCustomerDebts(
+    String uid,
+    String customerName, {
+    bool forceRefresh = false,
+  });
   Future<void> payDebt(DebtModel debt, PaymentModel payment);
   Future<void> payTotalDebt(String uid, String customerName, double amount);
   Future<void> markCustomerAsPaid(String uid, String customerName);
@@ -26,8 +34,9 @@ abstract class DebtRemoteDataSource {
     required String debtId,
     required String paymentId,
   });
-  Stream<List<PaymentModel>> getDebtTransactions(String debtId);
+  Stream<List<PaymentModel>> getDebtTransactions(String uid, String debtId);
   Future<List<PaymentModel>> getDebtTransactionsFuture(
+    String uid,
     String debtId, {
     bool forceRefresh = false,
   });
@@ -42,6 +51,35 @@ abstract class DebtRemoteDataSource {
     String debtId, {
     bool forceRefresh = false,
   });
+
+  Future<PaginatedResult<DebtModel>> getDebtsPaginated(
+    String uid, {
+    int limit = 15,
+    DocumentSnapshot? lastDocument,
+    bool forceRefresh = false,
+  });
+
+  Future<PaginatedResult<PaymentModel>> getDebtTransactionsPaginated(
+    String uid,
+    String debtId, {
+    int limit = 15,
+    DocumentSnapshot? lastDocument,
+  });
+
+  Future<PaginatedResult<PaymentModel>> getCustomerAllPaymentsPaginated(
+    String uid,
+    String customerName, {
+    int limit = 15,
+    DocumentSnapshot? lastDocument,
+  });
+
+  Future<PaginatedResult<PaymentModel>> getAllUserPaymentsPaginated(
+    String uid, {
+    int limit = 15,
+    DocumentSnapshot? lastDocument,
+  });
+
+  Future<Map<String, dynamic>> getDebtSummary(String uid);
 }
 
 class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
@@ -141,6 +179,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             ? Timestamp.fromDate(debt.timestamp!)
             : FieldValue.serverTimestamp(),
         'type': PaymentType.debtAdded.name,
+        'relatedTo': debt.customerName,
+        'activityName': debt.productOrSessionDetails,
       });
 
       // 4. Add initial payment transaction if there was a payment
@@ -161,22 +201,33 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           'type': debt.remainingAmount <= 0
               ? PaymentType.full.name
               : PaymentType.partial.name,
+          'relatedTo': debt.customerName,
+          'activityName': debt.productOrSessionDetails,
         });
       }
 
       // 5. Update Summaries
-      final summaryKeys = SummaryHelper.getSummaryKeys(debt.timestamp ?? DateTime.now());
+      final summaryKeys = SummaryHelper.getSummaryKeys(
+        debt.timestamp ?? DateTime.now(),
+      );
+
+      // Check if this is the first unpaid debt for this customer to increment customer count
+      final unpaidSnapshot = await userRef
+          .collection('debts')
+          .where('customerName', isEqualTo: debt.customerName)
+          .where('isPaid', isEqualTo: false)
+          .limit(1)
+          .get();
+      final bool isFirstUnpaid = unpaidSnapshot.docs.isEmpty;
+
       for (final key in summaryKeys) {
         final summaryRef = userRef.collection('summaries').doc(key);
-        batch.set(
-          summaryRef,
-          {
-            'totalDebts': FieldValue.increment(debt.remainingAmount),
-            'unpaidDebts': FieldValue.increment(debt.remainingAmount),
-            'lastUpdatedAt': FieldValue.serverTimestamp(),
-          },
-          SetOptions(merge: true),
-        );
+        batch.set(summaryRef, {
+          'totalDebts': FieldValue.increment(debt.remainingAmount),
+          'unpaidDebts': FieldValue.increment(debt.remainingAmount),
+          if (isFirstUnpaid) 'debtCustomersCount': FieldValue.increment(1),
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
       }
 
       await batch.commit();
@@ -214,10 +265,47 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
   }
 
   @override
+  Future<List<DebtModel>> getCustomerDebts(
+    String uid,
+    String customerName, {
+    bool forceRefresh = false,
+  }) async {
+    try {
+      final snapshot = await firestore
+          .collection('users')
+          .doc(uid)
+          .collection('debts')
+          .where('customerName', isEqualTo: customerName)
+          .orderBy('lastUpdatedAt', descending: true)
+          .get(
+            GetOptions(
+              source: forceRefresh ? Source.server : Source.serverAndCache,
+            ),
+          );
+
+      return snapshot.docs
+          .map((doc) => DebtModel.fromJson(doc.data(), doc.id))
+          .toList();
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      throw Exception('Failed to fetch customer debts: $e');
+    }
+  }
+
+  @override
   Future<void> payDebt(DebtModel debt, PaymentModel payment) async {
     try {
       final uid = debt.uid;
-      final debtRef = _getDebtRef(uid, debt.id, debt.operationId);
+      final userRef = firestore.collection('users').doc(uid);
+      final debtRef = userRef.collection('debts').doc(debt.id);
+
+      // Check if this was the last unpaid debt for this customer BEFORE the transaction
+      final unpaidSnapshot = await userRef
+          .collection('debts')
+          .where('customerName', isEqualTo: debt.customerName)
+          .where('isPaid', isEqualTo: false)
+          .limit(2)
+          .get();
 
       await firestore.runTransaction((transaction) async {
         // 1. ALL READS FIRST
@@ -229,11 +317,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         DocumentSnapshot? opSnap;
         final operationId = debt.operationId;
         if (operationId.isNotEmpty) {
-          final opRef = firestore
-              .collection('users')
-              .doc(uid)
-              .collection('operations')
-              .doc(operationId);
+          final opRef = userRef.collection('operations').doc(operationId);
           opSnap = await transaction.get(opRef);
         }
 
@@ -241,7 +325,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         final debtData = debtSnap.data() as Map<String, dynamic>;
         final currentPaid = (debtData['paidAmount'] as num).toDouble();
         final currentTotal = (debtData['totalAmount'] as num).toDouble();
-        
+
         final newPaidAmount = currentPaid + payment.amountPaid;
         final newRemainingAmount = currentTotal - newPaidAmount;
         final isPaid = newRemainingAmount <= 1e-9;
@@ -272,27 +356,31 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           'remainingAmount': newRemainingAmount,
           'createdAt': FieldValue.serverTimestamp(),
           'type': isPaid ? PaymentType.full.name : PaymentType.partial.name,
+          'relatedTo': debtData['customerName'],
+          'activityName': debtData['productOrSessionDetails'],
         });
 
+        // Check if customer became fully paid to decrement customer count
+        // If they had only 1 unpaid debt before AND it's now paid
+        final bool becameFullyPaid =
+            isPaid &&
+            unpaidSnapshot.docs.length == 1 &&
+            unpaidSnapshot.docs.first.id == debt.id;
+
         // Update Summaries
-        final summaryKeys = SummaryHelper.getSummaryKeys(debt.timestamp ?? DateTime.now());
+        final summaryKeys = SummaryHelper.getSummaryKeys(
+          debt.timestamp ?? DateTime.now(),
+        );
         for (final key in summaryKeys) {
-          final summaryRef = firestore
-              .collection('users')
-              .doc(uid)
-              .collection('summaries')
-              .doc(key);
-          
-          transaction.set(
-            summaryRef,
-            {
-              'totalDebts': FieldValue.increment(-payment.amountPaid),
-              'unpaidDebts': FieldValue.increment(-payment.amountPaid),
-              if (isPaid) 'paidDebts': FieldValue.increment(currentTotal),
-              'lastUpdatedAt': FieldValue.serverTimestamp(),
-            },
-            SetOptions(merge: true),
-          );
+          final summaryRef = userRef.collection('summaries').doc(key);
+
+          transaction.set(summaryRef, {
+            'totalDebts': FieldValue.increment(-payment.amountPaid),
+            'unpaidDebts': FieldValue.increment(-payment.amountPaid),
+            if (isPaid) 'paidDebts': FieldValue.increment(currentTotal),
+            if (becameFullyPaid) 'debtCustomersCount': FieldValue.increment(-1),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
         }
       });
     } catch (e) {
@@ -345,7 +433,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           final operationId = debtData['operationId'] as String?;
           final currentTotal = (debtData['totalAmount'] as num).toDouble();
           final currentPaid = (debtData['paidAmount'] as num).toDouble();
-          final currentRemaining = (debtData['remainingAmount'] as num).toDouble();
+          final currentRemaining = (debtData['remainingAmount'] as num)
+              .toDouble();
 
           double paymentForThisItem = 0;
           if (remainingToPay >= currentRemaining) {
@@ -382,6 +471,19 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             }
           }
 
+          // Add payment record
+          final paymentRef = debtRef.collection('payments').doc();
+          transaction.set(paymentRef, {
+            'uid': uid,
+            'debtId': debtRef.id,
+            'amountPaid': paymentForThisItem,
+            'remainingAmount': newRemainingAmount,
+            'createdAt': FieldValue.serverTimestamp(),
+            'type': isPaid ? PaymentType.full.name : PaymentType.partial.name,
+            'relatedTo': debtData['customerName'],
+            'activityName': debtData['productOrSessionDetails'],
+          });
+
           // Update Summaries
           final summaryKeys = SummaryHelper.getSummaryKeys(
             (debtData['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
@@ -393,16 +495,33 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
                 .collection('summaries')
                 .doc(key);
 
-            transaction.set(
-              summaryRef,
-              {
-                'totalDebts': FieldValue.increment(-paymentForThisItem),
-                'unpaidDebts': FieldValue.increment(-paymentForThisItem),
-                if (isPaid) 'paidDebts': FieldValue.increment(currentTotal),
-                'lastUpdatedAt': FieldValue.serverTimestamp(),
-              },
-              SetOptions(merge: true),
-            );
+            transaction.set(summaryRef, {
+              'totalDebts': FieldValue.increment(-paymentForThisItem),
+              'unpaidDebts': FieldValue.increment(-paymentForThisItem),
+              if (isPaid) 'paidDebts': FieldValue.increment(currentTotal),
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          }
+        }
+
+        // After processing all debts for this customer, check if they are now fully paid
+        // If remainingToPay is 0 AND we went through the whole loop, they might be fully paid.
+        // Actually, if amount >= total unpaid amount of all items in snapshot.
+        double totalUnpaidInSnapshot = snapshot.docs.fold(
+          0.0,
+          (sum, d) => sum + (d.data()['remainingAmount'] as num).toDouble(),
+        );
+        if (amount >= totalUnpaidInSnapshot - 1e-9) {
+          final summaryKeys = SummaryHelper.getSummaryKeys(DateTime.now());
+          for (final key in summaryKeys) {
+            final summaryRef = firestore
+                .collection('users')
+                .doc(uid)
+                .collection('summaries')
+                .doc(key);
+            transaction.set(summaryRef, {
+              'debtCustomersCount': FieldValue.increment(-1),
+            }, SetOptions(merge: true));
           }
         }
       });
@@ -480,6 +599,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             'remainingAmount': 0.0,
             'createdAt': FieldValue.serverTimestamp(),
             'type': PaymentType.settlement.name,
+            'relatedTo': debtData['customerName'],
+            'activityName': debtData['productOrSessionDetails'],
           });
 
           // Update Summaries
@@ -493,17 +614,26 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
                 .collection('summaries')
                 .doc(key);
 
-            transaction.set(
-              summaryRef,
-              {
-                'totalDebts': FieldValue.increment(-amountToPay),
-                'unpaidDebts': FieldValue.increment(-amountToPay),
-                'paidDebts': FieldValue.increment(currentTotal),
-                'lastUpdatedAt': FieldValue.serverTimestamp(),
-              },
-              SetOptions(merge: true),
-            );
+            transaction.set(summaryRef, {
+              'totalDebts': FieldValue.increment(-amountToPay),
+              'unpaidDebts': FieldValue.increment(-amountToPay),
+              'paidDebts': FieldValue.increment(currentTotal),
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
           }
+        }
+
+        // Decrement debtCustomersCount in summaries since customer is now fully paid
+        final summaryKeys = SummaryHelper.getSummaryKeys(DateTime.now());
+        for (final key in summaryKeys) {
+          final summaryRef = firestore
+              .collection('users')
+              .doc(uid)
+              .collection('summaries')
+              .doc(key);
+          transaction.set(summaryRef, {
+            'debtCustomersCount': FieldValue.increment(-1),
+          }, SetOptions(merge: true));
         }
       });
     } catch (e) {
@@ -524,31 +654,42 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
       if (snapshot.docs.isEmpty) return;
 
-      // Firestore batch limit is 500 writes, so we chunk
-      final List<DocumentReference> allRefs = [];
-
-      // Track summary decrements
+      // Track summary decrements and refs
       final Map<String, Map<String, double>> summaryUpdates = {};
+      final List<DocumentReference> allRefs = [];
+      bool hadUnpaid = false;
 
+      // 1. Pre-calculate if there are any unpaid debts for this customer
+      for (var doc in snapshot.docs) {
+        if (!(doc.data()['isPaid'] as bool? ?? false)) {
+          hadUnpaid = true;
+          break;
+        }
+      }
+
+      // 2. Process all documents to collect refs and summary deltas
       for (var doc in snapshot.docs) {
         final data = doc.data();
-        final timestamp = (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+        final timestamp =
+            (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
         final remaining = (data['remainingAmount'] as num?)?.toDouble() ?? 0.0;
         final total = (data['totalAmount'] as num?)?.toDouble() ?? 0.0;
         final isPaid = (data['isPaid'] as bool?) ?? false;
 
         final keys = SummaryHelper.getSummaryKeys(timestamp);
         for (final key in keys) {
-          summaryUpdates.putIfAbsent(key, () => {
-            'totalDebts': 0.0,
-            'unpaidDebts': 0.0,
-            'paidDebts': 0.0,
-          });
-          summaryUpdates[key]!['totalDebts'] = (summaryUpdates[key]!['totalDebts'] ?? 0) - remaining;
+          summaryUpdates.putIfAbsent(
+            key,
+            () => {'totalDebts': 0.0, 'unpaidDebts': 0.0, 'paidDebts': 0.0},
+          );
+          summaryUpdates[key]!['totalDebts'] =
+              (summaryUpdates[key]!['totalDebts'] ?? 0) - remaining;
           if (!isPaid) {
-            summaryUpdates[key]!['unpaidDebts'] = (summaryUpdates[key]!['unpaidDebts'] ?? 0) - remaining;
+            summaryUpdates[key]!['unpaidDebts'] =
+                (summaryUpdates[key]!['unpaidDebts'] ?? 0) - remaining;
           } else {
-            summaryUpdates[key]!['paidDebts'] = (summaryUpdates[key]!['paidDebts'] ?? 0) - total;
+            summaryUpdates[key]!['paidDebts'] =
+                (summaryUpdates[key]!['paidDebts'] ?? 0) - total;
           }
         }
 
@@ -559,11 +700,10 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         for (var paymentDoc in paymentsSnapshot.docs) {
           allRefs.add(paymentDoc.reference);
         }
-        // Add the debt doc itself
         allRefs.add(doc.reference);
       }
 
-      // Batch delete in chunks of 500
+      // 3. Batch commit in chunks of 500
       for (var i = 0; i < allRefs.length; i += 500) {
         final chunk = allRefs.sublist(
           i,
@@ -574,21 +714,21 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           batch.delete(ref);
         }
 
-        // Only add summary updates to the FIRST batch to avoid double-decrement if we have multiple chunks
-        // Actually, we should only do this once.
+        // Only add summary updates to the FIRST batch
         if (i == 0) {
           summaryUpdates.forEach((key, updates) {
-            final summaryRef = firestore.collection('users').doc(uid).collection('summaries').doc(key);
-            batch.set(
-              summaryRef,
-              {
-                'totalDebts': FieldValue.increment(updates['totalDebts']!),
-                'unpaidDebts': FieldValue.increment(updates['unpaidDebts']!),
-                'paidDebts': FieldValue.increment(updates['paidDebts']!),
-                'lastUpdatedAt': FieldValue.serverTimestamp(),
-              },
-              SetOptions(merge: true),
-            );
+            final summaryRef = firestore
+                .collection('users')
+                .doc(uid)
+                .collection('summaries')
+                .doc(key);
+            batch.set(summaryRef, {
+              'totalDebts': FieldValue.increment(updates['totalDebts']!),
+              'unpaidDebts': FieldValue.increment(updates['unpaidDebts']!),
+              'paidDebts': FieldValue.increment(updates['paidDebts']!),
+              if (hadUnpaid) 'debtCustomersCount': FieldValue.increment(-1),
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
           });
         }
 
@@ -617,7 +757,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
       // 2. Fetch all payment references
       final paymentsSnapshot = await debtRef.collection('payments').get();
-      
+
       final List<DocumentReference> allRefs = [];
       for (var doc in paymentsSnapshot.docs) {
         allRefs.add(doc.reference);
@@ -644,10 +784,31 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
       batch.delete(debtRef);
 
       // 6. Update Summaries (Decrement)
-      final timestamp = (debtDoc.data()?['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
-      final remainingAmount = (debtDoc.data()?['remainingAmount'] as num?)?.toDouble() ?? 0.0;
-      final totalAmount = (debtDoc.data()?['totalAmount'] as num?)?.toDouble() ?? 0.0;
+      final timestamp =
+          (debtDoc.data()?['timestamp'] as Timestamp?)?.toDate() ??
+          DateTime.now();
+      final remainingAmount =
+          (debtDoc.data()?['remainingAmount'] as num?)?.toDouble() ?? 0.0;
+      final totalAmount =
+          (debtDoc.data()?['totalAmount'] as num?)?.toDouble() ?? 0.0;
       final isPaid = (debtDoc.data()?['isPaid'] as bool?) ?? false;
+
+      // Check if this was the last unpaid debt for this customer BEFORE the loop
+      bool shouldDecrementCustomerCount = false;
+      if (!isPaid) {
+        final otherUnpaid = await firestore
+            .collection('users')
+            .doc(uid)
+            .collection('debts')
+            .where('customerName', isEqualTo: debtDoc.data()?['customerName'])
+            .where('isPaid', isEqualTo: false)
+            .limit(2)
+            .get();
+        // If length is 1, it's just this one (which is about to be deleted)
+        if (otherUnpaid.docs.length <= 1) {
+          shouldDecrementCustomerCount = true;
+        }
+      }
 
       final summaryKeys = SummaryHelper.getSummaryKeys(timestamp);
       for (final key in summaryKeys) {
@@ -656,17 +817,15 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             .doc(uid)
             .collection('summaries')
             .doc(key);
-        
-        batch.set(
-          summaryRef,
-          {
-            'totalDebts': FieldValue.increment(-remainingAmount),
-            if (!isPaid) 'unpaidDebts': FieldValue.increment(-remainingAmount),
-            if (isPaid) 'paidDebts': FieldValue.increment(-totalAmount),
-            'lastUpdatedAt': FieldValue.serverTimestamp(),
-          },
-          SetOptions(merge: true),
-        );
+
+        batch.set(summaryRef, {
+          'totalDebts': FieldValue.increment(-remainingAmount),
+          if (!isPaid) 'unpaidDebts': FieldValue.increment(-remainingAmount),
+          if (isPaid) 'paidDebts': FieldValue.increment(-totalAmount),
+          if (shouldDecrementCustomerCount)
+            'debtCustomersCount': FieldValue.increment(-1),
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
       }
 
       await batch.commit();
@@ -677,42 +836,37 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
   }
 
   @override
-  Stream<List<PaymentModel>> getDebtTransactions(String debtId) {
-    // This is more complex because we need the UID to find the debt
-    // But usually we can find it by searching all users or by passing the UID
-    // However, looking at the structure, debts are under users/{uid}/debts/{debtId}
-    // We need to know which user this debt belongs to.
-    // Let's assume we can use a collectionGroup or pass the path.
-    // For now, I'll use collectionGroup for 'payments' and filter by 'debtId'
-    // which is safe if debtId is unique (which doc().id is).
-
+  Stream<List<PaymentModel>> getDebtTransactions(String uid, String debtId) {
     return firestore
-        .collectionGroup('payments')
-        .where('debtId', isEqualTo: debtId)
+        .collection('users')
+        .doc(uid)
+        .collection('debts')
+        .doc(debtId)
+        .collection('payments')
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
+        .map((snapshot) {
+          return snapshot.docs
               .map((doc) => PaymentModel.fromJson(doc.data(), doc.id))
-              .toList(),
-        );
+              .toList();
+        });
   }
 
   @override
   Future<List<PaymentModel>> getDebtTransactionsFuture(
+    String uid,
     String debtId, {
     bool forceRefresh = false,
   }) async {
     try {
       final snapshot = await firestore
-          .collectionGroup('payments')
-          .where('debtId', isEqualTo: debtId)
+          .collection('users')
+          .doc(uid)
+          .collection('debts')
+          .doc(debtId)
+          .collection('payments')
           .orderBy('createdAt', descending: true)
-          .get(
-            GetOptions(
-              source: forceRefresh ? Source.server : Source.serverAndCache,
-            ),
-          );
+          .get();
 
       return snapshot.docs
           .map((doc) => PaymentModel.fromJson(doc.data(), doc.id))
@@ -769,38 +923,15 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
   @override
   Future<List<PaymentModel>> getAllUserPayments(String uid) async {
     try {
-      final debtsSnapshot = await firestore
-          .collection('users')
-          .doc(uid)
-          .collection('debts')
+      final snapshot = await firestore
+          .collectionGroup('payments')
+          .where('uid', isEqualTo: uid)
+          .orderBy('createdAt', descending: true)
           .get();
 
-      List<PaymentModel> allPayments = [];
-      final paymentFutures = debtsSnapshot.docs.map((debtDoc) async {
-        final debtData = debtDoc.data();
-        final customerName = debtData['customerName'] ?? '';
-        final debtName = debtData['productOrSessionDetails'] ?? '';
-        
-        final paymentsSnapshot = await debtDoc.reference
-            .collection('payments')
-            .get();
-            
-        return paymentsSnapshot.docs.map((paymentDoc) {
-          final paymentData = paymentDoc.data();
-          // Inject parent debt info for easier display in global analytics
-          paymentData['relatedTo'] = customerName;
-          paymentData['activityName'] = debtName;
-          
-          return PaymentModel.fromJson(paymentData, paymentDoc.id);
-        }).toList();
-      });
-
-      final results = await Future.wait(paymentFutures);
-      for (var list in results) {
-        allPayments.addAll(list);
-      }
-
-      return allPayments;
+      return snapshot.docs
+          .map((doc) => PaymentModel.fromJson(doc.data(), doc.id))
+          .toList();
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       throw Exception('Failed to fetch all user payments: $e');
@@ -925,7 +1056,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
         // Update Summaries
         final summaryKeys = SummaryHelper.getSummaryKeys(
-          (debtSnap.data()?['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+          (debtSnap.data()?['timestamp'] as Timestamp?)?.toDate() ??
+              DateTime.now(),
         );
         for (final key in summaryKeys) {
           final summaryRef = firestore
@@ -936,15 +1068,11 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
           final double summaryDelta = relatedTo == 'debt' ? delta : -delta;
 
-          transaction.set(
-            summaryRef,
-            {
-              'totalDebts': FieldValue.increment(summaryDelta),
-              'unpaidDebts': FieldValue.increment(summaryDelta),
-              'lastUpdatedAt': FieldValue.serverTimestamp(),
-            },
-            SetOptions(merge: true),
-          );
+          transaction.set(summaryRef, {
+            'totalDebts': FieldValue.increment(summaryDelta),
+            'unpaidDebts': FieldValue.increment(summaryDelta),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
         }
       });
     } catch (e) {
@@ -1040,7 +1168,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
         // Update Summaries
         final summaryKeys = SummaryHelper.getSummaryKeys(
-          (debtSnap.data()?['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+          (debtSnap.data()?['timestamp'] as Timestamp?)?.toDate() ??
+              DateTime.now(),
         );
         for (final key in summaryKeys) {
           final summaryRef = firestore
@@ -1049,17 +1178,15 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
               .collection('summaries')
               .doc(key);
 
-          final double summaryDelta = relatedTo == 'debt' ? -amountToDelete : amountToDelete;
+          final double summaryDelta = relatedTo == 'debt'
+              ? -amountToDelete
+              : amountToDelete;
 
-          transaction.set(
-            summaryRef,
-            {
-              'totalDebts': FieldValue.increment(summaryDelta),
-              'unpaidDebts': FieldValue.increment(summaryDelta),
-              'lastUpdatedAt': FieldValue.serverTimestamp(),
-            },
-            SetOptions(merge: true),
-          );
+          transaction.set(summaryRef, {
+            'totalDebts': FieldValue.increment(summaryDelta),
+            'unpaidDebts': FieldValue.increment(summaryDelta),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
         }
       });
     } catch (e) {
@@ -1080,7 +1207,219 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
     } else if (operationId != null && operationId.isNotEmpty) {
       return debtsCollection.doc(operationId);
     } else {
-      throw Exception("Cannot resolve Debt reference: Both id and operationId are empty.");
+      throw Exception(
+        "Cannot resolve Debt reference: Both id and operationId are empty.",
+      );
+    }
+  }
+
+  @override
+  Future<PaginatedResult<DebtModel>> getDebtsPaginated(
+    String uid, {
+    int limit = 15,
+    DocumentSnapshot? lastDocument,
+    bool forceRefresh = false,
+  }) async {
+    try {
+      var query = firestore
+          .collection('users')
+          .doc(uid)
+          .collection('debts')
+          .orderBy('lastUpdatedAt', descending: true)
+          .limit(limit);
+
+      if (lastDocument != null) {
+        query = query.startAfterDocument(lastDocument);
+      }
+
+      final snapshot = await query.get(
+        GetOptions(
+          source: forceRefresh ? Source.server : Source.serverAndCache,
+        ),
+      );
+
+      final items = snapshot.docs
+          .map((doc) => DebtModel.fromJson(doc.data(), doc.id))
+          .toList();
+
+      return PaginatedResult(
+        items: items,
+        lastDocument: snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
+        hasMore: items.length == limit,
+      );
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      throw Exception('Failed to fetch paginated debts: $e');
+    }
+  }
+
+  @override
+  Future<PaginatedResult<PaymentModel>> getDebtTransactionsPaginated(
+    String uid,
+    String debtId, {
+    int limit = 15,
+    DocumentSnapshot? lastDocument,
+  }) async {
+    try {
+      // Use direct path instead of collectionGroup for better reliability with old records
+      var query = firestore
+          .collection('users')
+          .doc(uid)
+          .collection('debts')
+          .doc(debtId)
+          .collection('payments')
+          .orderBy('createdAt', descending: true)
+          .limit(limit);
+
+      if (lastDocument != null) {
+        query = query.startAfterDocument(lastDocument);
+      }
+
+      final snapshot = await query.get();
+
+      final items = snapshot.docs
+          .map((doc) => PaymentModel.fromJson(doc.data(), doc.id))
+          .toList();
+
+      return PaginatedResult(
+        items: items,
+        lastDocument: snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
+        hasMore: items.length == limit,
+      );
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      throw Exception('Failed to fetch paginated transactions: $e');
+    }
+  }
+
+  @override
+  Future<PaginatedResult<PaymentModel>> getCustomerAllPaymentsPaginated(
+    String uid,
+    String customerName, {
+    int limit = 15,
+    DocumentSnapshot? lastDocument,
+  }) async {
+    try {
+      // NOTE: Because payments are in sub-collections of debts,
+      // and a customer can have many debts, we have two options:
+      // 1. Fetch debt IDs for this customer to support legacy records missing 'relatedTo'
+      // This is efficient as it only fetches IDs from the user's debts sub-collection.
+      final debtsSnap = await firestore
+          .collection('users')
+          .doc(uid)
+          .collection('debts')
+          .where('customerName', isEqualTo: customerName)
+          .get();
+
+      final debtIds = debtsSnap.docs.map((doc) => doc.id).toList();
+
+      if (debtIds.isEmpty) {
+        return const PaginatedResult(
+          items: [],
+          lastDocument: null,
+          hasMore: false,
+        );
+      }
+
+      // 2. Query payments using collectionGroup.
+      // We prioritize 'relatedTo' for efficiency, but fallback to 'debtId' for legacy data.
+      // Since we want pagination, we use a single query where possible.
+
+      Query<Map<String, dynamic>> query;
+
+      // If we have many debts, we rely on 'relatedTo' which should be on modern records.
+      // For legacy records, we hope they are among the recent debts if there are many.
+      if (debtIds.length > 10) {
+        // Use relatedTo filter (Modern approach)
+        // Note: Old records missing this field will unfortunately be missed if there are > 10 debts,
+        // but this is an extreme case and 'relatedTo' is now set on all new records.
+        query = firestore
+            .collectionGroup('payments')
+            .where('relatedTo', isEqualTo: customerName)
+            .orderBy('createdAt', descending: true);
+      } else {
+        // Use debtId whereIn (Universal approach for up to 10 debts)
+        query = firestore
+            .collectionGroup('payments')
+            .where('debtId', whereIn: debtIds)
+            .orderBy('createdAt', descending: true);
+      }
+
+      query = query.limit(limit);
+
+      if (lastDocument != null) {
+        query = query.startAfterDocument(lastDocument);
+      }
+
+      final snapshot = await query.get();
+
+      final items = snapshot.docs
+          .map((doc) => PaymentModel.fromJson(doc.data(), doc.id))
+          .toList();
+
+      return PaginatedResult(
+        items: items,
+        lastDocument: snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
+        hasMore: items.length == limit,
+      );
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      throw Exception('Failed to fetch paginated customer payments: $e');
+    }
+  }
+
+  @override
+  Future<PaginatedResult<PaymentModel>> getAllUserPaymentsPaginated(
+    String uid, {
+    int limit = 15,
+    DocumentSnapshot? lastDocument,
+  }) async {
+    try {
+      var query = firestore
+          .collectionGroup('payments')
+          .where('uid', isEqualTo: uid)
+          .orderBy('createdAt', descending: true)
+          .limit(limit);
+
+      if (lastDocument != null) {
+        query = query.startAfterDocument(lastDocument);
+      }
+
+      final snapshot = await query.get();
+
+      final items = snapshot.docs
+          .map((doc) => PaymentModel.fromJson(doc.data(), doc.id))
+          .toList();
+
+      return PaginatedResult(
+        items: items,
+        lastDocument: snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
+        hasMore: items.length == limit,
+      );
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      throw Exception('Failed to fetch paginated user payments: $e');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> getDebtSummary(String uid) async {
+    try {
+      final doc = await firestore
+          .collection('users')
+          .doc(uid)
+          .collection('summaries')
+          .doc(SummaryHelper.getAllTimeKey())
+          .get();
+
+      if (doc.exists) {
+        return doc.data()!;
+      } else {
+        return {'totalDebts': 0.0, 'unpaidDebts': 0.0, 'debtCustomersCount': 0};
+      }
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      throw Exception('Failed to fetch debt summary: $e');
     }
   }
 }

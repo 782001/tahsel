@@ -138,7 +138,7 @@ class MyDebtItemCard extends StatelessWidget {
                                   ),
                                   SizedBox(width: 4.w),
                                   Text(
-                                    "قيد المزامنة...",
+                                    AppStrings.syncing.tr(),
                                     style: TextStyles.customStyle(
                                       color: AppColors.error,
                                       fontSize: 10,

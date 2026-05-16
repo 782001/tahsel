@@ -37,7 +37,7 @@ class SideNavBar extends StatelessWidget {
                       gradient: LinearGradient(
                         colors: [
                           AppColors.primaryColor,
-                          AppColors.primaryColor.withOpacity(0.7),
+                          AppColors.primaryColor.withValues(alpha: 0.7),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -45,7 +45,7 @@ class SideNavBar extends StatelessWidget {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primaryColor.withOpacity(0.3),
+                          color: AppColors.primaryColor.withValues(alpha: 0.3),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -205,9 +205,9 @@ class _NavTileState extends State<_NavTile> {
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             decoration: BoxDecoration(
               color: widget.isSelected
-                  ? activeColor.withOpacity(0.1)
+                  ? activeColor.withValues(alpha: 0.1)
                   : (_isHovered
-                        ? activeColor.withOpacity(0.05)
+                        ? activeColor.withValues(alpha: 0.05)
                         : Colors.transparent),
               borderRadius: BorderRadius.circular(12),
             ),

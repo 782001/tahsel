@@ -11,6 +11,7 @@ class SummaryModel {
   final int transactionCount;
   final int cafeCount;
   final int playstationCount;
+  final int debtCustomersCount;
   final bool isSynced;
   final DateTime lastUpdatedAt;
 
@@ -25,6 +26,7 @@ class SummaryModel {
     required this.transactionCount,
     this.cafeCount = 0,
     this.playstationCount = 0,
+    this.debtCustomersCount = 0,
     this.isSynced = false,
     required this.lastUpdatedAt,
   });
@@ -41,6 +43,7 @@ class SummaryModel {
       transactionCount: (json['transactionCount'] ?? 0).toInt(),
       cafeCount: (json['cafeCount'] ?? 0).toInt(),
       playstationCount: (json['playstationCount'] ?? 0).toInt(),
+      debtCustomersCount: (json['debtCustomersCount'] ?? 0).toInt(),
       isSynced: json['isSynced'] as bool? ?? false,
       lastUpdatedAt: (json['lastUpdatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
@@ -58,6 +61,7 @@ class SummaryModel {
       transactionCount: 0,
       cafeCount: 0,
       playstationCount: 0,
+      debtCustomersCount: 0,
       isSynced: false,
       lastUpdatedAt: DateTime.now(),
     );
@@ -75,6 +79,7 @@ class SummaryModel {
       'transactionCount': transactionCount,
       'cafeCount': cafeCount,
       'playstationCount': playstationCount,
+      'debtCustomersCount': debtCustomersCount,
       'isSynced': isSynced,
       'lastUpdatedAt': FieldValue.serverTimestamp(),
     };
@@ -105,6 +110,7 @@ class SummaryModel {
       transactionCount: transactionCount ?? this.transactionCount,
       cafeCount: cafeCount ?? this.cafeCount,
       playstationCount: playstationCount ?? this.playstationCount,
+      debtCustomersCount: debtCustomersCount,
       isSynced: isSynced ?? this.isSynced,
       lastUpdatedAt: lastUpdatedAt ?? this.lastUpdatedAt,
     );

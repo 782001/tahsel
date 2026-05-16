@@ -9,7 +9,6 @@ import 'package:tahsel/features/standard_features/no-internet/logic/connectivity
 import 'package:tahsel/shared/widgets/no_internet_view.dart';
 import 'package:tahsel/shared/widgets/shimmer/transaction_skeleton.dart';
 
-import '../../../../core/config/locale/app_localizations.dart';
 import '../../../../core/utils/app_colors.dart';
 import '../../../../core/utils/app_strings.dart';
 import '../../../../core/utils/styles.dart';
@@ -30,6 +29,8 @@ class CustomerGlobalPaymentsScreen extends StatefulWidget {
 
 class _CustomerGlobalPaymentsScreenState
     extends State<CustomerGlobalPaymentsScreen> {
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
@@ -40,6 +41,34 @@ class _CustomerGlobalPaymentsScreenState
       uid: uid,
       customerName: widget.customerDetail.customerName,
     );
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_isBottom) {
+      final uid = widget.customerDetail.items.isNotEmpty
+          ? widget.customerDetail.items.first.entity.uid
+          : "";
+      if (uid.isNotEmpty) {
+        context.read<GlobalPaymentsCubit>().loadMorePayments(
+          uid: uid,
+          customerName: widget.customerDetail.customerName,
+        );
+      }
+    }
+  }
+
+  bool get _isBottom {
+    if (!_scrollController.hasClients) return false;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.offset;
+    return currentScroll >= (maxScroll * 0.9);
   }
 
   @override
@@ -68,6 +97,7 @@ class _CustomerGlobalPaymentsScreenState
               );
             },
             child: CustomScrollView(
+              controller: _scrollController,
               physics: const AlwaysScrollableScrollPhysics(
                 parent: BouncingScrollPhysics(),
               ),
@@ -132,7 +162,7 @@ class _CustomerGlobalPaymentsScreenState
                           borderRadius: BorderRadius.circular(20.r),
                         ),
                         child: Text(
-                          "${AppLocalizations.tr(AppStrings.ledgerNumber)}: ${widget.customerDetail.ledgerNumber}",
+                          "${AppStrings.ledgerNumber.tr()}: ${widget.customerDetail.ledgerNumber}",
                           style: TextStyles.customStyle(
                             color: AppColors.whiteOpacity(0.9),
                             fontSize: 12,
@@ -152,7 +182,7 @@ class _CustomerGlobalPaymentsScreenState
         onPressed: () => Navigator.pop(context),
       ),
       title: Text(
-        AppLocalizations.tr(AppStrings.globalPaymentsReport),
+        AppStrings.globalPaymentsReport.tr(),
         style: TextStyles.customStyle(
           color: Colors.white,
           fontSize: 18,
@@ -192,7 +222,7 @@ class _CustomerGlobalPaymentsScreenState
                 children: [
                   Expanded(
                     child: _buildSummaryItem(
-                      title: AppLocalizations.tr(AppStrings.paid),
+                      title: AppStrings.paid.tr(),
                       amount: totalPaid,
                       color: AppColors.success,
                       icon: Icons.check_circle_outline,
@@ -205,7 +235,7 @@ class _CustomerGlobalPaymentsScreenState
                   ),
                   Expanded(
                     child: _buildSummaryItem(
-                      title: AppLocalizations.tr(AppStrings.remaining),
+                      title: AppStrings.remaining.tr(),
                       amount: widget.customerDetail.totalDebt,
                       color: AppColors.error,
                       icon: Icons.account_balance_wallet_outlined,
@@ -282,11 +312,13 @@ class _CustomerGlobalPaymentsScreenState
         if (state is GlobalPaymentsLoaded) {
           if (state.transactions.isEmpty) {
             return SliverFillRemaining(
-              child: Text(
-                AppLocalizations.tr(AppStrings.noTransactions),
-                style: TextStyles.customStyle(
-                  color: AppColors.disabledColor,
-                  fontSize: 14,
+              child: Center(
+                child: Text(
+                  AppStrings.noTransactions.tr(),
+                  style: TextStyles.customStyle(
+                    color: AppColors.disabledColor,
+                    fontSize: 14,
+                  ),
                 ),
               ),
             );
@@ -296,12 +328,27 @@ class _CustomerGlobalPaymentsScreenState
             padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 40.h),
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate((context, index) {
+                if (index == state.transactions.length) {
+                  if (state.isPaginationLoading) {
+                    return Padding(
+                      padding: EdgeInsets.symmetric(vertical: 32.h),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primaryColor,
+                          strokeWidth: 2,
+                        ),
+                      ),
+                    );
+                  }
+                  return const SizedBox(height: 20);
+                }
+
                 final transaction = state.transactions[index];
                 return FadeInUp(
-                  duration: Duration(milliseconds: 400 + (index * 100)),
+                  duration: Duration(milliseconds: 400 + (index * 30)),
                   child: _buildTransactionCard(transaction),
                 );
-              }, childCount: state.transactions.length),
+              }, childCount: state.transactions.length + 1),
             ),
           );
         }
@@ -379,7 +426,7 @@ class _CustomerGlobalPaymentsScreenState
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    "${AppLocalizations.tr(AppStrings.remaining)}: ${transaction.remainingAmount.toSmartAmount()}",
+                    "${AppStrings.remaining.tr()}: ${transaction.remainingAmount.toSmartAmount()}",
                     style: TextStyles.customStyle(
                       color: AppColors.disabledColor,
                       fontSize: 11,

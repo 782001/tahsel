@@ -5,12 +5,12 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 
-class DebtDetailesReportSummaryItem extends StatelessWidget {
+class DebtDetailsReportSummaryItem extends StatelessWidget {
   final String label;
   final String value;
   final bool isHighlighted;
 
-  const DebtDetailesReportSummaryItem({
+  const DebtDetailsReportSummaryItem({
     super.key,
     required this.label,
     required this.value,

@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -134,10 +134,10 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
     );
   }
 
-  void _navigateToDetail(BuildContext context, CustomerDebtDetail detail) {
+  void _navigateToDetail(BuildContext context, CustomerDebtDetail detail) async {
     final cubit = context.read<DebtCubit>();
     final isShop = context.read<MainLayoutCubit>().isShop;
-    Navigator.push(
+    final hasChanged = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (_) => BlocProvider.value(
@@ -146,14 +146,15 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
         ),
       ),
     );
+
+    if (hasChanged == true) {
+      final uid = AppStrings.userToken;
+      if (uid.isNotEmpty) {
+        cubit.getDebts(uid, forceRefresh: true);
+      }
+    }
   }
 
-  Future<List<CustomerDebtDetail>> _groupDebts(List<DebtEntity> debts) async {
-    return compute(_filterAndGroupDebts, {
-      'debts': debts,
-      'query': widget.searchQuery,
-    });
-  }
 
   static List<CustomerDebtDetail> _filterAndGroupDebts(
     Map<String, dynamic> params,
@@ -247,69 +248,66 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
         }
 
         if (state is DebtsFetchSuccess) {
-          return FutureBuilder<List<CustomerDebtDetail>>(
-            future: _groupDebts(state.debts),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => const CustomerDebtCardSkeleton(),
-                    childCount: 5,
-                  ),
-                );
-              }
+          final customers = _filterAndGroupDebts({
+            'debts': state.debts,
+            'query': widget.searchQuery,
+          });
 
-              final customers = snapshot.data ?? [];
-
-              if (customers.isEmpty) {
-                return SliverFillRemaining(
-                  child: Center(
-                    child: Text(
-                      AppStrings.noCustomerDebts.tr(),
-                      style: TextStyles.customStyle(color: AppColors.grey),
-                    ),
-                  ),
-                );
-              }
-
-              return SliverPadding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 8,
+          if (customers.isEmpty) {
+            return SliverFillRemaining(
+              child: Center(
+                child: Text(
+                  AppStrings.noCustomerDebts.tr(),
+                  style: TextStyles.customStyle(color: AppColors.grey),
                 ),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    if (index == customers.length) {
-                      return const SizedBox(height: 100);
-                    }
+              ),
+            );
+          }
 
-                    final detail = customers[index];
-                    final debtEntity = detail.items.first.entity;
-
-                    return CustomerDebtCard(
-                      customerName: detail.customerName,
-                      ledgerNumber: detail.ledgerNumber,
-                      description: detail.items.isNotEmpty
-                          ? detail.items.first.itemDescription
-                          : null,
-                      lastTransactionDate: detail.lastTransactionDate,
-                      amount: detail.totalDebt,
-                      status: detail.status.tr(),
-                      statusColor: detail.statusColor,
-                      onTap: () => _navigateToDetail(context, detail),
-                      onPartialPayment: () => _showPartialPaymentModal(
-                        context,
-                        detail.customerName,
-                        detail.totalDebt,
-                        debtEntity,
+          return SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+                if (index == customers.length) {
+                  if (state.isPaginationLoading) {
+                    return Padding(
+                      padding: EdgeInsets.symmetric(vertical: 32.h),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primaryColor,
+                          strokeWidth: 2,
+                        ),
                       ),
-                      onFullPayment: () => _onPayFull(context, debtEntity),
-                      onDelete: () => _onDeleteDebt(context, debtEntity),
                     );
-                  }, childCount: customers.length + 1),
-                ),
-              );
-            },
+                  }
+                  return const SizedBox(height: 100);
+                }
+
+                final detail = customers[index];
+                final debtEntity = detail.items.first.entity;
+
+                return CustomerDebtCard(
+                  customerName: detail.customerName,
+                  ledgerNumber: detail.ledgerNumber,
+                  description: detail.items.isNotEmpty
+                      ? detail.items.first.itemDescription
+                      : null,
+                  lastTransactionDate: detail.lastTransactionDate,
+                  amount: detail.totalDebt,
+                  status: detail.status.tr(),
+                  statusColor: detail.statusColor,
+                  onTap: () => _navigateToDetail(context, detail),
+                  onPartialPayment: () => _showPartialPaymentModal(
+                    context,
+                    detail.customerName,
+                    detail.totalDebt,
+                    debtEntity,
+                  ),
+                  onFullPayment: () => _onPayFull(context, debtEntity),
+                  onDelete: () => _onDeleteDebt(context, debtEntity),
+                );
+              }, childCount: customers.length + 1),
+            ),
           );
         }
 

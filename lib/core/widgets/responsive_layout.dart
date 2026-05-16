@@ -16,8 +16,9 @@ class ResponsiveLayout extends StatelessWidget {
   static bool isMobile(BuildContext context) {
     if (kIsWeb) return false;
     try {
-      if (Platform.isWindows || Platform.isMacOS || Platform.isLinux)
+      if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
         return false;
+      }
     } catch (_) {}
     return MediaQuery.of(context).size.width < 900;
   }

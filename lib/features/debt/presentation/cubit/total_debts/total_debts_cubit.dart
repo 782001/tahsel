@@ -1,18 +1,16 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tahsel/features/debt/domain/entities/debt_entity.dart';
-import 'package:tahsel/features/debt/domain/usecases/get_debts_usecase.dart';
-import 'package:tahsel/features/debt/domain/usecases/calculate_total_debts_usecase.dart';
+import 'package:tahsel/features/debt/domain/usecases/get_debt_summary_usecase.dart';
+// Removed redundant import
+
 import 'total_debts_state.dart';
 
 class TotalDebtsCubit extends Cubit<TotalDebtsState> {
-  final GetDebtsUseCase getDebtsUseCase;
-  final CalculateTotalDebtsUseCase calculateTotalDebtsUseCase;
+  final GetDebtSummaryUseCase getDebtSummaryUseCase;
 
   TotalDebtsCubit({
-    required this.getDebtsUseCase,
-    required this.calculateTotalDebtsUseCase,
+    required this.getDebtSummaryUseCase,
   }) : super(TotalDebtsInitial());
 
   Future<void> getTotalDebts(String uid, {bool forceRefresh = false}) async {
@@ -22,46 +20,26 @@ class TotalDebtsCubit extends Cubit<TotalDebtsState> {
 
     emit(TotalDebtsLoading());
 
-    final result = await getDebtsUseCase(GetDebtsParams(uid: uid));
+    final result = await getDebtSummaryUseCase(uid);
 
-    await result.fold(
-      (failure) async => emit(TotalDebtsError(failure.message)),
-      (debts) async {
-        try {
-          final totalResult = await calculateTotalDebtsUseCase(debts);
-          if (!isClosed) {
-            emit(
-              TotalDebtsLoaded(
-                totalAmount: totalResult.totalAmount,
-                customerCount: totalResult.customerCount,
-              ),
-            );
-          }
-        } catch (e) {
-          if (!isClosed) {
-            emit(TotalDebtsError(e.toString()));
-          }
+    result.fold(
+      (failure) => emit(TotalDebtsError(failure.message)),
+      (summary) {
+        if (!isClosed) {
+          emit(
+            TotalDebtsLoaded(
+              totalAmount: summary.totalAmount,
+              customerCount: summary.customerCount,
+            ),
+          );
         }
       },
     );
   }
 
-  /// Recalculates totals directly from a debt list.
-  /// Called when DebtCubit refreshes the debts list after any mutation,
-  /// so the summary card updates instantly without a separate Firestore fetch.
-  Future<void> updateFromDebts(List<DebtEntity> debts) async {
-    try {
-      final totalResult = await calculateTotalDebtsUseCase(debts);
-      if (!isClosed) {
-        emit(
-          TotalDebtsLoaded(
-            totalAmount: totalResult.totalAmount,
-            customerCount: totalResult.customerCount,
-          ),
-        );
-      }
-    } catch (e) {
-      // Silently ignore — the current total stays as-is
-    }
+  /// Called when DebtCubit refreshes the debts list after any mutation.
+  /// Fetches the latest global summary from Firestore.
+  Future<void> updateFromDebts(String uid) async {
+    await getTotalDebts(uid, forceRefresh: true);
   }
 }

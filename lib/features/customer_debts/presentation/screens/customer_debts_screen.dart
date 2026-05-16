@@ -31,12 +31,36 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen>
   bool get wantKeepAlive => true;
 
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (_isBottom) {
+      final uid = AppStrings.userToken;
+      if (uid.isNotEmpty) {
+        context.read<DebtCubit>().loadMoreDebts(uid);
+      }
+    }
+  }
+
+  bool get _isBottom {
+    if (!_scrollController.hasClients) return false;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.offset;
+    return currentScroll >= (maxScroll * 0.9);
   }
 
   @override
@@ -48,9 +72,12 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen>
         child: BlocListener<DebtCubit, DebtState>(
           listener: (context, state) {
             // When DebtCubit refreshes debts after any operation,
-            // recalculate totals instantly from the new list
+            // fetch latest global totals from summary
             if (state is DebtsFetchSuccess) {
-              context.read<TotalDebtsCubit>().updateFromDebts(state.debts);
+              final uid = AppStrings.userToken;
+              if (uid.isNotEmpty) {
+                context.read<TotalDebtsCubit>().updateFromDebts(uid);
+              }
             }
           },
           child: BlocBuilder<ConnectivityCubit, ConnectivityState>(
@@ -72,6 +99,7 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen>
                   }
                 },
                 child: CustomScrollView(
+                  controller: _scrollController,
                   physics: const AlwaysScrollableScrollPhysics(
                     parent: BouncingScrollPhysics(),
                   ),

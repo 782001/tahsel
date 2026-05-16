@@ -11,8 +11,8 @@ import 'package:tahsel/features/debt/domain/entities/debt_entity.dart';
 import 'package:tahsel/features/debt/domain/entities/payment_entity.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_details/debt_details_cubit.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_details/debt_details_state.dart';
-import 'package:tahsel/features/debt/presentation/widgets/debt_detailes_report_transaction_item.dart';
-import 'package:tahsel/features/debt/presentation/widgets/debt_detailes_report_summary_item.dart';
+import 'package:tahsel/features/debt/presentation/widgets/debt_details_report_transaction_item.dart';
+import 'package:tahsel/features/debt/presentation/widgets/debt_details_report_summary_item.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/shared/widgets/no_internet_view.dart';
@@ -29,10 +29,14 @@ class DebtDetailsReportScreen extends StatefulWidget {
 }
 
 class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
+  bool _hasChanged = false;
+  DebtEntity? _updatedDebt;
+
   @override
+
   void initState() {
     super.initState();
-    context.read<DebtDetailsCubit>().loadTransactions(widget.debtId);
+    context.read<DebtDetailsCubit>().loadTransactions(AppStrings.userToken, widget.debtId);
   }
 
   @override
@@ -48,6 +52,8 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
             note: state.note,
             operationType: 'edit',
           );
+          _hasChanged = true;
+          _updatedDebt = state.debt;
         } else if (state is DebtDetailsDeleteSuccess) {
           NotificationDialog.show(
             context: context,
@@ -57,8 +63,10 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
             note: AppStrings.deleteSuccess.tr(),
             operationType: 'delete',
           );
+          _hasChanged = true;
+          _updatedDebt = state.debt;
         } else if (state is DebtDetailsNotFound) {
-          Navigator.pop(context);
+          Navigator.pop(context, true);
         } else if (state is DebtDetailsError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -68,7 +76,18 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
           );
         }
       },
-      child: Scaffold(
+      child: PopScope(
+        canPop: true,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop && result == null) {
+            // This handles the system back button. 
+            // We can't actually change the result here in older Flutter versions 
+            // but in recent ones we might. 
+            // However, Navigator.pop(context, value) is called from our back button.
+            // If result is already set, we don't need to do anything.
+          }
+        },
+        child: Scaffold(
         backgroundColor: AppColors.scafoldBackGround,
         appBar: AppBar(
           title: Text(
@@ -88,7 +107,8 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
               color: AppColors.textColor,
               size: 20.r,
             ),
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(context, _updatedDebt ?? _hasChanged),
+
           ),
         ),
         body: BlocBuilder<ConnectivityCubit, ConnectivityState>(
@@ -103,6 +123,7 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
               color: AppColors.primaryColor,
               onRefresh: () async {
                 await context.read<DebtDetailsCubit>().loadTransactions(
+                  AppStrings.userToken,
                   widget.debtId,
                   forceRefresh: true,
                 );
@@ -209,6 +230,7 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
                                   onPressed: () => context
                                       .read<DebtDetailsCubit>()
                                       .loadTransactions(
+                                        AppStrings.userToken,
                                         widget.debtId,
                                         forceRefresh: true,
                                       ),
@@ -232,7 +254,7 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
           },
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildSummaryCard({
@@ -347,17 +369,17 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              DebtDetailesReportSummaryItem(
+              DebtDetailsReportSummaryItem(
                 label: AppStrings.totalDueLabel.tr(),
                 value: totalAmount.toSmartAmount(),
               ),
               SizedBox(width: 8.w),
-              DebtDetailesReportSummaryItem(
+              DebtDetailsReportSummaryItem(
                 label: AppStrings.paid.tr(),
                 value: amountPaid.toSmartAmount(),
               ),
               SizedBox(width: 8.w),
-              DebtDetailesReportSummaryItem(
+              DebtDetailsReportSummaryItem(
                 label: AppStrings.remaining.tr(),
                 value: remainingDebt.toSmartAmount(),
                 isHighlighted: true,
@@ -378,7 +400,7 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate((context, index) {
           final transaction = transactions[index];
-          return DebtDetailesReportTransactionItem(
+          return DebtDetailsReportTransactionItem(
             transaction: transaction,
             debtId: widget.debtId,
             customerName: debt?.customerName ?? '',

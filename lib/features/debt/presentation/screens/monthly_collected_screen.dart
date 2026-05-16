@@ -59,24 +59,27 @@ class MonthlyCollectedScreen extends StatelessWidget {
                 itemCount: 5,
               );
             } else if (state is MonthlyCollectedError) {
-               return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.analytics_outlined,
-                        size: 80,
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.analytics_outlined,
+                      size: 80,
+                      color: AppColors.grey.withValues(alpha: 0.5),
+                    ),
+                    SizedBox(height: 20.h),
+                    Text(
+                      AppStrings.noCollectedData.tr(),
+                      style: TextStyles.customStyle(
+                        fontSize: 20,
                         color: AppColors.grey.withValues(alpha: 0.5),
                       ),
-                      SizedBox(height: 20.h),
-                      Text(
-                        AppStrings.noCollectedData.tr(),
-                        style: TextStyles.customStyle(fontSize: 20),
-                      ),
-                    ],
-                  ),
-                );
-             } else if (state is MonthlyCollectedSuccess) {
+                    ),
+                  ],
+                ),
+              );
+            } else if (state is MonthlyCollectedSuccess) {
               if (state.data.isEmpty) {
                 return Center(
                   child: Column(
@@ -109,7 +112,7 @@ class MonthlyCollectedScreen extends StatelessWidget {
                       itemBuilder: (context, index) {
                         final item = state.data[index];
                         return FadeInUp(
-                          duration: Duration(milliseconds: 300 + (index * 50)),
+                          duration: Duration(milliseconds: 300 + (index * 30)),
                           child: _buildMonthCard(context, item),
                         );
                       },

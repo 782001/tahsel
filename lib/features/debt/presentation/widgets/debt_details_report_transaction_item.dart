@@ -15,12 +15,12 @@ import 'package:tahsel/features/debt/presentation/cubit/debt_details/debt_detail
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 
-class DebtDetailesReportTransactionItem extends StatelessWidget {
+class DebtDetailsReportTransactionItem extends StatelessWidget {
   final PaymentEntity transaction;
   final String debtId;
   final String customerName;
 
-  const DebtDetailesReportTransactionItem({
+  const DebtDetailsReportTransactionItem({
     super.key,
     required this.transaction,
     required this.debtId,

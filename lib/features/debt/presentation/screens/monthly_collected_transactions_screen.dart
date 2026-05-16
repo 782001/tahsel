@@ -56,7 +56,7 @@ class MonthlyCollectedTransactionsScreen extends StatelessWidget {
               itemBuilder: (context, index) {
                 final payment = monthlyData.payments[index];
                 return FadeInUp(
-                  duration: Duration(milliseconds: 300 + (index * 50)),
+                  duration: Duration(milliseconds: 300 + (index * 30)),
                   child: _buildTransactionCard(context, payment),
                 );
               },

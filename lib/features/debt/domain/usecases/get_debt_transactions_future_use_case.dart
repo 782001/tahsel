@@ -16,6 +16,7 @@ class GetDebtTransactionsFutureUseCase
     GetDebtTransactionsParams params,
   ) async {
     return await repository.getDebtTransactionsFuture(
+      params.uid,
       params.debtId,
       forceRefresh: params.forceRefresh,
     );
@@ -23,7 +24,12 @@ class GetDebtTransactionsFutureUseCase
 }
 
 class GetDebtTransactionsParams {
+  final String uid;
   final String debtId;
   final bool forceRefresh;
-  GetDebtTransactionsParams({required this.debtId, this.forceRefresh = false});
+  GetDebtTransactionsParams({
+    required this.uid,
+    required this.debtId,
+    this.forceRefresh = false,
+  });
 }
