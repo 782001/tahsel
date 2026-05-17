@@ -45,15 +45,29 @@ class MyDebtPersonRemoteDataSourceImpl implements MyDebtPersonRemoteDataSource {
           .doc(uid)
           .collection('my_debt_persons');
 
-      final snapshot = await collection.aggregate(
-        count(),
-        sum('totalRemainingDebt'),
-        sum('totalDebtAmount'),
-      ).get();
+      double remaining = 0.0;
+      double total = 0.0;
+      int cnt = 0;
 
-      final remaining = snapshot.getSum('totalRemainingDebt') ?? 0.0;
-      final total = snapshot.getSum('totalDebtAmount') ?? 0.0;
-      final cnt = snapshot.count ?? 0;
+      if (defaultTargetPlatform == TargetPlatform.windows) {
+        final querySnapshot = await collection.get();
+        cnt = querySnapshot.docs.length;
+        for (var doc in querySnapshot.docs) {
+          final data = doc.data();
+          remaining += (data['totalRemainingDebt'] as num?)?.toDouble() ?? 0.0;
+          total += (data['totalDebtAmount'] as num?)?.toDouble() ?? 0.0;
+        }
+      } else {
+        final snapshot = await collection.aggregate(
+          count(),
+          sum('totalRemainingDebt'),
+          sum('totalDebtAmount'),
+        ).get();
+
+        remaining = snapshot.getSum('totalRemainingDebt') ?? 0.0;
+        total = snapshot.getSum('totalDebtAmount') ?? 0.0;
+        cnt = snapshot.count ?? 0;
+      }
 
       return MyDebtSummaryEntity(
         totalRemainingDebt: remaining,
