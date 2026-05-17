@@ -69,68 +69,79 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
   void _onDeleteDebt(BuildContext context, DebtEntity debt) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: AppColors.error),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                AppStrings.confirmDeleteDebtTitle.tr(),
-                style: TextStyles.customStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textColor,
+      builder: (ctx) => Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: AppColors.error),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    AppStrings.confirmDeleteDebtTitle.tr(),
+                    style: TextStyles.customStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              AppStrings.confirmDeleteDebtMessage.tr(),
+              style: TextStyles.customStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AppColors.blackLight,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: Text(
+                  AppStrings.cancel.tr(),
+                  style: TextStyles.customStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.disabledColor,
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-        content: Text(
-          AppStrings.confirmDeleteDebtMessage.tr(),
-          style: TextStyles.customStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: AppColors.blackLight,
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  final uid = AppStrings.userToken;
+                  if (uid.isNotEmpty) {
+                    context.read<DebtCubit>().deleteDebtItem(
+                      uid,
+                      debt.id ?? '',
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.error,
+                  foregroundColor: AppColors.whiteColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  AppStrings.delete.tr(),
+                  style: TextStyles.customStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(
-              AppStrings.cancel.tr(),
-              style: TextStyles.customStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.disabledColor,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              final uid = AppStrings.userToken;
-              if (uid.isNotEmpty) {
-                context.read<DebtCubit>().deleteDebtItem(uid, debt.id ?? '');
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              foregroundColor: AppColors.whiteColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: Text(
-              AppStrings.delete.tr(),
-              style: TextStyles.customStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

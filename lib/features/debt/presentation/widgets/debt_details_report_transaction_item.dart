@@ -243,254 +243,264 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
       builder: (dialogContext) {
         String? errorText;
         return StatefulBuilder(
-          builder: (context, setState) => Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16.r),
-            ),
-            backgroundColor: AppColors.scafoldBackGround,
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: EdgeInsets.all(24.r),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      AppStrings.editPayment.tr(),
-                      style: TextStyles.customStyle(
-                        color: AppColors.textColor,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 24.h),
-                    Text(
-                      AppStrings.amountPaid.tr(),
-                      style: TextStyles.customStyle(
-                        color: AppColors.disabledColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.1,
-                      ),
-                    ),
-                    SizedBox(height: 8.h),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 16.w),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceContainerHigh,
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: errorText != null
-                            ? Border.all(color: AppColors.error, width: 1)
-                            : null,
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            AppStrings.currencyEgp.tr(),
-                            style: TextStyles.customStyle(
-                              color: AppColors.disabledColor,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+          builder: (context, setState) => Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+
+              child: Dialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16.r),
+                ),
+                backgroundColor: AppColors.scafoldBackGround,
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: EdgeInsets.all(24.r),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          AppStrings.editPayment.tr(),
+                          style: TextStyles.customStyle(
+                            color: AppColors.textColor,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
                           ),
-                          Expanded(
-                            child: TextField(
-                              cursorColor: AppColors.primaryColor,
-                              controller: amountController,
-                              keyboardType: TextInputType.number,
-                              onChanged: (value) {
-                                if (errorText != null) {
-                                  setState(() => errorText = null);
-                                }
-                              },
-                              style: TextStyles.customStyle(
-                                color: AppColors.textColor,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              decoration: InputDecoration(
-                                hintText: '0.00',
-                                hintStyle: TextStyles.customStyle(
+                        ),
+                        SizedBox(height: 24.h),
+                        Text(
+                          AppStrings.amountPaid.tr(),
+                          style: TextStyles.customStyle(
+                            color: AppColors.disabledColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.1,
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 16.w),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceContainerHigh,
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: errorText != null
+                                ? Border.all(color: AppColors.error, width: 1)
+                                : null,
+                          ),
+                          child: Row(
+                            children: [
+                              Text(
+                                AppStrings.currencyEgp.tr(),
+                                style: TextStyles.customStyle(
                                   color: AppColors.disabledColor,
-                                  fontSize: 24,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
-                                border: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 16.w,
-                                  vertical: 16.h,
+                              ),
+                              Expanded(
+                                child: TextField(
+                                  cursorColor: AppColors.primaryColor,
+                                  controller: amountController,
+                                  keyboardType: TextInputType.number,
+                                  onChanged: (value) {
+                                    if (errorText != null) {
+                                      setState(() => errorText = null);
+                                    }
+                                  },
+                                  style: TextStyles.customStyle(
+                                    color: AppColors.textColor,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText: '0.00',
+                                    hintStyle: TextStyles.customStyle(
+                                      color: AppColors.disabledColor,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    border: InputBorder.none,
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 16.w,
+                                      vertical: 16.h,
+                                    ),
+                                  ),
                                 ),
                               ),
+                            ],
+                          ),
+                        ),
+                        if (errorText != null) ...[
+                          SizedBox(height: 8.h),
+                          Text(
+                            errorText!,
+                            style: TextStyles.customStyle(
+                              color: AppColors.error,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
-                      ),
-                    ),
-                    if (errorText != null) ...[
-                      SizedBox(height: 8.h),
-                      Text(
-                        errorText!,
-                        style: TextStyles.customStyle(
-                          color: AppColors.error,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                    SizedBox(height: 16.h),
-                    if (minAmount > 0 &&
-                        transaction.type == PaymentType.debtAdded)
-                      Text(
-                        "${AppStrings.minValueHint.tr()} ${minAmount.toSmartAmount()}",
-                        style: TextStyles.customStyle(
-                          color: AppColors.primaryColor,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    SizedBox(height: 16.h),
-                    Text(
-                      AppStrings.notes.tr(),
-                      style: TextStyles.customStyle(
-                        color: AppColors.disabledColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.1,
-                      ),
-                    ),
-                    SizedBox(height: 8.h),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceContainerHigh,
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                      child: TextField(
-                        controller: noteController,
-                        maxLines: 2,
-                        cursorColor: AppColors.primaryColor,
-                        style: TextStyles.customStyle(
-                          color: AppColors.textColor,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: AppStrings.notes.tr(),
-                          hintStyle: TextStyles.customStyle(
-                            color: AppColors.disabledColor,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                        SizedBox(height: 16.h),
+                        if (minAmount > 0 &&
+                            transaction.type == PaymentType.debtAdded)
+                          Text(
+                            "${AppStrings.minValueHint.tr()} ${minAmount.toSmartAmount()}",
+                            style: TextStyles.customStyle(
+                              color: AppColors.primaryColor,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.all(16.r),
+                        SizedBox(height: 16.h),
+                        Text(
+                          AppStrings.notes.tr(),
+                          style: TextStyles.customStyle(
+                            color: AppColors.disabledColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.1,
+                          ),
                         ),
-                      ),
-                    ),
-                    SizedBox(height: 24.h),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56.h,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          final double? newAmount = double.tryParse(
-                            amountController.text,
-                          );
-                          if (newAmount == null || newAmount <= 0) {
-                            setState(
-                              () => errorText = AppStrings.invalidValue.tr(),
-                            );
-                            return;
-                          }
-
-                          final newAmountRounded = double.parse(
-                            newAmount.toStringAsFixed(2),
-                          );
-                          final minAmountRounded = double.parse(
-                            minAmount.toStringAsFixed(2),
-                          );
-
-                          if ((newAmountRounded < minAmountRounded) &&
-                              transaction.type == PaymentType.debtAdded) {
-                            setState(
-                              () => errorText = AppStrings.minValueError.tr(),
-                            );
-                            return;
-                          }
-
-                          if (maxAmount != null &&
-                              transaction.type != PaymentType.debtAdded) {
-                            final maxAmountRounded = double.parse(
-                              maxAmount.toStringAsFixed(2),
-                            );
-                            if (newAmountRounded > maxAmountRounded) {
-                              setState(
-                                () => errorText = AppStrings
-                                    .paymentExceedsRemaining
-                                    .tr(),
-                              );
-                              return;
-                            }
-                          }
-                          if (context.read<ConnectivityCubit>().state
-                              is ConnectivityDisconnected) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  AppStrings.noInternetConnection.tr(),
-                                ),
-                                backgroundColor: AppColors.error,
-                              ),
-                            );
-                            return;
-                          }
-                          cubit.updatePayment(
-                            uid: FirebaseAuth.instance.currentUser?.uid ?? '',
-                            debtId: debtId,
-                            paymentId: transaction.id ?? '',
-                            newAmount: newAmount,
-                            customerName: customerName,
-                            note: noteController.text,
-                          );
-                          if (Navigator.canPop(dialogContext)) {
-                            Navigator.pop(dialogContext);
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryColor,
-                          foregroundColor: AppColors.white,
-                          shape: RoundedRectangleBorder(
+                        SizedBox(height: 8.h),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceContainerHigh,
                             borderRadius: BorderRadius.circular(12.r),
                           ),
-                        ),
-                        child: Text(
-                          AppStrings.confirm.tr(),
-                          style: TextStyles.customStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                          child: TextField(
+                            controller: noteController,
+                            maxLines: 2,
+                            cursorColor: AppColors.primaryColor,
+                            style: TextStyles.customStyle(
+                              color: AppColors.textColor,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: AppStrings.notes.tr(),
+                              hintStyle: TextStyles.customStyle(
+                                color: AppColors.disabledColor,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.all(16.r),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                    SizedBox(height: 12.h),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56.h,
-                      child: TextButton(
-                        onPressed: () => Navigator.pop(dialogContext),
-                        style: TextButton.styleFrom(
-                          foregroundColor: AppColors.disabledColor,
-                        ),
-                        child: Text(
-                          AppStrings.cancel.tr(),
-                          style: TextStyles.customStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.disabledColor,
+                        SizedBox(height: 24.h),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56.h,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              final double? newAmount = double.tryParse(
+                                amountController.text,
+                              );
+                              if (newAmount == null || newAmount <= 0) {
+                                setState(
+                                  () =>
+                                      errorText = AppStrings.invalidValue.tr(),
+                                );
+                                return;
+                              }
+
+                              final newAmountRounded = double.parse(
+                                newAmount.toStringAsFixed(2),
+                              );
+                              final minAmountRounded = double.parse(
+                                minAmount.toStringAsFixed(2),
+                              );
+
+                              if ((newAmountRounded < minAmountRounded) &&
+                                  transaction.type == PaymentType.debtAdded) {
+                                setState(
+                                  () =>
+                                      errorText = AppStrings.minValueError.tr(),
+                                );
+                                return;
+                              }
+
+                              if (maxAmount != null &&
+                                  transaction.type != PaymentType.debtAdded) {
+                                final maxAmountRounded = double.parse(
+                                  maxAmount.toStringAsFixed(2),
+                                );
+                                if (newAmountRounded > maxAmountRounded) {
+                                  setState(
+                                    () => errorText = AppStrings
+                                        .paymentExceedsRemaining
+                                        .tr(),
+                                  );
+                                  return;
+                                }
+                              }
+                              if (context.read<ConnectivityCubit>().state
+                                  is ConnectivityDisconnected) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      AppStrings.noInternetConnection.tr(),
+                                    ),
+                                    backgroundColor: AppColors.error,
+                                  ),
+                                );
+                                return;
+                              }
+                              cubit.updatePayment(
+                                uid:
+                                    FirebaseAuth.instance.currentUser?.uid ??
+                                    '',
+                                debtId: debtId,
+                                paymentId: transaction.id ?? '',
+                                newAmount: newAmount,
+                                customerName: customerName,
+                                note: noteController.text,
+                              );
+                              if (Navigator.canPop(dialogContext)) {
+                                Navigator.pop(dialogContext);
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryColor,
+                              foregroundColor: AppColors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                            ),
+                            child: Text(
+                              AppStrings.confirm.tr(),
+                              style: TextStyles.customStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                        SizedBox(height: 12.h),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56.h,
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(dialogContext),
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppColors.disabledColor,
+                            ),
+                            child: Text(
+                              AppStrings.cancel.tr(),
+                              style: TextStyles.customStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.disabledColor,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -515,56 +525,61 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
     final cubit = context.read<DebtDetailsCubit>();
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(AppStrings.delete.tr()),
-        content: Text(AppStrings.deleteTransactionConfirmation.tr()),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(
-              AppStrings.cancel.tr(),
-              style: TextStyles.customStyle(
-                color: AppColors.disabledColor,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+      builder: (dialogContext) => Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+
+        child: AlertDialog(
+          title: Text(AppStrings.delete.tr()),
+          content: Text(AppStrings.deleteTransactionConfirmation.tr()),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                AppStrings.cancel.tr(),
+                style: TextStyles.customStyle(
+                  color: AppColors.disabledColor,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (connectivityCubit.state is ConnectivityDisconnected) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(AppStrings.noInternetConnection.tr()),
-                    backgroundColor: AppColors.error,
-                  ),
+            ElevatedButton(
+              onPressed: () {
+                if (connectivityCubit.state is ConnectivityDisconnected) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(AppStrings.noInternetConnection.tr()),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                  return;
+                }
+                cubit.deletePayment(
+                  uid: FirebaseAuth.instance.currentUser?.uid ?? '',
+                  debtId: debtId,
+                  paymentId: transaction.id ?? '',
+                  customerName: customerName,
+                  amountBeingDeleted: transaction.amountPaid,
                 );
-                return;
-              }
-              cubit.deletePayment(
-                uid: FirebaseAuth.instance.currentUser?.uid ?? '',
-                debtId: debtId,
-                paymentId: transaction.id ?? '',
-                customerName: customerName,
-                amountBeingDeleted: transaction.amountPaid,
-              );
-              if (Navigator.canPop(dialogContext)) {
-                Navigator.pop(dialogContext);
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: Text(
-              AppStrings.delete.tr(),
-              style: TextStyles.customStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+                if (Navigator.canPop(dialogContext)) {
+                  Navigator.pop(dialogContext);
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+              child: Text(
+                AppStrings.delete.tr(),
+                style: TextStyles.customStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    );
+    ));
   }
 
   String _getTransactionTitle() {

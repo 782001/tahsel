@@ -97,202 +97,212 @@ class _MyPartialPaymentDialogState extends State<MyPartialPaymentDialog> {
           setState(() => _errorText = state.message);
         }
       },
-      child: Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        backgroundColor: AppColors.scafoldBackGround,
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppStrings.partialPayment.tr(),
-                  style: TextStyles.customStyle(
-                    color: AppColors.textColor,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  '${AppStrings.amountPaid.tr()} (${AppStrings.remainingDebt.tr()}: ${widget.totalRemaining.toStringAsFixed(1)})',
-                  style: TextStyles.customStyle(
-                    color: AppColors.disabledColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.1,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(12),
-                    border: _errorText != null
-                        ? Border.all(color: AppColors.error)
-                        : null,
-                  ),
-                  child: Row(
-                    children: [
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+
+          child: Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            backgroundColor: AppColors.scafoldBackGround,
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppStrings.partialPayment.tr(),
+                      style: TextStyles.customStyle(
+                        color: AppColors.textColor,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      '${AppStrings.amountPaid.tr()} (${AppStrings.remainingDebt.tr()}: ${widget.totalRemaining.toStringAsFixed(1)})',
+                      style: TextStyles.customStyle(
+                        color: AppColors.disabledColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceContainerHigh,
+                        borderRadius: BorderRadius.circular(12),
+                        border: _errorText != null
+                            ? Border.all(color: AppColors.error)
+                            : null,
+                      ),
+                      child: Row(
+                        children: [
+                          Text(
+                            AppStrings.currencyEgp.tr(),
+                            style: TextStyles.customStyle(
+                              color: AppColors.disabledColor,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Expanded(
+                            child: TextField(
+                              cursorColor: AppColors.primaryColor,
+                              controller: _amountController,
+                              keyboardType: TextInputType.number,
+                              style: TextStyles.customStyle(
+                                color: AppColors.textColor,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              decoration: InputDecoration(
+                                hintText: '0.00',
+                                hintStyle: TextStyles.customStyle(
+                                  color: AppColors.disabledColor,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Text(
+                    //   AppStrings.notes.tr(),
+                    //   style: TextStyles.customStyle(
+                    //     color: AppColors.disabledColor,
+                    //     fontSize: 12,
+                    //     fontWeight: FontWeight.bold,
+                    //     letterSpacing: 1.1,
+                    //   ),
+                    // ),
+                    // const SizedBox(height: 8),
+                    // Container(
+                    //   decoration: BoxDecoration(
+                    //     color: AppColors.surfaceContainerHigh,
+                    //     borderRadius: BorderRadius.circular(12),
+                    //   ),
+                    //   child: TextField(
+                    //     controller: _noteController,
+                    //     maxLines: 2,
+                    //     cursorColor: AppColors.primaryColor,
+                    //     style: TextStyles.customStyle(
+                    //       color: AppColors.textColor,
+                    //       fontSize: 16,
+                    //       fontWeight: FontWeight.bold,
+                    //     ),
+                    //     decoration: InputDecoration(
+                    //       hintText: AppStrings.notes.tr(),
+                    //       hintStyle: TextStyles.customStyle(
+                    //         color: AppColors.disabledColor,
+                    //         fontSize: 16,
+                    //         fontWeight: FontWeight.bold,
+                    //       ),
+                    //       border: InputBorder.none,
+                    //       contentPadding: const EdgeInsets.all(16),
+                    //     ),
+                    //   ),
+                    // ),
+                    if (_errorText != null) ...[
+                      const SizedBox(height: 8),
                       Text(
-                        AppStrings.currencyEgp.tr(),
+                        _errorText!,
                         style: TextStyles.customStyle(
-                          color: AppColors.disabledColor,
-                          fontSize: 16,
+                          color: AppColors.error,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Expanded(
-                        child: TextField(
-                          cursorColor: AppColors.primaryColor,
-                          controller: _amountController,
-                          keyboardType: TextInputType.number,
-                          style: TextStyles.customStyle(
-                            color: AppColors.textColor,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: '0.00',
-                            hintStyle: TextStyles.customStyle(
-                              color: AppColors.disabledColor,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 16,
-                            ),
-                          ),
-                        ),
-                      ),
                     ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Text(
-                //   AppStrings.notes.tr(),
-                //   style: TextStyles.customStyle(
-                //     color: AppColors.disabledColor,
-                //     fontSize: 12,
-                //     fontWeight: FontWeight.bold,
-                //     letterSpacing: 1.1,
-                //   ),
-                // ),
-                // const SizedBox(height: 8),
-                // Container(
-                //   decoration: BoxDecoration(
-                //     color: AppColors.surfaceContainerHigh,
-                //     borderRadius: BorderRadius.circular(12),
-                //   ),
-                //   child: TextField(
-                //     controller: _noteController,
-                //     maxLines: 2,
-                //     cursorColor: AppColors.primaryColor,
-                //     style: TextStyles.customStyle(
-                //       color: AppColors.textColor,
-                //       fontSize: 16,
-                //       fontWeight: FontWeight.bold,
-                //     ),
-                //     decoration: InputDecoration(
-                //       hintText: AppStrings.notes.tr(),
-                //       hintStyle: TextStyles.customStyle(
-                //         color: AppColors.disabledColor,
-                //         fontSize: 16,
-                //         fontWeight: FontWeight.bold,
-                //       ),
-                //       border: InputBorder.none,
-                //       contentPadding: const EdgeInsets.all(16),
-                //     ),
-                //   ),
-                // ),
-                if (_errorText != null) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    _errorText!,
-                    style: TextStyles.customStyle(
-                      color: AppColors.error,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: BlocBuilder<MyDebtDetailsCubit, MyDebtDetailsState>(
-                    builder: (context, state) {
-                      return ElevatedButton(
-                        onPressed: state.status == MyDebtDetailsStatus.loading
-                            ? null
-                            : _submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryColor,
-                          foregroundColor: AppColors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (state.status ==
-                                  MyDebtDetailsStatus.loading) ...[
-                                ShimmerLoading(
-                                  child: Container(
-                                    height: 20,
-                                    width: 20,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child:
+                          BlocBuilder<MyDebtDetailsCubit, MyDebtDetailsState>(
+                            builder: (context, state) {
+                              return ElevatedButton(
+                                onPressed:
+                                    state.status == MyDebtDetailsStatus.loading
+                                    ? null
+                                    : _submit,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primaryColor,
+                                  foregroundColor: AppColors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                              ],
-                              Text(
-                                AppStrings.confirm.tr(),
-                                style: TextStyles.customStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (state.status ==
+                                          MyDebtDetailsStatus.loading) ...[
+                                        ShimmerLoading(
+                                          child: Container(
+                                            height: 20,
+                                            width: 20,
+                                            decoration: const BoxDecoration(
+                                              color: Colors.white,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                      ],
+                                      Text(
+                                        AppStrings.confirm.tr(),
+                                        style: TextStyles.customStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                              );
+                            },
+                          ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.disabledColor,
+                        ),
+                        child: Text(
+                          AppStrings.cancel.tr(),
+                          style: TextStyles.customStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.disabledColor,
                           ),
                         ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppColors.disabledColor,
-                    ),
-                    child: Text(
-                      AppStrings.cancel.tr(),
-                      style: TextStyles.customStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.disabledColor,
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),

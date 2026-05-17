@@ -100,186 +100,195 @@ class _MyAddDebtDialogState extends State<MyAddDebtDialog> {
           setState(() => _errorText = state.message);
         }
       },
-      child: Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        backgroundColor: AppColors.scafoldBackGround,
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppStrings.addNewDebt.tr(),
-                  style: TextStyles.customStyle(
-                    color: AppColors.textColor,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            backgroundColor: AppColors.scafoldBackGround,
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            AppStrings.totalDueLabel.tr(),
-                            style: TextStyles.customStyle(
-                              color: AppColors.disabledColor,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          _buildField(
-                            controller: _amountController,
-                            focusNode: _amountFocus,
-                            nextFocusNode: _paidAmountFocus,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            AppStrings.paidAmount.tr(),
-                            style: TextStyles.customStyle(
-                              color: AppColors.disabledColor,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          _buildField(
-                            controller: _paidAmountController,
-                            focusNode: _paidAmountFocus,
-                            nextFocusNode: _notesFocus,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  AppStrings.notes.tr(),
-                  style: TextStyles.customStyle(
-                    color: AppColors.disabledColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: TextField(
-                    controller: _notesController,
-                    focusNode: _notesFocus,
-                    maxLines: 2,
-                    cursorColor: AppColors.primaryColor,
-                    decoration: InputDecoration(
-                      hintText: AppStrings.notes.tr(),
-                      hintStyle: TextStyles.customStyle(
-                        color: AppColors.disabledColor,
-                        fontSize: 15,
+                    Text(
+                      AppStrings.addNewDebt.tr(),
+                      style: TextStyles.customStyle(
+                        color: AppColors.textColor,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.all(16),
                     ),
-                  ),
-                ),
-                if (_errorText != null) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    _errorText!,
-                    style: TextStyles.customStyle(
-                      color: AppColors.error,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: BlocBuilder<MyDebtDetailsCubit, MyDebtDetailsState>(
-                    builder: (context, state) {
-                      return ElevatedButton(
-                        onPressed: state.status == MyDebtDetailsStatus.loading
-                            ? null
-                            : _submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryColor,
-                          foregroundColor: AppColors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              if (state.status ==
-                                  MyDebtDetailsStatus.loading) ...[
-                                ShimmerLoading(
-                                  child: Container(
-                                    height: 20,
-                                    width: 20,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                              ],
                               Text(
-                                AppStrings.confirm.tr(),
+                                AppStrings.totalDueLabel.tr(),
                                 style: TextStyles.customStyle(
-                                  fontSize: 18,
+                                  color: AppColors.disabledColor,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
                                 ),
+                              ),
+                              const SizedBox(height: 8),
+                              _buildField(
+                                controller: _amountController,
+                                focusNode: _amountFocus,
+                                nextFocusNode: _paidAmountFocus,
                               ),
                             ],
                           ),
                         ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppColors.disabledColor,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                AppStrings.paidAmount.tr(),
+                                style: TextStyles.customStyle(
+                                  color: AppColors.disabledColor,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              _buildField(
+                                controller: _paidAmountController,
+                                focusNode: _paidAmountFocus,
+                                nextFocusNode: _notesFocus,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    child: Text(
-                      AppStrings.cancel.tr(),
+                    const SizedBox(height: 16),
+                    Text(
+                      AppStrings.notes.tr(),
                       style: TextStyles.customStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
                         color: AppColors.disabledColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceContainerHigh,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: TextField(
+                        controller: _notesController,
+                        focusNode: _notesFocus,
+                        maxLines: 2,
+                        cursorColor: AppColors.primaryColor,
+                        decoration: InputDecoration(
+                          hintText: AppStrings.notes.tr(),
+                          hintStyle: TextStyles.customStyle(
+                            color: AppColors.disabledColor,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.all(16),
+                        ),
+                      ),
+                    ),
+                    if (_errorText != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        _errorText!,
+                        style: TextStyles.customStyle(
+                          color: AppColors.error,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child:
+                          BlocBuilder<MyDebtDetailsCubit, MyDebtDetailsState>(
+                            builder: (context, state) {
+                              return ElevatedButton(
+                                onPressed:
+                                    state.status == MyDebtDetailsStatus.loading
+                                    ? null
+                                    : _submit,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primaryColor,
+                                  foregroundColor: AppColors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (state.status ==
+                                          MyDebtDetailsStatus.loading) ...[
+                                        ShimmerLoading(
+                                          child: Container(
+                                            height: 20,
+                                            width: 20,
+                                            decoration: const BoxDecoration(
+                                              color: Colors.white,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                      ],
+                                      Text(
+                                        AppStrings.confirm.tr(),
+                                        style: TextStyles.customStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.disabledColor,
+                        ),
+                        child: Text(
+                          AppStrings.cancel.tr(),
+                          style: TextStyles.customStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.disabledColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),

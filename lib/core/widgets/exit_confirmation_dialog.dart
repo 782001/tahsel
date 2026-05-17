@@ -12,14 +12,19 @@ class ExitConfirmationDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
-    return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(isDesktop ? 16 : 20.r),
+    return Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+
+      child: Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(isDesktop ? 16 : 20.r),
+        ),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        child: _buildDialogContent(context),
       ),
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      child: _buildDialogContent(context),
-    );
+        )    );
   }
 
   Widget _buildDialogContent(BuildContext context) {

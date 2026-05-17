@@ -7,6 +7,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/skeletons/customer_debt_skeleton.dart';
 import 'package:tahsel/features/expenses/domain/entities/expense_entity.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
@@ -15,8 +16,6 @@ import 'package:tahsel/features/expenses/presentation/screens/month_expenses_scr
 import 'package:tahsel/features/offline_sync/data/models/offline_record.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
-
-import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 import '../../../../core/utils/app_logger.dart';
 
@@ -89,11 +88,11 @@ class ExpensesList extends StatelessWidget {
                           physics: const NeverScrollableScrollPhysics(),
                           gridDelegate:
                               const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisExtent: 110,
-                            mainAxisSpacing: 16,
-                            crossAxisSpacing: 16,
-                          ),
+                                crossAxisCount: 2,
+                                mainAxisExtent: 110,
+                                mainAxisSpacing: 16,
+                                crossAxisSpacing: 16,
+                              ),
                           itemCount: pending.length,
                           itemBuilder: (context, index) =>
                               _buildPendingRecordItem(pending[index], true),
@@ -130,11 +129,11 @@ class ExpensesList extends StatelessWidget {
                               physics: const NeverScrollableScrollPhysics(),
                               gridDelegate:
                                   const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                mainAxisExtent: 110,
-                                mainAxisSpacing: 16,
-                                crossAxisSpacing: 16,
-                              ),
+                                    crossAxisCount: 2,
+                                    mainAxisExtent: 110,
+                                    mainAxisSpacing: 16,
+                                    crossAxisSpacing: 16,
+                                  ),
                               itemCount: months.length,
                               itemBuilder: (context, index) {
                                 final month = months[index];
@@ -385,30 +384,36 @@ class ExpensesList extends StatelessWidget {
     final expenseCubit = context.read<ExpenseCubit>();
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(AppStrings.confirmDeleteTitle.tr()),
-        content: Text(
-          "${AppStrings.confirmDeleteMonthMessage.tr()} ($monthName)؟",
+      builder: (ctx) => Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+
+          child: AlertDialog(
+            title: Text(AppStrings.confirmDeleteTitle.tr()),
+            content: Text(
+              "${AppStrings.confirmDeleteMonthMessage.tr()} ($monthName)؟",
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(
+                  AppStrings.cancel.tr(),
+                  style: TextStyles.customStyle(color: AppColors.blackLight),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  expenseCubit.deleteMonth(AppStrings.userToken, monthKey);
+                },
+                child: Text(
+                  AppStrings.delete.tr(),
+                  style: TextStyles.customStyle(color: AppColors.error),
+                ),
+              ),
+            ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              AppStrings.cancel.tr(),
-              style: TextStyles.customStyle(color: AppColors.blackLight),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              expenseCubit.deleteMonth(AppStrings.userToken, monthKey);
-            },
-            child: Text(
-              AppStrings.delete.tr(),
-              style: TextStyles.customStyle(color: AppColors.error),
-            ),
-          ),
-        ],
       ),
     );
   }

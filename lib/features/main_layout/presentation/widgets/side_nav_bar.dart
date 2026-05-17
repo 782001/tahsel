@@ -16,7 +16,7 @@ class SideNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: MediaQuery.of(context).size.width * 0.25,
-      constraints: const BoxConstraints(minWidth: 260, maxWidth: 500),
+      constraints: const BoxConstraints(minWidth: 240, maxWidth: 500),
       decoration: BoxDecoration(
         color: AppColors.surface,
         border: BorderDirectional(

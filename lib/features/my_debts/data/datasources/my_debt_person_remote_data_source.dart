@@ -55,15 +55,12 @@ class MyDebtPersonRemoteDataSourceImpl implements MyDebtPersonRemoteDataSource {
       final total = snapshot.getSum('totalDebtAmount') ?? 0.0;
       final cnt = snapshot.count ?? 0;
 
-      debugPrint('DEBUG MyDebtSummary: count=$cnt, remaining=$remaining, total=$total');
-
       return MyDebtSummaryEntity(
         totalRemainingDebt: remaining,
         totalDebtAmount: total,
         peopleCount: cnt,
       );
     } catch (e) {
-      debugPrint('DEBUG MyDebtSummary ERROR: $e');
       FirebaseErrorHandler.handle(e);
       rethrow;
     }

@@ -299,9 +299,9 @@ class _CustomerGlobalPaymentsScreenState
           return SliverFillRemaining(
             child: Center(
               child: Text(
-                state.message,
+                AppStrings.noData.tr(),
                 style: TextStyles.customStyle(
-                  color: AppColors.error,
+                  color: AppColors.grey,
                   fontSize: 13,
                 ),
               ),

@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/shared/widgets/shimmer/shimmer_loading.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 class MyDebtsSummarySkeleton extends StatelessWidget {
   const MyDebtsSummarySkeleton({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
     return ShimmerLoading(
       child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
-        padding: EdgeInsets.all(20.r),
+        margin: EdgeInsets.symmetric(
+          horizontal: isDesktop ? 0 : 24,
+          vertical: 16,
+        ),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: AppColors.debtCardSurface,
-          borderRadius: BorderRadius.circular(20.r),
+          borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -22,22 +26,22 @@ class MyDebtsSummarySkeleton extends StatelessWidget {
             Row(
               children: [
                 ShimmerPlaceholder(
-                  width: 40.r,
-                  height: 40.r,
-                  borderRadius: 12.r,
+                  width: 40,
+                  height: 40,
+                  borderRadius: 12,
                 ),
-                SizedBox(width: 12.w),
-                ShimmerPlaceholder(width: 120.w, height: 20.h),
+                const SizedBox(width: 12),
+                ShimmerPlaceholder(width: 120, height: 20),
               ],
             ),
-            SizedBox(height: 16.h),
-            ShimmerPlaceholder(width: 180.w, height: 32.h),
-            SizedBox(height: 12.h),
+            const SizedBox(height: 16),
+            ShimmerPlaceholder(width: 180, height: 32),
+            const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                ShimmerPlaceholder(width: 100.w, height: 16.h),
-                ShimmerPlaceholder(width: 100.w, height: 16.h),
+                ShimmerPlaceholder(width: 100, height: 16),
+                ShimmerPlaceholder(width: 100, height: 16),
               ],
             ),
           ],

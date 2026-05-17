@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_item_entity.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_person_entity.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_state.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_summary_cubit.dart';
-import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/features/my_debts/presentation/widgets/my_add_debt_dialog.dart';
 import 'package:tahsel/features/my_debts/presentation/widgets/my_debt_details_widgets.dart';
 import 'package:tahsel/features/my_debts/presentation/widgets/my_debt_item_card.dart';
@@ -150,7 +151,16 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
         value: context.read<MyDebtDetailsCubit>(),
         child: MyAddDebtDialog(personName: widget.person.name),
       ),
-    ).then((_) => _loadData());
+    ).then((_) {
+      if (context.mounted) {
+        _loadData();
+        final uid = AppStrings.userToken;
+        if (uid.isNotEmpty) {
+          context.read<MyDebtsCubit>().loadPersons(uid);
+          sl<MyDebtsSummaryCubit>().refreshSummary(uid);
+        }
+      }
+    });
   }
 
   void _onDeleteItem(BuildContext context, MyDebtItemEntity item) {
@@ -165,42 +175,52 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
     }
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(AppStrings.confirmDeletion.tr()),
-        content: Text(AppStrings.deleteDebtItemConfirmation.tr()),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              AppStrings.cancel.tr(),
-              style: TextStyles.customStyle(
-                color: AppColors.disabledColor,
-                fontSize: 16,
+      builder: (ctx) => Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+
+          child: AlertDialog(
+            title: Text(AppStrings.confirmDeletion.tr()),
+            content: Text(AppStrings.deleteDebtItemConfirmation.tr()),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(
+                  AppStrings.cancel.tr(),
+                  style: TextStyles.customStyle(
+                    color: AppColors.disabledColor,
+                    fontSize: 16,
+                  ),
+                ),
               ),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              final uid = AppStrings.userToken;
-              if (uid.isNotEmpty && item.id != null) {
-                context.read<MyDebtDetailsCubit>().deleteItem(
-                  uid,
-                  item.id!,
-                  widget.person.name,
-                );
-              }
-            },
-            child: Text(
-              AppStrings.delete.tr(),
-              style: TextStyles.customStyle(
-                color: AppColors.error,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  final uid = AppStrings.userToken;
+                  if (uid.isNotEmpty && item.id != null) {
+                    context
+                        .read<MyDebtDetailsCubit>()
+                        .deleteItem(uid, item.id!, widget.person.name)
+                        .then((_) {
+                          if (context.mounted) {
+                            context.read<MyDebtsCubit>().loadPersons(uid);
+                            sl<MyDebtsSummaryCubit>().refreshSummary(uid);
+                          }
+                        });
+                  }
+                },
+                child: Text(
+                  AppStrings.delete.tr(),
+                  style: TextStyles.customStyle(
+                    color: AppColors.error,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -286,6 +306,8 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
 
             body: BlocBuilder<ConnectivityCubit, ConnectivityState>(
               builder: (context, connectivityState) {
+                final isDesktop = ResponsiveLayout.isDesktop(context);
+
                 if (connectivityState is ConnectivityDisconnected) {
                   return NoInternetView(
                     onRetry: () =>
@@ -329,175 +351,258 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
                       ),
                     ),
                     SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(24.w, 20.h, 24.w, 0),
-                        child: Column(
-                          children: [
-                            MyDebtSummaryRow(
-                              totalOwed: state.totalOwed,
-                              remainingAmount: state.remainingAmount,
-                            ),
-                            SizedBox(height: 20.h),
-                            MyNotificationPreferenceToggle(
-                              person: widget.person,
-                            ),
-                            SizedBox(height: 20.h),
-                            if (state.remainingAmount > 0)
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: ElevatedButton.icon(
-                                      onPressed:
-                                          (state.items.isEmpty ||
-                                              state.items.any(
-                                                (i) => i.isPending,
-                                              ))
-                                          ? null
-                                          : () => _onPayPartial(
-                                              context,
-                                              state.remainingAmount,
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: isDesktop ? 800 : double.infinity,
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(24.w, 20.h, 24.w, 0),
+                            child: Column(
+                              children: [
+                                MyDebtSummaryRow(
+                                  totalOwed: state.totalOwed,
+                                  remainingAmount: state.remainingAmount,
+                                ),
+                                SizedBox(height: 20.h),
+                                MyNotificationPreferenceToggle(
+                                  person: widget.person,
+                                ),
+                                SizedBox(height: 20.h),
+                                if (state.remainingAmount > 0)
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: ElevatedButton.icon(
+                                          onPressed:
+                                              (state.items.isEmpty ||
+                                                  state.items.any(
+                                                    (i) => i.isPending,
+                                                  ))
+                                              ? null
+                                              : () => _onPayPartial(
+                                                  context,
+                                                  state.remainingAmount,
+                                                ),
+                                          icon: const Icon(
+                                            Icons.payment_rounded,
+                                            size: 18,
+                                          ),
+                                          label: Text(
+                                            AppStrings.partialPayment.tr(),
+                                          ),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: AppColors.primaryColor,
+                                            foregroundColor: Colors.white,
+                                            padding: EdgeInsets.symmetric(
+                                              vertical: 12.h,
                                             ),
-                                      icon: const Icon(
-                                        Icons.payment_rounded,
-                                        size: 18,
-                                      ),
-                                      label: Text(
-                                        AppStrings.partialPayment.tr(),
-                                      ),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: AppColors.primaryColor,
-                                        foregroundColor: Colors.white,
-                                        padding: EdgeInsets.symmetric(
-                                          vertical: 12.h,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12.r,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(
+                                                12.r,
+                                              ),
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  ),
-                                  SizedBox(width: 12.w),
-                                  Expanded(
-                                    child: OutlinedButton.icon(
-                                      onPressed:
-                                          (state.items.isEmpty ||
-                                              state.items.any(
-                                                (i) => i.isPending,
-                                              ))
-                                          ? null
-                                          : () => _onPayFull(
-                                              context,
-                                              state.remainingAmount,
+                                      SizedBox(width: 12.w),
+                                      Expanded(
+                                        child: OutlinedButton.icon(
+                                          onPressed:
+                                              (state.items.isEmpty ||
+                                                  state.items.any(
+                                                    (i) => i.isPending,
+                                                  ))
+                                              ? null
+                                              : () => _onPayFull(
+                                                  context,
+                                                  state.remainingAmount,
+                                                ),
+                                          icon: const Icon(
+                                            Icons.check_circle_rounded,
+                                            size: 18,
+                                          ),
+                                          label: Text(
+                                            AppStrings.fullSettlement.tr(),
+                                          ),
+                                          style: OutlinedButton.styleFrom(
+                                            side: BorderSide(
+                                              color: AppColors.primaryColor,
                                             ),
-                                      icon: const Icon(
-                                        Icons.check_circle_rounded,
-                                        size: 18,
-                                      ),
-                                      label: Text(
-                                        AppStrings.fullSettlement.tr(),
-                                      ),
-                                      style: OutlinedButton.styleFrom(
-                                        side: BorderSide(
-                                          color: AppColors.primaryColor,
-                                        ),
-                                        foregroundColor: AppColors.primaryColor,
-                                        padding: EdgeInsets.symmetric(
-                                          vertical: 12.h,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12.r,
+                                            foregroundColor: AppColors.primaryColor,
+                                            padding: EdgeInsets.symmetric(
+                                              vertical: 12.h,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(
+                                                12.r,
+                                              ),
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                            SizedBox(height: 24.h),
-                          ],
+                                SizedBox(height: 24.h),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
                     SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 24.w),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 4.w,
-                              height: 18.h,
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryColor,
-                                borderRadius: BorderRadius.circular(4.r),
-                              ),
-                            ),
-                            SizedBox(width: 10.w),
-                            Text(
-                              AppStrings.activityDetails.tr(),
-                              style: TextStyles.customStyle(
-                                color: AppColors.textColor,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const Spacer(),
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 10.w,
-                                vertical: 4.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryColor.withValues(
-                                  alpha: 0.1,
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: isDesktop ? 800 : double.infinity,
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 24.w),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 4.w,
+                                  height: 18.h,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryColor,
+                                    borderRadius: BorderRadius.circular(4.r),
+                                  ),
                                 ),
-                                borderRadius: BorderRadius.circular(20.r),
-                              ),
-                              child: Text(
-                                '${state.items.length} ${AppStrings.transactionCount.tr()}',
-                                style: TextStyles.customStyle(
-                                  color: AppColors.primaryColor,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
+                                SizedBox(width: 10.w),
+                                Text(
+                                  AppStrings.activityDetails.tr(),
+                                  style: TextStyles.customStyle(
+                                    color: AppColors.textColor,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
+                                const Spacer(),
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 10.w,
+                                    vertical: 4.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryColor.withValues(
+                                      alpha: 0.1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(20.r),
+                                  ),
+                                  child: Text(
+                                    '${state.items.length} ${AppStrings.transactionCount.tr()}',
+                                    style: TextStyles.customStyle(
+                                      color: AppColors.primaryColor,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
                     SliverToBoxAdapter(child: SizedBox(height: 16.h)),
                     if (state.status == MyDebtDetailsStatus.loading &&
                         state.items.isEmpty)
-                      SliverPadding(
-                        padding: EdgeInsets.symmetric(horizontal: 16.w),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) => const TransactionCardSkeleton(),
-                            childCount: 3,
+                      if (isDesktop)
+                        SliverPadding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 8,
                           ),
-                        ),
-                      )
-                    else
-                      SliverList(
-                        delegate: SliverChildBuilderDelegate((context, index) {
-                          final item = state.items[index];
-                          return Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 24.w),
-                            child: MyDebtItemCard(
-                              item: item,
-                              index: index + 1,
-                              onPayPartial: (i) =>
-                                  _onPayItemPartial(context, i),
-                              onPayFull: (i) => _onPayItemFull(context, i),
-                              onDelete: (i) => _onDeleteItem(context, i),
-                              onRefresh: _loadData,
+                          sliver: SliverToBoxAdapter(
+                            child: Center(
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 800),
+                                child: GridView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  gridDelegate:
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 2,
+                                        mainAxisExtent: 270,
+                                        crossAxisSpacing: 16,
+                                        mainAxisSpacing: 4,
+                                      ),
+                                  itemCount: 4,
+                                  itemBuilder: (context, index) {
+                                    return const TransactionCardSkeleton();
+                                  },
+                                ),
+                              ),
                             ),
-                          );
-                        }, childCount: state.items.length),
-                      ),
+                          ),
+                        )
+                      else
+                        SliverPadding(
+                          padding: EdgeInsets.symmetric(horizontal: 16.w),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) => const TransactionCardSkeleton(),
+                              childCount: 3,
+                            ),
+                          ),
+                        )
+                    else
+                      if (isDesktop)
+                        SliverPadding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 8,
+                          ),
+                          sliver: SliverToBoxAdapter(
+                            child: Center(
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 800),
+                                child: GridView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  gridDelegate:
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 2,
+                                        mainAxisExtent: 270,
+                                        crossAxisSpacing: 16,
+                                        mainAxisSpacing: 4,
+                                      ),
+                                  itemCount: state.items.length,
+                                  itemBuilder: (context, index) {
+                                    final item = state.items[index];
+                                    return MyDebtItemCard(
+                                      item: item,
+                                      index: index + 1,
+                                      onPayPartial: (i) =>
+                                          _onPayItemPartial(context, i),
+                                      onPayFull: (i) => _onPayItemFull(context, i),
+                                      onDelete: (i) => _onDeleteItem(context, i),
+                                      onRefresh: _loadData,
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        SliverList(
+                          delegate: SliverChildBuilderDelegate((context, index) {
+                            final item = state.items[index];
+                            return Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 24.w),
+                              child: MyDebtItemCard(
+                                item: item,
+                                index: index + 1,
+                                onPayPartial: (i) =>
+                                    _onPayItemPartial(context, i),
+                                onPayFull: (i) => _onPayItemFull(context, i),
+                                onDelete: (i) => _onDeleteItem(context, i),
+                                onRefresh: _loadData,
+                              ),
+                            );
+                          }, childCount: state.items.length),
+                        ),
                     SliverToBoxAdapter(child: SizedBox(height: 120.h)),
                   ],
                 );

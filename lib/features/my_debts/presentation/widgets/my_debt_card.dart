@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
@@ -12,6 +11,7 @@ import 'package:tahsel/features/my_debts/domain/entities/my_debt_person_entity.d
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_state.dart';
 import 'package:tahsel/routes/app_routes.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 class MyDebtCard extends StatelessWidget {
   final MyDebtPersonEntity person;
@@ -25,12 +25,13 @@ class MyDebtCard extends StatelessWidget {
         // final isProcessing = state.processingId == person.name;
         final isOffline = state.status == MyDebtsStatus.offlineLoaded;
         final totalPaid = person.totalDebtAmount - person.totalRemainingDebt;
+        final isDesktop = ResponsiveLayout.isDesktop(context);
 
         return Container(
-          margin: EdgeInsets.only(bottom: 12.h),
+          margin: EdgeInsets.only(bottom: isDesktop ? 0 : 12),
           decoration: BoxDecoration(
             color: AppColors.debtCardSurface,
-            borderRadius: BorderRadius.circular(16.r),
+            borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(
@@ -44,7 +45,7 @@ class MyDebtCard extends StatelessWidget {
           child: Material(
             color: AppColors.transparent,
             child: InkWell(
-              borderRadius: BorderRadius.circular(16.r),
+              borderRadius: BorderRadius.circular(16),
               onTap: isOffline
                   ? null
                   : () async {
@@ -61,7 +62,7 @@ class MyDebtCard extends StatelessWidget {
                       }
                     },
               child: Padding(
-                padding: EdgeInsets.all(16.r),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -87,18 +88,18 @@ class MyDebtCard extends StatelessWidget {
                                     ),
                                   ),
                                   if (person.isPending) ...[
-                                    SizedBox(width: 8.w),
+                                    const SizedBox(width: 8),
                                     Container(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 6.w,
-                                        vertical: 2.h,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
                                       ),
                                       decoration: BoxDecoration(
                                         color: AppColors.error.withValues(
                                           alpha: 0.1,
                                         ),
                                         borderRadius: BorderRadius.circular(
-                                          4.r,
+                                          4,
                                         ),
                                       ),
                                       child: Text(
@@ -128,19 +129,24 @@ class MyDebtCard extends StatelessWidget {
                         _buildStatusBadge(),
                       ],
                     ),
-                    SizedBox(height: 16.h),
+                    const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildAmountInfo(
-                          AppStrings.remainingDebt.tr(),
-                          person.totalRemainingDebt,
-                          AppColors.error,
+                        Expanded(
+                          child: _buildAmountInfo(
+                            AppStrings.remainingDebt.tr(),
+                            person.totalRemainingDebt,
+                            AppColors.error,
+                          ),
                         ),
-                        _buildAmountInfo(
-                          AppStrings.paid.tr(),
-                          totalPaid,
-                          AppColors.success,
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildAmountInfo(
+                            AppStrings.paid.tr(),
+                            totalPaid,
+                            AppColors.success,
+                          ),
                         ),
                       ],
                     ),
@@ -152,12 +158,16 @@ class MyDebtCard extends StatelessWidget {
                           color: AppColors.disabledColor,
                           size: 14,
                         ),
-                        SizedBox(width: 6.w),
-                        Text(
-                          '${AppStrings.lastTransactionDate.tr()}: ${DateFormat('yyyy/MM/dd').format(person.lastUsedAt)}',
-                          style: TextStyles.customStyle(
-                            color: AppColors.disabledColor,
-                            fontSize: 12,
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            '${AppStrings.lastTransactionDate.tr()}: ${DateFormat('yyyy/MM/dd').format(person.lastUsedAt)}',
+                            style: TextStyles.customStyle(
+                              color: AppColors.disabledColor,
+                              fontSize: 12,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
@@ -178,10 +188,10 @@ class MyDebtCard extends StatelessWidget {
     final text = isPaid ? AppStrings.paid : AppStrings.remaining;
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8.r),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         text.tr(),
@@ -204,8 +214,10 @@ class MyDebtCard extends StatelessWidget {
             color: AppColors.subTitleColor,
             fontSize: 12,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
-        SizedBox(height: 4.h),
+        const SizedBox(height: 4),
         Text(
           '${amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
           style: TextStyles.customStyle(
@@ -213,6 +225,8 @@ class MyDebtCard extends StatelessWidget {
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );

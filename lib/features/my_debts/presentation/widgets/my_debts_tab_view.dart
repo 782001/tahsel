@@ -6,6 +6,7 @@ import 'package:tahsel/core/services/navigator_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_state.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_summary_cubit.dart';
@@ -65,6 +66,8 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final isDesktop = ResponsiveLayout.isDesktop(context);
+    
     return Scaffold(
       backgroundColor: AppColors.transparent,
       floatingActionButton: Builder(
@@ -132,12 +135,32 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView>
                   const SliverToBoxAdapter(child: SizedBox(height: 16)),
                   if (state.status == MyDebtsStatus.loading &&
                       state.persons.isEmpty)
-                    SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) => const MyDebtCardSkeleton(),
-                        childCount: 5,
-                      ),
-                    )
+                    if (isDesktop)
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
+                        sliver: SliverToBoxAdapter(
+                          child: GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  mainAxisExtent: 210,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 16,
+                                ),
+                            itemCount: 4,
+                            itemBuilder: (context, index) => const MyDebtCardSkeleton(),
+                          ),
+                        ),
+                      )
+                    else
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) => const MyDebtCardSkeleton(),
+                          childCount: 5,
+                        ),
+                      )
                   else if (state.filteredPersons.isEmpty)
                     SliverFillRemaining(
                       hasScrollBody: false,
@@ -148,6 +171,44 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView>
                             color: AppColors.subTitleColor,
                             fontSize: 16,
                           ),
+                        ),
+                      ),
+                    )
+                  else if (isDesktop)
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
+                      sliver: SliverToBoxAdapter(
+                        child: Column(
+                          children: [
+                            GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    mainAxisExtent: 210,
+                                    crossAxisSpacing: 16,
+                                    mainAxisSpacing: 16,
+                                  ),
+                              itemCount: state.filteredPersons.length,
+                              itemBuilder: (context, index) {
+                                final person = state.filteredPersons[index];
+                                return MyDebtCard(person: person);
+                              },
+                            ),
+                            if (state.isPaginationLoading)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 32),
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.primaryColor,
+                                    strokeWidth: 4,
+                                  ),
+                                ),
+                              )
+                            else
+                              const SizedBox(height: 100),
+                          ],
                         ),
                       ),
                     )

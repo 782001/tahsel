@@ -339,34 +339,39 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
     final expenseCubit = context.read<ExpenseCubit>();
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(AppStrings.confirmDeleteTitle.tr()),
-        content: Text(AppStrings.confirmDeleteMessage.tr()),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              AppStrings.cancel.tr(),
-              style: TextStyles.customStyle(color: AppColors.blackLight),
+      builder: (ctx) => Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+
+        child: AlertDialog(
+          title: Text(AppStrings.confirmDeleteTitle.tr()),
+          content: Text(AppStrings.confirmDeleteMessage.tr()),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(
+                AppStrings.cancel.tr(),
+                style: TextStyles.customStyle(color: AppColors.blackLight),
+              ),
             ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              expenseCubit.deleteExpense(
-                AppStrings.userToken,
-                expenseId,
-                monthKey: widget.monthKey,
-                monthName: widget.monthName,
-              );
-            },
-            child: Text(
-              AppStrings.delete.tr(),
-              style: TextStyles.customStyle(color: AppColors.error),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                expenseCubit.deleteExpense(
+                  AppStrings.userToken,
+                  expenseId,
+                  monthKey: widget.monthKey,
+                  monthName: widget.monthName,
+                );
+              },
+              child: Text(
+                AppStrings.delete.tr(),
+                style: TextStyles.customStyle(color: AppColors.error),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    );
+     ) );
   }
 }

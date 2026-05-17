@@ -12,13 +12,19 @@ class LogoutConfirmationDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
-    return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(isDesktop ? 16 : 20.r),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
+
+        child: Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(isDesktop ? 16 : 20.r),
+          ),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          child: _buildDialogContent(context),
+        ),
       ),
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      child: _buildDialogContent(context),
     );
   }
 
@@ -85,7 +91,9 @@ class LogoutConfirmationDialog extends StatelessWidget {
                       vertical: isDesktop ? 18 : 12.h,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(isDesktop ? 12 : 12.r),
+                      borderRadius: BorderRadius.circular(
+                        isDesktop ? 12 : 12.r,
+                      ),
                       side: BorderSide(color: AppColors.veryLightGrey),
                     ),
                   ),
@@ -110,7 +118,9 @@ class LogoutConfirmationDialog extends StatelessWidget {
                     ),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(isDesktop ? 12 : 12.r),
+                      borderRadius: BorderRadius.circular(
+                        isDesktop ? 12 : 12.r,
+                      ),
                     ),
                   ),
                   child: Text(

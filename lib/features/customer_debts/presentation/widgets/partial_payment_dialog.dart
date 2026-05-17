@@ -97,7 +97,10 @@ class _PartialPaymentDialogState extends State<PartialPaymentDialog> {
           setState(() => _errorText = state.message);
         }
       },
-      child: Dialog(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         backgroundColor: AppColors.scafoldBackGround,
         child: Padding(
@@ -252,6 +255,8 @@ class _PartialPaymentDialogState extends State<PartialPaymentDialog> {
               ),
             ],
           ),
+        ),
+      ),
         ),
       ),
     );

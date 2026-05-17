@@ -13,52 +13,64 @@ class CustomerDebtCardSkeleton extends StatelessWidget {
     return ShimmerLoading(
       child: Container(
         margin: EdgeInsets.only(
-          bottom: 12.h,
+          bottom: isDesktop ? 12 : 12.h,
           left: isDesktop ? 0 : 24.w,
           right: isDesktop ? 0 : 24.w,
         ),
-        padding: EdgeInsets.all(16.r),
+        padding: EdgeInsets.all(isDesktop ? 16 : 16.r),
         decoration: BoxDecoration(
           color: AppColors.debtCardSurface,
-          borderRadius: BorderRadius.circular(16.r),
+          borderRadius: BorderRadius.circular(isDesktop ? 16 : 16.r),
         ),
         child: Column(
           children: [
             Row(
               children: [
                 ShimmerPlaceholder(
-                  width: 48.r,
-                  height: 48.r,
+                  width: isDesktop ? 48 : 48.r,
+                  height: isDesktop ? 48 : 48.r,
                   shape: BoxShape.circle,
                 ),
-                SizedBox(width: 12.w),
+                SizedBox(width: isDesktop ? 12 : 12.w),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      ShimmerPlaceholder(width: 150.w, height: 18.h),
-                      SizedBox(height: 6.h),
-                      ShimmerPlaceholder(width: 80.w, height: 14.h),
+                      ShimmerPlaceholder(
+                        width: isDesktop ? 150 : 150.w,
+                        height: isDesktop ? 18 : 18.h,
+                      ),
+                      SizedBox(height: isDesktop ? 6 : 6.h),
+                      ShimmerPlaceholder(
+                        width: isDesktop ? 80 : 80.w,
+                        height: isDesktop ? 14 : 14.h,
+                      ),
                     ],
                   ),
                 ),
                 ShimmerPlaceholder(
-                  width: 60.w,
-                  height: 24.h,
-                  borderRadius: 8.r,
+                  width: isDesktop ? 60 : 60.w,
+                  height: isDesktop ? 24 : 24.h,
+                  borderRadius: isDesktop ? 8 : 8.r,
                 ),
               ],
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: isDesktop ? 16 : 16.h),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Flexible(
-                  child: ShimmerPlaceholder(width: 120.w, height: 16.h),
+                  child: ShimmerPlaceholder(
+                    width: isDesktop ? 120 : 120.w,
+                    height: isDesktop ? 16 : 16.h,
+                  ),
                 ),
-                SizedBox(width: 16.w),
+                SizedBox(width: isDesktop ? 16 : 16.w),
                 Flexible(
-                  child: ShimmerPlaceholder(width: 100.w, height: 20.h),
+                  child: ShimmerPlaceholder(
+                    width: isDesktop ? 100 : 100.w,
+                    height: isDesktop ? 20 : 20.h,
+                  ),
                 ),
               ],
             ),

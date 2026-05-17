@@ -6,6 +6,7 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/assets.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_person_entity.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_state.dart';
@@ -19,6 +20,8 @@ class MyNotificationPreferenceToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
+
     return BlocBuilder<MyDebtsCubit, MyDebtsState>(
       builder: (context, state) {
         // Find the person in the state to ensure we have the latest data (e.g. preference)
@@ -30,10 +33,10 @@ class MyNotificationPreferenceToggle extends StatelessWidget {
         final currentPreference = personInState.notificationPreference;
 
         return Container(
-          padding: EdgeInsets.all(12.w),
+          padding: EdgeInsets.all(isDesktop ? 14 : 12.w),
           decoration: BoxDecoration(
             color: AppColors.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(16.r),
+            borderRadius: BorderRadius.circular(isDesktop ? 16 : 16.r),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,7 +48,7 @@ class MyNotificationPreferenceToggle extends StatelessWidget {
                     size: 18,
                     color: AppColors.primaryColor,
                   ),
-                  SizedBox(width: 8.w),
+                  SizedBox(width: isDesktop ? 8 : 8.w),
                   Text(
                     AppStrings.notificationChannel.tr(),
                     style: TextStyles.customStyle(
@@ -56,7 +59,7 @@ class MyNotificationPreferenceToggle extends StatelessWidget {
                   ),
                 ],
               ),
-              SizedBox(height: 12.h),
+              SizedBox(height: isDesktop ? 12 : 12.h),
               SizedBox(
                 width: double.infinity,
                 child: SegmentedButton<String>(
@@ -77,8 +80,8 @@ class MyNotificationPreferenceToggle extends StatelessWidget {
                       ),
                       icon: Image.asset(
                         Assets.imagesWhatsapp,
-                        width: 22.w,
-                        height: 22.w,
+                        width: isDesktop ? 22 : 22.w,
+                        height: isDesktop ? 22 : 22.w,
                       ),
                     ),
                     ButtonSegment(
@@ -120,7 +123,9 @@ class MyNotificationPreferenceToggle extends StatelessWidget {
                     foregroundColor: AppColors.disabledColor,
                     side: BorderSide.none,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
+                      borderRadius: BorderRadius.circular(
+                        isDesktop ? 12 : 12.r,
+                      ),
                     ),
                   ),
                 ),
