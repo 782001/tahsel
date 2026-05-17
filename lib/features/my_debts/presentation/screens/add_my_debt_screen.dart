@@ -287,9 +287,9 @@ class _AddMyDebtScreenState extends State<AddMyDebtScreen> {
                                         ? null
                                         : _notesController.text,
                                   );
+                                  if (!mounted) return;
+                                  sl<NavigatorService>().pop();
                                 }
-                                if (!mounted) return;
-                                sl<NavigatorService>().pop();
                               },
                             );
                           },
