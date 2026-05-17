@@ -11,6 +11,7 @@ import 'package:tahsel/features/debt/domain/entities/debt_entity.dart';
 import 'package:tahsel/features/debt/domain/entities/payment_entity.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_details/debt_details_cubit.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_details/debt_details_state.dart';
+import 'package:tahsel/features/debt/presentation/widgets/build_debt_details_summary_card.dart';
 import 'package:tahsel/features/debt/presentation/widgets/debt_details_report_transaction_item.dart';
 import 'package:tahsel/features/debt/presentation/widgets/debt_details_report_summary_item.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
@@ -137,30 +138,15 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
                     builder: (context, state) {
                       if (state is DebtDetailsLoaded) {
                         return SliverToBoxAdapter(
-                          child: _buildSummaryCard(
-                            totalAmount: state.totalAmount,
-                            amountPaid: state.totalPaid,
-                            remainingDebt: state.remainingDebt,
-                            debt: state.debt,
-                          ),
+                          child: BuildDebtDetailsSummaryCard(totalAmount: state.totalAmount, amountPaid: state.totalPaid, remainingDebt: state.remainingDebt, debt: state.debt),
                         );
                       } else if (state is DebtDetailsUpdateSuccess) {
                         return SliverToBoxAdapter(
-                          child: _buildSummaryCard(
-                            totalAmount: state.totalAmount,
-                            amountPaid: state.totalPaid,
-                            remainingDebt: state.remainingDebt,
-                            debt: state.debt,
-                          ),
+                          child: BuildDebtDetailsSummaryCard(totalAmount: state.totalAmount, amountPaid: state.totalPaid, remainingDebt: state.remainingDebt, debt: state.debt),
                         );
                       } else if (state is DebtDetailsDeleteSuccess) {
                         return SliverToBoxAdapter(
-                          child: _buildSummaryCard(
-                            totalAmount: state.totalAmount,
-                            amountPaid: state.totalPaid,
-                            remainingDebt: state.remainingDebt,
-                            debt: state.debt,
-                          ),
+                          child: BuildDebtDetailsSummaryCard(totalAmount: state.totalAmount, amountPaid: state.totalPaid, remainingDebt: state.remainingDebt, debt: state.debt),
                         );
                       }
                       // Loading or initial
@@ -255,140 +241,6 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
         ),
       ),
     ));
-  }
-
-  Widget _buildSummaryCard({
-    required double totalAmount,
-    required double amountPaid,
-    required double remainingDebt,
-    DebtEntity? debt,
-  }) {
-    final bool isSettled = remainingDebt <= 0;
-
-    return Container(
-      margin: EdgeInsets.all(16.r),
-      padding: EdgeInsets.all(20.r),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isSettled
-              ? [
-                  AppColors.primaryColor,
-                  AppColors.primaryColor.withValues(alpha: 0.8),
-                ]
-              : [AppColors.error.withValues(alpha: 0.9), AppColors.error],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24.r),
-        boxShadow: [
-          BoxShadow(
-            color: (isSettled ? AppColors.primaryColor : AppColors.error)
-                .withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      debt?.customerName ?? '',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyles.customStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 4.h),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 8.w,
-                        vertical: 2.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.whiteOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      child: Text(
-                        debt?.productOrSessionDetails ?? '',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyles.customStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    if (debt?.ledgerNumber != null)
-                      Padding(
-                        padding: EdgeInsets.only(top: 4.h),
-                        child: Text(
-                          '${AppStrings.ledgerNumber.tr()}: ${debt?.ledgerNumber}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyles.customStyle(
-                            color: AppColors.whiteOpacity(0.8),
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: AppColors.whiteOpacity(0.2),
-                  borderRadius: BorderRadius.circular(20.r),
-                ),
-                child: Text(
-                  isSettled
-                      ? AppStrings.fullSettlement.tr()
-                      : AppStrings.debtStatusOverdue.tr(),
-                  style: TextStyles.customStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 24.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              DebtDetailsReportSummaryItem(
-                label: AppStrings.totalDueLabel.tr(),
-                value: totalAmount.toSmartAmount(),
-              ),
-              SizedBox(width: 8.w),
-              DebtDetailsReportSummaryItem(
-                label: AppStrings.paid.tr(),
-                value: amountPaid.toSmartAmount(),
-              ),
-              SizedBox(width: 8.w),
-              DebtDetailsReportSummaryItem(
-                label: AppStrings.remaining.tr(),
-                value: remainingDebt.toSmartAmount(),
-                isHighlighted: true,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildTransactionList(
