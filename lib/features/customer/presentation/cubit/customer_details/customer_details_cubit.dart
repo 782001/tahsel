@@ -24,25 +24,9 @@ class CustomerDetailsCubit extends Cubit<CustomerDetailsState> {
       (paginatedData) {
         final operations = paginatedData.$1;
         final lastDoc = paginatedData.$2;
+        final totalSpent = paginatedData.$3;
+        final totalPaid = paginatedData.$4;
 
-        double totalSpent = 0;
-        double totalPaid = 0;
-
-        for (var op in operations) {
-          if (op.type == CustomerOperationType.purchase ||
-              op.type == CustomerOperationType.debt) {
-            totalSpent += op.amount;
-          } else if (op.type == CustomerOperationType.payment) {
-            totalPaid += op.amount;
-          }
-        }
-
-        // NOTE: In a real paginated app, totals should be pre-calculated in the database.
-        // For now, these totals only reflect the fetched page if we don't have a better source.
-        // BUT, existing logic expects total spent/paid for the WHOLE history.
-        // Since we want to satisfy "don't fetch all", we should probably show a warning 
-        // or fetch summary data separately.
-        
         emit(
           CustomerDetailsLoaded(
             operations: operations,
@@ -83,30 +67,17 @@ class CustomerDetailsCubit extends Cubit<CustomerDetailsState> {
         if (newOperations.isEmpty) {
           emit(currentState.copyWith(hasReachedMax: true, isFetchingMore: false));
           return;
-        }
+         }
 
         final allOperations = List<CustomerOperation>.from(currentState.operations)
           ..addAll(newOperations);
 
-        // Update totals
-        double totalSpent = currentState.totalSpent;
-        double totalPaid = currentState.totalPaid;
-
-        for (var op in newOperations) {
-          if (op.type == CustomerOperationType.purchase ||
-              op.type == CustomerOperationType.debt) {
-            totalSpent += op.amount;
-          } else if (op.type == CustomerOperationType.payment) {
-            totalPaid += op.amount;
-          }
-        }
-
         emit(
           currentState.copyWith(
             operations: allOperations,
-            totalSpent: totalSpent,
-            totalPaid: totalPaid,
-            remaining: totalSpent - totalPaid,
+            totalSpent: currentState.totalSpent,
+            totalPaid: currentState.totalPaid,
+            remaining: currentState.totalSpent - currentState.totalPaid,
             lastDoc: lastDoc,
             hasReachedMax: newOperations.length < _pageSize,
             isFetchingMore: false,

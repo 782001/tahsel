@@ -22,7 +22,7 @@ abstract class CustomerRepository {
     String name,
     String preference,
   );
-  Future<Either<Failure, (List<CustomerOperation>, DocumentSnapshot?)>>
+  Future<Either<Failure, (List<CustomerOperation>, DocumentSnapshot?, double, double)>>
   getCustomerOperations(
     String uid,
     String customerName, {

@@ -193,11 +193,10 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
         );
       }
 
-      // 2. Fetch payments only if we are on the first page
-      // (Optimization: In a fully paginated system, payments should be their own operations)
-      // For now, to keep totals accurate without fetching everything, we fetch payments separately.
-      // But we only fetch them once or paginate them too.
-      // To satisfy "do not fetch all", I will fetch payments for the specific debts found in the operations.
+      // 2. Fetch payments and calculate aggregate statistics only if we are on the first page
+      double totalSpent = 0.0;
+      double totalPaid = 0.0;
+
       if (lastDoc == null) {
         final debtsSnapshot = await userRef
             .collection('debts')
@@ -206,6 +205,9 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
 
         for (var debtDoc in debtsSnapshot.docs) {
           final debtData = debtDoc.data();
+          totalSpent += (debtData['totalAmount'] as num? ?? 0.0).toDouble();
+          totalPaid += (debtData['paidAmount'] as num? ?? 0.0).toDouble();
+
           final activityName = debtData['operationType'] as String;
 
           final paymentsSnapshot = await debtDoc.reference
@@ -236,6 +238,8 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
       return {
         'operations': operations,
         'lastDoc': opsSnapshot.docs.isNotEmpty ? opsSnapshot.docs.last : null,
+        'totalSpent': totalSpent,
+        'totalPaid': totalPaid,
       };
     } catch (e) {
       FirebaseErrorHandler.handle(e);

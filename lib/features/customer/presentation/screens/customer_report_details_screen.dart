@@ -32,6 +32,7 @@ class CustomerReportDetailsScreen extends StatelessWidget {
         appBar: AppBar(
           backgroundColor: AppColors.scafoldBackGround,
           elevation: 0,
+          scrolledUnderElevation: 0,
           title: Text(
             customerName,
             style: TextStyles.customStyle(
@@ -103,7 +104,7 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
       builder: (context, state) {
         if (state is CustomerDetailsLoading) {
           return Center(
-            child: CircularProgressIndicator(color: AppColors.primaryColor),
+            child: CircularProgressIndicator(color: AppColors.primaryColor,strokeWidth: 2,),
           );
         }
 
@@ -134,17 +135,20 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     sliver: isDesktop
                         ? SliverGrid(
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              mainAxisExtent: 85,
-                              crossAxisSpacing: 16,
-                              mainAxisSpacing: 16,
-                            ),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  mainAxisExtent: 85,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 16,
+                                ),
                             delegate: SliverChildBuilderDelegate(
                               (context, index) {
                                 if (index >= state.operations.length) {
                                   return Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 32),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 32,
+                                    ),
                                     child: Center(
                                       child: CircularProgressIndicator(
                                         color: AppColors.primaryColor,
@@ -166,7 +170,9 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
                               (context, index) {
                                 if (index >= state.operations.length) {
                                   return Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 32),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 32,
+                                    ),
                                     child: Center(
                                       child: CircularProgressIndicator(
                                         color: AppColors.primaryColor,

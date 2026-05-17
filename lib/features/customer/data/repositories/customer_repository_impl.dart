@@ -75,7 +75,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
   }
 
   @override
-  Future<Either<Failure, (List<CustomerOperation>, DocumentSnapshot?)>>
+  Future<Either<Failure, (List<CustomerOperation>, DocumentSnapshot?, double, double)>>
   getCustomerOperations(
     String uid,
     String customerName, {
@@ -92,6 +92,8 @@ class CustomerRepositoryImpl implements CustomerRepository {
       return Right((
         result['operations'] as List<CustomerOperation>,
         result['lastDoc'] as DocumentSnapshot?,
+        (result['totalSpent'] as num? ?? 0.0).toDouble(),
+        (result['totalPaid'] as num? ?? 0.0).toDouble(),
       ));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
