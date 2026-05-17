@@ -77,6 +77,8 @@ abstract class DebtRemoteDataSource {
     String uid, {
     int limit = 15,
     DocumentSnapshot? lastDocument,
+    int? month,
+    int? year,
   });
 
   Future<Map<String, dynamic>> getDebtSummary(String uid);
@@ -1373,11 +1375,23 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
     String uid, {
     int limit = 15,
     DocumentSnapshot? lastDocument,
+    int? month,
+    int? year,
   }) async {
     try {
       var query = firestore
           .collectionGroup('payments')
-          .where('uid', isEqualTo: uid)
+          .where('uid', isEqualTo: uid);
+
+      if (month != null && year != null) {
+        final startOfMonth = DateTime(year, month, 1);
+        final endOfMonth = DateTime(year, month + 1, 1).subtract(const Duration(milliseconds: 1));
+        query = query
+            .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
+            .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth));
+      }
+
+      query = query
           .orderBy('createdAt', descending: true)
           .limit(limit);
 

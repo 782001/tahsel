@@ -145,9 +145,14 @@ class AppRoutes {
           builder: (_) => MonthlyCollectedScreen(uid: uid),
         );
       case monthlyCollectedTransactions:
-        final data = settings.arguments as MonthlyCollectedAmount;
+        final args = settings.arguments as Map<String, dynamic>;
+        final data = args['monthlyData'] as MonthlyCollectedAmount;
+        final uid = args['uid'] as String;
         return MaterialPageRoute(
-          builder: (_) => MonthlyCollectedTransactionsScreen(monthlyData: data),
+          builder: (_) => MonthlyCollectedTransactionsScreen(
+            monthlyData: data,
+            uid: uid,
+          ),
         );
       default:
         return MaterialPageRoute(

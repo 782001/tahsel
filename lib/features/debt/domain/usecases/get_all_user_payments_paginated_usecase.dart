@@ -14,11 +14,15 @@ class GetAllUserPaymentsPaginatedUseCase {
     required String uid,
     int limit = 15,
     DocumentSnapshot? lastDocument,
+    int? month,
+    int? year,
   }) async {
     return await repository.getAllUserPaymentsPaginated(
       uid,
       limit: limit,
       lastDocument: lastDocument,
+      month: month,
+      year: year,
     );
   }
 }

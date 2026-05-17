@@ -289,12 +289,16 @@ class DebtRepositoryImpl implements DebtRepository {
     String uid, {
     int limit = 15,
     DocumentSnapshot? lastDocument,
+    int? month,
+    int? year,
   }) async {
     try {
       final result = await remoteDataSource.getAllUserPaymentsPaginated(
         uid,
         limit: limit,
         lastDocument: lastDocument,
+        month: month,
+        year: year,
       );
       return Right(result);
     } catch (e) {

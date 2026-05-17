@@ -272,7 +272,10 @@ class MonthlyCollectedScreen extends StatelessWidget {
             Navigator.pushNamed(
               context,
               AppRoutes.monthlyCollectedTransactions,
-              arguments: item,
+              arguments: {
+                'monthlyData': item,
+                'uid': uid,
+              },
             );
           },
           child: Padding(

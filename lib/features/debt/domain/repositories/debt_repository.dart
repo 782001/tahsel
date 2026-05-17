@@ -86,6 +86,8 @@ abstract class DebtRepository {
     String uid, {
     int limit = 15,
     DocumentSnapshot? lastDocument,
+    int? month,
+    int? year,
   });
 
   Stream<List<DebtEntity>> getDebtsStream(String uid);
