@@ -6,6 +6,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/customer/presentation/widgets/notification_dialog.dart';
 import 'package:tahsel/features/customer_debts/data/models/debt_item_model.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/add_debt_dialog.dart';
@@ -43,7 +44,6 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
   bool _isLoading = true;
   bool _hasChanged = false;
 
-
   @override
   void initState() {
     super.initState();
@@ -64,7 +64,7 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
     // Determine if this is the first load (from initState) or a refresh
     final bool isInitial = result == 'initial';
     final bool forceRefresh = !isInitial;
-    
+
     final debts = await context.read<DebtCubit>().fetchCustomerDebts(
       widget.detail.customerName,
       forceRefresh: forceRefresh,
@@ -97,7 +97,6 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
       _hasChanged = true; // Propagate change to previous screen (customer list)
     });
   }
-
 
   void _onPayPartial(
     BuildContext context,
@@ -199,7 +198,7 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
       child: _isLoading
           ? Scaffold(
               backgroundColor: AppColors.scafoldBackGround,
-             
+
               body: CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
@@ -227,8 +226,7 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                         Icons.arrow_back_ios_new_rounded,
                         color: Colors.white,
                       ),
-                    onPressed: () => Navigator.pop(context, _hasChanged),
-
+                      onPressed: () => Navigator.pop(context, _hasChanged),
                     ),
                     flexibleSpace: FlexibleSpaceBar(
                       background: HeaderBanner(detail: currentDetail),
@@ -286,7 +284,6 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                   color: Colors.white,
                 ),
                 onPressed: () => Navigator.pop(context, _hasChanged),
-
               ),
             ),
             body: NoInternetView(
@@ -296,6 +293,8 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
             ),
           );
         }
+        final isDesktop = ResponsiveLayout.isDesktop(context);
+
         return Scaffold(
           backgroundColor: AppColors.scafoldBackGround,
           floatingActionButton: FloatingActionButton.extended(
@@ -340,7 +339,6 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                     color: Colors.white,
                   ),
                   onPressed: () => Navigator.pop(context, _hasChanged),
-
                 ),
                 flexibleSpace: FlexibleSpaceBar(
                   background: HeaderBanner(detail: currentDetail),
@@ -510,7 +508,6 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                       },
                       onRefresh: _fetchDebts,
                     ),
-
                   );
                 }, childCount: currentDetail.items.length),
               ),

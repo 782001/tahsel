@@ -3,21 +3,25 @@ import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/features/debt/domain/entities/payment_entity.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_item_entity.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/debt/get_my_debt_item_payments_usecase.dart';
+import 'package:tahsel/features/my_debts/domain/usecases/debt/get_my_debt_item_payments_paginated_usecase.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/get_my_debt_by_id_usecase.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/payment/delete_my_debt_payment_usecase.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/payment/update_my_debt_payment_usecase.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_report_state.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
+import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_summary_cubit.dart';
 
 class MyDebtDetailsReportCubit extends Cubit<MyDebtDetailsReportState> {
   final GetMyDebtItemPaymentsUseCase getMyDebtItemPaymentsUseCase;
+  final GetMyDebtItemPaymentsPaginatedUseCase getMyDebtItemPaymentsPaginatedUseCase;
   final UpdateMyDebtPaymentUseCase updateMyDebtPaymentUseCase;
   final DeleteMyDebtPaymentUseCase deleteMyDebtPaymentUseCase;
   final GetMyDebtByIdUseCase getMyDebtByIdUseCase;
 
   MyDebtDetailsReportCubit({
     required this.getMyDebtItemPaymentsUseCase,
+    required this.getMyDebtItemPaymentsPaginatedUseCase,
     required this.updateMyDebtPaymentUseCase,
     required this.deleteMyDebtPaymentUseCase,
     required this.getMyDebtByIdUseCase,
@@ -32,10 +36,11 @@ class MyDebtDetailsReportCubit extends Cubit<MyDebtDetailsReportState> {
       emit(MyDebtDetailsReportLoading());
     }
 
-    final result = await getMyDebtItemPaymentsUseCase(
-      GetMyDebtItemPaymentsParams(
+    final result = await getMyDebtItemPaymentsPaginatedUseCase(
+      GetMyDebtItemPaymentsPaginatedParams(
         uid: uid,
         debtId: debtId,
+        limit: 15,
         forceRefresh: forceRefresh,
       ),
     );
@@ -56,11 +61,11 @@ class MyDebtDetailsReportCubit extends Cubit<MyDebtDetailsReportState> {
 
     result.fold(
       (failure) => emit(MyDebtDetailsReportError(message: failure.message)),
-      (transactions) {
+      (paginated) {
         double totalAmount = 0;
         double paidAmount = 0;
 
-        for (var t in transactions) {
+        for (var t in paginated.items) {
           if (t.type == PaymentType.debtAdded) {
             totalAmount += t.amountPaid;
           } else if (t.type == PaymentType.partial ||
@@ -69,7 +74,6 @@ class MyDebtDetailsReportCubit extends Cubit<MyDebtDetailsReportState> {
             paidAmount += t.amountPaid;
           } else if (t.type == PaymentType.adjustment ||
               t.type == PaymentType.reversal) {
-            // Keep for backward compatibility with old ledger data
             if (t.relatedTo == 'debt') {
               totalAmount += t.amountPaid;
             } else if (t.relatedTo == 'payment') {
@@ -80,11 +84,74 @@ class MyDebtDetailsReportCubit extends Cubit<MyDebtDetailsReportState> {
 
         emit(
           MyDebtDetailsReportLoaded(
-            transactions: transactions,
+            transactions: paginated.items,
             totalAmount: totalAmount,
             paidAmount: paidAmount,
             remainingAmount: totalAmount - paidAmount,
             debt: currentDebt,
+            lastDocument: paginated.lastDocument,
+            hasMore: paginated.hasMore,
+            isPaginationLoading: false,
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> loadMoreTransactions(
+    String uid,
+    String debtId,
+  ) async {
+    if (state is! MyDebtDetailsReportLoaded) return;
+    final loadedState = state as MyDebtDetailsReportLoaded;
+    if (loadedState.isPaginationLoading || !loadedState.hasMore) return;
+
+    emit(loadedState.copyWith(isPaginationLoading: true));
+
+    final result = await getMyDebtItemPaymentsPaginatedUseCase(
+      GetMyDebtItemPaymentsPaginatedParams(
+        uid: uid,
+        debtId: debtId,
+        limit: 15,
+        lastDocument: loadedState.lastDocument,
+      ),
+    );
+
+    result.fold(
+      (failure) => emit(loadedState.copyWith(isPaginationLoading: false)),
+      (paginated) {
+        final updatedTransactions = List<PaymentEntity>.from(loadedState.transactions)
+          ..addAll(paginated.items);
+
+        double totalAmount = 0;
+        double paidAmount = 0;
+
+        for (var t in updatedTransactions) {
+          if (t.type == PaymentType.debtAdded) {
+            totalAmount += t.amountPaid;
+          } else if (t.type == PaymentType.partial ||
+              t.type == PaymentType.full ||
+              t.type == PaymentType.settlement) {
+            paidAmount += t.amountPaid;
+          } else if (t.type == PaymentType.adjustment ||
+              t.type == PaymentType.reversal) {
+            if (t.relatedTo == 'debt') {
+              totalAmount += t.amountPaid;
+            } else if (t.relatedTo == 'payment') {
+              paidAmount += t.amountPaid;
+            }
+          }
+        }
+
+        emit(
+          loadedState.copyWith(
+            transactions: updatedTransactions,
+            totalAmount: totalAmount,
+            paidAmount: paidAmount,
+            remainingAmount: totalAmount - paidAmount,
+            lastDocument: paginated.lastDocument,
+            hasMore: paginated.hasMore,
+            isPaginationLoading: false,
           ),
         );
       },
@@ -140,6 +207,9 @@ class MyDebtDetailsReportCubit extends Cubit<MyDebtDetailsReportState> {
         if (sl.isRegistered<MyDebtsCubit>()) {
           sl<MyDebtsCubit>().loadPersons(uid, forceRefresh: true);
         }
+        if (sl.isRegistered<MyDebtsSummaryCubit>()) {
+          sl<MyDebtsSummaryCubit>().refreshSummary(uid);
+        }
 
         // Trigger details refresh
         if (sl.isRegistered<MyDebtDetailsCubit>()) {
@@ -162,6 +232,9 @@ class MyDebtDetailsReportCubit extends Cubit<MyDebtDetailsReportState> {
               amountPaid: newAmount, // Pass NEW amount for notification
               remainingBalance: loadedState.remainingAmount,
               note: note ?? '',
+              lastDocument: loadedState.lastDocument,
+              hasMore: loadedState.hasMore,
+              isPaginationLoading: loadedState.isPaginationLoading,
             ),
           );
         }
@@ -189,6 +262,9 @@ class MyDebtDetailsReportCubit extends Cubit<MyDebtDetailsReportState> {
         if (sl.isRegistered<MyDebtsCubit>()) {
           sl<MyDebtsCubit>().loadPersons(uid, forceRefresh: true);
         }
+        if (sl.isRegistered<MyDebtsSummaryCubit>()) {
+          sl<MyDebtsSummaryCubit>().refreshSummary(uid);
+        }
 
         // Trigger details refresh
         if (sl.isRegistered<MyDebtDetailsCubit>()) {
@@ -211,6 +287,9 @@ class MyDebtDetailsReportCubit extends Cubit<MyDebtDetailsReportState> {
               amountPaid: amountBeingDeleted, // Absolute value for display
               remainingBalance: loadedState.remainingAmount,
               note: '',
+              lastDocument: loadedState.lastDocument,
+              hasMore: loadedState.hasMore,
+              isPaginationLoading: loadedState.isPaginationLoading,
             ),
           );
         }

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tahsel/core/error/firebase_error_handler.dart';
+import 'package:tahsel/core/usecases/pagination_params.dart';
 import 'package:tahsel/features/my_debts/data/models/my_debt_item_model.dart';
 import 'package:tahsel/features/my_debts/data/models/my_debt_payment_model.dart';
 
@@ -29,6 +30,13 @@ abstract class MyDebtItemRemoteDataSource {
   Future<List<MyDebtPaymentModel>> getDebtItemPayments(
     String uid,
     String debtId, {
+    bool forceRefresh = false,
+  });
+  Future<PaginatedResult<MyDebtPaymentModel>> getDebtItemPaymentsPaginated(
+    String uid,
+    String debtId, {
+    required int limit,
+    DocumentSnapshot? lastDocument,
     bool forceRefresh = false,
   });
   Future<void> updateMyDebtPayment({
@@ -610,6 +618,58 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       return snapshot.docs
           .map((doc) => MyDebtPaymentModel.fromJson(doc.data(), doc.id))
           .toList();
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<PaginatedResult<MyDebtPaymentModel>> getDebtItemPaymentsPaginated(
+    String uid,
+    String debtId, {
+    required int limit,
+    DocumentSnapshot? lastDocument,
+    bool forceRefresh = false,
+  }) async {
+    try {
+      var query = firestore
+          .collection('users')
+          .doc(uid)
+          .collection('my_debt_items')
+          .doc(debtId)
+          .collection('payments')
+          .where(
+            'type',
+            whereIn: ['debtAdded', 'partial', 'full', 'adjustment', 'reversal'],
+          )
+          .orderBy('createdAt', descending: true);
+
+      if (lastDocument != null) {
+        query = query.startAfterDocument(lastDocument);
+      }
+
+      // Fetch limit + 1 to determine hasMore
+      final snapshot = await query.limit(limit + 1).get(
+            GetOptions(
+              source: forceRefresh ? Source.server : Source.serverAndCache,
+            ),
+          );
+
+      final hasMore = snapshot.docs.length > limit;
+      final docs = hasMore ? snapshot.docs.sublist(0, limit) : snapshot.docs;
+
+      final items = docs
+          .map((doc) => MyDebtPaymentModel.fromJson(doc.data(), doc.id))
+          .toList();
+
+      final newLastDoc = docs.isNotEmpty ? docs.last : null;
+
+      return PaginatedResult(
+        items: items,
+        lastDocument: newLastDoc,
+        hasMore: hasMore,
+      );
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;

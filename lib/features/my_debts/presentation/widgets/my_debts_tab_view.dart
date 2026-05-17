@@ -8,6 +8,7 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_state.dart';
+import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_summary_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/widgets/my_debt_card.dart';
 import 'package:tahsel/features/my_debts/presentation/widgets/my_debts_summary_card.dart';
 import 'package:tahsel/features/my_debts/presentation/widgets/skeletons/my_debt_skeleton.dart';
@@ -27,10 +28,12 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView>
   bool get wantKeepAlive => true;
 
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -38,12 +41,24 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView>
   void initState() {
     super.initState();
     _loadData();
+    _scrollController.addListener(_onScroll);
   }
 
-  void _loadData() {
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      final uid = AppStrings.userToken;
+      if (uid.isNotEmpty) {
+        context.read<MyDebtsCubit>().loadMorePersons(uid);
+      }
+    }
+  }
+
+  void _loadData({bool forceRefresh = false}) {
     final uid = AppStrings.userToken;
     if (uid.isNotEmpty) {
-      context.read<MyDebtsCubit>().loadPersons(uid);
+      context.read<MyDebtsCubit>().loadPersons(uid, forceRefresh: forceRefresh);
+      context.read<MyDebtsSummaryCubit>().loadSummary(uid, forceRefresh: forceRefresh);
     }
   }
 
@@ -57,18 +72,9 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView>
           heroTag: 'add_my_debt_fab',
           backgroundColor: AppColors.primaryColor,
           onPressed: () {
-            // if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
-            //   ScaffoldMessenger.of(context).showSnackBar(
-            //     SnackBar(
-            //       content: Text(AppStrings.noInternetConnection.tr()),
-            //       backgroundColor: AppColors.error,
-            //     ),
-            //   );
-            //   return;
-            // }
             sl<NavigatorService>().pushNamed(AppRoutes.addMyDebt).then((_) {
               if (context.mounted) {
-                _loadData();
+                _loadData(forceRefresh: true);
               }
             });
           },
@@ -103,8 +109,9 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView>
           builder: (context, state) {
             return RefreshIndicator(
               color: AppColors.primaryColor,
-              onRefresh: () async => _loadData(),
+              onRefresh: () async => _loadData(forceRefresh: true),
               child: CustomScrollView(
+                controller: _scrollController,
                 physics: const AlwaysScrollableScrollPhysics(
                   parent: BouncingScrollPhysics(),
                 ),
@@ -150,6 +157,19 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView>
                       sliver: SliverList(
                         delegate: SliverChildBuilderDelegate((context, index) {
                           if (index == state.filteredPersons.length) {
+                            if (state.isPaginationLoading) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.primaryColor,
+                                    strokeWidth: 4,
+                                  ),
+                                ),
+                              );
+                            }
                             return const SizedBox(height: 100);
                           }
                           final person = state.filteredPersons[index];

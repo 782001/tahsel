@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_person_entity.dart';
 
@@ -30,6 +31,11 @@ class MyDebtsState extends Equatable {
   final double? lastPaymentRemaining;
   final String? lastPaymentNote;
 
+  // Pagination parameters
+  final DocumentSnapshot? lastDocument;
+  final bool hasMore;
+  final bool isPaginationLoading;
+
   const MyDebtsState({
     this.status = MyDebtsStatus.initial,
     this.persons = const [],
@@ -43,6 +49,9 @@ class MyDebtsState extends Equatable {
     this.lastPaymentAmount,
     this.lastPaymentRemaining,
     this.lastPaymentNote,
+    this.lastDocument,
+    this.hasMore = false,
+    this.isPaginationLoading = false,
   });
 
   MyDebtsState copyWith({
@@ -58,9 +67,13 @@ class MyDebtsState extends Equatable {
     double? lastPaymentAmount,
     double? lastPaymentRemaining,
     String? lastPaymentNote,
+    DocumentSnapshot? lastDocument,
+    bool? hasMore,
+    bool? isPaginationLoading,
     bool clearMessage = false,
     bool clearProcessingId = false,
     bool clearLastPayment = false,
+    bool clearLastDocument = false,
   }) {
     return MyDebtsState(
       status: status ?? this.status,
@@ -85,6 +98,9 @@ class MyDebtsState extends Equatable {
       lastPaymentNote: clearLastPayment
           ? null
           : (lastPaymentNote ?? this.lastPaymentNote),
+      lastDocument: clearLastDocument ? null : (lastDocument ?? this.lastDocument),
+      hasMore: hasMore ?? this.hasMore,
+      isPaginationLoading: isPaginationLoading ?? this.isPaginationLoading,
     );
   }
 
@@ -102,5 +118,9 @@ class MyDebtsState extends Equatable {
     lastPaymentAmount,
     lastPaymentRemaining,
     lastPaymentNote,
+    lastDocument,
+    hasMore,
+    isPaginationLoading,
   ];
 }
+

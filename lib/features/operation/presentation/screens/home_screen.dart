@@ -9,6 +9,7 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_state.dart';
 import 'package:tahsel/features/operation/presentation/widgets/quick_add_mode_selector.dart';
@@ -418,204 +419,213 @@ class _HomeScreenState extends State<HomeScreen> {
       ],
       child: BlocBuilder<OperationCubit, OperationState>(
         builder: (context, state) {
-          return Stack(
-            children: [
-              SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Text(
-                        AppStrings.quickAdd.tr(),
-                        style: TextStyles.customStyle(
-                          color: AppColors.black,
-                          fontSize: 25,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    20.verticalSpace,
-                    // Mode Selection
-                    if (context.read<MainLayoutCubit>().isCafe &&
-                        !context.watch<MainLayoutCubit>().isShop)
-                      QuickAddModeSelector(
-                        selectedMode: _selectedMode,
-                        onModeChanged: (mode) {
-                          setState(() {
-                            _selectedMode = mode;
-                            if (_selectedMode == QuickAddMode.playStation) {
-                              _psSubMode = PlayStationMode.time;
-                            }
-                          });
-                        },
-                      ),
-                    const SizedBox(height: 24),
-
-                    // Mode Body
-                    if (_selectedMode == QuickAddMode.playStation) ...[
-                      // PS Mode Sub-tabs
-                      QuickAddSubTabHeader(
-                        selectedMode: _psSubMode,
-                        onModeChanged: (mode) =>
-                            setState(() => _psSubMode = mode),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Form based on sub-mode
-                      if (_psSubMode == PlayStationMode.time)
-                        QuickAddTimeForm(
-                          customerController: _customerController,
-                          hourlyRateController: _hourlyRateController,
-                          durationMinutes: _durationMinutes,
-                          customerError: _customerError,
-                          customerFocus: _customerFocus,
-                          hourlyRateFocus: _hourlyRateFocus,
-                          nextFocus: _paidFocus,
-                          onCustomerSubmitted: (_) =>
-                              _hourlyRateFocus.requestFocus(),
-                          onHourlyRateSubmitted: (_) =>
-                              _paidFocus.requestFocus(),
-                          onDurationAdd: () =>
-                              setState(() => _durationMinutes += 5),
-                          onDurationRemove: () => setState(
-                            () => _durationMinutes > 5
-                                ? _durationMinutes -= 5
-                                : null,
-                          ),
-                          onContactPickerPressed: _onContactPickerPressed,
-                        )
-                      else
-                        QuickAddTurnForm(
-                          customerController: _customerController,
-                          turnRateController: _turnRateController,
-                          matchCount: _matchCount,
-                          customerError: _customerError,
-                          customerFocus: _customerFocus,
-                          turnRateFocus: _turnRateFocus,
-                          nextFocus: _paidFocus,
-                          onCustomerSubmitted: (_) =>
-                              _turnRateFocus.requestFocus(),
-                          onTurnRateSubmitted: (_) => _paidFocus.requestFocus(),
-                          onAdd: () => setState(() => _matchCount++),
-                          onRemove: () => setState(
-                            () => _matchCount > 1 ? _matchCount-- : null,
-                          ),
-                          onContactPickerPressed: _onContactPickerPressed,
-                        ),
-
-                      const SizedBox(height: 24),
-
-                      // Total Calculation Card
-                      QuickAddSummaryCard(totalDue: totalDue),
-
-                      const SizedBox(height: 24),
-
-                      // Paid Field
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            AppStrings.paidAmount.tr(),
+          final isDesktop = ResponsiveLayout.isDesktop(context);
+          return Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: isDesktop ? 800 : double.infinity,
+              ),
+              child: Stack(
+                children: [
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Text(
+                            AppStrings.quickAdd.tr(),
                             style: TextStyles.customStyle(
+                              color: AppColors.black,
+                              fontSize: 25,
                               fontWeight: FontWeight.bold,
-                              fontSize: 18,
                             ),
+                            textAlign: TextAlign.center,
                           ),
-                          TextButton(
-                            onPressed: () {
+                        ),
+                        20.verticalSpace,
+                        // Mode Selection
+                        if (context.read<MainLayoutCubit>().isCafe &&
+                            !context.watch<MainLayoutCubit>().isShop)
+                          QuickAddModeSelector(
+                            selectedMode: _selectedMode,
+                            onModeChanged: (mode) {
                               setState(() {
-                                _paidController.text = totalDue.toStringAsFixed(
-                                  1,
-                                );
+                                _selectedMode = mode;
+                                if (_selectedMode == QuickAddMode.playStation) {
+                                  _psSubMode = PlayStationMode.time;
+                                }
                               });
                             },
-                            child: Text(
-                              AppStrings.paidFull.tr(),
-                              style: TextStyles.customStyle(
-                                color: AppColors.primaryColor,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
+                          ),
+                        const SizedBox(height: 24),
+
+                        // Mode Body
+                        if (_selectedMode == QuickAddMode.playStation) ...[
+                          // PS Mode Sub-tabs
+                          QuickAddSubTabHeader(
+                            selectedMode: _psSubMode,
+                            onModeChanged: (mode) =>
+                                setState(() => _psSubMode = mode),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Form based on sub-mode
+                          if (_psSubMode == PlayStationMode.time)
+                            QuickAddTimeForm(
+                              customerController: _customerController,
+                              hourlyRateController: _hourlyRateController,
+                              durationMinutes: _durationMinutes,
+                              customerError: _customerError,
+                              customerFocus: _customerFocus,
+                              hourlyRateFocus: _hourlyRateFocus,
+                              nextFocus: _paidFocus,
+                              onCustomerSubmitted: (_) =>
+                                  _hourlyRateFocus.requestFocus(),
+                              onHourlyRateSubmitted: (_) =>
+                                  _paidFocus.requestFocus(),
+                              onDurationAdd: () =>
+                                  setState(() => _durationMinutes += 5),
+                              onDurationRemove: () => setState(
+                                () => _durationMinutes > 5
+                                    ? _durationMinutes -= 5
+                                    : null,
                               ),
+                              onContactPickerPressed: _onContactPickerPressed,
+                            )
+                          else
+                            QuickAddTurnForm(
+                              customerController: _customerController,
+                              turnRateController: _turnRateController,
+                              matchCount: _matchCount,
+                              customerError: _customerError,
+                              customerFocus: _customerFocus,
+                              turnRateFocus: _turnRateFocus,
+                              nextFocus: _paidFocus,
+                              onCustomerSubmitted: (_) =>
+                                  _turnRateFocus.requestFocus(),
+                              onTurnRateSubmitted: (_) =>
+                                  _paidFocus.requestFocus(),
+                              onAdd: () => setState(() => _matchCount++),
+                              onRemove: () => setState(
+                                () => _matchCount > 1 ? _matchCount-- : null,
+                              ),
+                              onContactPickerPressed: _onContactPickerPressed,
                             ),
+
+                          const SizedBox(height: 24),
+
+                          // Total Calculation Card
+                          QuickAddSummaryCard(totalDue: totalDue),
+
+                          const SizedBox(height: 24),
+
+                          // Paid Field
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                AppStrings.paidAmount.tr(),
+                                style: TextStyles.customStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _paidController.text = totalDue
+                                        .toStringAsFixed(1);
+                                  });
+                                },
+                                child: Text(
+                                  AppStrings.paidFull.tr(),
+                                  style: TextStyles.customStyle(
+                                    color: AppColors.primaryColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          QuickAddTextField(
+                            hint: '0.00',
+                            controller: _paidController,
+                            suffixText: AppStrings.currencyEgp.tr(),
+                            isNumber: true,
+                            focusNode: _paidFocus,
+                            textInputAction: TextInputAction.done,
+                            onSubmitted: (_) => _submitOperation(context),
+                          ),
+                        ] else ...[
+                          // Shop Mode Body (Simplified Form)
+                          QuickAddShopForm(
+                            totalAmountController: _totalAmountController,
+                            customerController: _customerController,
+                            productController: _productController,
+                            paidController: _paidController,
+                            debtController: _debtController,
+                            ledgerController: _ledgerController,
+                            isShop: context.read<MainLayoutCubit>().isShop,
+                            customerError: _customerError,
+                            totalAmountFocus: _totalAmountFocus,
+                            customerFocus: _customerFocus,
+                            ledgerFocus: _ledgerFocus,
+                            productFocus: _productFocus,
+                            paidFocus: _paidFocus,
+                            debtFocus: _debtFocus,
+                            onDebtSubmitted: (_) => _submitOperation(context),
+                            onContactPickerPressed: _onContactPickerPressed,
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 8),
-                      QuickAddTextField(
-                        hint: '0.00',
-                        controller: _paidController,
-                        suffixText: AppStrings.currencyEgp.tr(),
-                        isNumber: true,
-                        focusNode: _paidFocus,
-                        textInputAction: TextInputAction.done,
-                        onSubmitted: (_) => _submitOperation(context),
-                      ),
-                    ] else ...[
-                      // Shop Mode Body (Simplified Form)
-                      QuickAddShopForm(
-                        totalAmountController: _totalAmountController,
-                        customerController: _customerController,
-                        productController: _productController,
-                        paidController: _paidController,
-                        debtController: _debtController,
-                        ledgerController: _ledgerController,
-                        isShop: context.read<MainLayoutCubit>().isShop,
-                        customerError: _customerError,
-                        totalAmountFocus: _totalAmountFocus,
-                        customerFocus: _customerFocus,
-                        ledgerFocus: _ledgerFocus,
-                        productFocus: _productFocus,
-                        paidFocus: _paidFocus,
-                        debtFocus: _debtFocus,
-                        onDebtSubmitted: (_) => _submitOperation(context),
-                        onContactPickerPressed: _onContactPickerPressed,
-                      ),
-                    ],
 
-                    const SizedBox(height: 20),
+                        const SizedBox(height: 20),
 
-                    // Confirm Action Button
-                    QuickActionButton(
-                      label: AppStrings.confirmOperation.tr(),
-                      icon: Icons.check_circle_outline,
-                      onPressed:
-                          (state is OperationLoading ||
-                              context.watch<DebtCubit>().state is DebtLoading)
-                          ? null
-                          : () => _submitOperation(context),
+                        // Confirm Action Button
+                        QuickActionButton(
+                          label: AppStrings.confirmOperation.tr(),
+                          icon: Icons.check_circle_outline,
+                          onPressed:
+                              (state is OperationLoading ||
+                                  context.watch<DebtCubit>().state
+                                      is DebtLoading)
+                              ? null
+                              : () => _submitOperation(context),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // Footer Info
+                        Center(
+                          child: Text(
+                            AppStrings.quickAddDesc.tr(),
+                            textAlign: TextAlign.center,
+                            style: TextStyles.customStyle(
+                              color: AppColors.blackLight,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 100), // Padding for bottom nav
+                      ],
                     ),
-
-                    const SizedBox(height: 20),
-
-                    // Footer Info
-                    Center(
-                      child: Text(
-                        AppStrings.quickAddDesc.tr(),
-                        textAlign: TextAlign.center,
-                        style: TextStyles.customStyle(
-                          color: AppColors.blackLight,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
+                  ),
+                  if (state is OperationLoading ||
+                      context.watch<DebtCubit>().state is DebtLoading)
+                    Container(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primaryColor,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 100), // Padding for bottom nav
-                  ],
-                ),
+                ],
               ),
-              if (state is OperationLoading ||
-                  context.watch<DebtCubit>().state is DebtLoading)
-                Container(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.primaryColor,
-                    ),
-                  ),
-                ),
-            ],
+            ),
           );
         },
       ),

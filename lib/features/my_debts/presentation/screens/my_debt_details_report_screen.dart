@@ -27,6 +27,8 @@ class MyDebtDetailsReportScreen extends StatefulWidget {
 }
 
 class _MyDebtDetailsReportScreenState extends State<MyDebtDetailsReportScreen> {
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
@@ -36,6 +38,26 @@ class _MyDebtDetailsReportScreenState extends State<MyDebtDetailsReportScreen> {
         uid,
         widget.debtId,
       );
+    }
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      final uid = AppStrings.userToken;
+      if (uid.isNotEmpty) {
+        context.read<MyDebtDetailsReportCubit>().loadMoreTransactions(
+          uid,
+          widget.debtId,
+        );
+      }
     }
   }
 
@@ -114,6 +136,7 @@ class _MyDebtDetailsReportScreenState extends State<MyDebtDetailsReportScreen> {
                 );
               },
               child: CustomScrollView(
+                controller: _scrollController,
                 physics: const AlwaysScrollableScrollPhysics(
                   parent: BouncingScrollPhysics(),
                 ),
@@ -194,18 +217,21 @@ class _MyDebtDetailsReportScreenState extends State<MyDebtDetailsReportScreen> {
                           widget: widget,
                           transactions: state.transactions,
                           debt: state.debt,
+                          isPaginationLoading: state.isPaginationLoading,
                         );
                       } else if (state is MyDebtDetailsUpdateSuccess) {
                         return BuildMyDebtDetailsTransactionList(
                           widget: widget,
                           transactions: state.transactions,
                           debt: state.debt,
+                          isPaginationLoading: state.isPaginationLoading,
                         );
                       } else if (state is MyDebtDetailsDeleteSuccess) {
                         return BuildMyDebtDetailsTransactionList(
                           widget: widget,
                           transactions: state.transactions,
                           debt: state.debt,
+                          isPaginationLoading: state.isPaginationLoading,
                         );
                       } else if (state is MyDebtDetailsReportError) {
                         return SliverFillRemaining(
@@ -214,42 +240,42 @@ class _MyDebtDetailsReportScreenState extends State<MyDebtDetailsReportScreen> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text(
-                                  state.message,
-                                  style: TextStyles.customStyle(
-                                    color: AppColors.error,
-                                    fontSize: 13,
+                                  Text(
+                                    state.message,
+                                    style: TextStyles.customStyle(
+                                      color: AppColors.error,
+                                      fontSize: 13,
+                                    ),
                                   ),
-                                ),
-                                SizedBox(height: 16.h),
-                                ElevatedButton(
-                                  onPressed: () => context
-                                      .read<MyDebtDetailsReportCubit>()
-                                      .loadTransactions(
-                                        uid,
-                                        widget.debtId,
-                                        forceRefresh: true,
-                                      ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primaryColor,
-                                    foregroundColor: Colors.white,
+                                  SizedBox(height: 16.h),
+                                  ElevatedButton(
+                                    onPressed: () => context
+                                        .read<MyDebtDetailsReportCubit>()
+                                        .loadTransactions(
+                                          uid,
+                                          widget.debtId,
+                                          forceRefresh: true,
+                                        ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.primaryColor,
+                                      foregroundColor: Colors.white,
+                                    ),
+                                    child: Text(AppStrings.tryAgain.tr()),
                                   ),
-                                  child: Text(AppStrings.tryAgain.tr()),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        );
-                      }
-                      return const SliverToBoxAdapter(child: SizedBox());
-                    },
-                  ),
-                ],
-              ),
-            );
-          },
+                          );
+                        }
+                        return const SliverToBoxAdapter(child: SizedBox());
+                      },
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
-}

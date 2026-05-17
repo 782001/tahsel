@@ -6,8 +6,8 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
-import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
-import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_state.dart';
+import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_summary_cubit.dart';
+import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_summary_state.dart';
 import 'package:tahsel/features/my_debts/presentation/widgets/skeletons/my_debts_summary_skeleton.dart';
 
 class MyDebtsSummaryCard extends StatelessWidget {
@@ -15,10 +15,24 @@ class MyDebtsSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<MyDebtsCubit, MyDebtsState>(
+    return BlocBuilder<MyDebtsSummaryCubit, MyDebtsSummaryState>(
       builder: (context, state) {
-        if (state.status == MyDebtsStatus.loading && state.persons.isEmpty) {
+        if (state is MyDebtsSummaryLoading || state is MyDebtsSummaryInitial) {
           return const MyDebtsSummarySkeleton();
+        }
+
+        final double totalOwed;
+        final double totalPaid;
+        final int totalPeople;
+
+        if (state is MyDebtsSummaryLoaded) {
+          totalOwed = state.totalOwed;
+          totalPaid = state.totalPaid;
+          totalPeople = state.totalPeople;
+        } else {
+          totalOwed = 0;
+          totalPaid = 0;
+          totalPeople = 0;
         }
 
         return FadeInDown(
@@ -74,7 +88,7 @@ class MyDebtsSummaryCard extends StatelessWidget {
                 ),
                 SizedBox(height: 16.h),
                 Text(
-                  '${state.totalOwed.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
+                  '${totalOwed.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
                   style: TextStyles.customStyle(
                     color: AppColors.primaryColor,
                     fontSize: 28,
@@ -87,11 +101,11 @@ class MyDebtsSummaryCard extends StatelessWidget {
                   children: [
                     _buildInfoItem(
                       Icons.people_alt_outlined,
-                      '${state.totalPeople} ${AppStrings.totalPeople.tr()}',
+                      '$totalPeople ${AppStrings.totalPeople.tr()}',
                     ),
                     _buildInfoItem(
                       Icons.check_circle_outline,
-                      '${AppStrings.paid.tr()}: ${state.totalPaid.toStringAsFixed(1)}',
+                      '${AppStrings.paid.tr()}: ${totalPaid.toStringAsFixed(1)}',
                     ),
                   ],
                 ),

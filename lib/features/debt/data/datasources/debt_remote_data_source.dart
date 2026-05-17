@@ -1431,7 +1431,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         final double unpaidDebts = (data['unpaidDebts'] ?? 0.0).toDouble();
         final int debtCustomersCount = (data['debtCustomersCount'] ?? 0).toInt();
 
-        if (unpaidDebts > 0.0 && debtCustomersCount <= 0) {
+        if (debtCustomersCount <= 0) {
           // Heal: recalculate active customers count and update Firestore
           final activeDebts = await firestore
               .collection('users')

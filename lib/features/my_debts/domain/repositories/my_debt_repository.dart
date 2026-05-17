@@ -1,15 +1,27 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:tahsel/core/error/failures.dart';
+import 'package:tahsel/core/usecases/pagination_params.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_person_entity.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_item_entity.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_operation_entity.dart';
+import 'package:tahsel/features/my_debts/domain/entities/my_debt_summary_entity.dart';
 import 'package:tahsel/features/debt/domain/entities/payment_entity.dart';
 import 'package:tahsel/features/offline_sync/data/models/offline_record.dart';
 
 abstract class MyDebtRepository {
+  // Summary (aggregate query - 1 read cost)
+  Future<Either<Failure, MyDebtSummaryEntity>> getMyDebtSummary(String uid);
+
   // Person (Supplier/etc)
   Future<Either<Failure, List<MyDebtPersonEntity>>> getMyDebtPersons(
     String uid, {
+    bool forceRefresh = false,
+  });
+  Future<Either<Failure, PaginatedResult<MyDebtPersonEntity>>> getMyDebtPersonsPaginated(
+    String uid, {
+    required int limit,
+    DocumentSnapshot? lastDocument,
     bool forceRefresh = false,
   });
   Future<Either<Failure, void>> saveMyDebtPerson(
@@ -47,6 +59,13 @@ abstract class MyDebtRepository {
   Future<Either<Failure, List<PaymentEntity>>> getMyDebtItemPayments(
     String uid,
     String debtId, {
+    bool forceRefresh = false,
+  });
+  Future<Either<Failure, PaginatedResult<PaymentEntity>>> getMyDebtItemPaymentsPaginated(
+    String uid,
+    String debtId, {
+    required int limit,
+    DocumentSnapshot? lastDocument,
     bool forceRefresh = false,
   });
   Future<Either<Failure, void>> distributeMyDebtPayment({

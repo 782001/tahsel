@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/base_usecase/base_usecase.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
@@ -10,15 +11,19 @@ import 'package:tahsel/features/my_debts/domain/usecases/debt/add_my_debt_usecas
 import 'package:tahsel/features/my_debts/domain/usecases/debt/get_pending_my_debts_usecase.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/payment/distribute_my_debt_payment_usecase.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/person/get_my_debt_persons_usecase.dart';
+import 'package:tahsel/features/my_debts/domain/usecases/person/get_my_debt_persons_paginated_usecase.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/person/update_my_debt_person_preference_usecase.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_state.dart';
+import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_summary_cubit.dart';
 import 'package:tahsel/features/offline_sync/data/models/offline_record.dart';
 import 'package:tahsel/features/offline_sync/presentation/cubit/offline_sync_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/core/services/injection_container.dart';
 
 class MyDebtsCubit extends Cubit<MyDebtsState> {
   final GetMyDebtPersonsUseCase getPersonsUseCase;
+  final GetMyDebtPersonsPaginatedUseCase getPersonsPaginatedUseCase;
   final AddMyDebtUseCase addDebtUseCase;
   final DistributeMyDebtPaymentUseCase distributePaymentUseCase;
   final UpdateMyDebtPersonPreferenceUseCase updatePreferenceUseCase;
@@ -30,6 +35,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
 
   MyDebtsCubit({
     required this.getPersonsUseCase,
+    required this.getPersonsPaginatedUseCase,
     required this.addDebtUseCase,
     required this.distributePaymentUseCase,
     required this.updatePreferenceUseCase,
@@ -67,15 +73,26 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
   }
 
   List<MyDebtPersonEntity> _allPersons = [];
+  List<MyDebtPersonEntity> _remotePersons = [];
   Timer? _searchDebounce;
 
   Future<void> loadPersons(String uid, {bool forceRefresh = false}) async {
     if (isClosed) return;
 
-    emit(state.copyWith(status: MyDebtsStatus.loading, clearMessage: true));
+    emit(state.copyWith(
+      status: MyDebtsStatus.loading,
+      clearMessage: true,
+      clearLastDocument: true,
+      hasMore: false,
+      isPaginationLoading: false,
+    ));
 
-    final result = await getPersonsUseCase(
-      GetMyDebtPersonsParams(uid: uid, forceRefresh: forceRefresh),
+    final result = await getPersonsPaginatedUseCase(
+      GetMyDebtPersonsPaginatedParams(
+        uid: uid,
+        limit: 15,
+        forceRefresh: forceRefresh,
+      ),
     );
     final pendingResult = await getPendingMyDebtsUseCase(const NoParams());
     final List<OfflineRecord> pendingRecords = pendingResult.fold(
@@ -87,16 +104,69 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
 
     result.fold(
       (failure) {
-        // If remote fails, merge pending records with empty list (or existing list)
+        _remotePersons = [];
         final merged = _mergePendingRecords([], pendingRecords);
         _allPersons = merged;
-        _emitLoaded(merged, status: MyDebtsStatus.offlineLoaded);
+        _emitLoaded(
+          merged,
+          status: MyDebtsStatus.offlineLoaded,
+          lastDocument: null,
+          hasMore: false,
+        );
       },
-      (persons) {
-        // ALWAYS merge pending records even when online to show local changes not yet synced
-        final merged = _mergePendingRecords(persons, pendingRecords);
+      (paginated) {
+        _remotePersons = List.from(paginated.items);
+        final merged = _mergePendingRecords(_remotePersons, pendingRecords);
         _allPersons = merged;
-        _emitLoaded(merged, status: MyDebtsStatus.loaded);
+        _emitLoaded(
+          merged,
+          status: MyDebtsStatus.loaded,
+          lastDocument: paginated.lastDocument,
+          hasMore: paginated.hasMore,
+        );
+      },
+    );
+  }
+
+  Future<void> loadMorePersons(String uid) async {
+    if (isClosed) return;
+    if (state.isPaginationLoading || !state.hasMore || state.status == MyDebtsStatus.loading) {
+      return;
+    }
+
+    emit(state.copyWith(isPaginationLoading: true));
+
+    final result = await getPersonsPaginatedUseCase(
+      GetMyDebtPersonsPaginatedParams(
+        uid: uid,
+        limit: 15,
+        lastDocument: state.lastDocument,
+      ),
+    );
+
+    final pendingResult = await getPendingMyDebtsUseCase(const NoParams());
+    final List<OfflineRecord> pendingRecords = pendingResult.fold(
+      (_) => [],
+      (records) => records,
+    );
+
+    if (isClosed) return;
+
+    result.fold(
+      (failure) {
+        emit(state.copyWith(isPaginationLoading: false));
+      },
+      (paginated) {
+        _remotePersons.addAll(paginated.items);
+        final merged = _mergePendingRecords(_remotePersons, pendingRecords);
+        _allPersons = merged;
+        _emitLoaded(
+          merged,
+          status: MyDebtsStatus.loaded,
+          lastDocument: paginated.lastDocument,
+          hasMore: paginated.hasMore,
+          isPaginationLoading: false,
+        );
       },
     );
   }
@@ -147,6 +217,9 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
   void _emitLoaded(
     List<MyDebtPersonEntity> persons, {
     MyDebtsStatus status = MyDebtsStatus.loaded,
+    DocumentSnapshot? lastDocument,
+    bool? hasMore,
+    bool? isPaginationLoading,
   }) {
     double totalOwed = 0;
     double totalPaid = 0;
@@ -163,6 +236,9 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
         totalOwed: totalOwed,
         totalPaid: totalPaid,
         totalPeople: persons.length,
+        lastDocument: lastDocument,
+        hasMore: hasMore,
+        isPaginationLoading: isPaginationLoading,
       ),
     );
   }
@@ -209,7 +285,10 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
       emit(
         state.copyWith(status: MyDebtsStatus.error, message: failure.message),
       );
-    }, (_) => loadPersons(uid, forceRefresh: true));
+    }, (_) {
+      loadPersons(uid, forceRefresh: true);
+      sl<MyDebtsSummaryCubit>().refreshSummary(uid);
+    });
   }
 
   Future<void> payTotalDebt({
@@ -248,6 +327,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
           ),
         );
         loadPersons(uid, forceRefresh: true);
+        sl<MyDebtsSummaryCubit>().refreshSummary(uid);
       },
     );
   }

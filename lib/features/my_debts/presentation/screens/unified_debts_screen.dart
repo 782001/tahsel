@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
+import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_summary_cubit.dart';
 import 'package:tahsel/features/debt/presentation/cubit/total_debts/total_debts_cubit.dart';
 import 'package:tahsel/features/offline_sync/presentation/cubit/offline_sync_cubit.dart';
 
@@ -45,6 +46,7 @@ class _UnifiedDebtsScreenState extends State<UnifiedDebtsScreen>
       providers: [
         BlocProvider.value(value: sl<DebtCubit>()),
         BlocProvider.value(value: sl<MyDebtsCubit>()),
+        BlocProvider.value(value: sl<MyDebtsSummaryCubit>()),
         BlocProvider.value(value: sl<TotalDebtsCubit>()),
       ],
       child: BlocListener<OfflineSyncCubit, OfflineSyncState>(
@@ -54,6 +56,7 @@ class _UnifiedDebtsScreenState extends State<UnifiedDebtsScreen>
             if (uid.isNotEmpty) {
               context.read<DebtCubit>().getDebts(uid, forceRefresh: true);
               context.read<MyDebtsCubit>().loadPersons(uid, forceRefresh: true);
+              context.read<MyDebtsSummaryCubit>().refreshSummary(uid);
             }
           }
         },

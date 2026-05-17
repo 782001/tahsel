@@ -10,6 +10,8 @@ import 'package:tahsel/features/my_debts/domain/entities/my_debt_person_entity.d
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_state.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
+import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_summary_cubit.dart';
+import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/features/my_debts/presentation/widgets/my_add_debt_dialog.dart';
 import 'package:tahsel/features/my_debts/presentation/widgets/my_debt_details_widgets.dart';
 import 'package:tahsel/features/my_debts/presentation/widgets/my_debt_item_card.dart';
@@ -225,6 +227,7 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
           );
 
           context.read<MyDebtsCubit>().loadPersons(AppStrings.userToken);
+          sl<MyDebtsSummaryCubit>().refreshSummary(AppStrings.userToken);
           context.read<MyDebtDetailsCubit>().clearFlags();
         } else if (state.status == MyDebtDetailsStatus.error &&
             state.message != null) {

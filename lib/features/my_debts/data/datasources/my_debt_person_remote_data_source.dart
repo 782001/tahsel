@@ -1,13 +1,23 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:tahsel/core/error/firebase_error_handler.dart';
+import 'package:tahsel/core/usecases/pagination_params.dart';
 import 'package:tahsel/features/my_debts/data/models/my_debt_person_model.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_operation_entity.dart';
+import 'package:tahsel/features/my_debts/domain/entities/my_debt_summary_entity.dart';
 
 abstract class MyDebtPersonRemoteDataSource {
   Future<List<MyDebtPersonModel>> getPersons(
     String uid, {
     bool forceRefresh = false,
   });
+  Future<PaginatedResult<MyDebtPersonModel>> getPersonsPaginated(
+    String uid, {
+    required int limit,
+    DocumentSnapshot? lastDocument,
+    bool forceRefresh = false,
+  });
+  Future<MyDebtSummaryEntity> getMyDebtSummary(String uid);
   Future<void> savePerson(String uid, MyDebtPersonModel person);
   Future<void> updatePersonPhone(String uid, String name, String phoneNumber);
   Future<void> updatePersonPreference(
@@ -26,6 +36,83 @@ class MyDebtPersonRemoteDataSourceImpl implements MyDebtPersonRemoteDataSource {
   final FirebaseFirestore firestore;
 
   MyDebtPersonRemoteDataSourceImpl({required this.firestore});
+
+  @override
+  Future<MyDebtSummaryEntity> getMyDebtSummary(String uid) async {
+    try {
+      final collection = firestore
+          .collection('users')
+          .doc(uid)
+          .collection('my_debt_persons');
+
+      final snapshot = await collection.aggregate(
+        count(),
+        sum('totalRemainingDebt'),
+        sum('totalDebtAmount'),
+      ).get();
+
+      final remaining = snapshot.getSum('totalRemainingDebt') ?? 0.0;
+      final total = snapshot.getSum('totalDebtAmount') ?? 0.0;
+      final cnt = snapshot.count ?? 0;
+
+      debugPrint('DEBUG MyDebtSummary: count=$cnt, remaining=$remaining, total=$total');
+
+      return MyDebtSummaryEntity(
+        totalRemainingDebt: remaining,
+        totalDebtAmount: total,
+        peopleCount: cnt,
+      );
+    } catch (e) {
+      debugPrint('DEBUG MyDebtSummary ERROR: $e');
+      FirebaseErrorHandler.handle(e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<PaginatedResult<MyDebtPersonModel>> getPersonsPaginated(
+    String uid, {
+    required int limit,
+    DocumentSnapshot? lastDocument,
+    bool forceRefresh = false,
+  }) async {
+    try {
+      var query = firestore
+          .collection('users')
+          .doc(uid)
+          .collection('my_debt_persons')
+          .orderBy('lastUsedAt', descending: true);
+
+      if (lastDocument != null) {
+        query = query.startAfterDocument(lastDocument);
+      }
+
+      // Fetch one extra to determine hasMore
+      final snapshot = await query.limit(limit + 1).get(
+            GetOptions(
+              source: forceRefresh ? Source.server : Source.serverAndCache,
+            ),
+          );
+
+      final hasMore = snapshot.docs.length > limit;
+      final docs = hasMore ? snapshot.docs.sublist(0, limit) : snapshot.docs;
+
+      final items = docs
+          .map((doc) => MyDebtPersonModel.fromJson(doc.data(), id: doc.id))
+          .toList();
+
+      final newLastDoc = docs.isNotEmpty ? docs.last : null;
+
+      return PaginatedResult(
+        items: items,
+        lastDocument: newLastDoc,
+        hasMore: hasMore,
+      );
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      rethrow;
+    }
+  }
 
   @override
   Future<List<MyDebtPersonModel>> getPersons(

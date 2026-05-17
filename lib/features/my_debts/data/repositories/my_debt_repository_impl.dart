@@ -1,11 +1,14 @@
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:tahsel/core/error/failures.dart';
+import 'package:tahsel/core/usecases/pagination_params.dart';
 import 'package:tahsel/features/debt/domain/entities/payment_entity.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_person_entity.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_item_entity.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_operation_entity.dart';
+import 'package:tahsel/features/my_debts/domain/entities/my_debt_summary_entity.dart';
 import 'package:tahsel/features/my_debts/domain/repositories/my_debt_repository.dart';
 import 'package:tahsel/features/my_debts/data/datasources/my_debt_person_remote_data_source.dart';
 import 'package:tahsel/features/my_debts/data/datasources/my_debt_item_remote_data_source.dart';
@@ -28,6 +31,22 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
   });
 
   @override
+  Future<Either<Failure, MyDebtSummaryEntity>> getMyDebtSummary(
+    String uid,
+  ) async {
+    try {
+      final hasConnection = await connectionChecker.hasConnection;
+      if (!hasConnection) {
+        return const Left(OfflineFailure("No internet connection"));
+      }
+      final summary = await personRemoteDataSource.getMyDebtSummary(uid);
+      return Right(summary);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, List<MyDebtPersonEntity>>> getMyDebtPersons(
     String uid, {
     bool forceRefresh = false,
@@ -46,6 +65,39 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
         forceRefresh: forceRefresh,
       );
       return Right(persons);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, PaginatedResult<MyDebtPersonEntity>>> getMyDebtPersonsPaginated(
+    String uid, {
+    required int limit,
+    DocumentSnapshot? lastDocument,
+    bool forceRefresh = false,
+  }) async {
+    try {
+      final hasConnection = await connectionChecker.hasConnection;
+      if (!hasConnection) {
+        return const Left(OfflineFailure("No internet connection"));
+      }
+
+      // TRIGGER SYNC when online before fetching
+      await offlineSyncRepository.syncAllPendingRecords();
+
+      final paginatedResult = await personRemoteDataSource.getPersonsPaginated(
+        uid,
+        limit: limit,
+        lastDocument: lastDocument,
+        forceRefresh: forceRefresh,
+      );
+      
+      return Right(PaginatedResult(
+        items: paginatedResult.items,
+        lastDocument: paginatedResult.lastDocument,
+        hasMore: paginatedResult.hasMore,
+      ));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -341,6 +393,48 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
           )
           .toList();
       return Right(entities);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, PaginatedResult<PaymentEntity>>> getMyDebtItemPaymentsPaginated(
+    String uid,
+    String debtId, {
+    required int limit,
+    DocumentSnapshot? lastDocument,
+    bool forceRefresh = false,
+  }) async {
+    try {
+      final paginatedResult = await itemRemoteDataSource.getDebtItemPaymentsPaginated(
+        uid,
+        debtId,
+        limit: limit,
+        lastDocument: lastDocument,
+        forceRefresh: forceRefresh,
+      );
+
+      final entities = paginatedResult.items
+          .map(
+            (p) => PaymentEntity(
+              id: p.id,
+              debtId: p.debtId,
+              amountPaid: p.amountPaid,
+              remainingAmount: 0.0,
+              createdAt: p.createdAt,
+              type: _mapType(p.type),
+              activityName: p.note,
+              relatedTo: p.relatedTo,
+            ),
+          )
+          .toList();
+
+      return Right(PaginatedResult(
+        items: entities,
+        lastDocument: paginatedResult.lastDocument,
+        hasMore: paginatedResult.hasMore,
+      ));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
