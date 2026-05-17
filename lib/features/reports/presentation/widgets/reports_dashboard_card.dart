@@ -4,6 +4,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 enum BusinessReportType { income, expense, cafe, playstation, debts }
 
@@ -39,8 +40,12 @@ class ReportsDashboardCard extends StatelessWidget {
     bool isSummaryCard =
         type == BusinessReportType.income || type == BusinessReportType.expense;
 
+    final isDesktop = ResponsiveLayout.isDesktop(context);
+
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
+      padding: isDesktop
+          ? EdgeInsets.zero
+          : EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
       child: GestureDetector(
         onTap: onTap,
         child: ClipRRect(
@@ -76,14 +81,16 @@ class ReportsDashboardCard extends StatelessWidget {
                       Flexible(
                         child: Container(
                           padding: EdgeInsets.symmetric(
-                            horizontal: 10.w,
-                            vertical: 4.h,
+                            horizontal: isDesktop ? 12 : 10.w,
+                            vertical: isDesktop ? 8 : 4.h,
                           ),
                           decoration: BoxDecoration(
                             color: isAccentCard
                                 ? AppColors.whiteColor.withValues(alpha: 0.1)
                                 : contentColor.withValues(alpha: 0.05),
-                            borderRadius: BorderRadius.circular(8.r),
+                            borderRadius: BorderRadius.circular(
+                              isDesktop ? 10 : 8.r,
+                            ),
                           ),
                           child: Text(
                             badgeText!,

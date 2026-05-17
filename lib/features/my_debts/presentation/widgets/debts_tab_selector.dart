@@ -4,6 +4,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 class DebtsTabSelector extends StatelessWidget {
   final Function(int index) onTabChanged;
@@ -22,10 +23,11 @@ class DebtsTabSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDesktop = ResponsiveLayout.isDesktop(context);
     return Container(
-      height: 50.h,
-      margin: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
-      padding: EdgeInsets.all(4.r),
+      height: isDesktop ? 60.h : 50.h,
+      margin: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 24.w),
+      padding: EdgeInsets.all(isDesktop ? 6 : 4.r),
       decoration: BoxDecoration(
         color: AppColors.stitchSurfaceLow,
         borderRadius: BorderRadius.circular(25.r),

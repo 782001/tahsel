@@ -7,6 +7,7 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/operation/domain/entities/operation_entity.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 class TransactionDetailCard extends StatelessWidget {
   final OperationEntity operation;
@@ -15,6 +16,7 @@ class TransactionDetailCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
     final bool isPlaystation =
         operation.type.toLowerCase() == AppStrings.playStation.toLowerCase();
     final bool hasDebt = operation.remainingDebt > 0;
@@ -44,10 +46,10 @@ class TransactionDetailCard extends StatelessWidget {
         : AppStrings.walkingCustomer.tr();
 
     return Container(
-      margin: EdgeInsets.only(bottom: 16.h),
+      margin: EdgeInsets.only(bottom: isDesktop ? 16 : 16.h),
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(isDesktop ? 20 : 20.r),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -63,14 +65,14 @@ class TransactionDetailCard extends StatelessWidget {
         ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(isDesktop ? 20 : 20.r),
         child: Column(
           children: [
             // Status marker for debt
             if (hasDebt)
               Container(
                 width: double.infinity,
-                padding: EdgeInsets.symmetric(vertical: 4.h),
+                padding: EdgeInsets.symmetric(vertical: isDesktop ? 4 : 4.h),
                 color: AppColors.error.withValues(alpha: 0.3),
                 child: Center(
                   child: Text(
@@ -85,7 +87,7 @@ class TransactionDetailCard extends StatelessWidget {
               ),
 
             Padding(
-              padding: EdgeInsets.all(16.r),
+              padding: EdgeInsets.all(isDesktop ? 16 : 16.r),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -93,7 +95,7 @@ class TransactionDetailCard extends StatelessWidget {
                     children: [
                       // Icon Circle
                       Container(
-                        padding: EdgeInsets.all(10.r),
+                        padding: EdgeInsets.all(isDesktop ? 10 : 10.r),
                         decoration: BoxDecoration(
                           color:
                               (isPlaystation
@@ -112,7 +114,7 @@ class TransactionDetailCard extends StatelessWidget {
                           size: 20,
                         ),
                       ),
-                      SizedBox(width: 12.w),
+                      SizedBox(width: isDesktop ? 12 : 12.w),
                       // Customer and Type
                       Expanded(
                         child: Column(
@@ -128,7 +130,7 @@ class TransactionDetailCard extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            SizedBox(height: 2.h),
+                            SizedBox(height: isDesktop ? 2 : 2.h),
                             Text(
                               subtitleText,
                               style: TextStyles.customStyle(
@@ -174,12 +176,12 @@ class TransactionDetailCard extends StatelessWidget {
                     ],
                   ),
 
-                  SizedBox(height: 16.h),
+                  SizedBox(height: isDesktop ? 16 : 16.h),
                   const Divider(height: 1),
 
                   // Debt Breakdown Section
                   if (hasDebt) ...[
-                    SizedBox(height: 12.h),
+                    SizedBox(height: isDesktop ? 12 : 12.h),
                     Row(
                       children: [
                         Expanded(
@@ -196,7 +198,7 @@ class TransactionDetailCard extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              SizedBox(height: 4.h),
+                              SizedBox(height: isDesktop ? 4 : 4.h),
                               FittedBox(
                                 fit: BoxFit.scaleDown,
                                 child: Text(
@@ -213,10 +215,10 @@ class TransactionDetailCard extends StatelessWidget {
                         ),
                         Container(
                           width: 1,
-                          height: 30.h,
+                          height: isDesktop ? 30 : 30.h,
                           color: AppColors.blackLight.withValues(alpha: 0.1),
                         ),
-                        SizedBox(width: 16.w),
+                        SizedBox(width: isDesktop ? 16 : 16.w),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,7 +233,7 @@ class TransactionDetailCard extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              SizedBox(height: 4.h),
+                              SizedBox(height: isDesktop ? 4 : 4.h),
                               FittedBox(
                                 fit: BoxFit.scaleDown,
                                 child: Text(
@@ -250,7 +252,7 @@ class TransactionDetailCard extends StatelessWidget {
                     ),
                   ],
 
-                  SizedBox(height: 12.h),
+                  SizedBox(height: isDesktop ? 12 : 12.h),
 
                   // Footer: Date & Time + Payment Info
                   Row(
@@ -263,7 +265,7 @@ class TransactionDetailCard extends StatelessWidget {
                             size: 12,
                             color: AppColors.blackLight.withValues(alpha: 0.4),
                           ),
-                          SizedBox(width: 4.w),
+                          SizedBox(width: isDesktop ? 4 : 4.w),
                           Text(
                             operation.timestamp != null
                                 ? dateFormat.format(operation.timestamp!)
@@ -276,13 +278,13 @@ class TransactionDetailCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                          SizedBox(width: 12.w),
+                          SizedBox(width: isDesktop ? 12 : 12.w),
                           Icon(
                             Icons.access_time_rounded,
                             size: 12,
                             color: AppColors.blackLight.withValues(alpha: 0.4),
                           ),
-                          SizedBox(width: 4.w),
+                          SizedBox(width: isDesktop ? 4 : 4.w),
                           Text(
                             operation.timestamp != null
                                 ? timeFormat.format(operation.timestamp!)
@@ -301,14 +303,14 @@ class TransactionDetailCard extends StatelessWidget {
                       // Payment Status Badge
                       Container(
                         padding: EdgeInsets.symmetric(
-                          horizontal: 8.w,
-                          vertical: 4.h,
+                          horizontal: isDesktop ? 8 : 8.w,
+                          vertical: isDesktop ? 4 : 4.h,
                         ),
                         decoration: BoxDecoration(
                           color: hasDebt
                               ? AppColors.error.withValues(alpha: 0.05)
                               : AppColors.success.withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(8.r),
+                          borderRadius: BorderRadius.circular(isDesktop ? 8 : 8.r),
                         ),
                         child: Text(
                           hasDebt

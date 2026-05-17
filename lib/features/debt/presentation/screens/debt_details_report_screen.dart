@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/customer/presentation/widgets/notification_dialog.dart';
 import 'package:tahsel/features/debt/domain/entities/debt_entity.dart';
 import 'package:tahsel/features/debt/domain/entities/payment_entity.dart';
@@ -13,7 +13,6 @@ import 'package:tahsel/features/debt/presentation/cubit/debt_details/debt_detail
 import 'package:tahsel/features/debt/presentation/cubit/debt_details/debt_details_state.dart';
 import 'package:tahsel/features/debt/presentation/widgets/build_debt_details_summary_card.dart';
 import 'package:tahsel/features/debt/presentation/widgets/debt_details_report_transaction_item.dart';
-import 'package:tahsel/features/debt/presentation/widgets/debt_details_report_summary_item.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/shared/widgets/no_internet_view.dart';
@@ -34,10 +33,12 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
   DebtEntity? _updatedDebt;
 
   @override
-
   void initState() {
     super.initState();
-    context.read<DebtDetailsCubit>().loadTransactions(AppStrings.userToken, widget.debtId);
+    context.read<DebtDetailsCubit>().loadTransactions(
+      AppStrings.userToken,
+      widget.debtId,
+    );
   }
 
   @override
@@ -81,172 +82,283 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
         canPop: true,
         onPopInvokedWithResult: (didPop, result) {
           if (didPop && result == null) {
-            // This handles the system back button. 
-            // We can't actually change the result here in older Flutter versions 
-            // but in recent ones we might. 
+            // This handles the system back button.
+            // We can't actually change the result here in older Flutter versions
+            // but in recent ones we might.
             // However, Navigator.pop(context, value) is called from our back button.
             // If result is already set, we don't need to do anything.
           }
         },
         child: Scaffold(
-        backgroundColor: AppColors.scafoldBackGround,
-        appBar: AppBar(
-          title: Text(
-            AppStrings.debtDetails.tr(),
-            style: TextStyles.customStyle(
-              color: AppColors.textColor,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+          backgroundColor: AppColors.scafoldBackGround,
+          appBar: AppBar(
+            title: Text(
+              AppStrings.debtDetails.tr(),
+              style: TextStyles.customStyle(
+                color: AppColors.textColor,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            centerTitle: true,
+            elevation: 0,
+            backgroundColor: AppColors.transparent,
+            leading: IconButton(
+              icon: Icon(
+                Icons.arrow_back_ios_new,
+                color: AppColors.textColor,
+                size: 20.r,
+              ),
+              onPressed: () =>
+                  Navigator.pop(context, _updatedDebt ?? _hasChanged),
             ),
           ),
-          centerTitle: true,
-          elevation: 0,
-          backgroundColor: AppColors.transparent,
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_new,
-              color: AppColors.textColor,
-              size: 20.r,
-            ),
-            onPressed: () => Navigator.pop(context, _updatedDebt ?? _hasChanged),
-
-          ),
-        ),
-        body: BlocBuilder<ConnectivityCubit, ConnectivityState>(
-          builder: (context, connectivityState) {
-            if (connectivityState is ConnectivityDisconnected) {
-              return NoInternetView(
-                onRetry: () =>
-                    context.read<ConnectivityCubit>().checkConnectivity(),
-              );
-            }
-            return RefreshIndicator(
-              color: AppColors.primaryColor,
-              onRefresh: () async {
-                await context.read<DebtDetailsCubit>().loadTransactions(
-                  AppStrings.userToken,
-                  widget.debtId,
-                  forceRefresh: true,
+          body: BlocBuilder<ConnectivityCubit, ConnectivityState>(
+            builder: (context, connectivityState) {
+              final isDesktop = ResponsiveLayout.isDesktop(context);
+              if (connectivityState is ConnectivityDisconnected) {
+                return NoInternetView(
+                  onRetry: () =>
+                      context.read<ConnectivityCubit>().checkConnectivity(),
                 );
-              },
-              child: CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics(),
-                ),
-                slivers: [
-                  BlocBuilder<DebtDetailsCubit, DebtDetailsState>(
-                    builder: (context, state) {
-                      if (state is DebtDetailsLoaded) {
-                        return SliverToBoxAdapter(
-                          child: BuildDebtDetailsSummaryCard(totalAmount: state.totalAmount, amountPaid: state.totalPaid, remainingDebt: state.remainingDebt, debt: state.debt),
-                        );
-                      } else if (state is DebtDetailsUpdateSuccess) {
-                        return SliverToBoxAdapter(
-                          child: BuildDebtDetailsSummaryCard(totalAmount: state.totalAmount, amountPaid: state.totalPaid, remainingDebt: state.remainingDebt, debt: state.debt),
-                        );
-                      } else if (state is DebtDetailsDeleteSuccess) {
-                        return SliverToBoxAdapter(
-                          child: BuildDebtDetailsSummaryCard(totalAmount: state.totalAmount, amountPaid: state.totalPaid, remainingDebt: state.remainingDebt, debt: state.debt),
-                        );
-                      }
-                      // Loading or initial
-                      return SliverToBoxAdapter(child: _buildSummarySkeleton());
-                    },
+              }
+              return RefreshIndicator(
+                color: AppColors.primaryColor,
+                onRefresh: () async {
+                  await context.read<DebtDetailsCubit>().loadTransactions(
+                    AppStrings.userToken,
+                    widget.debtId,
+                    forceRefresh: true,
+                  );
+                },
+                child: CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
                   ),
-                  BlocBuilder<DebtDetailsCubit, DebtDetailsState>(
-                    builder: (context, state) {
-                      if (state is DebtDetailsLoading) {
-                        return SliverPadding(
-                          padding: EdgeInsets.symmetric(horizontal: 16.w),
-                          sliver: SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) => Padding(
-                                padding: EdgeInsets.only(bottom: 12.h),
-                                child: const TransactionCardSkeleton(),
-                              ),
-                              childCount: 5,
-                            ),
-                          ),
-                        );
-                      } else if (state is DebtDetailsLoaded) {
-                        if (state.transactions.isEmpty) {
-                          return SliverFillRemaining(
-                            hasScrollBody: false,
+                  slivers: [
+                    BlocBuilder<DebtDetailsCubit, DebtDetailsState>(
+                      builder: (context, state) {
+                        if (state is DebtDetailsLoaded) {
+                          return SliverToBoxAdapter(
                             child: Center(
-                              child: Text(
-                                AppStrings.noTransactions.tr(),
-                                style: TextStyles.customStyle(
-                                  color: AppColors.disabledColor,
-                                  fontSize: 14,
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  maxWidth: isDesktop ? 800 : double.infinity,
+                                ),
+                                child: BuildDebtDetailsSummaryCard(
+                                  totalAmount: state.totalAmount,
+                                  amountPaid: state.totalPaid,
+                                  remainingDebt: state.remainingDebt,
+                                  debt: state.debt,
+                                ),
+                              ),
+                            ),
+                          );
+                        } else if (state is DebtDetailsUpdateSuccess) {
+                          return SliverToBoxAdapter(
+                            child: Center(
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  maxWidth: isDesktop ? 800 : double.infinity,
+                                ),
+                                child: BuildDebtDetailsSummaryCard(
+                                  totalAmount: state.totalAmount,
+                                  amountPaid: state.totalPaid,
+                                  remainingDebt: state.remainingDebt,
+                                  debt: state.debt,
+                                ),
+                              ),
+                            ),
+                          );
+                        } else if (state is DebtDetailsDeleteSuccess) {
+                          return SliverToBoxAdapter(
+                            child: Center(
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  maxWidth: isDesktop ? 800 : double.infinity,
+                                ),
+                                child: BuildDebtDetailsSummaryCard(
+                                  totalAmount: state.totalAmount,
+                                  amountPaid: state.totalPaid,
+                                  remainingDebt: state.remainingDebt,
+                                  debt: state.debt,
                                 ),
                               ),
                             ),
                           );
                         }
-                        return _buildTransactionList(
-                          state.transactions,
-                          state.debt,
-                        );
-                      } else if (state is DebtDetailsUpdateSuccess) {
-                        return _buildTransactionList(
-                          state.transactions,
-                          state.debt,
-                        );
-                      } else if (state is DebtDetailsDeleteSuccess) {
-                        return _buildTransactionList(
-                          state.transactions,
-                          state.debt,
-                        );
-                      } else if (state is DebtDetailsError) {
-                        return SliverFillRemaining(
-                          hasScrollBody: false,
+                        // Loading or initial
+                        return SliverToBoxAdapter(
                           child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  state.message,
-                                  style: TextStyles.customStyle(
-                                    color: AppColors.error,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                SizedBox(height: 16.h),
-                                ElevatedButton(
-                                  onPressed: () => context
-                                      .read<DebtDetailsCubit>()
-                                      .loadTransactions(
-                                        AppStrings.userToken,
-                                        widget.debtId,
-                                        forceRefresh: true,
-                                      ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primaryColor,
-                                    foregroundColor: Colors.white,
-                                  ),
-                                  child: Text(AppStrings.tryAgain.tr()),
-                                ),
-                              ],
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: isDesktop ? 800 : double.infinity,
+                              ),
+                              child: _buildSummarySkeleton(),
                             ),
                           ),
                         );
-                      }
-                      return const SliverToBoxAdapter(child: SizedBox());
-                    },
-                  ),
-                ],
-              ),
-            );
-          },
+                      },
+                    ),
+                    BlocBuilder<DebtDetailsCubit, DebtDetailsState>(
+                      builder: (context, state) {
+                        if (state is DebtDetailsLoading) {
+                          final double screenWidth = MediaQuery.of(
+                            context,
+                          ).size.width;
+                          final double horizontalPadding =
+                              isDesktop && screenWidth > 800
+                              ? (screenWidth - 800) / 2
+                              : 16.w;
+                          if (isDesktop) {
+                            return SliverPadding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: horizontalPadding,
+                                vertical: 8,
+                              ),
+                              sliver: SliverGrid(
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 2,
+                                      mainAxisExtent: 140,
+                                      crossAxisSpacing: 16,
+                                      mainAxisSpacing: 12,
+                                    ),
+                                delegate: SliverChildBuilderDelegate(
+                                  (context, index) =>
+                                      const TransactionCardSkeleton(),
+                                  childCount: 6,
+                                ),
+                              ),
+                            );
+                          }
+                          return SliverPadding(
+                            padding: EdgeInsets.symmetric(horizontal: 16.w),
+                            sliver: SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) => Padding(
+                                  padding: EdgeInsets.only(bottom: 12.h),
+                                  child: const TransactionCardSkeleton(),
+                                ),
+                                childCount: 5,
+                              ),
+                            ),
+                          );
+                        } else if (state is DebtDetailsLoaded) {
+                          if (state.transactions.isEmpty) {
+                            return SliverFillRemaining(
+                              hasScrollBody: false,
+                              child: Center(
+                                child: Text(
+                                  AppStrings.noTransactions.tr(),
+                                  style: TextStyles.customStyle(
+                                    color: AppColors.disabledColor,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+                          return _buildTransactionList(
+                            context,
+                            state.transactions,
+                            state.debt,
+                          );
+                        } else if (state is DebtDetailsUpdateSuccess) {
+                          return _buildTransactionList(
+                            context,
+                            state.transactions,
+                            state.debt,
+                          );
+                        } else if (state is DebtDetailsDeleteSuccess) {
+                          return _buildTransactionList(
+                            context,
+                            state.transactions,
+                            state.debt,
+                          );
+                        } else if (state is DebtDetailsError) {
+                          return SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    state.message,
+                                    style: TextStyles.customStyle(
+                                      color: AppColors.error,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  SizedBox(height: 16.h),
+                                  ElevatedButton(
+                                    onPressed: () => context
+                                        .read<DebtDetailsCubit>()
+                                        .loadTransactions(
+                                          AppStrings.userToken,
+                                          widget.debtId,
+                                          forceRefresh: true,
+                                        ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.primaryColor,
+                                      foregroundColor: Colors.white,
+                                    ),
+                                    child: Text(AppStrings.tryAgain.tr()),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+                        return const SliverToBoxAdapter(child: SizedBox());
+                      },
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ),
-    ));
+    );
   }
 
   Widget _buildTransactionList(
+    BuildContext context,
     List<PaymentEntity> transactions,
     DebtEntity? debt,
   ) {
+    final bool isDesktop = ResponsiveLayout.isDesktop(context);
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double horizontalPadding = isDesktop && screenWidth > 800
+        ? (screenWidth - 800) / 2
+        : 16.w;
+
+    if (isDesktop) {
+      return SliverPadding(
+        padding: EdgeInsets.symmetric(
+          horizontal: horizontalPadding,
+          vertical: 8,
+        ),
+        sliver: SliverGrid(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisExtent: 140,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 12,
+          ),
+          delegate: SliverChildBuilderDelegate((context, index) {
+            final transaction = transactions[index];
+            return DebtDetailsReportTransactionItem(
+              transaction: transaction,
+              debtId: widget.debtId,
+              customerName: debt?.customerName ?? '',
+            );
+          }, childCount: transactions.length),
+        ),
+      );
+    }
+
     return SliverPadding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       sliver: SliverList(

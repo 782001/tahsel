@@ -15,6 +15,7 @@ import 'package:tahsel/features/standard_features/no-internet/logic/connectivity
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/shared/widgets/no_internet_view.dart';
 import 'package:tahsel/shared/widgets/shimmer/transaction_skeleton.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 class MyDebtDetailsReportScreen extends StatefulWidget {
   final String debtId;
@@ -120,6 +121,7 @@ class _MyDebtDetailsReportScreenState extends State<MyDebtDetailsReportScreen> {
         ),
         body: BlocBuilder<ConnectivityCubit, ConnectivityState>(
           builder: (context, connectivityState) {
+            final isDesktop = ResponsiveLayout.isDesktop(context);
             if (connectivityState is ConnectivityDisconnected) {
               return NoInternetView(
                 onRetry: () =>
@@ -148,35 +150,63 @@ class _MyDebtDetailsReportScreenState extends State<MyDebtDetailsReportScreen> {
                     builder: (context, state) {
                       if (state is MyDebtDetailsReportLoaded) {
                         return SliverToBoxAdapter(
-                          child: BuildMyDebtDetailsSummaryCard(
-                            totalAmount: state.totalAmount,
-                            amountPaid: state.paidAmount,
-                            remainingDebt: state.remainingAmount,
-                            debt: state.debt,
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: isDesktop ? 800 : double.infinity,
+                              ),
+                              child: BuildMyDebtDetailsSummaryCard(
+                                totalAmount: state.totalAmount,
+                                amountPaid: state.paidAmount,
+                                remainingDebt: state.remainingAmount,
+                                debt: state.debt,
+                              ),
+                            ),
                           ),
                         );
                       } else if (state is MyDebtDetailsUpdateSuccess) {
                         return SliverToBoxAdapter(
-                          child: BuildMyDebtDetailsSummaryCard(
-                            totalAmount: state.totalAmount,
-                            amountPaid: state.paidAmount,
-                            remainingDebt: state.remainingAmount,
-                            debt: state.debt,
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: isDesktop ? 800 : double.infinity,
+                              ),
+                              child: BuildMyDebtDetailsSummaryCard(
+                                totalAmount: state.totalAmount,
+                                amountPaid: state.paidAmount,
+                                remainingDebt: state.remainingAmount,
+                                debt: state.debt,
+                              ),
+                            ),
                           ),
                         );
                       } else if (state is MyDebtDetailsDeleteSuccess) {
                         return SliverToBoxAdapter(
-                          child: BuildMyDebtDetailsSummaryCard(
-                            totalAmount: state.totalAmount,
-                            amountPaid: state.paidAmount,
-                            remainingDebt: state.remainingAmount,
-                            debt: state.debt,
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: isDesktop ? 800 : double.infinity,
+                              ),
+                              child: BuildMyDebtDetailsSummaryCard(
+                                totalAmount: state.totalAmount,
+                                amountPaid: state.paidAmount,
+                                remainingDebt: state.remainingAmount,
+                                debt: state.debt,
+                              ),
+                            ),
                           ),
                         );
                       }
                       // Loading or initial
-                      return const SliverToBoxAdapter(
-                        child: BuildMyDebtDetailsSummarySkeleton(),
+                      return SliverToBoxAdapter(
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: isDesktop ? 800 : double.infinity,
+                            ),
+                            child: const BuildMyDebtDetailsSummarySkeleton(),
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -186,6 +216,30 @@ class _MyDebtDetailsReportScreenState extends State<MyDebtDetailsReportScreen> {
                   >(
                     builder: (context, state) {
                       if (state is MyDebtDetailsReportLoading) {
+                        final double screenWidth = MediaQuery.of(context).size.width;
+                        final double horizontalPadding = isDesktop && screenWidth > 800
+                            ? (screenWidth - 800) / 2
+                            : 16.w;
+                        if (isDesktop) {
+                          return SliverPadding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: horizontalPadding,
+                              vertical: 8,
+                            ),
+                            sliver: SliverGrid(
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisExtent: 140,
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 12,
+                              ),
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) => const TransactionCardSkeleton(),
+                                childCount: 6,
+                              ),
+                            ),
+                          );
+                        }
                         return SliverPadding(
                           padding: EdgeInsets.symmetric(horizontal: 16.w),
                           sliver: SliverList(

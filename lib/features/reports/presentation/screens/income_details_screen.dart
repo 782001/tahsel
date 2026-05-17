@@ -6,6 +6,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
@@ -173,6 +174,12 @@ class _IncomeDetailsScreenState extends State<IncomeDetailsScreen> {
                     widget.startDate,
                     widget.endDate,
                   );
+                  final isDesktop = ResponsiveLayout.isDesktop(context);
+                  final double screenWidth = MediaQuery.of(context).size.width;
+                  final double horizontalPadding =
+                      isDesktop && screenWidth > 800
+                      ? (screenWidth - 800) / 2
+                      : 24.w;
 
                   return RefreshIndicator(
                     color: AppColors.primaryColor,
@@ -191,17 +198,24 @@ class _IncomeDetailsScreenState extends State<IncomeDetailsScreen> {
                       slivers: [
                         // Summary Section
                         SliverToBoxAdapter(
-                          child: Padding(
-                            padding: EdgeInsets.fromLTRB(
-                              24.w,
-                              24.h,
-                              24.w,
-                              16.h,
-                            ),
-                            child: IncomeSummaryCard(
-                              totalIncome: widget.totalIncome,
-                              count: widget.totalCount,
-                              dateRange: dateRangeStr,
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: isDesktop ? 800 : double.infinity,
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.fromLTRB(
+                                  isDesktop ? 24 : 24.w,
+                                  isDesktop ? 24 : 24.h,
+                                  isDesktop ? 24 : 24.w,
+                                  isDesktop ? 16 : 16.h,
+                                ),
+                                child: IncomeSummaryCard(
+                                  totalIncome: widget.totalIncome,
+                                  count: widget.totalCount,
+                                  dateRange: dateRangeStr,
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -238,15 +252,36 @@ class _IncomeDetailsScreenState extends State<IncomeDetailsScreen> {
                           )
                         else ...[
                           SliverPadding(
-                            padding: EdgeInsets.fromLTRB(24.w, 8.h, 24.w, 0),
-                            sliver: SliverList(
-                              delegate: SliverChildBuilderDelegate(
-                                (context, index) => TransactionDetailCard(
-                                  operation: state.operations[index],
-                                ),
-                                childCount: state.operations.length,
-                              ),
+                            padding: EdgeInsets.fromLTRB(
+                              isDesktop ? horizontalPadding : 24.w,
+                              isDesktop ? 8 : 8.h,
+                              isDesktop ? horizontalPadding : 24.w,
+                              0,
                             ),
+                            sliver: isDesktop
+                                ? SliverGrid(
+                                    gridDelegate:
+                                        const SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 2,
+                                          mainAxisExtent: 250,
+                                          crossAxisSpacing: 16,
+                                          mainAxisSpacing: 16,
+                                        ),
+                                    delegate: SliverChildBuilderDelegate(
+                                      (context, index) => TransactionDetailCard(
+                                        operation: state.operations[index],
+                                      ),
+                                      childCount: state.operations.length,
+                                    ),
+                                  )
+                                : SliverList(
+                                    delegate: SliverChildBuilderDelegate(
+                                      (context, index) => TransactionDetailCard(
+                                        operation: state.operations[index],
+                                      ),
+                                      childCount: state.operations.length,
+                                    ),
+                                  ),
                           ),
 
                           // Loading More Indicator

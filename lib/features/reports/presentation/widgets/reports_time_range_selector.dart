@@ -4,6 +4,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 class ReportsTimeRangeSelector extends StatefulWidget {
   final Function(int index) onTabChanged;
@@ -37,9 +38,11 @@ class _ReportsTimeRangeSelectorState extends State<ReportsTimeRangeSelector> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDesktop = ResponsiveLayout.isDesktop(context);
+
     return Container(
-      height: 50.h,
-      margin: EdgeInsets.symmetric(horizontal: 24.w),
+      height: isDesktop ? 60.h : 50.h,
+      margin: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 24.w),
       padding: EdgeInsets.all(4.r),
       decoration: BoxDecoration(
         color: AppColors.stitchSurfaceLow,

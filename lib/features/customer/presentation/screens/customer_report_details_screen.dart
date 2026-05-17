@@ -4,6 +4,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/customer/presentation/widgets/customer_operation_tile.dart';
 import 'package:tahsel/features/customer/presentation/widgets/customer_summary_card.dart';
 
@@ -97,6 +98,7 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
     return BlocBuilder<CustomerDetailsCubit, CustomerDetailsState>(
       builder: (context, state) {
         if (state is CustomerDetailsLoading) {
@@ -110,58 +112,94 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
         }
 
         if (state is CustomerDetailsLoaded) {
-          return CustomScrollView(
-            controller: _scrollController,
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: CustomerSummaryCard(
-                    totalSpent: state.totalSpent,
-                    totalPaid: state.totalPaid,
-                    remaining: state.remaining,
-                  ),
-                ),
+          return Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: isDesktop ? 800 : double.infinity,
               ),
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      if (index >= state.operations.length) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 32),
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              color: AppColors.primaryColor,
-                              strokeWidth: 2,
-                            ),
-                          ),
-                        );
-                      }
-                      final op = state.operations[index];
-                      return CustomerOperationTile(operation: op);
-                    },
-                    childCount:
-                        state.operations.length +
-                        (state.isFetchingMore ? 1 : 0),
-                  ),
-                ),
-              ),
-              if (state.operations.isEmpty && !state.isFetchingMore)
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Center(
-                    child: Text(
-                      AppStrings.noData.tr(),
-                      style: TextStyles.customStyle(
-                        color: AppColors.blackLight,
+              child: CustomScrollView(
+                controller: _scrollController,
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: CustomerSummaryCard(
+                        totalSpent: state.totalSpent,
+                        totalPaid: state.totalPaid,
+                        remaining: state.remaining,
                       ),
                     ),
                   ),
-                ),
-              const SliverToBoxAdapter(child: SizedBox(height: 32)),
-            ],
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    sliver: isDesktop
+                        ? SliverGrid(
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              mainAxisExtent: 85,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                            ),
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                if (index >= state.operations.length) {
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 32),
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        color: AppColors.primaryColor,
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  );
+                                }
+                                final op = state.operations[index];
+                                return CustomerOperationTile(operation: op);
+                              },
+                              childCount:
+                                  state.operations.length +
+                                  (state.isFetchingMore ? 1 : 0),
+                            ),
+                          )
+                        : SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                if (index >= state.operations.length) {
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 32),
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        color: AppColors.primaryColor,
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  );
+                                }
+                                final op = state.operations[index];
+                                return CustomerOperationTile(operation: op);
+                              },
+                              childCount:
+                                  state.operations.length +
+                                  (state.isFetchingMore ? 1 : 0),
+                            ),
+                          ),
+                  ),
+                  if (state.operations.isEmpty && !state.isFetchingMore)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(
+                        child: Text(
+                          AppStrings.noData.tr(),
+                          style: TextStyles.customStyle(
+                            color: AppColors.blackLight,
+                          ),
+                        ),
+                      ),
+                    ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 32)),
+                ],
+              ),
+            ),
           );
         }
 

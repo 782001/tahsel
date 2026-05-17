@@ -4,6 +4,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 class ReportsOperationalMarginCard extends StatelessWidget {
   final String amount;
@@ -17,9 +18,12 @@ class ReportsOperationalMarginCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
     return Container(
       width: double.infinity,
-      margin: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
+      margin: isDesktop
+          ? EdgeInsets.zero
+          : EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
       padding: EdgeInsets.all(24.r),
       decoration: BoxDecoration(
         color: AppColors.stitchSurfaceLow.withValues(alpha: 0.5),

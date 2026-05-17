@@ -20,7 +20,7 @@ class MyDebtsSummarySkeleton extends StatelessWidget {
           color: AppColors.debtCardSurface,
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Column(
+        child: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
@@ -30,13 +30,13 @@ class MyDebtsSummarySkeleton extends StatelessWidget {
                   height: 40,
                   borderRadius: 12,
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 ShimmerPlaceholder(width: 120, height: 20),
               ],
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             ShimmerPlaceholder(width: 180, height: 32),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

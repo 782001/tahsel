@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/customer/domain/entities/customer_operation.dart';
 
 class CustomerOperationTile extends StatelessWidget {
@@ -13,9 +14,10 @@ class CustomerOperationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _getColor();
     final icon = _getIcon();
+    final isDesktop = ResponsiveLayout.isDesktop(context);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: isDesktop ? EdgeInsets.zero : const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:tahsel/core/extensions/extensions.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/shared/widgets/no_internet_view.dart';
@@ -114,14 +115,17 @@ class _CustomerGlobalPaymentsScreenState
   }
 
   Widget _buildSliverAppBar() {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
     return SliverAppBar(
-      expandedHeight: 180.h,
+      expandedHeight: isDesktop ? 140 : 180.h,
       pinned: true,
       elevation: 0,
       stretch: true,
       backgroundColor: AppColors.primaryColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(24.r)),
+        borderRadius: BorderRadius.vertical(
+          bottom: Radius.circular(isDesktop ? 24 : 24.r),
+        ),
       ),
       flexibleSpace: FlexibleSpaceBar(
         stretchModes: const [StretchMode.zoomBackground],
@@ -131,7 +135,7 @@ class _CustomerGlobalPaymentsScreenState
               right: -20.w,
               top: -20.h,
               child: CircleAvatar(
-                radius: 80.r,
+                radius: isDesktop ? 80 : 80.r,
                 backgroundColor: AppColors.whiteOpacity(0.05),
               ),
             ),
@@ -141,7 +145,7 @@ class _CustomerGlobalPaymentsScreenState
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SizedBox(height: 40.h),
+                    SizedBox(height: isDesktop ? 20 : 40.h),
                     Text(
                       widget.customerDetail.customerName,
                       style: TextStyles.customStyle(
@@ -152,10 +156,10 @@ class _CustomerGlobalPaymentsScreenState
                     ),
                     if (widget.customerDetail.ledgerNumber != null)
                       Container(
-                        margin: EdgeInsets.only(top: 8.h),
+                        margin: EdgeInsets.only(top: isDesktop ? 8 : 8.h),
                         padding: EdgeInsets.symmetric(
-                          horizontal: 12.w,
-                          vertical: 4.h,
+                          horizontal: isDesktop ? 12 : 12.w,
+                          vertical: isDesktop ? 4 : 4.h,
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.whiteOpacity(0.15),
@@ -194,55 +198,73 @@ class _CustomerGlobalPaymentsScreenState
   }
 
   Widget _buildSummarySection() {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
-        child: BlocBuilder<GlobalPaymentsCubit, GlobalPaymentsState>(
-          builder: (context, state) {
-            double totalPaid = widget.customerDetail.totalPaid;
+    final isDesktop = ResponsiveLayout.isDesktop(context);
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double horizontalPadding = isDesktop && screenWidth > 800
+        ? (screenWidth - 800) / 2
+        : 20.w;
 
-            return Container(
-              padding: EdgeInsets.all(20.r),
-              decoration: BoxDecoration(
-                color: AppColors.debtCardSurface,
-                borderRadius: BorderRadius.circular(24.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(
-                      alpha: AppColors.isDark ? 0.2 : 0.05,
-                    ),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
+    return SliverToBoxAdapter(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: isDesktop ? 800 : double.infinity,
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: isDesktop ? 16 : horizontalPadding,
+              vertical: isDesktop ? 16 : 20.h,
+            ),
+            child: BlocBuilder<GlobalPaymentsCubit, GlobalPaymentsState>(
+              builder: (context, state) {
+                double totalPaid = widget.customerDetail.totalPaid;
+
+                return Container(
+                  padding: EdgeInsets.all(isDesktop ? 20 : 20.r),
+                  decoration: BoxDecoration(
+                    color: AppColors.debtCardSurface,
+                    borderRadius: BorderRadius.circular(isDesktop ? 24 : 24.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(
+                          alpha: AppColors.isDark ? 0.2 : 0.05,
+                        ),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildSummaryItem(
-                      title: AppStrings.paid.tr(),
-                      amount: totalPaid,
-                      color: AppColors.success,
-                      icon: Icons.check_circle_outline,
-                    ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _buildSummaryItem(
+                          title: AppStrings.paid.tr(),
+                          amount: totalPaid,
+                          color: AppColors.success,
+                          icon: Icons.check_circle_outline,
+                          isDesktop: isDesktop,
+                        ),
+                      ),
+                      Container(
+                        height: isDesktop ? 50 : 50.h,
+                        width: isDesktop ? 1 : 1.w,
+                        color: AppColors.disabledColor.withValues(alpha: 0.1),
+                      ),
+                      Expanded(
+                        child: _buildSummaryItem(
+                          title: AppStrings.remaining.tr(),
+                          amount: widget.customerDetail.totalDebt,
+                          color: AppColors.error,
+                          icon: Icons.account_balance_wallet_outlined,
+                          isDesktop: isDesktop,
+                        ),
+                      ),
+                    ],
                   ),
-                  Container(
-                    height: 50.h,
-                    width: 1.w,
-                    color: AppColors.disabledColor.withValues(alpha: 0.1),
-                  ),
-                  Expanded(
-                    child: _buildSummaryItem(
-                      title: AppStrings.remaining.tr(),
-                      amount: widget.customerDetail.totalDebt,
-                      color: AppColors.error,
-                      icon: Icons.account_balance_wallet_outlined,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
+                );
+              },
+            ),
+          ),
         ),
       ),
     );
@@ -253,11 +275,12 @@ class _CustomerGlobalPaymentsScreenState
     required double amount,
     required Color color,
     required IconData icon,
+    bool isDesktop = false,
   }) {
     return Column(
       children: [
-        Icon(icon, color: color, size: 24.r),
-        SizedBox(height: 8.h),
+        Icon(icon, color: color, size: isDesktop ? 24 : 24.r),
+        SizedBox(height: isDesktop ? 8 : 8.h),
         Text(
           title,
           style: TextStyles.customStyle(
@@ -265,7 +288,7 @@ class _CustomerGlobalPaymentsScreenState
             fontSize: 12,
           ),
         ),
-        SizedBox(height: 4.h),
+        SizedBox(height: isDesktop ? 4 : 4.h),
         Text(
           amount.toSmartAmount(),
           style: TextStyles.customStyle(
@@ -279,9 +302,35 @@ class _CustomerGlobalPaymentsScreenState
   }
 
   Widget _buildTransactionList() {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double horizontalPadding = isDesktop && screenWidth > 800
+        ? (screenWidth - 800) / 2
+        : 20.w;
+
     return BlocBuilder<GlobalPaymentsCubit, GlobalPaymentsState>(
       builder: (context, state) {
         if (state is GlobalPaymentsLoading) {
+          if (isDesktop) {
+            return SliverPadding(
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: 8,
+              ),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisExtent: 160,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 12,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => const TransactionCardSkeleton(),
+                  childCount: 4,
+                ),
+              ),
+            );
+          }
           return SliverPadding(
             padding: EdgeInsets.symmetric(horizontal: 20.w),
             sliver: SliverList(
@@ -322,6 +371,44 @@ class _CustomerGlobalPaymentsScreenState
             );
           }
 
+          if (isDesktop) {
+            return SliverPadding(
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                0,
+                horizontalPadding,
+                40,
+              ),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisExtent: 160,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 12,
+                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  if (index == state.transactions.length) {
+                    if (state.isPaginationLoading) {
+                      return Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primaryColor,
+                          strokeWidth: 2,
+                        ),
+                      );
+                    }
+                    return const SizedBox();
+                  }
+
+                  final transaction = state.transactions[index];
+                  return FadeInUp(
+                    duration: Duration(milliseconds: 400 + (index * 30)),
+                    child: _buildTransactionCard(transaction),
+                  );
+                }, childCount: state.transactions.length + 1),
+              ),
+            );
+          }
+
           return SliverPadding(
             padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 40.h),
             sliver: SliverList(
@@ -357,6 +444,7 @@ class _CustomerGlobalPaymentsScreenState
   }
 
   Widget _buildTransactionCard(PaymentEntity transaction) {
+    final bool isDesktop = ResponsiveLayout.isDesktop(context);
     final bool isAddition = transaction.type == PaymentType.debtAdded;
     final Color typeColor = isAddition ? AppColors.error : AppColors.success;
     final String dateStr = transaction.createdAt != null
@@ -367,11 +455,11 @@ class _CustomerGlobalPaymentsScreenState
         : '';
 
     return Container(
-      margin: EdgeInsets.only(bottom: 16.h),
-      padding: EdgeInsets.all(16.r),
+      margin: EdgeInsets.only(bottom: isDesktop ? 0 : 16.h),
+      padding: EdgeInsets.all(isDesktop ? 16 : 16.r),
       decoration: BoxDecoration(
         color: AppColors.debtCardSurface,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(isDesktop ? 16 : 16.r),
         border: Border.all(
           color: AppColors.disabledColor.withValues(alpha: 0.05),
         ),
@@ -395,18 +483,6 @@ class _CustomerGlobalPaymentsScreenState
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  // if (transaction.activityName != null &&
-                  //     transaction.activityName!.isNotEmpty) ...[
-                  //   SizedBox(height: 4.h),
-                  //   Text(
-                  //     transaction.activityName!,
-                  //     style: TextStyles.customStyle(
-                  //       color: AppColors.primaryColor,
-                  //       fontSize: 12,
-                  //       fontWeight: FontWeight.w500,
-                  //     ),
-                  //   ),
-                  // ],
                 ],
               ),
 
@@ -422,7 +498,7 @@ class _CustomerGlobalPaymentsScreenState
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  SizedBox(height: 4.h),
+                  SizedBox(height: isDesktop ? 4 : 4.h),
                   Text(
                     "${AppStrings.remaining.tr()}: ${transaction.remainingAmount.toSmartAmount()}",
                     style: TextStyles.customStyle(
@@ -434,9 +510,9 @@ class _CustomerGlobalPaymentsScreenState
               ),
             ],
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: isDesktop ? 12 : 12.h),
           const Divider(height: 1, thickness: 0.5),
-          SizedBox(height: 12.h),
+          SizedBox(height: isDesktop ? 12 : 12.h),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -444,10 +520,10 @@ class _CustomerGlobalPaymentsScreenState
                 children: [
                   Icon(
                     Icons.calendar_today_outlined,
-                    size: 14.r,
+                    size: isDesktop ? 14 : 14.r,
                     color: AppColors.disabledColor,
                   ),
-                  SizedBox(width: 6.w),
+                  SizedBox(width: isDesktop ? 6 : 6.w),
                   Text(
                     dateStr,
                     style: TextStyles.customStyle(
@@ -460,7 +536,7 @@ class _CustomerGlobalPaymentsScreenState
               if (!isAddition)
                 Icon(
                   Icons.verified_outlined,
-                  size: 16.r,
+                  size: isDesktop ? 16 : 16.r,
                   color: AppColors.success.withValues(alpha: 0.5),
                 ),
             ],

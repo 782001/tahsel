@@ -4,6 +4,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 class ReportsNetProfitCard extends StatelessWidget {
   final String amount;
@@ -19,9 +20,14 @@ class ReportsNetProfitCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
+
     return Center(
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
+        padding: EdgeInsets.symmetric(
+          horizontal: isDesktop ? 24 : 24.w,
+          vertical: isDesktop ? 16 : 16.h,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -33,7 +39,7 @@ class ReportsNetProfitCard extends StatelessWidget {
                 color: AppColors.blackLight.withValues(alpha: 0.6),
               ),
             ),
-            SizedBox(height: 8.h),
+            SizedBox(height: isDesktop ? 16 : 8.h),
             FittedBox(
               fit: BoxFit.scaleDown,
               child: Row(
@@ -49,7 +55,7 @@ class ReportsNetProfitCard extends StatelessWidget {
                       color: AppColors.black,
                     ),
                   ),
-                  SizedBox(width: 8.w),
+                  SizedBox(width: isDesktop ? 12 : 8.w),
                   Text(
                     AppStrings.currencyEgp.tr(),
                     style: TextStyles.customStyle(
@@ -61,9 +67,12 @@ class ReportsNetProfitCard extends StatelessWidget {
                 ],
               ),
             ),
-            SizedBox(height: 8.h),
+            SizedBox(height: isDesktop ? 12 : 8.h),
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+              padding: EdgeInsets.symmetric(
+                horizontal: isDesktop ? 12 : 10.w,
+                vertical: isDesktop ? 8 : 4.h,
+              ),
               decoration: BoxDecoration(
                 color: (isPositive ? AppColors.primaryColor : AppColors.error)
                     .withValues(alpha: 0.1),
@@ -75,7 +84,7 @@ class ReportsNetProfitCard extends StatelessWidget {
                   "$comparisonText  ${isPositive ? '↑↑' : '↓↓'}",
                   textAlign: TextAlign.center,
                   style: TextStyles.customStyle(
-                    fontSize: 15,
+                    fontSize: isDesktop ? 18 : 15,
                     fontWeight: FontWeight.bold,
                     color: isPositive
                         ? AppColors.primaryColor

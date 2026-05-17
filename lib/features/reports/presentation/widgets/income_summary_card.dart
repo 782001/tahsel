@@ -5,6 +5,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 class IncomeSummaryCard extends StatelessWidget {
   final double totalIncome;
@@ -20,22 +21,23 @@ class IncomeSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(24.r),
+      padding: EdgeInsets.all(isDesktop ? 24 : 24.r),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
             AppColors.primaryColor,
-            AppColors.primaryColor.withValues(alpha:0.8),
+            AppColors.primaryColor.withValues(alpha: 0.8),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(24.r),
+        borderRadius: BorderRadius.circular(isDesktop ? 24 : 24.r),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryColor.withValues(alpha:0.3),
+            color: AppColors.primaryColor.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -56,10 +58,13 @@ class IncomeSummaryCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isDesktop ? 12 : 12.w,
+                  vertical: isDesktop ? 6 : 6.h,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.whiteOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12.r),
+                  borderRadius: BorderRadius.circular(isDesktop ? 12 : 12.r),
                 ),
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
@@ -75,7 +80,7 @@ class IncomeSummaryCard extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: isDesktop ? 12 : 12.h),
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Row(
@@ -90,7 +95,7 @@ class IncomeSummaryCard extends StatelessWidget {
                     color: Colors.white,
                   ),
                 ),
-                SizedBox(width: 8.w),
+                SizedBox(width: isDesktop ? 8 : 8.w),
                 Text(
                   AppStrings.currencyEgp.tr(),
                   style: TextStyles.customStyle(
@@ -102,7 +107,7 @@ class IncomeSummaryCard extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: isDesktop ? 16 : 16.h),
           Row(
             children: [
               Icon(
@@ -110,7 +115,7 @@ class IncomeSummaryCard extends StatelessWidget {
                 color: AppColors.whiteOpacity(0.7),
                 size: 14,
               ),
-              SizedBox(width: 8.w),
+              SizedBox(width: isDesktop ? 8 : 8.w),
               Expanded(
                 child: Text(
                   dateRange,
