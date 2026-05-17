@@ -199,9 +199,7 @@ class _CustomerGlobalPaymentsScreenState
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
         child: BlocBuilder<GlobalPaymentsCubit, GlobalPaymentsState>(
           builder: (context, state) {
-            double totalPaid = state is GlobalPaymentsLoaded
-                ? state.totalPaid
-                : 0;
+            double totalPaid = widget.customerDetail.totalPaid;
 
             return Container(
               padding: EdgeInsets.all(20.r),

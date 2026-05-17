@@ -14,7 +14,7 @@ import '../../domain/repositories/debt_repository.dart';
 import '../datasources/debt_remote_data_source.dart';
 import '../models/debt_model.dart';
 import '../models/payment_model.dart';
-// Removed redundant import
+import '../../domain/entities/monthly_collected_amount.dart';
 
 
 class DebtRepositoryImpl implements DebtRepository {
@@ -278,6 +278,16 @@ class DebtRepositoryImpl implements DebtRepository {
   Future<Either<Failure, List<PaymentEntity>>> getAllUserPayments(String uid) async {
     try {
       final result = await remoteDataSource.getAllUserPayments(uid);
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<MonthlyCollectedAmount>>> getMonthlyCollectedAmounts(String uid) async {
+    try {
+      final result = await remoteDataSource.getMonthlyCollectedAmounts(uid);
       return Right(result);
     } catch (e) {
       return Left(ServerFailure(e.toString()));

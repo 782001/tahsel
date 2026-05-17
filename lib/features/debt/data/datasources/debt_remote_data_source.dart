@@ -8,6 +8,8 @@ import '../../../../core/utils/summary_helper.dart';
 import '../../domain/entities/payment_entity.dart';
 import '../models/debt_model.dart';
 import '../models/payment_model.dart';
+import 'package:flutter/foundation.dart';
+import '../../domain/entities/monthly_collected_amount.dart';
 
 abstract class DebtRemoteDataSource {
   Future<String> addDebt(DebtModel debt);
@@ -82,6 +84,7 @@ abstract class DebtRemoteDataSource {
   });
 
   Future<Map<String, dynamic>> getDebtSummary(String uid);
+  Future<List<MonthlyCollectedAmount>> getMonthlyCollectedAmounts(String uid);
 }
 
 class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
@@ -114,6 +117,89 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;
+    }
+  }
+
+  @override
+  Future<List<MonthlyCollectedAmount>> getMonthlyCollectedAmounts(String uid) async {
+    try {
+      final snapshot = await firestore
+          .collection('users')
+          .doc(uid)
+          .collection('summaries')
+          .where(FieldPath.documentId, isGreaterThanOrEqualTo: 'monthly_')
+          .where(FieldPath.documentId, isLessThanOrEqualTo: 'monthly_\uf8ff')
+          .get();
+
+      final List<MonthlyCollectedAmount> results = [];
+
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final docId = doc.id; // e.g. "monthly_2024-05"
+        final parts = docId.split('_');
+        if (parts.length < 2) continue;
+        final dateParts = parts[1].split('-');
+        if (dateParts.length < 2) continue;
+
+        final year = int.tryParse(dateParts[0]) ?? 0;
+        final month = int.tryParse(dateParts[1]) ?? 0;
+        if (year == 0 || month == 0) continue;
+
+        double totalAmount = 0.0;
+        if (data.containsKey('totalCollected') && data['totalCollected'] != null) {
+          totalAmount = (data['totalCollected'] as num).toDouble();
+        } else {
+          // Self-healing: compute aggregate totalCollected and update Firestore
+          final startOfMonth = DateTime(year, month, 1);
+          final endOfMonth = DateTime(year, month + 1, 1).subtract(const Duration(milliseconds: 1));
+
+          final paymentsQuery = firestore
+              .collectionGroup('payments')
+              .where('uid', isEqualTo: uid)
+              .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
+              .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth));
+
+          double computedSum = 0.0;
+          if (defaultTargetPlatform == TargetPlatform.windows) {
+            final snap = await paymentsQuery.get();
+            for (var paymentDoc in snap.docs) {
+              final type = paymentDoc.data()['type'] as String?;
+              if (type == 'full' || type == 'partial' || type == 'settlement') {
+                computedSum += (paymentDoc.data()['amountPaid'] as num?)?.toDouble() ?? 0.0;
+              }
+            }
+          } else {
+            final aggregateSnapshot = await paymentsQuery.aggregate(sum('amountPaid')).get();
+            computedSum = (aggregateSnapshot.getSum('amountPaid') ?? 0.0).toDouble();
+          }
+
+          // Save this to the summary document to heal the cache
+          await doc.reference.set({
+            'totalCollected': computedSum,
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+
+          totalAmount = computedSum;
+        }
+
+        results.add(MonthlyCollectedAmount(
+          year: year,
+          month: month,
+          totalAmount: totalAmount,
+          payments: const [],
+        ));
+      }
+
+      // Sort by date descending (latest month first)
+      results.sort((a, b) {
+        if (a.year != b.year) return b.year.compareTo(a.year);
+        return b.month.compareTo(a.month);
+      });
+
+      return results;
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      throw Exception('Failed to get monthly collected amounts: $e');
     }
   }
 
@@ -227,6 +313,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         batch.set(summaryRef, {
           'totalDebts': FieldValue.increment(debt.remainingAmount),
           'unpaidDebts': FieldValue.increment(debt.remainingAmount),
+          if (debt.paidAmount > 0) 'totalCollected': FieldValue.increment(debt.paidAmount),
           if (isFirstUnpaid) 'debtCustomersCount': FieldValue.increment(1),
           'lastUpdatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
@@ -379,6 +466,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           transaction.set(summaryRef, {
             'totalDebts': FieldValue.increment(-payment.amountPaid),
             'unpaidDebts': FieldValue.increment(-payment.amountPaid),
+            'totalCollected': FieldValue.increment(payment.amountPaid),
             if (isPaid) 'paidDebts': FieldValue.increment(currentTotal),
             if (becameFullyPaid) 'debtCustomersCount': FieldValue.increment(-1),
             'lastUpdatedAt': FieldValue.serverTimestamp(),
@@ -500,6 +588,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             transaction.set(summaryRef, {
               'totalDebts': FieldValue.increment(-paymentForThisItem),
               'unpaidDebts': FieldValue.increment(-paymentForThisItem),
+              'totalCollected': FieldValue.increment(paymentForThisItem),
               if (isPaid) 'paidDebts': FieldValue.increment(currentTotal),
               'lastUpdatedAt': FieldValue.serverTimestamp(),
             }, SetOptions(merge: true));
@@ -619,6 +708,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             transaction.set(summaryRef, {
               'totalDebts': FieldValue.increment(-amountToPay),
               'unpaidDebts': FieldValue.increment(-amountToPay),
+              'totalCollected': FieldValue.increment(amountToPay),
               'paidDebts': FieldValue.increment(currentTotal),
               'lastUpdatedAt': FieldValue.serverTimestamp(),
             }, SetOptions(merge: true));
@@ -678,11 +768,13 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         final total = (data['totalAmount'] as num?)?.toDouble() ?? 0.0;
         final isPaid = (data['isPaid'] as bool?) ?? false;
 
+        final paid = (data['paidAmount'] as num?)?.toDouble() ?? 0.0;
+
         final keys = SummaryHelper.getSummaryKeys(timestamp);
         for (final key in keys) {
           summaryUpdates.putIfAbsent(
             key,
-            () => {'totalDebts': 0.0, 'unpaidDebts': 0.0, 'paidDebts': 0.0},
+            () => {'totalDebts': 0.0, 'unpaidDebts': 0.0, 'paidDebts': 0.0, 'totalCollected': 0.0},
           );
           summaryUpdates[key]!['totalDebts'] =
               (summaryUpdates[key]!['totalDebts'] ?? 0) - remaining;
@@ -692,6 +784,10 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           } else {
             summaryUpdates[key]!['paidDebts'] =
                 (summaryUpdates[key]!['paidDebts'] ?? 0) - total;
+          }
+          if (paid > 0) {
+            summaryUpdates[key]!['totalCollected'] =
+                (summaryUpdates[key]!['totalCollected'] ?? 0) - paid;
           }
         }
 
@@ -728,6 +824,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
               'totalDebts': FieldValue.increment(updates['totalDebts']!),
               'unpaidDebts': FieldValue.increment(updates['unpaidDebts']!),
               'paidDebts': FieldValue.increment(updates['paidDebts']!),
+              if (updates['totalCollected'] != null && updates['totalCollected']! != 0)
+                'totalCollected': FieldValue.increment(updates['totalCollected']!),
               if (hadUnpaid) 'debtCustomersCount': FieldValue.increment(-1),
               'lastUpdatedAt': FieldValue.serverTimestamp(),
             }, SetOptions(merge: true));
@@ -793,6 +891,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           (debtDoc.data()?['remainingAmount'] as num?)?.toDouble() ?? 0.0;
       final totalAmount =
           (debtDoc.data()?['totalAmount'] as num?)?.toDouble() ?? 0.0;
+      final paidAmount =
+          (debtDoc.data()?['paidAmount'] as num?)?.toDouble() ?? 0.0;
       final isPaid = (debtDoc.data()?['isPaid'] as bool?) ?? false;
 
       // Check if this was the last unpaid debt for this customer BEFORE the loop
@@ -824,6 +924,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           'totalDebts': FieldValue.increment(-remainingAmount),
           if (!isPaid) 'unpaidDebts': FieldValue.increment(-remainingAmount),
           if (isPaid) 'paidDebts': FieldValue.increment(-totalAmount),
+          if (paidAmount > 0) 'totalCollected': FieldValue.increment(-paidAmount),
           if (shouldDecrementCustomerCount)
             'debtCustomersCount': FieldValue.increment(-1),
           'lastUpdatedAt': FieldValue.serverTimestamp(),
@@ -1073,6 +1174,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           transaction.set(summaryRef, {
             'totalDebts': FieldValue.increment(summaryDelta),
             'unpaidDebts': FieldValue.increment(summaryDelta),
+            if (relatedTo == 'payment') 'totalCollected': FieldValue.increment(delta),
             'lastUpdatedAt': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
         }
@@ -1187,6 +1289,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           transaction.set(summaryRef, {
             'totalDebts': FieldValue.increment(summaryDelta),
             'unpaidDebts': FieldValue.increment(summaryDelta),
+            if (relatedTo == 'payment') 'totalCollected': FieldValue.increment(-amountToDelete),
             'lastUpdatedAt': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
         }

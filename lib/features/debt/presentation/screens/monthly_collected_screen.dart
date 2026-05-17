@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/skeletons/customer_debt_skeleton.dart';
@@ -81,6 +82,7 @@ class MonthlyCollectedScreen extends StatelessWidget {
                       itemCount: 5,
                     );
             } else if (state is MonthlyCollectedError) {
+              AppLogger.printMessage(state.message);
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -272,10 +274,7 @@ class MonthlyCollectedScreen extends StatelessWidget {
             Navigator.pushNamed(
               context,
               AppRoutes.monthlyCollectedTransactions,
-              arguments: {
-                'monthlyData': item,
-                'uid': uid,
-              },
+              arguments: {'monthlyData': item, 'uid': uid},
             );
           },
           child: Padding(

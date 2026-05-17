@@ -4,7 +4,7 @@ import '../../../../core/usecases/pagination_params.dart';
 import '../entities/debt_entity.dart';
 import '../entities/payment_entity.dart';
 import '../../../../core/error/failures.dart';
-// Removed redundant import
+import '../entities/monthly_collected_amount.dart';
 
 
 abstract class DebtRepository {
@@ -81,6 +81,7 @@ abstract class DebtRepository {
   });
 
   Future<Either<Failure, List<PaymentEntity>>> getAllUserPayments(String uid);
+  Future<Either<Failure, List<MonthlyCollectedAmount>>> getMonthlyCollectedAmounts(String uid);
 
   Future<Either<Failure, PaginatedResult<PaymentEntity>>> getAllUserPaymentsPaginated(
     String uid, {
