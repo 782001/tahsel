@@ -104,18 +104,25 @@ class MyDebtsSummaryCard extends StatelessWidget {
   }
 
   Widget _buildInfoItem(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(icon, color: AppColors.disabledColor, size: 16.sp),
-        SizedBox(width: 6.w),
-        Text(
-          text,
-          style: TextStyles.customStyle(
-            color: AppColors.disabledColor,
-            fontSize: 14,
+    return Flexible(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: AppColors.disabledColor, size: 18),
+          SizedBox(width: 6.w),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyles.customStyle(
+                color: AppColors.disabledColor,
+                fontSize: 14,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

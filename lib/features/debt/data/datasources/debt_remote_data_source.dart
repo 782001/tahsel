@@ -1427,8 +1427,77 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           .get();
 
       if (doc.exists) {
-        return doc.data()!;
+        final data = Map<String, dynamic>.from(doc.data()!);
+        final double unpaidDebts = (data['unpaidDebts'] ?? 0.0).toDouble();
+        final int debtCustomersCount = (data['debtCustomersCount'] ?? 0).toInt();
+
+        if (unpaidDebts > 0.0 && debtCustomersCount <= 0) {
+          // Heal: recalculate active customers count and update Firestore
+          final activeDebts = await firestore
+              .collection('users')
+              .doc(uid)
+              .collection('debts')
+              .where('isPaid', isEqualTo: false)
+              .get();
+          
+          final uniqueCustomers = activeDebts.docs
+              .map((doc) => doc.data()['customerName'] as String?)
+              .whereType<String>()
+              .map((name) => name.trim())
+              .where((name) => name.isNotEmpty)
+              .toSet()
+              .length;
+
+          await firestore
+              .collection('users')
+              .doc(uid)
+              .collection('summaries')
+              .doc(SummaryHelper.getAllTimeKey())
+              .update({'debtCustomersCount': uniqueCustomers});
+
+          data['debtCustomersCount'] = uniqueCustomers;
+        }
+        return data;
       } else {
+        // If the summary document doesn't exist, check if there are unpaid debts to calculate from
+        final activeDebts = await firestore
+            .collection('users')
+            .doc(uid)
+            .collection('debts')
+            .where('isPaid', isEqualTo: false)
+            .get();
+
+        if (activeDebts.docs.isNotEmpty) {
+          final uniqueCustomers = activeDebts.docs
+              .map((doc) => doc.data()['customerName'] as String?)
+              .whereType<String>()
+              .map((name) => name.trim())
+              .where((name) => name.isNotEmpty)
+              .toSet()
+              .length;
+
+          double unpaidTotal = 0.0;
+          for (var doc in activeDebts.docs) {
+            unpaidTotal += (doc.data()['remainingAmount'] ?? 0.0).toDouble();
+          }
+
+          final summaryData = {
+            'totalDebts': unpaidTotal,
+            'unpaidDebts': unpaidTotal,
+            'debtCustomersCount': uniqueCustomers,
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          };
+
+          await firestore
+              .collection('users')
+              .doc(uid)
+              .collection('summaries')
+              .doc(SummaryHelper.getAllTimeKey())
+              .set(summaryData, SetOptions(merge: true));
+
+          return summaryData;
+        }
+
         return {'totalDebts': 0.0, 'unpaidDebts': 0.0, 'debtCustomersCount': 0};
       }
     } catch (e) {
