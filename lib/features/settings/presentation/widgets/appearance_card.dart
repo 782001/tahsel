@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 class AppearanceCard extends StatelessWidget {
   final String title;
@@ -19,15 +20,20 @@ class AppearanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 16.w),
+        padding: EdgeInsets.symmetric(
+          vertical: isDesktop ? 20 : 20.h,
+          horizontal: isDesktop ? 16 : 16.w,
+        ),
         decoration: BoxDecoration(
           color: isSelected
               ? AppColors.primaryColor.withValues(alpha: 0.1)
               : AppColors.surface,
-          borderRadius: BorderRadius.circular(16.r),
+          borderRadius: BorderRadius.circular(isDesktop ? 16 : 16.r),
           border: isSelected
               ? Border.all(color: AppColors.primaryColor, width: 1.5)
               : Border.all(
@@ -47,9 +53,9 @@ class AppearanceCard extends StatelessWidget {
             Icon(
               icon,
               color: isSelected ? AppColors.primaryColor : AppColors.sandText,
-              size: 32.sp,
+              size: isDesktop ? 32 : 32.sp,
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: isDesktop ? 12 : 12.h),
             Text(
               title,
               style: TextStyles.customStyle(

@@ -6,6 +6,7 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/logout_confirmation_dialog.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:tahsel/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
 
@@ -14,6 +15,8 @@ class LogoutButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
+
     return BlocBuilder<LocaleCubit, LocaleState>(
       builder: (context, state) {
         return SizedBox(
@@ -33,9 +36,11 @@ class LogoutButton extends StatelessWidget {
               }
             },
             style: TextButton.styleFrom(
-              padding: EdgeInsets.symmetric(vertical: 16.h),
+              padding: EdgeInsets.symmetric(
+                vertical: isDesktop ? 16 : 16.h,
+              ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.r),
+                borderRadius: BorderRadius.circular(isDesktop ? 12 : 12.r),
                 side: BorderSide(color: AppColors.error),
               ),
             ),

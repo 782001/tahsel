@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 class LanguageOption extends StatelessWidget {
   final String title;
@@ -19,15 +20,17 @@ class LanguageOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.all(20.w),
+        padding: EdgeInsets.all(isDesktop ? 20 : 20.w),
         decoration: BoxDecoration(
           color: isSelected
               ? AppColors.primaryColor.withValues(alpha: 0.1)
               : AppColors.surface,
-          borderRadius: BorderRadius.circular(16.r),
+          borderRadius: BorderRadius.circular(isDesktop ? 16 : 16.r),
           border: isSelected
               ? Border.all(
                   color: AppColors.primaryColor.withValues(alpha: 0.5),
@@ -45,8 +48,8 @@ class LanguageOption extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 48.w,
-              height: 48.w,
+              width: isDesktop ? 48 : 48.w,
+              height: isDesktop ? 48 : 48.w,
               decoration: BoxDecoration(
                 color: isSelected
                     ? AppColors.primaryColor
@@ -57,11 +60,11 @@ class LanguageOption extends StatelessWidget {
                 child: Icon(
                   Icons.language,
                   color: isSelected ? AppColors.white : AppColors.sandText,
-                  size: 24.sp,
+                  size: isDesktop ? 24 : 24.sp,
                 ),
               ),
             ),
-            SizedBox(width: 16.w),
+            SizedBox(width: isDesktop ? 16 : 16.w),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,7 +92,7 @@ class LanguageOption extends StatelessWidget {
               Icon(
                 Icons.check_circle,
                 color: AppColors.primaryColor,
-                size: 24.sp,
+                size: isDesktop ? 24 : 24.sp,
               ),
           ],
         ),
