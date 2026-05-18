@@ -15,6 +15,7 @@ import 'package:tahsel/features/settings/presentation/widgets/section_header.dar
 import 'package:tahsel/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_cubit.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_state.dart';
+import 'package:tahsel/routes/app_routes.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -136,7 +137,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                             // Language Section
                             SectionHeader(
-                                title: AppStrings.changeLanguage.tr()),
+                              title: AppStrings.changeLanguage.tr(),
+                            ),
                             Text(
                               AppStrings.changeLanguageDesc.tr(),
                               style: TextStyles.customStyle(
@@ -170,6 +172,74 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
 
                             SizedBox(height: isDesktop ? 32 : 32.h),
+
+                            // Employee Management Section
+                            SectionHeader(
+                              title: AppStrings.employeeManagement.tr(),
+                            ),
+                            InkWell(
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.employeeList,
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(12.r),
+                              child: Container(
+                                padding: EdgeInsets.all(isDesktop ? 16 : 14.w),
+                                decoration: BoxDecoration(
+                                  color: AppColors.whiteColor,
+                                  borderRadius: BorderRadius.circular(12.r),
+                                  border: Border.all(
+                                    color: AppColors.veryLightGrey,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundColor: AppColors.primaryColor
+                                          .withValues(alpha: 0.1),
+                                      radius: 20.r,
+                                      child: Icon(
+                                        Icons.people_rounded,
+                                        color: AppColors.primaryColor,
+                                      ),
+                                    ),
+                                    SizedBox(width: 16.w),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            AppStrings.employeeManagement.tr(),
+                                            style: TextStyles.customStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.blackReal,
+                                            ),
+                                          ),
+                                          SizedBox(height: 4.h),
+                                          Text(
+                                            AppStrings.employeeManagementDesc
+                                                .tr(),
+                                            style: TextStyles.customStyle(
+                                              fontSize: 12,
+                                              color: AppColors.sandText,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.arrow_forward_ios_rounded,
+                                      size: 16,
+                                      color: AppColors.sandText,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
 
                             SizedBox(height: isDesktop ? 32 : 32.h),
 

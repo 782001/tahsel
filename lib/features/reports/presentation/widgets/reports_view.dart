@@ -641,8 +641,9 @@ class _ReportsViewState extends State<ReportsView> {
                                                       return true;
                                                     })
                                                     .toList();
-                                                if (i >= currentList.length)
+                                                if (i >= currentList.length) {
                                                   return const SizedBox();
+                                                }
                                                 return Padding(
                                                   padding:
                                                       const EdgeInsets.fromLTRB(

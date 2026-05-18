@@ -1,0 +1,323 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../core/error/firebase_error_handler.dart';
+import '../models/employee_model.dart';
+import '../models/attendance_model.dart';
+import '../models/payroll_model.dart';
+
+class EmployeeRemotePaginationResult {
+  final List<EmployeeModel> employees;
+  final DocumentSnapshot? lastDoc;
+
+  EmployeeRemotePaginationResult({required this.employees, this.lastDoc});
+}
+
+class AttendanceRemotePaginationResult {
+  final List<AttendanceModel> attendanceLogs;
+  final DocumentSnapshot? lastDoc;
+
+  AttendanceRemotePaginationResult({
+    required this.attendanceLogs,
+    this.lastDoc,
+  });
+}
+
+class PayrollRemotePaginationResult {
+  final List<PayrollModel> payrollLogs;
+  final DocumentSnapshot? lastDoc;
+
+  PayrollRemotePaginationResult({required this.payrollLogs, this.lastDoc});
+}
+
+abstract class EmployeeRemoteDataSource {
+  Future<String> addEmployee(EmployeeModel employee);
+  Future<void> editEmployee(EmployeeModel employee);
+  Future<EmployeeRemotePaginationResult> getEmployees(
+    String uid, {
+    int limit = 15,
+    DocumentSnapshot? lastDoc,
+  });
+  Future<List<EmployeeModel>> searchEmployees(String uid, String query);
+  Future<String> checkInEmployee(AttendanceModel attendance);
+  Future<void> checkOutEmployee({
+    required String uid,
+    required String attendanceId,
+    required DateTime checkOut,
+    required double overtimeHours,
+    required double deductionHours,
+    required int lateMinutes,
+    required String status,
+    required String notes,
+  });
+  Future<AttendanceRemotePaginationResult> getAttendance(
+    String uid,
+    String employeeId, {
+    int limit = 15,
+    DocumentSnapshot? lastDoc,
+  });
+  Future<String> paySalary(PayrollModel payroll);
+  Future<PayrollRemotePaginationResult> getPayrollHistory(
+    String uid,
+    String employeeId, {
+    int limit = 15,
+    DocumentSnapshot? lastDoc,
+  });
+}
+
+class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
+  final FirebaseFirestore firestore;
+
+  EmployeeRemoteDataSourceImpl({required this.firestore});
+
+  @override
+  Future<String> addEmployee(EmployeeModel employee) async {
+    try {
+      final userRef = firestore.collection('users').doc(employee.uid);
+      final collectionRef = userRef.collection('employees');
+
+      final docRef = (employee.id != null && employee.id!.isNotEmpty)
+          ? collectionRef.doc(employee.id)
+          : collectionRef.doc();
+
+      final batch = firestore.batch();
+      batch.set(docRef, employee.toJson());
+
+      // Idempotent increments on total employees inside user summaries doc
+      final allTimeSummaryRef = userRef.collection('summaries').doc('all_time');
+      batch.set(allTimeSummaryRef, {
+        'employeeCount': FieldValue.increment(1),
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      await batch.commit();
+      return docRef.id;
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      throw Exception('Failed to add employee: $e');
+    }
+  }
+
+  @override
+  Future<void> editEmployee(EmployeeModel employee) async {
+    try {
+      if (employee.id == null || employee.id!.isEmpty) {
+        throw Exception('Employee ID cannot be empty for edit operation');
+      }
+      final docRef = firestore
+          .collection('users')
+          .doc(employee.uid)
+          .collection('employees')
+          .doc(employee.id);
+
+      await docRef.update(employee.toJson());
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      throw Exception('Failed to edit employee: $e');
+    }
+  }
+
+  @override
+  Future<EmployeeRemotePaginationResult> getEmployees(
+    String uid, {
+    int limit = 15,
+    DocumentSnapshot? lastDoc,
+  }) async {
+    try {
+      var query = firestore
+          .collection('users')
+          .doc(uid)
+          .collection('employees')
+          .orderBy('createdAt', descending: true)
+          .limit(limit);
+
+      if (lastDoc != null) {
+        query = query.startAfterDocument(lastDoc);
+      }
+
+      final snapshot = await query.get();
+      final employees = snapshot.docs
+          .map((doc) => EmployeeModel.fromJson(doc.data(), doc.id))
+          .toList();
+
+      return EmployeeRemotePaginationResult(
+        employees: employees,
+        lastDoc: snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
+      );
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      throw Exception('Failed to fetch employees: $e');
+    }
+  }
+
+  @override
+  Future<List<EmployeeModel>> searchEmployees(String uid, String query) async {
+    try {
+      final snapshot = await firestore
+          .collection('users')
+          .doc(uid)
+          .collection('employees')
+          .where('name', isGreaterThanOrEqualTo: query)
+          .where('name', isLessThanOrEqualTo: '$query\uf8ff')
+          .get();
+
+      return snapshot.docs
+          .map((doc) => EmployeeModel.fromJson(doc.data(), doc.id))
+          .toList();
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      throw Exception('Failed to search employees: $e');
+    }
+  }
+
+  @override
+  Future<String> checkInEmployee(AttendanceModel attendance) async {
+    try {
+      final userRef = firestore.collection('users').doc(attendance.uid);
+      final docRef = (attendance.id != null && attendance.id!.isNotEmpty)
+          ? userRef.collection('attendances').doc(attendance.id)
+          : userRef.collection('attendances').doc();
+
+      await docRef.set(attendance.toJson());
+      return docRef.id;
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      throw Exception('Failed to check in: $e');
+    }
+  }
+
+  @override
+  Future<void> checkOutEmployee({
+    required String uid,
+    required String attendanceId,
+    required DateTime checkOut,
+    required double overtimeHours,
+    required double deductionHours,
+    required int lateMinutes,
+    required String status,
+    required String notes,
+  }) async {
+    try {
+      final docRef = firestore
+          .collection('users')
+          .doc(uid)
+          .collection('attendances')
+          .doc(attendanceId);
+
+      await docRef.update({
+        'checkOut': Timestamp.fromDate(checkOut),
+        'overtimeHours': overtimeHours,
+        'deductionHours': deductionHours,
+        'lateMinutes': lateMinutes,
+        'status': status,
+        'notes': notes,
+      });
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      throw Exception('Failed to check out: $e');
+    }
+  }
+
+  @override
+  Future<AttendanceRemotePaginationResult> getAttendance(
+    String uid,
+    String employeeId, {
+    int limit = 15,
+    DocumentSnapshot? lastDoc,
+  }) async {
+    try {
+      var query = firestore
+          .collection('users')
+          .doc(uid)
+          .collection('attendances')
+          .where('employeeId', isEqualTo: employeeId)
+          .orderBy('checkIn', descending: true)
+          .limit(limit);
+
+      if (lastDoc != null) {
+        query = query.startAfterDocument(lastDoc);
+      }
+
+      final snapshot = await query.get();
+      final logs = snapshot.docs
+          .map((doc) => AttendanceModel.fromJson(doc.data(), doc.id))
+          .toList();
+
+      return AttendanceRemotePaginationResult(
+        attendanceLogs: logs,
+        lastDoc: snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
+      );
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      throw Exception('Failed to fetch attendance logs: $e');
+    }
+  }
+
+  @override
+  Future<String> paySalary(PayrollModel payroll) async {
+    try {
+      final userRef = firestore.collection('users').doc(payroll.uid);
+      final docRef = (payroll.id != null && payroll.id!.isNotEmpty)
+          ? userRef.collection('payrolls').doc(payroll.id)
+          : userRef.collection('payrolls').doc();
+
+      final batch = firestore.batch();
+      batch.set(docRef, payroll.toJson());
+
+      // Update summaries for salaries paid and overtime compensation paid
+      final monthlyRef = userRef
+          .collection('summaries')
+          .doc('monthly_${payroll.monthKey}');
+      final allTimeRef = userRef.collection('summaries').doc('all_time');
+
+      for (final ref in [monthlyRef, allTimeRef]) {
+        batch.set(ref, {
+          'totalSalariesPaid': FieldValue.increment(payroll.netSalary),
+          'totalOvertimePaid': FieldValue.increment(
+            payroll.overtimeCompensation,
+          ),
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
+
+      await batch.commit();
+      return docRef.id;
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      throw Exception('Failed to pay salary: $e');
+    }
+  }
+
+  @override
+  Future<PayrollRemotePaginationResult> getPayrollHistory(
+    String uid,
+    String employeeId, {
+    int limit = 15,
+    DocumentSnapshot? lastDoc,
+  }) async {
+    try {
+      var query = firestore
+          .collection('users')
+          .doc(uid)
+          .collection('payrolls')
+          .where('employeeId', isEqualTo: employeeId)
+          .orderBy('paymentDate', descending: true)
+          .limit(limit);
+
+      if (lastDoc != null) {
+        query = query.startAfterDocument(lastDoc);
+      }
+
+      final snapshot = await query.get();
+      final history = snapshot.docs
+          .map((doc) => PayrollModel.fromJson(doc.data(), doc.id))
+          .toList();
+
+      return PayrollRemotePaginationResult(
+        payrollLogs: history,
+        lastDoc: snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
+      );
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      throw Exception('Failed to fetch payroll history: $e');
+    }
+  }
+}

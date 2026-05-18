@@ -194,56 +194,59 @@ class _NavTileState extends State<_NavTile> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _isHovered = true),
-        onExit: (_) => setState(() => _isHovered = false),
-        child: InkWell(
-          onTap: widget.onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            decoration: BoxDecoration(
-              color: widget.isSelected
-                  ? activeColor.withValues(alpha: 0.1)
-                  : (_isHovered
-                        ? activeColor.withValues(alpha: 0.05)
-                        : Colors.transparent),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  widget.icon,
-                  color: widget.isSelected ? activeColor : AppColors.blackLight,
-                  size: 24,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    widget.label,
-                    style: TextStyles.customStyle(
-                      fontSize: 16,
-                      fontWeight: widget.isSelected
-                          ? FontWeight.bold
-                          : FontWeight.w500,
-                      color: widget.isSelected
-                          ? activeColor
-                          : AppColors.blackLight,
-                    ),
+      child: InkWell(
+        onTap: widget.onTap,
+        onHover: (hovered) {
+          if (mounted) {
+            setState(() {
+              _isHovered = hovered;
+            });
+          }
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          decoration: BoxDecoration(
+            color: widget.isSelected
+                ? activeColor.withValues(alpha: 0.1)
+                : (_isHovered
+                      ? activeColor.withValues(alpha: 0.05)
+                      : Colors.transparent),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                widget.icon,
+                color: widget.isSelected ? activeColor : AppColors.blackLight,
+                size: 24,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  widget.label,
+                  style: TextStyles.customStyle(
+                    fontSize: 16,
+                    fontWeight: widget.isSelected
+                        ? FontWeight.bold
+                        : FontWeight.w500,
+                    color: widget.isSelected
+                        ? activeColor
+                        : AppColors.blackLight,
                   ),
                 ),
-                if (widget.isSelected)
-                  Container(
-                    width: 4,
-                    height: 18,
-                    decoration: BoxDecoration(
-                      color: activeColor,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+              ),
+              if (widget.isSelected)
+                Container(
+                  width: 4,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    color: activeColor,
+                    borderRadius: BorderRadius.circular(2),
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
         ),
       ),

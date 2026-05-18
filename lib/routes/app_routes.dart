@@ -27,6 +27,11 @@ import 'package:tahsel/features/my_debts/presentation/screens/my_debt_details_re
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_person_entity.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_report_cubit.dart';
+import 'package:tahsel/features/employee/domain/entities/employee_entity.dart';
+import 'package:tahsel/features/employee/presentation/cubit/employee_cubit.dart';
+import 'package:tahsel/features/employee/presentation/screens/employee_list_screen.dart';
+import 'package:tahsel/features/employee/presentation/screens/employee_details_screen.dart';
+import 'package:tahsel/features/employee/presentation/screens/employee_reports_screen.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -46,9 +51,34 @@ class AppRoutes {
   static const String myDebtDetailsReport = '/my-debt-details-report';
   static const String monthlyCollected = '/monthly-collected';
   static const String monthlyCollectedTransactions = '/monthly-collected-transactions';
+  static const String employeeList = '/employee-list';
+  static const String employeeDetails = '/employee-details';
+  static const String employeeReports = '/employee-reports';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
+      case employeeList:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider.value(
+            value: di.sl<EmployeeCubit>(),
+            child: const EmployeeListScreen(),
+          ),
+        );
+      case employeeDetails:
+        final employee = settings.arguments as EmployeeEntity;
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider.value(
+            value: di.sl<EmployeeCubit>(),
+            child: EmployeeDetailsScreen(employee: employee),
+          ),
+        );
+      case employeeReports:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider.value(
+            value: di.sl<EmployeeCubit>(),
+            child: const EmployeeReportsScreen(),
+          ),
+        );
       case splash:
         return MaterialPageRoute(builder: (_) => const SplashScreen());
       case mainLayout:

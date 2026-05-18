@@ -1531,7 +1531,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
       if (doc.exists) {
         final data = Map<String, dynamic>.from(doc.data()!);
-        final double unpaidDebts = (data['unpaidDebts'] ?? 0.0).toDouble();
+        // final double unpaidDebts = (data['unpaidDebts'] ?? 0.0).toDouble();
         final int debtCustomersCount = (data['debtCustomersCount'] ?? 0).toInt();
 
         if (debtCustomersCount <= 0) {

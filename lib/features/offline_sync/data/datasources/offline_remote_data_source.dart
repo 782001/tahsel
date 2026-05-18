@@ -29,8 +29,10 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
         await _syncMyDebtAdd(record, payload);
       } else if (record.type == 'debt_add') {
         await _syncDebtAdd(record, payload);
+      } else if (record.type == 'checkout_update') {
+        await _syncCheckOutUpdate(record, payload);
       } else {
-        // Simple collection sync (e.g., expenses, operations)
+        // Simple collection sync (e.g., expenses, operations, employees, attendance_checkin, payroll)
         await _syncSimpleRecord(record, payload);
       }
 
@@ -228,6 +230,36 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
     await batch.commit();
   }
 
+  Future<void> _syncCheckOutUpdate(
+    OfflineRecord record,
+    Map<String, dynamic> payload,
+  ) async {
+    final uid = payload['uid'] as String;
+    final attendanceId = payload['attendanceId'] as String;
+    final checkOutStr = payload['checkOut'] as String;
+    final checkOut = Timestamp.fromDate(DateTime.parse(checkOutStr));
+    final overtimeHours = (payload['overtimeHours'] as num).toDouble();
+    final deductionHours = (payload['deductionHours'] as num).toDouble();
+    final lateMinutes = (payload['lateMinutes'] as num).toInt();
+    final status = payload['status'] as String;
+    final notes = payload['notes'] as String;
+
+    final docRef = firestore
+        .collection('users')
+        .doc(uid)
+        .collection('attendances')
+        .doc(attendanceId);
+
+    await docRef.update({
+      'checkOut': checkOut,
+      'overtimeHours': overtimeHours,
+      'deductionHours': deductionHours,
+      'lateMinutes': lateMinutes,
+      'status': status,
+      'notes': notes,
+    });
+  }
+
   Future<void> _syncSimpleRecord(
     OfflineRecord record,
     Map<String, dynamic> payload,
@@ -253,13 +285,25 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
       timestampDate = DateTime.parse(payload['timestamp']);
       payload['timestamp'] = Timestamp.fromDate(timestampDate);
     }
+    if (payload['checkIn'] is String) {
+      timestampDate = DateTime.parse(payload['checkIn']);
+      payload['checkIn'] = Timestamp.fromDate(timestampDate);
+    }
+    if (payload['checkOut'] is String) {
+      final checkOutDate = DateTime.parse(payload['checkOut']);
+      payload['checkOut'] = Timestamp.fromDate(checkOutDate);
+    }
+    if (payload['paymentDate'] is String) {
+      timestampDate = DateTime.parse(payload['paymentDate']);
+      payload['paymentDate'] = Timestamp.fromDate(timestampDate);
+    }
 
     payload['syncedAt'] = FieldValue.serverTimestamp();
     
     final batch = firestore.batch();
     batch.set(docRef, payload, SetOptions(merge: true));
 
-    // Handle Summary Updates for Operations and Expenses
+    // Handle Summary Updates for Operations, Expenses, Employees, and Payroll
     final uid = payload['uid'] as String?;
     if (uid != null && timestampDate != null) {
       final userRef = firestore.collection('users').doc(uid);
@@ -292,6 +336,35 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
             {
               'totalExpenses': FieldValue.increment(amount),
               'transactionCount': FieldValue.increment(1),
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          );
+        }
+      } else if (collectionPath.contains('employees')) {
+        final allTimeRef = userRef.collection('summaries').doc('all_time');
+        batch.set(
+          allTimeRef,
+          {
+            'employeeCount': FieldValue.increment(1),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      } else if (collectionPath.contains('payrolls')) {
+        final netSalary = (payload['netSalary'] as num?)?.toDouble() ?? 0;
+        final overtimeCompensation = (payload['overtimeCompensation'] as num?)?.toDouble() ?? 0;
+        final monthKey = payload['monthKey'] as String? ?? '';
+        
+        final monthlyRef = userRef.collection('summaries').doc('monthly_$monthKey');
+        final allTimeRef = userRef.collection('summaries').doc('all_time');
+
+        for (final ref in [monthlyRef, allTimeRef]) {
+          batch.set(
+            ref,
+            {
+              'totalSalariesPaid': FieldValue.increment(netSalary),
+              'totalOvertimePaid': FieldValue.increment(overtimeCompensation),
               'lastUpdatedAt': FieldValue.serverTimestamp(),
             },
             SetOptions(merge: true),

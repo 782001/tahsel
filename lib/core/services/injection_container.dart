@@ -8,6 +8,7 @@ import 'package:tahsel/features/auth/service_injection/auth_injection.dart';
 import 'package:tahsel/features/customer/service_injection/customer_injection.dart';
 import 'package:tahsel/features/debt/service_injection/debt_injection.dart';
 import 'package:tahsel/features/expenses/service_injection/expense_injection.dart';
+import 'package:tahsel/features/employee/service_injection/employee_injection.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:tahsel/features/my_debts/service_injection/my_debts_injection.dart';
 import 'package:tahsel/features/offline_sync/service_injection/offline_sync_injection.dart';
@@ -59,6 +60,7 @@ Future<void> initDependencies() async {
   await OfflineSyncInjection.init(sl);
   ReportsInjection.init(sl);
   MyDebtsInjection.init(sl);
+  EmployeeInjection.init();
 
   // localization
   /// -----localizationCubit------

@@ -12,6 +12,8 @@ import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_summary_cub
 import 'package:tahsel/features/debt/presentation/cubit/total_debts/total_debts_cubit.dart';
 import 'package:tahsel/features/offline_sync/presentation/cubit/offline_sync_cubit.dart';
 
+import 'package:tahsel/core/widgets/responsive_layout.dart';
+
 class UnifiedDebtsScreen extends StatefulWidget {
   const UnifiedDebtsScreen({super.key});
 
@@ -42,6 +44,7 @@ class _UnifiedDebtsScreenState extends State<UnifiedDebtsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final bool isDesktop = ResponsiveLayout.isDesktop(context);
     return MultiBlocProvider(
       providers: [
         BlocProvider.value(value: sl<DebtCubit>()),
@@ -67,17 +70,31 @@ class _UnifiedDebtsScreenState extends State<UnifiedDebtsScreen>
             elevation: 0,
             toolbarHeight: 70, // Height for the custom tab selector
             flexibleSpace: SafeArea(
-              child: DebtsTabSelector(
-                selectedIndex: _tabController.index,
-                onTabChanged: (index) {
-                  _tabController.animateTo(index);
-                },
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: isDesktop ? 600 : double.infinity,
+                  ),
+                  child: DebtsTabSelector(
+                    selectedIndex: _tabController.index,
+                    onTabChanged: (index) {
+                      _tabController.animateTo(index);
+                    },
+                  ),
+                ),
               ),
             ),
           ),
-          body: TabBarView(
-            controller: _tabController,
-            children: const [CustomerDebtsScreen(), MyDebtsTabView()],
+          body: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: isDesktop ? 1000 : double.infinity,
+              ),
+              child: TabBarView(
+                controller: _tabController,
+                children: const [CustomerDebtsScreen(), MyDebtsTabView()],
+              ),
+            ),
           ),
         ),
       ),

@@ -10,7 +10,11 @@ class CustomerListCard extends StatelessWidget {
   final dynamic customer;
   final String uid;
 
-  const CustomerListCard({required this.customer, required this.uid});
+  const CustomerListCard({
+    super.key,
+    required this.customer,
+    required this.uid,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,10 +24,7 @@ class CustomerListCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(
-          color: AppColors.blackLight.withAlpha(20),
-          width: 1,
-        ),
+        side: BorderSide(color: AppColors.blackLight.withAlpha(20), width: 1),
       ),
       color: AppColors.debtCardSurface,
       child: InkWell(
@@ -32,10 +33,7 @@ class CustomerListCard extends StatelessWidget {
           Navigator.pushNamed(
             context,
             AppRoutes.customerReportDetails,
-            arguments: {
-              'uid': uid,
-              'customerName': customer.name,
-            },
+            arguments: {'uid': uid, 'customerName': customer.name},
           );
         },
         child: Padding(

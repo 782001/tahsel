@@ -110,6 +110,7 @@ class TextStyles {
     Color? color,
     double? letterSpacing,
     double? height,
+    FontStyle? fontStyle,
   }) {
     return TextStyle(
       fontSize: getResponsiveFontSize(fontSize: fontSize ?? 14),
@@ -118,6 +119,7 @@ class TextStyles {
       color: color,
       letterSpacing: letterSpacing,
       height: height,
+      fontStyle: fontStyle,
     );
   }
 }
