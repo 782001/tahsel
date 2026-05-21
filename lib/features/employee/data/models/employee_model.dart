@@ -13,6 +13,11 @@ class EmployeeModel extends EmployeeEntity {
     required super.status,
     required super.createdAt,
     required super.notes,
+    super.workingDaysPerMonth = 26,
+    super.expectedDailyHours = 8.0,
+    super.overtimeMultiplier = 1.5,
+    super.customOvertimeRate,
+    super.customDeductionRate,
   });
 
   factory EmployeeModel.fromJson(Map<String, dynamic> json, String id) {
@@ -38,6 +43,11 @@ class EmployeeModel extends EmployeeEntity {
       status: json['status'] as String? ?? 'active',
       createdAt: createdAtDate,
       notes: json['notes'] as String? ?? '',
+      workingDaysPerMonth: json['workingDaysPerMonth'] as int? ?? 26,
+      expectedDailyHours: (json['expectedDailyHours'] as num?)?.toDouble() ?? 8.0,
+      overtimeMultiplier: (json['overtimeMultiplier'] as num?)?.toDouble() ?? 1.5,
+      customOvertimeRate: (json['customOvertimeRate'] as num?)?.toDouble(),
+      customDeductionRate: (json['customDeductionRate'] as num?)?.toDouble(),
     );
   }
 
@@ -52,6 +62,11 @@ class EmployeeModel extends EmployeeEntity {
       'status': status,
       'createdAt': Timestamp.fromDate(createdAt),
       'notes': notes,
+      'workingDaysPerMonth': workingDaysPerMonth,
+      'expectedDailyHours': expectedDailyHours,
+      'overtimeMultiplier': overtimeMultiplier,
+      'customOvertimeRate': customOvertimeRate,
+      'customDeductionRate': customDeductionRate,
     };
   }
 
@@ -67,6 +82,11 @@ class EmployeeModel extends EmployeeEntity {
       status: entity.status,
       createdAt: entity.createdAt,
       notes: entity.notes,
+      workingDaysPerMonth: entity.workingDaysPerMonth,
+      expectedDailyHours: entity.expectedDailyHours,
+      overtimeMultiplier: entity.overtimeMultiplier,
+      customOvertimeRate: entity.customOvertimeRate,
+      customDeductionRate: entity.customDeductionRate,
     );
   }
 }

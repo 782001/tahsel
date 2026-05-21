@@ -15,7 +15,10 @@ import 'package:tahsel/features/employee/presentation/widgets/pay_salary_dialog.
 import 'package:tahsel/features/expenses/domain/entities/expense_entity.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
 import 'package:tahsel/features/offline_sync/data/models/offline_record.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/routes/app_routes.dart';
+import 'package:tahsel/shared/widgets/no_internet_view.dart';
 
 class EmployeeListScreen extends StatefulWidget {
   const EmployeeListScreen({super.key});
@@ -115,194 +118,211 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
           }
         },
         child: SafeArea(
-          child: BlocBuilder<EmployeeCubit, EmployeeState>(
-            buildWhen: (previous, current) =>
-                current is EmployeeLoading ||
-                current is EmployeeFetchSuccess ||
-                current is EmployeeFailure,
-            builder: (context, state) {
-              final isDesktop = ResponsiveLayout.isDesktop(context);
-
-              if (state is EmployeeFetchSuccess) {
-                _cachedEmployees = state.employees;
-                _cachedPendingRecords = state.pendingRecords;
+          child: BlocBuilder<ConnectivityCubit, ConnectivityState>(
+            builder: (context, connectivityState) {
+              if (connectivityState is ConnectivityDisconnected) {
+                return NoInternetView(
+                  onRetry: () =>
+                      context.read<ConnectivityCubit>().checkConnectivity(),
+                );
               }
+              return BlocBuilder<EmployeeCubit, EmployeeState>(
+                buildWhen: (previous, current) =>
+                    current is EmployeeLoading ||
+                    current is EmployeeFetchSuccess ||
+                    current is EmployeeFailure,
+                builder: (context, state) {
+                  final isDesktop = ResponsiveLayout.isDesktop(context);
 
-              final unsyncedCount = _cachedPendingRecords.length;
-              final filteredList = _cachedEmployees.where((emp) {
-                final matchQuery =
-                    emp.name.toLowerCase().contains(
-                      _searchController.text.toLowerCase(),
-                    ) ||
-                    emp.role.toLowerCase().contains(
-                      _searchController.text.toLowerCase(),
-                    ) ||
-                    emp.phone.contains(_searchController.text);
-                final matchStatus =
-                    _selectedStatusFilter == 'all' ||
-                    emp.status == _selectedStatusFilter;
-                return matchQuery && matchStatus;
-              }).toList();
+                  if (state is EmployeeFetchSuccess) {
+                    _cachedEmployees = state.employees;
+                    _cachedPendingRecords = state.pendingRecords;
+                  }
 
-              return RefreshIndicator(
-                color: AppColors.primaryColor,
-                onRefresh: () async {
-                  context.read<EmployeeCubit>().fetchEmployees(
-                    AppStrings.userToken,
-                    forceRefresh: true,
-                  );
-                },
-                child: CustomScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  slivers: [
-                    SliverToBoxAdapter(child: _buildHeader(isDesktop)),
-                    SliverToBoxAdapter(child: _buildFilters(isDesktop)),
-                    if (state is EmployeeLoading && _cachedEmployees.isEmpty)
-                      SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.primaryColor,
-                            strokeWidth: 3,
-                          ),
-                        ),
-                      )
-                    else if (state is EmployeeFailure &&
-                        _cachedEmployees.isEmpty)
-                      SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                state.message,
-                                style: TextStyles.customStyle(
-                                  fontSize: 14,
-                                  color: AppColors.error,
-                                ),
+                  final unsyncedCount = _cachedPendingRecords.length;
+                  final filteredList = _cachedEmployees.where((emp) {
+                    final matchQuery =
+                        emp.name.toLowerCase().contains(
+                          _searchController.text.toLowerCase(),
+                        ) ||
+                        emp.role.toLowerCase().contains(
+                          _searchController.text.toLowerCase(),
+                        ) ||
+                        emp.phone.contains(_searchController.text);
+                    final matchStatus =
+                        _selectedStatusFilter == 'all' ||
+                        emp.status == _selectedStatusFilter;
+                    return matchQuery && matchStatus;
+                  }).toList();
+
+                  return RefreshIndicator(
+                    color: AppColors.primaryColor,
+                    onRefresh: () async {
+                      context.read<EmployeeCubit>().fetchEmployees(
+                        AppStrings.userToken,
+                        forceRefresh: true,
+                      );
+                    },
+                    child: CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        SliverToBoxAdapter(child: _buildHeader(isDesktop)),
+                        SliverToBoxAdapter(child: _buildFilters(isDesktop)),
+                        if (state is EmployeeLoading &&
+                            _cachedEmployees.isEmpty)
+                          SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: AppColors.primaryColor,
+                                strokeWidth: 3,
                               ),
-                              SizedBox(height: 12.h),
-                              ElevatedButton(
-                                onPressed: () {
-                                  context.read<EmployeeCubit>().fetchEmployees(
-                                    AppStrings.userToken,
-                                    forceRefresh: true,
-                                  );
-                                },
-                                child: Text(AppStrings.retry.tr()),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    else ...[
-                      if (filteredList.isEmpty)
-                        SliverFillRemaining(
-                          hasScrollBody: false,
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.people_outline_rounded,
-                                  size: isDesktop ? 80 : 64,
-                                  color: AppColors.blackLight.withValues(
-                                    alpha: 0.4,
-                                  ),
-                                ),
-                                SizedBox(height: 16.h),
-                                Text(
-                                  AppStrings.noEmployeesFound.tr(),
-                                  style: TextStyles.customStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.blackLight.withValues(
-                                      alpha: 0.4,
-                                    ),
-                                  ),
-                                ),
-                              ],
                             ),
-                          ),
-                        )
-                      else ...[
-                        if (unsyncedCount > 0)
-                          SliverToBoxAdapter(
-                            child: Container(
-                              width: double.infinity,
-                              color: AppColors.warning.withValues(alpha: 0.1),
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 16.w,
-                                vertical: 8.h,
-                              ),
-                              child: Row(
+                          )
+                        else if (state is EmployeeFailure &&
+                            _cachedEmployees.isEmpty)
+                          SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(
-                                    Icons.sync_problem_rounded,
-                                    color: AppColors.warning,
-                                    size: 18,
-                                  ),
-                                  SizedBox(width: 8.w),
-                                  Expanded(
-                                    child: Text(
-                                      AppStrings.unsyncedOfflineRecordsWarning
-                                          .tr(
-                                            namedArgs: {
-                                              'count': unsyncedCount.toString(),
-                                            },
-                                          ),
-                                      style: TextStyles.customStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.warning,
-                                      ),
+                                  Text(
+                                    state.message,
+                                    style: TextStyles.customStyle(
+                                      fontSize: 14,
+                                      color: AppColors.error,
                                     ),
+                                  ),
+                                  SizedBox(height: 12.h),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      context
+                                          .read<EmployeeCubit>()
+                                          .fetchEmployees(
+                                            AppStrings.userToken,
+                                            forceRefresh: true,
+                                          );
+                                    },
+                                    child: Text(AppStrings.retry.tr()),
                                   ),
                                 ],
                               ),
                             ),
-                          ),
-                        SliverPadding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: isDesktop ? 24.w : 16.w,
-                            vertical: isDesktop ? 16.h : 12.h,
-                          ),
-                          sliver: isDesktop
-                              ? SliverGrid(
-                                  gridDelegate:
-                                      const SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 2,
-                                        crossAxisSpacing: 16,
-                                        mainAxisSpacing: 16,
-                                        childAspectRatio: 1.8,
+                          )
+                        else ...[
+                          if (filteredList.isEmpty)
+                            SliverFillRemaining(
+                              hasScrollBody: false,
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.people_outline_rounded,
+                                      size: isDesktop ? 80 : 64,
+                                      color: AppColors.blackLight.withValues(
+                                        alpha: 0.4,
                                       ),
-                                  delegate: SliverChildBuilderDelegate((
-                                    context,
-                                    idx,
-                                  ) {
-                                    return _buildEmployeeCard(
-                                      filteredList[idx],
-                                      isDesktop,
-                                    );
-                                  }, childCount: filteredList.length),
-                                )
-                              : SliverList(
-                                  delegate: SliverChildBuilderDelegate((
-                                    context,
-                                    idx,
-                                  ) {
-                                    return _buildEmployeeCard(
-                                      filteredList[idx],
-                                      isDesktop,
-                                    );
-                                  }, childCount: filteredList.length),
+                                    ),
+                                    SizedBox(height: 16.h),
+                                    Text(
+                                      AppStrings.noEmployeesFound.tr(),
+                                      style: TextStyles.customStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.blackLight.withValues(
+                                          alpha: 0.4,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                        ),
+                              ),
+                            )
+                          else ...[
+                            if (unsyncedCount > 0)
+                              SliverToBoxAdapter(
+                                child: Container(
+                                  width: double.infinity,
+                                  color: AppColors.warning.withValues(
+                                    alpha: 0.1,
+                                  ),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 16.w,
+                                    vertical: 8.h,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.sync_problem_rounded,
+                                        color: AppColors.warning,
+                                        size: 18,
+                                      ),
+                                      SizedBox(width: 8.w),
+                                      Expanded(
+                                        child: Text(
+                                          AppStrings
+                                              .unsyncedOfflineRecordsWarning
+                                              .tr(
+                                                namedArgs: {
+                                                  'count': unsyncedCount
+                                                      .toString(),
+                                                },
+                                              ),
+                                          style: TextStyles.customStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.warning,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            SliverPadding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isDesktop ? 24.w : 16.w,
+                                vertical: isDesktop ? 16.h : 12.h,
+                              ),
+                              sliver: isDesktop
+                                  ? SliverGrid(
+                                      gridDelegate:
+                                          const SliverGridDelegateWithFixedCrossAxisCount(
+                                            crossAxisCount: 2,
+                                            crossAxisSpacing: 16,
+                                            mainAxisSpacing: 16,
+                                            childAspectRatio: 1.8,
+                                          ),
+                                      delegate: SliverChildBuilderDelegate((
+                                        context,
+                                        idx,
+                                      ) {
+                                        return _buildEmployeeCard(
+                                          filteredList[idx],
+                                          isDesktop,
+                                        );
+                                      }, childCount: filteredList.length),
+                                    )
+                                  : SliverList(
+                                      delegate: SliverChildBuilderDelegate((
+                                        context,
+                                        idx,
+                                      ) {
+                                        return _buildEmployeeCard(
+                                          filteredList[idx],
+                                          isDesktop,
+                                        );
+                                      }, childCount: filteredList.length),
+                                    ),
+                            ),
+                          ],
+                        ],
                       ],
-                    ],
-                  ],
-                ),
+                    ),
+                  );
+                },
               );
             },
           ),
@@ -550,24 +570,24 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                   ),
                   Row(
                     children: [
-                      IconButton(
-                        icon: Icon(
-                          Icons.qr_code_scanner_rounded,
-                          color: AppColors.primaryColor,
-                          size: 20,
-                        ),
-                        tooltip: AppStrings.checkIn.tr(),
-                        onPressed: () => _showCheckInOutDialog(employee),
-                      ),
-                      IconButton(
-                        icon: Icon(
-                          Icons.payment_rounded,
-                          color: AppColors.primaryColor,
-                          size: 20,
-                        ),
-                        tooltip: AppStrings.paySalary.tr(),
-                        onPressed: () => _showPaySalaryDialog(employee),
-                      ),
+                      // IconButton(
+                      //   icon: Icon(
+                      //     Icons.qr_code_scanner_rounded,
+                      //     color: AppColors.primaryColor,
+                      //     size: 20,
+                      //   ),
+                      //   tooltip: AppStrings.checkIn.tr(),
+                      //   onPressed: () => _showCheckInOutDialog(employee),
+                      // ),
+                      // IconButton(
+                      //   icon: Icon(
+                      //     Icons.payment_rounded,
+                      //     color: AppColors.primaryColor,
+                      //     size: 20,
+                      //   ),
+                      //   tooltip: AppStrings.paySalary.tr(),
+                      //   onPressed: () => _showPaySalaryDialog(employee),
+                      // ),
                       IconButton(
                         icon: Icon(
                           Icons.edit_note_rounded,
@@ -589,6 +609,15 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
   }
 
   void _showAddEmployeeDialog() {
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppStrings.noInternetConnection.tr()),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -603,6 +632,15 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
   }
 
   void _showEditEmployeeDialog(EmployeeEntity employee) {
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppStrings.noInternetConnection.tr()),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -618,6 +656,15 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
   }
 
   void _showCheckInOutDialog(EmployeeEntity employee) {
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppStrings.noInternetConnection.tr()),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -669,48 +716,60 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
   }
 
   void _showPaySalaryDialog(EmployeeEntity employee) {
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppStrings.noInternetConnection.tr()),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) {
         return PaySalaryDialog(
           employee: employee,
-          onPay: (payroll) {
-            context.read<EmployeeCubit>().payPayroll(payroll).then((_) {
-              // Build localized salary type label
-              String salaryTypeLabel;
-              switch (payroll.salaryType) {
-                case 'monthly':
-                  salaryTypeLabel = AppStrings.monthly.tr();
-                  break;
-                case 'daily':
-                  salaryTypeLabel = AppStrings.daily.tr();
-                  break;
-                case 'hourly':
-                  salaryTypeLabel = AppStrings.hourly.tr();
-                  break;
-                default:
-                  salaryTypeLabel = AppStrings.monthly.tr();
-              }
+          onPay: (payroll, paidAdvanceIds) {
+            context
+                .read<EmployeeCubit>()
+                .payPayroll(payroll, advanceIdsToDeduct: paidAdvanceIds)
+                .then((_) {
+                  // Build localized salary type label
+                  String salaryTypeLabel;
+                  switch (payroll.salaryType) {
+                    case 'monthly':
+                      salaryTypeLabel = AppStrings.monthly.tr();
+                      break;
+                    case 'daily':
+                      salaryTypeLabel = AppStrings.daily.tr();
+                      break;
+                    case 'hourly':
+                      salaryTypeLabel = AppStrings.hourly.tr();
+                      break;
+                    default:
+                      salaryTypeLabel = AppStrings.monthly.tr();
+                  }
 
-              final categoryName = AppStrings.salaryExpenseFor.tr(
-                namedArgs: {
-                  'type': salaryTypeLabel,
-                  'name': payroll.employeeName,
-                },
-              );
+                  final categoryName = AppStrings.salaryExpenseFor.tr(
+                    namedArgs: {
+                      'type': salaryTypeLabel,
+                      'name': payroll.employeeName,
+                    },
+                  );
 
-              final expense = ExpenseEntity(
-                uid: AppStrings.userToken,
-                amount: payroll.netSalary,
-                category: categoryName,
-                description: payroll.notes,
-                createdAt: payroll.paymentDate,
-                monthKey: payroll.monthKey,
-              );
-              if (!mounted) return;
-              context.read<ExpenseCubit>().addExpense(expense);
-            });
+                  final expense = ExpenseEntity(
+                    uid: AppStrings.userToken,
+                    amount: payroll.netSalary,
+                    category: categoryName,
+                    description: payroll.notes,
+                    createdAt: payroll.paymentDate,
+                    monthKey: payroll.monthKey,
+                  );
+                  if (!mounted) return;
+                  context.read<ExpenseCubit>().addExpense(expense);
+                });
           },
         );
       },

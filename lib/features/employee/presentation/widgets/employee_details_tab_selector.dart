@@ -22,13 +22,17 @@ class EmployeeDetailsTabSelector extends StatelessWidget {
     final List<Map<String, dynamic>> tabs = [
       {'label': AppStrings.attendance, 'icon': Icons.av_timer_rounded},
       {'label': AppStrings.payroll, 'icon': Icons.payments_rounded},
+      {
+        'label': AppStrings.advances,
+        'icon': Icons.account_balance_wallet_rounded,
+      },
     ];
 
     return Container(
       height: isDesktop ? 50.h : 45.h,
       margin: EdgeInsets.symmetric(
-        horizontal: isDesktop ? 16 : 16.w,
-        vertical: isDesktop ? 8 : 8.h,
+        horizontal: isDesktop ? 16 : 8.w,
+        vertical: isDesktop ? 8 : 4.h,
       ),
       padding: EdgeInsets.all(isDesktop ? 4 : 4.r),
       decoration: BoxDecoration(
@@ -53,7 +57,7 @@ class EmployeeDetailsTabSelector extends StatelessWidget {
                   height: double.infinity,
                   decoration: BoxDecoration(
                     color: AppColors.whiteColor,
-                    borderRadius: BorderRadius.circular(16.r),
+                    borderRadius: BorderRadius.circular(isDesktop ? 16 : 8.r),
                     border: Border.all(
                       color: AppColors.primaryColor,
                       width: 1.5.r,
@@ -87,18 +91,22 @@ class EmployeeDetailsTabSelector extends StatelessWidget {
                                   : AppColors.blackLight.withValues(alpha: 0.5),
                             ),
                             const SizedBox(width: 6),
-                            Text(
-                              (tabs[index]['label'] as String).tr(),
-                              style: TextStyles.customStyle(
-                                fontSize: 13,
-                                fontWeight: selectedIndex == index
-                                    ? FontWeight.bold
-                                    : FontWeight.w500,
-                                color: selectedIndex == index
-                                    ? AppColors.primaryColor
-                                    : AppColors.blackLight.withValues(
-                                        alpha: 0.5,
-                                      ),
+                            Flexible(
+                              child: Text(
+                                (tabs[index]['label'] as String).tr(),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyles.customStyle(
+                                  fontSize: 13,
+                                  fontWeight: selectedIndex == index
+                                      ? FontWeight.bold
+                                      : FontWeight.w500,
+                                  color: selectedIndex == index
+                                      ? AppColors.primaryColor
+                                      : AppColors.blackLight.withValues(
+                                          alpha: 0.5,
+                                        ),
+                                ),
                               ),
                             ),
                           ],

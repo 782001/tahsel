@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'employee_entity.dart';
 import 'attendance_entity.dart';
 import 'payroll_entity.dart';
+import 'advance_entity.dart';
 
 class EmployeePaginatedList extends Equatable {
   final List<EmployeeEntity> employees;
@@ -31,4 +32,14 @@ class PayrollPaginatedList extends Equatable {
 
   @override
   List<Object?> get props => [payrollLogs, lastDoc];
+}
+
+class AdvancePaginatedList extends Equatable {
+  final List<AdvanceEntity> advanceLogs;
+  final Object? lastDoc;
+
+  const AdvancePaginatedList({required this.advanceLogs, this.lastDoc});
+
+  @override
+  List<Object?> get props => [advanceLogs, lastDoc];
 }

@@ -8,15 +8,17 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/employee/domain/entities/employee_entity.dart';
 import 'package:tahsel/features/employee/domain/entities/payroll_entity.dart';
+import 'package:tahsel/features/employee/domain/entities/advance_entity.dart';
 
 class PaySalaryDialog extends StatefulWidget {
   final EmployeeEntity employee;
-  final Function(PayrollEntity) onPay;
+  final Function(PayrollEntity, List<String>) onPay;
   final double? initialBaseSalary;
   final double? initialOvertimeHours;
   final double? initialOvertimeRate;
   final double? initialDeductions;
   final double? initialAllowances;
+  final List<AdvanceEntity> paidAdvances;
 
   const PaySalaryDialog({
     super.key,
@@ -27,6 +29,7 @@ class PaySalaryDialog extends StatefulWidget {
     this.initialOvertimeRate,
     this.initialDeductions,
     this.initialAllowances,
+    this.paidAdvances = const [],
   });
 
   @override
@@ -45,6 +48,7 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
 
   late DateTime _paymentDate;
   double _netSalary = 0.0;
+  late Set<String> _selectedAdvanceIds;
 
   @override
   void initState() {
@@ -59,15 +63,21 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
 
     // Estimate overtime hourly rate based on type
     double defaultOvertimeRate = 10.0;
-    if (widget.employee.salaryType == 'monthly') {
-      defaultOvertimeRate =
-          widget.employee.salaryAmount /
-          (26 * 8) *
-          1.5; // typical overtime calculation multiplier
-    } else if (widget.employee.salaryType == 'daily') {
-      defaultOvertimeRate = widget.employee.salaryAmount / 8 * 1.5;
+    if (widget.employee.customOvertimeRate != null) {
+      defaultOvertimeRate = widget.employee.customOvertimeRate!;
     } else {
-      defaultOvertimeRate = widget.employee.salaryAmount * 1.5;
+      final double baseAmount = widget.employee.salaryAmount;
+      final int workingDays = widget.employee.workingDaysPerMonth;
+      final double dailyHours = widget.employee.expectedDailyHours;
+      final double otMultiplier = widget.employee.overtimeMultiplier;
+
+      if (widget.employee.salaryType == 'monthly') {
+        defaultOvertimeRate = baseAmount / (workingDays * dailyHours) * otMultiplier;
+      } else if (widget.employee.salaryType == 'daily') {
+        defaultOvertimeRate = baseAmount / dailyHours * otMultiplier;
+      } else {
+        defaultOvertimeRate = baseAmount * otMultiplier;
+      }
     }
     _overtimeRateController = TextEditingController(
       text: (widget.initialOvertimeRate ?? defaultOvertimeRate).toStringAsFixed(
@@ -83,6 +93,12 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
     );
     _notesController = TextEditingController();
     _paymentDate = DateTime.now();
+
+    _selectedAdvanceIds = widget.paidAdvances
+        .map((adv) => adv.id)
+        .whereType<String>()
+        .toSet();
+
     _calculateNetSalary();
 
     // Listeners for real-time recalculations
@@ -112,8 +128,15 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
     final double allow = double.tryParse(_allowancesController.text) ?? 0.0;
     final double deduct = double.tryParse(_deductionsController.text) ?? 0.0;
 
+    double advancesDeduction = 0.0;
+    for (final adv in widget.paidAdvances) {
+      if (adv.id != null && _selectedAdvanceIds.contains(adv.id)) {
+        advancesDeduction += adv.amount;
+      }
+    }
+
     setState(() {
-      _netSalary = base + (otHours * otRate) + allow - deduct;
+      _netSalary = base + (otHours * otRate) + allow - deduct - advancesDeduction;
     });
   }
 
@@ -481,7 +504,67 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
                       color: AppColors.blackReal,
                     ),
                   ),
-                  SizedBox(height: isDesktop ? 24 : 20.h),
+                  SizedBox(height: isDesktop ? 16 : 12.h),
+
+                  if (widget.paidAdvances.isNotEmpty) ...[
+                    Text(
+                      AppStrings.unpaidAdvancesDeduction.tr(),
+                      style: TextStyles.customStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.black,
+                      ),
+                    ),
+                    SizedBox(height: 6.h),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
+                      decoration: BoxDecoration(
+                        color: AppColors.veryLightGrey.withValues(alpha: 0.5),
+                        border: Border.all(color: AppColors.veryLightGrey),
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
+                      child: Column(
+                        children: widget.paidAdvances.map((advance) {
+                          final isSelected = _selectedAdvanceIds.contains(advance.id);
+                          return CheckboxListTile(
+                            contentPadding: EdgeInsets.symmetric(horizontal: 8.w),
+                            title: Text(
+                              "${advance.amount.toStringAsFixed(2)} • ${DateFormat('yyyy-MM-dd').format(advance.date)}",
+                              style: TextStyles.customStyle(
+                                fontSize: 13,
+                                color: AppColors.blackReal,
+                              ),
+                            ),
+                            subtitle: advance.notes.isNotEmpty
+                                ? Text(
+                                    advance.notes,
+                                    style: TextStyles.customStyle(
+                                      fontSize: 11,
+                                      color: AppColors.blackLight,
+                                    ),
+                                  )
+                                : null,
+                            value: isSelected,
+                            activeColor: AppColors.primaryColor,
+                            controlAffinity: ListTileControlAffinity.leading,
+                            onChanged: (val) {
+                              setState(() {
+                                if (val == true) {
+                                  if (advance.id != null) {
+                                    _selectedAdvanceIds.add(advance.id!);
+                                  }
+                                } else {
+                                  _selectedAdvanceIds.remove(advance.id);
+                                }
+                                _calculateNetSalary();
+                              });
+                            },
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    SizedBox(height: isDesktop ? 20 : 16.h),
+                  ],
 
                   // Net Salary Display Card (Stunning design)
                   Container(
@@ -666,6 +749,13 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
       final double allow = double.tryParse(_allowancesController.text) ?? 0.0;
       final double deduct = double.tryParse(_deductionsController.text) ?? 0.0;
 
+      double advancesDeduction = 0.0;
+      for (final adv in widget.paidAdvances) {
+        if (adv.id != null && _selectedAdvanceIds.contains(adv.id)) {
+          advancesDeduction += adv.amount;
+        }
+      }
+
       final payroll = PayrollEntity(
         uid: widget.employee.uid,
         employeeId: widget.employee.id!,
@@ -673,7 +763,7 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
         paymentDate: _paymentDate,
         amount: base,
         bonus: allow,
-        deduction: deduct,
+        deduction: deduct + advancesDeduction,
         overtimeCompensation: otHours * otRate,
         netSalary: _netSalary,
         monthKey: DateFormat('yyyy-MM').format(_paymentDate),
@@ -681,7 +771,7 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
         salaryType: widget.employee.salaryType,
       );
 
-      widget.onPay(payroll);
+      widget.onPay(payroll, _selectedAdvanceIds.toList());
       Navigator.pop(context);
     }
   }

@@ -11,6 +11,11 @@ class EmployeeEntity extends Equatable {
   final String status; // 'active', 'inactive', 'suspended'
   final DateTime createdAt;
   final String notes;
+  final int workingDaysPerMonth;
+  final double expectedDailyHours;
+  final double overtimeMultiplier;
+  final double? customOvertimeRate;
+  final double? customDeductionRate;
 
   const EmployeeEntity({
     this.id,
@@ -23,6 +28,11 @@ class EmployeeEntity extends Equatable {
     required this.status,
     required this.createdAt,
     required this.notes,
+    this.workingDaysPerMonth = 26,
+    this.expectedDailyHours = 8.0,
+    this.overtimeMultiplier = 1.5,
+    this.customOvertimeRate,
+    this.customDeductionRate,
   });
 
   @override
@@ -37,5 +47,10 @@ class EmployeeEntity extends Equatable {
     status,
     createdAt,
     notes,
+    workingDaysPerMonth,
+    expectedDailyHours,
+    overtimeMultiplier,
+    customOvertimeRate,
+    customDeductionRate,
   ];
 }

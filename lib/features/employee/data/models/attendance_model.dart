@@ -39,6 +39,17 @@ class AttendanceModel extends AttendanceEntity {
       }
     }
 
+    String dateStr = '';
+    if (json['date'] is String) {
+      dateStr = json['date'] as String;
+    } else if (json['date'] is Timestamp) {
+      // ignore: unused_local_variable
+      final dateObj = (json['date'] as Timestamp).toDate().toLocal();
+      dateStr = "\${dateObj.year}-\${dateObj.month.toString().padLeft(2, '0')}-\${dateObj.day.toString().padLeft(2, '0')}";
+    } else {
+      dateStr = json['date']?.toString() ?? '';
+    }
+
     return AttendanceModel(
       id: id,
       employeeId: json['employeeId'] as String? ?? '',
@@ -46,7 +57,7 @@ class AttendanceModel extends AttendanceEntity {
       uid: json['uid'] as String? ?? '',
       checkIn: checkInDate,
       checkOut: checkOutDate,
-      date: json['date'] as String? ?? '',
+      date: dateStr,
       status: json['status'] as String? ?? 'present',
       overtimeHours: (json['overtimeHours'] as num?)?.toDouble() ?? 0.0,
       lateMinutes: (json['lateMinutes'] as num?)?.toInt() ?? 0,

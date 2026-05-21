@@ -16,6 +16,9 @@ class PayrollModel extends PayrollEntity {
     required super.monthKey,
     required super.notes,
     super.salaryType,
+    super.periodStart,
+    super.periodEnd,
+    super.advancePaid,
   });
 
   factory PayrollModel.fromJson(Map<String, dynamic> json, String id) {
@@ -27,6 +30,22 @@ class PayrollModel extends PayrollEntity {
       paymentDateVal = DateTime.parse(paymentDateData).toLocal();
     } else {
       paymentDateVal = DateTime.now();
+    }
+
+    final periodStartData = json['periodStart'];
+    DateTime? periodStartVal;
+    if (periodStartData is Timestamp) {
+      periodStartVal = periodStartData.toDate().toLocal();
+    } else if (periodStartData is String) {
+      periodStartVal = DateTime.tryParse(periodStartData)?.toLocal();
+    }
+
+    final periodEndData = json['periodEnd'];
+    DateTime? periodEndVal;
+    if (periodEndData is Timestamp) {
+      periodEndVal = periodEndData.toDate().toLocal();
+    } else if (periodEndData is String) {
+      periodEndVal = DateTime.tryParse(periodEndData)?.toLocal();
     }
 
     return PayrollModel(
@@ -44,6 +63,9 @@ class PayrollModel extends PayrollEntity {
       monthKey: json['monthKey'] as String? ?? '',
       notes: json['notes'] as String? ?? '',
       salaryType: json['salaryType'] as String?,
+      periodStart: periodStartVal,
+      periodEnd: periodEndVal,
+      advancePaid: (json['advancePaid'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
@@ -61,6 +83,9 @@ class PayrollModel extends PayrollEntity {
       'monthKey': monthKey,
       'notes': notes,
       'salaryType': salaryType,
+      'periodStart': periodStart != null ? Timestamp.fromDate(periodStart!) : null,
+      'periodEnd': periodEnd != null ? Timestamp.fromDate(periodEnd!) : null,
+      'advancePaid': advancePaid ?? 0.0,
     };
   }
 
@@ -79,6 +104,9 @@ class PayrollModel extends PayrollEntity {
       monthKey: entity.monthKey,
       notes: entity.notes,
       salaryType: entity.salaryType,
+      periodStart: entity.periodStart,
+      periodEnd: entity.periodEnd,
+      advancePaid: entity.advancePaid,
     );
   }
 }

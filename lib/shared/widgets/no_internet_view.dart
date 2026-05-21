@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 
 class NoInternetView extends StatelessWidget {
@@ -31,7 +32,7 @@ class NoInternetView extends StatelessWidget {
             ),
             24.verticalSpace,
             Text(
-              "noInternetTitle".tr(),
+              AppStrings.noInternetTitle.tr(),
               style: TextStyles.customStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -41,7 +42,7 @@ class NoInternetView extends StatelessWidget {
             ),
             12.verticalSpace,
             Text(
-              "noInternetDescription".tr(),
+              AppStrings.noInternetDescription.tr(),
               style: TextStyles.customStyle(
                 fontSize: 14,
                 color: AppColors.primaryColor,

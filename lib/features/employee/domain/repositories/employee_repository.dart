@@ -4,6 +4,7 @@ import '../../../offline_sync/data/models/offline_record.dart';
 import '../entities/employee_entity.dart';
 import '../entities/attendance_entity.dart';
 import '../entities/payroll_entity.dart';
+import '../entities/advance_entity.dart';
 import '../entities/employee_paginated_lists.dart';
 
 abstract class EmployeeRepository {
@@ -41,6 +42,18 @@ abstract class EmployeeRepository {
     String employeeId, {
     int limit = 15,
     Object? lastDoc,
+  });
+  Future<Either<Failure, String>> requestAdvance(AdvanceEntity advance);
+  Future<Either<Failure, AdvancePaginatedList>> getAdvanceHistory(
+    String uid,
+    String employeeId, {
+    int limit = 15,
+    Object? lastDoc,
+  });
+  Future<Either<Failure, void>> settleAdvances({
+    required String uid,
+    required List<String> advanceIds,
+    required String payrollId,
   });
   Future<Either<Failure, List<OfflineRecord>>> getPendingEmployeeRecords();
 }

@@ -460,5 +460,20 @@
   "estimated_net_salary": "Estimated Net Salary",
   "no_previous_payments": "No previous payments recorded",
   "payroll_history_title": "Payroll History",
-  "salary_expense_for": "{type} Salary for {name}"
+  "salary_expense_for": "{type} Salary for {name}",
+  "working_days_per_month": "Expected Work Days per Month",
+  "expected_daily_hours": "Expected Daily Hours",
+  "overtime_multiplier": "Overtime Multiplier",
+  "custom_overtime_rate": "Custom Overtime Rate\n (EGP/hr)",
+  "custom_deduction_rate": "Custom Deduction Rate\n (EGP/hr)",
+  "advances": "Advances",
+  "add_advance": "Add Advance",
+  "request_advance": "Request Advance",
+  "no_advance_logs": "No advances logs found for this period",
+  "advance_history": "Advances History",
+  "unpaid_advances": "Pending Advances",
+  "unpaid_advances_deduction": "Deduct Paid Advances",
+  "advance_requested_success": "Advance requested successfully",
+  "advance_amount": "Advance Amount",
+  "advance_expense_for": "Advance for {name}"
 }

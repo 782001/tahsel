@@ -14,6 +14,9 @@ class PayrollEntity extends Equatable {
   final String monthKey; // 'yyyy-MM'
   final String notes;
   final String? salaryType; // Added for expense creation
+  final DateTime? periodStart;
+  final DateTime? periodEnd;
+  final double? advancePaid;
 
   const PayrollEntity({
     this.id,
@@ -29,6 +32,9 @@ class PayrollEntity extends Equatable {
     required this.monthKey,
     required this.notes,
     this.salaryType,
+    this.periodStart,
+    this.periodEnd,
+    this.advancePaid,
   });
 
   @override
@@ -46,5 +52,8 @@ class PayrollEntity extends Equatable {
     monthKey,
     notes,
     salaryType,
+    periodStart,
+    periodEnd,
+    advancePaid,
   ];
 }

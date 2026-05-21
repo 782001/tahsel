@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tahsel/features/employee/domain/entities/employee_entity.dart';
 import 'package:tahsel/features/employee/domain/entities/attendance_entity.dart';
 import 'package:tahsel/features/employee/domain/entities/payroll_entity.dart';
+import 'package:tahsel/features/employee/domain/entities/advance_entity.dart';
 
 void main() {
   group('Employee Management Entities - Equality & Field Checks', () {
@@ -140,6 +141,84 @@ void main() {
             : 0.0;
         expect(diff, equals(0.0));
       });
+    });
+
+    group('Employee Contract Configuration default values and custom overrides', () {
+      test('Should default to standard contract configurations when none are specified', () {
+        final employee = EmployeeEntity(
+          id: 'emp_defaults',
+          uid: 'uid_defaults',
+          name: 'Abdalla Defaults',
+          phone: '123',
+          role: 'Dev',
+          salaryAmount: 5000.0,
+          salaryType: 'monthly',
+          status: 'active',
+          createdAt: DateTime(2026, 1, 1),
+          notes: '',
+        );
+
+        expect(employee.workingDaysPerMonth, 26);
+        expect(employee.expectedDailyHours, 8.0);
+        expect(employee.overtimeMultiplier, 1.5);
+        expect(employee.customOvertimeRate, isNull);
+        expect(employee.customDeductionRate, isNull);
+      });
+
+      test('Should preserve custom contract values when explicitly set', () {
+        final employee = EmployeeEntity(
+          id: 'emp_custom',
+          uid: 'uid_custom',
+          name: 'Abdalla Custom',
+          phone: '123',
+          role: 'Dev',
+          salaryAmount: 5000.0,
+          salaryType: 'monthly',
+          status: 'active',
+          createdAt: DateTime(2026, 1, 1),
+          notes: '',
+          workingDaysPerMonth: 22,
+          expectedDailyHours: 6.0,
+          overtimeMultiplier: 2.0,
+          customOvertimeRate: 75.0,
+          customDeductionRate: 50.0,
+        );
+
+        expect(employee.workingDaysPerMonth, 22);
+        expect(employee.expectedDailyHours, 6.0);
+        expect(employee.overtimeMultiplier, 2.0);
+        expect(employee.customOvertimeRate, 75.0);
+        expect(employee.customDeductionRate, 50.0);
+      });
+    });
+
+    test('AdvanceEntity properties and equality check', () {
+      final date = DateTime(2026, 5, 18);
+      final advance1 = AdvanceEntity(
+        id: 'adv1',
+        employeeId: 'emp1',
+        employeeName: 'Abdalla',
+        uid: 'user_uid_123',
+        amount: 500.0,
+        date: date,
+        status: 'unpaid',
+        notes: 'Medical emergency',
+      );
+
+      final advance2 = AdvanceEntity(
+        id: 'adv1',
+        employeeId: 'emp1',
+        employeeName: 'Abdalla',
+        uid: 'user_uid_123',
+        amount: 500.0,
+        date: date,
+        status: 'unpaid',
+        notes: 'Medical emergency',
+      );
+
+      expect(advance1, equals(advance2));
+      expect(advance1.amount, equals(500.0));
+      expect(advance1.status, equals('unpaid'));
     });
   });
 }

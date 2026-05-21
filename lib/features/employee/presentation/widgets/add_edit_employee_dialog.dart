@@ -25,6 +25,11 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
   late TextEditingController _roleController;
   late TextEditingController _salaryAmountController;
   late TextEditingController _notesController;
+  late TextEditingController _workingDaysController;
+  late TextEditingController _expectedHoursController;
+  late TextEditingController _overtimeMultiplierController;
+  late TextEditingController _customOvertimeRateController;
+  late TextEditingController _customDeductionRateController;
 
   String _salaryType = 'monthly';
   String _status = 'active';
@@ -50,6 +55,28 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
     );
     _salaryType = widget.employee?.salaryType ?? 'monthly';
     _status = widget.employee?.status ?? 'active';
+
+    _workingDaysController = TextEditingController(
+      text: widget.employee != null
+          ? widget.employee!.workingDaysPerMonth.toString()
+          : '26',
+    );
+    _expectedHoursController = TextEditingController(
+      text: widget.employee != null
+          ? widget.employee!.expectedDailyHours.toString()
+          : '8.0',
+    );
+    _overtimeMultiplierController = TextEditingController(
+      text: widget.employee != null
+          ? widget.employee!.overtimeMultiplier.toString()
+          : '1.5',
+    );
+    _customOvertimeRateController = TextEditingController(
+      text: widget.employee?.customOvertimeRate?.toString() ?? '',
+    );
+    _customDeductionRateController = TextEditingController(
+      text: widget.employee?.customDeductionRate?.toString() ?? '',
+    );
   }
 
   @override
@@ -59,6 +86,11 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
     _roleController.dispose();
     _salaryAmountController.dispose();
     _notesController.dispose();
+    _workingDaysController.dispose();
+    _expectedHoursController.dispose();
+    _overtimeMultiplierController.dispose();
+    _customOvertimeRateController.dispose();
+    _customDeductionRateController.dispose();
     super.dispose();
   }
 
@@ -208,7 +240,6 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
                     children: [
                       // Salary Amount
                       Expanded(
-                        flex: 3,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -253,7 +284,6 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
                       SizedBox(width: 12.w),
                       // Salary Type
                       Expanded(
-                        flex: 2,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -341,6 +371,253 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
                   ),
                   SizedBox(height: isDesktop ? 16 : 12.h),
 
+                  // Calculation settings section
+                  Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.r),
+                      side: BorderSide(color: AppColors.veryLightGrey),
+                    ),
+                    color: AppColors.veryLightGrey.withValues(alpha: 0.1),
+                    child: Theme(
+                      data: Theme.of(
+                        context,
+                      ).copyWith(dividerColor: Colors.transparent),
+                      child: ExpansionTile(
+                        collapsedShape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                          side: BorderSide(color: AppColors.veryLightGrey),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                          side: BorderSide(color: AppColors.veryLightGrey),
+                        ),
+                        title: Text(
+                          AppStrings.calculateNetSalary.tr(),
+                          style: TextStyles.customStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryColor,
+                          ),
+                        ),
+                        leading: Icon(
+                          Icons.settings_applications,
+                          color: AppColors.primaryColor,
+                        ),
+                        childrenPadding: EdgeInsets.symmetric(
+                          horizontal: 12.w,
+                          vertical: 8.h,
+                        ),
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      AppStrings.workingDaysPerMonth.tr(),
+                                      style: TextStyles.customStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4.h),
+                                    TextFormField(
+                                      cursorColor: AppColors.primaryColor,
+                                      controller: _workingDaysController,
+                                      keyboardType: TextInputType.number,
+                                      decoration: _buildInputDecoration(
+                                        hintText: '26',
+                                      ),
+                                      style: TextStyles.customStyle(
+                                        fontSize: 13,
+                                      ),
+                                      validator: (val) {
+                                        if (val == null || val.trim().isEmpty) {
+                                          return AppStrings.requiredField.tr();
+                                        }
+                                        final numVal = int.tryParse(val);
+                                        if (numVal == null || numVal <= 0) {
+                                          return AppStrings.invalidValue.tr();
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(width: 8.w),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      AppStrings.expectedDailyHours.tr(),
+                                      style: TextStyles.customStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4.h),
+                                    TextFormField(
+                                      cursorColor: AppColors.primaryColor,
+                                      controller: _expectedHoursController,
+                                      keyboardType:
+                                          const TextInputType.numberWithOptions(
+                                            decimal: true,
+                                          ),
+                                      decoration: _buildInputDecoration(
+                                        hintText: '8.0',
+                                      ),
+                                      style: TextStyles.customStyle(
+                                        fontSize: 13,
+                                      ),
+                                      validator: (val) {
+                                        if (val == null || val.trim().isEmpty) {
+                                          return AppStrings.requiredField.tr();
+                                        }
+                                        final numVal = double.tryParse(val);
+                                        if (numVal == null || numVal <= 0) {
+                                          return AppStrings.invalidValue.tr();
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 12.h),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                AppStrings.overtimeMultiplier.tr(),
+                                style: TextStyles.customStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 4.h),
+                              TextFormField(
+                                cursorColor: AppColors.primaryColor,
+                                controller: _overtimeMultiplierController,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                decoration: _buildInputDecoration(
+                                  hintText: '1.5',
+                                ),
+                                style: TextStyles.customStyle(fontSize: 13),
+                                validator: (val) {
+                                  if (val == null || val.trim().isEmpty) {
+                                    return AppStrings.requiredField.tr();
+                                  }
+                                  final numVal = double.tryParse(val);
+                                  if (numVal == null || numVal < 0) {
+                                    return AppStrings.invalidValue.tr();
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 12.h),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      AppStrings.customOvertimeRate.tr(),
+                                      style: TextStyles.customStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4.h),
+                                    TextFormField(
+                                      cursorColor: AppColors.primaryColor,
+                                      controller: _customOvertimeRateController,
+                                      keyboardType:
+                                          const TextInputType.numberWithOptions(
+                                            decimal: true,
+                                          ),
+                                      decoration: _buildInputDecoration(
+                                        hintText:
+                                            '${AppStrings.optional.tr()} (e.g. 50)',
+                                      ),
+                                      style: TextStyles.customStyle(
+                                        fontSize: 13,
+                                      ),
+                                      validator: (val) {
+                                        if (val != null &&
+                                            val.trim().isNotEmpty) {
+                                          final numVal = double.tryParse(val);
+                                          if (numVal == null || numVal < 0) {
+                                            return AppStrings.invalidValue.tr();
+                                          }
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(width: 8.w),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      AppStrings.customDeductionRate.tr(),
+                                      style: TextStyles.customStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4.h),
+                                    TextFormField(
+                                      cursorColor: AppColors.primaryColor,
+                                      controller:
+                                          _customDeductionRateController,
+                                      keyboardType:
+                                          const TextInputType.numberWithOptions(
+                                            decimal: true,
+                                          ),
+                                      decoration: _buildInputDecoration(
+                                        hintText:
+                                            '${AppStrings.optional.tr()} (e.g. 40)',
+                                      ),
+                                      style: TextStyles.customStyle(
+                                        fontSize: 13,
+                                      ),
+                                      validator: (val) {
+                                        if (val != null &&
+                                            val.trim().isNotEmpty) {
+                                          final numVal = double.tryParse(val);
+                                          if (numVal == null || numVal < 0) {
+                                            return AppStrings.invalidValue.tr();
+                                          }
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: isDesktop ? 16 : 12.h),
+
                   // Notes
                   Text(
                     AppStrings.notes.tr(),
@@ -398,6 +675,8 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
   }
 
   InputDecoration _buildInputDecoration({String? hintText, IconData? icon}) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
+
     return InputDecoration(
       hintText: hintText,
       hintStyle: TextStyles.customStyle(
@@ -407,7 +686,10 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
       prefixIcon: icon != null
           ? Icon(icon, color: AppColors.primaryColor, size: 20)
           : null,
-      contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 16 : 16.w,
+        vertical: isDesktop ? 12 : 12.h,
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10.r),
         borderSide: BorderSide(color: AppColors.veryLightGrey),
@@ -470,6 +752,18 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
         status: _status,
         createdAt: widget.employee?.createdAt ?? DateTime.now(),
         notes: _notesController.text.trim(),
+        workingDaysPerMonth: int.tryParse(_workingDaysController.text) ?? 26,
+        expectedDailyHours:
+            double.tryParse(_expectedHoursController.text) ?? 8.0,
+        overtimeMultiplier:
+            double.tryParse(_overtimeMultiplierController.text) ?? 1.5,
+        customOvertimeRate: _customOvertimeRateController.text.trim().isNotEmpty
+            ? double.tryParse(_customOvertimeRateController.text)
+            : null,
+        customDeductionRate:
+            _customDeductionRateController.text.trim().isNotEmpty
+            ? double.tryParse(_customDeductionRateController.text)
+            : null,
       );
       widget.onSave(employee);
       Navigator.pop(context);

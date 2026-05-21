@@ -30,6 +30,8 @@ class AppStrings {
   static const String slideToLoadMore = "slide_to_load_more";
 
   // Security Warning Screen
+  static const String noInternetTitle = "noInternetTitle";
+  static const String noInternetDescription = "noInternetDescription";
   static const String securityWarningTitle = "security_warning_title";
   static const String securityWarningDescription =
       "security_warning_description";
@@ -527,4 +529,19 @@ class AppStrings {
   static const String noPreviousPayments = "no_previous_payments";
   static const String payrollHistoryTitle = "payroll_history_title";
   static const String salaryExpenseFor = "salary_expense_for";
+  static const String workingDaysPerMonth = "working_days_per_month";
+  static const String expectedDailyHours = "expected_daily_hours";
+  static const String overtimeMultiplier = "overtime_multiplier";
+  static const String customOvertimeRate = "custom_overtime_rate";
+  static const String customDeductionRate = "custom_deduction_rate";
+  static const String advances = "advances";
+  static const String addAdvance = "add_advance";
+  static const String requestAdvance = "request_advance";
+  static const String noAdvanceLogs = "no_advance_logs";
+  static const String advanceHistory = "advance_history";
+  static const String unpaidAdvances = "unpaid_advances";
+  static const String unpaidAdvancesDeduction = "unpaid_advances_deduction";
+  static const String advanceRequestedSuccess = "advance_requested_success";
+  static const String advanceAmount = "advance_amount";
+  static const String advanceExpenseFor = "advance_expense_for";
 }

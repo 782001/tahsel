@@ -3,6 +3,7 @@ import '../../../offline_sync/data/models/offline_record.dart';
 import '../../domain/entities/employee_entity.dart';
 import '../../domain/entities/attendance_entity.dart';
 import '../../domain/entities/payroll_entity.dart';
+import '../../domain/entities/advance_entity.dart';
 
 abstract class EmployeeState extends Equatable {
   const EmployeeState();
@@ -56,43 +57,59 @@ class EmployeeFailure extends EmployeeState {
 class EmployeeDetailsFetchSuccess extends EmployeeState {
   final List<AttendanceEntity> attendanceLogs;
   final List<PayrollEntity> payrollLogs;
+  final List<AdvanceEntity> advanceLogs;
   final Object? lastAttendanceDoc;
   final Object? lastPayrollDoc;
+  final Object? lastAdvanceDoc;
   final bool hasReachedMaxAttendance;
   final bool hasReachedMaxPayroll;
+  final bool hasReachedMaxAdvance;
   final bool isPaginationLoadingAttendance;
   final bool isPaginationLoadingPayroll;
+  final bool isPaginationLoadingAdvance;
 
   const EmployeeDetailsFetchSuccess({
     required this.attendanceLogs,
     required this.payrollLogs,
+    required this.advanceLogs,
     this.lastAttendanceDoc,
     this.lastPayrollDoc,
+    this.lastAdvanceDoc,
     this.hasReachedMaxAttendance = false,
     this.hasReachedMaxPayroll = false,
+    this.hasReachedMaxAdvance = false,
     this.isPaginationLoadingAttendance = false,
     this.isPaginationLoadingPayroll = false,
+    this.isPaginationLoadingAdvance = false,
   });
 
   EmployeeDetailsFetchSuccess copyWith({
     List<AttendanceEntity>? attendanceLogs,
     List<PayrollEntity>? payrollLogs,
+    List<AdvanceEntity>? advanceLogs,
     Object? lastAttendanceDoc,
     Object? lastPayrollDoc,
+    Object? lastAdvanceDoc,
     bool? hasReachedMaxAttendance,
     bool? hasReachedMaxPayroll,
+    bool? hasReachedMaxAdvance,
     bool? isPaginationLoadingAttendance,
     bool? isPaginationLoadingPayroll,
+    bool? isPaginationLoadingAdvance,
   }) {
     return EmployeeDetailsFetchSuccess(
       attendanceLogs: attendanceLogs ?? this.attendanceLogs,
       payrollLogs: payrollLogs ?? this.payrollLogs,
+      advanceLogs: advanceLogs ?? this.advanceLogs,
       lastAttendanceDoc: lastAttendanceDoc ?? this.lastAttendanceDoc,
       lastPayrollDoc: lastPayrollDoc ?? this.lastPayrollDoc,
+      lastAdvanceDoc: lastAdvanceDoc ?? this.lastAdvanceDoc,
       hasReachedMaxAttendance: hasReachedMaxAttendance ?? this.hasReachedMaxAttendance,
       hasReachedMaxPayroll: hasReachedMaxPayroll ?? this.hasReachedMaxPayroll,
+      hasReachedMaxAdvance: hasReachedMaxAdvance ?? this.hasReachedMaxAdvance,
       isPaginationLoadingAttendance: isPaginationLoadingAttendance ?? this.isPaginationLoadingAttendance,
       isPaginationLoadingPayroll: isPaginationLoadingPayroll ?? this.isPaginationLoadingPayroll,
+      isPaginationLoadingAdvance: isPaginationLoadingAdvance ?? this.isPaginationLoadingAdvance,
     );
   }
 
@@ -100,12 +117,16 @@ class EmployeeDetailsFetchSuccess extends EmployeeState {
   List<Object?> get props => [
     attendanceLogs,
     payrollLogs,
+    advanceLogs,
     lastAttendanceDoc,
     lastPayrollDoc,
+    lastAdvanceDoc,
     hasReachedMaxAttendance,
     hasReachedMaxPayroll,
+    hasReachedMaxAdvance,
     isPaginationLoadingAttendance,
     isPaginationLoadingPayroll,
+    isPaginationLoadingAdvance,
   ];
 }
 

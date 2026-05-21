@@ -50,7 +50,7 @@ class SyncStatusListener extends StatelessWidget {
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
           ScaffoldMessenger.of(
             context,
-          ).hideCurrentMaterialBanner(); // 👈 مهم جدًا
+          ).hideCurrentMaterialBanner(); 
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

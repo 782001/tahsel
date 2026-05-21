@@ -1,8 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/error/firebase_error_handler.dart';
 import '../models/employee_model.dart';
 import '../models/attendance_model.dart';
 import '../models/payroll_model.dart';
+import '../models/advance_model.dart';
 
 class EmployeeRemotePaginationResult {
   final List<EmployeeModel> employees;
@@ -26,6 +28,13 @@ class PayrollRemotePaginationResult {
   final DocumentSnapshot? lastDoc;
 
   PayrollRemotePaginationResult({required this.payrollLogs, this.lastDoc});
+}
+
+class AdvanceRemotePaginationResult {
+  final List<AdvanceModel> advanceLogs;
+  final DocumentSnapshot? lastDoc;
+
+  AdvanceRemotePaginationResult({required this.advanceLogs, this.lastDoc});
 }
 
 abstract class EmployeeRemoteDataSource {
@@ -60,6 +69,18 @@ abstract class EmployeeRemoteDataSource {
     String employeeId, {
     int limit = 15,
     DocumentSnapshot? lastDoc,
+  });
+  Future<String> requestAdvance(AdvanceModel advance);
+  Future<AdvanceRemotePaginationResult> getAdvanceHistory(
+    String uid,
+    String employeeId, {
+    int limit = 15,
+    DocumentSnapshot? lastDoc,
+  });
+  Future<void> settleAdvances({
+    required String uid,
+    required List<String> advanceIds,
+    required String payrollId,
   });
 }
 
@@ -318,6 +339,100 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       throw Exception('Failed to fetch payroll history: $e');
+    }
+  }
+
+  @override
+  Future<String> requestAdvance(AdvanceModel advance) async {
+    try {
+      final userRef = firestore.collection('users').doc(advance.uid);
+      final docRef = (advance.id != null && advance.id!.isNotEmpty)
+          ? userRef.collection('advances').doc(advance.id)
+          : userRef.collection('advances').doc();
+
+      final batch = firestore.batch();
+      batch.set(docRef, advance.toJson());
+
+      // Update summaries: advance is a partial salary payment
+      final monthKey = DateFormat('yyyy-MM', 'en').format(advance.date);
+      final monthlyRef = userRef
+          .collection('summaries')
+          .doc('monthly_$monthKey');
+      final allTimeRef = userRef.collection('summaries').doc('all_time');
+
+      for (final ref in [monthlyRef, allTimeRef]) {
+        batch.set(ref, {
+          'totalSalariesPaid': FieldValue.increment(advance.amount),
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
+
+      await batch.commit();
+      return docRef.id;
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      throw Exception('Failed to request advance: $e');
+    }
+  }
+
+  @override
+  Future<AdvanceRemotePaginationResult> getAdvanceHistory(
+    String uid,
+    String employeeId, {
+    int limit = 15,
+    DocumentSnapshot? lastDoc,
+  }) async {
+    try {
+      var query = firestore
+          .collection('users')
+          .doc(uid)
+          .collection('advances')
+          .where('employeeId', isEqualTo: employeeId)
+          .orderBy('date', descending: true)
+          .limit(limit);
+
+      if (lastDoc != null) {
+        query = query.startAfterDocument(lastDoc);
+      }
+
+      final snapshot = await query.get();
+      final history = snapshot.docs
+          .map((doc) => AdvanceModel.fromJson(doc.data(), doc.id))
+          .toList();
+
+      return AdvanceRemotePaginationResult(
+        advanceLogs: history,
+        lastDoc: snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
+      );
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      throw Exception('Failed to fetch advance history: $e');
+    }
+  }
+
+  @override
+  Future<void> settleAdvances({
+    required String uid,
+    required List<String> advanceIds,
+    required String payrollId,
+  }) async {
+    try {
+      if (advanceIds.isEmpty) return;
+      final userRef = firestore.collection('users').doc(uid);
+      final batch = firestore.batch();
+
+      for (final id in advanceIds) {
+        final docRef = userRef.collection('advances').doc(id);
+        batch.update(docRef, {
+          'status': 'deducted',
+          'payrollId': payrollId,
+        });
+      }
+
+      await batch.commit();
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      throw Exception('Failed to settle advances: $e');
     }
   }
 }

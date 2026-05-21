@@ -4,6 +4,7 @@ import '../data/datasources/employee_remote_data_source.dart';
 import '../data/repositories/employee_repository_impl.dart';
 import '../domain/repositories/employee_repository.dart';
 import '../domain/usecases/employee_usecases.dart';
+import '../domain/usecases/advance_usecases.dart';
 import '../presentation/cubit/employee_cubit.dart';
 
 class EmployeeInjection {
@@ -21,6 +22,9 @@ class EmployeeInjection {
         paySalaryUseCase: sl(),
         getPayrollUseCase: sl(),
         getPendingEmployeeRecordsUseCase: sl(),
+        requestAdvanceUseCase: sl(),
+        getAdvancesUseCase: sl(),
+        settleAdvancesUseCase: sl(),
       ),
     );
 
@@ -37,6 +41,9 @@ class EmployeeInjection {
     sl.registerLazySingleton(
       () => GetPendingEmployeeRecordsUseCase(repository: sl()),
     );
+    sl.registerLazySingleton(() => RequestAdvanceUseCase(repository: sl()));
+    sl.registerLazySingleton(() => GetAdvancesUseCase(repository: sl()));
+    sl.registerLazySingleton(() => SettleAdvancesUseCase(repository: sl()));
 
     // Repository
     sl.registerLazySingleton<EmployeeRepository>(

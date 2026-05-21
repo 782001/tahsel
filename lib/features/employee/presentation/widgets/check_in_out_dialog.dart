@@ -63,7 +63,9 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
     _overtimeController = TextEditingController(text: '0');
     _lateMinutesController = TextEditingController(text: '0');
     _notesController = TextEditingController();
-    _expectedHoursController = TextEditingController(text: '8.0');
+    _expectedHoursController = TextEditingController(
+      text: widget.employee.expectedDailyHours.toString(),
+    );
     _deductionsController = TextEditingController(text: '0.0');
 
     if (widget.activeAttendance != null) {
@@ -84,7 +86,7 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
     final checkOutTime = _selectedTime;
     final duration = checkOutTime.difference(checkInTime);
     final actualWorkedHours = duration.inMinutes / 60.0;
-    final expectedHours = double.tryParse(_expectedHoursController.text) ?? 8.0;
+    final expectedHours = double.tryParse(_expectedHoursController.text) ?? widget.employee.expectedDailyHours;
 
     if (actualWorkedHours > expectedHours) {
       _overtimeController.text = (actualWorkedHours - expectedHours)
@@ -593,7 +595,7 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
           overtimeHours: 0.0,
           deductionHours: 0.0,
           expectedWorkingHours:
-              double.tryParse(_expectedHoursController.text) ?? 8.0,
+              double.tryParse(_expectedHoursController.text) ?? widget.employee.expectedDailyHours,
           lateMinutes: 0,
           notes: _notesController.text.trim(),
         );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -9,6 +10,9 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/employee/presentation/cubit/employee_cubit.dart';
 import 'package:tahsel/features/employee/presentation/cubit/employee_state.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/shared/widgets/no_internet_view.dart';
 
 class EmployeeReportsScreen extends StatefulWidget {
   const EmployeeReportsScreen({super.key});
@@ -78,14 +82,22 @@ class _EmployeeReportsScreenState extends State<EmployeeReportsScreen> {
         elevation: 0,
         centerTitle: true,
       ),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: isDesktop ? 800 : double.infinity,
-            ),
-            child: Column(
-              children: [
+      body: BlocBuilder<ConnectivityCubit, ConnectivityState>(
+        builder: (context, connectivityState) {
+          if (connectivityState is ConnectivityDisconnected) {
+            return NoInternetView(
+              onRetry: () =>
+                  context.read<ConnectivityCubit>().checkConnectivity(),
+            );
+          }
+          return SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isDesktop ? 800 : double.infinity,
+                ),
+                child: Column(
+                  children: [
                 // Month Picker Banner
                 _buildMonthPicker(isDesktop),
 
@@ -134,9 +146,11 @@ class _EmployeeReportsScreenState extends State<EmployeeReportsScreen> {
             ),
           ),
         ),
-      ),
-    );
-  }
+      );
+    },
+  ),
+);
+}
 
   Widget _buildMonthPicker(bool isDesktop) {
     return Container(
@@ -232,9 +246,7 @@ class _EmployeeReportsScreenState extends State<EmployeeReportsScreen> {
                     children: [
                       _buildMetricCard(
                         title: AppStrings.totalOvertimeComp.tr(),
-                        value: report.totalOvertimeCompensation.toStringAsFixed(
-                          2,
-                        ),
+                        value: report.totalOvertimeCompensation.toSmartAmount(),
                         icon: Icons.timer_rounded,
                         color: AppColors.warning,
                         isDesktop: true,
@@ -242,7 +254,7 @@ class _EmployeeReportsScreenState extends State<EmployeeReportsScreen> {
                       _buildMetricCard(
                         title: AppStrings.avgAttendanceRate.tr(),
                         value:
-                            "${report.averageAttendanceRate.toStringAsFixed(1)}%",
+                            "${report.averageAttendanceRate.toSmartAmount()}%",
                         icon: Icons.done_all_rounded,
                         color: AppColors.success,
                         isDesktop: true,
@@ -284,7 +296,7 @@ class _EmployeeReportsScreenState extends State<EmployeeReportsScreen> {
               Expanded(
                 child: _buildMetricCard(
                   title: AppStrings.totalOvertimeComp.tr(),
-                  value: report.totalOvertimeCompensation.toStringAsFixed(2),
+                  value: report.totalOvertimeCompensation.toSmartAmount(),
                   icon: Icons.timer_rounded,
                   color: AppColors.warning,
                   isDesktop: false,
@@ -294,7 +306,7 @@ class _EmployeeReportsScreenState extends State<EmployeeReportsScreen> {
               Expanded(
                 child: _buildMetricCard(
                   title: AppStrings.avgAttendanceRate.tr(),
-                  value: "${report.averageAttendanceRate.toStringAsFixed(1)}%",
+                  value: "${report.averageAttendanceRate.toSmartAmount()}%",
                   icon: Icons.done_all_rounded,
                   color: AppColors.success,
                   isDesktop: false,
@@ -374,7 +386,7 @@ class _EmployeeReportsScreenState extends State<EmployeeReportsScreen> {
           ),
           SizedBox(height: isDesktop ? 12 : 12.h),
           Text(
-            report.totalPaidSalaries.toStringAsFixed(2),
+            report.totalPaidSalaries.toSmartAmount(),
             style: TextStyles.customStyle(
               fontSize: isDesktop ? 32 : 28,
               fontWeight: FontWeight.w900,

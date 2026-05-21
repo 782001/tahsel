@@ -1,12 +1,16 @@
 import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
+
 import '../../../offline_sync/data/models/offline_record.dart';
-import '../../domain/entities/employee_entity.dart';
+import '../../domain/entities/advance_entity.dart';
 import '../../domain/entities/attendance_entity.dart';
+import '../../domain/entities/employee_entity.dart';
 import '../../domain/entities/payroll_entity.dart';
+import '../../domain/usecases/advance_usecases.dart';
 import '../../domain/usecases/employee_usecases.dart';
 import 'employee_state.dart';
 
@@ -21,6 +25,9 @@ class EmployeeCubit extends Cubit<EmployeeState> {
   final PaySalaryUseCase paySalaryUseCase;
   final GetPayrollUseCase getPayrollUseCase;
   final GetPendingEmployeeRecordsUseCase getPendingEmployeeRecordsUseCase;
+  final RequestAdvanceUseCase requestAdvanceUseCase;
+  final GetAdvancesUseCase getAdvancesUseCase;
+  final SettleAdvancesUseCase settleAdvancesUseCase;
 
   EmployeeCubit({
     required this.addEmployeeUseCase,
@@ -33,6 +40,9 @@ class EmployeeCubit extends Cubit<EmployeeState> {
     required this.paySalaryUseCase,
     required this.getPayrollUseCase,
     required this.getPendingEmployeeRecordsUseCase,
+    required this.requestAdvanceUseCase,
+    required this.getAdvancesUseCase,
+    required this.settleAdvancesUseCase,
   }) : super(EmployeeInitial());
 
   Future<void> fetchEmployees(String uid, {bool forceRefresh = false}) async {
@@ -129,11 +139,7 @@ class EmployeeCubit extends Cubit<EmployeeState> {
     emit(EmployeeLoading());
     final result = await addEmployeeUseCase(employee);
     result.fold((failure) => emit(EmployeeFailure(failure.message)), (id) {
-      emit(
-        EmployeeActionSuccess(
-          AppStrings.employeeAddedSuccess.tr(),
-        ),
-      );
+      emit(EmployeeActionSuccess(AppStrings.employeeAddedSuccess.tr()));
       fetchEmployees(employee.uid, forceRefresh: true);
     });
   }
@@ -142,11 +148,7 @@ class EmployeeCubit extends Cubit<EmployeeState> {
     emit(EmployeeLoading());
     final result = await editEmployeeUseCase(employee);
     result.fold((failure) => emit(EmployeeFailure(failure.message)), (_) {
-      emit(
-        EmployeeActionSuccess(
-          AppStrings.employeeEditedSuccess.tr(),
-        ),
-      );
+      emit(EmployeeActionSuccess(AppStrings.employeeEditedSuccess.tr()));
       fetchEmployees(employee.uid, forceRefresh: true);
     });
   }
@@ -171,11 +173,7 @@ class EmployeeCubit extends Cubit<EmployeeState> {
     emit(EmployeeLoading());
     final result = await checkInUseCase(attendance);
     result.fold((failure) => emit(EmployeeFailure(failure.message)), (id) {
-      emit(
-        EmployeeActionSuccess(
-          AppStrings.checkinSuccess.tr(),
-        ),
-      );
+      emit(EmployeeActionSuccess(AppStrings.checkinSuccess.tr()));
     });
   }
 
@@ -204,97 +202,125 @@ class EmployeeCubit extends Cubit<EmployeeState> {
     );
     result.fold(
       (failure) => emit(EmployeeFailure(failure.message)),
-      (_) => emit(
-        EmployeeActionSuccess(
-          AppStrings.checkoutSuccess.tr(),
-        ),
-      ),
+      (_) => emit(EmployeeActionSuccess(AppStrings.checkoutSuccess.tr())),
     );
   }
 
-  Future<void> payPayroll(PayrollEntity payroll) async {
+  Future<void> payPayroll(
+    PayrollEntity payroll, {
+    List<String>? advanceIdsToDeduct,
+  }) async {
     emit(EmployeeLoading());
     final result = await paySalaryUseCase(payroll);
-    result.fold(
-      (failure) => emit(EmployeeFailure(failure.message)),
-      (_) => emit(
-        EmployeeActionSuccess(
-          AppStrings.payrollPaidSuccess.tr(),
-        ),
-      ),
-    );
+    result.fold((failure) => emit(EmployeeFailure(failure.message)), (
+      payrollId,
+    ) async {
+      if (advanceIdsToDeduct != null && advanceIdsToDeduct.isNotEmpty) {
+        final settleResult = await settleAdvancesUseCase(
+          SettleAdvancesParams(
+            uid: payroll.uid,
+            advanceIds: advanceIdsToDeduct,
+            payrollId: payrollId,
+          ),
+        );
+        settleResult.fold((failure) {
+          // Log failure but proceed since payroll payment succeeded.
+        }, (_) {});
+      }
+      emit(EmployeeActionSuccess(AppStrings.payrollPaidSuccess.tr()));
+    });
   }
 
   Future<void> fetchEmployeeDetails(
     String uid,
     String employeeId, {
-    bool forceRefresh = false, 
+    bool forceRefresh = false,
   }) async {
     if (!forceRefresh && state is EmployeeDetailsFetchSuccess) {
       return;
     }
-    
+
     emit(EmployeeLoading());
 
-    // Fetch initial 15 logs for both
+    // Fetch initial 15 logs for all three
     final attendanceResult = await getAttendanceUseCase(
       GetAttendanceParams(uid: uid, employeeId: employeeId, limit: 15),
     );
-    
+
     final payrollResult = await getPayrollUseCase(
       GetPayrollParams(uid: uid, employeeId: employeeId, limit: 15),
     );
 
-    attendanceResult.fold(
-      (failure) => emit(EmployeeFailure(failure.message)),
-      (attendancePaginated) {
-        payrollResult.fold(
-          (failure) => emit(EmployeeFailure(failure.message)),
-          (payrollPaginated) async {
-            // Logic to fetch more attendance if needed to calculate pending salaries
-            List<AttendanceEntity> currentAttendance = List.from(attendancePaginated.attendanceLogs);
-            Object? lastAttendanceDoc = attendancePaginated.lastDoc;
-            bool hasReachedMaxAttendance = attendancePaginated.attendanceLogs.length < 15;
-
-            if (payrollPaginated.payrollLogs.isNotEmpty && currentAttendance.isNotEmpty) {
-              final latestPaymentDate = payrollPaginated.payrollLogs.first.paymentDate;
-              while (currentAttendance.isNotEmpty &&
-                  currentAttendance.last.checkIn.isAfter(latestPaymentDate) &&
-                  !hasReachedMaxAttendance) {
-                final extraResult = await getAttendanceUseCase(
-                  GetAttendanceParams(uid: uid, employeeId: employeeId, limit: 15, lastDoc: lastAttendanceDoc),
-                );
-                
-                bool fetchedMore = false;
-                extraResult.fold(
-                  (failure) {
-                    hasReachedMaxAttendance = true;
-                  },
-                  (extraPaginated) {
-                    currentAttendance.addAll(extraPaginated.attendanceLogs);
-                    lastAttendanceDoc = extraPaginated.lastDoc;
-                    hasReachedMaxAttendance = extraPaginated.attendanceLogs.length < 15;
-                    fetchedMore = extraPaginated.attendanceLogs.isNotEmpty;
-                  },
-                );
-                if (!fetchedMore) break;
-              }
-            }
-
-            emit(
-              EmployeeDetailsFetchSuccess(
-                attendanceLogs: currentAttendance,
-                payrollLogs: payrollPaginated.payrollLogs,
-                lastAttendanceDoc: lastAttendanceDoc,
-                lastPayrollDoc: payrollPaginated.lastDoc,
-                hasReachedMaxAttendance: hasReachedMaxAttendance,
-                hasReachedMaxPayroll: payrollPaginated.payrollLogs.length < 15,
-              ),
-            );
-          },
-        );
-      },
+    final advanceResult = await getAdvancesUseCase(
+      GetAdvancesParams(uid: uid, employeeId: employeeId, limit: 15),
     );
+
+    attendanceResult.fold((failure) => emit(EmployeeFailure(failure.message)), (
+      attendancePaginated,
+    ) {
+      payrollResult.fold((failure) => emit(EmployeeFailure(failure.message)), (
+        payrollPaginated,
+      ) async {
+        advanceResult.fold((failure) => emit(EmployeeFailure(failure.message)), (
+          advancePaginated,
+        ) async {
+          // Logic to fetch more attendance if needed to calculate pending salaries
+          List<AttendanceEntity> currentAttendance = List.from(
+            attendancePaginated.attendanceLogs,
+          );
+          Object? lastAttendanceDoc = attendancePaginated.lastDoc;
+          bool hasReachedMaxAttendance =
+              attendancePaginated.attendanceLogs.length < 15;
+
+          if (payrollPaginated.payrollLogs.isNotEmpty &&
+              currentAttendance.isNotEmpty) {
+            final latestPaymentDate =
+                payrollPaginated.payrollLogs.first.paymentDate;
+            while (currentAttendance.isNotEmpty &&
+                currentAttendance.last.checkIn.isAfter(latestPaymentDate) &&
+                !hasReachedMaxAttendance) {
+              final extraResult = await getAttendanceUseCase(
+                GetAttendanceParams(
+                  uid: uid,
+                  employeeId: employeeId,
+                  limit: 15,
+                  lastDoc: lastAttendanceDoc,
+                ),
+              );
+
+              bool fetchedMore = false;
+              extraResult.fold(
+                (failure) {
+                  hasReachedMaxAttendance = true;
+                },
+                (extraPaginated) {
+                  currentAttendance.addAll(extraPaginated.attendanceLogs);
+                  lastAttendanceDoc = extraPaginated.lastDoc;
+                  hasReachedMaxAttendance =
+                      extraPaginated.attendanceLogs.length < 15;
+                  fetchedMore = extraPaginated.attendanceLogs.isNotEmpty;
+                },
+              );
+              if (!fetchedMore) break;
+            }
+          }
+
+          emit(
+            EmployeeDetailsFetchSuccess(
+              attendanceLogs: currentAttendance,
+              payrollLogs: payrollPaginated.payrollLogs,
+              advanceLogs: advancePaginated.advanceLogs,
+              lastAttendanceDoc: lastAttendanceDoc,
+              lastPayrollDoc: payrollPaginated.lastDoc,
+              lastAdvanceDoc: advancePaginated.lastDoc,
+              hasReachedMaxAttendance: hasReachedMaxAttendance,
+              hasReachedMaxPayroll: payrollPaginated.payrollLogs.length < 15,
+              hasReachedMaxAdvance: advancePaginated.advanceLogs.length < 15,
+            ),
+          );
+        });
+      });
+    });
   }
 
   Future<void> loadMoreAttendance(String uid, String employeeId) async {
@@ -317,11 +343,15 @@ class EmployeeCubit extends Cubit<EmployeeState> {
     );
 
     result.fold(
-      (failure) => emit(currentState.copyWith(isPaginationLoadingAttendance: false)),
+      (failure) =>
+          emit(currentState.copyWith(isPaginationLoadingAttendance: false)),
       (paginated) {
         emit(
           currentState.copyWith(
-            attendanceLogs: [...currentState.attendanceLogs, ...paginated.attendanceLogs],
+            attendanceLogs: [
+              ...currentState.attendanceLogs,
+              ...paginated.attendanceLogs,
+            ],
             lastAttendanceDoc: paginated.lastDoc,
             hasReachedMaxAttendance: paginated.attendanceLogs.length < 15,
             isPaginationLoadingAttendance: false,
@@ -351,14 +381,65 @@ class EmployeeCubit extends Cubit<EmployeeState> {
     );
 
     result.fold(
-      (failure) => emit(currentState.copyWith(isPaginationLoadingPayroll: false)),
+      (failure) =>
+          emit(currentState.copyWith(isPaginationLoadingPayroll: false)),
       (paginated) {
         emit(
           currentState.copyWith(
-            payrollLogs: [...currentState.payrollLogs, ...paginated.payrollLogs],
+            payrollLogs: [
+              ...currentState.payrollLogs,
+              ...paginated.payrollLogs,
+            ],
             lastPayrollDoc: paginated.lastDoc,
             hasReachedMaxPayroll: paginated.payrollLogs.length < 15,
             isPaginationLoadingPayroll: false,
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> requestAdvance(AdvanceEntity advance) async {
+    emit(EmployeeLoading());
+    final result = await requestAdvanceUseCase(advance);
+    result.fold((failure) => emit(EmployeeFailure(failure.message)), (_) {
+      emit(EmployeeActionSuccess(AppStrings.advanceRequestedSuccess.tr()));
+      fetchEmployeeDetails(advance.uid, advance.employeeId, forceRefresh: true);
+    });
+  }
+
+  Future<void> loadMoreAdvances(String uid, String employeeId) async {
+    final currentState = state;
+    if (currentState is! EmployeeDetailsFetchSuccess ||
+        currentState.hasReachedMaxAdvance ||
+        currentState.isPaginationLoadingAdvance) {
+      return;
+    }
+
+    emit(currentState.copyWith(isPaginationLoadingAdvance: true));
+
+    final result = await getAdvancesUseCase(
+      GetAdvancesParams(
+        uid: uid,
+        employeeId: employeeId,
+        limit: 15,
+        lastDoc: currentState.lastAdvanceDoc,
+      ),
+    );
+
+    result.fold(
+      (failure) =>
+          emit(currentState.copyWith(isPaginationLoadingAdvance: false)),
+      (paginated) {
+        emit(
+          currentState.copyWith(
+            advanceLogs: [
+              ...currentState.advanceLogs,
+              ...paginated.advanceLogs,
+            ],
+            lastAdvanceDoc: paginated.lastDoc,
+            hasReachedMaxAdvance: paginated.advanceLogs.length < 15,
+            isPaginationLoadingAdvance: false,
           ),
         );
       },

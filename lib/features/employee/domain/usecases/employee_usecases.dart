@@ -4,6 +4,7 @@ import '../../../offline_sync/data/models/offline_record.dart';
 import '../entities/employee_entity.dart';
 import '../entities/attendance_entity.dart';
 import '../entities/payroll_entity.dart';
+import '../entities/advance_entity.dart';
 import '../entities/employee_paginated_lists.dart';
 import '../repositories/employee_repository.dart';
 
@@ -188,5 +189,40 @@ class GetPendingEmployeeRecordsUseCase {
 
   Future<Either<Failure, List<OfflineRecord>>> call() {
     return repository.getPendingEmployeeRecords();
+  }
+}
+
+class RequestAdvanceUseCase {
+  final EmployeeRepository repository;
+  RequestAdvanceUseCase({required this.repository});
+
+  Future<Either<Failure, String>> call(AdvanceEntity advance) {
+    return repository.requestAdvance(advance);
+  }
+}
+
+
+class SettleAdvancesParams {
+  final String uid;
+  final List<String> advanceIds;
+  final String payrollId;
+
+  SettleAdvancesParams({
+    required this.uid,
+    required this.advanceIds,
+    required this.payrollId,
+  });
+}
+
+class SettleAdvancesUseCase {
+  final EmployeeRepository repository;
+  SettleAdvancesUseCase({required this.repository});
+
+  Future<Either<Failure, void>> call(SettleAdvancesParams params) {
+    return repository.settleAdvances(
+      uid: params.uid,
+      advanceIds: params.advanceIds,
+      payrollId: params.payrollId,
+    );
   }
 }

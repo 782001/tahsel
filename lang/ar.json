@@ -462,5 +462,20 @@
   "estimated_net_salary": "الصافي التقريبي للراتب",
   "no_previous_payments": "لا يوجد دفعات رواتب سابقة مسجلة",
   "payroll_history_title": "سجل الرواتب والمدفوعات",
-  "salary_expense_for": "راتب {type} لـ {name}"
+  "salary_expense_for": "راتب {type} لـ {name}",
+  "working_days_per_month": "أيام العمل المتوقعة بالشهر",
+  "expected_daily_hours": "ساعات العمل اليومية المتوقعة",
+  "overtime_multiplier": "مضاعف الوقت الإضافي",
+  "custom_overtime_rate": "أجر إضافي مخصص \n (ج.م/ساعة)",
+  "custom_deduction_rate": "خصم مخصص بالساعة \n (ج.م/ساعة)",
+  "advances": "السلف",
+  "add_advance": "إضافة سلفة",
+  "request_advance": "طلب سلفة",
+  "no_advance_logs": "لا توجد سجلات سلف لهذه الفترة",
+  "advance_history": "سجل السلف",
+  "unpaid_advances": "السلف المعلقة",
+  "unpaid_advances_deduction": "خصم السلف المدفوعة",
+  "advance_requested_success": "تم طلب السلفة بنجاح",
+  "advance_amount": "قيمة السلفة",
+  "advance_expense_for": "سلفة للموظف {name}"
 }
