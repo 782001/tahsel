@@ -41,9 +41,7 @@ class MyDebtsInjection {
     );
 
     sl.registerLazySingleton(
-      () => MyDebtsSummaryCubit(
-        getMyDebtSummaryUseCase: sl(),
-      ),
+      () => MyDebtsSummaryCubit(getMyDebtSummaryUseCase: sl()),
     );
 
     sl.registerFactory(
@@ -72,7 +70,9 @@ class MyDebtsInjection {
 
     // Use cases
     sl.registerLazySingleton(() => GetMyDebtPersonsUseCase(repository: sl()));
-    sl.registerLazySingleton(() => GetMyDebtPersonsPaginatedUseCase(repository: sl()));
+    sl.registerLazySingleton(
+      () => GetMyDebtPersonsPaginatedUseCase(repository: sl()),
+    );
     sl.registerLazySingleton(() => GetMyDebtSummaryUseCase(repository: sl()));
     sl.registerLazySingleton(() => AddMyDebtUseCase(sl()));
     sl.registerLazySingleton(() => PayMyDebtItemUseCase(sl()));

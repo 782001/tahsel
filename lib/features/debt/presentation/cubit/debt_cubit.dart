@@ -85,29 +85,31 @@ class DebtCubit extends Cubit<DebtState> {
         !(state as DebtsFetchSuccess).hasMore) {
       return;
     }
-    
+
     emit(DebtLoading());
-    
+
     final result = await getDebtsPaginatedUseCase(
       uid: uid,
       limit: 15,
       forceRefresh: forceRefresh,
     );
-    
+
     result.fold(
       (failure) => emit(DebtFailure(message: failure.message)),
-      (paginatedResult) => emit(DebtsFetchSuccess(
-        debts: paginatedResult.items,
-        lastDocument: paginatedResult.lastDocument,
-        hasMore: paginatedResult.hasMore,
-      )),
+      (paginatedResult) => emit(
+        DebtsFetchSuccess(
+          debts: paginatedResult.items,
+          lastDocument: paginatedResult.lastDocument,
+          hasMore: paginatedResult.hasMore,
+        ),
+      ),
     );
   }
 
   Future<void> loadMoreDebts(String uid) async {
     final currentState = state;
-    if (currentState is! DebtsFetchSuccess || 
-        !currentState.hasMore || 
+    if (currentState is! DebtsFetchSuccess ||
+        !currentState.hasMore ||
         currentState.isPaginationLoading) {
       return;
     }
@@ -128,17 +130,22 @@ class DebtCubit extends Cubit<DebtState> {
       (paginatedResult) {
         final List<DebtEntity> updatedDebts = List.from(currentState.debts)
           ..addAll(paginatedResult.items);
-        emit(DebtsFetchSuccess(
-          debts: updatedDebts,
-          lastDocument: paginatedResult.lastDocument,
-          hasMore: paginatedResult.hasMore,
-          isPaginationLoading: false,
-        ));
+        emit(
+          DebtsFetchSuccess(
+            debts: updatedDebts,
+            lastDocument: paginatedResult.lastDocument,
+            hasMore: paginatedResult.hasMore,
+            isPaginationLoading: false,
+          ),
+        );
       },
     );
   }
 
-  Future<List<DebtEntity>> fetchCustomerDebts(String customerName, {bool forceRefresh = false}) async {
+  Future<List<DebtEntity>> fetchCustomerDebts(
+    String customerName, {
+    bool forceRefresh = false,
+  }) async {
     final uid = AppStrings.userToken;
     if (uid.isEmpty) return [];
 
@@ -150,10 +157,7 @@ class DebtCubit extends Cubit<DebtState> {
       ),
     );
 
-    return result.fold(
-      (failure) => [],
-      (debts) => debts,
-    );
+    return result.fold((failure) => [], (debts) => debts);
   }
 
   Future<void> payDebt({

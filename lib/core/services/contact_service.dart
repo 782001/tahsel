@@ -37,25 +37,26 @@ class ContactService {
                 // ignore: use_build_context_synchronously
                 context: context,
                 builder: (ctx) => Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 420),
 
-                  child: AlertDialog(
-                    title: Text(AppStrings.selectFromContacts.tr()),
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: fullContact.phones
-                          .map(
-                            (p) => ListTile(
-                              title: Text(p.number),
-                              onTap: () => Navigator.pop(ctx, p.number),
-                            ),
-                          )
-                          .toList(),
+                    child: AlertDialog(
+                      title: Text(AppStrings.selectFromContacts.tr()),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: fullContact.phones
+                            .map(
+                              (p) => ListTile(
+                                title: Text(p.number),
+                                onTap: () => Navigator.pop(ctx, p.number),
+                              ),
+                            )
+                            .toList(),
+                      ),
                     ),
                   ),
                 ),
-              ));
+              );
             }
 
             if (phone != null) {

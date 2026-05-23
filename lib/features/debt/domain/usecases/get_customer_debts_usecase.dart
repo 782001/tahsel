@@ -4,13 +4,16 @@ import '../entities/debt_entity.dart';
 import '../repositories/debt_repository.dart';
 import '../../../../core/error/failures.dart';
 
-class GetCustomerDebtsUseCase implements BaseUseCase<List<DebtEntity>, GetCustomerDebtsParams> {
+class GetCustomerDebtsUseCase
+    implements BaseUseCase<List<DebtEntity>, GetCustomerDebtsParams> {
   final DebtRepository repository;
 
   GetCustomerDebtsUseCase({required this.repository});
 
   @override
-  Future<Either<Failure, List<DebtEntity>>> call(GetCustomerDebtsParams params) async {
+  Future<Either<Failure, List<DebtEntity>>> call(
+    GetCustomerDebtsParams params,
+  ) async {
     return await repository.getCustomerDebts(
       params.uid,
       params.customerName,

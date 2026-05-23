@@ -5,9 +5,8 @@ import 'monthly_collected_state.dart';
 class MonthlyCollectedCubit extends Cubit<MonthlyCollectedState> {
   final GetMonthlyCollectedAmountsUseCase getMonthlyCollectedAmountsUseCase;
 
-  MonthlyCollectedCubit({
-    required this.getMonthlyCollectedAmountsUseCase,
-  }) : super(MonthlyCollectedInitial());
+  MonthlyCollectedCubit({required this.getMonthlyCollectedAmountsUseCase})
+    : super(MonthlyCollectedInitial());
 
   Future<void> loadMonthlyData(String uid) async {
     emit(MonthlyCollectedLoading());

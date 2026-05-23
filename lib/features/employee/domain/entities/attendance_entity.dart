@@ -14,6 +14,8 @@ class AttendanceEntity extends Equatable {
   final String notes;
   final double expectedWorkingHours;
   final double deductionHours;
+  final bool isPaid;
+  final String? payrollId;
 
   const AttendanceEntity({
     this.id,
@@ -29,6 +31,8 @@ class AttendanceEntity extends Equatable {
     required this.notes,
     this.expectedWorkingHours = 8.0,
     this.deductionHours = 0.0,
+    this.isPaid = false,
+    this.payrollId,
   });
 
   @override
@@ -46,5 +50,7 @@ class AttendanceEntity extends Equatable {
     notes,
     expectedWorkingHours,
     deductionHours,
+    isPaid,
+    payrollId,
   ];
 }

@@ -98,9 +98,7 @@ class MyDebtCard extends StatelessWidget {
                                         color: AppColors.error.withValues(
                                           alpha: 0.1,
                                         ),
-                                        borderRadius: BorderRadius.circular(
-                                          4,
-                                        ),
+                                        borderRadius: BorderRadius.circular(4),
                                       ),
                                       child: Text(
                                         AppStrings.syncing.tr(),

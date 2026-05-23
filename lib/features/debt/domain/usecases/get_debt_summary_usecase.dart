@@ -3,7 +3,6 @@ import '../../../../core/error/failures.dart';
 import '../repositories/debt_repository.dart';
 import '../entities/debt_entity.dart';
 
-
 class GetDebtSummaryUseCase {
   final DebtRepository repository;
 

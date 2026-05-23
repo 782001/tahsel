@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-import '../../../offline_sync/data/models/offline_record.dart';
 import '../../domain/entities/employee_entity.dart';
 import '../../domain/entities/attendance_entity.dart';
 import '../../domain/entities/payroll_entity.dart';
@@ -18,24 +17,17 @@ class EmployeeLoading extends EmployeeState {}
 
 class EmployeeFetchSuccess extends EmployeeState {
   final List<EmployeeEntity> employees;
-  final List<OfflineRecord> pendingRecords;
   final Object? lastDoc;
   final bool hasReachedMax;
 
   const EmployeeFetchSuccess({
     required this.employees,
-    this.pendingRecords = const [],
     this.lastDoc,
     this.hasReachedMax = false,
   });
 
   @override
-  List<Object?> get props => [
-    employees,
-    pendingRecords,
-    lastDoc,
-    hasReachedMax,
-  ];
+  List<Object?> get props => [employees, lastDoc, hasReachedMax];
 }
 
 class EmployeeActionSuccess extends EmployeeState {
@@ -104,12 +96,16 @@ class EmployeeDetailsFetchSuccess extends EmployeeState {
       lastAttendanceDoc: lastAttendanceDoc ?? this.lastAttendanceDoc,
       lastPayrollDoc: lastPayrollDoc ?? this.lastPayrollDoc,
       lastAdvanceDoc: lastAdvanceDoc ?? this.lastAdvanceDoc,
-      hasReachedMaxAttendance: hasReachedMaxAttendance ?? this.hasReachedMaxAttendance,
+      hasReachedMaxAttendance:
+          hasReachedMaxAttendance ?? this.hasReachedMaxAttendance,
       hasReachedMaxPayroll: hasReachedMaxPayroll ?? this.hasReachedMaxPayroll,
       hasReachedMaxAdvance: hasReachedMaxAdvance ?? this.hasReachedMaxAdvance,
-      isPaginationLoadingAttendance: isPaginationLoadingAttendance ?? this.isPaginationLoadingAttendance,
-      isPaginationLoadingPayroll: isPaginationLoadingPayroll ?? this.isPaginationLoadingPayroll,
-      isPaginationLoadingAdvance: isPaginationLoadingAdvance ?? this.isPaginationLoadingAdvance,
+      isPaginationLoadingAttendance:
+          isPaginationLoadingAttendance ?? this.isPaginationLoadingAttendance,
+      isPaginationLoadingPayroll:
+          isPaginationLoadingPayroll ?? this.isPaginationLoadingPayroll,
+      isPaginationLoadingAdvance:
+          isPaginationLoadingAdvance ?? this.isPaginationLoadingAdvance,
     );
   }
 

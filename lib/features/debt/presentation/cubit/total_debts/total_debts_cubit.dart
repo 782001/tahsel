@@ -9,9 +9,8 @@ import 'total_debts_state.dart';
 class TotalDebtsCubit extends Cubit<TotalDebtsState> {
   final GetDebtSummaryUseCase getDebtSummaryUseCase;
 
-  TotalDebtsCubit({
-    required this.getDebtSummaryUseCase,
-  }) : super(TotalDebtsInitial());
+  TotalDebtsCubit({required this.getDebtSummaryUseCase})
+    : super(TotalDebtsInitial());
 
   Future<void> getTotalDebts(String uid, {bool forceRefresh = false}) async {
     if (!forceRefresh && state is TotalDebtsLoaded) {
@@ -22,19 +21,16 @@ class TotalDebtsCubit extends Cubit<TotalDebtsState> {
 
     final result = await getDebtSummaryUseCase(uid);
 
-    result.fold(
-      (failure) => emit(TotalDebtsError(failure.message)),
-      (summary) {
-        if (!isClosed) {
-          emit(
-            TotalDebtsLoaded(
-              totalAmount: summary.totalAmount,
-              customerCount: summary.customerCount,
-            ),
-          );
-        }
-      },
-    );
+    result.fold((failure) => emit(TotalDebtsError(failure.message)), (summary) {
+      if (!isClosed) {
+        emit(
+          TotalDebtsLoaded(
+            totalAmount: summary.totalAmount,
+            customerCount: summary.customerCount,
+          ),
+        );
+      }
+    });
   }
 
   /// Called when DebtCubit refreshes the debts list after any mutation.

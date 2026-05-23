@@ -482,13 +482,15 @@ class AppStrings {
   static const String calculateNetSalary = "calculate_net_salary";
   static const String confirmCheckout = "confirm_checkout";
   static const String paymentDate = "payment_date";
-  static const String addTransactionNotesPlaceholder = "add_transaction_notes_placeholder";
+  static const String addTransactionNotesPlaceholder =
+      "add_transaction_notes_placeholder";
   static const String addNotesPlaceholder = "add_notes_placeholder";
   static const String employeeNamePlaceholder = "employee_name_placeholder";
   static const String employeePhonePlaceholder = "employee_phone_placeholder";
   static const String employeeRolePlaceholder = "employee_role_placeholder";
   static const String employeeNotesPlaceholder = "employee_notes_placeholder";
-  static const String unsyncedOfflineRecordsWarning = "unsynced_offline_records_warning";
+  static const String unsyncedOfflineRecordsWarning =
+      "unsynced_offline_records_warning";
 
   static const String employeeList = "employee_list";
   static const String viewReports = "view_reports";
@@ -544,4 +546,14 @@ class AppStrings {
   static const String advanceRequestedSuccess = "advance_requested_success";
   static const String advanceAmount = "advance_amount";
   static const String advanceExpenseFor = "advance_expense_for";
+  static const String paymentWindowStart = "payment_window_start";
+  static const String paymentWindowEnd = "payment_window_end";
+  static const String paymentWindowError = "payment_window_error";
+  static const String invalidPaymentWindowDay = "invalid_payment_window_day";
+  static const String noPendingRecords = "no_pending_records";
+
+  static const String deductionsExceedPayable = "deductions_exceed_payable";
+  static const String outstandingBalance = "outstanding_balance";
+  static const String carriedForwardAutomatically =
+      "carried_forward_automatically";
 }

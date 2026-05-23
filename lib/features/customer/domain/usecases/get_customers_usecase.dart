@@ -15,8 +15,10 @@ class GetCustomersParams {
 
 class GetCustomersUseCase
     implements
-        BaseUseCase<(List<CustomerEntity>, DocumentSnapshot?),
-            GetCustomersParams> {
+        BaseUseCase<
+          (List<CustomerEntity>, DocumentSnapshot?),
+          GetCustomersParams
+        > {
   final CustomerRepository repository;
 
   GetCustomersUseCase(this.repository);

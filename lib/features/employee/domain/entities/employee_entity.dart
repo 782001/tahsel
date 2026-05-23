@@ -16,6 +16,9 @@ class EmployeeEntity extends Equatable {
   final double overtimeMultiplier;
   final double? customOvertimeRate;
   final double? customDeductionRate;
+  final int paymentWindowStart;
+  final int paymentWindowEnd;
+  final double outstandingBalance; // Negative carried forward balance/debt
 
   const EmployeeEntity({
     this.id,
@@ -33,6 +36,9 @@ class EmployeeEntity extends Equatable {
     this.overtimeMultiplier = 1.5,
     this.customOvertimeRate,
     this.customDeductionRate,
+    this.paymentWindowStart = 1,
+    this.paymentWindowEnd = 31,
+    this.outstandingBalance = 0.0,
   });
 
   @override
@@ -52,5 +58,8 @@ class EmployeeEntity extends Equatable {
     overtimeMultiplier,
     customOvertimeRate,
     customDeductionRate,
+    paymentWindowStart,
+    paymentWindowEnd,
+    outstandingBalance,
   ];
 }

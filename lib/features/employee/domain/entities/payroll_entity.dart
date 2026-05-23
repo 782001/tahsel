@@ -17,6 +17,7 @@ class PayrollEntity extends Equatable {
   final DateTime? periodStart;
   final DateTime? periodEnd;
   final double? advancePaid;
+  final double? carriedForwardBalance;
 
   const PayrollEntity({
     this.id,
@@ -35,6 +36,7 @@ class PayrollEntity extends Equatable {
     this.periodStart,
     this.periodEnd,
     this.advancePaid,
+    this.carriedForwardBalance,
   });
 
   @override
@@ -55,5 +57,6 @@ class PayrollEntity extends Equatable {
     periodStart,
     periodEnd,
     advancePaid,
+    carriedForwardBalance,
   ];
 }

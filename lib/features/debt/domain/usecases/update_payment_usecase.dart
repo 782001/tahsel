@@ -42,9 +42,13 @@ class UpdatePaymentUseCase implements BaseUseCase<void, UpdatePaymentParams> {
     }
 
     if (!params.isDebtAdded && params.maxAmount != null) {
-      final maxAmountRounded = double.parse(params.maxAmount!.toStringAsFixed(2));
+      final maxAmountRounded = double.parse(
+        params.maxAmount!.toStringAsFixed(2),
+      );
       if (newAmountRounded > maxAmountRounded) {
-        return Future.value(Left(ServerFailure(AppStrings.paymentExceedsRemaining.tr())));
+        return Future.value(
+          Left(ServerFailure(AppStrings.paymentExceedsRemaining.tr())),
+        );
       }
     }
 

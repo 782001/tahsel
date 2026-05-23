@@ -46,12 +46,12 @@ class GlobalPaymentsLoaded extends GlobalPaymentsState {
 
   @override
   List<Object?> get props => [
-        transactions,
-        totalPaid,
-        lastDocument,
-        hasMore,
-        isPaginationLoading,
-      ];
+    transactions,
+    totalPaid,
+    lastDocument,
+    hasMore,
+    isPaginationLoading,
+  ];
 }
 
 class GlobalPaymentsError extends GlobalPaymentsState {

@@ -216,8 +216,11 @@ class _MyDebtDetailsReportScreenState extends State<MyDebtDetailsReportScreen> {
                   >(
                     builder: (context, state) {
                       if (state is MyDebtDetailsReportLoading) {
-                        final double screenWidth = MediaQuery.of(context).size.width;
-                        final double horizontalPadding = isDesktop && screenWidth > 800
+                        final double screenWidth = MediaQuery.of(
+                          context,
+                        ).size.width;
+                        final double horizontalPadding =
+                            isDesktop && screenWidth > 800
                             ? (screenWidth - 800) / 2
                             : 16.w;
                         if (isDesktop) {
@@ -227,14 +230,16 @@ class _MyDebtDetailsReportScreenState extends State<MyDebtDetailsReportScreen> {
                               vertical: 8,
                             ),
                             sliver: SliverGrid(
-                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                mainAxisExtent: 140,
-                                crossAxisSpacing: 16,
-                                mainAxisSpacing: 12,
-                              ),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    mainAxisExtent: 140,
+                                    crossAxisSpacing: 16,
+                                    mainAxisSpacing: 12,
+                                  ),
                               delegate: SliverChildBuilderDelegate(
-                                (context, index) => const TransactionCardSkeleton(),
+                                (context, index) =>
+                                    const TransactionCardSkeleton(),
                                 childCount: 6,
                               ),
                             ),
@@ -294,42 +299,42 @@ class _MyDebtDetailsReportScreenState extends State<MyDebtDetailsReportScreen> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                  Text(
-                                    state.message,
-                                    style: TextStyles.customStyle(
-                                      color: AppColors.error,
-                                      fontSize: 13,
-                                    ),
+                                Text(
+                                  state.message,
+                                  style: TextStyles.customStyle(
+                                    color: AppColors.error,
+                                    fontSize: 13,
                                   ),
-                                  SizedBox(height: 16.h),
-                                  ElevatedButton(
-                                    onPressed: () => context
-                                        .read<MyDebtDetailsReportCubit>()
-                                        .loadTransactions(
-                                          uid,
-                                          widget.debtId,
-                                          forceRefresh: true,
-                                        ),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.primaryColor,
-                                      foregroundColor: Colors.white,
-                                    ),
-                                    child: Text(AppStrings.tryAgain.tr()),
+                                ),
+                                SizedBox(height: 16.h),
+                                ElevatedButton(
+                                  onPressed: () => context
+                                      .read<MyDebtDetailsReportCubit>()
+                                      .loadTransactions(
+                                        uid,
+                                        widget.debtId,
+                                        forceRefresh: true,
+                                      ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primaryColor,
+                                    foregroundColor: Colors.white,
                                   ),
-                                ],
-                              ),
+                                  child: Text(AppStrings.tryAgain.tr()),
+                                ),
+                              ],
                             ),
-                          );
-                        }
-                        return const SliverToBoxAdapter(child: SizedBox());
-                      },
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
+                          ),
+                        );
+                      }
+                      return const SliverToBoxAdapter(child: SizedBox());
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
         ),
-      );
-    }
+      ),
+    );
   }
+}

@@ -9,7 +9,13 @@ class GetCustomerOperationsUseCase {
 
   GetCustomerOperationsUseCase(this.repository);
 
-  Future<Either<Failure, (List<CustomerOperation>, DocumentSnapshot?, double, double)>> call({
+  Future<
+    Either<
+      Failure,
+      (List<CustomerOperation>, DocumentSnapshot?, double, double)
+    >
+  >
+  call({
     required String uid,
     required String customerName,
     int limit = 15,

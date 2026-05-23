@@ -18,6 +18,9 @@ class EmployeeModel extends EmployeeEntity {
     super.overtimeMultiplier = 1.5,
     super.customOvertimeRate,
     super.customDeductionRate,
+    super.paymentWindowStart = 1,
+    super.paymentWindowEnd = 31,
+    super.outstandingBalance = 0.0,
   });
 
   factory EmployeeModel.fromJson(Map<String, dynamic> json, String id) {
@@ -44,10 +47,16 @@ class EmployeeModel extends EmployeeEntity {
       createdAt: createdAtDate,
       notes: json['notes'] as String? ?? '',
       workingDaysPerMonth: json['workingDaysPerMonth'] as int? ?? 26,
-      expectedDailyHours: (json['expectedDailyHours'] as num?)?.toDouble() ?? 8.0,
-      overtimeMultiplier: (json['overtimeMultiplier'] as num?)?.toDouble() ?? 1.5,
+      expectedDailyHours:
+          (json['expectedDailyHours'] as num?)?.toDouble() ?? 8.0,
+      overtimeMultiplier:
+          (json['overtimeMultiplier'] as num?)?.toDouble() ?? 1.5,
       customOvertimeRate: (json['customOvertimeRate'] as num?)?.toDouble(),
       customDeductionRate: (json['customDeductionRate'] as num?)?.toDouble(),
+      paymentWindowStart: json['paymentWindowStart'] as int? ?? 1,
+      paymentWindowEnd: json['paymentWindowEnd'] as int? ?? 31,
+      outstandingBalance:
+          (json['outstandingBalance'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
@@ -67,6 +76,9 @@ class EmployeeModel extends EmployeeEntity {
       'overtimeMultiplier': overtimeMultiplier,
       'customOvertimeRate': customOvertimeRate,
       'customDeductionRate': customDeductionRate,
+      'paymentWindowStart': paymentWindowStart,
+      'paymentWindowEnd': paymentWindowEnd,
+      'outstandingBalance': outstandingBalance,
     };
   }
 
@@ -87,6 +99,9 @@ class EmployeeModel extends EmployeeEntity {
       overtimeMultiplier: entity.overtimeMultiplier,
       customOvertimeRate: entity.customOvertimeRate,
       customDeductionRate: entity.customDeductionRate,
+      paymentWindowStart: entity.paymentWindowStart,
+      paymentWindowEnd: entity.paymentWindowEnd,
+      outstandingBalance: entity.outstandingBalance,
     );
   }
 }

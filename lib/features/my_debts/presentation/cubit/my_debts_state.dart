@@ -98,7 +98,9 @@ class MyDebtsState extends Equatable {
       lastPaymentNote: clearLastPayment
           ? null
           : (lastPaymentNote ?? this.lastPaymentNote),
-      lastDocument: clearLastDocument ? null : (lastDocument ?? this.lastDocument),
+      lastDocument: clearLastDocument
+          ? null
+          : (lastDocument ?? this.lastDocument),
       hasMore: hasMore ?? this.hasMore,
       isPaginationLoading: isPaginationLoading ?? this.isPaginationLoading,
     );
@@ -123,4 +125,3 @@ class MyDebtsState extends Equatable {
     isPaginationLoading,
   ];
 }
-

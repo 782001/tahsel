@@ -217,7 +217,9 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
   }
 
   @override
-  Future<Map<String, dynamic>> getAllTimeData({bool forceRefresh = false}) async {
+  Future<Map<String, dynamic>> getAllTimeData({
+    bool forceRefresh = false,
+  }) async {
     try {
       final uid = AppStrings.userToken;
       if (uid.isEmpty) return {};

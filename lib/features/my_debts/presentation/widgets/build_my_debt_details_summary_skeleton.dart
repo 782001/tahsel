@@ -3,9 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 
 class BuildMyDebtDetailsSummarySkeleton extends StatelessWidget {
-  const BuildMyDebtDetailsSummarySkeleton({
-    super.key,
-  });
+  const BuildMyDebtDetailsSummarySkeleton({super.key});
 
   @override
   Widget build(BuildContext context) {

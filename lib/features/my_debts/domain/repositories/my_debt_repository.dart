@@ -18,7 +18,8 @@ abstract class MyDebtRepository {
     String uid, {
     bool forceRefresh = false,
   });
-  Future<Either<Failure, PaginatedResult<MyDebtPersonEntity>>> getMyDebtPersonsPaginated(
+  Future<Either<Failure, PaginatedResult<MyDebtPersonEntity>>>
+  getMyDebtPersonsPaginated(
     String uid, {
     required int limit,
     DocumentSnapshot? lastDocument,
@@ -61,7 +62,8 @@ abstract class MyDebtRepository {
     String debtId, {
     bool forceRefresh = false,
   });
-  Future<Either<Failure, PaginatedResult<PaymentEntity>>> getMyDebtItemPaymentsPaginated(
+  Future<Either<Failure, PaginatedResult<PaymentEntity>>>
+  getMyDebtItemPaymentsPaginated(
     String uid,
     String debtId, {
     required int limit,

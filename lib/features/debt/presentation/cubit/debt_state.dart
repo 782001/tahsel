@@ -49,7 +49,12 @@ class DebtsFetchSuccess extends DebtState {
   }
 
   @override
-  List<Object?> get props => [debts, lastDocument, hasMore, isPaginationLoading];
+  List<Object?> get props => [
+    debts,
+    lastDocument,
+    hasMore,
+    isPaginationLoading,
+  ];
 }
 
 class DebtPaymentSuccess extends DebtState {

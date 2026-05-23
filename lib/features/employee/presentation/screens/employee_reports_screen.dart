@@ -98,59 +98,59 @@ class _EmployeeReportsScreenState extends State<EmployeeReportsScreen> {
                 ),
                 child: Column(
                   children: [
-                // Month Picker Banner
-                _buildMonthPicker(isDesktop),
+                    // Month Picker Banner
+                    _buildMonthPicker(isDesktop),
 
-                Expanded(
-                  child: BlocBuilder<EmployeeCubit, EmployeeState>(
-                    buildWhen: (previous, current) =>
-                        current is EmployeeLoading ||
-                        current is EmployeeReportsSuccess ||
-                        current is EmployeeFailure,
-                    builder: (context, state) {
-                      if (state is EmployeeLoading) {
-                        return Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.primaryColor,
-                            strokeWidth: 3,
-                          ),
-                        );
-                      } else if (state is EmployeeFailure) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                state.message,
-                                style: TextStyles.customStyle(
-                                  fontSize: 14,
-                                  color: AppColors.error,
-                                ),
+                    Expanded(
+                      child: BlocBuilder<EmployeeCubit, EmployeeState>(
+                        buildWhen: (previous, current) =>
+                            current is EmployeeLoading ||
+                            current is EmployeeReportsSuccess ||
+                            current is EmployeeFailure,
+                        builder: (context, state) {
+                          if (state is EmployeeLoading) {
+                            return Center(
+                              child: CircularProgressIndicator(
+                                color: AppColors.primaryColor,
+                                strokeWidth: 3,
                               ),
-                              SizedBox(height: 12.h),
-                              ElevatedButton(
-                                onPressed: _fetchReportData,
-                                child: Text(AppStrings.retry.tr()),
+                            );
+                          } else if (state is EmployeeFailure) {
+                            return Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    state.message,
+                                    style: TextStyles.customStyle(
+                                      fontSize: 14,
+                                      color: AppColors.error,
+                                    ),
+                                  ),
+                                  SizedBox(height: 12.h),
+                                  ElevatedButton(
+                                    onPressed: _fetchReportData,
+                                    child: Text(AppStrings.retry.tr()),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        );
-                      } else if (state is EmployeeReportsSuccess) {
-                        return _buildReportsDashboard(state, isDesktop);
-                      }
-                      return const SizedBox.shrink();
-                    },
-                  ),
+                            );
+                          } else if (state is EmployeeReportsSuccess) {
+                            return _buildReportsDashboard(state, isDesktop);
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
-      );
-    },
-  ),
-);
-}
+          );
+        },
+      ),
+    );
+  }
 
   Widget _buildMonthPicker(bool isDesktop) {
     return Container(

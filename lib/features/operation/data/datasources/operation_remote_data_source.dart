@@ -38,18 +38,14 @@ class OperationRemoteDataSourceImpl implements OperationRemoteDataSource {
 
       for (final key in summaryKeys) {
         final summaryRef = userRef.collection('summaries').doc(key);
-        batch.set(
-          summaryRef,
-          {
-            'totalIncome': FieldValue.increment(operation.totalAmount),
-            if (isShop) 'cafeIncome': FieldValue.increment(operation.totalAmount),
-            if (isPS)
-              'playstationIncome': FieldValue.increment(operation.totalAmount),
-            'transactionCount': FieldValue.increment(1),
-            'lastUpdatedAt': FieldValue.serverTimestamp(),
-          },
-          SetOptions(merge: true),
-        );
+        batch.set(summaryRef, {
+          'totalIncome': FieldValue.increment(operation.totalAmount),
+          if (isShop) 'cafeIncome': FieldValue.increment(operation.totalAmount),
+          if (isPS)
+            'playstationIncome': FieldValue.increment(operation.totalAmount),
+          'transactionCount': FieldValue.increment(1),
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
       }
 
       await batch.commit();

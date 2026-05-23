@@ -47,15 +47,21 @@ class ReportsRepositoryImpl implements ReportsRepository {
 
       // Mapping keys from DataSource to Entity
       // Consistent keys: totalIncome, cafeIncome, playstationIncome, totalExpenses, totalDebts, paidDebts, unpaidDebts
-      
+
       // Current Data
       final double currentIncome = (currentData['totalIncome'] ?? 0).toDouble();
-      final double currentCafeIncome = (currentData['cafeIncome'] ?? 0).toDouble();
-      final double currentPlaystationIncome = (currentData['playstationIncome'] ?? 0).toDouble();
-      final double currentExpenses = (currentData['totalExpenses'] ?? 0).toDouble();
-      final double currentTotalDebts = (currentData['totalDebts'] ?? 0).toDouble();
-      final double currentPaidDebts = (currentData['paidDebts'] ?? 0).toDouble();
-      final double currentUnpaidDebts = (currentData['unpaidDebts'] ?? 0).toDouble();
+      final double currentCafeIncome = (currentData['cafeIncome'] ?? 0)
+          .toDouble();
+      final double currentPlaystationIncome =
+          (currentData['playstationIncome'] ?? 0).toDouble();
+      final double currentExpenses = (currentData['totalExpenses'] ?? 0)
+          .toDouble();
+      final double currentTotalDebts = (currentData['totalDebts'] ?? 0)
+          .toDouble();
+      final double currentPaidDebts = (currentData['paidDebts'] ?? 0)
+          .toDouble();
+      final double currentUnpaidDebts = (currentData['unpaidDebts'] ?? 0)
+          .toDouble();
       final int currentTotalCount = (currentData['totalCount'] ?? 0).toInt();
       final int currentCafeCount = (currentData['cafeCount'] ?? 0).toInt();
       final int currentPSCount = (currentData['playstationCount'] ?? 0).toInt();
@@ -64,7 +70,8 @@ class ReportsRepositoryImpl implements ReportsRepository {
       // Previous Data
       final double prevIncome = (prevData['totalIncome'] ?? 0).toDouble();
       final double prevCafeIncome = (prevData['cafeIncome'] ?? 0).toDouble();
-      final double prevPlaystationIncome = (prevData['playstationIncome'] ?? 0).toDouble();
+      final double prevPlaystationIncome = (prevData['playstationIncome'] ?? 0)
+          .toDouble();
       final double prevExpenses = (prevData['totalExpenses'] ?? 0).toDouble();
       final double prevProfit = prevIncome - prevExpenses;
 
@@ -109,13 +116,16 @@ class ReportsRepositoryImpl implements ReportsRepository {
   }
 
   @override
-  Future<Either<Failure, ReportsEntity>> getAllTimeReports({bool forceRefresh = false}) async {
+  Future<Either<Failure, ReportsEntity>> getAllTimeReports({
+    bool forceRefresh = false,
+  }) async {
     try {
       final data = await dataSource.getAllTimeData(forceRefresh: forceRefresh);
 
       final double income = (data['totalIncome'] ?? 0).toDouble();
       final double cafeIncome = (data['cafeIncome'] ?? 0).toDouble();
-      final double playstationIncome = (data['playstationIncome'] ?? 0).toDouble();
+      final double playstationIncome = (data['playstationIncome'] ?? 0)
+          .toDouble();
       final double expenses = (data['totalExpenses'] ?? 0).toDouble();
       final double totalDebts = (data['totalDebts'] ?? 0).toDouble();
       final double paidDebts = (data['paidDebts'] ?? 0).toDouble();
@@ -155,7 +165,8 @@ class ReportsRepositoryImpl implements ReportsRepository {
   }
 
   @override
-  Future<Either<Failure, (List<OperationEntity>, DocumentSnapshot?)>> getIncomeDetails(
+  Future<Either<Failure, (List<OperationEntity>, DocumentSnapshot?)>>
+  getIncomeDetails(
     DateTime startDate,
     DateTime endDate, {
     String? type,
@@ -177,8 +188,8 @@ class ReportsRepositoryImpl implements ReportsRepository {
         return OperationModel.fromJson(data, id);
       }).toList();
 
-      final DocumentSnapshot? lastSnapshot = results.isNotEmpty 
-          ? results.last['snapshot'] as DocumentSnapshot 
+      final DocumentSnapshot? lastSnapshot = results.isNotEmpty
+          ? results.last['snapshot'] as DocumentSnapshot
           : null;
 
       return Right((operations, lastSnapshot));

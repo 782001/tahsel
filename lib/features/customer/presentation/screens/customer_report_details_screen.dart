@@ -104,7 +104,10 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
       builder: (context, state) {
         if (state is CustomerDetailsLoading) {
           return Center(
-            child: CircularProgressIndicator(color: AppColors.primaryColor,strokeWidth: 2,),
+            child: CircularProgressIndicator(
+              color: AppColors.primaryColor,
+              strokeWidth: 2,
+            ),
           );
         }
 

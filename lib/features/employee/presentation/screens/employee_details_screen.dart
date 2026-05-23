@@ -112,16 +112,14 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
     int unpaidDaysCount = 0;
     int unpaidAttendanceCount = 0;
 
-    DateTime latestPaymentDate = DateTime(2000);
-    for (final p in payrollLogs) {
-      if (p.paymentDate.isAfter(latestPaymentDate)) {
-        latestPaymentDate = p.paymentDate;
-      }
-    }
-
-    final unpaidAttendance = attendanceLogs
-        .where((log) => log.checkIn.isAfter(latestPaymentDate))
-        .toList();
+    // Filter attendance to only include records that haven't been paid yet
+    // AND are finalized (checked out, or absent/excused which have no checkout)
+    final unpaidAttendance = attendanceLogs.where((log) {
+      if (log.isPaid) return false;
+      if (log.status == 'absent' || log.status == 'excused') return true;
+      if (log.checkOut == null) return false;
+      return true;
+    }).toList();
 
     final salaryType = widget.employee.salaryType;
     final baseAmount = widget.employee.salaryAmount;
@@ -153,10 +151,6 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
           pendingBase += workedHrs * baseAmount;
           unpaidAttendanceCount++;
         }
-        unpaidOvertimeHours += log.overtimeHours;
-        pendingOvertimeComp += log.overtimeHours * overtimeHourlyRate;
-        final dedRate = widget.employee.customDeductionRate ?? baseAmount;
-        pendingDeductions += log.deductionHours * dedRate;
       }
     } else if (salaryType == 'daily') {
       for (final log in unpaidAttendance) {
@@ -175,13 +169,20 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
         pendingDeductions += log.deductionHours * hourlyRate;
       }
     } else {
-      pendingBase = baseAmount;
+      pendingBase = 0.0;
+      double dailyRate = baseAmount / workingDays;
       for (final log in unpaidAttendance) {
         unpaidDaysCount++;
         unpaidAttendanceCount++;
+
+        pendingBase += dailyRate;
+
         if (log.status == 'absent') {
-          pendingDeductions += baseAmount / workingDays;
+          pendingDeductions += dailyRate;
+        } else if (log.status == 'half_day') {
+          pendingDeductions += dailyRate * 0.5;
         }
+
         unpaidOvertimeHours += log.overtimeHours;
         pendingOvertimeComp += log.overtimeHours * overtimeHourlyRate;
 
@@ -193,7 +194,10 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
     }
 
     final double netSalary =
-        pendingBase + pendingOvertimeComp - pendingDeductions;
+        pendingBase +
+        pendingOvertimeComp -
+        pendingDeductions -
+        widget.employee.outstandingBalance;
 
     return {
       'pendingBase': pendingBase,
@@ -252,244 +256,254 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
             );
           }
           return BlocConsumer<EmployeeCubit, EmployeeState>(
-        listener: (context, state) {
-          if (state is EmployeeActionSuccess) {
-            _loadInitialData();
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.actionMessage),
-                backgroundColor: AppColors.success,
-              ),
-            );
-          } else if (state is EmployeeFailure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppColors.error,
-              ),
-            );
-          }
-        },
-        builder: (context, state) {
-          if (state is EmployeeLoading) {
-            return Center(
-              child: CircularProgressIndicator(
-                color: AppColors.primaryColor,
-                strokeWidth: 3,
-              ),
-            );
-          }
-
-          if (state is EmployeeDetailsFetchSuccess) {
-            final attendanceLogs = state.attendanceLogs;
-            final payrollLogs = state.payrollLogs;
-
-            AttendanceEntity? activeCheckIn;
-            for (final log in attendanceLogs) {
-              if (log.checkOut == null) {
-                activeCheckIn = log;
-                break;
-              }
-            }
-
-            final pending = _calculatePendingSalary(
-              attendanceLogs,
-              payrollLogs,
-            );
-            final double netSalary = pending['netSalary'];
-            final double baseSalary = pending['pendingBase'];
-            final double overtimeComp = pending['pendingOvertimeComp'];
-            final double deductions = pending['pendingDeductions'];
-            final double overtimeHours = pending['unpaidOvertimeHours'];
-            final double workedHours = pending['unpaidWorkedHours'];
-            final int unpaidCount = pending['unpaidCount'];
-
-            final paidAdvances = state.advanceLogs
-                .where((adv) => adv.status == 'paid')
-                .toList();
-
-            return SafeArea(
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: isDesktop ? 1100 : double.infinity,
+            listener: (context, state) {
+              if (state is EmployeeActionSuccess) {
+                _loadInitialData();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.actionMessage),
+                    backgroundColor: AppColors.success,
                   ),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isDesktop ? 24 : 0,
-                      vertical: isDesktop ? 16 : 0,
-                    ),
-                    child: isDesktop
-                        ? Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                flex: 3,
-                                child: SingleChildScrollView(
-                                  physics: const BouncingScrollPhysics(),
-                                  child: Column(
-                                    children: [
-                                      _buildProfileHeader(true, statusColor),
-                                      const SizedBox(height: 16),
-                                      _buildLiveCheckInCard(
-                                        dateFormatter,
-                                        true,
-                                        activeCheckIn,
+                );
+              } else if (state is EmployeeFailure) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: AppColors.error,
+                  ),
+                );
+              }
+            },
+            builder: (context, state) {
+              if (state is EmployeeLoading) {
+                return Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.primaryColor,
+                    strokeWidth: 3,
+                  ),
+                );
+              }
+
+              if (state is EmployeeDetailsFetchSuccess) {
+                final attendanceLogs = state.attendanceLogs;
+                final payrollLogs = state.payrollLogs;
+
+                AttendanceEntity? activeCheckIn;
+                for (final log in attendanceLogs) {
+                  if (log.checkOut == null) {
+                    activeCheckIn = log;
+                    break;
+                  }
+                }
+
+                final pending = _calculatePendingSalary(
+                  attendanceLogs,
+                  payrollLogs,
+                );
+                final double netSalary = pending['netSalary'];
+                final double baseSalary = pending['pendingBase'];
+                final double overtimeComp = pending['pendingOvertimeComp'];
+                final double deductions = pending['pendingDeductions'];
+                final double overtimeHours = pending['unpaidOvertimeHours'];
+                final double workedHours = pending['unpaidWorkedHours'];
+                final int unpaidCount = pending['unpaidCount'];
+
+                final paidAdvances = state.advanceLogs
+                    .where((adv) => adv.status == 'paid')
+                    .toList();
+
+                return SafeArea(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: isDesktop ? 1100 : double.infinity,
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isDesktop ? 24 : 0,
+                          vertical: isDesktop ? 16 : 0,
+                        ),
+                        child: isDesktop
+                            ? Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    flex: 3,
+                                    child: SingleChildScrollView(
+                                      physics: const BouncingScrollPhysics(),
+                                      child: Column(
+                                        children: [
+                                          _buildProfileHeader(
+                                            true,
+                                            statusColor,
+                                          ),
+                                          const SizedBox(height: 16),
+                                          _buildLiveCheckInCard(
+                                            dateFormatter,
+                                            true,
+                                            activeCheckIn,
+                                            attendanceLogs,
+                                          ),
+                                          const SizedBox(height: 16),
+                                          _buildPendingSalaryCard(
+                                            pending,
+                                            netSalary,
+                                            baseSalary,
+                                            overtimeComp,
+                                            deductions,
+                                            overtimeHours,
+                                            workedHours,
+                                            unpaidCount,
+                                            true,
+                                            paidAdvances,
+                                            attendanceLogs,
+                                          ),
+                                        ],
                                       ),
-                                      const SizedBox(height: 16),
-                                      _buildPendingSalaryCard(
-                                        pending,
-                                        netSalary,
-                                        baseSalary,
-                                        overtimeComp,
-                                        deductions,
-                                        overtimeHours,
-                                        workedHours,
-                                        unpaidCount,
-                                        true,
-                                        paidAdvances,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 20),
-                              Expanded(
-                                flex: 4,
-                                child: Card(
-                                  elevation: 0,
-                                  margin: EdgeInsets.zero,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16.r),
-                                    side: BorderSide(
-                                      color: AppColors.veryLightGrey,
                                     ),
                                   ),
-                                  color: AppColors.whiteColor,
-                                  child: Column(
-                                    children: [
-                                      EmployeeDetailsTabSelector(
-                                        selectedIndex: _tabController.index,
-                                        onTabChanged: (index) {
-                                          _tabController.animateTo(index);
-                                        },
+                                  const SizedBox(width: 20),
+                                  Expanded(
+                                    flex: 4,
+                                    child: Card(
+                                      elevation: 0,
+                                      margin: EdgeInsets.zero,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          16.r,
+                                        ),
+                                        side: BorderSide(
+                                          color: AppColors.veryLightGrey,
+                                        ),
                                       ),
-                                      Expanded(
-                                        child: TabBarView(
-                                          controller: _tabController,
-                                          children: [
-                                            _buildAttendanceList(
-                                              dateFormatter,
-                                              true,
-                                              attendanceLogs,
-                                              state
-                                                  .isPaginationLoadingAttendance,
-                                              state.hasReachedMaxAttendance,
-                                            ),
-                                            CustomScrollView(
-                                              controller:
-                                                  _payrollScrollController,
-                                              slivers: [
-                                                _buildPayrollList(
+                                      color: AppColors.whiteColor,
+                                      child: Column(
+                                        children: [
+                                          EmployeeDetailsTabSelector(
+                                            selectedIndex: _tabController.index,
+                                            onTabChanged: (index) {
+                                              _tabController.animateTo(index);
+                                            },
+                                          ),
+                                          Expanded(
+                                            child: TabBarView(
+                                              controller: _tabController,
+                                              children: [
+                                                _buildAttendanceList(
+                                                  dateFormatter,
                                                   true,
-                                                  payrollLogs,
+                                                  attendanceLogs,
                                                   state
-                                                      .isPaginationLoadingPayroll,
-                                                  state.hasReachedMaxPayroll,
+                                                      .isPaginationLoadingAttendance,
+                                                  state.hasReachedMaxAttendance,
+                                                ),
+                                                CustomScrollView(
+                                                  controller:
+                                                      _payrollScrollController,
+                                                  slivers: [
+                                                    _buildPayrollList(
+                                                      true,
+                                                      payrollLogs,
+                                                      state
+                                                          .isPaginationLoadingPayroll,
+                                                      state
+                                                          .hasReachedMaxPayroll,
+                                                    ),
+                                                  ],
+                                                ),
+                                                _buildAdvancesTab(
+                                                  true,
+                                                  state.advanceLogs,
+                                                  state
+                                                      .isPaginationLoadingAdvance,
+                                                  state.hasReachedMaxAdvance,
                                                 ),
                                               ],
                                             ),
-                                            _buildAdvancesTab(
-                                              true,
-                                              state.advanceLogs,
-                                              state.isPaginationLoadingAdvance,
-                                              state.hasReachedMaxAdvance,
-                                            ),
-                                          ],
-                                        ),
+                                          ),
+                                        ],
                                       ),
-                                    ],
+                                    ),
                                   ),
-                                ),
-                              ),
-                            ],
-                          )
-                        : Column(
-                            children: [
-                              _buildProfileHeader(false, statusColor),
-                              Container(
-                                color: AppColors.whiteColor,
-                                child: EmployeeDetailsTabSelector(
-                                  selectedIndex: _tabController.index,
-                                  onTabChanged: (index) {
-                                    _tabController.animateTo(index);
-                                  },
-                                ),
-                              ),
-                              Expanded(
-                                child: TabBarView(
-                                  controller: _tabController,
-                                  children: [
-                                    _buildAttendanceTab(
-                                      false,
-                                      dateFormatter,
-                                      attendanceLogs,
-                                      state.isPaginationLoadingAttendance,
-                                      state.hasReachedMaxAttendance,
-                                      activeCheckIn,
+                                ],
+                              )
+                            : Column(
+                                children: [
+                                  _buildProfileHeader(false, statusColor),
+                                  Container(
+                                    color: AppColors.whiteColor,
+                                    child: EmployeeDetailsTabSelector(
+                                      selectedIndex: _tabController.index,
+                                      onTabChanged: (index) {
+                                        _tabController.animateTo(index);
+                                      },
                                     ),
-                                    _buildPayrollTab(
-                                      false,
-                                      pending,
-                                      payrollLogs,
-                                      state.isPaginationLoadingPayroll,
-                                      state.hasReachedMaxPayroll,
-                                      netSalary,
-                                      baseSalary,
-                                      overtimeComp,
-                                      deductions,
-                                      overtimeHours,
-                                      workedHours,
-                                      unpaidCount,
-                                      paidAdvances,
+                                  ),
+                                  Expanded(
+                                    child: TabBarView(
+                                      controller: _tabController,
+                                      children: [
+                                        _buildAttendanceTab(
+                                          false,
+                                          dateFormatter,
+                                          attendanceLogs,
+                                          state.isPaginationLoadingAttendance,
+                                          state.hasReachedMaxAttendance,
+                                          activeCheckIn,
+                                        ),
+                                        _buildPayrollTab(
+                                          false,
+                                          pending,
+                                          payrollLogs,
+                                          state.isPaginationLoadingPayroll,
+                                          state.hasReachedMaxPayroll,
+                                          netSalary,
+                                          baseSalary,
+                                          overtimeComp,
+                                          deductions,
+                                          overtimeHours,
+                                          workedHours,
+                                          unpaidCount,
+                                          paidAdvances,
+                                          attendanceLogs,
+                                        ),
+                                        _buildAdvancesTab(
+                                          false,
+                                          state.advanceLogs,
+                                          state.isPaginationLoadingAdvance,
+                                          state.hasReachedMaxAdvance,
+                                        ),
+                                      ],
                                     ),
-                                    _buildAdvancesTab(
-                                      false,
-                                      state.advanceLogs,
-                                      state.isPaginationLoadingAdvance,
-                                      state.hasReachedMaxAdvance,
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            );
-          }
+                );
+              }
 
-          if (state is EmployeeFailure) {
-            debugPrint(state.message);
-            return Center(
-              child: Text(
-                AppStrings.noData.tr(),
-                style: TextStyles.customStyle(
-                  fontSize: 14,
-                  color: AppColors.error,
-                ),
-              ),
-            );
-          }
+              if (state is EmployeeFailure) {
+                debugPrint(state.message);
+                return Center(
+                  child: Text(
+                    AppStrings.noData.tr(),
+                    style: TextStyles.customStyle(
+                      fontSize: 14,
+                      color: AppColors.error,
+                    ),
+                  ),
+                );
+              }
 
-          return const SizedBox.shrink();
+              return const SizedBox.shrink();
+            },
+          );
         },
-      );
-    },
-  ),
-);
-}
+      ),
+    );
+  }
 
   Widget _buildProfileHeader(bool isDesktop, Color statusColor) {
     return Container(
@@ -618,7 +632,12 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
   ) {
     return Column(
       children: [
-        _buildLiveCheckInCard(dateFormatter, isDesktop, activeCheckIn),
+        _buildLiveCheckInCard(
+          dateFormatter,
+          isDesktop,
+          activeCheckIn,
+          attendanceLogs,
+        ),
         Expanded(
           child: _buildAttendanceList(
             dateFormatter,
@@ -636,6 +655,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
     DateFormat dateFormatter,
     bool isDesktop,
     AttendanceEntity? activeCheckIn,
+    List<AttendanceEntity> attendanceLogs,
   ) {
     return Container(
       width: double.infinity,
@@ -679,8 +699,11 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
           SizedBox(width: isDesktop ? 12 : 12.w),
           Flexible(
             child: ElevatedButton.icon(
-              onPressed: () =>
-                  _showCheckInOutDialog(widget.employee, activeCheckIn),
+              onPressed: () => _showCheckInOutDialog(
+                widget.employee,
+                activeCheckIn,
+                attendanceLogs,
+              ),
               icon: Icon(
                 activeCheckIn != null
                     ? Icons.logout_rounded
@@ -983,6 +1006,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
     double workedHours,
     int unpaidCount,
     List<AdvanceEntity> paidAdvances,
+    List<AttendanceEntity> attendanceLogs,
   ) {
     return CustomScrollView(
       controller: _payrollScrollController,
@@ -1002,6 +1026,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
               unpaidCount,
               isDesktop,
               paidAdvances,
+              attendanceLogs,
             ),
           ),
         ),
@@ -1039,7 +1064,15 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
     int unpaidCount,
     bool isDesktop,
     List<AdvanceEntity> paidAdvances,
+    List<AttendanceEntity> attendanceLogs,
   ) {
+    final today = DateTime.now().day;
+    final start = widget.employee.paymentWindowStart;
+    final end = widget.employee.paymentWindowEnd;
+    final bool isWithinWindow = start <= end
+        ? (today >= start && today <= end)
+        : (today >= start || today <= end);
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -1095,86 +1128,155 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
               ],
             ),
             const SizedBox(height: 10),
-            ElevatedButton.icon(
-              onPressed: () {
-                if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(AppStrings.noInternetConnection.tr()),
-                      backgroundColor: AppColors.error,
+            if (!isWithinWindow) ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: EdgeInsets.all(isDesktop ? 10 : 10.w),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(8.r),
+                  border: Border.all(color: Colors.white38),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.warning_amber_rounded,
+                      color: Colors.white,
+                      size: 16,
                     ),
-                  );
-                  return;
-                }
-                showDialog(
-                  context: context,
-                  builder: (ctx) => PaySalaryDialog(
-                    employee: widget.employee,
-                    initialBaseSalary: baseSalary > 0
-                        ? baseSalary
-                        : widget.employee.salaryAmount,
-                    initialOvertimeHours: overtimeHours,
-                    initialOvertimeRate: pending['overtimeRate'],
-                    initialDeductions: deductions,
-                    paidAdvances: paidAdvances,
-                    onPay: (payroll, paidAdvanceIds) {
-                      context
-                          .read<EmployeeCubit>()
-                          .payPayroll(payroll, advanceIdsToDeduct: paidAdvanceIds)
-                          .then((_) {
-                            String salaryTypeLabel;
-                            switch (payroll.salaryType) {
-                              case 'monthly':
-                                salaryTypeLabel = AppStrings.monthly.tr();
-                                break;
-                              case 'daily':
-                                salaryTypeLabel = AppStrings.daily.tr();
-                                break;
-                              case 'hourly':
-                                salaryTypeLabel = AppStrings.hourly.tr();
-                                break;
-                              default:
-                                salaryTypeLabel = AppStrings.monthly.tr();
-                            }
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        AppStrings.paymentWindowError.tr(
+                          namedArgs: {
+                            'start': start.toString(),
+                            'end': end.toString(),
+                          },
+                        ),
+                        style: TextStyles.customStyle(
+                          fontSize: 11,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            ElevatedButton.icon(
+              onPressed: !isWithinWindow
+                  ? null
+                  : () {
+                      if (context.read<ConnectivityCubit>().state
+                          is ConnectivityDisconnected) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(AppStrings.noInternetConnection.tr()),
+                            backgroundColor: AppColors.error,
+                          ),
+                        );
+                        return;
+                      }
 
-                            final categoryName = AppStrings.salaryExpenseFor.tr(
-                              namedArgs: {
-                                'type': salaryTypeLabel,
-                                'name': payroll.employeeName,
-                              },
-                            );
+                      if (unpaidCount == 0 &&
+                          widget.employee.outstandingBalance <= 0) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(AppStrings.noPendingRecords.tr()),
+                            backgroundColor: AppColors.error,
+                          ),
+                        );
+                        return;
+                      }
 
-                            final expense = ExpenseEntity(
-                              uid: AppStrings.userToken,
-                              amount: payroll.netSalary,
-                              category: categoryName,
-                              description: payroll.notes,
-                              createdAt: payroll.paymentDate,
-                              monthKey: payroll.monthKey,
-                            );
-                            if (!mounted) return;
-                            context.read<ExpenseCubit>().addExpense(expense);
-                          });
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => PaySalaryDialog(
+                          employee: widget.employee,
+                          initialBaseSalary: baseSalary,
+                          initialOvertimeHours: overtimeHours,
+                          initialOvertimeRate: pending['overtimeRate'],
+                          initialDeductions: deductions,
+                          paidAdvances: paidAdvances,
+                          onPay: (payroll, paidAdvanceIds) {
+                            // Collect IDs of unpaid, completed attendance records
+                            final unpaidAttendanceIds = attendanceLogs
+                                .where(
+                                  (log) =>
+                                      !log.isPaid &&
+                                      log.checkOut != null &&
+                                      log.id != null,
+                                )
+                                .map((log) => log.id!)
+                                .toList();
+                            context
+                                .read<EmployeeCubit>()
+                                .payPayroll(
+                                  payroll,
+                                  advanceIdsToDeduct: paidAdvanceIds,
+                                  attendanceIds: unpaidAttendanceIds,
+                                )
+                                .then((_) {
+                                  String salaryTypeLabel;
+                                  switch (payroll.salaryType) {
+                                    case 'monthly':
+                                      salaryTypeLabel = AppStrings.monthly.tr();
+                                      break;
+                                    case 'daily':
+                                      salaryTypeLabel = AppStrings.daily.tr();
+                                      break;
+                                    case 'hourly':
+                                      salaryTypeLabel = AppStrings.hourly.tr();
+                                      break;
+                                    default:
+                                      salaryTypeLabel = AppStrings.monthly.tr();
+                                  }
+
+                                  final categoryName = AppStrings
+                                      .salaryExpenseFor
+                                      .tr(
+                                        namedArgs: {
+                                          'type': salaryTypeLabel,
+                                          'name': payroll.employeeName,
+                                        },
+                                      );
+
+                                  final expense = ExpenseEntity(
+                                    uid: AppStrings.userToken,
+                                    amount: payroll.netSalary,
+                                    category: categoryName,
+                                    description: payroll.notes,
+                                    createdAt: payroll.paymentDate,
+                                    monthKey: payroll.monthKey,
+                                  );
+                                  if (!mounted) return;
+                                  context.read<ExpenseCubit>().addExpense(
+                                    expense,
+                                  );
+                                });
+                          },
+                        ),
+                      );
                     },
-                  ),
-                );
-              },
-              icon: const Icon(
+              icon: Icon(
                 Icons.payment_rounded,
                 size: 16,
-                color: Colors.white,
+                color: AppColors.black,
               ),
               label: Text(
                 AppStrings.paySalary.tr(),
                 style: TextStyles.customStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: AppColors.black,
                 ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.errorContainer,
                 foregroundColor: Colors.white,
+                disabledBackgroundColor: Colors.white24,
+                disabledForegroundColor: Colors.white54,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10.r),
@@ -1195,19 +1297,21 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                     "${baseSalary.toSmartAmount()} ${AppStrings.egp.tr()}",
                   ),
                 ),
-                Expanded(
-                  child: _buildPendingMetricItem(
-                    AppStrings.pendingOvertimeComp.tr(),
-                    "${overtimeComp.toSmartAmount()} ${AppStrings.egp.tr()}\n ($overtimeHours ${AppStrings.hours.tr()})",
+                if (widget.employee.salaryType != 'hourly') ...[
+                  Expanded(
+                    child: _buildPendingMetricItem(
+                      AppStrings.pendingOvertimeComp.tr(),
+                      "${overtimeComp.toSmartAmount()} ${AppStrings.egp.tr()}\n (${overtimeHours.toSmartAmount()} ${AppStrings.hours.tr()})",
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: _buildPendingMetricItem(
-                    AppStrings.pendingDeductionsEst.tr(),
-                    "-${deductions.toSmartAmount()} ${AppStrings.egp.tr()}",
-                    isDeduction: true,
+                  Expanded(
+                    child: _buildPendingMetricItem(
+                      AppStrings.pendingDeductionsEst.tr(),
+                      "-${deductions.toSmartAmount()} ${AppStrings.egp.tr()}",
+                      isDeduction: true,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
             SizedBox(height: isDesktop ? 8 : 8.h),
@@ -1466,6 +1570,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
   void _showCheckInOutDialog(
     EmployeeEntity employee,
     AttendanceEntity? activeCheckIn,
+    List<AttendanceEntity> attendanceLogs,
   ) {
     if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1476,6 +1581,26 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
       );
       return;
     }
+
+    double previousWorkedHoursToday = 0.0;
+    double previousOvertimeToday = 0.0;
+    double previousDeductionToday = 0.0;
+
+    if (activeCheckIn != null) {
+      final todayStr = DateFormat('yyyy-MM-dd').format(activeCheckIn.checkIn);
+      for (final log in attendanceLogs) {
+        if (log.id != activeCheckIn.id && log.checkOut != null) {
+          final logDateStr = DateFormat('yyyy-MM-dd').format(log.checkIn);
+          if (logDateStr == todayStr) {
+            final diff = log.checkOut!.difference(log.checkIn).inMinutes / 60.0;
+            previousWorkedHoursToday += diff;
+            previousOvertimeToday += log.overtimeHours;
+            previousDeductionToday += log.deductionHours;
+          }
+        }
+      }
+    }
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -1483,6 +1608,9 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
         return CheckInOutDialog(
           employee: employee,
           activeAttendance: activeCheckIn,
+          previousWorkedHoursToday: previousWorkedHoursToday,
+          previousOvertimeToday: previousOvertimeToday,
+          previousDeductionToday: previousDeductionToday,
           onCheckIn: (attendance) {
             context.read<EmployeeCubit>().checkIn(attendance);
           },

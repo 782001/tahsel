@@ -16,6 +16,8 @@ class AttendanceModel extends AttendanceEntity {
     required super.notes,
     super.expectedWorkingHours,
     super.deductionHours,
+    super.isPaid,
+    super.payrollId,
   });
 
   factory AttendanceModel.fromJson(Map<String, dynamic> json, String id) {
@@ -45,7 +47,8 @@ class AttendanceModel extends AttendanceEntity {
     } else if (json['date'] is Timestamp) {
       // ignore: unused_local_variable
       final dateObj = (json['date'] as Timestamp).toDate().toLocal();
-      dateStr = "\${dateObj.year}-\${dateObj.month.toString().padLeft(2, '0')}-\${dateObj.day.toString().padLeft(2, '0')}";
+      dateStr =
+          "\${dateObj.year}-\${dateObj.month.toString().padLeft(2, '0')}-\${dateObj.day.toString().padLeft(2, '0')}";
     } else {
       dateStr = json['date']?.toString() ?? '';
     }
@@ -62,8 +65,11 @@ class AttendanceModel extends AttendanceEntity {
       overtimeHours: (json['overtimeHours'] as num?)?.toDouble() ?? 0.0,
       lateMinutes: (json['lateMinutes'] as num?)?.toInt() ?? 0,
       notes: json['notes'] as String? ?? '',
-      expectedWorkingHours: (json['expectedWorkingHours'] as num?)?.toDouble() ?? 8.0,
+      expectedWorkingHours:
+          (json['expectedWorkingHours'] as num?)?.toDouble() ?? 8.0,
       deductionHours: (json['deductionHours'] as num?)?.toDouble() ?? 0.0,
+      isPaid: json['isPaid'] as bool? ?? false,
+      payrollId: json['payrollId'] as String?,
     );
   }
 
@@ -81,6 +87,8 @@ class AttendanceModel extends AttendanceEntity {
       'notes': notes,
       'expectedWorkingHours': expectedWorkingHours,
       'deductionHours': deductionHours,
+      'isPaid': isPaid,
+      'payrollId': payrollId,
     };
   }
 
@@ -99,6 +107,8 @@ class AttendanceModel extends AttendanceEntity {
       notes: entity.notes,
       expectedWorkingHours: entity.expectedWorkingHours,
       deductionHours: entity.deductionHours,
+      isPaid: entity.isPaid,
+      payrollId: entity.payrollId,
     );
   }
 }

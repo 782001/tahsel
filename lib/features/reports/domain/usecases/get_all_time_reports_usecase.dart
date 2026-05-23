@@ -9,7 +9,8 @@ class GetAllTimeReportsParams {
   GetAllTimeReportsParams({this.forceRefresh = false});
 }
 
-class GetAllTimeReportsUseCase implements BaseUseCase<ReportsEntity, GetAllTimeReportsParams> {
+class GetAllTimeReportsUseCase
+    implements BaseUseCase<ReportsEntity, GetAllTimeReportsParams> {
   final ReportsRepository repository;
 
   GetAllTimeReportsUseCase(this.repository);

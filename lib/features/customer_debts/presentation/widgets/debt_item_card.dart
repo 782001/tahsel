@@ -24,7 +24,6 @@ class DebtItemCard extends StatelessWidget {
     this.onRefresh,
   });
 
-
   @override
   Widget build(BuildContext context) {
     final bool isSettled = item.remainingDebt <= 0;
@@ -42,7 +41,6 @@ class DebtItemCard extends StatelessWidget {
           onRefresh!(result);
         }
       },
-
 
       borderRadius: BorderRadius.circular(16.r),
       child: Container(

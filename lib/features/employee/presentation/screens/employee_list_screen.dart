@@ -10,11 +10,8 @@ import 'package:tahsel/features/employee/domain/entities/employee_entity.dart';
 import 'package:tahsel/features/employee/presentation/cubit/employee_cubit.dart';
 import 'package:tahsel/features/employee/presentation/cubit/employee_state.dart';
 import 'package:tahsel/features/employee/presentation/widgets/add_edit_employee_dialog.dart';
-import 'package:tahsel/features/employee/presentation/widgets/check_in_out_dialog.dart';
-import 'package:tahsel/features/employee/presentation/widgets/pay_salary_dialog.dart';
-import 'package:tahsel/features/expenses/domain/entities/expense_entity.dart';
-import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
-import 'package:tahsel/features/offline_sync/data/models/offline_record.dart';
+// import 'package:tahsel/features/employee/presentation/widgets/check_in_out_dialog.dart';
+
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/routes/app_routes.dart';
@@ -31,7 +28,6 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedStatusFilter = 'all';
   List<EmployeeEntity> _cachedEmployees = [];
-  List<OfflineRecord> _cachedPendingRecords = [];
 
   @override
   void initState() {
@@ -136,10 +132,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
 
                   if (state is EmployeeFetchSuccess) {
                     _cachedEmployees = state.employees;
-                    _cachedPendingRecords = state.pendingRecords;
                   }
-
-                  final unsyncedCount = _cachedPendingRecords.length;
                   final filteredList = _cachedEmployees.where((emp) {
                     final matchQuery =
                         emp.name.toLowerCase().contains(
@@ -241,46 +234,6 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                               ),
                             )
                           else ...[
-                            if (unsyncedCount > 0)
-                              SliverToBoxAdapter(
-                                child: Container(
-                                  width: double.infinity,
-                                  color: AppColors.warning.withValues(
-                                    alpha: 0.1,
-                                  ),
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 16.w,
-                                    vertical: 8.h,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.sync_problem_rounded,
-                                        color: AppColors.warning,
-                                        size: 18,
-                                      ),
-                                      SizedBox(width: 8.w),
-                                      Expanded(
-                                        child: Text(
-                                          AppStrings
-                                              .unsyncedOfflineRecordsWarning
-                                              .tr(
-                                                namedArgs: {
-                                                  'count': unsyncedCount
-                                                      .toString(),
-                                                },
-                                              ),
-                                          style: TextStyles.customStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.warning,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
                             SliverPadding(
                               padding: EdgeInsets.symmetric(
                                 horizontal: isDesktop ? 24.w : 16.w,
@@ -655,50 +608,41 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
     );
   }
 
-  void _showCheckInOutDialog(EmployeeEntity employee) {
-    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppStrings.noInternetConnection.tr()),
-          backgroundColor: AppColors.error,
-        ),
-      );
-      return;
-    }
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) {
-        return CheckInOutDialog(
-          employee: employee,
-          onCheckIn: (attendance) {
-            context.read<EmployeeCubit>().checkIn(attendance);
-          },
-          onCheckOut:
-              ({
-                required String attendanceId,
-                required DateTime checkOutTime,
-                required double overtimeHours,
-                required double deductionHours,
-                required int lateMinutes,
-                required String status,
-                required String notes,
-              }) {
-                context.read<EmployeeCubit>().checkOut(
-                  uid: AppStrings.userToken,
-                  attendanceId: attendanceId,
-                  checkOutTime: checkOutTime,
-                  overtimeHours: overtimeHours,
-                  deductionHours: deductionHours,
-                  lateMinutes: lateMinutes,
-                  status: status,
-                  notes: notes,
-                );
-              },
-        );
-      },
-    );
-  }
+  // void _showCheckInOutDialog(EmployeeEntity employee) {
+  //     showDialog(
+  //       context: context,
+  //       barrierDismissible: false,
+  //       builder: (ctx) {
+  //         return CheckInOutDialog(
+  //           employee: employee,
+  //           onCheckIn: (attendance) {
+  //             context.read<EmployeeCubit>().checkIn(attendance);
+  //           },
+  //           onCheckOut:
+  //               ({
+  //                 required String attendanceId,
+  //                 required DateTime checkOutTime,
+  //                 required double overtimeHours,
+  //                 required double deductionHours,
+  //                 required int lateMinutes,
+  //                 required String status,
+  //                 required String notes,
+  //               }) {
+  //                 context.read<EmployeeCubit>().checkOut(
+  //                   uid: AppStrings.userToken,
+  //                   attendanceId: attendanceId,
+  //                   checkOutTime: checkOutTime,
+  //                   overtimeHours: overtimeHours,
+  //                   deductionHours: deductionHours,
+  //                   lateMinutes: lateMinutes,
+  //                   status: status,
+  //                   notes: notes,
+  //                 );
+  //               },
+  //         );
+  //       },
+  //     );
+  //   }
 
   String _getFilterTranslation(String filter) {
     switch (filter) {
@@ -713,66 +657,5 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
       default:
         return filter.tr();
     }
-  }
-
-  void _showPaySalaryDialog(EmployeeEntity employee) {
-    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppStrings.noInternetConnection.tr()),
-          backgroundColor: AppColors.error,
-        ),
-      );
-      return;
-    }
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) {
-        return PaySalaryDialog(
-          employee: employee,
-          onPay: (payroll, paidAdvanceIds) {
-            context
-                .read<EmployeeCubit>()
-                .payPayroll(payroll, advanceIdsToDeduct: paidAdvanceIds)
-                .then((_) {
-                  // Build localized salary type label
-                  String salaryTypeLabel;
-                  switch (payroll.salaryType) {
-                    case 'monthly':
-                      salaryTypeLabel = AppStrings.monthly.tr();
-                      break;
-                    case 'daily':
-                      salaryTypeLabel = AppStrings.daily.tr();
-                      break;
-                    case 'hourly':
-                      salaryTypeLabel = AppStrings.hourly.tr();
-                      break;
-                    default:
-                      salaryTypeLabel = AppStrings.monthly.tr();
-                  }
-
-                  final categoryName = AppStrings.salaryExpenseFor.tr(
-                    namedArgs: {
-                      'type': salaryTypeLabel,
-                      'name': payroll.employeeName,
-                    },
-                  );
-
-                  final expense = ExpenseEntity(
-                    uid: AppStrings.userToken,
-                    amount: payroll.netSalary,
-                    category: categoryName,
-                    description: payroll.notes,
-                    createdAt: payroll.paymentDate,
-                    monthKey: payroll.monthKey,
-                  );
-                  if (!mounted) return;
-                  context.read<ExpenseCubit>().addExpense(expense);
-                });
-          },
-        );
-      },
-    );
   }
 }

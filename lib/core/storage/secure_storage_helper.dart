@@ -47,7 +47,10 @@ class SecureStorageHelper {
     if (_isMobile) {
       await _vault.clearAll();
     } else {
-      final keys = _prefs.getKeys().where((k) => k.startsWith('secure_')).toList();
+      final keys = _prefs
+          .getKeys()
+          .where((k) => k.startsWith('secure_'))
+          .toList();
       for (var key in keys) {
         await _prefs.remove(key);
       }

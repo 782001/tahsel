@@ -4,10 +4,7 @@ class PaginationParams {
   final int limit;
   final DocumentSnapshot? lastDocument;
 
-  const PaginationParams({
-    this.limit = 15,
-    this.lastDocument,
-  });
+  const PaginationParams({this.limit = 15, this.lastDocument});
 }
 
 class PaginatedResult<T> {

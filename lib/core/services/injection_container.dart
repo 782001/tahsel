@@ -175,10 +175,7 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => CheckUpdateUseCase(sl()));
   sl.registerLazySingleton(() => DownloadUpdateUseCase(sl()));
   sl.registerFactory(
-    () => UpdateCubit(
-      checkUpdateUseCase: sl(),
-      downloadUpdateUseCase: sl(),
-    ),
+    () => UpdateCubit(checkUpdateUseCase: sl(), downloadUpdateUseCase: sl()),
   );
 
   // PRELOAD: Session data for offline-first start

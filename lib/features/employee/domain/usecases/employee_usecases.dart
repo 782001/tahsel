@@ -1,6 +1,5 @@
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failures.dart';
-import '../../../offline_sync/data/models/offline_record.dart';
+import 'package:tahsel/core/error/failures.dart';
 import '../entities/employee_entity.dart';
 import '../entities/attendance_entity.dart';
 import '../entities/payroll_entity.dart';
@@ -150,8 +149,16 @@ class PaySalaryUseCase {
   final EmployeeRepository repository;
   PaySalaryUseCase({required this.repository});
 
-  Future<Either<Failure, String>> call(PayrollEntity payroll) {
-    return repository.paySalary(payroll);
+  Future<Either<Failure, String>> call(
+    PayrollEntity payroll, {
+    List<String> attendanceIds = const [],
+    List<String> advanceIds = const [],
+  }) {
+    return repository.paySalary(
+      payroll,
+      attendanceIds: attendanceIds,
+      advanceIds: advanceIds,
+    );
   }
 }
 
@@ -183,15 +190,6 @@ class GetPayrollUseCase {
   }
 }
 
-class GetPendingEmployeeRecordsUseCase {
-  final EmployeeRepository repository;
-  GetPendingEmployeeRecordsUseCase({required this.repository});
-
-  Future<Either<Failure, List<OfflineRecord>>> call() {
-    return repository.getPendingEmployeeRecords();
-  }
-}
-
 class RequestAdvanceUseCase {
   final EmployeeRepository repository;
   RequestAdvanceUseCase({required this.repository});
@@ -200,7 +198,6 @@ class RequestAdvanceUseCase {
     return repository.requestAdvance(advance);
   }
 }
-
 
 class SettleAdvancesParams {
   final String uid;

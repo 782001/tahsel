@@ -36,9 +36,7 @@ class LogoutButton extends StatelessWidget {
               }
             },
             style: TextButton.styleFrom(
-              padding: EdgeInsets.symmetric(
-                vertical: isDesktop ? 16 : 16.h,
-              ),
+              padding: EdgeInsets.symmetric(vertical: isDesktop ? 16 : 16.h),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(isDesktop ? 12 : 12.r),
                 side: BorderSide(color: AppColors.error),

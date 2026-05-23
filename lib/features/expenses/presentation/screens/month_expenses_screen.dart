@@ -252,20 +252,28 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
                                   physics: const NeverScrollableScrollPhysics(),
                                   gridDelegate:
                                       const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 2,
-                                    mainAxisExtent: 120,
-                                    crossAxisSpacing: 16,
-                                    mainAxisSpacing: 16,
-                                  ),
+                                        crossAxisCount: 2,
+                                        mainAxisExtent: 120,
+                                        crossAxisSpacing: 16,
+                                        mainAxisSpacing: 16,
+                                      ),
                                   itemCount: item.length,
                                   itemBuilder: (context, idx) =>
-                                      _buildExpenseItem(context, item[idx], isDesktop),
+                                      _buildExpenseItem(
+                                        context,
+                                        item[idx],
+                                        isDesktop,
+                                      ),
                                 );
                               }
 
                               // Expense Item (Mobile)
                               if (item is ExpenseEntity) {
-                                return _buildExpenseItem(context, item, isDesktop);
+                                return _buildExpenseItem(
+                                  context,
+                                  item,
+                                  isDesktop,
+                                );
                               }
                               return const SizedBox.shrink();
                             }, childCount: items.length),
@@ -324,13 +332,8 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
         title: categoryStr,
         subtitle: expense.description,
         amount: expense.amount,
-        date: DateFormatter.formatNumericDate(
-          expense.createdAt,
-        ),
-        onDelete: () => _confirmDelete(
-          context,
-          expense.id ?? '',
-        ),
+        date: DateFormatter.formatNumericDate(expense.createdAt),
+        onDelete: () => _confirmDelete(context, expense.id ?? ''),
       ),
     );
   }
@@ -343,35 +346,36 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
 
-        child: AlertDialog(
-          title: Text(AppStrings.confirmDeleteTitle.tr()),
-          content: Text(AppStrings.confirmDeleteMessage.tr()),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(
-                AppStrings.cancel.tr(),
-                style: TextStyles.customStyle(color: AppColors.blackLight),
+          child: AlertDialog(
+            title: Text(AppStrings.confirmDeleteTitle.tr()),
+            content: Text(AppStrings.confirmDeleteMessage.tr()),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(
+                  AppStrings.cancel.tr(),
+                  style: TextStyles.customStyle(color: AppColors.blackLight),
+                ),
               ),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                expenseCubit.deleteExpense(
-                  AppStrings.userToken,
-                  expenseId,
-                  monthKey: widget.monthKey,
-                  monthName: widget.monthName,
-                );
-              },
-              child: Text(
-                AppStrings.delete.tr(),
-                style: TextStyles.customStyle(color: AppColors.error),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  expenseCubit.deleteExpense(
+                    AppStrings.userToken,
+                    expenseId,
+                    monthKey: widget.monthKey,
+                    monthName: widget.monthName,
+                  );
+                },
+                child: Text(
+                  AppStrings.delete.tr(),
+                  style: TextStyles.customStyle(color: AppColors.error),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-     ) );
+    );
   }
 }

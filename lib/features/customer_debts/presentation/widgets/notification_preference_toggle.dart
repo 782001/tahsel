@@ -110,7 +110,9 @@ class NotificationPreferenceToggle extends StatelessWidget {
                     foregroundColor: AppColors.disabledColor,
                     side: BorderSide.none,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(isDesktop ? 12 : 12.r),
+                      borderRadius: BorderRadius.circular(
+                        isDesktop ? 12 : 12.r,
+                      ),
                     ),
                   ),
                 ),

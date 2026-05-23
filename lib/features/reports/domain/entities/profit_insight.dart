@@ -7,7 +7,8 @@ class ProfitInsight extends Equatable {
   final double currentValue;
   final double previousValue;
   final double difference;
-  final double netProfit; // Keep for backward compatibility if needed, but netProfit is usually currentValue
+  final double
+  netProfit; // Keep for backward compatibility if needed, but netProfit is usually currentValue
   final ProfitInsightStatus status;
 
   const ProfitInsight({
@@ -21,11 +22,11 @@ class ProfitInsight extends Equatable {
 
   @override
   List<Object?> get props => [
-        messageKey,
-        currentValue,
-        previousValue,
-        difference,
-        netProfit,
-        status,
-      ];
+    messageKey,
+    currentValue,
+    previousValue,
+    difference,
+    netProfit,
+    status,
+  ];
 }

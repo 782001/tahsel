@@ -42,31 +42,28 @@ class BuildMyDebtDetailsTransactionList extends StatelessWidget {
             crossAxisSpacing: 16,
             mainAxisSpacing: 12,
           ),
-          delegate: SliverChildBuilderDelegate(
-            (context, index) {
-              if (index >= transactions.length) {
-                if (index == transactions.length && isPaginationLoading) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primaryColor,
-                        strokeWidth: 4,
-                      ),
+          delegate: SliverChildBuilderDelegate((context, index) {
+            if (index >= transactions.length) {
+              if (index == transactions.length && isPaginationLoading) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.primaryColor,
+                      strokeWidth: 4,
                     ),
-                  );
-                }
-                return const SizedBox(height: 50);
+                  ),
+                );
               }
-              final transaction = transactions[index];
-              return MyDebtDetailsTransactionItem(
-                transaction: transaction,
-                debtId: widget.debtId,
-                customerName: debt?.personName ?? '',
-              );
-            },
-            childCount: transactions.length + 2,
-          ),
+              return const SizedBox(height: 50);
+            }
+            final transaction = transactions[index];
+            return MyDebtDetailsTransactionItem(
+              transaction: transaction,
+              debtId: widget.debtId,
+              customerName: debt?.personName ?? '',
+            );
+          }, childCount: transactions.length + 2),
         ),
       );
     }

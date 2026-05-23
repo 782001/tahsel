@@ -71,7 +71,8 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
   }
 
   @override
-  Future<Either<Failure, PaginatedResult<MyDebtPersonEntity>>> getMyDebtPersonsPaginated(
+  Future<Either<Failure, PaginatedResult<MyDebtPersonEntity>>>
+  getMyDebtPersonsPaginated(
     String uid, {
     required int limit,
     DocumentSnapshot? lastDocument,
@@ -92,12 +93,14 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
         lastDocument: lastDocument,
         forceRefresh: forceRefresh,
       );
-      
-      return Right(PaginatedResult(
-        items: paginatedResult.items,
-        lastDocument: paginatedResult.lastDocument,
-        hasMore: paginatedResult.hasMore,
-      ));
+
+      return Right(
+        PaginatedResult(
+          items: paginatedResult.items,
+          lastDocument: paginatedResult.lastDocument,
+          hasMore: paginatedResult.hasMore,
+        ),
+      );
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -399,7 +402,8 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
   }
 
   @override
-  Future<Either<Failure, PaginatedResult<PaymentEntity>>> getMyDebtItemPaymentsPaginated(
+  Future<Either<Failure, PaginatedResult<PaymentEntity>>>
+  getMyDebtItemPaymentsPaginated(
     String uid,
     String debtId, {
     required int limit,
@@ -407,13 +411,14 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
     bool forceRefresh = false,
   }) async {
     try {
-      final paginatedResult = await itemRemoteDataSource.getDebtItemPaymentsPaginated(
-        uid,
-        debtId,
-        limit: limit,
-        lastDocument: lastDocument,
-        forceRefresh: forceRefresh,
-      );
+      final paginatedResult = await itemRemoteDataSource
+          .getDebtItemPaymentsPaginated(
+            uid,
+            debtId,
+            limit: limit,
+            lastDocument: lastDocument,
+            forceRefresh: forceRefresh,
+          );
 
       final entities = paginatedResult.items
           .map(
@@ -430,11 +435,13 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
           )
           .toList();
 
-      return Right(PaginatedResult(
-        items: entities,
-        lastDocument: paginatedResult.lastDocument,
-        hasMore: paginatedResult.hasMore,
-      ));
+      return Right(
+        PaginatedResult(
+          items: entities,
+          lastDocument: paginatedResult.lastDocument,
+          hasMore: paginatedResult.hasMore,
+        ),
+      );
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

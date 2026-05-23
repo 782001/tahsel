@@ -6,7 +6,6 @@ import '../entities/payment_entity.dart';
 import '../../../../core/error/failures.dart';
 import '../entities/monthly_collected_amount.dart';
 
-
 abstract class DebtRepository {
   Future<Either<Failure, String>> addDebt(DebtEntity debt);
   Future<Either<Failure, List<DebtEntity>>> getDebts(
@@ -61,7 +60,8 @@ abstract class DebtRepository {
     bool forceRefresh = false,
   });
 
-  Future<Either<Failure, PaginatedResult<PaymentEntity>>> getDebtTransactionsPaginated(
+  Future<Either<Failure, PaginatedResult<PaymentEntity>>>
+  getDebtTransactionsPaginated(
     String uid,
     String debtId, {
     int limit = 15,
@@ -73,7 +73,8 @@ abstract class DebtRepository {
     String customerName,
   );
 
-  Future<Either<Failure, PaginatedResult<PaymentEntity>>> getCustomerAllPaymentsPaginated(
+  Future<Either<Failure, PaginatedResult<PaymentEntity>>>
+  getCustomerAllPaymentsPaginated(
     String uid,
     String customerName, {
     int limit = 15,
@@ -81,9 +82,11 @@ abstract class DebtRepository {
   });
 
   Future<Either<Failure, List<PaymentEntity>>> getAllUserPayments(String uid);
-  Future<Either<Failure, List<MonthlyCollectedAmount>>> getMonthlyCollectedAmounts(String uid);
+  Future<Either<Failure, List<MonthlyCollectedAmount>>>
+  getMonthlyCollectedAmounts(String uid);
 
-  Future<Either<Failure, PaginatedResult<PaymentEntity>>> getAllUserPaymentsPaginated(
+  Future<Either<Failure, PaginatedResult<PaymentEntity>>>
+  getAllUserPaymentsPaginated(
     String uid, {
     int limit = 15,
     DocumentSnapshot? lastDocument,

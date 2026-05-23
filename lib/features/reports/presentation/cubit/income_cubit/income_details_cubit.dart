@@ -39,11 +39,13 @@ class IncomeDetailsCubit extends Cubit<IncomeDetailsState> {
       (data) {
         final operations = data.$1;
         final lastDoc = data.$2;
-        emit(IncomeDetailsLoaded(
-          operations: operations,
-          hasReachedMax: operations.length < 15,
-          lastDoc: lastDoc,
-        ));
+        emit(
+          IncomeDetailsLoaded(
+            operations: operations,
+            hasReachedMax: operations.length < 15,
+            lastDoc: lastDoc,
+          ),
+        );
       },
     );
   }
@@ -73,15 +75,18 @@ class IncomeDetailsCubit extends Cubit<IncomeDetailsState> {
       (data) {
         final newOperations = data.$1;
         final lastDoc = data.$2;
-        
+
         if (newOperations.isEmpty) {
           emit(currentState.copyWith(hasReachedMax: true));
         } else {
-          emit(currentState.copyWith(
-            operations: List.of(currentState.operations)..addAll(newOperations),
-            hasReachedMax: newOperations.length < 15,
-            lastDoc: lastDoc,
-          ));
+          emit(
+            currentState.copyWith(
+              operations: List.of(currentState.operations)
+                ..addAll(newOperations),
+              hasReachedMax: newOperations.length < 15,
+              lastDoc: lastDoc,
+            ),
+          );
         }
       },
     );

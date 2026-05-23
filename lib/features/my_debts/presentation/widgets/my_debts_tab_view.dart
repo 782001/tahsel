@@ -59,7 +59,10 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView>
     final uid = AppStrings.userToken;
     if (uid.isNotEmpty) {
       context.read<MyDebtsCubit>().loadPersons(uid, forceRefresh: forceRefresh);
-      context.read<MyDebtsSummaryCubit>().loadSummary(uid, forceRefresh: forceRefresh);
+      context.read<MyDebtsSummaryCubit>().loadSummary(
+        uid,
+        forceRefresh: forceRefresh,
+      );
     }
   }
 
@@ -67,7 +70,7 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView>
   Widget build(BuildContext context) {
     super.build(context);
     final isDesktop = ResponsiveLayout.isDesktop(context);
-    
+
     return Scaffold(
       backgroundColor: AppColors.transparent,
       floatingActionButton: Builder(
@@ -137,7 +140,10 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView>
                       state.persons.isEmpty)
                     if (isDesktop)
                       SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 8,
+                        ),
                         sliver: SliverToBoxAdapter(
                           child: GridView.builder(
                             shrinkWrap: true,
@@ -150,7 +156,8 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView>
                                   mainAxisSpacing: 16,
                                 ),
                             itemCount: 4,
-                            itemBuilder: (context, index) => const MyDebtCardSkeleton(),
+                            itemBuilder: (context, index) =>
+                                const MyDebtCardSkeleton(),
                           ),
                         ),
                       )
@@ -176,7 +183,10 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView>
                     )
                   else if (isDesktop)
                     SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 8,
+                      ),
                       sliver: SliverToBoxAdapter(
                         child: Column(
                           children: [
@@ -198,7 +208,9 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView>
                             ),
                             if (state.isPaginationLoading)
                               Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 32),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 32,
+                                ),
                                 child: Center(
                                   child: CircularProgressIndicator(
                                     color: AppColors.primaryColor,

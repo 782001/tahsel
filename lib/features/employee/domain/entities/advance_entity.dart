@@ -27,15 +27,15 @@ class AdvanceEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        employeeId,
-        employeeName,
-        uid,
-        amount,
-        date,
-        status,
-        payrollId,
-        notes,
-        createdAt,
-      ];
+    id,
+    employeeId,
+    employeeName,
+    uid,
+    amount,
+    date,
+    status,
+    payrollId,
+    notes,
+    createdAt,
+  ];
 }

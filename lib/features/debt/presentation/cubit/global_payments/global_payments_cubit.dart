@@ -98,9 +98,9 @@ class GlobalPaymentsCubit extends Cubit<GlobalPaymentsState> {
         // Process only the NEW payments for total, then merge
         final processedData = await compute(_processPayments, newPayments);
 
-        final updatedTransactions =
-            List<PaymentEntity>.from(currentState.transactions)
-              ..addAll(processedData.transactions);
+        final updatedTransactions = List<PaymentEntity>.from(
+          currentState.transactions,
+        )..addAll(processedData.transactions);
 
         emit(
           GlobalPaymentsLoaded(

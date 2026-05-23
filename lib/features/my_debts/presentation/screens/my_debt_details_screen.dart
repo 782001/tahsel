@@ -392,15 +392,15 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
                                             AppStrings.partialPayment.tr(),
                                           ),
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: AppColors.primaryColor,
+                                            backgroundColor:
+                                                AppColors.primaryColor,
                                             foregroundColor: Colors.white,
                                             padding: EdgeInsets.symmetric(
                                               vertical: 12.h,
                                             ),
                                             shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(
-                                                12.r,
-                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(12.r),
                                             ),
                                           ),
                                         ),
@@ -429,14 +429,14 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
                                             side: BorderSide(
                                               color: AppColors.primaryColor,
                                             ),
-                                            foregroundColor: AppColors.primaryColor,
+                                            foregroundColor:
+                                                AppColors.primaryColor,
                                             padding: EdgeInsets.symmetric(
                                               vertical: 12.h,
                                             ),
                                             shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(
-                                                12.r,
-                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(12.r),
                                             ),
                                           ),
                                         ),
@@ -516,14 +516,16 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
                             vertical: 8,
                           ),
                           sliver: SliverGrid(
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              mainAxisExtent: 270,
-                              crossAxisSpacing: 16,
-                              mainAxisSpacing: 16,
-                            ),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  mainAxisExtent: 270,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 16,
+                                ),
                             delegate: SliverChildBuilderDelegate(
-                              (context, index) => const TransactionCardSkeleton(),
+                              (context, index) =>
+                                  const TransactionCardSkeleton(),
                               childCount: 4,
                             ),
                           ),
@@ -533,62 +535,63 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
                           padding: EdgeInsets.symmetric(horizontal: 16.w),
                           sliver: SliverList(
                             delegate: SliverChildBuilderDelegate(
-                              (context, index) => const TransactionCardSkeleton(),
+                              (context, index) =>
+                                  const TransactionCardSkeleton(),
                               childCount: 3,
                             ),
                           ),
                         )
-                    else
-                      if (isDesktop)
-                        SliverPadding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: MediaQuery.of(context).size.width > 800
-                                ? (MediaQuery.of(context).size.width - 800) / 2
-                                : 32.w,
-                            vertical: 8,
-                          ),
-                          sliver: SliverGrid(
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              mainAxisExtent: 270,
-                              crossAxisSpacing: 16,
-                              mainAxisSpacing: 16,
-                            ),
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                final item = state.items[index];
-                                return MyDebtItemCard(
-                                  item: item,
-                                  index: index + 1,
-                                  onPayPartial: (i) =>
-                                      _onPayItemPartial(context, i),
-                                  onPayFull: (i) => _onPayItemFull(context, i),
-                                  onDelete: (i) => _onDeleteItem(context, i),
-                                  onRefresh: _loadData,
-                                );
-                              },
-                              childCount: state.items.length,
-                            ),
-                          ),
-                        )
-                      else
-                        SliverList(
-                          delegate: SliverChildBuilderDelegate((context, index) {
-                            final item = state.items[index];
-                            return Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 24.w),
-                              child: MyDebtItemCard(
-                                item: item,
-                                index: index + 1,
-                                onPayPartial: (i) =>
-                                    _onPayItemPartial(context, i),
-                                onPayFull: (i) => _onPayItemFull(context, i),
-                                onDelete: (i) => _onDeleteItem(context, i),
-                                onRefresh: _loadData,
+                    else if (isDesktop)
+                      SliverPadding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: MediaQuery.of(context).size.width > 800
+                              ? (MediaQuery.of(context).size.width - 800) / 2
+                              : 32.w,
+                          vertical: 8,
+                        ),
+                        sliver: SliverGrid(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisExtent: 270,
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
                               ),
+                          delegate: SliverChildBuilderDelegate((
+                            context,
+                            index,
+                          ) {
+                            final item = state.items[index];
+                            return MyDebtItemCard(
+                              item: item,
+                              index: index + 1,
+                              onPayPartial: (i) =>
+                                  _onPayItemPartial(context, i),
+                              onPayFull: (i) => _onPayItemFull(context, i),
+                              onDelete: (i) => _onDeleteItem(context, i),
+                              onRefresh: _loadData,
                             );
                           }, childCount: state.items.length),
                         ),
+                      )
+                    else
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final item = state.items[index];
+                          return Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 24.w),
+                            child: MyDebtItemCard(
+                              item: item,
+                              index: index + 1,
+                              onPayPartial: (i) =>
+                                  _onPayItemPartial(context, i),
+                              onPayFull: (i) => _onPayItemFull(context, i),
+                              onDelete: (i) => _onDeleteItem(context, i),
+                              onRefresh: _loadData,
+                            ),
+                          );
+                        }, childCount: state.items.length),
+                      ),
                     SliverToBoxAdapter(child: SizedBox(height: 120.h)),
                   ],
                 );

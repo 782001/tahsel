@@ -79,13 +79,15 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
   Future<void> loadPersons(String uid, {bool forceRefresh = false}) async {
     if (isClosed) return;
 
-    emit(state.copyWith(
-      status: MyDebtsStatus.loading,
-      clearMessage: true,
-      clearLastDocument: true,
-      hasMore: false,
-      isPaginationLoading: false,
-    ));
+    emit(
+      state.copyWith(
+        status: MyDebtsStatus.loading,
+        clearMessage: true,
+        clearLastDocument: true,
+        hasMore: false,
+        isPaginationLoading: false,
+      ),
+    );
 
     final result = await getPersonsPaginatedUseCase(
       GetMyDebtPersonsPaginatedParams(
@@ -130,7 +132,9 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
 
   Future<void> loadMorePersons(String uid) async {
     if (isClosed) return;
-    if (state.isPaginationLoading || !state.hasMore || state.status == MyDebtsStatus.loading) {
+    if (state.isPaginationLoading ||
+        !state.hasMore ||
+        state.status == MyDebtsStatus.loading) {
       return;
     }
 
@@ -280,15 +284,18 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
 
     final result = await addDebtUseCase(debt);
     if (isClosed) return;
-    result.fold((failure) {
-      AppLogger.printMessage(failure.message);
-      emit(
-        state.copyWith(status: MyDebtsStatus.error, message: failure.message),
-      );
-    }, (_) {
-      loadPersons(uid, forceRefresh: true);
-      sl<MyDebtsSummaryCubit>().refreshSummary(uid);
-    });
+    result.fold(
+      (failure) {
+        AppLogger.printMessage(failure.message);
+        emit(
+          state.copyWith(status: MyDebtsStatus.error, message: failure.message),
+        );
+      },
+      (_) {
+        loadPersons(uid, forceRefresh: true);
+        sl<MyDebtsSummaryCubit>().refreshSummary(uid);
+      },
+    );
   }
 
   Future<void> payTotalDebt({

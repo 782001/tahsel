@@ -1,6 +1,5 @@
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/failures.dart';
-import '../../../offline_sync/data/models/offline_record.dart';
 import '../entities/employee_entity.dart';
 import '../entities/attendance_entity.dart';
 import '../entities/payroll_entity.dart';
@@ -36,7 +35,11 @@ abstract class EmployeeRepository {
     int limit = 15,
     Object? lastDoc,
   });
-  Future<Either<Failure, String>> paySalary(PayrollEntity payroll);
+  Future<Either<Failure, String>> paySalary(
+    PayrollEntity payroll, {
+    List<String> attendanceIds = const [],
+    List<String> advanceIds = const [],
+  });
   Future<Either<Failure, PayrollPaginatedList>> getPayrollHistory(
     String uid,
     String employeeId, {
@@ -55,5 +58,4 @@ abstract class EmployeeRepository {
     required List<String> advanceIds,
     required String payrollId,
   });
-  Future<Either<Failure, List<OfflineRecord>>> getPendingEmployeeRecords();
 }

@@ -30,6 +30,8 @@ class SummaryHelper {
 
   static int _getIsoWeekNumber(DateTime date) {
     int daysSinceJan1 = date.difference(DateTime(date.year, 1, 1)).inDays;
-    return ((daysSinceJan1 + DateTime(date.year, 1, 1).weekday - 1) / 7).floor() + 1;
+    return ((daysSinceJan1 + DateTime(date.year, 1, 1).weekday - 1) / 7)
+            .floor() +
+        1;
   }
 }

@@ -21,7 +21,6 @@ class EmployeeInjection {
         getAttendanceUseCase: sl(),
         paySalaryUseCase: sl(),
         getPayrollUseCase: sl(),
-        getPendingEmployeeRecordsUseCase: sl(),
         requestAdvanceUseCase: sl(),
         getAdvancesUseCase: sl(),
         settleAdvancesUseCase: sl(),
@@ -38,9 +37,6 @@ class EmployeeInjection {
     sl.registerLazySingleton(() => GetAttendanceUseCase(repository: sl()));
     sl.registerLazySingleton(() => PaySalaryUseCase(repository: sl()));
     sl.registerLazySingleton(() => GetPayrollUseCase(repository: sl()));
-    sl.registerLazySingleton(
-      () => GetPendingEmployeeRecordsUseCase(repository: sl()),
-    );
     sl.registerLazySingleton(() => RequestAdvanceUseCase(repository: sl()));
     sl.registerLazySingleton(() => GetAdvancesUseCase(repository: sl()));
     sl.registerLazySingleton(() => SettleAdvancesUseCase(repository: sl()));
@@ -49,7 +45,6 @@ class EmployeeInjection {
     sl.registerLazySingleton<EmployeeRepository>(
       () => EmployeeRepositoryImpl(
         remoteDataSource: sl(),
-        offlineSyncRepository: sl(),
         connectionChecker: sl(),
       ),
     );

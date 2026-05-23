@@ -37,7 +37,7 @@ class SyncStatusListener extends StatelessWidget {
                   SizedBox(width: 12.w),
                   Text(
                     AppStrings.syncingData.tr(),
-                    style:  TextStyles.customStyle(color: Colors.white),
+                    style: TextStyles.customStyle(color: Colors.white),
                   ),
                 ],
               ),
@@ -48,9 +48,7 @@ class SyncStatusListener extends StatelessWidget {
           );
         } else if (state is OfflineSyncSuccess) {
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          ScaffoldMessenger.of(
-            context,
-          ).hideCurrentMaterialBanner(); 
+          ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

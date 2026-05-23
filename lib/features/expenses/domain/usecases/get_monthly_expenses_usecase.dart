@@ -5,8 +5,7 @@ import '../entities/monthly_paginated_list.dart';
 import '../repositories/expense_repository.dart';
 
 class GetMonthlyExpensesUseCase
-    implements
-        BaseUseCase<MonthlyPaginatedList, GetMonthlyExpensesParams> {
+    implements BaseUseCase<MonthlyPaginatedList, GetMonthlyExpensesParams> {
   final ExpenseRepository repository;
 
   GetMonthlyExpensesUseCase({required this.repository});
@@ -28,9 +27,5 @@ class GetMonthlyExpensesParams {
   final int limit;
   final Object? lastDoc;
 
-  GetMonthlyExpensesParams({
-    required this.uid,
-    this.limit = 15,
-    this.lastDoc,
-  });
+  GetMonthlyExpensesParams({required this.uid, this.limit = 15, this.lastDoc});
 }

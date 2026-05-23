@@ -66,11 +66,7 @@ Future<void> initDebt() async {
     ),
   );
 
-  sl.registerLazySingleton(
-    () => TotalDebtsCubit(
-      getDebtSummaryUseCase: sl(),
-    ),
-  );
+  sl.registerLazySingleton(() => TotalDebtsCubit(getDebtSummaryUseCase: sl()));
 
   sl.registerFactory(
     () => MonthlyCollectedCubit(getMonthlyCollectedAmountsUseCase: sl()),
@@ -96,9 +92,7 @@ Future<void> initDebt() async {
   sl.registerLazySingleton(() => DeletePaymentUseCase(repository: sl()));
   sl.registerLazySingleton(() => GetDebtByIdUseCase(sl()));
   sl.registerLazySingleton(() => GetDebtsPaginatedUseCase(sl()));
-  sl.registerLazySingleton(
-    () => GetCustomerAllPaymentsPaginatedUseCase( sl()),
-  );
+  sl.registerLazySingleton(() => GetCustomerAllPaymentsPaginatedUseCase(sl()));
   sl.registerLazySingleton(() => GetDebtTransactionsPaginatedUseCase(sl()));
   sl.registerLazySingleton(() => GetAllUserPaymentsPaginatedUseCase(sl()));
   sl.registerLazySingleton(() => GetMonthlyCollectedAmountsUseCase(sl()));

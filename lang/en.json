@@ -475,5 +475,13 @@
   "unpaid_advances_deduction": "Deduct Paid Advances",
   "advance_requested_success": "Advance requested successfully",
   "advance_amount": "Advance Amount",
-  "advance_expense_for": "Advance for {name}"
+  "advance_expense_for": "Advance for {name}",
+  "payment_window_start": "Payment Window Start",
+  "payment_window_end": "Payment Window End",
+  "payment_window_error": "This employee's designated payment window is from the {start}th to the {end}th of the month. Proceeding to pay them outside of this window may cause early balance clearance and incorrect reporting.",
+  "invalid_payment_window_day": "Value must be between 1 and 28",
+  "no_pending_records": "No pending records to pay",
+  "deductions_exceed_payable": "Deductions exceed payable salary",
+  "outstanding_balance": "Outstanding Balance",
+  "carried_forward_automatically": "This will be carried forward automatically."
 }

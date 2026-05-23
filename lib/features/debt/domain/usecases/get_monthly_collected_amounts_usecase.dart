@@ -4,7 +4,8 @@ import '../../../../core/error/failures.dart';
 import '../entities/monthly_collected_amount.dart';
 import '../repositories/debt_repository.dart';
 
-class GetMonthlyCollectedAmountsUseCase implements BaseUseCase<List<MonthlyCollectedAmount>, String> {
+class GetMonthlyCollectedAmountsUseCase
+    implements BaseUseCase<List<MonthlyCollectedAmount>, String> {
   final DebtRepository repository;
 
   GetMonthlyCollectedAmountsUseCase(this.repository);

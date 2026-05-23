@@ -1,11 +1,8 @@
-import 'dart:convert';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 
-import '../../../offline_sync/data/models/offline_record.dart';
 import '../../domain/entities/advance_entity.dart';
 import '../../domain/entities/attendance_entity.dart';
 import '../../domain/entities/employee_entity.dart';
@@ -24,7 +21,6 @@ class EmployeeCubit extends Cubit<EmployeeState> {
   final GetAttendanceUseCase getAttendanceUseCase;
   final PaySalaryUseCase paySalaryUseCase;
   final GetPayrollUseCase getPayrollUseCase;
-  final GetPendingEmployeeRecordsUseCase getPendingEmployeeRecordsUseCase;
   final RequestAdvanceUseCase requestAdvanceUseCase;
   final GetAdvancesUseCase getAdvancesUseCase;
   final SettleAdvancesUseCase settleAdvancesUseCase;
@@ -39,7 +35,6 @@ class EmployeeCubit extends Cubit<EmployeeState> {
     required this.getAttendanceUseCase,
     required this.paySalaryUseCase,
     required this.getPayrollUseCase,
-    required this.getPendingEmployeeRecordsUseCase,
     required this.requestAdvanceUseCase,
     required this.getAdvancesUseCase,
     required this.settleAdvancesUseCase,
@@ -52,52 +47,18 @@ class EmployeeCubit extends Cubit<EmployeeState> {
 
     emit(EmployeeLoading());
 
-    // Fetch local pending offline records first (Offline-First Approach)
-    final pendingResult = await getPendingEmployeeRecordsUseCase();
-    final List<OfflineRecord> pendingRecords = pendingResult.fold(
-      (_) => [],
-      (records) => records,
-    );
-
     final result = await getEmployeesUseCase(
       GetEmployeesParams(uid: uid, limit: 15),
     );
 
     result.fold(
       (failure) {
-        if (pendingRecords.isNotEmpty) {
-          // If Firestore is offline, show offline employees reconstructed from local payload
-          final offlineEmployees = _reconstructEmployeesFromOffline(
-            pendingRecords,
-          );
-          emit(
-            EmployeeFetchSuccess(
-              employees: offlineEmployees,
-              pendingRecords: pendingRecords,
-              hasReachedMax: true,
-            ),
-          );
-        } else {
-          emit(EmployeeFailure(failure.message));
-        }
+        emit(EmployeeFailure(failure.message));
       },
       (paginatedList) {
-        // Merge real remote employees with local unsynced employees
-        final List<EmployeeEntity> merged = List.from(paginatedList.employees);
-        final offlineEmployees = _reconstructEmployeesFromOffline(
-          pendingRecords,
-        );
-
-        for (var offlineEmp in offlineEmployees) {
-          if (!merged.any((e) => e.id == offlineEmp.id)) {
-            merged.insert(0, offlineEmp);
-          }
-        }
-
         emit(
           EmployeeFetchSuccess(
-            employees: merged,
-            pendingRecords: pendingRecords,
+            employees: paginatedList.employees,
             lastDoc: paginatedList.lastDoc,
             hasReachedMax: paginatedList.employees.length < 15,
           ),
@@ -127,7 +88,6 @@ class EmployeeCubit extends Cubit<EmployeeState> {
       emit(
         EmployeeFetchSuccess(
           employees: unique.values.toList(),
-          pendingRecords: currentState.pendingRecords,
           lastDoc: paginatedList.lastDoc,
           hasReachedMax: paginatedList.employees.length < 15,
         ),
@@ -209,26 +169,18 @@ class EmployeeCubit extends Cubit<EmployeeState> {
   Future<void> payPayroll(
     PayrollEntity payroll, {
     List<String>? advanceIdsToDeduct,
+    List<String> attendanceIds = const [],
   }) async {
     emit(EmployeeLoading());
-    final result = await paySalaryUseCase(payroll);
-    result.fold((failure) => emit(EmployeeFailure(failure.message)), (
-      payrollId,
-    ) async {
-      if (advanceIdsToDeduct != null && advanceIdsToDeduct.isNotEmpty) {
-        final settleResult = await settleAdvancesUseCase(
-          SettleAdvancesParams(
-            uid: payroll.uid,
-            advanceIds: advanceIdsToDeduct,
-            payrollId: payrollId,
-          ),
-        );
-        settleResult.fold((failure) {
-          // Log failure but proceed since payroll payment succeeded.
-        }, (_) {});
-      }
-      emit(EmployeeActionSuccess(AppStrings.payrollPaidSuccess.tr()));
-    });
+    final result = await paySalaryUseCase(
+      payroll,
+      attendanceIds: attendanceIds,
+      advanceIds: advanceIdsToDeduct ?? const [],
+    );
+    result.fold(
+      (failure) => emit(EmployeeFailure(failure.message)),
+      (_) => emit(EmployeeActionSuccess(AppStrings.payrollPaidSuccess.tr())),
+    );
   }
 
   Future<void> fetchEmployeeDetails(
@@ -518,36 +470,5 @@ class EmployeeCubit extends Cubit<EmployeeState> {
     } catch (e) {
       emit(EmployeeFailure(e.toString()));
     }
-  }
-
-  // --- Helpers ---
-  List<EmployeeEntity> _reconstructEmployeesFromOffline(
-    List<OfflineRecord> pendingRecords,
-  ) {
-    final List<EmployeeEntity> employees = [];
-    final employeeRecords = pendingRecords.where((r) => r.type == 'employee');
-
-    for (var r in employeeRecords) {
-      try {
-        final payload = jsonDecode(r.payloadJson) as Map<String, dynamic>;
-        employees.add(
-          EmployeeEntity(
-            id: r.id,
-            uid: payload['uid'] as String? ?? '',
-            name: payload['name'] as String? ?? '',
-            phone: payload['phone'] as String? ?? '',
-            role: payload['role'] as String? ?? '',
-            salaryType: payload['salaryType'] as String? ?? 'monthly',
-            salaryAmount: (payload['salaryAmount'] as num?)?.toDouble() ?? 0.0,
-            status: payload['status'] as String? ?? 'active',
-            createdAt: payload['createdAt'] != null
-                ? DateTime.parse(payload['createdAt'] as String)
-                : DateTime.now(),
-            notes: payload['notes'] as String? ?? '',
-          ),
-        );
-      } catch (_) {}
-    }
-    return employees;
   }
 }

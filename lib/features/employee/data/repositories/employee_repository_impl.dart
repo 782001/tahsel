@@ -3,8 +3,6 @@ import 'package:dartz/dartz.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:tahsel/core/error/failures.dart';
 
-import '../../../offline_sync/data/models/offline_record.dart';
-import '../../../offline_sync/domain/repositories/offline_sync_repository.dart';
 import '../../domain/entities/attendance_entity.dart';
 import '../../domain/entities/employee_entity.dart';
 import '../../domain/entities/employee_paginated_lists.dart';
@@ -19,12 +17,10 @@ import '../models/advance_model.dart';
 
 class EmployeeRepositoryImpl implements EmployeeRepository {
   final EmployeeRemoteDataSource remoteDataSource;
-  final OfflineSyncRepository offlineSyncRepository;
   final InternetConnectionChecker connectionChecker;
 
   EmployeeRepositoryImpl({
     required this.remoteDataSource,
-    required this.offlineSyncRepository,
     required this.connectionChecker,
   });
 
@@ -171,14 +167,22 @@ class EmployeeRepositoryImpl implements EmployeeRepository {
   }
 
   @override
-  Future<Either<Failure, String>> paySalary(PayrollEntity payroll) async {
+  Future<Either<Failure, String>> paySalary(
+    PayrollEntity payroll, {
+    List<String> attendanceIds = const [],
+    List<String> advanceIds = const [],
+  }) async {
     try {
       final hasConnection = await connectionChecker.hasConnection;
       if (!hasConnection) {
         return const Left(ServerFailure("No internet connection."));
       }
       final model = PayrollModel.fromEntity(payroll);
-      final id = await remoteDataSource.paySalary(model);
+      final id = await remoteDataSource.paySalary(
+        model,
+        attendanceIds: attendanceIds,
+        advanceIds: advanceIds,
+      );
       return Right(id);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -270,11 +274,5 @@ class EmployeeRepositoryImpl implements EmployeeRepository {
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
-  }
-
-  @override
-  Future<Either<Failure, List<OfflineRecord>>>
-  getPendingEmployeeRecords() async {
-    return const Right([]);
   }
 }

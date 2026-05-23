@@ -58,7 +58,9 @@ class AdvanceModel extends AdvanceEntity {
       'status': status,
       'payrollId': payrollId,
       'notes': notes,
-      'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
+      'createdAt': createdAt != null
+          ? Timestamp.fromDate(createdAt!)
+          : FieldValue.serverTimestamp(),
     };
   }
 

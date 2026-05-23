@@ -16,7 +16,6 @@ import '../models/debt_model.dart';
 import '../models/payment_model.dart';
 import '../../domain/entities/monthly_collected_amount.dart';
 
-
 class DebtRepositoryImpl implements DebtRepository {
   final DebtRemoteDataSource remoteDataSource;
   final InternetConnectionChecker connectionChecker;
@@ -219,7 +218,8 @@ class DebtRepositoryImpl implements DebtRepository {
   }
 
   @override
-  Future<Either<Failure, PaginatedResult<PaymentEntity>>> getDebtTransactionsPaginated(
+  Future<Either<Failure, PaginatedResult<PaymentEntity>>>
+  getDebtTransactionsPaginated(
     String uid,
     String debtId, {
     int limit = 15,
@@ -255,7 +255,8 @@ class DebtRepositoryImpl implements DebtRepository {
   }
 
   @override
-  Future<Either<Failure, PaginatedResult<PaymentEntity>>> getCustomerAllPaymentsPaginated(
+  Future<Either<Failure, PaginatedResult<PaymentEntity>>>
+  getCustomerAllPaymentsPaginated(
     String uid,
     String customerName, {
     int limit = 15,
@@ -275,7 +276,9 @@ class DebtRepositoryImpl implements DebtRepository {
   }
 
   @override
-  Future<Either<Failure, List<PaymentEntity>>> getAllUserPayments(String uid) async {
+  Future<Either<Failure, List<PaymentEntity>>> getAllUserPayments(
+    String uid,
+  ) async {
     try {
       final result = await remoteDataSource.getAllUserPayments(uid);
       return Right(result);
@@ -285,7 +288,8 @@ class DebtRepositoryImpl implements DebtRepository {
   }
 
   @override
-  Future<Either<Failure, List<MonthlyCollectedAmount>>> getMonthlyCollectedAmounts(String uid) async {
+  Future<Either<Failure, List<MonthlyCollectedAmount>>>
+  getMonthlyCollectedAmounts(String uid) async {
     try {
       final result = await remoteDataSource.getMonthlyCollectedAmounts(uid);
       return Right(result);
@@ -295,7 +299,8 @@ class DebtRepositoryImpl implements DebtRepository {
   }
 
   @override
-  Future<Either<Failure, PaginatedResult<PaymentEntity>>> getAllUserPaymentsPaginated(
+  Future<Either<Failure, PaginatedResult<PaymentEntity>>>
+  getAllUserPaymentsPaginated(
     String uid, {
     int limit = 15,
     DocumentSnapshot? lastDocument,

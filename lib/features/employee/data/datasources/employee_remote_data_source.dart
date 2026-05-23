@@ -63,7 +63,11 @@ abstract class EmployeeRemoteDataSource {
     int limit = 15,
     DocumentSnapshot? lastDoc,
   });
-  Future<String> paySalary(PayrollModel payroll);
+  Future<String> paySalary(
+    PayrollModel payroll, {
+    List<String> attendanceIds = const [],
+    List<String> advanceIds = const [],
+  });
   Future<PayrollRemotePaginationResult> getPayrollHistory(
     String uid,
     String employeeId, {
@@ -88,6 +92,8 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
   final FirebaseFirestore firestore;
 
   EmployeeRemoteDataSourceImpl({required this.firestore});
+
+  // ... (keeping other methods as is, just finding the correct place for the method)
 
   @override
   Future<String> addEmployee(EmployeeModel employee) async {
@@ -273,17 +279,61 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
   }
 
   @override
-  Future<String> paySalary(PayrollModel payroll) async {
+  Future<String> paySalary(
+    PayrollModel payroll, {
+    List<String> attendanceIds = const [],
+    List<String> advanceIds = const [],
+  }) async {
     try {
       final userRef = firestore.collection('users').doc(payroll.uid);
       final docRef = (payroll.id != null && payroll.id!.isNotEmpty)
           ? userRef.collection('payrolls').doc(payroll.id)
           : userRef.collection('payrolls').doc();
 
+      // Phase 1: Validate reads OUTSIDE the transaction to avoid
+      // the Windows platform-channel threading crash caused by too many
+      // sequential transaction.get() calls inside runTransaction.
+      for (final attId in attendanceIds) {
+        final snap = await userRef.collection('attendances').doc(attId).get();
+        if (!snap.exists) {
+          throw Exception('Attendance record $attId does not exist.');
+        }
+        final data = snap.data() as Map<String, dynamic>;
+        if (data['isPaid'] == true) {
+          throw Exception('Attendance record $attId is already paid.');
+        }
+      }
+
+      for (final advId in advanceIds) {
+        final snap = await userRef.collection('advances').doc(advId).get();
+        if (!snap.exists) {
+          throw Exception('Advance record $advId does not exist.');
+        }
+        final data = snap.data() as Map<String, dynamic>;
+        if (data['status'] == 'deducted') {
+          throw Exception('Advance record $advId is already deducted.');
+        }
+      }
+
+      // Phase 2: Atomic batch write for all mutations.
       final batch = firestore.batch();
+
       batch.set(docRef, payroll.toJson());
 
-      // Update summaries for salaries paid and overtime compensation paid
+      for (final attId in attendanceIds) {
+        batch.update(userRef.collection('attendances').doc(attId), {
+          'isPaid': true,
+          'payrollId': docRef.id,
+        });
+      }
+
+      for (final advId in advanceIds) {
+        batch.update(userRef.collection('advances').doc(advId), {
+          'status': 'deducted',
+          'payrollId': docRef.id,
+        });
+      }
+
       final monthlyRef = userRef
           .collection('summaries')
           .doc('monthly_${payroll.monthKey}');
@@ -298,6 +348,12 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
           'lastUpdatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
       }
+
+      // Update employee's outstanding balance
+      final empRef = userRef.collection('employees').doc(payroll.employeeId);
+      batch.update(empRef, {
+        'outstandingBalance': payroll.carriedForwardBalance ?? 0.0,
+      });
 
       await batch.commit();
       return docRef.id;
@@ -423,10 +479,7 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
 
       for (final id in advanceIds) {
         final docRef = userRef.collection('advances').doc(id);
-        batch.update(docRef, {
-          'status': 'deducted',
-          'payrollId': payrollId,
-        });
+        batch.update(docRef, {'status': 'deducted', 'payrollId': payrollId});
       }
 
       await batch.commit();

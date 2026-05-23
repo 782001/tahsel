@@ -143,54 +143,60 @@ void main() {
       });
     });
 
-    group('Employee Contract Configuration default values and custom overrides', () {
-      test('Should default to standard contract configurations when none are specified', () {
-        final employee = EmployeeEntity(
-          id: 'emp_defaults',
-          uid: 'uid_defaults',
-          name: 'Abdalla Defaults',
-          phone: '123',
-          role: 'Dev',
-          salaryAmount: 5000.0,
-          salaryType: 'monthly',
-          status: 'active',
-          createdAt: DateTime(2026, 1, 1),
-          notes: '',
+    group(
+      'Employee Contract Configuration default values and custom overrides',
+      () {
+        test(
+          'Should default to standard contract configurations when none are specified',
+          () {
+            final employee = EmployeeEntity(
+              id: 'emp_defaults',
+              uid: 'uid_defaults',
+              name: 'Abdalla Defaults',
+              phone: '123',
+              role: 'Dev',
+              salaryAmount: 5000.0,
+              salaryType: 'monthly',
+              status: 'active',
+              createdAt: DateTime(2026, 1, 1),
+              notes: '',
+            );
+
+            expect(employee.workingDaysPerMonth, 26);
+            expect(employee.expectedDailyHours, 8.0);
+            expect(employee.overtimeMultiplier, 1.5);
+            expect(employee.customOvertimeRate, isNull);
+            expect(employee.customDeductionRate, isNull);
+          },
         );
 
-        expect(employee.workingDaysPerMonth, 26);
-        expect(employee.expectedDailyHours, 8.0);
-        expect(employee.overtimeMultiplier, 1.5);
-        expect(employee.customOvertimeRate, isNull);
-        expect(employee.customDeductionRate, isNull);
-      });
+        test('Should preserve custom contract values when explicitly set', () {
+          final employee = EmployeeEntity(
+            id: 'emp_custom',
+            uid: 'uid_custom',
+            name: 'Abdalla Custom',
+            phone: '123',
+            role: 'Dev',
+            salaryAmount: 5000.0,
+            salaryType: 'monthly',
+            status: 'active',
+            createdAt: DateTime(2026, 1, 1),
+            notes: '',
+            workingDaysPerMonth: 22,
+            expectedDailyHours: 6.0,
+            overtimeMultiplier: 2.0,
+            customOvertimeRate: 75.0,
+            customDeductionRate: 50.0,
+          );
 
-      test('Should preserve custom contract values when explicitly set', () {
-        final employee = EmployeeEntity(
-          id: 'emp_custom',
-          uid: 'uid_custom',
-          name: 'Abdalla Custom',
-          phone: '123',
-          role: 'Dev',
-          salaryAmount: 5000.0,
-          salaryType: 'monthly',
-          status: 'active',
-          createdAt: DateTime(2026, 1, 1),
-          notes: '',
-          workingDaysPerMonth: 22,
-          expectedDailyHours: 6.0,
-          overtimeMultiplier: 2.0,
-          customOvertimeRate: 75.0,
-          customDeductionRate: 50.0,
-        );
-
-        expect(employee.workingDaysPerMonth, 22);
-        expect(employee.expectedDailyHours, 6.0);
-        expect(employee.overtimeMultiplier, 2.0);
-        expect(employee.customOvertimeRate, 75.0);
-        expect(employee.customDeductionRate, 50.0);
-      });
-    });
+          expect(employee.workingDaysPerMonth, 22);
+          expect(employee.expectedDailyHours, 6.0);
+          expect(employee.overtimeMultiplier, 2.0);
+          expect(employee.customOvertimeRate, 75.0);
+          expect(employee.customDeductionRate, 50.0);
+        });
+      },
+    );
 
     test('AdvanceEntity properties and equality check', () {
       final date = DateTime(2026, 5, 18);

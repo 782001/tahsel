@@ -45,7 +45,8 @@ class SummaryModel {
       playstationCount: (json['playstationCount'] ?? 0).toInt(),
       debtCustomersCount: (json['debtCustomersCount'] ?? 0).toInt(),
       isSynced: json['isSynced'] as bool? ?? false,
-      lastUpdatedAt: (json['lastUpdatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      lastUpdatedAt:
+          (json['lastUpdatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 

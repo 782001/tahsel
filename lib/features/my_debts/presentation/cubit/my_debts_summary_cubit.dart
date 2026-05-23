@@ -5,9 +5,8 @@ import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_summary_sta
 class MyDebtsSummaryCubit extends Cubit<MyDebtsSummaryState> {
   final GetMyDebtSummaryUseCase getMyDebtSummaryUseCase;
 
-  MyDebtsSummaryCubit({
-    required this.getMyDebtSummaryUseCase,
-  }) : super(MyDebtsSummaryInitial());
+  MyDebtsSummaryCubit({required this.getMyDebtSummaryUseCase})
+    : super(MyDebtsSummaryInitial());
 
   Future<void> loadSummary(String uid, {bool forceRefresh = false}) async {
     if (!forceRefresh && state is MyDebtsSummaryLoaded) {
@@ -18,20 +17,19 @@ class MyDebtsSummaryCubit extends Cubit<MyDebtsSummaryState> {
 
     final result = await getMyDebtSummaryUseCase(uid);
 
-    result.fold(
-      (failure) => emit(MyDebtsSummaryError(failure.message)),
-      (summary) {
-        if (!isClosed) {
-          emit(
-            MyDebtsSummaryLoaded(
-              totalOwed: summary.totalRemainingDebt,
-              totalPaid: summary.totalPaid,
-              totalPeople: summary.peopleCount,
-            ),
-          );
-        }
-      },
-    );
+    result.fold((failure) => emit(MyDebtsSummaryError(failure.message)), (
+      summary,
+    ) {
+      if (!isClosed) {
+        emit(
+          MyDebtsSummaryLoaded(
+            totalOwed: summary.totalRemainingDebt,
+            totalPaid: summary.totalPaid,
+            totalPeople: summary.peopleCount,
+          ),
+        );
+      }
+    });
   }
 
   /// Called after any mutation (add debt, pay, etc.) to refresh the summary.

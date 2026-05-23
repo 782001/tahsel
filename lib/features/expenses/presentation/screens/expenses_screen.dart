@@ -57,7 +57,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           listener: (context, state) {
             if (state is OfflineSyncSuccess) {
               // Refresh list when sync is successful
-              context.read<ExpenseCubit>().fetchMonths(AppStrings.userToken, forceRefresh: true);
+              context.read<ExpenseCubit>().fetchMonths(
+                AppStrings.userToken,
+                forceRefresh: true,
+              );
             }
           },
         ),

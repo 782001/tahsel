@@ -50,7 +50,7 @@ class _RequestAdvanceDialogState extends State<RequestAdvanceDialog> {
         color: AppColors.blackLight.withValues(alpha: 0.5),
       ),
       filled: true,
-      fillColor: AppColors.veryLightGrey.withValues(alpha: 0.5),
+      fillColor: AppColors.surfaceContainerHigh.withValues(alpha: 0.5),
       contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12.r),
@@ -119,7 +119,7 @@ class _RequestAdvanceDialogState extends State<RequestAdvanceDialog> {
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-      backgroundColor: AppColors.whiteColor,
+      backgroundColor: AppColors.scafoldBackGround,
       insetPadding: EdgeInsets.all(isDesktop ? 24 : 16.w),
       child: ConstrainedBox(
         constraints: BoxConstraints(

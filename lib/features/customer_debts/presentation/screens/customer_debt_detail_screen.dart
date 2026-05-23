@@ -545,42 +545,40 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                     vertical: 8,
                   ),
                   sliver: SliverGrid(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisExtent: 270,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                    ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        return DebtItemCard(
-                          item: currentDetail.items[index],
-                          index: index + 1,
-                          onPayPartial: (item) {
-                            final cubit = context.read<DebtCubit>();
-                            showDialog(
-                              context: context,
-                              builder: (context) => BlocProvider.value(
-                                value: cubit,
-                                child: PartialPaymentDialog(
-                                  customerName: currentDetail.customerName,
-                                  totalRemaining: item.remainingDebt,
-                                  debt: item.entity,
-                                ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisExtent: 270,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                        ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      return DebtItemCard(
+                        item: currentDetail.items[index],
+                        index: index + 1,
+                        onPayPartial: (item) {
+                          final cubit = context.read<DebtCubit>();
+                          showDialog(
+                            context: context,
+                            builder: (context) => BlocProvider.value(
+                              value: cubit,
+                              child: PartialPaymentDialog(
+                                customerName: currentDetail.customerName,
+                                totalRemaining: item.remainingDebt,
+                                debt: item.entity,
                               ),
-                            );
-                          },
-                          onPayFull: (item) {
-                            context.read<DebtCubit>().markItemAsPaid(
-                              debt: item.entity,
-                              totalRemainingBefore: currentDetail.totalDebt,
-                            );
-                          },
-                          onRefresh: _fetchDebts,
-                        );
-                      },
-                      childCount: currentDetail.items.length,
-                    ),
+                            ),
+                          );
+                        },
+                        onPayFull: (item) {
+                          context.read<DebtCubit>().markItemAsPaid(
+                            debt: item.entity,
+                            totalRemainingBefore: currentDetail.totalDebt,
+                          );
+                        },
+                        onRefresh: _fetchDebts,
+                      );
+                    }, childCount: currentDetail.items.length),
                   ),
                 )
               else

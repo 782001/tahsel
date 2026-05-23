@@ -57,10 +57,7 @@ class DayExpenseGroup extends Equatable {
   final DateTime date;
   final List<ExpenseEntity> expenses;
 
-  const DayExpenseGroup({
-    required this.date,
-    required this.expenses,
-  });
+  const DayExpenseGroup({required this.date, required this.expenses});
 
   double get totalAmount => expenses.fold(0.0, (sum, e) => sum + e.amount);
 

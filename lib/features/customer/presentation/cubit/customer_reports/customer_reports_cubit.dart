@@ -70,7 +70,9 @@ class CustomerReportsCubit extends Cubit<CustomerReportsState> {
         final lastDoc = paginatedData.$2;
 
         if (newCustomers.isEmpty) {
-          emit(currentState.copyWith(hasReachedMax: true, isFetchingMore: false));
+          emit(
+            currentState.copyWith(hasReachedMax: true, isFetchingMore: false),
+          );
           return;
         }
 
@@ -78,13 +80,15 @@ class CustomerReportsCubit extends Cubit<CustomerReportsState> {
           ..addAll(newCustomers);
 
         // Sort alphabetically
-        final sorted = List<CustomerEntity>.from(allCustomers)
-          ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+        final sorted = List<CustomerEntity>.from(
+          allCustomers,
+        )..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 
         emit(
           currentState.copyWith(
             customers: sorted,
-            filteredCustomers: sorted, // Reset filter when loading more or re-apply? 
+            filteredCustomers:
+                sorted, // Reset filter when loading more or re-apply?
             // Usually, we should re-apply the filter if searchQuery is not empty
             lastDoc: lastDoc,
             hasReachedMax: newCustomers.length < _pageSize,
@@ -122,7 +126,9 @@ class CustomerReportsCubit extends Cubit<CustomerReportsState> {
         'query': query.toLowerCase(),
       });
 
-      emit(currentState.copyWith(filteredCustomers: filtered, searchQuery: query));
+      emit(
+        currentState.copyWith(filteredCustomers: filtered, searchQuery: query),
+      );
     }
 
     if (immediate) {

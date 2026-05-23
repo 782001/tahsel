@@ -19,6 +19,7 @@ class PayrollModel extends PayrollEntity {
     super.periodStart,
     super.periodEnd,
     super.advancePaid,
+    super.carriedForwardBalance,
   });
 
   factory PayrollModel.fromJson(Map<String, dynamic> json, String id) {
@@ -66,6 +67,8 @@ class PayrollModel extends PayrollEntity {
       periodStart: periodStartVal,
       periodEnd: periodEndVal,
       advancePaid: (json['advancePaid'] as num?)?.toDouble() ?? 0.0,
+      carriedForwardBalance:
+          (json['carriedForwardBalance'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
@@ -83,9 +86,12 @@ class PayrollModel extends PayrollEntity {
       'monthKey': monthKey,
       'notes': notes,
       'salaryType': salaryType,
-      'periodStart': periodStart != null ? Timestamp.fromDate(periodStart!) : null,
+      'periodStart': periodStart != null
+          ? Timestamp.fromDate(periodStart!)
+          : null,
       'periodEnd': periodEnd != null ? Timestamp.fromDate(periodEnd!) : null,
       'advancePaid': advancePaid ?? 0.0,
+      'carriedForwardBalance': carriedForwardBalance ?? 0.0,
     };
   }
 
@@ -107,6 +113,7 @@ class PayrollModel extends PayrollEntity {
       periodStart: entity.periodStart,
       periodEnd: entity.periodEnd,
       advancePaid: entity.advancePaid,
+      carriedForwardBalance: entity.carriedForwardBalance,
     );
   }
 }

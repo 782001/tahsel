@@ -371,7 +371,7 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
         final amount = (payload['amount'] as num?)?.toDouble() ?? 0;
         final date = timestampDate;
         final monthKey = DateFormat('yyyy-MM', 'en').format(date);
-        
+
         final monthlyRef = userRef
             .collection('summaries')
             .doc('monthly_$monthKey');

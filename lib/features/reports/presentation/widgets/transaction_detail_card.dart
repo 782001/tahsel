@@ -310,7 +310,9 @@ class TransactionDetailCard extends StatelessWidget {
                           color: hasDebt
                               ? AppColors.error.withValues(alpha: 0.05)
                               : AppColors.success.withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(isDesktop ? 8 : 8.r),
+                          borderRadius: BorderRadius.circular(
+                            isDesktop ? 8 : 8.r,
+                          ),
                         ),
                         child: Text(
                           hasDebt

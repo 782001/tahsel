@@ -50,7 +50,8 @@ class AppRoutes {
   static const String myDebtDetails = '/my-debt-details';
   static const String myDebtDetailsReport = '/my-debt-details-report';
   static const String monthlyCollected = '/monthly-collected';
-  static const String monthlyCollectedTransactions = '/monthly-collected-transactions';
+  static const String monthlyCollectedTransactions =
+      '/monthly-collected-transactions';
   static const String employeeList = '/employee-list';
   static const String employeeDetails = '/employee-details';
   static const String employeeReports = '/employee-reports';
@@ -107,12 +108,12 @@ class AppRoutes {
         final args = settings.arguments as Map<String, dynamic>;
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
-            create: (context) => di.sl<IncomeDetailsCubit>()
-              ..fetchIncomeDetails(
-                args['startDate'] as DateTime,
-                args['endDate'] as DateTime,
-                type: args['type'] as String?,
-              ),
+            create: (context) =>
+                di.sl<IncomeDetailsCubit>()..fetchIncomeDetails(
+                  args['startDate'] as DateTime,
+                  args['endDate'] as DateTime,
+                  type: args['type'] as String?,
+                ),
             child: IncomeDetailsScreen(
               startDate: args['startDate'] as DateTime,
               endDate: args['endDate'] as DateTime,
@@ -179,10 +180,8 @@ class AppRoutes {
         final data = args['monthlyData'] as MonthlyCollectedAmount;
         final uid = args['uid'] as String;
         return MaterialPageRoute(
-          builder: (_) => MonthlyCollectedTransactionsScreen(
-            monthlyData: data,
-            uid: uid,
-          ),
+          builder: (_) =>
+              MonthlyCollectedTransactionsScreen(monthlyData: data, uid: uid),
         );
       default:
         return MaterialPageRoute(

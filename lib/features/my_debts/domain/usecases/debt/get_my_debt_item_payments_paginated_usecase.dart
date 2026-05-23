@@ -7,7 +7,11 @@ import 'package:tahsel/features/debt/domain/entities/payment_entity.dart';
 import 'package:tahsel/features/my_debts/domain/repositories/my_debt_repository.dart';
 
 class GetMyDebtItemPaymentsPaginatedUseCase
-    implements BaseUseCase<PaginatedResult<PaymentEntity>, GetMyDebtItemPaymentsPaginatedParams> {
+    implements
+        BaseUseCase<
+          PaginatedResult<PaymentEntity>,
+          GetMyDebtItemPaymentsPaginatedParams
+        > {
   final MyDebtRepository repository;
 
   GetMyDebtItemPaymentsPaginatedUseCase({required this.repository});

@@ -121,7 +121,9 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
   }
 
   @override
-  Future<List<MonthlyCollectedAmount>> getMonthlyCollectedAmounts(String uid) async {
+  Future<List<MonthlyCollectedAmount>> getMonthlyCollectedAmounts(
+    String uid,
+  ) async {
     try {
       final snapshot = await firestore
           .collection('users')
@@ -146,18 +148,29 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         if (year == 0 || month == 0) continue;
 
         double totalAmount = 0.0;
-        if (data.containsKey('totalCollected') && data['totalCollected'] != null) {
+        if (data.containsKey('totalCollected') &&
+            data['totalCollected'] != null) {
           totalAmount = (data['totalCollected'] as num).toDouble();
         } else {
           // Self-healing: compute aggregate totalCollected and update Firestore
           final startOfMonth = DateTime(year, month, 1);
-          final endOfMonth = DateTime(year, month + 1, 1).subtract(const Duration(milliseconds: 1));
+          final endOfMonth = DateTime(
+            year,
+            month + 1,
+            1,
+          ).subtract(const Duration(milliseconds: 1));
 
           final paymentsQuery = firestore
               .collectionGroup('payments')
               .where('uid', isEqualTo: uid)
-              .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
-              .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth));
+              .where(
+                'createdAt',
+                isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth),
+              )
+              .where(
+                'createdAt',
+                isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth),
+              );
 
           double computedSum = 0.0;
           if (defaultTargetPlatform == TargetPlatform.windows) {
@@ -165,12 +178,17 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             for (var paymentDoc in snap.docs) {
               final type = paymentDoc.data()['type'] as String?;
               if (type == 'full' || type == 'partial' || type == 'settlement') {
-                computedSum += (paymentDoc.data()['amountPaid'] as num?)?.toDouble() ?? 0.0;
+                computedSum +=
+                    (paymentDoc.data()['amountPaid'] as num?)?.toDouble() ??
+                    0.0;
               }
             }
           } else {
-            final aggregateSnapshot = await paymentsQuery.aggregate(sum('amountPaid')).get();
-            computedSum = (aggregateSnapshot.getSum('amountPaid') ?? 0.0).toDouble();
+            final aggregateSnapshot = await paymentsQuery
+                .aggregate(sum('amountPaid'))
+                .get();
+            computedSum = (aggregateSnapshot.getSum('amountPaid') ?? 0.0)
+                .toDouble();
           }
 
           // Save this to the summary document to heal the cache
@@ -182,12 +200,14 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           totalAmount = computedSum;
         }
 
-        results.add(MonthlyCollectedAmount(
-          year: year,
-          month: month,
-          totalAmount: totalAmount,
-          payments: const [],
-        ));
+        results.add(
+          MonthlyCollectedAmount(
+            year: year,
+            month: month,
+            totalAmount: totalAmount,
+            payments: const [],
+          ),
+        );
       }
 
       // Sort by date descending (latest month first)
@@ -313,7 +333,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         batch.set(summaryRef, {
           'totalDebts': FieldValue.increment(debt.remainingAmount),
           'unpaidDebts': FieldValue.increment(debt.remainingAmount),
-          if (debt.paidAmount > 0) 'totalCollected': FieldValue.increment(debt.paidAmount),
+          if (debt.paidAmount > 0)
+            'totalCollected': FieldValue.increment(debt.paidAmount),
           if (isFirstUnpaid) 'debtCustomersCount': FieldValue.increment(1),
           'lastUpdatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
@@ -774,7 +795,12 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         for (final key in keys) {
           summaryUpdates.putIfAbsent(
             key,
-            () => {'totalDebts': 0.0, 'unpaidDebts': 0.0, 'paidDebts': 0.0, 'totalCollected': 0.0},
+            () => {
+              'totalDebts': 0.0,
+              'unpaidDebts': 0.0,
+              'paidDebts': 0.0,
+              'totalCollected': 0.0,
+            },
           );
           summaryUpdates[key]!['totalDebts'] =
               (summaryUpdates[key]!['totalDebts'] ?? 0) - remaining;
@@ -824,8 +850,11 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
               'totalDebts': FieldValue.increment(updates['totalDebts']!),
               'unpaidDebts': FieldValue.increment(updates['unpaidDebts']!),
               'paidDebts': FieldValue.increment(updates['paidDebts']!),
-              if (updates['totalCollected'] != null && updates['totalCollected']! != 0)
-                'totalCollected': FieldValue.increment(updates['totalCollected']!),
+              if (updates['totalCollected'] != null &&
+                  updates['totalCollected']! != 0)
+                'totalCollected': FieldValue.increment(
+                  updates['totalCollected']!,
+                ),
               if (hadUnpaid) 'debtCustomersCount': FieldValue.increment(-1),
               'lastUpdatedAt': FieldValue.serverTimestamp(),
             }, SetOptions(merge: true));
@@ -924,7 +953,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           'totalDebts': FieldValue.increment(-remainingAmount),
           if (!isPaid) 'unpaidDebts': FieldValue.increment(-remainingAmount),
           if (isPaid) 'paidDebts': FieldValue.increment(-totalAmount),
-          if (paidAmount > 0) 'totalCollected': FieldValue.increment(-paidAmount),
+          if (paidAmount > 0)
+            'totalCollected': FieldValue.increment(-paidAmount),
           if (shouldDecrementCustomerCount)
             'debtCustomersCount': FieldValue.increment(-1),
           'lastUpdatedAt': FieldValue.serverTimestamp(),
@@ -1174,7 +1204,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           transaction.set(summaryRef, {
             'totalDebts': FieldValue.increment(summaryDelta),
             'unpaidDebts': FieldValue.increment(summaryDelta),
-            if (relatedTo == 'payment') 'totalCollected': FieldValue.increment(delta),
+            if (relatedTo == 'payment')
+              'totalCollected': FieldValue.increment(delta),
             'lastUpdatedAt': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
         }
@@ -1289,7 +1320,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           transaction.set(summaryRef, {
             'totalDebts': FieldValue.increment(summaryDelta),
             'unpaidDebts': FieldValue.increment(summaryDelta),
-            if (relatedTo == 'payment') 'totalCollected': FieldValue.increment(-amountToDelete),
+            if (relatedTo == 'payment')
+              'totalCollected': FieldValue.increment(-amountToDelete),
             'lastUpdatedAt': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
         }
@@ -1488,15 +1520,23 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
       if (month != null && year != null) {
         final startOfMonth = DateTime(year, month, 1);
-        final endOfMonth = DateTime(year, month + 1, 1).subtract(const Duration(milliseconds: 1));
+        final endOfMonth = DateTime(
+          year,
+          month + 1,
+          1,
+        ).subtract(const Duration(milliseconds: 1));
         query = query
-            .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
-            .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth));
+            .where(
+              'createdAt',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth),
+            )
+            .where(
+              'createdAt',
+              isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth),
+            );
       }
 
-      query = query
-          .orderBy('createdAt', descending: true)
-          .limit(limit);
+      query = query.orderBy('createdAt', descending: true).limit(limit);
 
       if (lastDocument != null) {
         query = query.startAfterDocument(lastDocument);
@@ -1532,7 +1572,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
       if (doc.exists) {
         final data = Map<String, dynamic>.from(doc.data()!);
         // final double unpaidDebts = (data['unpaidDebts'] ?? 0.0).toDouble();
-        final int debtCustomersCount = (data['debtCustomersCount'] ?? 0).toInt();
+        final int debtCustomersCount = (data['debtCustomersCount'] ?? 0)
+            .toInt();
 
         if (debtCustomersCount <= 0) {
           // Heal: recalculate active customers count and update Firestore
@@ -1542,7 +1583,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
               .collection('debts')
               .where('isPaid', isEqualTo: false)
               .get();
-          
+
           final uniqueCustomers = activeDebts.docs
               .map((doc) => doc.data()['customerName'] as String?)
               .whereType<String>()

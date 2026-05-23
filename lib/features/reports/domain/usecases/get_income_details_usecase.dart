@@ -22,7 +22,11 @@ class GetIncomeDetailsParams {
 }
 
 class GetIncomeDetailsUseCase
-    implements BaseUseCase<(List<OperationEntity>, DocumentSnapshot?), GetIncomeDetailsParams> {
+    implements
+        BaseUseCase<
+          (List<OperationEntity>, DocumentSnapshot?),
+          GetIncomeDetailsParams
+        > {
   final ReportsRepository repository;
 
   GetIncomeDetailsUseCase(this.repository);

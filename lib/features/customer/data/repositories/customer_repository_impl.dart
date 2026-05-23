@@ -75,7 +75,12 @@ class CustomerRepositoryImpl implements CustomerRepository {
   }
 
   @override
-  Future<Either<Failure, (List<CustomerOperation>, DocumentSnapshot?, double, double)>>
+  Future<
+    Either<
+      Failure,
+      (List<CustomerOperation>, DocumentSnapshot?, double, double)
+    >
+  >
   getCustomerOperations(
     String uid,
     String customerName, {

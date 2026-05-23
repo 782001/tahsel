@@ -99,7 +99,7 @@ class ReportsOperationalMarginCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: margin,
               minHeight: 8.h,
-              backgroundColor: AppColors.whiteColor,
+              backgroundColor: AppColors.scafoldBackGround,
               valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryColor),
             ),
           ),

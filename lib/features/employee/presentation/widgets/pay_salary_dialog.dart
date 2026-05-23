@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
-import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/extensions/extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/features/employee/domain/entities/advance_entity.dart';
 import 'package:tahsel/features/employee/domain/entities/employee_entity.dart';
 import 'package:tahsel/features/employee/domain/entities/payroll_entity.dart';
-import 'package:tahsel/features/employee/domain/entities/advance_entity.dart';
 
 class PaySalaryDialog extends StatefulWidget {
   final EmployeeEntity employee;
@@ -72,7 +72,8 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
       final double otMultiplier = widget.employee.overtimeMultiplier;
 
       if (widget.employee.salaryType == 'monthly') {
-        defaultOvertimeRate = baseAmount / (workingDays * dailyHours) * otMultiplier;
+        defaultOvertimeRate =
+            baseAmount / (workingDays * dailyHours) * otMultiplier;
       } else if (widget.employee.salaryType == 'daily') {
         defaultOvertimeRate = baseAmount / dailyHours * otMultiplier;
       } else {
@@ -122,9 +123,12 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
 
   void _calculateNetSalary() {
     final double base = double.tryParse(_baseSalaryController.text) ?? 0.0;
-    final double otHours =
-        double.tryParse(_overtimeHoursController.text) ?? 0.0;
-    final double otRate = double.tryParse(_overtimeRateController.text) ?? 0.0;
+    final double otHours = widget.employee.salaryType == 'hourly'
+        ? 0.0
+        : (double.tryParse(_overtimeHoursController.text) ?? 0.0);
+    final double otRate = widget.employee.salaryType == 'hourly'
+        ? 0.0
+        : (double.tryParse(_overtimeRateController.text) ?? 0.0);
     final double allow = double.tryParse(_allowancesController.text) ?? 0.0;
     final double deduct = double.tryParse(_deductionsController.text) ?? 0.0;
 
@@ -136,7 +140,10 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
     }
 
     setState(() {
-      _netSalary = base + (otHours * otRate) + allow - deduct - advancesDeduction;
+      final gross = base + (otHours * otRate) + allow;
+      final totalDeductions =
+          deduct + advancesDeduction + widget.employee.outstandingBalance;
+      _netSalary = gross - totalDeductions;
     });
   }
 
@@ -149,7 +156,7 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(isDesktop ? 16 : 20.r),
       ),
-      backgroundColor: AppColors.whiteColor,
+      backgroundColor: AppColors.scafoldBackGround,
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: isDesktop ? 500 : double.infinity,
@@ -268,91 +275,93 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
                   ),
                   SizedBox(height: isDesktop ? 16 : 12.h),
 
-                  // Overtime Hours & Rate Row
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              AppStrings.overtimeHours.tr(),
-                              style: TextStyles.customStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.black,
+                  if (widget.employee.salaryType != 'hourly') ...[
+                    // Overtime Hours & Rate Row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                AppStrings.overtimeHours.tr(),
+                                style: TextStyles.customStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.black,
+                                ),
                               ),
-                            ),
-                            SizedBox(height: 6.h),
-                            TextFormField(
-                              cursorColor: AppColors.primaryColor,
-                              controller: _overtimeHoursController,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
-                              decoration: _buildInputDecoration(),
-                              style: TextStyles.customStyle(
-                                fontSize: 14,
-                                color: AppColors.blackReal,
-                              ),
-                              validator: (val) {
-                                if (val == null || val.trim().isEmpty) {
+                              SizedBox(height: 6.h),
+                              TextFormField(
+                                cursorColor: AppColors.primaryColor,
+                                controller: _overtimeHoursController,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                decoration: _buildInputDecoration(),
+                                style: TextStyles.customStyle(
+                                  fontSize: 14,
+                                  color: AppColors.blackReal,
+                                ),
+                                validator: (val) {
+                                  if (val == null || val.trim().isEmpty) {
+                                    return null;
+                                  }
+                                  if (double.tryParse(val) == null ||
+                                      double.parse(val) < 0) {
+                                    return AppStrings.invalidValue.tr();
+                                  }
                                   return null;
-                                }
-                                if (double.tryParse(val) == null ||
-                                    double.parse(val) < 0) {
-                                  return AppStrings.invalidValue.tr();
-                                }
-                                return null;
-                              },
-                            ),
-                          ],
+                                },
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              AppStrings.overtimeRate.tr(),
-                              style: TextStyles.customStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.black,
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                AppStrings.overtimeRate.tr(),
+                                style: TextStyles.customStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.black,
+                                ),
                               ),
-                            ),
-                            SizedBox(height: 6.h),
-                            TextFormField(
-                              cursorColor: AppColors.primaryColor,
-                              controller: _overtimeRateController,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
-                              decoration: _buildInputDecoration(),
-                              style: TextStyles.customStyle(
-                                fontSize: 14,
-                                color: AppColors.blackReal,
-                              ),
-                              validator: (val) {
-                                if (val == null || val.trim().isEmpty) {
+                              SizedBox(height: 6.h),
+                              TextFormField(
+                                cursorColor: AppColors.primaryColor,
+                                controller: _overtimeRateController,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                decoration: _buildInputDecoration(),
+                                style: TextStyles.customStyle(
+                                  fontSize: 14,
+                                  color: AppColors.blackReal,
+                                ),
+                                validator: (val) {
+                                  if (val == null || val.trim().isEmpty) {
+                                    return null;
+                                  }
+                                  if (double.tryParse(val) == null ||
+                                      double.parse(val) < 0) {
+                                    return AppStrings.invalidValue.tr();
+                                  }
                                   return null;
-                                }
-                                if (double.tryParse(val) == null ||
-                                    double.parse(val) < 0) {
-                                  return AppStrings.invalidValue.tr();
-                                }
-                                return null;
-                              },
-                            ),
-                          ],
+                                },
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: isDesktop ? 16 : 12.h),
+                      ],
+                    ),
+                    SizedBox(height: isDesktop ? 16 : 12.h),
+                  ],
 
                   // Allowances & Deductions Row
                   Row(
@@ -517,17 +526,28 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
                     ),
                     SizedBox(height: 6.h),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 4.w,
+                        vertical: 4.h,
+                      ),
                       decoration: BoxDecoration(
-                        color: AppColors.veryLightGrey.withValues(alpha: 0.5),
-                        border: Border.all(color: AppColors.veryLightGrey),
+                        color: AppColors.surfaceContainerHigh.withValues(
+                          alpha: 0.5,
+                        ),
+                        border: Border.all(
+                          color: AppColors.surfaceContainerHigh,
+                        ),
                         borderRadius: BorderRadius.circular(10.r),
                       ),
                       child: Column(
                         children: widget.paidAdvances.map((advance) {
-                          final isSelected = _selectedAdvanceIds.contains(advance.id);
+                          final isSelected = _selectedAdvanceIds.contains(
+                            advance.id,
+                          );
                           return CheckboxListTile(
-                            contentPadding: EdgeInsets.symmetric(horizontal: 8.w),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 8.w,
+                            ),
                             title: Text(
                               "${advance.amount.toStringAsFixed(2)} • ${DateFormat('yyyy-MM-dd').format(advance.date)}",
                               style: TextStyles.customStyle(
@@ -585,25 +605,74 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
                         ),
                       ],
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Column(
                       children: [
-                        Text(
-                          AppStrings.netSalary.tr(),
-                          style: TextStyles.customStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              AppStrings.netSalary.tr(),
+                              style: TextStyles.customStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              _netSalary < 0
+                                  ? "0.00"
+                                  : _netSalary.toSmartAmount(),
+                              style: TextStyles.customStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(
-                          _netSalary.toStringAsFixed(2),
-                          style: TextStyles.customStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
+                        if (_netSalary < 0) ...[
+                          SizedBox(height: 12.h),
+                          Container(
+                            padding: EdgeInsets.all(8.w),
+                            decoration: BoxDecoration(
+                              color: AppColors.errorContainer,
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.warning_amber_rounded,
+                                      color: AppColors.errorText,
+                                      size: 20,
+                                    ),
+                                    SizedBox(width: 8.w),
+                                    Expanded(
+                                      child: Text(
+                                        AppStrings.deductionsExceedPayable.tr(),
+                                        style: TextStyles.customStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.errorText,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 4.h),
+                                Text(
+                                  '${AppStrings.outstandingBalance.tr()}: ${_netSalary.abs().toSmartAmount()}\n${AppStrings.carriedForwardAutomatically.tr()}',
+                                  style: TextStyles.customStyle(
+                                    fontSize: 11,
+                                    color: AppColors.errorText,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   ),
@@ -677,11 +746,11 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
       contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10.r),
-        borderSide: BorderSide(color: AppColors.veryLightGrey),
+        borderSide: BorderSide(color: AppColors.surfaceContainerHigh),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10.r),
-        borderSide: BorderSide(color: AppColors.veryLightGrey),
+        borderSide: BorderSide(color: AppColors.surfaceContainerHigh),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10.r),
@@ -742,10 +811,12 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
   void _submit() {
     if (_formKey.currentState!.validate()) {
       final double base = double.parse(_baseSalaryController.text);
-      final double otHours =
-          double.tryParse(_overtimeHoursController.text) ?? 0.0;
-      final double otRate =
-          double.tryParse(_overtimeRateController.text) ?? 0.0;
+      final double otHours = widget.employee.salaryType == 'hourly'
+          ? 0.0
+          : (double.tryParse(_overtimeHoursController.text) ?? 0.0);
+      final double otRate = widget.employee.salaryType == 'hourly'
+          ? 0.0
+          : (double.tryParse(_overtimeRateController.text) ?? 0.0);
       final double allow = double.tryParse(_allowancesController.text) ?? 0.0;
       final double deduct = double.tryParse(_deductionsController.text) ?? 0.0;
 
@@ -756,6 +827,13 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
         }
       }
 
+      double actualPaid = _netSalary;
+      double carriedForward = 0.0;
+      if (_netSalary < 0) {
+        actualPaid = 0.0;
+        carriedForward = _netSalary.abs();
+      }
+
       final payroll = PayrollEntity(
         uid: widget.employee.uid,
         employeeId: widget.employee.id!,
@@ -763,9 +841,11 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
         paymentDate: _paymentDate,
         amount: base,
         bonus: allow,
-        deduction: deduct + advancesDeduction,
+        deduction:
+            deduct + advancesDeduction + widget.employee.outstandingBalance,
         overtimeCompensation: otHours * otRate,
-        netSalary: _netSalary,
+        netSalary: actualPaid, // only actual paid
+        carriedForwardBalance: carriedForward,
         monthKey: DateFormat('yyyy-MM').format(_paymentDate),
         notes: _notesController.text.trim(),
         salaryType: widget.employee.salaryType,

@@ -14,7 +14,8 @@ import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_summary_cub
 
 class MyDebtDetailsReportCubit extends Cubit<MyDebtDetailsReportState> {
   final GetMyDebtItemPaymentsUseCase getMyDebtItemPaymentsUseCase;
-  final GetMyDebtItemPaymentsPaginatedUseCase getMyDebtItemPaymentsPaginatedUseCase;
+  final GetMyDebtItemPaymentsPaginatedUseCase
+  getMyDebtItemPaymentsPaginatedUseCase;
   final UpdateMyDebtPaymentUseCase updateMyDebtPaymentUseCase;
   final DeleteMyDebtPaymentUseCase deleteMyDebtPaymentUseCase;
   final GetMyDebtByIdUseCase getMyDebtByIdUseCase;
@@ -98,10 +99,7 @@ class MyDebtDetailsReportCubit extends Cubit<MyDebtDetailsReportState> {
     );
   }
 
-  Future<void> loadMoreTransactions(
-    String uid,
-    String debtId,
-  ) async {
+  Future<void> loadMoreTransactions(String uid, String debtId) async {
     if (state is! MyDebtDetailsReportLoaded) return;
     final loadedState = state as MyDebtDetailsReportLoaded;
     if (loadedState.isPaginationLoading || !loadedState.hasMore) return;
@@ -120,8 +118,9 @@ class MyDebtDetailsReportCubit extends Cubit<MyDebtDetailsReportState> {
     result.fold(
       (failure) => emit(loadedState.copyWith(isPaginationLoading: false)),
       (paginated) {
-        final updatedTransactions = List<PaymentEntity>.from(loadedState.transactions)
-          ..addAll(paginated.items);
+        final updatedTransactions = List<PaymentEntity>.from(
+          loadedState.transactions,
+        )..addAll(paginated.items);
 
         double totalAmount = 0;
         double paidAmount = 0;

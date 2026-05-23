@@ -58,11 +58,13 @@ class MyDebtPersonRemoteDataSourceImpl implements MyDebtPersonRemoteDataSource {
           total += (data['totalDebtAmount'] as num?)?.toDouble() ?? 0.0;
         }
       } else {
-        final snapshot = await collection.aggregate(
-          count(),
-          sum('totalRemainingDebt'),
-          sum('totalDebtAmount'),
-        ).get();
+        final snapshot = await collection
+            .aggregate(
+              count(),
+              sum('totalRemainingDebt'),
+              sum('totalDebtAmount'),
+            )
+            .get();
 
         remaining = snapshot.getSum('totalRemainingDebt') ?? 0.0;
         total = snapshot.getSum('totalDebtAmount') ?? 0.0;
@@ -99,7 +101,9 @@ class MyDebtPersonRemoteDataSourceImpl implements MyDebtPersonRemoteDataSource {
       }
 
       // Fetch one extra to determine hasMore
-      final snapshot = await query.limit(limit + 1).get(
+      final snapshot = await query
+          .limit(limit + 1)
+          .get(
             GetOptions(
               source: forceRefresh ? Source.server : Source.serverAndCache,
             ),

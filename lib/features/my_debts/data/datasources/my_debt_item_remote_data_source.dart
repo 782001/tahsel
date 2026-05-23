@@ -650,7 +650,9 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       }
 
       // Fetch limit + 1 to determine hasMore
-      final snapshot = await query.limit(limit + 1).get(
+      final snapshot = await query
+          .limit(limit + 1)
+          .get(
             GetOptions(
               source: forceRefresh ? Source.server : Source.serverAndCache,
             ),

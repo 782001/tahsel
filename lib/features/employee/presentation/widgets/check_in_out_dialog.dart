@@ -14,6 +14,9 @@ class CheckInOutDialog extends StatefulWidget {
   final EmployeeEntity employee;
   final AttendanceEntity?
   activeAttendance; // If present, this is a CHECK-OUT action. Otherwise CHECK-IN.
+  final double previousWorkedHoursToday;
+  final double previousOvertimeToday;
+  final double previousDeductionToday;
   final Function(AttendanceEntity) onCheckIn;
   final Function({
     required String attendanceId,
@@ -30,6 +33,9 @@ class CheckInOutDialog extends StatefulWidget {
     super.key,
     required this.employee,
     this.activeAttendance,
+    this.previousWorkedHoursToday = 0.0,
+    this.previousOvertimeToday = 0.0,
+    this.previousDeductionToday = 0.0,
     required this.onCheckIn,
     required this.onCheckOut,
   });
@@ -86,19 +92,38 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
     final checkOutTime = _selectedTime;
     final duration = checkOutTime.difference(checkInTime);
     final actualWorkedHours = duration.inMinutes / 60.0;
-    final expectedHours = double.tryParse(_expectedHoursController.text) ?? widget.employee.expectedDailyHours;
 
-    if (actualWorkedHours > expectedHours) {
-      _overtimeController.text = (actualWorkedHours - expectedHours)
-          .toStringAsFixed(2);
-      _deductionsController.text = '0.0';
-    } else if (actualWorkedHours < expectedHours) {
+    if (widget.employee.salaryType == 'hourly') {
       _overtimeController.text = '0.0';
-      _deductionsController.text = (expectedHours - actualWorkedHours)
-          .toStringAsFixed(2);
+      _deductionsController.text = '0.0';
+      return;
+    }
+
+    final expectedHours =
+        double.tryParse(_expectedHoursController.text) ??
+        widget.employee.expectedDailyHours;
+
+    final totalWorkedToday = widget.previousWorkedHoursToday + actualWorkedHours;
+
+    if (totalWorkedToday > expectedHours) {
+      double totalOvertime = totalWorkedToday - expectedHours;
+      double netOvertime = totalOvertime - widget.previousOvertimeToday;
+      double netDeduction = 0.0 - widget.previousDeductionToday;
+      
+      _overtimeController.text = netOvertime.toStringAsFixed(2);
+      _deductionsController.text = netDeduction.toStringAsFixed(2);
+    } else if (totalWorkedToday < expectedHours) {
+      double totalDeduction = expectedHours - totalWorkedToday;
+      double netDeduction = totalDeduction - widget.previousDeductionToday;
+      double netOvertime = 0.0 - widget.previousOvertimeToday;
+
+      _overtimeController.text = netOvertime.toStringAsFixed(2);
+      _deductionsController.text = netDeduction.toStringAsFixed(2);
     } else {
-      _overtimeController.text = '0.0';
-      _deductionsController.text = '0.0';
+      double netOvertime = 0.0 - widget.previousOvertimeToday;
+      double netDeduction = 0.0 - widget.previousDeductionToday;
+      _overtimeController.text = netOvertime.toStringAsFixed(2);
+      _deductionsController.text = netDeduction.toStringAsFixed(2);
     }
   }
 
@@ -124,7 +149,7 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(isDesktop ? 16 : 20.r),
       ),
-      backgroundColor: AppColors.whiteColor,
+      backgroundColor: AppColors.scafoldBackGround,
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: isDesktop ? 450 : double.infinity,
@@ -173,7 +198,7 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
                     width: double.infinity,
                     padding: EdgeInsets.all(12.w),
                     decoration: BoxDecoration(
-                      color: AppColors.veryLightGrey,
+                      color: AppColors.surfaceContainerHigh,
                       borderRadius: BorderRadius.circular(10.r),
                     ),
                     child: Column(
@@ -219,7 +244,9 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
                         vertical: 12.h,
                       ),
                       decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.veryLightGrey),
+                        border: Border.all(
+                          color: AppColors.surfaceContainerHigh,
+                        ),
                         borderRadius: BorderRadius.circular(10.r),
                       ),
                       child: Row(
@@ -278,42 +305,44 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
                         }
                       },
                     ),
-                    SizedBox(height: isDesktop ? 20 : 16.h),
-                    Text(
-                      AppStrings.dailyWorkingHours.tr(),
-                      style: TextStyles.customStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.black,
+                    if (widget.employee.salaryType != 'hourly') ...[
+                      SizedBox(height: isDesktop ? 20 : 16.h),
+                      Text(
+                        AppStrings.dailyWorkingHours.tr(),
+                        style: TextStyles.customStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.black,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 6.h),
-                    TextFormField(
-                      cursorColor: AppColors.primaryColor,
-                      controller: _expectedHoursController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
+                      SizedBox(height: 6.h),
+                      TextFormField(
+                        cursorColor: AppColors.primaryColor,
+                        controller: _expectedHoursController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: _buildInputDecoration(
+                          hintText: '8.0',
+                          icon: Icons.access_time_rounded,
+                        ),
+                        style: TextStyles.customStyle(
+                          fontSize: 14,
+                          color: AppColors.blackReal,
+                        ),
+                        validator: (val) {
+                          if (val == null || val.trim().isEmpty) {
+                            return AppStrings.invalidValue.tr();
+                          }
+                          if (double.tryParse(val) == null ||
+                              double.parse(val) <= 0) {
+                            return AppStrings.invalidValue.tr();
+                          }
+                          return null;
+                        },
                       ),
-                      decoration: _buildInputDecoration(
-                        hintText: '8.0',
-                        icon: Icons.access_time_rounded,
-                      ),
-                      style: TextStyles.customStyle(
-                        fontSize: 14,
-                        color: AppColors.blackReal,
-                      ),
-                      validator: (val) {
-                        if (val == null || val.trim().isEmpty) {
-                          return AppStrings.invalidValue.tr();
-                        }
-                        if (double.tryParse(val) == null ||
-                            double.parse(val) <= 0) {
-                          return AppStrings.invalidValue.tr();
-                        }
-                        return null;
-                      },
-                    ),
-                  ] else ...[
+                    ],
+                  ] else if (widget.employee.salaryType != 'hourly') ...[
                     // Check Out Inputs
                     Row(
                       children: [
@@ -336,7 +365,7 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
                                 readOnly: true, // Read Only
                                 decoration: _buildInputDecoration(hintText: '0')
                                     .copyWith(
-                                      fillColor: AppColors.veryLightGrey,
+                                      fillColor: AppColors.surfaceContainerHigh,
                                       filled: true,
                                     ),
                                 style: TextStyles.customStyle(
@@ -368,7 +397,7 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
                                 readOnly: true, // Read Only
                                 decoration: _buildInputDecoration(hintText: '0')
                                     .copyWith(
-                                      fillColor: AppColors.veryLightGrey,
+                                      fillColor: AppColors.surfaceContainerHigh,
                                       filled: true,
                                     ),
                                 style: TextStyles.customStyle(
@@ -477,11 +506,11 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10.r),
-        borderSide: BorderSide(color: AppColors.veryLightGrey),
+        borderSide: BorderSide(color: AppColors.surfaceContainerHigh),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10.r),
-        borderSide: BorderSide(color: AppColors.veryLightGrey),
+        borderSide: BorderSide(color: AppColors.surfaceContainerHigh),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10.r),
@@ -595,7 +624,8 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
           overtimeHours: 0.0,
           deductionHours: 0.0,
           expectedWorkingHours:
-              double.tryParse(_expectedHoursController.text) ?? widget.employee.expectedDailyHours,
+              double.tryParse(_expectedHoursController.text) ??
+              widget.employee.expectedDailyHours,
           lateMinutes: 0,
           notes: _notesController.text.trim(),
         );

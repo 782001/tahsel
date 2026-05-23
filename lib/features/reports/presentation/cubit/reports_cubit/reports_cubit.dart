@@ -126,8 +126,11 @@ class ReportsCubit extends Cubit<ReportsState> {
     );
 
     result.fold((failure) => emit(ReportsError(failure.message)), (reports) {
-      final successState =
-          ReportsSuccess(reports, const [], ReportPeriod.allTime);
+      final successState = ReportsSuccess(
+        reports,
+        const [],
+        ReportPeriod.allTime,
+      );
       _cache[cacheKey] = successState;
       emit(successState);
     });
@@ -138,5 +141,3 @@ class ReportsCubit extends Cubit<ReportsState> {
     _cache.clear();
   }
 }
-
-

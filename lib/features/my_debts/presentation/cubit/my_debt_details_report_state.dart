@@ -50,7 +50,9 @@ class MyDebtDetailsReportLoaded extends MyDebtDetailsReportState {
       paidAmount: paidAmount ?? this.paidAmount,
       remainingAmount: remainingAmount ?? this.remainingAmount,
       debt: debt ?? this.debt,
-      lastDocument: clearLastDocument ? null : (lastDocument ?? this.lastDocument),
+      lastDocument: clearLastDocument
+          ? null
+          : (lastDocument ?? this.lastDocument),
       hasMore: hasMore ?? this.hasMore,
       isPaginationLoading: isPaginationLoading ?? this.isPaginationLoading,
     );

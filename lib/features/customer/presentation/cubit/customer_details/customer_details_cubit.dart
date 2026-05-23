@@ -19,26 +19,25 @@ class CustomerDetailsCubit extends Cubit<CustomerDetailsState> {
       limit: _pageSize,
     );
 
-    result.fold(
-      (failure) => emit(CustomerDetailsError(failure.message)),
-      (paginatedData) {
-        final operations = paginatedData.$1;
-        final lastDoc = paginatedData.$2;
-        final totalSpent = paginatedData.$3;
-        final totalPaid = paginatedData.$4;
+    result.fold((failure) => emit(CustomerDetailsError(failure.message)), (
+      paginatedData,
+    ) {
+      final operations = paginatedData.$1;
+      final lastDoc = paginatedData.$2;
+      final totalSpent = paginatedData.$3;
+      final totalPaid = paginatedData.$4;
 
-        emit(
-          CustomerDetailsLoaded(
-            operations: operations,
-            totalSpent: totalSpent,
-            totalPaid: totalPaid,
-            remaining: totalSpent - totalPaid,
-            lastDoc: lastDoc,
-            hasReachedMax: operations.length < _pageSize,
-          ),
-        );
-      },
-    );
+      emit(
+        CustomerDetailsLoaded(
+          operations: operations,
+          totalSpent: totalSpent,
+          totalPaid: totalPaid,
+          remaining: totalSpent - totalPaid,
+          lastDoc: lastDoc,
+          hasReachedMax: operations.length < _pageSize,
+        ),
+      );
+    });
   }
 
   Future<void> fetchMoreOperations(String uid, String customerName) async {
@@ -65,12 +64,15 @@ class CustomerDetailsCubit extends Cubit<CustomerDetailsState> {
         final lastDoc = paginatedData.$2;
 
         if (newOperations.isEmpty) {
-          emit(currentState.copyWith(hasReachedMax: true, isFetchingMore: false));
+          emit(
+            currentState.copyWith(hasReachedMax: true, isFetchingMore: false),
+          );
           return;
-         }
+        }
 
-        final allOperations = List<CustomerOperation>.from(currentState.operations)
-          ..addAll(newOperations);
+        final allOperations = List<CustomerOperation>.from(
+          currentState.operations,
+        )..addAll(newOperations);
 
         emit(
           currentState.copyWith(
