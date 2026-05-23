@@ -25,7 +25,8 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
   late TextEditingController _roleController;
   late TextEditingController _salaryAmountController;
   late TextEditingController _notesController;
-  late TextEditingController _workingDaysController;
+  late TextEditingController _allowedPaidWeekendsController;
+  late TextEditingController _dailyDeductionMultiplierController;
   late TextEditingController _expectedHoursController;
   late TextEditingController _overtimeMultiplierController;
   late TextEditingController _customOvertimeRateController;
@@ -58,10 +59,15 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
     _salaryType = widget.employee?.salaryType ?? 'monthly';
     _status = widget.employee?.status ?? 'active';
 
-    _workingDaysController = TextEditingController(
+    _allowedPaidWeekendsController = TextEditingController(
       text: widget.employee != null
-          ? widget.employee!.workingDaysPerMonth.toString()
-          : '26',
+          ? widget.employee!.allowedPaidWeekendsPerMonth.toString()
+          : '4',
+    );
+    _dailyDeductionMultiplierController = TextEditingController(
+      text: widget.employee != null
+          ? widget.employee!.dailyDeductionMultiplier.toString()
+          : '1.0',
     );
     _expectedHoursController = TextEditingController(
       text: widget.employee != null
@@ -98,7 +104,8 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
     _roleController.dispose();
     _salaryAmountController.dispose();
     _notesController.dispose();
-    _workingDaysController.dispose();
+    _allowedPaidWeekendsController.dispose();
+    _dailyDeductionMultiplierController.dispose();
     _expectedHoursController.dispose();
     _overtimeMultiplierController.dispose();
     _customOvertimeRateController.dispose();
@@ -432,51 +439,102 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
                         ),
                         children: [
                           if (_salaryType != 'hourly') ...[
+                            if (_salaryType == 'monthly') ...[
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          AppStrings.allowedPaidWeekendsPerMonth.tr(),
+                                          style: TextStyles.customStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        SizedBox(height: 4.h),
+                                        TextFormField(
+                                          cursorColor: AppColors.primaryColor,
+                                          controller: _allowedPaidWeekendsController,
+                                          keyboardType: TextInputType.number,
+                                          decoration: _buildInputDecoration(
+                                            hintText: '4',
+                                          ),
+                                          style: TextStyles.customStyle(
+                                            fontSize: 13,
+                                          ),
+                                          validator: (val) {
+                                            if (_salaryType != 'monthly') {
+                                              return null;
+                                            }
+                                            if (val == null ||
+                                                val.trim().isEmpty) {
+                                              return AppStrings.requiredField
+                                                  .tr();
+                                            }
+                                            final numVal = int.tryParse(val);
+                                            if (numVal == null || numVal < 0 || numVal > 28) {
+                                              return "${AppStrings.invalidValue.tr()} (1 - 28)";
+                                            }
+                                            return null;
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(width: 8.w),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          AppStrings.dailyDeductionMultiplier.tr(),
+                                          style: TextStyles.customStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        SizedBox(height: 4.h),
+                                        TextFormField(
+                                          cursorColor: AppColors.primaryColor,
+                                          controller: _dailyDeductionMultiplierController,
+                                          keyboardType: const TextInputType.numberWithOptions(
+                                            decimal: true,
+                                          ),
+                                          decoration: _buildInputDecoration(
+                                            hintText: '1.0',
+                                          ),
+                                          style: TextStyles.customStyle(
+                                            fontSize: 13,
+                                          ),
+                                          validator: (val) {
+                                            if (_salaryType != 'monthly') {
+                                              return null;
+                                            }
+                                            if (val == null ||
+                                                val.trim().isEmpty) {
+                                              return AppStrings.requiredField
+                                                  .tr();
+                                            }
+                                            final numVal = double.tryParse(val);
+                                            if (numVal == null || numVal < 0) {
+                                              return AppStrings.invalidValue.tr();
+                                            }
+                                            return null;
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 12.h),
+                            ],
                             Row(
                               children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        AppStrings.workingDaysPerMonth.tr(),
-                                        style: TextStyles.customStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      SizedBox(height: 4.h),
-                                      TextFormField(
-                                        cursorColor: AppColors.primaryColor,
-                                        controller: _workingDaysController,
-                                        keyboardType: TextInputType.number,
-                                        decoration: _buildInputDecoration(
-                                          hintText: '26',
-                                        ),
-                                        style: TextStyles.customStyle(
-                                          fontSize: 13,
-                                        ),
-                                        validator: (val) {
-                                          if (_salaryType == 'hourly') {
-                                            return null;
-                                          }
-                                          if (val == null ||
-                                              val.trim().isEmpty) {
-                                            return AppStrings.requiredField
-                                                .tr();
-                                          }
-                                          final numVal = int.tryParse(val);
-                                          if (numVal == null || numVal <= 0) {
-                                            return AppStrings.invalidValue.tr();
-                                          }
-                                          return null;
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                SizedBox(width: 8.w),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
@@ -522,44 +580,51 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
                                     ],
                                   ),
                                 ),
-                              ],
-                            ),
-                            SizedBox(height: 12.h),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  AppStrings.overtimeMultiplier.tr(),
-                                  style: TextStyles.customStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                SizedBox(height: 4.h),
-                                TextFormField(
-                                  cursorColor: AppColors.primaryColor,
-                                  controller: _overtimeMultiplierController,
-                                  keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                        decimal: true,
+                                SizedBox(width: 8.w),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        AppStrings.overtimeMultiplier.tr(),
+                                        style: TextStyles.customStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
-                                  decoration: _buildInputDecoration(
-                                    hintText: '1.5',
+                                      SizedBox(height: 4.h),
+                                      TextFormField(
+                                        cursorColor: AppColors.primaryColor,
+                                        controller: _overtimeMultiplierController,
+                                        keyboardType:
+                                            const TextInputType.numberWithOptions(
+                                              decimal: true,
+                                            ),
+                                        decoration: _buildInputDecoration(
+                                          hintText: '1.5',
+                                        ),
+                                        style: TextStyles.customStyle(
+                                          fontSize: 13,
+                                        ),
+                                        validator: (val) {
+                                          if (_salaryType == 'hourly') {
+                                            return null;
+                                          }
+                                          if (val == null ||
+                                              val.trim().isEmpty) {
+                                            return AppStrings.requiredField
+                                                .tr();
+                                          }
+                                          final numVal = double.tryParse(val);
+                                          if (numVal == null || numVal < 0) {
+                                            return AppStrings.invalidValue.tr();
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                    ],
                                   ),
-                                  style: TextStyles.customStyle(fontSize: 13),
-                                  validator: (val) {
-                                    if (_salaryType == 'hourly') {
-                                      return null;
-                                    }
-                                    if (val == null || val.trim().isEmpty) {
-                                      return AppStrings.requiredField.tr();
-                                    }
-                                    final numVal = double.tryParse(val);
-                                    if (numVal == null || numVal < 0) {
-                                      return AppStrings.invalidValue.tr();
-                                    }
-                                    return null;
-                                  },
                                 ),
                               ],
                             ),
@@ -884,7 +949,6 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
         status: _status,
         createdAt: widget.employee?.createdAt ?? DateTime.now(),
         notes: _notesController.text.trim(),
-        workingDaysPerMonth: int.tryParse(_workingDaysController.text) ?? 26,
         expectedDailyHours:
             double.tryParse(_expectedHoursController.text) ?? 8.0,
         overtimeMultiplier:
@@ -899,6 +963,11 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
         paymentWindowStart:
             int.tryParse(_paymentWindowStartController.text) ?? 1,
         paymentWindowEnd: int.tryParse(_paymentWindowEndController.text) ?? 31,
+        outstandingBalance: widget.employee?.outstandingBalance ?? 0.0,
+        allowedPaidWeekendsPerMonth:
+            int.tryParse(_allowedPaidWeekendsController.text) ?? 4,
+        dailyDeductionMultiplier:
+            double.tryParse(_dailyDeductionMultiplierController.text) ?? 1.0,
       );
       widget.onSave(employee);
       Navigator.pop(context);

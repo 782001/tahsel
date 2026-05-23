@@ -481,9 +481,12 @@
   "payment_window_start": "يوم بدء فترة دفع الراتب",
   "payment_window_end": "يوم نهاية فترة دفع الراتب",
   "payment_window_error": "فترة دفع الراتب المخصصة لهذا الموظف هي من يوم {start} إلى يوم {end} من الشهر. المتابعة في الدفع خارج هذه الفترة قد يؤدي إلى تصفية الرصيد مبكراً وتقارير غير صحيحة.",
-  "invalid_payment_window_day": "يجب أن تكون القيمة بين 1 و 28",
+  "invalid_payment_window_day": "القيمة بين 1 و 28",
   "no_pending_records": "لا توجد سجلات مستحقة للدفع",
   "deductions_exceed_payable": "الخصومات تتجاوز الراتب المستحق",
   "outstanding_balance": "الرصيد المتبقي (المديونية)",
-  "carried_forward_automatically": "سيتم ترحيله تلقائياً للراتب القادم."
+  "carried_forward_automatically": "سيتم ترحيله تلقائياً للراتب القادم.",
+  "allowed_paid_weekends_per_month": "عدد أيام الراحات المدفوعة",
+  "daily_deduction_multiplier": "مضاعف الخصم اليومي",
+  "attendance_overlap_error": "هذا الوقت يتداخل مع سجل حضور موجود"
 }

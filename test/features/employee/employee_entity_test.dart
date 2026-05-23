@@ -162,7 +162,8 @@ void main() {
               notes: '',
             );
 
-            expect(employee.workingDaysPerMonth, 26);
+            expect(employee.allowedPaidWeekendsPerMonth, 4);
+            expect(employee.dailyDeductionMultiplier, 1.0);
             expect(employee.expectedDailyHours, 8.0);
             expect(employee.overtimeMultiplier, 1.5);
             expect(employee.customOvertimeRate, isNull);
@@ -182,14 +183,16 @@ void main() {
             status: 'active',
             createdAt: DateTime(2026, 1, 1),
             notes: '',
-            workingDaysPerMonth: 22,
+            allowedPaidWeekendsPerMonth: 6,
+            dailyDeductionMultiplier: 1.5,
             expectedDailyHours: 6.0,
             overtimeMultiplier: 2.0,
             customOvertimeRate: 75.0,
             customDeductionRate: 50.0,
           );
 
-          expect(employee.workingDaysPerMonth, 22);
+          expect(employee.allowedPaidWeekendsPerMonth, 6);
+          expect(employee.dailyDeductionMultiplier, 1.5);
           expect(employee.expectedDailyHours, 6.0);
           expect(employee.overtimeMultiplier, 2.0);
           expect(employee.customOvertimeRate, 75.0);

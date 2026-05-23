@@ -11,7 +11,6 @@ class EmployeeEntity extends Equatable {
   final String status; // 'active', 'inactive', 'suspended'
   final DateTime createdAt;
   final String notes;
-  final int workingDaysPerMonth;
   final double expectedDailyHours;
   final double overtimeMultiplier;
   final double? customOvertimeRate;
@@ -19,6 +18,8 @@ class EmployeeEntity extends Equatable {
   final int paymentWindowStart;
   final int paymentWindowEnd;
   final double outstandingBalance; // Negative carried forward balance/debt
+  final int allowedPaidWeekendsPerMonth;
+  final double dailyDeductionMultiplier;
 
   const EmployeeEntity({
     this.id,
@@ -31,7 +32,6 @@ class EmployeeEntity extends Equatable {
     required this.status,
     required this.createdAt,
     required this.notes,
-    this.workingDaysPerMonth = 26,
     this.expectedDailyHours = 8.0,
     this.overtimeMultiplier = 1.5,
     this.customOvertimeRate,
@@ -39,6 +39,8 @@ class EmployeeEntity extends Equatable {
     this.paymentWindowStart = 1,
     this.paymentWindowEnd = 31,
     this.outstandingBalance = 0.0,
+    this.allowedPaidWeekendsPerMonth = 4,
+    this.dailyDeductionMultiplier = 1.0,
   });
 
   @override
@@ -53,7 +55,6 @@ class EmployeeEntity extends Equatable {
     status,
     createdAt,
     notes,
-    workingDaysPerMonth,
     expectedDailyHours,
     overtimeMultiplier,
     customOvertimeRate,
@@ -61,5 +62,7 @@ class EmployeeEntity extends Equatable {
     paymentWindowStart,
     paymentWindowEnd,
     outstandingBalance,
+    allowedPaidWeekendsPerMonth,
+    dailyDeductionMultiplier,
   ];
 }

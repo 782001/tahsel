@@ -479,9 +479,12 @@
   "payment_window_start": "Payment Window Start",
   "payment_window_end": "Payment Window End",
   "payment_window_error": "This employee's designated payment window is from the {start}th to the {end}th of the month. Proceeding to pay them outside of this window may cause early balance clearance and incorrect reporting.",
-  "invalid_payment_window_day": "Value must be between 1 and 28",
+  "invalid_payment_window_day": "between 1 and 28",
   "no_pending_records": "No pending records to pay",
   "deductions_exceed_payable": "Deductions exceed payable salary",
   "outstanding_balance": "Outstanding Balance",
-  "carried_forward_automatically": "This will be carried forward automatically."
+  "carried_forward_automatically": "This will be carried forward automatically.",
+  "allowed_paid_weekends_per_month": "Allowed Paid Weekend Days",
+  "daily_deduction_multiplier": "Daily Deduction Multiplier",
+  "attendance_overlap_error": "This time overlaps with an existing attendance record"
 }

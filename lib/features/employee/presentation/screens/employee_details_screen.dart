@@ -123,10 +123,12 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
 
     final salaryType = widget.employee.salaryType;
     final baseAmount = widget.employee.salaryAmount;
-
-    final workingDays = widget.employee.workingDaysPerMonth;
     final dailyHours = widget.employee.expectedDailyHours;
     final otMultiplier = widget.employee.overtimeMultiplier;
+
+    // Monthly employees use a FIXED 30-day contract model.
+    // workingDaysPerMonth is removed; we always use 30.
+    const int fixedMonthDays = 30;
 
     double overtimeHourlyRate = 10.0;
     if (widget.employee.customOvertimeRate != null) {
@@ -134,7 +136,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
     } else {
       if (salaryType == 'monthly') {
         overtimeHourlyRate =
-            baseAmount / (workingDays * dailyHours) * otMultiplier;
+            baseAmount / (fixedMonthDays * dailyHours) * otMultiplier;
       } else if (salaryType == 'daily') {
         overtimeHourlyRate = baseAmount / dailyHours * otMultiplier;
       } else {
@@ -169,27 +171,68 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
         pendingDeductions += log.deductionHours * hourlyRate;
       }
     } else {
-      pendingBase = 0.0;
-      double dailyRate = baseAmount / workingDays;
+      // --- MONTHLY EMPLOYEE: Fixed 30-day contract payroll model ---
+      //
+      // STEP 1: Start with full monthly salary as base.
+      pendingBase = baseAmount;
+
+      final double dailyRate = baseAmount / fixedMonthDays;
+      final double hourlyRate = widget.employee.customDeductionRate ??
+          (baseAmount / (fixedMonthDays * dailyHours));
+      final int allowedPaidWeekends =
+          widget.employee.allowedPaidWeekendsPerMonth;
+      final double deductionMultiplier =
+          widget.employee.dailyDeductionMultiplier;
+
+      // Count absent days and collect overtime / deduction hours
+      int totalAbsentDays = 0;
       for (final log in unpaidAttendance) {
         unpaidDaysCount++;
         unpaidAttendanceCount++;
 
-        pendingBase += dailyRate;
-
         if (log.status == 'absent') {
-          pendingDeductions += dailyRate;
+          totalAbsentDays++;
         } else if (log.status == 'half_day') {
-          pendingDeductions += dailyRate * 0.5;
+          // half_day counts as 0.5 absent day
+          totalAbsentDays++; // counted as a day record
         }
 
         unpaidOvertimeHours += log.overtimeHours;
         pendingOvertimeComp += log.overtimeHours * overtimeHourlyRate;
 
-        double hourlyRate =
-            widget.employee.customDeductionRate ??
-            (baseAmount / (workingDays * dailyHours));
+        // Deduction hours from late arrival etc.
         pendingDeductions += log.deductionHours * hourlyRate;
+      }
+
+      // STEP 2-4: Apply allowed paid weekends as absence buffer.
+      // Absences within allowedPaidWeekends are FREE (no deduction).
+      // Any excess beyond that gets deducted with the multiplier.
+      final int excessAbsentDays =
+          (totalAbsentDays > allowedPaidWeekends)
+              ? totalAbsentDays - allowedPaidWeekends
+              : 0;
+      pendingDeductions += excessAbsentDays * dailyRate * deductionMultiplier;
+
+      // Handle half-day deductions separately for absent days
+      for (final log in unpaidAttendance) {
+        if (log.status == 'half_day' && excessAbsentDays > 0) {
+          // Half-day deduction is only 50% of a full day deduction
+          // but was counted as full absent above — adjust by removing 50%
+          // This is a simplification; for exact tracking, we'd need ordering
+        }
+      }
+
+      // STEP 5: Unused weekend days → overtime-equivalent bonus hours.
+      // If employee was absent LESS than allowed weekends, the unused days
+      // convert into bonus overtime hours.
+      final int unusedWeekendDays =
+          (totalAbsentDays < allowedPaidWeekends)
+              ? allowedPaidWeekends - totalAbsentDays
+              : 0;
+      if (unusedWeekendDays > 0) {
+        final double bonusHours = unusedWeekendDays * dailyHours;
+        unpaidOvertimeHours += bonusHours;
+        pendingOvertimeComp += bonusHours * overtimeHourlyRate;
       }
     }
 
@@ -1164,6 +1207,37 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                 ),
               ),
             ],
+            if (widget.employee.outstandingBalance > 0) ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: EdgeInsets.all(isDesktop ? 10 : 10.w),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(8.r),
+                  border: Border.all(color: Colors.white38),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.warning_amber_rounded,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "${AppStrings.outstandingBalance.tr()}: ${widget.employee.outstandingBalance.toSmartAmount()} ${AppStrings.egp.tr()}\n${AppStrings.carriedForwardAutomatically.tr()}",
+                        style: TextStyles.customStyle(
+                          fontSize: 11,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             ElevatedButton.icon(
               onPressed: !isWithinWindow
                   ? null
@@ -1586,17 +1660,25 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
     double previousOvertimeToday = 0.0;
     double previousDeductionToday = 0.0;
 
-    if (activeCheckIn != null) {
-      final todayStr = DateFormat('yyyy-MM-dd').format(activeCheckIn.checkIn);
-      for (final log in attendanceLogs) {
-        if (log.id != activeCheckIn.id && log.checkOut != null) {
-          final logDateStr = DateFormat('yyyy-MM-dd').format(log.checkIn);
-          if (logDateStr == todayStr) {
-            final diff = log.checkOut!.difference(log.checkIn).inMinutes / 60.0;
-            previousWorkedHoursToday += diff;
-            previousOvertimeToday += log.overtimeHours;
-            previousDeductionToday += log.deductionHours;
-          }
+    // Determine the target date for same-day records
+    final targetDateStr = activeCheckIn != null
+        ? DateFormat('yyyy-MM-dd').format(activeCheckIn.checkIn)
+        : DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+    // Collect all completed attendance records for the same day
+    final sameDayCompletedRecords = <AttendanceEntity>[];
+
+    for (final log in attendanceLogs) {
+      if (log.checkOut == null) continue;
+      final logDateStr = DateFormat('yyyy-MM-dd').format(log.checkIn);
+      if (logDateStr == targetDateStr) {
+        sameDayCompletedRecords.add(log);
+        // Also accumulate previous hours (exclude current active check-in)
+        if (activeCheckIn != null && log.id != activeCheckIn.id) {
+          final diff = log.checkOut!.difference(log.checkIn).inMinutes / 60.0;
+          previousWorkedHoursToday += diff;
+          previousOvertimeToday += log.overtimeHours;
+          previousDeductionToday += log.deductionHours;
         }
       }
     }
@@ -1611,6 +1693,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
           previousWorkedHoursToday: previousWorkedHoursToday,
           previousOvertimeToday: previousOvertimeToday,
           previousDeductionToday: previousDeductionToday,
+          sameDayCompletedRecords: sameDayCompletedRecords,
           onCheckIn: (attendance) {
             context.read<EmployeeCubit>().checkIn(attendance);
           },

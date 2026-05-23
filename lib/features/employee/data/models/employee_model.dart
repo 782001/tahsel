@@ -13,7 +13,6 @@ class EmployeeModel extends EmployeeEntity {
     required super.status,
     required super.createdAt,
     required super.notes,
-    super.workingDaysPerMonth = 26,
     super.expectedDailyHours = 8.0,
     super.overtimeMultiplier = 1.5,
     super.customOvertimeRate,
@@ -21,6 +20,8 @@ class EmployeeModel extends EmployeeEntity {
     super.paymentWindowStart = 1,
     super.paymentWindowEnd = 31,
     super.outstandingBalance = 0.0,
+    super.allowedPaidWeekendsPerMonth = 4,
+    super.dailyDeductionMultiplier = 1.0,
   });
 
   factory EmployeeModel.fromJson(Map<String, dynamic> json, String id) {
@@ -46,7 +47,6 @@ class EmployeeModel extends EmployeeEntity {
       status: json['status'] as String? ?? 'active',
       createdAt: createdAtDate,
       notes: json['notes'] as String? ?? '',
-      workingDaysPerMonth: json['workingDaysPerMonth'] as int? ?? 26,
       expectedDailyHours:
           (json['expectedDailyHours'] as num?)?.toDouble() ?? 8.0,
       overtimeMultiplier:
@@ -57,6 +57,8 @@ class EmployeeModel extends EmployeeEntity {
       paymentWindowEnd: json['paymentWindowEnd'] as int? ?? 31,
       outstandingBalance:
           (json['outstandingBalance'] as num?)?.toDouble() ?? 0.0,
+      allowedPaidWeekendsPerMonth: json['allowedPaidWeekendsPerMonth'] as int? ?? 4,
+      dailyDeductionMultiplier: (json['dailyDeductionMultiplier'] as num?)?.toDouble() ?? 1.0,
     );
   }
 
@@ -71,7 +73,6 @@ class EmployeeModel extends EmployeeEntity {
       'status': status,
       'createdAt': Timestamp.fromDate(createdAt),
       'notes': notes,
-      'workingDaysPerMonth': workingDaysPerMonth,
       'expectedDailyHours': expectedDailyHours,
       'overtimeMultiplier': overtimeMultiplier,
       'customOvertimeRate': customOvertimeRate,
@@ -79,6 +80,8 @@ class EmployeeModel extends EmployeeEntity {
       'paymentWindowStart': paymentWindowStart,
       'paymentWindowEnd': paymentWindowEnd,
       'outstandingBalance': outstandingBalance,
+      'allowedPaidWeekendsPerMonth': allowedPaidWeekendsPerMonth,
+      'dailyDeductionMultiplier': dailyDeductionMultiplier,
     };
   }
 
@@ -94,7 +97,6 @@ class EmployeeModel extends EmployeeEntity {
       status: entity.status,
       createdAt: entity.createdAt,
       notes: entity.notes,
-      workingDaysPerMonth: entity.workingDaysPerMonth,
       expectedDailyHours: entity.expectedDailyHours,
       overtimeMultiplier: entity.overtimeMultiplier,
       customOvertimeRate: entity.customOvertimeRate,
@@ -102,6 +104,8 @@ class EmployeeModel extends EmployeeEntity {
       paymentWindowStart: entity.paymentWindowStart,
       paymentWindowEnd: entity.paymentWindowEnd,
       outstandingBalance: entity.outstandingBalance,
+      allowedPaidWeekendsPerMonth: entity.allowedPaidWeekendsPerMonth,
+      dailyDeductionMultiplier: entity.dailyDeductionMultiplier,
     );
   }
 }

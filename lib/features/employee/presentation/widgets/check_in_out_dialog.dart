@@ -17,6 +17,8 @@ class CheckInOutDialog extends StatefulWidget {
   final double previousWorkedHoursToday;
   final double previousOvertimeToday;
   final double previousDeductionToday;
+  /// Completed attendance records for the same day (used for overlap validation).
+  final List<AttendanceEntity> sameDayCompletedRecords;
   final Function(AttendanceEntity) onCheckIn;
   final Function({
     required String attendanceId,
@@ -36,6 +38,7 @@ class CheckInOutDialog extends StatefulWidget {
     this.previousWorkedHoursToday = 0.0,
     this.previousOvertimeToday = 0.0,
     this.previousDeductionToday = 0.0,
+    this.sameDayCompletedRecords = const [],
     required this.onCheckIn,
     required this.onCheckOut,
   });
@@ -599,9 +602,50 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
     }
   }
 
+  /// Checks if the given time falls within any existing completed attendance
+  /// range for the same day. Returns the overlapping record, or null if no overlap.
+  AttendanceEntity? _findOverlappingRecord(DateTime start, DateTime end) {
+    for (final record in widget.sameDayCompletedRecords) {
+      // Skip the current active check-in (it's the one being checked out)
+      if (widget.activeAttendance != null &&
+          record.id == widget.activeAttendance!.id) {
+        continue;
+      }
+      if (record.checkOut == null) continue;
+
+      final existingStart = record.checkIn;
+      final existingEnd = record.checkOut!;
+
+      // Two ranges [start, end] and [existingStart, existingEnd] overlap
+      // if start < existingEnd AND end > existingStart
+      if (start.isBefore(existingEnd) && end.isAfter(existingStart)) {
+        return record;
+      }
+    }
+    return null;
+  }
+
   void _submit() {
     if (_formKey.currentState!.validate()) {
       if (_isCheckOut) {
+        // Validate no overlap with other completed records on the same day
+        final checkInTime = widget.activeAttendance!.checkIn;
+        final checkOutTime = _selectedTime;
+        final overlap = _findOverlappingRecord(checkInTime, checkOutTime);
+        if (overlap != null) {
+          final fmt = DateFormat('hh:mm a', AppStrings.currentLang);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '${AppStrings.attendanceOverlapError.tr()} '
+                '(${fmt.format(overlap.checkIn)} - ${fmt.format(overlap.checkOut!)})',
+              ),
+              backgroundColor: AppColors.error,
+            ),
+          );
+          return;
+        }
+
         widget.onCheckOut(
           attendanceId: widget.activeAttendance!.id!,
           checkOutTime: _selectedTime,
@@ -613,6 +657,26 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
           notes: _notesController.text.trim(),
         );
       } else {
+        // For check-in, validate time doesn't fall inside an existing shift
+        final checkInTime = _selectedTime;
+        for (final record in widget.sameDayCompletedRecords) {
+          if (record.checkOut == null) continue;
+          if (checkInTime.isAfter(record.checkIn) &&
+              checkInTime.isBefore(record.checkOut!)) {
+            final fmt = DateFormat('hh:mm a', AppStrings.currentLang);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  '${AppStrings.attendanceOverlapError.tr()} '
+                  '(${fmt.format(record.checkIn)} - ${fmt.format(record.checkOut!)})',
+                ),
+                backgroundColor: AppColors.error,
+              ),
+            );
+            return;
+          }
+        }
+
         final checkInAttendance = AttendanceEntity(
           uid: widget.employee.uid,
           employeeId: widget.employee.id!,

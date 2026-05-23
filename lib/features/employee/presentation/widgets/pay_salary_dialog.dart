@@ -61,19 +61,20 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
       text: (widget.initialOvertimeHours ?? 0.0).toStringAsFixed(2),
     );
 
-    // Estimate overtime hourly rate based on type
+    // Estimate overtime hourly rate based on type.
+    // Monthly employees use a FIXED 30-day salary contract.
     double defaultOvertimeRate = 10.0;
     if (widget.employee.customOvertimeRate != null) {
       defaultOvertimeRate = widget.employee.customOvertimeRate!;
     } else {
       final double baseAmount = widget.employee.salaryAmount;
-      final int workingDays = widget.employee.workingDaysPerMonth;
+      const int fixedMonthDays = 30;
       final double dailyHours = widget.employee.expectedDailyHours;
       final double otMultiplier = widget.employee.overtimeMultiplier;
 
       if (widget.employee.salaryType == 'monthly') {
         defaultOvertimeRate =
-            baseAmount / (workingDays * dailyHours) * otMultiplier;
+            baseAmount / (fixedMonthDays * dailyHours) * otMultiplier;
       } else if (widget.employee.salaryType == 'daily') {
         defaultOvertimeRate = baseAmount / dailyHours * otMultiplier;
       } else {
