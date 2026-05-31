@@ -222,18 +222,10 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
         }
       }
 
-      // STEP 5: Unused weekend days → overtime-equivalent bonus hours.
-      // If employee was absent LESS than allowed weekends, the unused days
-      // convert into bonus overtime hours.
-      final int unusedWeekendDays =
-          (totalAbsentDays < allowedPaidWeekends)
-              ? allowedPaidWeekends - totalAbsentDays
-              : 0;
-      if (unusedWeekendDays > 0) {
-        final double bonusHours = unusedWeekendDays * dailyHours;
-        unpaidOvertimeHours += bonusHours;
-        pendingOvertimeComp += bonusHours * overtimeHourlyRate;
-      }
+      // NOTE: Unused weekend allowance days do NOT generate bonus overtime.
+      // The allowedPaidWeekendsPerMonth is purely an absence buffer (deduction
+      // shield). Overtime is only earned from actual worked hours exceeding
+      // expectedDailyHours, as recorded in individual attendance records.
     }
 
     final double netSalary =
