@@ -54,6 +54,7 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
   late Set<String> _selectedAdvanceIds;
 
   bool get _isMonthAlreadyPaid {
+    if (widget.employee.salaryType != 'monthly') return false;
     final String currentMonthKey = DateFormat('yyyy-MM').format(_paymentDate);
     return widget.paidMonthKeys.contains(currentMonthKey);
   }
@@ -697,7 +698,7 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
                         if (_netSalary < 0) ...[
                           SizedBox(height: 12.h),
                           Container(
-                            padding: EdgeInsets.all(8.w),
+                            padding: EdgeInsets.all(isDesktop ? 8 : 8.w),
                             decoration: BoxDecoration(
                               color: AppColors.errorContainer,
                               borderRadius: BorderRadius.circular(8.r),

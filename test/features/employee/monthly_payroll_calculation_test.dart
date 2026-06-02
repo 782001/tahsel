@@ -314,4 +314,145 @@ void main() {
       },
     );
   });
+
+  group('Daily and Hourly Payroll Calculation Tests', () {
+    test(
+      'Daily Employee: Should calculate base, overtime, and deductions correctly per day',
+      () {
+        final dailyEmployee = EmployeeEntity(
+          id: 'emp_daily',
+          uid: 'user123',
+          name: 'Daily worker',
+          phone: '123456',
+          role: 'Technician',
+          salaryAmount: 200.0, // daily rate
+          salaryType: 'daily',
+          status: 'active',
+          createdAt: DateTime(2026, 1, 1),
+          notes: '',
+          allowedPaidWeekendsPerMonth: 0,
+          dailyDeductionMultiplier: 1.0,
+          expectedDailyHours: 8.0,
+          overtimeMultiplier: 1.5,
+          outstandingBalance: 0.0,
+        );
+
+        final logs = [
+          AttendanceEntity(
+            id: 'd1',
+            employeeId: 'emp_daily',
+            employeeName: 'Daily worker',
+            uid: 'user123',
+            checkIn: DateTime(2026, 5, 1, 9, 0),
+            checkOut: DateTime(2026, 5, 1, 19, 0), // 8 regular + 2 overtime
+            date: '2026-05-01',
+            status: 'present',
+            overtimeHours: 2.0,
+            lateMinutes: 0,
+            notes: '',
+            deductionHours: 1.0, // 1 hour deduction
+          ),
+          AttendanceEntity(
+            id: 'd2',
+            employeeId: 'emp_daily',
+            employeeName: 'Daily worker',
+            uid: 'user123',
+            checkIn: DateTime(2026, 5, 2, 9, 0),
+            checkOut: DateTime(2026, 5, 2, 13, 0),
+            date: '2026-05-02',
+            status: 'half_day',
+            overtimeHours: 0.0,
+            lateMinutes: 0,
+            notes: '',
+          ),
+        ];
+
+        // Overtime rate: baseAmount (200) / dailyHours (8) * overtimeMultiplier (1.5) = 25 * 1.5 = 37.5
+        // Overtime comp: 2.0 * 37.5 = 75.0
+        // Base salary: 200.0 (present) + 100.0 (half_day) = 300.0
+        // Deduction hourly rate: baseAmount (200) / dailyHours (8) = 25.0
+        // Deductions: 1.0 * 25.0 = 25.0
+        // Net Salary: 300.0 (base) + 75.0 (overtime) - 25.0 (deduction) = 350.0
+
+        final result = MonthlyPayrollCalculator.calculate(
+          employee: dailyEmployee,
+          attendanceLogs: logs,
+          referenceDate: DateTime(2026, 5, 10),
+        );
+
+        expect(result['pendingBase'], 300.0);
+        expect(result['unpaidOvertimeHours'], 2.0);
+        expect(result['pendingOvertimeComp'], 75.0);
+        expect(result['pendingDeductions'], 25.0);
+        expect(result['netSalary'], 350.0);
+      },
+    );
+
+    test(
+      'Hourly Employee: Should calculate base correctly based on worked hours',
+      () {
+        final hourlyEmployee = EmployeeEntity(
+          id: 'emp_hourly',
+          uid: 'user123',
+          name: 'Hourly worker',
+          phone: '123456',
+          role: 'Parttime',
+          salaryAmount: 25.0, // hourly rate
+          salaryType: 'hourly',
+          status: 'active',
+          createdAt: DateTime(2026, 1, 1),
+          notes: '',
+          allowedPaidWeekendsPerMonth: 0,
+          dailyDeductionMultiplier: 1.0,
+          expectedDailyHours: 8.0,
+          overtimeMultiplier: 1.5,
+          outstandingBalance: 50.0, // outstanding balance
+        );
+
+        final logs = [
+          AttendanceEntity(
+            id: 'h1',
+            employeeId: 'emp_hourly',
+            employeeName: 'Hourly worker',
+            uid: 'user123',
+            checkIn: DateTime(2026, 5, 1, 9, 0),
+            checkOut: DateTime(2026, 5, 1, 13, 0), // 4 hours worked
+            date: '2026-05-01',
+            status: 'present',
+            overtimeHours: 0.0,
+            lateMinutes: 0,
+            notes: '',
+          ),
+          AttendanceEntity(
+            id: 'h2',
+            employeeId: 'emp_hourly',
+            employeeName: 'Hourly worker',
+            uid: 'user123',
+            checkIn: DateTime(2026, 5, 2, 9, 0),
+            checkOut: DateTime(2026, 5, 2, 15, 0), // 6 hours worked
+            date: '2026-05-02',
+            status: 'present',
+            overtimeHours: 0.0,
+            lateMinutes: 0,
+            notes: '',
+          ),
+        ];
+
+        // Worked hours: 4.0 + 6.0 = 10.0 hours
+        // Base salary: 10.0 * 25.0 = 250.0
+        // Outstanding balance: 50.0
+        // Net Salary: 250.0 - 50.0 = 200.0
+
+        final result = MonthlyPayrollCalculator.calculate(
+          employee: hourlyEmployee,
+          attendanceLogs: logs,
+          referenceDate: DateTime(2026, 5, 10),
+        );
+
+        expect(result['pendingBase'], 250.0);
+        expect(result['unpaidWorkedHours'], 10.0);
+        expect(result['netSalary'], 200.0);
+      },
+    );
+  });
 }

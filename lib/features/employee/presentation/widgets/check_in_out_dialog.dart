@@ -17,6 +17,7 @@ class CheckInOutDialog extends StatefulWidget {
   final double previousWorkedHoursToday;
   final double previousOvertimeToday;
   final double previousDeductionToday;
+
   /// Completed attendance records for the same day (used for overlap validation).
   final List<AttendanceEntity> sameDayCompletedRecords;
   final Function(AttendanceEntity) onCheckIn;
@@ -106,13 +107,14 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
         double.tryParse(_expectedHoursController.text) ??
         widget.employee.expectedDailyHours;
 
-    final totalWorkedToday = widget.previousWorkedHoursToday + actualWorkedHours;
+    final totalWorkedToday =
+        widget.previousWorkedHoursToday + actualWorkedHours;
 
     if (totalWorkedToday > expectedHours) {
       double totalOvertime = totalWorkedToday - expectedHours;
       double netOvertime = totalOvertime - widget.previousOvertimeToday;
       double netDeduction = 0.0 - widget.previousDeductionToday;
-      
+
       _overtimeController.text = netOvertime.toStringAsFixed(2);
       _deductionsController.text = netDeduction.toStringAsFixed(2);
     } else if (totalWorkedToday < expectedHours) {

@@ -455,7 +455,8 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          AppStrings.allowedPaidWeekendsPerMonth.tr(),
+                                          AppStrings.allowedPaidWeekendsPerMonth
+                                              .tr(),
                                           style: TextStyles.customStyle(
                                             fontSize: 12,
                                             fontWeight: FontWeight.bold,
@@ -464,7 +465,8 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
                                         SizedBox(height: 4.h),
                                         TextFormField(
                                           cursorColor: AppColors.primaryColor,
-                                          controller: _allowedPaidWeekendsController,
+                                          controller:
+                                              _allowedPaidWeekendsController,
                                           keyboardType: TextInputType.number,
                                           decoration: _buildInputDecoration(
                                             hintText: '4',
@@ -482,7 +484,9 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
                                                   .tr();
                                             }
                                             final numVal = int.tryParse(val);
-                                            if (numVal == null || numVal < 0 || numVal > 28) {
+                                            if (numVal == null ||
+                                                numVal < 0 ||
+                                                numVal > 28) {
                                               return "${AppStrings.invalidValue.tr()} (1 - 28)";
                                             }
                                             return null;
@@ -498,7 +502,8 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          AppStrings.dailyDeductionMultiplier.tr(),
+                                          AppStrings.dailyDeductionMultiplier
+                                              .tr(),
                                           style: TextStyles.customStyle(
                                             fontSize: 12,
                                             fontWeight: FontWeight.bold,
@@ -507,10 +512,12 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
                                         SizedBox(height: 4.h),
                                         TextFormField(
                                           cursorColor: AppColors.primaryColor,
-                                          controller: _dailyDeductionMultiplierController,
-                                          keyboardType: const TextInputType.numberWithOptions(
-                                            decimal: true,
-                                          ),
+                                          controller:
+                                              _dailyDeductionMultiplierController,
+                                          keyboardType:
+                                              const TextInputType.numberWithOptions(
+                                                decimal: true,
+                                              ),
                                           decoration: _buildInputDecoration(
                                             hintText: '1.0',
                                           ),
@@ -528,7 +535,8 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
                                             }
                                             final numVal = double.tryParse(val);
                                             if (numVal == null || numVal < 0) {
-                                              return AppStrings.invalidValue.tr();
+                                              return AppStrings.invalidValue
+                                                  .tr();
                                             }
                                             return null;
                                           },
@@ -556,7 +564,8 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
                                         SizedBox(height: 4.h),
                                         TextFormField(
                                           cursorColor: AppColors.primaryColor,
-                                          controller: _payrollClosingDayController,
+                                          controller:
+                                              _payrollClosingDayController,
                                           keyboardType: TextInputType.number,
                                           decoration: _buildInputDecoration(
                                             hintText: '25',
@@ -577,7 +586,9 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
                                             if (numVal == null ||
                                                 numVal < 1 ||
                                                 numVal > 28) {
-                                              return AppStrings.invalidPayrollClosingDay.tr();
+                                              return AppStrings
+                                                  .invalidPayrollClosingDay
+                                                  .tr();
                                             }
                                             return null;
                                           },
@@ -586,9 +597,7 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
                                     ),
                                   ),
                                   SizedBox(width: 8.w),
-                                  const Expanded(
-                                    child: SizedBox(),
-                                  ),
+                                  const Expanded(child: SizedBox()),
                                 ],
                               ),
                               SizedBox(height: 12.h),
@@ -656,7 +665,8 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
                                       SizedBox(height: 4.h),
                                       TextFormField(
                                         cursorColor: AppColors.primaryColor,
-                                        controller: _overtimeMultiplierController,
+                                        controller:
+                                            _overtimeMultiplierController,
                                         keyboardType:
                                             const TextInputType.numberWithOptions(
                                               decimal: true,
@@ -820,7 +830,9 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
                                         if (numVal == null ||
                                             numVal < 1 ||
                                             numVal > 28) {
-                                          return AppStrings.invalidPaymentWindowDay.tr();
+                                          return AppStrings
+                                              .invalidPaymentWindowDay
+                                              .tr();
                                         }
                                         return null;
                                       },
@@ -859,7 +871,9 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
                                         if (numVal == null ||
                                             numVal < 1 ||
                                             numVal > 28) {
-                                          return AppStrings.invalidPaymentWindowDay.tr();
+                                          return AppStrings
+                                              .invalidPaymentWindowDay
+                                              .tr();
                                         }
                                         return null;
                                       },
@@ -1028,8 +1042,9 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
             int.tryParse(_allowedPaidWeekendsController.text) ?? 4,
         dailyDeductionMultiplier:
             double.tryParse(_dailyDeductionMultiplierController.text) ?? 1.0,
-        payrollClosingDay:
-            _salaryType == 'monthly' ? (int.tryParse(_payrollClosingDayController.text) ?? 25) : 25,
+        payrollClosingDay: _salaryType == 'monthly'
+            ? (int.tryParse(_payrollClosingDayController.text) ?? 25)
+            : 25,
       );
       widget.onSave(employee);
       Navigator.pop(context);

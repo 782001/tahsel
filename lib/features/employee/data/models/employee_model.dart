@@ -58,8 +58,10 @@ class EmployeeModel extends EmployeeEntity {
       paymentWindowEnd: json['paymentWindowEnd'] as int? ?? 31,
       outstandingBalance:
           (json['outstandingBalance'] as num?)?.toDouble() ?? 0.0,
-      allowedPaidWeekendsPerMonth: json['allowedPaidWeekendsPerMonth'] as int? ?? 4,
-      dailyDeductionMultiplier: (json['dailyDeductionMultiplier'] as num?)?.toDouble() ?? 1.0,
+      allowedPaidWeekendsPerMonth:
+          json['allowedPaidWeekendsPerMonth'] as int? ?? 4,
+      dailyDeductionMultiplier:
+          (json['dailyDeductionMultiplier'] as num?)?.toDouble() ?? 1.0,
       payrollClosingDay: json['payrollClosingDay'] as int? ?? 25,
     );
   }

@@ -552,14 +552,16 @@ class AppStrings {
   static const String invalidPaymentWindowDay = "invalid_payment_window_day";
   static const String noPendingRecords = "no_pending_records";
 
-   static const String allowedPaidWeekendsPerMonth = "allowed_paid_weekends_per_month";
+  static const String allowedPaidWeekendsPerMonth =
+      "allowed_paid_weekends_per_month";
   static const String dailyDeductionMultiplier = "daily_deduction_multiplier";
   static const String deductionsExceedPayable = "deductions_exceed_payable";
   static const String outstandingBalance = "outstanding_balance";
   static const String carriedForwardAutomatically =
       "carried_forward_automatically";
   static const String attendanceOverlapError = "attendance_overlap_error";
-  static const String payrollAlreadyPaidForMonth = "payroll_already_paid_for_month";
+  static const String payrollAlreadyPaidForMonth =
+      "payroll_already_paid_for_month";
   static const String payrollClosingDay = "payroll_closing_day";
   static const String invalidPayrollClosingDay = "invalid_payroll_closing_day";
   static const String payrollPeriod = "payroll_period";

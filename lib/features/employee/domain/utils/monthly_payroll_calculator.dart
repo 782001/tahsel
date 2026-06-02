@@ -30,8 +30,11 @@ class MonthlyPayrollCalculator {
       // We have passed the closing day — we are in the next period.
       final nextMonth = DateTime(ref.year, ref.month + 1, clampedClosing);
       periodEnd = nextMonth;
-      periodStart = DateTime(ref.year, ref.month, clampedClosing)
-          .add(const Duration(days: 1));
+      periodStart = DateTime(
+        ref.year,
+        ref.month,
+        clampedClosing,
+      ).add(const Duration(days: 1));
     }
 
     return (start: periodStart, end: periodEnd);
@@ -136,13 +139,21 @@ class MonthlyPayrollCalculator {
       // Check if any confirmed presence (present, late, half_day) exists.
       // If no confirmed presence exists, base salary, overtime and deductions are 0.
       final bool hasConfirmedPresence = unpaidAttendance.any(
-        (log) => log.status == 'present' || log.status == 'late' || log.status == 'half_day',
+        (log) =>
+            log.status == 'present' ||
+            log.status == 'late' ||
+            log.status == 'half_day',
       );
 
       // Compute monthly metrics
-      attendedDays = unpaidAttendance.where(
-        (log) => log.status == 'present' || log.status == 'late' || log.status == 'half_day',
-      ).length;
+      attendedDays = unpaidAttendance
+          .where(
+            (log) =>
+                log.status == 'present' ||
+                log.status == 'late' ||
+                log.status == 'half_day',
+          )
+          .length;
 
       for (final log in unpaidAttendance) {
         if (log.status == 'absent') {
@@ -170,7 +181,8 @@ class MonthlyPayrollCalculator {
         pendingBase = baseAmount;
 
         final double dailyRate = baseAmount / fixedMonthDays;
-        final double hourlyRate = employee.customDeductionRate ??
+        final double hourlyRate =
+            employee.customDeductionRate ??
             (baseAmount / (fixedMonthDays * dailyHours));
         final double deductionMultiplier = employee.dailyDeductionMultiplier;
 
@@ -187,10 +199,9 @@ class MonthlyPayrollCalculator {
         pendingDeductions += excessAbsentDays * dailyRate * deductionMultiplier;
 
         // STEP 5 & 6: Convert unused weekend days to overtime-equivalent bonus hours.
-        final double unusedWeekendDays =
-            (totalAbsentDays < allowedPaidWeekends)
-                ? allowedPaidWeekends - totalAbsentDays
-                : 0.0;
+        final double unusedWeekendDays = (totalAbsentDays < allowedPaidWeekends)
+            ? allowedPaidWeekends - totalAbsentDays
+            : 0.0;
 
         final double weekendBonusHours = unusedWeekendDays * dailyHours;
 

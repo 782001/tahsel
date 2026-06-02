@@ -1600,10 +1600,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
           SizedBox(height: isDesktop ? 2 : 2.h),
           Text(
             label,
-            style: TextStyles.customStyle(
-              fontSize: 9,
-              color: Colors.white70,
-            ),
+            style: TextStyles.customStyle(fontSize: 9, color: Colors.white70),
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
