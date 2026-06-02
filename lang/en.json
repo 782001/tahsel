@@ -486,5 +486,10 @@
   "carried_forward_automatically": "This will be carried forward automatically.",
   "allowed_paid_weekends_per_month": "Allowed Paid Weekend Days",
   "daily_deduction_multiplier": "Daily Deduction Multiplier",
-  "attendance_overlap_error": "This time overlaps with an existing attendance record"
+  "attendance_overlap_error": "This time overlaps with an existing attendance record",
+  "payroll_already_paid_for_month": "Payroll for this month ({month}) has already been paid.",
+  "payroll_closing_day": "Payroll Closing Day",
+  "invalid_payroll_closing_day": "between 1 and 28",
+  "payroll_period": "Payroll Period",
+  "payroll_period_range": "{start} → {end}"
 }

@@ -33,6 +33,7 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
   late TextEditingController _customDeductionRateController;
   late TextEditingController _paymentWindowStartController;
   late TextEditingController _paymentWindowEndController;
+  late TextEditingController _payrollClosingDayController;
 
   String _salaryType = 'monthly';
   String _status = 'active';
@@ -95,6 +96,11 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
           ? widget.employee!.paymentWindowEnd.toString()
           : '31',
     );
+    _payrollClosingDayController = TextEditingController(
+      text: widget.employee != null
+          ? widget.employee!.payrollClosingDay.toString()
+          : '25',
+    );
   }
 
   @override
@@ -112,6 +118,7 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
     _customDeductionRateController.dispose();
     _paymentWindowStartController.dispose();
     _paymentWindowEndController.dispose();
+    _payrollClosingDayController.dispose();
     super.dispose();
   }
 
@@ -528,6 +535,59 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
                                         ),
                                       ],
                                     ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 12.h),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          AppStrings.payrollClosingDay.tr(),
+                                          style: TextStyles.customStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        SizedBox(height: 4.h),
+                                        TextFormField(
+                                          cursorColor: AppColors.primaryColor,
+                                          controller: _payrollClosingDayController,
+                                          keyboardType: TextInputType.number,
+                                          decoration: _buildInputDecoration(
+                                            hintText: '25',
+                                          ),
+                                          style: TextStyles.customStyle(
+                                            fontSize: 13,
+                                          ),
+                                          validator: (val) {
+                                            if (_salaryType != 'monthly') {
+                                              return null;
+                                            }
+                                            if (val == null ||
+                                                val.trim().isEmpty) {
+                                              return AppStrings.requiredField
+                                                  .tr();
+                                            }
+                                            final numVal = int.tryParse(val);
+                                            if (numVal == null ||
+                                                numVal < 1 ||
+                                                numVal > 28) {
+                                              return AppStrings.invalidPayrollClosingDay.tr();
+                                            }
+                                            return null;
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(width: 8.w),
+                                  const Expanded(
+                                    child: SizedBox(),
                                   ),
                                 ],
                               ),
@@ -968,6 +1028,8 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
             int.tryParse(_allowedPaidWeekendsController.text) ?? 4,
         dailyDeductionMultiplier:
             double.tryParse(_dailyDeductionMultiplierController.text) ?? 1.0,
+        payrollClosingDay:
+            _salaryType == 'monthly' ? (int.tryParse(_payrollClosingDayController.text) ?? 25) : 25,
       );
       widget.onSave(employee);
       Navigator.pop(context);

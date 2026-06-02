@@ -22,6 +22,7 @@ class EmployeeModel extends EmployeeEntity {
     super.outstandingBalance = 0.0,
     super.allowedPaidWeekendsPerMonth = 4,
     super.dailyDeductionMultiplier = 1.0,
+    super.payrollClosingDay = 25,
   });
 
   factory EmployeeModel.fromJson(Map<String, dynamic> json, String id) {
@@ -59,6 +60,7 @@ class EmployeeModel extends EmployeeEntity {
           (json['outstandingBalance'] as num?)?.toDouble() ?? 0.0,
       allowedPaidWeekendsPerMonth: json['allowedPaidWeekendsPerMonth'] as int? ?? 4,
       dailyDeductionMultiplier: (json['dailyDeductionMultiplier'] as num?)?.toDouble() ?? 1.0,
+      payrollClosingDay: json['payrollClosingDay'] as int? ?? 25,
     );
   }
 
@@ -82,6 +84,7 @@ class EmployeeModel extends EmployeeEntity {
       'outstandingBalance': outstandingBalance,
       'allowedPaidWeekendsPerMonth': allowedPaidWeekendsPerMonth,
       'dailyDeductionMultiplier': dailyDeductionMultiplier,
+      'payrollClosingDay': payrollClosingDay,
     };
   }
 
@@ -106,6 +109,7 @@ class EmployeeModel extends EmployeeEntity {
       outstandingBalance: entity.outstandingBalance,
       allowedPaidWeekendsPerMonth: entity.allowedPaidWeekendsPerMonth,
       dailyDeductionMultiplier: entity.dailyDeductionMultiplier,
+      payrollClosingDay: entity.payrollClosingDay,
     );
   }
 }

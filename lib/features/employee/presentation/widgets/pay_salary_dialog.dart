@@ -9,6 +9,7 @@ import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/employee/domain/entities/advance_entity.dart';
 import 'package:tahsel/features/employee/domain/entities/employee_entity.dart';
 import 'package:tahsel/features/employee/domain/entities/payroll_entity.dart';
+import 'package:tahsel/features/employee/domain/utils/monthly_payroll_calculator.dart';
 
 class PaySalaryDialog extends StatefulWidget {
   final EmployeeEntity employee;
@@ -19,6 +20,7 @@ class PaySalaryDialog extends StatefulWidget {
   final double? initialDeductions;
   final double? initialAllowances;
   final List<AdvanceEntity> paidAdvances;
+  final List<String> paidMonthKeys;
 
   const PaySalaryDialog({
     super.key,
@@ -30,6 +32,7 @@ class PaySalaryDialog extends StatefulWidget {
     this.initialDeductions,
     this.initialAllowances,
     this.paidAdvances = const [],
+    this.paidMonthKeys = const [],
   });
 
   @override
@@ -49,6 +52,11 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
   late DateTime _paymentDate;
   double _netSalary = 0.0;
   late Set<String> _selectedAdvanceIds;
+
+  bool get _isMonthAlreadyPaid {
+    final String currentMonthKey = DateFormat('yyyy-MM').format(_paymentDate);
+    return widget.paidMonthKeys.contains(currentMonthKey);
+  }
 
   @override
   void initState() {
@@ -240,6 +248,61 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
                       ],
                     ),
                   ),
+                  if (widget.employee.salaryType == 'monthly') ...[
+                    SizedBox(height: 8.h),
+                    Builder(
+                      builder: (context) {
+                        final period =
+                            MonthlyPayrollCalculator.getPayrollPeriod(
+                              closingDay: widget.employee.payrollClosingDay,
+                            );
+                        final fmt = DateFormat('yyyy-MM-dd');
+                        return Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 10.w,
+                            vertical: 6.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryColor.withValues(
+                              alpha: 0.08,
+                            ),
+                            borderRadius: BorderRadius.circular(8.r),
+                            border: Border.all(
+                              color: AppColors.primaryColor.withValues(
+                                alpha: 0.2,
+                              ),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.date_range_rounded,
+                                size: 14,
+                                color: AppColors.primaryColor,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  AppStrings.payrollPeriodRange.tr(
+                                    namedArgs: {
+                                      'start': fmt.format(period.start),
+                                      'end': fmt.format(period.end),
+                                    },
+                                  ),
+                                  style: TextStyles.customStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.primaryColor,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                   SizedBox(height: isDesktop ? 20 : 16.h),
 
                   // Base Salary (Editable)
@@ -677,6 +740,46 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
                       ],
                     ),
                   ),
+                  if (_isMonthAlreadyPaid) ...[
+                    SizedBox(height: isDesktop ? 12 : 12.h),
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(isDesktop ? 12 : 12.w),
+                      decoration: BoxDecoration(
+                        color: AppColors.errorContainer,
+                        border: Border.all(
+                          color: AppColors.error.withValues(alpha: 0.3),
+                        ),
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            color: AppColors.errorText,
+                            size: 24,
+                          ),
+                          SizedBox(width: isDesktop ? 12 : 12.w),
+                          Expanded(
+                            child: Text(
+                              AppStrings.payrollAlreadyPaidForMonth.tr(
+                                namedArgs: {
+                                  'month': DateFormat(
+                                    'yyyy-MM',
+                                  ).format(_paymentDate),
+                                },
+                              ),
+                              style: TextStyles.customStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.errorText,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   SizedBox(height: isDesktop ? 24 : 20.h),
 
                   // Submit Buttons
@@ -704,7 +807,7 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
                       SizedBox(width: 12.w),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: _submit,
+                          onPressed: _isMonthAlreadyPaid ? null : _submit,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryColor,
                             padding: EdgeInsets.symmetric(vertical: 14.h),
@@ -735,16 +838,20 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
   }
 
   InputDecoration _buildInputDecoration({String? hintText, IconData? icon}) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
     return InputDecoration(
       hintText: hintText,
       hintStyle: TextStyles.customStyle(
-        fontSize: 13,
+        fontSize: isDesktop ? 13 : 13.sp,
         color: AppColors.blackLight.withValues(alpha: 0.6),
       ),
       prefixIcon: icon != null
           ? Icon(icon, color: AppColors.primaryColor, size: 20)
           : null,
-      contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 16 : 16.w,
+        vertical: isDesktop ? 12 : 12.h,
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10.r),
         borderSide: BorderSide(color: AppColors.surfaceContainerHigh),

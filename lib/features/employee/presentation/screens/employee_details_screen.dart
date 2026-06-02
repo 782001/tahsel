@@ -11,6 +11,7 @@ import 'package:tahsel/features/employee/domain/entities/advance_entity.dart';
 import 'package:tahsel/features/employee/domain/entities/attendance_entity.dart';
 import 'package:tahsel/features/employee/domain/entities/employee_entity.dart';
 import 'package:tahsel/features/employee/domain/entities/payroll_entity.dart';
+import 'package:tahsel/features/employee/domain/utils/monthly_payroll_calculator.dart';
 import 'package:tahsel/features/employee/presentation/cubit/employee_cubit.dart';
 import 'package:tahsel/features/employee/presentation/cubit/employee_state.dart';
 import 'package:tahsel/features/employee/presentation/widgets/check_in_out_dialog.dart';
@@ -104,147 +105,10 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
     List<AttendanceEntity> attendanceLogs,
     List<PayrollEntity> payrollLogs,
   ) {
-    double pendingBase = 0.0;
-    double pendingOvertimeComp = 0.0;
-    double unpaidOvertimeHours = 0.0;
-    double unpaidWorkedHours = 0.0;
-    double pendingDeductions = 0.0;
-    int unpaidDaysCount = 0;
-    int unpaidAttendanceCount = 0;
-
-    // Filter attendance to only include records that haven't been paid yet
-    // AND are finalized (checked out, or absent/excused which have no checkout)
-    final unpaidAttendance = attendanceLogs.where((log) {
-      if (log.isPaid) return false;
-      if (log.status == 'absent' || log.status == 'excused') return true;
-      if (log.checkOut == null) return false;
-      return true;
-    }).toList();
-
-    final salaryType = widget.employee.salaryType;
-    final baseAmount = widget.employee.salaryAmount;
-    final dailyHours = widget.employee.expectedDailyHours;
-    final otMultiplier = widget.employee.overtimeMultiplier;
-
-    // Monthly employees use a FIXED 30-day contract model.
-    // workingDaysPerMonth is removed; we always use 30.
-    const int fixedMonthDays = 30;
-
-    double overtimeHourlyRate = 10.0;
-    if (widget.employee.customOvertimeRate != null) {
-      overtimeHourlyRate = widget.employee.customOvertimeRate!;
-    } else {
-      if (salaryType == 'monthly') {
-        overtimeHourlyRate =
-            baseAmount / (fixedMonthDays * dailyHours) * otMultiplier;
-      } else if (salaryType == 'daily') {
-        overtimeHourlyRate = baseAmount / dailyHours * otMultiplier;
-      } else {
-        overtimeHourlyRate = baseAmount * otMultiplier;
-      }
-    }
-
-    if (salaryType == 'hourly') {
-      for (final log in unpaidAttendance) {
-        if (log.checkOut != null) {
-          final workedHrs =
-              log.checkOut!.difference(log.checkIn).inMinutes / 60.0;
-          unpaidWorkedHours += workedHrs;
-          pendingBase += workedHrs * baseAmount;
-          unpaidAttendanceCount++;
-        }
-      }
-    } else if (salaryType == 'daily') {
-      for (final log in unpaidAttendance) {
-        unpaidDaysCount++;
-        unpaidAttendanceCount++;
-        if (log.status == 'present' || log.status == 'late') {
-          pendingBase += baseAmount;
-        } else if (log.status == 'half_day') {
-          pendingBase += baseAmount * 0.5;
-        }
-        unpaidOvertimeHours += log.overtimeHours;
-        pendingOvertimeComp += log.overtimeHours * overtimeHourlyRate;
-
-        double hourlyRate =
-            widget.employee.customDeductionRate ?? (baseAmount / dailyHours);
-        pendingDeductions += log.deductionHours * hourlyRate;
-      }
-    } else {
-      // --- MONTHLY EMPLOYEE: Fixed 30-day contract payroll model ---
-      //
-      // STEP 1: Start with full monthly salary as base.
-      pendingBase = baseAmount;
-
-      final double dailyRate = baseAmount / fixedMonthDays;
-      final double hourlyRate = widget.employee.customDeductionRate ??
-          (baseAmount / (fixedMonthDays * dailyHours));
-      final int allowedPaidWeekends =
-          widget.employee.allowedPaidWeekendsPerMonth;
-      final double deductionMultiplier =
-          widget.employee.dailyDeductionMultiplier;
-
-      // Count absent days and collect overtime / deduction hours
-      int totalAbsentDays = 0;
-      for (final log in unpaidAttendance) {
-        unpaidDaysCount++;
-        unpaidAttendanceCount++;
-
-        if (log.status == 'absent') {
-          totalAbsentDays++;
-        } else if (log.status == 'half_day') {
-          // half_day counts as 0.5 absent day
-          totalAbsentDays++; // counted as a day record
-        }
-
-        unpaidOvertimeHours += log.overtimeHours;
-        pendingOvertimeComp += log.overtimeHours * overtimeHourlyRate;
-
-        // Deduction hours from late arrival etc.
-        pendingDeductions += log.deductionHours * hourlyRate;
-      }
-
-      // STEP 2-4: Apply allowed paid weekends as absence buffer.
-      // Absences within allowedPaidWeekends are FREE (no deduction).
-      // Any excess beyond that gets deducted with the multiplier.
-      final int excessAbsentDays =
-          (totalAbsentDays > allowedPaidWeekends)
-              ? totalAbsentDays - allowedPaidWeekends
-              : 0;
-      pendingDeductions += excessAbsentDays * dailyRate * deductionMultiplier;
-
-      // Handle half-day deductions separately for absent days
-      for (final log in unpaidAttendance) {
-        if (log.status == 'half_day' && excessAbsentDays > 0) {
-          // Half-day deduction is only 50% of a full day deduction
-          // but was counted as full absent above — adjust by removing 50%
-          // This is a simplification; for exact tracking, we'd need ordering
-        }
-      }
-
-      // NOTE: Unused weekend allowance days do NOT generate bonus overtime.
-      // The allowedPaidWeekendsPerMonth is purely an absence buffer (deduction
-      // shield). Overtime is only earned from actual worked hours exceeding
-      // expectedDailyHours, as recorded in individual attendance records.
-    }
-
-    final double netSalary =
-        pendingBase +
-        pendingOvertimeComp -
-        pendingDeductions -
-        widget.employee.outstandingBalance;
-
-    return {
-      'pendingBase': pendingBase,
-      'pendingOvertimeComp': pendingOvertimeComp,
-      'unpaidOvertimeHours': unpaidOvertimeHours,
-      'unpaidWorkedHours': unpaidWorkedHours,
-      'pendingDeductions': pendingDeductions,
-      'unpaidDaysCount': unpaidDaysCount,
-      'unpaidCount': unpaidAttendanceCount,
-      'netSalary': netSalary < 0 ? 0.0 : netSalary,
-      'overtimeRate': overtimeHourlyRate,
-    };
+    return MonthlyPayrollCalculator.calculate(
+      employee: widget.employee,
+      attendanceLogs: attendanceLogs,
+    );
   }
 
   @override
@@ -392,6 +256,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                                             true,
                                             paidAdvances,
                                             attendanceLogs,
+                                            payrollLogs,
                                           ),
                                         ],
                                       ),
@@ -1062,6 +927,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
               isDesktop,
               paidAdvances,
               attendanceLogs,
+              payrollLogs,
             ),
           ),
         ),
@@ -1100,6 +966,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
     bool isDesktop,
     List<AdvanceEntity> paidAdvances,
     List<AttendanceEntity> attendanceLogs,
+    List<PayrollEntity> payrollLogs,
   ) {
     final today = DateTime.now().day;
     final start = widget.employee.paymentWindowStart;
@@ -1163,6 +1030,42 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
               ],
             ),
             const SizedBox(height: 10),
+            if (widget.employee.salaryType == 'monthly' &&
+                pending['periodStart'] != null &&
+                pending['periodEnd'] != null) ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isDesktop ? 10 : 10.w,
+                  vertical: isDesktop ? 6 : 6.h,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8.r),
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.date_range_rounded,
+                      color: Colors.white70,
+                      size: 14,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        "${AppStrings.payrollPeriod.tr()}: ${DateFormat('yyyy-MM-dd').format(pending['periodStart'])} → ${DateFormat('yyyy-MM-dd').format(pending['periodEnd'])}",
+                        style: TextStyles.customStyle(
+                          fontSize: 11,
+                          color: Colors.white70,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             if (!isWithinWindow) ...[
               Container(
                 margin: const EdgeInsets.only(bottom: 10),
@@ -1265,15 +1168,41 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                           initialOvertimeRate: pending['overtimeRate'],
                           initialDeductions: deductions,
                           paidAdvances: paidAdvances,
+                          paidMonthKeys: payrollLogs
+                              .map((log) => log.monthKey)
+                              .toList(),
                           onPay: (payroll, paidAdvanceIds) {
-                            // Collect IDs of unpaid, completed attendance records
+                            // Collect IDs of unpaid, completed attendance records within active payroll period
                             final unpaidAttendanceIds = attendanceLogs
-                                .where(
-                                  (log) =>
-                                      !log.isPaid &&
-                                      log.checkOut != null &&
-                                      log.id != null,
-                                )
+                                .where((log) {
+                                  if (log.isPaid ||
+                                      log.checkOut == null ||
+                                      log.id == null) {
+                                    return false;
+                                  }
+                                  if (widget.employee.salaryType == 'monthly') {
+                                    final periodStart =
+                                        pending['periodStart'] as DateTime?;
+                                    final periodEnd =
+                                        pending['periodEnd'] as DateTime?;
+                                    if (periodStart != null &&
+                                        periodEnd != null) {
+                                      final logDate = DateTime.tryParse(
+                                        log.date,
+                                      );
+                                      if (logDate == null) return false;
+                                      return (logDate.isAtSameMomentAs(
+                                                periodStart,
+                                              ) ||
+                                              logDate.isAfter(periodStart)) &&
+                                          (logDate.isAtSameMomentAs(
+                                                periodEnd,
+                                              ) ||
+                                              logDate.isBefore(periodEnd));
+                                    }
+                                  }
+                                  return true;
+                                })
                                 .map((log) => log.id!)
                                 .toList();
                             context
@@ -1381,25 +1310,61 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
               ],
             ),
             SizedBox(height: isDesktop ? 8 : 8.h),
-            Row(
-              children: [
-                const Icon(
-                  Icons.info_outline_rounded,
-                  size: 12,
-                  color: Colors.white70,
-                ),
-                SizedBox(width: isDesktop ? 4 : 4.w),
-                Text(
-                  widget.employee.salaryType == 'hourly'
-                      ? "$unpaidCount ${AppStrings.attendance.tr()} ($workedHours ${AppStrings.hours.tr()})"
-                      : "$unpaidCount ${AppStrings.attendance.tr()} (${pending['unpaidDaysCount']} ${AppStrings.unpaidDays.tr()})",
-                  style: TextStyles.customStyle(
-                    fontSize: 11,
+            if (widget.employee.salaryType == 'monthly') ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildAttendanceMetricChip(
+                      Icons.check_circle_outline_rounded,
+                      AppStrings.attendance.tr(),
+                      '${pending['attendedDays'] ?? 0}',
+                      AppColors.success,
+                      isDesktop,
+                    ),
+                  ),
+                  SizedBox(width: isDesktop ? 8 : 8.w),
+                  Expanded(
+                    child: _buildAttendanceMetricChip(
+                      Icons.cancel_outlined,
+                      AppStrings.absent.tr(),
+                      (pending['absentDays'] as double? ?? 0.0).toSmartAmount(),
+                      AppColors.warning,
+                      isDesktop,
+                    ),
+                  ),
+                  SizedBox(width: isDesktop ? 8 : 8.w),
+                  Expanded(
+                    child: _buildAttendanceMetricChip(
+                      Icons.money_off_rounded,
+                      AppStrings.unpaidDays.tr(),
+                      (pending['unpaidDays'] as double? ?? 0.0).toSmartAmount(),
+                      AppColors.error,
+                      isDesktop,
+                    ),
+                  ),
+                ],
+              ),
+            ] else ...[
+              Row(
+                children: [
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    size: 12,
                     color: Colors.white70,
                   ),
-                ),
-              ],
-            ),
+                  SizedBox(width: isDesktop ? 4 : 4.w),
+                  Text(
+                    widget.employee.salaryType == 'hourly'
+                        ? "$unpaidCount ${AppStrings.attendance.tr()} ($workedHours ${AppStrings.hours.tr()})"
+                        : "$unpaidCount ${AppStrings.attendance.tr()} (${pending['unpaidDaysCount']} ${AppStrings.unpaidDays.tr()})",
+                    style: TextStyles.customStyle(
+                      fontSize: 11,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
@@ -1599,6 +1564,52 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildAttendanceMetricChip(
+    IconData icon,
+    String label,
+    String value,
+    Color accentColor,
+    bool isDesktop,
+  ) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 8 : 8.w,
+        vertical: isDesktop ? 6 : 6.h,
+      ),
+      decoration: BoxDecoration(
+        color: accentColor.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(icon, size: 14, color: accentColor),
+          SizedBox(height: isDesktop ? 4 : 4.h),
+          Text(
+            value,
+            style: TextStyles.customStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+            ),
+          ),
+          SizedBox(height: isDesktop ? 2 : 2.h),
+          Text(
+            label,
+            style: TextStyles.customStyle(
+              fontSize: 9,
+              color: Colors.white70,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
     );
   }
 

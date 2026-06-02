@@ -20,6 +20,7 @@ class EmployeeEntity extends Equatable {
   final double outstandingBalance; // Negative carried forward balance/debt
   final int allowedPaidWeekendsPerMonth;
   final double dailyDeductionMultiplier;
+  final int payrollClosingDay;
 
   const EmployeeEntity({
     this.id,
@@ -41,6 +42,7 @@ class EmployeeEntity extends Equatable {
     this.outstandingBalance = 0.0,
     this.allowedPaidWeekendsPerMonth = 4,
     this.dailyDeductionMultiplier = 1.0,
+    this.payrollClosingDay = 25,
   });
 
   @override
@@ -64,5 +66,6 @@ class EmployeeEntity extends Equatable {
     outstandingBalance,
     allowedPaidWeekendsPerMonth,
     dailyDeductionMultiplier,
+    payrollClosingDay,
   ];
 }

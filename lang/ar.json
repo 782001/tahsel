@@ -488,5 +488,10 @@
   "carried_forward_automatically": "سيتم ترحيله تلقائياً للراتب القادم.",
   "allowed_paid_weekends_per_month": "عدد أيام الراحات المدفوعة",
   "daily_deduction_multiplier": "مضاعف الخصم اليومي",
-  "attendance_overlap_error": "هذا الوقت يتداخل مع سجل حضور موجود"
+  "attendance_overlap_error": "هذا الوقت يتداخل مع سجل حضور موجود",
+  "payroll_already_paid_for_month": "تم دفع راتب هذا الشهر بالفعل ({month}).",
+  "payroll_closing_day": "يوم إغلاق كشف الرواتب",
+  "invalid_payroll_closing_day": "القيمة بين 1 و 28",
+  "payroll_period": "فترة الرواتب",
+  "payroll_period_range": "{start} → {end}"
 }

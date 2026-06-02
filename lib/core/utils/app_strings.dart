@@ -559,4 +559,9 @@ class AppStrings {
   static const String carriedForwardAutomatically =
       "carried_forward_automatically";
   static const String attendanceOverlapError = "attendance_overlap_error";
+  static const String payrollAlreadyPaidForMonth = "payroll_already_paid_for_month";
+  static const String payrollClosingDay = "payroll_closing_day";
+  static const String invalidPayrollClosingDay = "invalid_payroll_closing_day";
+  static const String payrollPeriod = "payroll_period";
+  static const String payrollPeriodRange = "payroll_period_range";
 }
