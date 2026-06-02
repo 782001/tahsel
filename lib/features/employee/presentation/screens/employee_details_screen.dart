@@ -491,6 +491,28 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                             maxLines: 1,
                           ),
                         ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                AppStrings.baseSalary.tr(),
+                                style: TextStyles.customStyle(
+                                  fontSize: 11,
+                                  color: AppColors.blackLight,
+                                ),
+                              ),
+                              Text(
+                                "${widget.employee.salaryAmount.toSmartAmount()} / ${widget.employee.salaryType.tr()}",
+                                style: TextStyles.customStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.blackReal,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -1213,6 +1235,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                                   attendanceIds: unpaidAttendanceIds,
                                 )
                                 .then((_) {
+                                  _loadInitialData();
                                   String salaryTypeLabel;
                                   switch (payroll.salaryType) {
                                     case 'monthly':
@@ -1693,7 +1716,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
           previousWorkedHoursToday: previousWorkedHoursToday,
           previousOvertimeToday: previousOvertimeToday,
           previousDeductionToday: previousDeductionToday,
-          sameDayCompletedRecords: sameDayCompletedRecords,
+          attendanceLogs: attendanceLogs,
           onCheckIn: (attendance) {
             context.read<EmployeeCubit>().checkIn(attendance);
           },

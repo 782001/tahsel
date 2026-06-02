@@ -491,5 +491,6 @@
   "payroll_closing_day": "Payroll Closing Day",
   "invalid_payroll_closing_day": "between 1 and 28",
   "payroll_period": "Payroll Period",
-  "payroll_period_range": "{start} → {end}"
+  "payroll_period_range": "{start} → {end}",
+  "checkout_before_checkin_error": "Check-out time cannot be earlier than check-in time"
 }

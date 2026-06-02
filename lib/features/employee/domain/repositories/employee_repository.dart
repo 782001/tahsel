@@ -1,10 +1,11 @@
 import 'package:dartz/dartz.dart';
+
 import '../../../../core/error/failures.dart';
-import '../entities/employee_entity.dart';
-import '../entities/attendance_entity.dart';
-import '../entities/payroll_entity.dart';
 import '../entities/advance_entity.dart';
+import '../entities/attendance_entity.dart';
+import '../entities/employee_entity.dart';
 import '../entities/employee_paginated_lists.dart';
+import '../entities/payroll_entity.dart';
 
 abstract class EmployeeRepository {
   Future<Either<Failure, String>> addEmployee(EmployeeEntity employee);

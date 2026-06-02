@@ -566,4 +566,6 @@ class AppStrings {
   static const String invalidPayrollClosingDay = "invalid_payroll_closing_day";
   static const String payrollPeriod = "payroll_period";
   static const String payrollPeriodRange = "payroll_period_range";
+  static const String checkoutBeforeCheckinError =
+      "checkout_before_checkin_error";
 }

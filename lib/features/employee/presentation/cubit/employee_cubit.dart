@@ -147,7 +147,12 @@ class EmployeeCubit extends Cubit<EmployeeState> {
     required String status,
     required String notes,
   }) async {
-    emit(EmployeeLoading());
+    // Preserve the current detail state for optimistic UI update
+    final previousState = state;
+    if (previousState is! EmployeeDetailsFetchSuccess) {
+      emit(EmployeeLoading());
+    }
+
     final result = await checkOutUseCase(
       CheckOutParams(
         uid: uid,
@@ -160,10 +165,37 @@ class EmployeeCubit extends Cubit<EmployeeState> {
         notes: notes,
       ),
     );
-    result.fold(
-      (failure) => emit(EmployeeFailure(failure.message)),
-      (_) => emit(EmployeeActionSuccess(AppStrings.checkoutSuccess.tr())),
-    );
+    result.fold((failure) => emit(EmployeeFailure(failure.message)), (_) {
+      // Optimistically update the attendance record in the local state
+      // so the pending salary card reflects the checkout immediately.
+      if (previousState is EmployeeDetailsFetchSuccess) {
+        final updatedLogs = previousState.attendanceLogs.map((log) {
+          if (log.id == attendanceId) {
+            return AttendanceEntity(
+              id: log.id,
+              employeeId: log.employeeId,
+              employeeName: log.employeeName,
+              uid: log.uid,
+              checkIn: log.checkIn,
+              checkOut: checkOutTime,
+              date: log.date,
+              status: status,
+              overtimeHours: overtimeHours,
+              deductionHours: deductionHours,
+              lateMinutes: lateMinutes,
+              notes: notes,
+              expectedWorkingHours: log.expectedWorkingHours,
+              isPaid: log.isPaid,
+              payrollId: log.payrollId,
+            );
+          }
+          return log;
+        }).toList();
+
+        emit(previousState.copyWith(attendanceLogs: updatedLogs));
+      }
+      emit(EmployeeActionSuccess(AppStrings.checkoutSuccess.tr()));
+    });
   }
 
   Future<void> payPayroll(
