@@ -843,7 +843,7 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
     return InputDecoration(
       hintText: hintText,
       hintStyle: TextStyles.customStyle(
-        fontSize: isDesktop ? 13 : 13.sp,
+        fontSize: isDesktop ? 13 : 13,
         color: AppColors.blackLight.withValues(alpha: 0.6),
       ),
       prefixIcon: icon != null
