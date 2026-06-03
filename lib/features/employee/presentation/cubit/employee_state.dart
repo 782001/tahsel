@@ -1,8 +1,9 @@
 import 'package:equatable/equatable.dart';
-import '../../domain/entities/employee_entity.dart';
-import '../../domain/entities/attendance_entity.dart';
-import '../../domain/entities/payroll_entity.dart';
+
 import '../../domain/entities/advance_entity.dart';
+import '../../domain/entities/attendance_entity.dart';
+import '../../domain/entities/employee_entity.dart';
+import '../../domain/entities/payroll_entity.dart';
 
 abstract class EmployeeState extends Equatable {
   const EmployeeState();

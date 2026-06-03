@@ -3,17 +3,17 @@ import 'package:dartz/dartz.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:tahsel/core/error/failures.dart';
 
+import '../../domain/entities/advance_entity.dart';
 import '../../domain/entities/attendance_entity.dart';
 import '../../domain/entities/employee_entity.dart';
 import '../../domain/entities/employee_paginated_lists.dart';
 import '../../domain/entities/payroll_entity.dart';
-import '../../domain/entities/advance_entity.dart';
 import '../../domain/repositories/employee_repository.dart';
 import '../datasources/employee_remote_data_source.dart';
+import '../models/advance_model.dart';
 import '../models/attendance_model.dart';
 import '../models/employee_model.dart';
 import '../models/payroll_model.dart';
-import '../models/advance_model.dart';
 
 class EmployeeRepositoryImpl implements EmployeeRepository {
   final EmployeeRemoteDataSource remoteDataSource;

@@ -1235,7 +1235,6 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                                   attendanceIds: unpaidAttendanceIds,
                                 )
                                 .then((_) {
-                                  _loadInitialData();
                                   String salaryTypeLabel;
                                   switch (payroll.salaryType) {
                                     case 'monthly':
