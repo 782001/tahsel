@@ -38,7 +38,7 @@ class EmployeeEntity extends Equatable {
     this.customOvertimeRate,
     this.customDeductionRate,
     this.paymentWindowStart = 1,
-    this.paymentWindowEnd = 31,
+    this.paymentWindowEnd = 28,
     this.outstandingBalance = 0.0,
     this.allowedPaidWeekendsPerMonth = 4,
     this.dailyDeductionMultiplier = 1.0,

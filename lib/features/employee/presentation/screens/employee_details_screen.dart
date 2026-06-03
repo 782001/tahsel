@@ -118,7 +118,6 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
     final localeCode = AppStrings.currentLang;
     final dateFormatter = DateFormat('yyyy-MM-dd hh:mm a', localeCode);
 
-
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
       appBar: AppBar(
@@ -344,7 +343,11 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                               )
                             : Column(
                                 children: [
-                                  _buildProfileHeader(false, statusColor, employee),
+                                  _buildProfileHeader(
+                                    false,
+                                    statusColor,
+                                    employee,
+                                  ),
                                   Container(
                                     color: AppColors.whiteColor,
                                     child: EmployeeDetailsTabSelector(
@@ -423,7 +426,11 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
     );
   }
 
-  Widget _buildProfileHeader(bool isDesktop, Color statusColor, EmployeeEntity employee) {
+  Widget _buildProfileHeader(
+    bool isDesktop,
+    Color statusColor,
+    EmployeeEntity employee,
+  ) {
     return Container(
       width: double.infinity,
       decoration: isDesktop
@@ -758,7 +765,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
           margin: EdgeInsets.only(bottom: 12.h),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12.r),
-            side: BorderSide(color: AppColors.veryLightGrey),
+            side: BorderSide(color: AppColors.dividerColor),
           ),
           color: AppColors.whiteColor,
           child: Padding(
@@ -1100,7 +1107,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        "${AppStrings.payrollPeriod.tr()}: ${DateFormat('yyyy-MM-dd').format(pending['periodStart'])} → ${DateFormat('yyyy-MM-dd').format(pending['periodEnd'])}",
+                        "${AppStrings.payrollPeriod.tr()}: ${DateFormat('yyyy-MM-dd').format(pending['periodStart'])} ${AppStrings.currentLang == "en" ? "→" : "←"} ${DateFormat('yyyy-MM-dd').format(pending['periodEnd'])}",
                         style: TextStyles.customStyle(
                           fontSize: 11,
                           color: Colors.white70,
@@ -1363,7 +1370,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                     child: _buildAttendanceMetricChip(
                       Icons.check_circle_outline_rounded,
                       AppStrings.attendance.tr(),
-                      '${pending['attendedDays'] ?? 0}',
+                      '${(pending['attendedDays'] as num?)?.toSmartAmount() ?? 0}',
                       AppColors.success,
                       isDesktop,
                     ),
@@ -1373,7 +1380,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                     child: _buildAttendanceMetricChip(
                       Icons.cancel_outlined,
                       AppStrings.absent.tr(),
-                      (pending['absentDays'] as double? ?? 0.0).toSmartAmount(),
+                      "${(pending['absentDays'] as num?)?.toSmartAmount() ?? 0}",
                       AppColors.warning,
                       isDesktop,
                     ),
@@ -1626,14 +1633,14 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
         vertical: isDesktop ? 6 : 6.h,
       ),
       decoration: BoxDecoration(
-        color: accentColor.withValues(alpha: 0.15),
+        color: accentColor.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(8.r),
-        border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+        border: Border.all(color: accentColor.withValues(alpha: 0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(icon, size: 14, color: accentColor),
+          Icon(icon, size: 16, color: accentColor),
           SizedBox(height: isDesktop ? 4 : 4.h),
           Text(
             value,

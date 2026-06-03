@@ -94,7 +94,7 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
     _paymentWindowEndController = TextEditingController(
       text: widget.employee != null
           ? widget.employee!.paymentWindowEnd.toString()
-          : '31',
+          : '28',
     );
     _payrollClosingDayController = TextEditingController(
       text: widget.employee != null
@@ -1036,7 +1036,7 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
             : null,
         paymentWindowStart:
             int.tryParse(_paymentWindowStartController.text) ?? 1,
-        paymentWindowEnd: int.tryParse(_paymentWindowEndController.text) ?? 31,
+        paymentWindowEnd: int.tryParse(_paymentWindowEndController.text) ?? 28,
         outstandingBalance: widget.employee?.outstandingBalance ?? 0.0,
         allowedPaidWeekendsPerMonth:
             int.tryParse(_allowedPaidWeekendsController.text) ?? 4,

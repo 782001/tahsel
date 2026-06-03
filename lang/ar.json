@@ -493,6 +493,6 @@
   "payroll_closing_day": "يوم إغلاق كشف الرواتب",
   "invalid_payroll_closing_day": "القيمة بين 1 و 28",
   "payroll_period": "فترة الرواتب",
-  "payroll_period_range": "{start} → {end}",
+  "payroll_period_range": "{start} ← {end}",
   "checkout_before_checkin_error": "لا يمكن أن يكون وقت الانصراف قبل وقت الحضور"
 }

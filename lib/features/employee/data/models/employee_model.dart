@@ -18,7 +18,7 @@ class EmployeeModel extends EmployeeEntity {
     super.customOvertimeRate,
     super.customDeductionRate,
     super.paymentWindowStart = 1,
-    super.paymentWindowEnd = 31,
+    super.paymentWindowEnd = 28,
     super.outstandingBalance = 0.0,
     super.allowedPaidWeekendsPerMonth = 4,
     super.dailyDeductionMultiplier = 1.0,
@@ -55,7 +55,7 @@ class EmployeeModel extends EmployeeEntity {
       customOvertimeRate: (json['customOvertimeRate'] as num?)?.toDouble(),
       customDeductionRate: (json['customDeductionRate'] as num?)?.toDouble(),
       paymentWindowStart: json['paymentWindowStart'] as int? ?? 1,
-      paymentWindowEnd: json['paymentWindowEnd'] as int? ?? 31,
+      paymentWindowEnd: json['paymentWindowEnd'] as int? ?? 28,
       outstandingBalance:
           (json['outstandingBalance'] as num?)?.toDouble() ?? 0.0,
       allowedPaidWeekendsPerMonth:
