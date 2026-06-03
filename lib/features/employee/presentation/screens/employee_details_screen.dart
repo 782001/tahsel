@@ -1201,8 +1201,9 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                         return;
                       }
 
-                      if (unpaidCount == 0 &&
-                          employee.outstandingBalance <= 0) {
+                      if (unpaidCount == 0
+                      //  && employee.outstandingBalance <= 0
+                      ) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(AppStrings.noPendingRecords.tr()),
