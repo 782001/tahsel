@@ -59,4 +59,8 @@ abstract class EmployeeRepository {
     required List<String> advanceIds,
     required String payrollId,
   });
+  Future<Either<Failure, EmployeeEntity>> getEmployee(
+    String uid,
+    String employeeId,
+  );
 }

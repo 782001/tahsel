@@ -48,6 +48,7 @@ class EmployeeFailure extends EmployeeState {
 }
 
 class EmployeeDetailsFetchSuccess extends EmployeeState {
+  final EmployeeEntity employee;
   final List<AttendanceEntity> attendanceLogs;
   final List<PayrollEntity> payrollLogs;
   final List<AdvanceEntity> advanceLogs;
@@ -62,6 +63,7 @@ class EmployeeDetailsFetchSuccess extends EmployeeState {
   final bool isPaginationLoadingAdvance;
 
   const EmployeeDetailsFetchSuccess({
+    required this.employee,
     required this.attendanceLogs,
     required this.payrollLogs,
     required this.advanceLogs,
@@ -77,6 +79,7 @@ class EmployeeDetailsFetchSuccess extends EmployeeState {
   });
 
   EmployeeDetailsFetchSuccess copyWith({
+    EmployeeEntity? employee,
     List<AttendanceEntity>? attendanceLogs,
     List<PayrollEntity>? payrollLogs,
     List<AdvanceEntity>? advanceLogs,
@@ -91,6 +94,7 @@ class EmployeeDetailsFetchSuccess extends EmployeeState {
     bool? isPaginationLoadingAdvance,
   }) {
     return EmployeeDetailsFetchSuccess(
+      employee: employee ?? this.employee,
       attendanceLogs: attendanceLogs ?? this.attendanceLogs,
       payrollLogs: payrollLogs ?? this.payrollLogs,
       advanceLogs: advanceLogs ?? this.advanceLogs,
@@ -112,6 +116,7 @@ class EmployeeDetailsFetchSuccess extends EmployeeState {
 
   @override
   List<Object?> get props => [
+    employee,
     attendanceLogs,
     payrollLogs,
     advanceLogs,

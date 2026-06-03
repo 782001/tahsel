@@ -224,3 +224,19 @@ class SettleAdvancesUseCase {
     );
   }
 }
+
+class GetEmployeeParams {
+  final String uid;
+  final String employeeId;
+
+  GetEmployeeParams({required this.uid, required this.employeeId});
+}
+
+class GetEmployeeUseCase {
+  final EmployeeRepository repository;
+  GetEmployeeUseCase({required this.repository});
+
+  Future<Either<Failure, EmployeeEntity>> call(GetEmployeeParams params) {
+    return repository.getEmployee(params.uid, params.employeeId);
+  }
+}

@@ -102,11 +102,12 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
   }
 
   Map<String, dynamic> _calculatePendingSalary(
+    EmployeeEntity employee,
     List<AttendanceEntity> attendanceLogs,
     List<PayrollEntity> payrollLogs,
   ) {
     return MonthlyPayrollCalculator.calculate(
-      employee: widget.employee,
+      employee: employee,
       attendanceLogs: attendanceLogs,
     );
   }
@@ -117,12 +118,6 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
     final localeCode = AppStrings.currentLang;
     final dateFormatter = DateFormat('yyyy-MM-dd hh:mm a', localeCode);
 
-    Color statusColor = AppColors.success;
-    if (widget.employee.status == 'suspended') {
-      statusColor = AppColors.error;
-    } else if (widget.employee.status == 'inactive') {
-      statusColor = AppColors.blackLight;
-    }
 
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
@@ -134,13 +129,20 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
-          widget.employee.name,
-          style: TextStyles.customStyle(
-            fontSize: isDesktop ? 20 : 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+        title: BlocBuilder<EmployeeCubit, EmployeeState>(
+          builder: (context, state) {
+            final name = state is EmployeeDetailsFetchSuccess
+                ? state.employee.name
+                : widget.employee.name;
+            return Text(
+              name,
+              style: TextStyles.customStyle(
+                fontSize: isDesktop ? 20 : 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            );
+          },
         ),
         backgroundColor: AppColors.primaryColor,
         elevation: 0,
@@ -184,6 +186,14 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
               }
 
               if (state is EmployeeDetailsFetchSuccess) {
+                final employee = state.employee;
+                Color statusColor = AppColors.success;
+                if (employee.status == 'suspended') {
+                  statusColor = AppColors.error;
+                } else if (employee.status == 'inactive') {
+                  statusColor = AppColors.blackLight;
+                }
+
                 final attendanceLogs = state.attendanceLogs;
                 final payrollLogs = state.payrollLogs;
 
@@ -196,6 +206,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                 }
 
                 final pending = _calculatePendingSalary(
+                  employee,
                   attendanceLogs,
                   payrollLogs,
                 );
@@ -235,9 +246,11 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                                           _buildProfileHeader(
                                             true,
                                             statusColor,
+                                            employee,
                                           ),
                                           const SizedBox(height: 16),
                                           _buildLiveCheckInCard(
+                                            employee,
                                             dateFormatter,
                                             true,
                                             activeCheckIn,
@@ -245,6 +258,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                                           ),
                                           const SizedBox(height: 16),
                                           _buildPendingSalaryCard(
+                                            employee,
                                             pending,
                                             netSalary,
                                             baseSalary,
@@ -312,6 +326,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                                                   ],
                                                 ),
                                                 _buildAdvancesTab(
+                                                  employee,
                                                   true,
                                                   state.advanceLogs,
                                                   state
@@ -329,7 +344,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                               )
                             : Column(
                                 children: [
-                                  _buildProfileHeader(false, statusColor),
+                                  _buildProfileHeader(false, statusColor, employee),
                                   Container(
                                     color: AppColors.whiteColor,
                                     child: EmployeeDetailsTabSelector(
@@ -344,6 +359,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                                       controller: _tabController,
                                       children: [
                                         _buildAttendanceTab(
+                                          employee,
                                           false,
                                           dateFormatter,
                                           attendanceLogs,
@@ -352,6 +368,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                                           activeCheckIn,
                                         ),
                                         _buildPayrollTab(
+                                          employee,
                                           false,
                                           pending,
                                           payrollLogs,
@@ -368,6 +385,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                                           attendanceLogs,
                                         ),
                                         _buildAdvancesTab(
+                                          employee,
                                           false,
                                           state.advanceLogs,
                                           state.isPaginationLoadingAdvance,
@@ -405,7 +423,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
     );
   }
 
-  Widget _buildProfileHeader(bool isDesktop, Color statusColor) {
+  Widget _buildProfileHeader(bool isDesktop, Color statusColor, EmployeeEntity employee) {
     return Container(
       width: double.infinity,
       decoration: isDesktop
@@ -432,7 +450,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                       children: [
                         Flexible(
                           child: Text(
-                            widget.employee.name,
+                            employee.name,
                             style: TextStyles.customStyle(
                               fontSize: isDesktop ? 18 : 16,
                               fontWeight: FontWeight.bold,
@@ -453,7 +471,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                             borderRadius: BorderRadius.circular(20.r),
                           ),
                           child: Text(
-                            widget.employee.status.tr(),
+                            employee.status.tr(),
                             style: TextStyles.customStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
@@ -465,7 +483,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                     ),
                     SizedBox(height: isDesktop ? 4 : 4.h),
                     Text(
-                      widget.employee.role,
+                      employee.role,
                       style: TextStyles.customStyle(
                         fontSize: isDesktop ? 14 : 14,
                         color: AppColors.sandText,
@@ -482,7 +500,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            widget.employee.phone,
+                            employee.phone,
                             style: TextStyles.customStyle(
                               fontSize: isDesktop ? 13 : 13,
                               color: AppColors.blackLight,
@@ -503,7 +521,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                                 ),
                               ),
                               Text(
-                                "${widget.employee.salaryAmount.toSmartAmount()} / ${widget.employee.salaryType.tr()}",
+                                "${employee.salaryAmount.toSmartAmount()} / ${employee.salaryType.tr()}",
                                 style: TextStyles.customStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
@@ -520,7 +538,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
               ),
             ],
           ),
-          if (widget.employee.notes.isNotEmpty) ...[
+          if (employee.notes.isNotEmpty) ...[
             SizedBox(height: isDesktop ? 12 : 12.h),
             Container(
               width: double.infinity,
@@ -530,7 +548,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                 borderRadius: BorderRadius.circular(8.r),
               ),
               child: Text(
-                widget.employee.notes,
+                employee.notes,
                 style: TextStyles.customStyle(
                   fontSize: 12,
                   color: AppColors.blackLight,
@@ -545,6 +563,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
   }
 
   Widget _buildAttendanceTab(
+    EmployeeEntity employee,
     bool isDesktop,
     DateFormat dateFormatter,
     List<AttendanceEntity> attendanceLogs,
@@ -555,6 +574,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
     return Column(
       children: [
         _buildLiveCheckInCard(
+          employee,
           dateFormatter,
           isDesktop,
           activeCheckIn,
@@ -574,6 +594,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
   }
 
   Widget _buildLiveCheckInCard(
+    EmployeeEntity employee,
     DateFormat dateFormatter,
     bool isDesktop,
     AttendanceEntity? activeCheckIn,
@@ -622,7 +643,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
           Flexible(
             child: ElevatedButton.icon(
               onPressed: () => _showCheckInOutDialog(
-                widget.employee,
+                employee,
                 activeCheckIn,
                 attendanceLogs,
               ),
@@ -915,6 +936,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
   }
 
   Widget _buildPayrollTab(
+    EmployeeEntity employee,
     bool isDesktop,
     Map<String, dynamic> pending,
     List<PayrollEntity> payrollLogs,
@@ -938,6 +960,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
             child: _buildPendingSalaryCard(
+              employee,
               pending,
               netSalary,
               baseSalary,
@@ -977,6 +1000,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
   }
 
   Widget _buildPendingSalaryCard(
+    EmployeeEntity employee,
     Map<String, dynamic> pending,
     double netSalary,
     double baseSalary,
@@ -991,8 +1015,8 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
     List<PayrollEntity> payrollLogs,
   ) {
     final today = DateTime.now().day;
-    final start = widget.employee.paymentWindowStart;
-    final end = widget.employee.paymentWindowEnd;
+    final start = employee.paymentWindowStart;
+    final end = employee.paymentWindowEnd;
     final bool isWithinWindow = start <= end
         ? (today >= start && today <= end)
         : (today >= start || today <= end);
@@ -1052,7 +1076,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
               ],
             ),
             const SizedBox(height: 10),
-            if (widget.employee.salaryType == 'monthly' &&
+            if (employee.salaryType == 'monthly' &&
                 pending['periodStart'] != null &&
                 pending['periodEnd'] != null) ...[
               Container(
@@ -1124,7 +1148,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                 ),
               ),
             ],
-            if (widget.employee.outstandingBalance > 0) ...[
+            if (employee.outstandingBalance > 0) ...[
               Container(
                 margin: const EdgeInsets.only(bottom: 10),
                 padding: EdgeInsets.all(isDesktop ? 10 : 10.w),
@@ -1143,7 +1167,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        "${AppStrings.outstandingBalance.tr()}: ${widget.employee.outstandingBalance.toSmartAmount()} ${AppStrings.egp.tr()}\n${AppStrings.carriedForwardAutomatically.tr()}",
+                        "${AppStrings.outstandingBalance.tr()}: ${employee.outstandingBalance.toSmartAmount()} ${AppStrings.egp.tr()}\n${AppStrings.carriedForwardAutomatically.tr()}",
                         style: TextStyles.customStyle(
                           fontSize: 11,
                           color: Colors.white,
@@ -1171,7 +1195,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                       }
 
                       if (unpaidCount == 0 &&
-                          widget.employee.outstandingBalance <= 0) {
+                          employee.outstandingBalance <= 0) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(AppStrings.noPendingRecords.tr()),
@@ -1184,7 +1208,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                       showDialog(
                         context: context,
                         builder: (ctx) => PaySalaryDialog(
-                          employee: widget.employee,
+                          employee: employee,
                           initialBaseSalary: baseSalary,
                           initialOvertimeHours: overtimeHours,
                           initialOvertimeRate: pending['overtimeRate'],
@@ -1202,7 +1226,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                                       log.id == null) {
                                     return false;
                                   }
-                                  if (widget.employee.salaryType == 'monthly') {
+                                  if (employee.salaryType == 'monthly') {
                                     final periodStart =
                                         pending['periodStart'] as DateTime?;
                                     final periodEnd =
@@ -1314,7 +1338,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                     "${baseSalary.toSmartAmount()} ${AppStrings.egp.tr()}",
                   ),
                 ),
-                if (widget.employee.salaryType != 'hourly') ...[
+                if (employee.salaryType != 'hourly') ...[
                   Expanded(
                     child: _buildPendingMetricItem(
                       AppStrings.pendingOvertimeComp.tr(),
@@ -1332,7 +1356,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
               ],
             ),
             SizedBox(height: isDesktop ? 8 : 8.h),
-            if (widget.employee.salaryType == 'monthly') ...[
+            if (employee.salaryType == 'monthly') ...[
               Row(
                 children: [
                   Expanded(
@@ -1376,7 +1400,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                   ),
                   SizedBox(width: isDesktop ? 4 : 4.w),
                   Text(
-                    widget.employee.salaryType == 'hourly'
+                    employee.salaryType == 'hourly'
                         ? "$unpaidCount ${AppStrings.attendance.tr()} ($workedHours ${AppStrings.hours.tr()})"
                         : "$unpaidCount ${AppStrings.attendance.tr()} (${pending['unpaidDaysCount']} ${AppStrings.unpaidDays.tr()})",
                     style: TextStyles.customStyle(
@@ -1772,6 +1796,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
   }
 
   Widget _buildAdvancesTab(
+    EmployeeEntity employee,
     bool isDesktop,
     List<AdvanceEntity> advanceLogs,
     bool isLoadingMore,
@@ -1779,7 +1804,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
   ) {
     return Column(
       children: [
-        _buildAdvanceHeaderCard(isDesktop),
+        _buildAdvanceHeaderCard(isDesktop, employee),
         Expanded(
           child: CustomScrollView(
             controller: _advanceScrollController,
@@ -1797,7 +1822,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
     );
   }
 
-  Widget _buildAdvanceHeaderCard(bool isDesktop) {
+  Widget _buildAdvanceHeaderCard(bool isDesktop, EmployeeEntity employee) {
     return Container(
       width: double.infinity,
       margin: EdgeInsets.all(isDesktop ? 16 : 16.w),
@@ -1822,7 +1847,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
           ),
           ElevatedButton.icon(
             onPressed: () {
-              _showRequestAdvanceDialog(widget.employee);
+              _showRequestAdvanceDialog(employee);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryColor,

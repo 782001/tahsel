@@ -25,6 +25,7 @@ class EmployeeInjection {
         requestAdvanceUseCase: sl(),
         getAdvancesUseCase: sl(),
         settleAdvancesUseCase: sl(),
+        getEmployeeUseCase: sl(),
       ),
     );
 
@@ -41,6 +42,7 @@ class EmployeeInjection {
     sl.registerLazySingleton(() => RequestAdvanceUseCase(repository: sl()));
     sl.registerLazySingleton(() => GetAdvancesUseCase(repository: sl()));
     sl.registerLazySingleton(() => SettleAdvancesUseCase(repository: sl()));
+    sl.registerLazySingleton(() => GetEmployeeUseCase(repository: sl()));
 
     // Repository
     sl.registerLazySingleton<EmployeeRepository>(

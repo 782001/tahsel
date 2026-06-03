@@ -24,6 +24,7 @@ class EmployeeCubit extends Cubit<EmployeeState> {
   final RequestAdvanceUseCase requestAdvanceUseCase;
   final GetAdvancesUseCase getAdvancesUseCase;
   final SettleAdvancesUseCase settleAdvancesUseCase;
+  final GetEmployeeUseCase getEmployeeUseCase;
 
   EmployeeCubit({
     required this.addEmployeeUseCase,
@@ -38,6 +39,7 @@ class EmployeeCubit extends Cubit<EmployeeState> {
     required this.requestAdvanceUseCase,
     required this.getAdvancesUseCase,
     required this.settleAdvancesUseCase,
+    required this.getEmployeeUseCase,
   }) : super(EmployeeInitial());
 
   Future<void> fetchEmployees(String uid, {bool forceRefresh = false}) async {
@@ -226,6 +228,11 @@ class EmployeeCubit extends Cubit<EmployeeState> {
 
     emit(EmployeeLoading());
 
+    // Fetch fresh employee data
+    final employeeResult = await getEmployeeUseCase(
+      GetEmployeeParams(uid: uid, employeeId: employeeId),
+    );
+
     // Fetch initial 15 logs for all three
     final attendanceResult = await getAttendanceUseCase(
       GetAttendanceParams(uid: uid, employeeId: employeeId, limit: 15),
@@ -239,72 +246,78 @@ class EmployeeCubit extends Cubit<EmployeeState> {
       GetAdvancesParams(uid: uid, employeeId: employeeId, limit: 15),
     );
 
-    attendanceResult.fold((failure) => emit(EmployeeFailure(failure.message)), (
-      attendancePaginated,
-    ) {
-      payrollResult.fold((failure) => emit(EmployeeFailure(failure.message)), (
-        payrollPaginated,
-      ) async {
-        advanceResult.fold((failure) => emit(EmployeeFailure(failure.message)), (
-          advancePaginated,
-        ) async {
-          // Logic to fetch more attendance if needed to calculate pending salaries
-          List<AttendanceEntity> currentAttendance = List.from(
-            attendancePaginated.attendanceLogs,
-          );
-          Object? lastAttendanceDoc = attendancePaginated.lastDoc;
-          bool hasReachedMaxAttendance =
-              attendancePaginated.attendanceLogs.length < 15;
+    employeeResult.fold(
+      (failure) => emit(EmployeeFailure(failure.message)),
+      (employee) {
+        attendanceResult.fold((failure) => emit(EmployeeFailure(failure.message)), (
+          attendancePaginated,
+        ) {
+          payrollResult.fold((failure) => emit(EmployeeFailure(failure.message)), (
+            payrollPaginated,
+          ) async {
+            advanceResult.fold((failure) => emit(EmployeeFailure(failure.message)), (
+              advancePaginated,
+            ) async {
+              // Logic to fetch more attendance if needed to calculate pending salaries
+              List<AttendanceEntity> currentAttendance = List.from(
+                attendancePaginated.attendanceLogs,
+              );
+              Object? lastAttendanceDoc = attendancePaginated.lastDoc;
+              bool hasReachedMaxAttendance =
+                  attendancePaginated.attendanceLogs.length < 15;
 
-          if (payrollPaginated.payrollLogs.isNotEmpty &&
-              currentAttendance.isNotEmpty) {
-            final latestPaymentDate =
-                payrollPaginated.payrollLogs.first.paymentDate;
-            while (currentAttendance.isNotEmpty &&
-                currentAttendance.last.checkIn.isAfter(latestPaymentDate) &&
-                !hasReachedMaxAttendance) {
-              final extraResult = await getAttendanceUseCase(
-                GetAttendanceParams(
-                  uid: uid,
-                  employeeId: employeeId,
-                  limit: 15,
-                  lastDoc: lastAttendanceDoc,
+              if (payrollPaginated.payrollLogs.isNotEmpty &&
+                  currentAttendance.isNotEmpty) {
+                final latestPaymentDate =
+                    payrollPaginated.payrollLogs.first.paymentDate;
+                while (currentAttendance.isNotEmpty &&
+                    currentAttendance.last.checkIn.isAfter(latestPaymentDate) &&
+                    !hasReachedMaxAttendance) {
+                  final extraResult = await getAttendanceUseCase(
+                    GetAttendanceParams(
+                      uid: uid,
+                      employeeId: employeeId,
+                      limit: 15,
+                      lastDoc: lastAttendanceDoc,
+                    ),
+                  );
+
+                  bool fetchedMore = false;
+                  extraResult.fold(
+                    (failure) {
+                      hasReachedMaxAttendance = true;
+                    },
+                    (extraPaginated) {
+                      currentAttendance.addAll(extraPaginated.attendanceLogs);
+                      lastAttendanceDoc = extraPaginated.lastDoc;
+                      hasReachedMaxAttendance =
+                          extraPaginated.attendanceLogs.length < 15;
+                      fetchedMore = extraPaginated.attendanceLogs.isNotEmpty;
+                    },
+                  );
+                  if (!fetchedMore) break;
+                }
+              }
+
+              emit(
+                EmployeeDetailsFetchSuccess(
+                  employee: employee,
+                  attendanceLogs: currentAttendance,
+                  payrollLogs: payrollPaginated.payrollLogs,
+                  advanceLogs: advancePaginated.advanceLogs,
+                  lastAttendanceDoc: lastAttendanceDoc,
+                  lastPayrollDoc: payrollPaginated.lastDoc,
+                  lastAdvanceDoc: advancePaginated.lastDoc,
+                  hasReachedMaxAttendance: hasReachedMaxAttendance,
+                  hasReachedMaxPayroll: payrollPaginated.payrollLogs.length < 15,
+                  hasReachedMaxAdvance: advancePaginated.advanceLogs.length < 15,
                 ),
               );
-
-              bool fetchedMore = false;
-              extraResult.fold(
-                (failure) {
-                  hasReachedMaxAttendance = true;
-                },
-                (extraPaginated) {
-                  currentAttendance.addAll(extraPaginated.attendanceLogs);
-                  lastAttendanceDoc = extraPaginated.lastDoc;
-                  hasReachedMaxAttendance =
-                      extraPaginated.attendanceLogs.length < 15;
-                  fetchedMore = extraPaginated.attendanceLogs.isNotEmpty;
-                },
-              );
-              if (!fetchedMore) break;
-            }
-          }
-
-          emit(
-            EmployeeDetailsFetchSuccess(
-              attendanceLogs: currentAttendance,
-              payrollLogs: payrollPaginated.payrollLogs,
-              advanceLogs: advancePaginated.advanceLogs,
-              lastAttendanceDoc: lastAttendanceDoc,
-              lastPayrollDoc: payrollPaginated.lastDoc,
-              lastAdvanceDoc: advancePaginated.lastDoc,
-              hasReachedMaxAttendance: hasReachedMaxAttendance,
-              hasReachedMaxPayroll: payrollPaginated.payrollLogs.length < 15,
-              hasReachedMaxAdvance: advancePaginated.advanceLogs.length < 15,
-            ),
-          );
+            });
+          });
         });
-      });
-    });
+      },
+    );
   }
 
   Future<void> loadMoreAttendance(String uid, String employeeId) async {

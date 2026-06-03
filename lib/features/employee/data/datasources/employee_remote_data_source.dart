@@ -87,6 +87,7 @@ abstract class EmployeeRemoteDataSource {
     required List<String> advanceIds,
     required String payrollId,
   });
+  Future<EmployeeModel> getEmployee(String uid, String employeeId);
 }
 
 class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
@@ -487,6 +488,25 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       throw Exception('Failed to settle advances: $e');
+    }
+  }
+
+  @override
+  Future<EmployeeModel> getEmployee(String uid, String employeeId) async {
+    try {
+      final doc = await firestore
+          .collection('users')
+          .doc(uid)
+          .collection('employees')
+          .doc(employeeId)
+          .get();
+      if (!doc.exists) {
+        throw Exception('Employee not found');
+      }
+      return EmployeeModel.fromJson(doc.data()!, doc.id);
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      throw Exception('Failed to get employee: $e');
     }
   }
 }
