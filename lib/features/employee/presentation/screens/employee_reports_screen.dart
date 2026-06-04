@@ -483,7 +483,7 @@ class _EmployeeReportsScreenState extends State<EmployeeReportsScreen> {
           SizedBox(height: isDesktop ? 4 : 4.h),
           Text(
             title,
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyles.customStyle(
               fontSize: isDesktop ? 12 : 11,
