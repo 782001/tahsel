@@ -1459,7 +1459,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        "${AppStrings.payrollPeriod.tr()}: ${DateFormat('yyyy-MM-dd').format(pending['periodStart'])} ${AppStrings.currentLang == "en" ? "→" : "←"} ${DateFormat('yyyy-MM-dd').format(pending['periodEnd'])}",
+                        "${AppStrings.payrollPeriod.tr()}: ${DateFormat('yyyy-MM-dd').format(pending['periodStart'])} ${AppStrings.currentLang == "en" ? "→→→→" : "←←←←"} ${DateFormat('yyyy-MM-dd').format(pending['periodEnd'])}",
                         style: TextStyles.customStyle(
                           fontSize: 11,
                           color: Colors.white70,
