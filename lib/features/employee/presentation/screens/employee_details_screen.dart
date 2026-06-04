@@ -1577,6 +1577,8 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                           paidMonthKeys: payrollLogs
                               .map((log) => log.monthKey)
                               .toList(),
+                          payrollLogs: payrollLogs,
+                          pendingMap: pending,
                           onPay: (payroll, paidAdvanceIds) {
                             // Collect IDs of unpaid, completed attendance records within active payroll period
                             final unpaidAttendanceIds = attendanceLogs
@@ -1715,40 +1717,86 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                 ],
               ],
             ),
-            SizedBox(height: isDesktop ? 8 : 8.h),
             if (employee.salaryType == 'monthly') ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildAttendanceMetricChip(
-                      Icons.check_circle_outline_rounded,
-                      AppStrings.attendance.tr(),
-                      '${(pending['attendedDays'] as num?)?.toSmartAmount() ?? 0}',
-                      AppColors.success,
-                      isDesktop,
-                    ),
+              SizedBox(height: isDesktop ? 8 : 8.h),
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(isDesktop ? 10 : 10.w),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10.r),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.15),
                   ),
-                  SizedBox(width: isDesktop ? 8 : 8.w),
-                  Expanded(
-                    child: _buildAttendanceMetricChip(
-                      Icons.cancel_outlined,
-                      AppStrings.absent.tr(),
-                      "${(pending['absentDays'] as num?)?.toSmartAmount() ?? 0}",
-                      AppColors.warning,
-                      isDesktop,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppStrings.attendanceStatus.tr(),
+                      style: TextStyles.customStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                  SizedBox(width: isDesktop ? 8 : 8.w),
-                  Expanded(
-                    child: _buildAttendanceMetricChip(
-                      Icons.money_off_rounded,
-                      AppStrings.unpaidDays.tr(),
-                      (pending['unpaidDays'] as double? ?? 0.0).toSmartAmount(),
-                      AppColors.error,
-                      isDesktop,
+                    SizedBox(height: 6.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: _buildPendingMetricItem(
+                            AppStrings.totalPeriodDays.tr(),
+                            "${pending['totalDaysInPeriod'] ?? 30}",
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildPendingMetricItem(
+                            AppStrings.workedDays.tr(),
+                            "${pending['workedDays'] ?? 0}",
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildPendingMetricItem(
+                            AppStrings.missingDays.tr(),
+                            "${pending['missingDays'] ?? 0}",
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildPendingMetricItem(
+                            AppStrings.allowedOffDays.tr(),
+                            "${pending['allowedOffDays'] ?? 0}",
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                    const Divider(color: Colors.white24, height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: _buildPendingMetricItem(
+                            AppStrings.bonusDays.tr(),
+                            "${pending['bonusDays'] ?? 0}",
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildPendingMetricItem(
+                            AppStrings.deductionDays.tr(),
+                            "${pending['deductionDays'] ?? 0}",
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildPendingMetricItem(
+                            AppStrings.bonusHours.tr(),
+                            "${(pending['bonusHours'] as num?)?.toStringAsFixed(1) ?? '0.0'} ${AppStrings.hours.tr()}",
+                          ),
+                        ),
+                        const Expanded(child: SizedBox()),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ] else ...[
               Row(
@@ -1966,53 +2014,10 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
           style: TextStyles.customStyle(
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: isDeduction ? AppColors.redColor : Colors.white,
+            color: isDeduction ? AppColors.error : Colors.white,
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildAttendanceMetricChip(
-    IconData icon,
-    String label,
-    String value,
-    Color accentColor,
-    bool isDesktop,
-  ) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: isDesktop ? 8 : 8.w,
-        vertical: isDesktop ? 6 : 6.h,
-      ),
-      decoration: BoxDecoration(
-        color: accentColor.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(8.r),
-        border: Border.all(color: accentColor.withValues(alpha: 0.5)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(icon, size: 16, color: accentColor),
-          SizedBox(height: isDesktop ? 4 : 4.h),
-          Text(
-            value,
-            style: TextStyles.customStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-            ),
-          ),
-          SizedBox(height: isDesktop ? 2 : 2.h),
-          Text(
-            label,
-            style: TextStyles.customStyle(fontSize: 9, color: Colors.white70),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
     );
   }
 

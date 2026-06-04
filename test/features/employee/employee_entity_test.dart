@@ -85,7 +85,7 @@ void main() {
     });
 
     test('AttendanceEntity for exception statuses (absent/excused) should support null checkIn and checkOut', () {
-      final log = AttendanceEntity(
+      const log = AttendanceEntity(
         id: 'att_exc',
         employeeId: 'emp1',
         employeeName: 'Abdalla',

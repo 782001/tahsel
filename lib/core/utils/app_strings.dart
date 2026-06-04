@@ -569,6 +569,15 @@ class AppStrings {
   static const String checkoutBeforeCheckinError =
       "checkout_before_checkin_error";
 
+  // Monthly Payroll Breakdown Metrics
+  static const String totalPeriodDays = "total_period_days";
+  static const String workedDays = "worked_days";
+  static const String missingDays = "missing_days";
+  static const String allowedOffDays = "allowed_off_days";
+  static const String bonusDays = "bonus_days";
+  static const String deductionDays = "deduction_days";
+  static const String bonusHours = "bonus_hours";
+
   // Attendance Workflow — Separated Flows
   static const String markAbsent = "mark_absent";
   static const String markExcused = "mark_excused";

@@ -500,5 +500,12 @@
   "absent_recorded": "تم تسجيل غياب الموظف بنجاح",
   "excused_recorded": "تم تسجيل غياب الموظف بعذر بنجاح",
   "checkout_not_allowed": "لا يمكن تسجيل انصراف لموظف غائب أو بعذر",
-  "attendance_status": "حالة الحضور"
+  "attendance_status": "حالة الحضور",
+  "total_period_days": "أيام الفترة",
+  "worked_days": "أيام العمل الفعلية",
+  "missing_days": "أيام الغياب",
+  "allowed_off_days": "الأيام المسموح غيابها",
+  "bonus_days": "أيام المكافأة",
+  "deduction_days": "أيام الخصم",
+  "bonus_hours": "ساعات المكافأة"
 }

@@ -21,6 +21,8 @@ class PaySalaryDialog extends StatefulWidget {
   final double? initialAllowances;
   final List<AdvanceEntity> paidAdvances;
   final List<String> paidMonthKeys;
+  final List<PayrollEntity> payrollLogs;
+  final Map<String, dynamic>? pendingMap;
 
   const PaySalaryDialog({
     super.key,
@@ -33,6 +35,8 @@ class PaySalaryDialog extends StatefulWidget {
     this.initialAllowances,
     this.paidAdvances = const [],
     this.paidMonthKeys = const [],
+    this.payrollLogs = const [],
+    this.pendingMap,
   });
 
   @override
@@ -53,10 +57,37 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
   double _netSalary = 0.0;
   late Set<String> _selectedAdvanceIds;
 
-  bool get _isMonthAlreadyPaid {
+  bool get _isPeriodAlreadyPaid {
     if (widget.employee.salaryType != 'monthly') return false;
-    final String currentMonthKey = DateFormat('yyyy-MM').format(_paymentDate);
-    return widget.paidMonthKeys.contains(currentMonthKey);
+
+    // Get the payroll period for the selected payment date
+    final targetPeriod = MonthlyPayrollCalculator.getPayrollPeriod(
+      closingDay: widget.employee.payrollClosingDay,
+      referenceDate: _paymentDate,
+    );
+
+    // Check if any existing payroll log has a period that overlaps with targetPeriod
+    for (final log in widget.payrollLogs) {
+      if (log.periodStart != null && log.periodEnd != null) {
+        final startMatch =
+            log.periodStart!.year == targetPeriod.start.year &&
+            log.periodStart!.month == targetPeriod.start.month &&
+            log.periodStart!.day == targetPeriod.start.day;
+
+        if (startMatch) {
+          return true;
+        }
+      } else {
+        // Fallback to monthKey match for historical records
+        final String currentMonthKey = DateFormat(
+          'yyyy-MM',
+        ).format(_paymentDate);
+        if (log.monthKey == currentMonthKey) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @override
@@ -71,19 +102,18 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
     );
 
     // Estimate overtime hourly rate based on type.
-    // Monthly employees use a FIXED 30-day salary contract.
     double defaultOvertimeRate = 10.0;
     if (widget.employee.customOvertimeRate != null) {
       defaultOvertimeRate = widget.employee.customOvertimeRate!;
     } else {
       final double baseAmount = widget.employee.salaryAmount;
-      const int fixedMonthDays = 30;
       final double dailyHours = widget.employee.expectedDailyHours;
       final double otMultiplier = widget.employee.overtimeMultiplier;
 
       if (widget.employee.salaryType == 'monthly') {
+        // ALWAYS use 30-day fixed contract model for financial rates
         defaultOvertimeRate =
-            baseAmount / (fixedMonthDays * dailyHours) * otMultiplier;
+            baseAmount / (30.0 * dailyHours) * otMultiplier;
       } else if (widget.employee.salaryType == 'daily') {
         defaultOvertimeRate = baseAmount / dailyHours * otMultiplier;
       } else {
@@ -256,6 +286,7 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
                         final period =
                             MonthlyPayrollCalculator.getPayrollPeriod(
                               closingDay: widget.employee.payrollClosingDay,
+                              referenceDate: _paymentDate,
                             );
                         final fmt = DateFormat('yyyy-MM-dd');
                         return Container(
@@ -303,6 +334,73 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
                         );
                       },
                     ),
+                    if (widget.pendingMap != null) ...[
+                      SizedBox(height: 8.h),
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(12.w),
+                        decoration: BoxDecoration(
+                          color: AppColors.veryLightGrey,
+                          borderRadius: BorderRadius.circular(10.r),
+                          border: Border.all(
+                            color: AppColors.surfaceContainerHigh,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              AppStrings.attendanceStatus.tr(),
+                              style: TextStyles.customStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primaryColor,
+                              ),
+                            ),
+                            SizedBox(height: 8.h),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                _buildDialogMetric(
+                                  AppStrings.totalPeriodDays.tr(),
+                                  "${widget.pendingMap!['totalDaysInPeriod'] ?? 30}",
+                                ),
+                                _buildDialogMetric(
+                                  AppStrings.workedDays.tr(),
+                                  "${widget.pendingMap!['workedDays'] ?? 0}",
+                                ),
+                                _buildDialogMetric(
+                                  AppStrings.missingDays.tr(),
+                                  "${widget.pendingMap!['missingDays'] ?? 0}",
+                                ),
+                                _buildDialogMetric(
+                                  AppStrings.allowedOffDays.tr(),
+                                  "${widget.pendingMap!['allowedOffDays'] ?? 0}",
+                                ),
+                              ],
+                            ),
+                            const Divider(height: 16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                _buildDialogMetric(
+                                  AppStrings.bonusDays.tr(),
+                                  "${widget.pendingMap!['bonusDays'] ?? 0}",
+                                ),
+                                _buildDialogMetric(
+                                  AppStrings.deductionDays.tr(),
+                                  "${widget.pendingMap!['deductionDays'] ?? 0}",
+                                ),
+                                _buildDialogMetric(
+                                  AppStrings.bonusHours.tr(),
+                                  "${(widget.pendingMap!['bonusHours'] as num?)?.toStringAsFixed(1) ?? '0.0'} ${AppStrings.hours.tr()}",
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                   SizedBox(height: isDesktop ? 20 : 16.h),
 
@@ -741,7 +839,7 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
                       ],
                     ),
                   ),
-                  if (_isMonthAlreadyPaid) ...[
+                  if (_isPeriodAlreadyPaid) ...[
                     SizedBox(height: isDesktop ? 12 : 12.h),
                     Container(
                       width: double.infinity,
@@ -808,7 +906,7 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
                       SizedBox(width: 12.w),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: _isMonthAlreadyPaid ? null : _submit,
+                          onPressed: _isPeriodAlreadyPaid ? null : _submit,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryColor,
                             padding: EdgeInsets.symmetric(vertical: 14.h),
@@ -917,6 +1015,34 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
     }
   }
 
+  Widget _buildDialogMetric(String label, String value) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+
+        children: [
+          Text(
+            label,
+            style: TextStyles.customStyle(
+              fontSize: 10,
+              color: AppColors.blackLight,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            value,
+            style: TextStyles.customStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: AppColors.blackReal,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _submit() {
     if (_formKey.currentState!.validate()) {
       final double base = double.parse(_baseSalaryController.text);
@@ -943,6 +1069,11 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
         carriedForward = _netSalary.abs();
       }
 
+      final period = MonthlyPayrollCalculator.getPayrollPeriod(
+        closingDay: widget.employee.payrollClosingDay,
+        referenceDate: _paymentDate,
+      );
+
       final payroll = PayrollEntity(
         uid: widget.employee.uid,
         employeeId: widget.employee.id!,
@@ -958,6 +1089,10 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
         monthKey: DateFormat('yyyy-MM').format(_paymentDate),
         notes: _notesController.text.trim(),
         salaryType: widget.employee.salaryType,
+        periodStart: widget.employee.salaryType == 'monthly'
+            ? period.start
+            : null,
+        periodEnd: widget.employee.salaryType == 'monthly' ? period.end : null,
       );
 
       widget.onPay(payroll, _selectedAdvanceIds.toList());

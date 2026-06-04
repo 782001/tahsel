@@ -58,6 +58,15 @@ class MonthlyPayrollCalculator {
     double totalAbsentDays = 0.0;
     double excessAbsentDays = 0.0;
 
+    // New monthly-specific metrics
+    int totalDaysInPeriod = 0;
+    int workedDays = 0;
+    int missingDays = 0;
+    int allowedOffDays = 0;
+    int bonusDays = 0;
+    int deductionDays = 0;
+    double bonusHours = 0.0;
+
     final period = getPayrollPeriod(
       closingDay: employee.payrollClosingDay,
       referenceDate: referenceDate,
@@ -81,6 +90,14 @@ class MonthlyPayrollCalculator {
         }
       }
 
+      // For monthly employees, only include completed attendance records
+      // (absent/excused records are kept for HR tracking but NOT used for payroll calc)
+      if (employee.salaryType == 'monthly') {
+        if (log.status == 'absent' || log.status == 'excused') return false;
+        if (log.checkOut == null) return false;
+        return true;
+      }
+
       if (log.status == 'absent' || log.status == 'excused') return true;
       if (log.checkOut == null) return false;
       return true;
@@ -91,17 +108,17 @@ class MonthlyPayrollCalculator {
     final dailyHours = employee.expectedDailyHours;
     final otMultiplier = employee.overtimeMultiplier;
 
-    // Monthly employees use a FIXED 30-day contract model.
-    // workingDaysPerMonth is removed; we always use 30.
-    const int fixedMonthDays = 30;
+    // Calculate total days in the payroll period (used for monthly).
+    totalDaysInPeriod = period.end.difference(period.start).inDays + 1;
 
     double overtimeHourlyRate = 10.0;
     if (employee.customOvertimeRate != null) {
       overtimeHourlyRate = employee.customOvertimeRate!;
     } else {
       if (salaryType == 'monthly') {
+        // ALWAYS use 30-day fixed month contract model for financial rates
         overtimeHourlyRate =
-            baseAmount / (fixedMonthDays * dailyHours) * otMultiplier;
+            baseAmount / (30.0 * dailyHours) * otMultiplier;
       } else if (salaryType == 'daily') {
         overtimeHourlyRate = baseAmount / dailyHours * otMultiplier;
       } else {
@@ -136,17 +153,13 @@ class MonthlyPayrollCalculator {
         pendingDeductions += log.deductionHours * hourlyRate;
       }
     } else {
-      // Check if any confirmed presence (present, late, half_day) exists.
-      // If no confirmed presence exists, base salary, overtime and deductions are 0.
-      final bool hasConfirmedPresence = unpaidAttendance.any(
-        (log) =>
-            log.status == 'present' ||
-            log.status == 'late' ||
-            log.status == 'half_day',
-      );
+      // ── MONTHLY EMPLOYEES ──
+      // New logic: derive missing days from expected working days.
+      // No longer requires explicit absence records for payroll calculation.
 
-      // Compute monthly metrics
-      attendedDays = unpaidAttendance
+      // Count unique worked days (completed attendance: checkIn + checkOut)
+      // Only present, late, half_day statuses count.
+      workedDays = unpaidAttendance
           .where(
             (log) =>
                 log.status == 'present' ||
@@ -155,38 +168,40 @@ class MonthlyPayrollCalculator {
           )
           .length;
 
-      for (final log in unpaidAttendance) {
-        if (log.status == 'absent') {
-          totalAbsentDays += 1.0;
-        } else if (log.status == 'half_day') {
-          totalAbsentDays += 0.5;
-        }
-      }
-
-      final int allowedPaidWeekends = employee.allowedPaidWeekendsPerMonth;
-      excessAbsentDays = (totalAbsentDays > allowedPaidWeekends)
-          ? totalAbsentDays - allowedPaidWeekends
-          : 0.0;
+      attendedDays = workedDays;
+      allowedOffDays = employee.allowedPaidWeekendsPerMonth;
+      
+      // ExpectedWorkingDays = ActualDaysInPeriod - AllowedPaidWeekends
+      final int expectedWorkingDays = totalDaysInPeriod - allowedOffDays;
+      
+      // MissingDays = ExpectedWorkingDays - WorkedDays
+      missingDays = expectedWorkingDays - workedDays;
 
       unpaidDaysCount = unpaidAttendance.length;
       unpaidAttendanceCount = unpaidAttendance.length;
 
-      if (!hasConfirmedPresence) {
+      if (workedDays == 0) {
+        // No confirmed presence — zero everything out.
         pendingBase = 0.0;
         pendingOvertimeComp = 0.0;
         unpaidOvertimeHours = 0.0;
         pendingDeductions = 0.0;
+        bonusDays = 0;
+        deductionDays = 0;
+        bonusHours = 0.0;
+        excessAbsentDays = 0.0;
       } else {
         // STEP 1: Start with full monthly salary as base.
         pendingBase = baseAmount;
 
-        final double dailyRate = baseAmount / fixedMonthDays;
+        // Financial calculations must ALWAYS use 30 days contract model
+        final double dailyRate = baseAmount / 30.0;
         final double hourlyRate =
             employee.customDeductionRate ??
-            (baseAmount / (fixedMonthDays * dailyHours));
+            (baseAmount / (30.0 * dailyHours));
         final double deductionMultiplier = employee.dailyDeductionMultiplier;
 
-        // STEP 2: Calculate actual overtime/deductions.
+        // STEP 2: Calculate actual overtime/deductions from attendance records.
         double actualOvertimeHours = 0.0;
 
         for (final log in unpaidAttendance) {
@@ -195,19 +210,33 @@ class MonthlyPayrollCalculator {
           pendingDeductions += log.deductionHours * hourlyRate;
         }
 
-        // STEP 7: Apply daily deduction multiplier to excess absences.
-        pendingDeductions += excessAbsentDays * dailyRate * deductionMultiplier;
+        // Determine bonus or deduction based on missing vs allowed off days.
+        if (missingDays > 0) {
+          // Excess absences → apply daily deduction multiplier.
+          deductionDays = missingDays;
+          bonusDays = 0;
+          excessAbsentDays = deductionDays.toDouble();
+          pendingDeductions +=
+              deductionDays * dailyRate * deductionMultiplier;
+        } else if (missingDays < 0) {
+          // Unused off days / Extra worked days → convert to bonus hours.
+          bonusDays = -missingDays;
+          deductionDays = 0;
+          excessAbsentDays = 0.0;
+        } else {
+          // Exact match → no bonus, no deduction.
+          bonusDays = 0;
+          deductionDays = 0;
+          excessAbsentDays = 0.0;
+        }
 
-        // STEP 5 & 6: Convert unused weekend days to overtime-equivalent bonus hours.
-        final double unusedWeekendDays = (totalAbsentDays < allowedPaidWeekends)
-            ? allowedPaidWeekends - totalAbsentDays
-            : 0.0;
-
-        final double weekendBonusHours = unusedWeekendDays * dailyHours;
-
-        unpaidOvertimeHours = actualOvertimeHours + weekendBonusHours;
+        bonusHours = bonusDays * dailyHours;
+        unpaidOvertimeHours = actualOvertimeHours + bonusHours;
         pendingOvertimeComp = unpaidOvertimeHours * overtimeHourlyRate;
       }
+
+      // Track total absent days for backwards-compatible map keys
+      totalAbsentDays = (totalDaysInPeriod - workedDays).toDouble();
     }
 
     final double netSalary =
@@ -239,6 +268,14 @@ class MonthlyPayrollCalculator {
       'attendedDays': attendedDays,
       'absentDays': totalAbsentDays,
       'unpaidDays': excessAbsentDays,
+      // New monthly-specific keys
+      'totalDaysInPeriod': totalDaysInPeriod,
+      'workedDays': workedDays,
+      'missingDays': missingDays,
+      'allowedOffDays': allowedOffDays,
+      'bonusDays': bonusDays,
+      'deductionDays': deductionDays,
+      'bonusHours': bonusHours,
     };
   }
 }

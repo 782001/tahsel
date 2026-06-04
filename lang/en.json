@@ -498,5 +498,12 @@
   "absent_recorded": "Employee marked as Absent successfully",
   "excused_recorded": "Employee marked as Excused successfully",
   "checkout_not_allowed": "Check-out is not allowed for absent or excused records",
-  "attendance_status": "Attendance Status"
+  "attendance_status": "Attendance Status",
+  "total_period_days": "Period Days",
+  "worked_days": "Worked Days",
+  "missing_days": "Missing Days",
+  "allowed_off_days": "Allowed Off Days",
+  "bonus_days": "Bonus Days",
+  "deduction_days": "Deduction Days",
+  "bonus_hours": "Bonus Hours"
 }
