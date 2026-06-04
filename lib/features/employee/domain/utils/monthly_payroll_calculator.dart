@@ -1,5 +1,6 @@
 import 'package:tahsel/features/employee/domain/entities/attendance_entity.dart';
 import 'package:tahsel/features/employee/domain/entities/employee_entity.dart';
+import 'package:tahsel/features/employee/domain/entities/payroll_entity.dart';
 
 class MonthlyPayrollCalculator {
   /// Computes the payroll period (start → end) for a given [referenceDate]
@@ -277,5 +278,126 @@ class MonthlyPayrollCalculator {
       'deductionDays': deductionDays,
       'bonusHours': bonusHours,
     };
+  }
+
+  /// Generates all payroll periods starting from the period containing the
+  /// employee's [createdAt] date up to the period containing the [now] date.
+  static List<({DateTime start, DateTime end})> getPeriodsSinceCreation({
+    required DateTime createdAt,
+    required int closingDay,
+    required DateTime now,
+  }) {
+    final List<({DateTime start, DateTime end})> periods = [];
+    
+    // Get the period containing createdAt
+    var currentPeriod = getPayrollPeriod(closingDay: closingDay, referenceDate: createdAt);
+    final targetPeriod = getPayrollPeriod(closingDay: closingDay, referenceDate: now);
+    
+    // Add periods sequentially until we reach or pass targetPeriod.
+    while (currentPeriod.start.isBefore(targetPeriod.start) || currentPeriod.start.isAtSameMomentAs(targetPeriod.start)) {
+      periods.add(currentPeriod);
+      // To get the next period, start from the day after this period ends.
+      final nextDay = currentPeriod.end.add(const Duration(days: 1));
+      currentPeriod = getPayrollPeriod(closingDay: closingDay, referenceDate: nextDay);
+    }
+    
+    return periods;
+  }
+
+  /// Determines if a period is completed based on [now].
+  /// A period is completed if the current day is strictly after the period's end date.
+  static bool isPeriodCompleted({
+    required ({DateTime start, DateTime end}) period,
+    required DateTime now,
+  }) {
+    final todayOnly = DateTime(now.year, now.month, now.day);
+    return todayOnly.isAfter(period.end);
+  }
+
+  /// Computes the payment window start and end dates for a given period end.
+  static ({DateTime start, DateTime end}) getPaymentWindow({
+    required DateTime periodEnd,
+    required int windowStart,
+    required int windowEnd,
+  }) {
+    final int nextMonth = periodEnd.month == 12 ? 1 : periodEnd.month + 1;
+    final int nextMonthYear = periodEnd.month == 12 ? periodEnd.year + 1 : periodEnd.year;
+    
+    if (windowStart <= windowEnd) {
+      final start = DateTime(nextMonthYear, nextMonth, windowStart);
+      final end = DateTime(nextMonthYear, nextMonth, windowEnd);
+      return (start: start, end: end);
+    } else {
+      final start = DateTime(periodEnd.year, periodEnd.month, windowStart);
+      final end = DateTime(nextMonthYear, nextMonth, windowEnd);
+      return (start: start, end: end);
+    }
+  }
+
+  /// Computes the status of a period based on [now].
+  /// Returns one of: 'in_progress', 'waiting_window', 'ready', 'overdue'.
+  static String getPeriodStatus({
+    required ({DateTime start, DateTime end}) period,
+    required int windowStart,
+    required int windowEnd,
+    required DateTime now,
+  }) {
+    final todayOnly = DateTime(now.year, now.month, now.day);
+    if (todayOnly.isBefore(period.end) || todayOnly.isAtSameMomentAs(period.end)) {
+      return 'in_progress';
+    }
+    
+    final window = getPaymentWindow(
+      periodEnd: period.end,
+      windowStart: windowStart,
+      windowEnd: windowEnd,
+    );
+    
+    if (todayOnly.isBefore(window.start)) {
+      return 'waiting_window';
+    } else if (todayOnly.isAfter(window.end)) {
+      return 'overdue';
+    } else {
+      return 'ready';
+    }
+  }
+
+  /// Returns a list of completed periods since the employee was created that have not been paid yet.
+  static List<({DateTime start, DateTime end})> getUnpaidCompletedPeriods({
+    required EmployeeEntity employee,
+    required List<PayrollEntity> payrollLogs,
+    required DateTime now,
+  }) {
+    if (employee.salaryType != 'monthly') return [];
+
+    final allPeriods = getPeriodsSinceCreation(
+      createdAt: employee.createdAt,
+      closingDay: employee.payrollClosingDay,
+      now: now,
+    );
+
+    final completedPeriods = allPeriods.where((p) => isPeriodCompleted(period: p, now: now)).toList();
+
+    // A completed period is unpaid if there's no payroll log matching its start & end dates.
+    final unpaidPeriods = completedPeriods.where((p) {
+      final isPaid = payrollLogs.any((log) {
+        if (log.periodStart != null && log.periodEnd != null) {
+          return log.periodStart!.year == p.start.year &&
+              log.periodStart!.month == p.start.month &&
+              log.periodStart!.day == p.start.day &&
+              log.periodEnd!.year == p.end.year &&
+              log.periodEnd!.month == p.end.month &&
+              log.periodEnd!.day == p.end.day;
+        } else {
+          // Fallback to monthKey match for legacy records
+          final String logMonthKey = log.monthKey; // Format: 'yyyy-MM'
+          final String expectedMonthKey = "${p.end.year}-${p.end.month.toString().padLeft(2, '0')}";
+          return logMonthKey == expectedMonthKey;
+        }
+      });
+      return !isPaid;
+    }).toList();
+
+    return unpaidPeriods;
   }
 }

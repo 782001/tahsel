@@ -505,5 +505,11 @@
   "allowed_off_days": "Allowed Off Days",
   "bonus_days": "Bonus Days",
   "deduction_days": "Deduction Days",
-  "bonus_hours": "Bonus Hours"
+  "bonus_hours": "Bonus Hours",
+  "payroll_status_in_progress": "In Progress",
+  "payroll_status_waiting_window": "Waiting Window",
+  "payroll_status_ready": "Ready",
+  "payroll_status_overdue": "Overdue",
+  "payroll_in_progress_warning": "This period is still in progress. Payments are blocked until the period completes.",
+  "payroll_waiting_window_warning": "This period is completed, but is awaiting the designated payment window ({start}th to {end}th)."
 }

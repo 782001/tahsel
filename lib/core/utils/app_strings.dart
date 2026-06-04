@@ -585,4 +585,14 @@ class AppStrings {
   static const String excusedRecorded = "excused_recorded";
   static const String checkoutNotAllowed = "checkout_not_allowed";
   static const String attendanceStatus = "attendance_status";
+
+  // Payroll Period Statuses
+  static const String payrollStatusInProgress = "payroll_status_in_progress";
+  static const String payrollStatusWaitingWindow = "payroll_status_waiting_window";
+  static const String payrollStatusReady = "payroll_status_ready";
+  static const String payrollStatusOverdue = "payroll_status_overdue";
+
+  // Payroll Warnings
+  static const String payrollInProgressWarning = "payroll_in_progress_warning";
+  static const String payrollWaitingWindowWarning = "payroll_waiting_window_warning";
 }

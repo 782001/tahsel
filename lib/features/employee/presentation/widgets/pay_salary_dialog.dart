@@ -23,6 +23,8 @@ class PaySalaryDialog extends StatefulWidget {
   final List<String> paidMonthKeys;
   final List<PayrollEntity> payrollLogs;
   final Map<String, dynamic>? pendingMap;
+  final DateTime? periodStart;
+  final DateTime? periodEnd;
 
   const PaySalaryDialog({
     super.key,
@@ -37,6 +39,8 @@ class PaySalaryDialog extends StatefulWidget {
     this.paidMonthKeys = const [],
     this.payrollLogs = const [],
     this.pendingMap,
+    this.periodStart,
+    this.periodEnd,
   });
 
   @override
@@ -60,29 +64,29 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
   bool get _isPeriodAlreadyPaid {
     if (widget.employee.salaryType != 'monthly') return false;
 
-    // Get the payroll period for the selected payment date
-    final targetPeriod = MonthlyPayrollCalculator.getPayrollPeriod(
+    final start = widget.periodStart ?? MonthlyPayrollCalculator.getPayrollPeriod(
       closingDay: widget.employee.payrollClosingDay,
       referenceDate: _paymentDate,
-    );
+    ).start;
+    final end = widget.periodEnd ?? MonthlyPayrollCalculator.getPayrollPeriod(
+      closingDay: widget.employee.payrollClosingDay,
+      referenceDate: _paymentDate,
+    ).end;
 
-    // Check if any existing payroll log has a period that overlaps with targetPeriod
     for (final log in widget.payrollLogs) {
       if (log.periodStart != null && log.periodEnd != null) {
         final startMatch =
-            log.periodStart!.year == targetPeriod.start.year &&
-            log.periodStart!.month == targetPeriod.start.month &&
-            log.periodStart!.day == targetPeriod.start.day;
+            log.periodStart!.year == start.year &&
+            log.periodStart!.month == start.month &&
+            log.periodStart!.day == start.day;
 
         if (startMatch) {
           return true;
         }
       } else {
         // Fallback to monthKey match for historical records
-        final String currentMonthKey = DateFormat(
-          'yyyy-MM',
-        ).format(_paymentDate);
-        if (log.monthKey == currentMonthKey) {
+        final String expectedMonthKey = "${end.year}-${end.month.toString().padLeft(2, '0')}";
+        if (log.monthKey == expectedMonthKey) {
           return true;
         }
       }
@@ -283,11 +287,14 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
                     SizedBox(height: 8.h),
                     Builder(
                       builder: (context) {
-                        final period =
-                            MonthlyPayrollCalculator.getPayrollPeriod(
+                        final start = widget.periodStart ?? MonthlyPayrollCalculator.getPayrollPeriod(
                               closingDay: widget.employee.payrollClosingDay,
                               referenceDate: _paymentDate,
-                            );
+                            ).start;
+                        final end = widget.periodEnd ?? MonthlyPayrollCalculator.getPayrollPeriod(
+                              closingDay: widget.employee.payrollClosingDay,
+                              referenceDate: _paymentDate,
+                            ).end;
                         final fmt = DateFormat('yyyy-MM-dd');
                         return Container(
                           width: double.infinity,
@@ -318,8 +325,8 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
                                 child: Text(
                                   AppStrings.payrollPeriodRange.tr(
                                     namedArgs: {
-                                      'start': fmt.format(period.start),
-                                      'end': fmt.format(period.end),
+                                      'start': fmt.format(start),
+                                      'end': fmt.format(end),
                                     },
                                   ),
                                   style: TextStyles.customStyle(
@@ -1069,10 +1076,24 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
         carriedForward = _netSalary.abs();
       }
 
-      final period = MonthlyPayrollCalculator.getPayrollPeriod(
-        closingDay: widget.employee.payrollClosingDay,
-        referenceDate: _paymentDate,
-      );
+      final start = widget.employee.salaryType == 'monthly'
+          ? (widget.periodStart ??
+              MonthlyPayrollCalculator.getPayrollPeriod(
+                closingDay: widget.employee.payrollClosingDay,
+                referenceDate: _paymentDate,
+              ).start)
+          : null;
+      final end = widget.employee.salaryType == 'monthly'
+          ? (widget.periodEnd ??
+              MonthlyPayrollCalculator.getPayrollPeriod(
+                closingDay: widget.employee.payrollClosingDay,
+                referenceDate: _paymentDate,
+              ).end)
+          : null;
+
+      final monthKey = widget.employee.salaryType == 'monthly' && end != null
+          ? "${end.year}-${end.month.toString().padLeft(2, '0')}"
+          : DateFormat('yyyy-MM').format(_paymentDate);
 
       final payroll = PayrollEntity(
         uid: widget.employee.uid,
@@ -1086,13 +1107,11 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
         overtimeCompensation: otHours * otRate,
         netSalary: actualPaid, // only actual paid
         carriedForwardBalance: carriedForward,
-        monthKey: DateFormat('yyyy-MM').format(_paymentDate),
+        monthKey: monthKey,
         notes: _notesController.text.trim(),
         salaryType: widget.employee.salaryType,
-        periodStart: widget.employee.salaryType == 'monthly'
-            ? period.start
-            : null,
-        periodEnd: widget.employee.salaryType == 'monthly' ? period.end : null,
+        periodStart: start,
+        periodEnd: end,
       );
 
       widget.onPay(payroll, _selectedAdvanceIds.toList());

@@ -106,10 +106,64 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
     List<AttendanceEntity> attendanceLogs,
     List<PayrollEntity> payrollLogs,
   ) {
-    return MonthlyPayrollCalculator.calculate(
-      employee: employee,
-      attendanceLogs: attendanceLogs,
-    );
+    if (employee.salaryType == 'monthly') {
+      final now = DateTime.now();
+      final unpaidCompleted =
+          MonthlyPayrollCalculator.getUnpaidCompletedPeriods(
+            employee: employee,
+            payrollLogs: payrollLogs,
+            now: now,
+          );
+
+      if (unpaidCompleted.isNotEmpty) {
+        final oldestPeriod = unpaidCompleted.first;
+        final calcResult = MonthlyPayrollCalculator.calculate(
+          employee: employee,
+          attendanceLogs: attendanceLogs,
+          referenceDate: oldestPeriod.end,
+        );
+        final status = MonthlyPayrollCalculator.getPeriodStatus(
+          period: oldestPeriod,
+          windowStart: employee.paymentWindowStart,
+          windowEnd: employee.paymentWindowEnd,
+          now: now,
+        );
+        return {
+          ...calcResult,
+          'status': status,
+          'unpaidPeriods': unpaidCompleted,
+          'targetPeriod': oldestPeriod,
+        };
+      } else {
+        // No completed unpaid periods, fallback to active period (In Progress)
+        final activePeriod = MonthlyPayrollCalculator.getPayrollPeriod(
+          closingDay: employee.payrollClosingDay,
+          referenceDate: now,
+        );
+        final calcResult = MonthlyPayrollCalculator.calculate(
+          employee: employee,
+          attendanceLogs: attendanceLogs,
+          referenceDate: now,
+        );
+        return {
+          ...calcResult,
+          'status': 'in_progress',
+          'unpaidPeriods': <({DateTime start, DateTime end})>[],
+          'targetPeriod': activePeriod,
+        };
+      }
+    } else {
+      final calcResult = MonthlyPayrollCalculator.calculate(
+        employee: employee,
+        attendanceLogs: attendanceLogs,
+      );
+      return {
+        ...calcResult,
+        'status': 'ready',
+        'unpaidPeriods': <({DateTime start, DateTime end})>[],
+        'targetPeriod': null,
+      };
+    }
   }
 
   @override
@@ -1376,9 +1430,11 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
     final today = DateTime.now().day;
     final start = employee.paymentWindowStart;
     final end = employee.paymentWindowEnd;
-    final bool isWithinWindow = start <= end
-        ? (today >= start && today <= end)
-        : (today >= start || today <= end);
+
+    final String status = pending['status'] ?? 'ready';
+    final bool isWithinWindow = employee.salaryType == 'monthly'
+        ? (status == 'ready' || status == 'overdue')
+        : true;
 
     return Container(
       width: double.infinity,
@@ -1432,6 +1488,9 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                     ],
                   ),
                 ),
+                if (employee.salaryType == 'monthly') ...[
+                  _buildPayrollStatusBadge(status),
+                ],
               ],
             ),
             const SizedBox(height: 10),
@@ -1459,7 +1518,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        "${AppStrings.payrollPeriod.tr()}: ${DateFormat('yyyy-MM-dd').format(pending['periodStart'])} ${AppStrings.currentLang == "en" ? "→→→→" : "←←←←"} ${DateFormat('yyyy-MM-dd').format(pending['periodEnd'])}",
+                        "${AppStrings.payrollPeriod.tr()}: ${DateFormat('yyyy-MM-dd').format(pending['periodStart'])} ${AppStrings.currentLang == "en" ? "→→" : "←←"} ${DateFormat('yyyy-MM-dd').format(pending['periodEnd'])}",
                         style: TextStyles.customStyle(
                           fontSize: 11,
                           color: Colors.white70,
@@ -1471,7 +1530,8 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                 ),
               ),
             ],
-            if (!isWithinWindow) ...[
+            if (employee.salaryType == 'monthly' &&
+                (status == 'in_progress' || status == 'waiting_window')) ...[
               Container(
                 margin: const EdgeInsets.only(bottom: 10),
                 padding: EdgeInsets.all(isDesktop ? 10 : 10.w),
@@ -1490,12 +1550,14 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        AppStrings.paymentWindowError.tr(
-                          namedArgs: {
-                            'start': start.toString(),
-                            'end': end.toString(),
-                          },
-                        ),
+                        status == 'in_progress'
+                            ? AppStrings.payrollInProgressWarning.tr()
+                            : AppStrings.payrollWaitingWindowWarning.tr(
+                                namedArgs: {
+                                  'start': start.toString(),
+                                  'end': end.toString(),
+                                },
+                              ),
                         style: TextStyles.customStyle(
                           fontSize: 11,
                           color: Colors.white,
@@ -1579,6 +1641,12 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                               .toList(),
                           payrollLogs: payrollLogs,
                           pendingMap: pending,
+                          periodStart: pending['targetPeriod'] != null
+                              ? (pending['targetPeriod'] as dynamic).start
+                              : null,
+                          periodEnd: pending['targetPeriod'] != null
+                              ? (pending['targetPeriod'] as dynamic).end
+                              : null,
                           onPay: (payroll, paidAdvanceIds) {
                             // Collect IDs of unpaid, completed attendance records within active payroll period
                             final unpaidAttendanceIds = attendanceLogs
@@ -2386,6 +2454,53 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
           },
           childCount:
               advanceLogs.length + ((isLoadingMore && !hasReachedMax) ? 1 : 0),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPayrollStatusBadge(String status) {
+    Color badgeColor;
+    Color textColor;
+    String labelKey;
+
+    switch (status) {
+      case 'in_progress':
+        badgeColor = Colors.blue.shade100.withOpacity(0.2);
+        textColor = Colors.blue.shade200;
+        labelKey = AppStrings.payrollStatusInProgress;
+        break;
+      case 'waiting_window':
+        badgeColor = Colors.orange.shade100.withOpacity(0.2);
+        textColor = Colors.orange.shade200;
+        labelKey = AppStrings.payrollStatusWaitingWindow;
+        break;
+      case 'overdue':
+        badgeColor = Colors.red.shade100.withOpacity(0.2);
+        textColor = Colors.red.shade300;
+        labelKey = AppStrings.payrollStatusOverdue;
+        break;
+      case 'ready':
+      default:
+        badgeColor = Colors.green.shade100.withOpacity(0.2);
+        textColor = Colors.green.shade300;
+        labelKey = AppStrings.payrollStatusReady;
+        break;
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+      decoration: BoxDecoration(
+        color: badgeColor,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: textColor.withOpacity(0.3)),
+      ),
+      child: Text(
+        labelKey.tr(),
+        style: TextStyles.customStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          color: textColor,
         ),
       ),
     );

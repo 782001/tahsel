@@ -507,5 +507,11 @@
   "allowed_off_days": "الأيام المسموح غيابها",
   "bonus_days": "أيام المكافأة",
   "deduction_days": "أيام الخصم",
-  "bonus_hours": "ساعات المكافأة"
+  "bonus_hours": "ساعات المكافأة",
+  "payroll_status_in_progress": "قيد التقدم",
+  "payroll_status_waiting_window": "في انتظار فترة الصرف",
+  "payroll_status_ready": "جاهز للصرف",
+  "payroll_status_overdue": "متأخر",
+  "payroll_in_progress_warning": "هذه الفترة لا تزال قيد التقدم. الصرف محجوب حتى نهاية الفترة.",
+  "payroll_waiting_window_warning": "هذه الفترة مكتملة، ولكن في انتظار فترة الصرف المحددة (من يوم {start} إلى {end})."
 }

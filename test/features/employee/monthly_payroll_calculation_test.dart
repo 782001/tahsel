@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tahsel/features/employee/domain/entities/attendance_entity.dart';
 import 'package:tahsel/features/employee/domain/entities/employee_entity.dart';
+import 'package:tahsel/features/employee/domain/entities/payroll_entity.dart';
 import 'package:tahsel/features/employee/domain/utils/monthly_payroll_calculator.dart';
 
 void main() {
@@ -640,4 +641,163 @@ void main() {
       },
     );
   });
+
+  group('Monthly Payroll Eligibility & FIFO Tracking Tests', () {
+    late EmployeeEntity employee;
+
+    setUp(() {
+      employee = EmployeeEntity(
+        id: 'emp_fifo',
+        uid: 'user123',
+        name: 'FIFO Employee',
+        phone: '123456',
+        role: 'Engineer',
+        salaryAmount: 6000.0,
+        salaryType: 'monthly',
+        status: 'active',
+        createdAt: DateTime(2026, 3, 28), // Created inside period 26/03 -> 25/04
+        notes: '',
+        allowedPaidWeekendsPerMonth: 4,
+        paymentWindowStart: 1,
+        paymentWindowEnd: 5,
+        payrollClosingDay: 25,
+      );
+    });
+
+    test('getPeriodsSinceCreation returns all periods from creation month to reference date', () {
+      final now = DateTime(2026, 6, 10);
+      final periods = MonthlyPayrollCalculator.getPeriodsSinceCreation(
+        createdAt: employee.createdAt,
+        closingDay: employee.payrollClosingDay,
+        now: now,
+      );
+
+      // Expected periods:
+      // 1. 26/03/2026 -> 25/04/2026 (created inside this)
+      // 2. 26/04/2026 -> 25/05/2026
+      // 3. 26/05/2026 -> 25/06/2026 (current period containing now 10/06)
+      expect(periods.length, 3);
+      expect(periods[0].start, DateTime(2026, 3, 26));
+      expect(periods[0].end, DateTime(2026, 4, 25));
+      expect(periods[1].start, DateTime(2026, 4, 26));
+      expect(periods[1].end, DateTime(2026, 5, 25));
+      expect(periods[2].start, DateTime(2026, 5, 26));
+      expect(periods[2].end, DateTime(2026, 6, 25));
+    });
+
+    test('isPeriodCompleted returns true only when today is after the period end', () {
+      final period = (start: DateTime(2026, 4, 26), end: DateTime(2026, 5, 25));
+
+      // Today is before end
+      expect(MonthlyPayrollCalculator.isPeriodCompleted(period: period, now: DateTime(2026, 5, 20)), false);
+      // Today is exactly on end
+      expect(MonthlyPayrollCalculator.isPeriodCompleted(period: period, now: DateTime(2026, 5, 25)), false);
+      // Today is day after end
+      expect(MonthlyPayrollCalculator.isPeriodCompleted(period: period, now: DateTime(2026, 5, 26)), true);
+    });
+
+    test('getPaymentWindow calculates correct window dates for standard and wrap-around windows', () {
+      // Standard window: 1 to 5, periodEnd = 25/05/2026
+      final window1 = MonthlyPayrollCalculator.getPaymentWindow(
+        periodEnd: DateTime(2026, 5, 25),
+        windowStart: 1,
+        windowEnd: 5,
+      );
+      expect(window1.start, DateTime(2026, 6, 1));
+      expect(window1.end, DateTime(2026, 6, 5));
+
+      // Wrap-around window: 28 to 5, periodEnd = 25/05/2026
+      final window2 = MonthlyPayrollCalculator.getPaymentWindow(
+        periodEnd: DateTime(2026, 5, 25),
+        windowStart: 28,
+        windowEnd: 5,
+      );
+      expect(window2.start, DateTime(2026, 5, 28));
+      expect(window2.end, DateTime(2026, 6, 5));
+    });
+
+    test('getPeriodStatus returns correct state (in_progress, waiting_window, ready, overdue)', () {
+      final period = (start: DateTime(2026, 4, 26), end: DateTime(2026, 5, 25));
+
+      // 1. In Progress: today is 20/05/2026
+      expect(
+        MonthlyPayrollCalculator.getPeriodStatus(
+          period: period,
+          windowStart: 1,
+          windowEnd: 5,
+          now: DateTime(2026, 5, 20),
+        ),
+        'in_progress',
+      );
+
+      // 2. Waiting Window: today is 28/05/2026 (window starts 01/06)
+      expect(
+        MonthlyPayrollCalculator.getPeriodStatus(
+          period: period,
+          windowStart: 1,
+          windowEnd: 5,
+          now: DateTime(2026, 5, 28),
+        ),
+        'waiting_window',
+      );
+
+      // 3. Ready: today is 03/06/2026 (window is 01/06 -> 05/06)
+      expect(
+        MonthlyPayrollCalculator.getPeriodStatus(
+          period: period,
+          windowStart: 1,
+          windowEnd: 5,
+          now: DateTime(2026, 6, 3),
+        ),
+        'ready',
+      );
+
+      // 4. Overdue: today is 10/06/2026
+      expect(
+        MonthlyPayrollCalculator.getPeriodStatus(
+          period: period,
+          windowStart: 1,
+          windowEnd: 5,
+          now: DateTime(2026, 6, 10),
+        ),
+        'overdue',
+      );
+    });
+
+    test('getUnpaidCompletedPeriods excludes paid periods and the in-progress period', () {
+      final now = DateTime(2026, 6, 10);
+      final List<PayrollEntity> payrollLogs = [
+        PayrollEntity(
+          uid: 'user123',
+          employeeId: 'emp_fifo',
+          employeeName: 'FIFO Employee',
+          paymentDate: DateTime(2026, 4, 28),
+          amount: 6000.0,
+          bonus: 0.0,
+          deduction: 0.0,
+          overtimeCompensation: 0.0,
+          netSalary: 6000.0,
+          monthKey: '2026-04',
+          notes: '',
+          salaryType: 'monthly',
+          periodStart: DateTime(2026, 3, 26),
+          periodEnd: DateTime(2026, 4, 25),
+        ),
+      ];
+
+      final unpaid = MonthlyPayrollCalculator.getUnpaidCompletedPeriods(
+        employee: employee,
+        payrollLogs: payrollLogs,
+        now: now,
+      );
+
+      // 1. 26/03 -> 25/04: Paid (in logs)
+      // 2. 26/04 -> 25/05: Completed and Unpaid -> should be returned
+      // 3. 26/05 -> 25/06: In Progress (contains 10/06) -> should be excluded
+      expect(unpaid.length, 1);
+      expect(unpaid[0].start, DateTime(2026, 4, 26));
+      expect(unpaid[0].end, DateTime(2026, 5, 25));
+    });
+  });
 }
+
