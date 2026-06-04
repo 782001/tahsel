@@ -7,7 +7,7 @@ class AttendanceModel extends AttendanceEntity {
     required super.employeeId,
     required super.employeeName,
     required super.uid,
-    required super.checkIn,
+    super.checkIn,
     super.checkOut,
     required super.date,
     required super.status,
@@ -22,13 +22,13 @@ class AttendanceModel extends AttendanceEntity {
 
   factory AttendanceModel.fromJson(Map<String, dynamic> json, String id) {
     final checkInData = json['checkIn'];
-    DateTime checkInDate;
+    DateTime? checkInDate;
     if (checkInData is Timestamp) {
       checkInDate = checkInData.toDate().toLocal();
     } else if (checkInData is String) {
       checkInDate = DateTime.parse(checkInData).toLocal();
     } else {
-      checkInDate = DateTime.now();
+      checkInDate = null;
     }
 
     final checkOutData = json['checkOut'];
@@ -78,7 +78,7 @@ class AttendanceModel extends AttendanceEntity {
       'employeeId': employeeId,
       'employeeName': employeeName,
       'uid': uid,
-      'checkIn': Timestamp.fromDate(checkIn),
+      'checkIn': checkIn != null ? Timestamp.fromDate(checkIn!) : null,
       'checkOut': checkOut != null ? Timestamp.fromDate(checkOut!) : null,
       'date': date,
       'status': status,

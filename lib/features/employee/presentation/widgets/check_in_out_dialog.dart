@@ -63,7 +63,7 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
     final targetDateStr = DateFormat('yyyy-MM-dd').format(_selectedTime);
     return widget.attendanceLogs.where((log) {
       if (log.checkOut == null) return false;
-      final logDateStr = DateFormat('yyyy-MM-dd').format(log.checkIn);
+      final logDateStr = DateFormat('yyyy-MM-dd').format(log.checkIn!);
       return logDateStr == targetDateStr;
     }).toList();
   }
@@ -72,8 +72,6 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
   final List<String> _checkInStatuses = [
     'present',
     'late',
-    'absent',
-    'excused',
   ];
 
   @override
@@ -102,7 +100,7 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
 
   void _calculateOvertimeAndDeductions() {
     if (!_isCheckOut || widget.activeAttendance == null) return;
-    final checkInTime = widget.activeAttendance!.checkIn;
+    final checkInTime = widget.activeAttendance!.checkIn!;
     final checkOutTime = _selectedTime;
     final duration = checkOutTime.difference(checkInTime);
     final actualWorkedHours = duration.inMinutes / 60.0;
@@ -544,7 +542,7 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
 
   Future<void> _pickDateTime() async {
     final DateTime checkInTime = _isCheckOut
-        ? widget.activeAttendance!.checkIn
+        ? widget.activeAttendance!.checkIn!
         : DateTime(2000);
     final DateTime initialDate =
         _isCheckOut && _selectedTime.isBefore(checkInTime)
@@ -648,7 +646,7 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
       }
       if (record.checkOut == null) continue;
 
-      final existingStart = record.checkIn;
+      final existingStart = record.checkIn!;
       final existingEnd = record.checkOut!;
 
       // Two ranges [start, end] and [existingStart, existingEnd] overlap
@@ -663,7 +661,7 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
   void _submit() {
     if (_formKey.currentState!.validate()) {
       if (_isCheckOut) {
-        final checkInTime = widget.activeAttendance!.checkIn;
+        final checkInTime = widget.activeAttendance!.checkIn!;
         final checkOutTime = _selectedTime;
 
         if (checkOutTime.isBefore(checkInTime)) {
@@ -681,14 +679,14 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
         if (overlap != null) {
           final fmt = DateFormat('hh:mm a', AppStrings.currentLang);
           AppLogger.printMessage(
-            "checkOutTime: ${AppStrings.attendanceOverlapError.tr()} (${fmt.format(overlap.checkIn)} - ${fmt.format(overlap.checkOut!)})",
+            "checkOutTime: ${AppStrings.attendanceOverlapError.tr()} (${fmt.format(overlap.checkIn!)} - ${fmt.format(overlap.checkOut!)})",
           );
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
                 '${AppStrings.attendanceOverlapError.tr()} '
-                '(${fmt.format(overlap.checkIn)} - ${fmt.format(overlap.checkOut!)})',
+                '(${fmt.format(overlap.checkIn!)} - ${fmt.format(overlap.checkOut!)})',
               ),
               backgroundColor: AppColors.error,
             ),
@@ -703,7 +701,7 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
           deductionHours: double.tryParse(_deductionsController.text) ?? 0.0,
           lateMinutes:
               0, // Late minutes logic deprecated / subsumed by deduction
-          status: 'present',
+          status: widget.activeAttendance!.status,
           notes: _notesController.text.trim(),
         );
       } else {
@@ -711,14 +709,14 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
         final checkInTime = _selectedTime;
         for (final record in _sameDayCompletedRecords) {
           if (record.checkOut == null) continue;
-          if ((checkInTime.isAfter(record.checkIn) || checkInTime.isAtSameMomentAs(record.checkIn)) &&
+          if ((checkInTime.isAfter(record.checkIn!) || checkInTime.isAtSameMomentAs(record.checkIn!)) &&
               (checkInTime.isBefore(record.checkOut!) || checkInTime.isAtSameMomentAs(record.checkOut!))) {
             final fmt = DateFormat('hh:mm a', AppStrings.currentLang);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
                   '${AppStrings.attendanceOverlapError.tr()} '
-                  '(${fmt.format(record.checkIn)} - ${fmt.format(record.checkOut!)})',
+                  '(${fmt.format(record.checkIn!)} - ${fmt.format(record.checkOut!)})',
                 ),
                 backgroundColor: AppColors.error,
               ),

@@ -494,5 +494,11 @@
   "invalid_payroll_closing_day": "القيمة بين 1 و 28",
   "payroll_period": "فترة الرواتب",
   "payroll_period_range": "{start} ← {end}",
-  "checkout_before_checkin_error": "لا يمكن أن يكون وقت الانصراف قبل وقت الحضور"
+  "checkout_before_checkin_error": "لا يمكن أن يكون وقت الانصراف قبل وقت الحضور",
+  "mark_absent": "تسجيل غياب",
+  "mark_excused": "تسجيل غياب بعذر",
+  "absent_recorded": "تم تسجيل غياب الموظف بنجاح",
+  "excused_recorded": "تم تسجيل غياب الموظف بعذر بنجاح",
+  "checkout_not_allowed": "لا يمكن تسجيل انصراف لموظف غائب أو بعذر",
+  "attendance_status": "حالة الحضور"
 }

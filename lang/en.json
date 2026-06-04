@@ -492,5 +492,11 @@
   "invalid_payroll_closing_day": "between 1 and 28",
   "payroll_period": "Payroll Period",
   "payroll_period_range": "{start} → {end}",
-  "checkout_before_checkin_error": "Check-out time cannot be earlier than check-in time"
+  "checkout_before_checkin_error": "Check-out time cannot be earlier than check-in time",
+  "mark_absent": "Mark Absent",
+  "mark_excused": "Mark Excused",
+  "absent_recorded": "Employee marked as Absent successfully",
+  "excused_recorded": "Employee marked as Excused successfully",
+  "checkout_not_allowed": "Check-out is not allowed for absent or excused records",
+  "attendance_status": "Attendance Status"
 }

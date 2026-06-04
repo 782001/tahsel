@@ -78,10 +78,36 @@ void main() {
       expect(log.notes, 'Good day');
 
       // Calculate working hours as done in UI
-      final diff = log.checkOut != null
-          ? log.checkOut!.difference(log.checkIn).inMinutes / 60.0
+      final diff = log.checkOut != null && log.checkIn != null
+          ? log.checkOut!.difference(log.checkIn!).inMinutes / 60.0
           : 0.0;
       expect(diff, equals(8.5));
+    });
+
+    test('AttendanceEntity for exception statuses (absent/excused) should support null checkIn and checkOut', () {
+      final log = AttendanceEntity(
+        id: 'att_exc',
+        employeeId: 'emp1',
+        employeeName: 'Abdalla',
+        uid: 'user_uid_123',
+        checkIn: null,
+        checkOut: null,
+        date: '2026-05-19',
+        status: 'absent',
+        overtimeHours: 0.0,
+        lateMinutes: 0,
+        notes: 'Sick leave',
+      );
+
+      expect(log.checkIn, isNull);
+      expect(log.checkOut, isNull);
+      expect(log.status, 'absent');
+      expect(log.notes, 'Sick leave');
+
+      final diff = log.checkOut != null && log.checkIn != null
+          ? log.checkOut!.difference(log.checkIn!).inMinutes / 60.0
+          : 0.0;
+      expect(diff, equals(0.0));
     });
 
     test('PayrollEntity properties equality check', () {
@@ -136,8 +162,8 @@ void main() {
           notes: '',
         );
 
-        final diff = log.checkOut != null
-            ? log.checkOut!.difference(log.checkIn).inMinutes / 60.0
+        final diff = log.checkOut != null && log.checkIn != null
+            ? log.checkOut!.difference(log.checkIn!).inMinutes / 60.0
             : 0.0;
         expect(diff, equals(0.0));
       });

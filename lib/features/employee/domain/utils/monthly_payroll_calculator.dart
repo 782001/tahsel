@@ -111,9 +111,9 @@ class MonthlyPayrollCalculator {
 
     if (salaryType == 'hourly') {
       for (final log in unpaidAttendance) {
-        if (log.checkOut != null) {
+        if (log.checkOut != null && log.checkIn != null) {
           final workedHrs =
-              log.checkOut!.difference(log.checkIn).inMinutes / 60.0;
+              log.checkOut!.difference(log.checkIn!).inMinutes / 60.0;
           unpaidWorkedHours += workedHrs;
           pendingBase += workedHrs * baseAmount;
           unpaidAttendanceCount++;

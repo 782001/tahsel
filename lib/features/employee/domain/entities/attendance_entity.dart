@@ -5,7 +5,7 @@ class AttendanceEntity extends Equatable {
   final String employeeId;
   final String employeeName;
   final String uid;
-  final DateTime checkIn;
+  final DateTime? checkIn;
   final DateTime? checkOut;
   final String date; // 'yyyy-MM-dd'
   final String status; // 'present', 'absent', 'late', 'half_day'
@@ -22,7 +22,7 @@ class AttendanceEntity extends Equatable {
     required this.employeeId,
     required this.employeeName,
     required this.uid,
-    required this.checkIn,
+    this.checkIn,
     this.checkOut,
     required this.date,
     required this.status,

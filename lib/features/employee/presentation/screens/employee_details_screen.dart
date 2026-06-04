@@ -198,7 +198,8 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
 
                 AttendanceEntity? activeCheckIn;
                 for (final log in attendanceLogs) {
-                  if (log.checkOut == null) {
+                  if ((log.status == 'present' || log.status == 'late') &&
+                      log.checkOut == null) {
                     activeCheckIn = log;
                     break;
                   }
@@ -616,79 +617,429 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
         borderRadius: BorderRadius.circular(isDesktop ? 16 : 16.r),
         border: Border.all(color: AppColors.veryLightGrey),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  activeCheckIn != null
-                      ? AppStrings.currentlyWorking.tr()
-                      : AppStrings.notCheckedIn.tr(),
-                  style: TextStyles.customStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.blackReal,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      activeCheckIn != null
+                          ? AppStrings.currentlyWorking.tr()
+                          : AppStrings.notCheckedIn.tr(),
+                      style: TextStyles.customStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.blackReal,
+                      ),
+                    ),
+                    if (activeCheckIn != null) ...[
+                      SizedBox(height: isDesktop ? 4 : 4.h),
+                      Text(
+                        "${AppStrings.checkedInAt.tr()}: ${activeCheckIn.checkIn != null ? dateFormatter.format(activeCheckIn.checkIn!) : ''}",
+                        style: TextStyles.customStyle(
+                          fontSize: 12,
+                          color: AppColors.sandText,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (activeCheckIn != null) ...[
+                SizedBox(width: isDesktop ? 12 : 12.w),
+                ElevatedButton.icon(
+                  onPressed: () => _showCheckInOutDialog(
+                    employee,
+                    activeCheckIn,
+                    attendanceLogs,
+                  ),
+                  icon: const Icon(
+                    Icons.logout_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                  label: Text(
+                    AppStrings.confirmCheckout.tr(),
+                    style: TextStyles.customStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.warning,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    elevation: 0,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isDesktop ? 16 : 16.w,
+                      vertical: isDesktop ? 10 : 10.h,
+                    ),
                   ),
                 ),
-                if (activeCheckIn != null) ...[
-                  SizedBox(height: isDesktop ? 4 : 4.h),
-                  Text(
-                    "${AppStrings.checkedInAt.tr()}: ${dateFormatter.format(activeCheckIn.checkIn)}",
+              ],
+            ],
+          ),
+          if (activeCheckIn == null) ...[
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () => _showCheckInOutDialog(
+                    employee,
+                    activeCheckIn,
+                    attendanceLogs,
+                  ),
+                  icon: const Icon(
+                    Icons.login_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                  label: Text(
+                    AppStrings.checkIn.tr(),
                     style: TextStyles.customStyle(
-                      fontSize: 12,
-                      color: AppColors.sandText,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.success,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    elevation: 0,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isDesktop ? 16 : 16.w,
+                      vertical: isDesktop ? 10 : 10.h,
+                    ),
+                  ),
+                ),
+                if (employee.salaryType == "monthly") ...[
+                  OutlinedButton.icon(
+                    onPressed: () =>
+                        _showMarkExceptionDialog(context, employee, 'absent'),
+                    icon: Icon(
+                      Icons.cancel_outlined,
+                      color: AppColors.error,
+                      size: 18,
+                    ),
+                    label: Text(
+                      AppStrings.markAbsent.tr(),
+                      style: TextStyles.customStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.error,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: AppColors.error),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isDesktop ? 16 : 16.w,
+                        vertical: isDesktop ? 10 : 10.h,
+                      ),
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () =>
+                        _showMarkExceptionDialog(context, employee, 'excused'),
+                    icon: Icon(
+                      Icons.event_busy_rounded,
+                      color: AppColors.blackLight,
+                      size: 18,
+                    ),
+                    label: Text(
+                      AppStrings.markExcused.tr(),
+                      style: TextStyles.customStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.blackLight,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: AppColors.blackLight),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isDesktop ? 16 : 16.w,
+                        vertical: isDesktop ? 10 : 10.h,
+                      ),
                     ),
                   ),
                 ],
               ],
             ),
-          ),
-          SizedBox(width: isDesktop ? 12 : 12.w),
-          Flexible(
-            child: ElevatedButton.icon(
-              onPressed: () => _showCheckInOutDialog(
-                employee,
-                activeCheckIn,
-                attendanceLogs,
-              ),
-              icon: Icon(
-                activeCheckIn != null
-                    ? Icons.logout_rounded
-                    : Icons.login_rounded,
-                color: Colors.white,
-                size: 18,
-              ),
-              label: Text(
-                (activeCheckIn != null
-                        ? AppStrings.confirmCheckout
-                        : AppStrings.checkIn)
-                    .tr(),
-                style: TextStyles.customStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: activeCheckIn != null
-                    ? AppColors.warning
-                    : AppColors.success,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-                elevation: 0,
-                padding: EdgeInsets.symmetric(
-                  horizontal: isDesktop ? 16 : 16.w,
-                  vertical: isDesktop ? 10 : 10.h,
-                ),
-              ),
-            ),
-          ),
+          ],
         ],
       ),
+    );
+  }
+
+  void _showMarkExceptionDialog(
+    BuildContext context,
+    EmployeeEntity employee,
+    String status,
+  ) {
+    final formKey = GlobalKey<FormState>();
+    final notesController = TextEditingController();
+    DateTime selectedDate = DateTime.now();
+    final isDesktop = ResponsiveLayout.isDesktop(context);
+    final employeeCubit = context.read<EmployeeCubit>();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              backgroundColor: AppColors.scafoldBackGround,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isDesktop ? 400 : double.infinity,
+                ),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isDesktop ? 24 : 20.w,
+                    vertical: isDesktop ? 24 : 20.h,
+                  ),
+                  child: Form(
+                    key: formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              (status == 'absent'
+                                      ? AppStrings.markAbsent
+                                      : AppStrings.markExcused)
+                                  .tr(),
+                              style: TextStyles.customStyle(
+                                fontSize: isDesktop ? 18 : 16,
+                                fontWeight: FontWeight.bold,
+                                color: status == 'absent'
+                                    ? AppColors.error
+                                    : AppColors.blackLight,
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => Navigator.pop(dialogContext),
+                              icon: const Icon(Icons.close),
+                              color: AppColors.blackLight,
+                            ),
+                          ],
+                        ),
+                        const Divider(),
+                        SizedBox(height: 12.h),
+                        Text(
+                          AppStrings.dateLabel.tr(),
+                          style: TextStyles.customStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.black,
+                          ),
+                        ),
+                        SizedBox(height: 6.h),
+                        InkWell(
+                          borderRadius: BorderRadius.circular(10.r),
+                          onTap: () async {
+                            final DateTime? date = await showDatePicker(
+                              context: context,
+                              initialDate: selectedDate,
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime(2100),
+                              builder: (context, child) {
+                                return Theme(
+                                  data: Theme.of(context).copyWith(
+                                    colorScheme: AppColors.isDark
+                                        ? ColorScheme.dark(
+                                            primary: AppColors.primaryColor,
+                                          )
+                                        : ColorScheme.light(
+                                            primary: AppColors.primaryColor,
+                                            onPrimary: AppColors.white,
+                                            onSurface: AppColors.black,
+                                          ),
+                                  ),
+                                  child: child!,
+                                );
+                              },
+                            );
+                            if (date != null) {
+                              setState(() {
+                                selectedDate = date;
+                              });
+                            }
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 12.h,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: AppColors.surfaceContainerHigh,
+                              ),
+                              borderRadius: BorderRadius.circular(10.r),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  DateFormat('yyyy-MM-dd').format(selectedDate),
+                                  style: TextStyles.customStyle(
+                                    fontSize: 14,
+                                    color: AppColors.blackReal,
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.calendar_today_rounded,
+                                  color: AppColors.primaryColor,
+                                  size: 20,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 16.h),
+                        Text(
+                          AppStrings.notes.tr(),
+                          style: TextStyles.customStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.black,
+                          ),
+                        ),
+                        SizedBox(height: 6.h),
+                        TextFormField(
+                          cursorColor: AppColors.primaryColor,
+                          controller: notesController,
+                          decoration: InputDecoration(
+                            hintText: AppStrings.addNotesPlaceholder.tr(),
+                            hintStyle: TextStyles.customStyle(
+                              fontSize: 13,
+                              color: AppColors.blackLight.withValues(
+                                alpha: 0.6,
+                              ),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.r),
+                              borderSide: BorderSide(
+                                color: AppColors.surfaceContainerHigh,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.r),
+                              borderSide: BorderSide(
+                                color: AppColors.surfaceContainerHigh,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.r),
+                              borderSide: BorderSide(
+                                color: AppColors.primaryColor,
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                          style: TextStyles.customStyle(
+                            fontSize: 14,
+                            color: AppColors.blackReal,
+                          ),
+                        ),
+                        SizedBox(height: 24.h),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () => Navigator.pop(dialogContext),
+                                style: OutlinedButton.styleFrom(
+                                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10.r),
+                                  ),
+                                ),
+                                child: Text(
+                                  AppStrings.cancel.tr(),
+                                  style: TextStyles.customStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.blackLight,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 12.w),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  if (formKey.currentState!.validate()) {
+                                    final targetDateStr = DateFormat(
+                                      'yyyy-MM-dd',
+                                    ).format(selectedDate);
+                                    employeeCubit.markAbsentOrExcused(
+                                      uid: AppStrings.userToken,
+                                      employeeId: employee.id!,
+                                      employeeName: employee.name,
+                                      date: targetDateStr,
+                                      status: status,
+                                      notes: notesController.text.trim(),
+                                    );
+                                    Navigator.pop(dialogContext);
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: status == 'absent'
+                                      ? AppColors.error
+                                      : AppColors.blackLight,
+                                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10.r),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: Text(
+                                  AppStrings.confirm.tr(),
+                                  style: TextStyles.customStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -739,11 +1090,12 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
         }
 
         final log = attendanceLogs[idx];
-        final dateStr = DateFormat('yyyy-MM-dd').format(log.checkIn);
-        final checkInStr = DateFormat(
-          'hh:mm a',
-          AppStrings.currentLang,
-        ).format(log.checkIn);
+        final dateStr = log.checkIn != null
+            ? DateFormat('yyyy-MM-dd').format(log.checkIn!)
+            : log.date;
+        final checkInStr = log.checkIn != null
+            ? DateFormat('hh:mm a', AppStrings.currentLang).format(log.checkIn!)
+            : '--:--';
         final checkOutStr = log.checkOut != null
             ? DateFormat(
                 'hh:mm a',
@@ -836,7 +1188,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                             ),
                           ),
                           Text(
-                            "${(log.checkOut != null ? log.checkOut!.difference(log.checkIn).inMinutes / 60.0 : 0.0).toStringAsFixed(1)} ${AppStrings.hours.tr()}",
+                            "${(log.checkOut != null && log.checkIn != null ? log.checkOut!.difference(log.checkIn!).inMinutes / 60.0 : 0.0).toStringAsFixed(1)} ${AppStrings.hours.tr()}",
                             style: TextStyles.customStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
@@ -1716,7 +2068,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
 
     // Determine the target date for same-day records
     final targetDateStr = activeCheckIn != null
-        ? DateFormat('yyyy-MM-dd').format(activeCheckIn.checkIn)
+        ? DateFormat('yyyy-MM-dd').format(activeCheckIn.checkIn!)
         : DateFormat('yyyy-MM-dd').format(DateTime.now());
 
     // Collect all completed attendance records for the same day
@@ -1724,12 +2076,12 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
 
     for (final log in attendanceLogs) {
       if (log.checkOut == null) continue;
-      final logDateStr = DateFormat('yyyy-MM-dd').format(log.checkIn);
+      final logDateStr = DateFormat('yyyy-MM-dd').format(log.checkIn!);
       if (logDateStr == targetDateStr) {
         sameDayCompletedRecords.add(log);
         // Also accumulate previous hours (exclude current active check-in)
         if (activeCheckIn != null && log.id != activeCheckIn.id) {
-          final diff = log.checkOut!.difference(log.checkIn).inMinutes / 60.0;
+          final diff = log.checkOut!.difference(log.checkIn!).inMinutes / 60.0;
           previousWorkedHoursToday += diff;
           previousOvertimeToday += log.overtimeHours;
           previousDeductionToday += log.deductionHours;

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 
@@ -139,6 +140,40 @@ class EmployeeCubit extends Cubit<EmployeeState> {
     });
   }
 
+  Future<void> markAbsentOrExcused({
+    required String uid,
+    required String employeeId,
+    required String employeeName,
+    required String date,
+    required String status,
+    required String notes,
+  }) async {
+    emit(EmployeeLoading());
+    final attendance = AttendanceEntity(
+      employeeId: employeeId,
+      employeeName: employeeName,
+      uid: uid,
+      checkIn: null,
+      checkOut: null,
+      date: date,
+      status: status,
+      notes: notes,
+      overtimeHours: 0.0,
+      lateMinutes: 0,
+      isPaid: false,
+    );
+    final result = await checkInUseCase(attendance);
+    result.fold(
+      (failure) => emit(EmployeeFailure(failure.message)),
+      (id) {
+        final successMessage = status == 'absent'
+            ? AppStrings.absentRecorded.tr()
+            : AppStrings.excusedRecorded.tr();
+        emit(EmployeeActionSuccess(successMessage));
+      },
+    );
+  }
+
   Future<void> checkOut({
     required String uid,
     required String attendanceId,
@@ -271,7 +306,10 @@ class EmployeeCubit extends Cubit<EmployeeState> {
                 final latestPaymentDate =
                     payrollPaginated.payrollLogs.first.paymentDate;
                 while (currentAttendance.isNotEmpty &&
-                    currentAttendance.last.checkIn.isAfter(latestPaymentDate) &&
+                    (currentAttendance.last.checkIn ??
+                            DateFormat('yyyy-MM-dd')
+                                .parse(currentAttendance.last.date))
+                        .isAfter(latestPaymentDate) &&
                     !hasReachedMaxAttendance) {
                   final extraResult = await getAttendanceUseCase(
                     GetAttendanceParams(

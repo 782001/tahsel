@@ -568,4 +568,12 @@ class AppStrings {
   static const String payrollPeriodRange = "payroll_period_range";
   static const String checkoutBeforeCheckinError =
       "checkout_before_checkin_error";
+
+  // Attendance Workflow — Separated Flows
+  static const String markAbsent = "mark_absent";
+  static const String markExcused = "mark_excused";
+  static const String absentRecorded = "absent_recorded";
+  static const String excusedRecorded = "excused_recorded";
+  static const String checkoutNotAllowed = "checkout_not_allowed";
+  static const String attendanceStatus = "attendance_status";
 }
