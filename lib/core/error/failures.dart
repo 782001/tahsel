@@ -28,3 +28,7 @@ class CacheFailure extends Failure {
 class OfflineFailure extends Failure {
   const OfflineFailure(super.message);
 }
+
+class StatusViolationFailure extends Failure {
+  const StatusViolationFailure(super.message);
+}

@@ -3,6 +3,7 @@ import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:tahsel/core/error/exceptions.dart';
 import 'package:tahsel/core/error/failures.dart';
 import 'package:tahsel/core/storage/secure_storage_helper.dart';
+import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 
 import '../../domain/entities/user_entity.dart';
@@ -33,8 +34,12 @@ class AuthRepositoryImpl implements AuthBaseRepository {
       final result = await remoteDataSource.login(parameters: parameters);
       return Right(result);
     } on ServerException catch (e) {
+      AppLogger.printMessage(e.toString());
+
       return Left(ServerFailure(_mapExceptionToMessage(e.code)));
     } catch (e) {
+      AppLogger.printMessage(e.toString());
+
       return const Left(ServerFailure('auth_default_error'));
     }
   }

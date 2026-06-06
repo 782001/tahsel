@@ -176,6 +176,7 @@ class EmployeeCubit extends Cubit<EmployeeState> {
 
   Future<void> checkOut({
     required String uid,
+    required String employeeId,
     required String attendanceId,
     required DateTime checkOutTime,
     required double overtimeHours,
@@ -193,6 +194,7 @@ class EmployeeCubit extends Cubit<EmployeeState> {
     final result = await checkOutUseCase(
       CheckOutParams(
         uid: uid,
+        employeeId: employeeId,
         attendanceId: attendanceId,
         checkOut: checkOutTime,
         overtimeHours: overtimeHours,

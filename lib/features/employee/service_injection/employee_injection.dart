@@ -4,6 +4,7 @@ import 'package:tahsel/core/services/injection_container.dart';
 import '../data/datasources/employee_remote_data_source.dart';
 import '../data/repositories/employee_repository_impl.dart';
 import '../domain/repositories/employee_repository.dart';
+import '../domain/services/employee_operation_guard.dart';
 import '../domain/usecases/advance_usecases.dart';
 import '../domain/usecases/employee_usecases.dart';
 import '../presentation/cubit/employee_cubit.dart';
@@ -29,17 +30,20 @@ class EmployeeInjection {
       ),
     );
 
+    // Service/Guard
+    sl.registerLazySingleton(() => const EmployeeOperationGuard());
+
     // Use cases
     sl.registerLazySingleton(() => AddEmployeeUseCase(repository: sl()));
     sl.registerLazySingleton(() => EditEmployeeUseCase(repository: sl()));
     sl.registerLazySingleton(() => GetEmployeesUseCase(repository: sl()));
     sl.registerLazySingleton(() => SearchEmployeesUseCase(repository: sl()));
-    sl.registerLazySingleton(() => CheckInUseCase(repository: sl()));
-    sl.registerLazySingleton(() => CheckOutUseCase(repository: sl()));
+    sl.registerLazySingleton(() => CheckInUseCase(repository: sl(), guard: sl()));
+    sl.registerLazySingleton(() => CheckOutUseCase(repository: sl(), guard: sl()));
     sl.registerLazySingleton(() => GetAttendanceUseCase(repository: sl()));
-    sl.registerLazySingleton(() => PaySalaryUseCase(repository: sl()));
+    sl.registerLazySingleton(() => PaySalaryUseCase(repository: sl(), guard: sl()));
     sl.registerLazySingleton(() => GetPayrollUseCase(repository: sl()));
-    sl.registerLazySingleton(() => RequestAdvanceUseCase(repository: sl()));
+    sl.registerLazySingleton(() => RequestAdvanceUseCase(repository: sl(), guard: sl()));
     sl.registerLazySingleton(() => GetAdvancesUseCase(repository: sl()));
     sl.registerLazySingleton(() => SettleAdvancesUseCase(repository: sl()));
     sl.registerLazySingleton(() => GetEmployeeUseCase(repository: sl()));

@@ -595,4 +595,13 @@ class AppStrings {
   // Payroll Warnings
   static const String payrollInProgressWarning = "payroll_in_progress_warning";
   static const String payrollWaitingWindowWarning = "payroll_waiting_window_warning";
+
+  // Employee Status Enforcement Warnings
+  static const String employeeSuspended = "employee_suspended";
+  static const String checkInNotAvailable = "check_in_not_available";
+  static const String checkOutNotAvailable = "check_out_not_available";
+  static const String salaryPaymentNotAvailable = "salary_payment_not_available";
+  static const String advanceRequestNotAvailable = "advance_request_not_available";
+  static const String employeeInactive = "employee_inactive";
+  static const String operationNotAvailableForInactive = "operation_not_available_for_inactive";
 }

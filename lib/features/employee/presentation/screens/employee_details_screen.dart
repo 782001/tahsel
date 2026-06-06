@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:tahsel/core/services/injection_container.dart';
+import 'package:tahsel/features/employee/domain/services/employee_operation_guard.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
@@ -39,6 +41,26 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
   final ScrollController _attendanceScrollController = ScrollController();
   final ScrollController _payrollScrollController = ScrollController();
   final ScrollController _advanceScrollController = ScrollController();
+  final EmployeeOperationGuard _guard = sl<EmployeeOperationGuard>();
+
+  /// Shows a SnackBar explaining why an action is blocked based on status.
+  void _showStatusBlockedSnackBar(String status) {
+    final guard = _guard;
+    String message;
+    if (guard.isSuspended(status)) {
+      message = AppStrings.employeeSuspended.tr();
+    } else if (guard.isInactive(status)) {
+      message = AppStrings.operationNotAvailableForInactive.tr();
+    } else {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.error,
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -707,11 +729,13 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
               if (activeCheckIn != null) ...[
                 SizedBox(width: isDesktop ? 12 : 12.w),
                 ElevatedButton.icon(
-                  onPressed: () => _showCheckInOutDialog(
-                    employee,
-                    activeCheckIn,
-                    attendanceLogs,
-                  ),
+                  onPressed: _guard.canCheckOut(employee.status)
+                      ? () => _showCheckInOutDialog(
+                            employee,
+                            activeCheckIn,
+                            attendanceLogs,
+                          )
+                      : () => _showStatusBlockedSnackBar(employee.status),
                   icon: const Icon(
                     Icons.logout_rounded,
                     color: Colors.white,
@@ -747,11 +771,13 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
               runSpacing: 8,
               children: [
                 ElevatedButton.icon(
-                  onPressed: () => _showCheckInOutDialog(
-                    employee,
-                    activeCheckIn,
-                    attendanceLogs,
-                  ),
+                  onPressed: _guard.canCheckIn(employee.status)
+                      ? () => _showCheckInOutDialog(
+                            employee,
+                            activeCheckIn,
+                            attendanceLogs,
+                          )
+                      : () => _showStatusBlockedSnackBar(employee.status),
                   icon: const Icon(
                     Icons.login_rounded,
                     color: Colors.white,
@@ -779,8 +805,9 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                 ),
                 if (employee.salaryType == "monthly") ...[
                   OutlinedButton.icon(
-                    onPressed: () =>
-                        _showMarkExceptionDialog(context, employee, 'absent'),
+                    onPressed: _guard.canModifyAttendance(employee.status)
+                        ? () => _showMarkExceptionDialog(context, employee, 'absent')
+                        : () => _showStatusBlockedSnackBar(employee.status),
                     icon: Icon(
                       Icons.cancel_outlined,
                       color: AppColors.error,
@@ -806,8 +833,9 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                     ),
                   ),
                   OutlinedButton.icon(
-                    onPressed: () =>
-                        _showMarkExceptionDialog(context, employee, 'excused'),
+                    onPressed: _guard.canModifyAttendance(employee.status)
+                        ? () => _showMarkExceptionDialog(context, employee, 'excused')
+                        : () => _showStatusBlockedSnackBar(employee.status),
                     icon: Icon(
                       Icons.event_busy_rounded,
                       color: AppColors.blackLight,
@@ -1603,7 +1631,9 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
             ElevatedButton.icon(
               onPressed: !isWithinWindow
                   ? null
-                  : () {
+                  : !_guard.canPaySalary(employee.status)
+                      ? () => _showStatusBlockedSnackBar(employee.status)
+                      : () {
                       if (context.read<ConnectivityCubit>().state
                           is ConnectivityDisconnected) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -2188,6 +2218,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
               }) {
                 context.read<EmployeeCubit>().checkOut(
                   uid: AppStrings.userToken,
+                  employeeId: employee.id??"",
                   attendanceId: attendanceId,
                   checkOutTime: checkOutTime,
                   overtimeHours: overtimeHours,
@@ -2279,9 +2310,11 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
             ),
           ),
           ElevatedButton.icon(
-            onPressed: () {
-              _showRequestAdvanceDialog(employee);
-            },
+            onPressed: _guard.canRequestAdvance(employee.status)
+                ? () {
+                    _showRequestAdvanceDialog(employee);
+                  }
+                : () => _showStatusBlockedSnackBar(employee.status),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryColor,
               shape: RoundedRectangleBorder(

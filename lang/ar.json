@@ -513,5 +513,12 @@
   "payroll_status_ready": "جاهز للصرف",
   "payroll_status_overdue": "متأخر",
   "payroll_in_progress_warning": "هذه الفترة لا تزال قيد التقدم. الصرف محجوب حتى نهاية الفترة.",
-  "payroll_waiting_window_warning": "هذه الفترة مكتملة، ولكن في انتظار فترة الصرف المحددة (من يوم {start} إلى {end})."
+  "payroll_waiting_window_warning": "هذه الفترة مكتملة، ولكن في انتظار فترة الصرف المحددة (من يوم {start} إلى {end}).",
+  "employee_suspended": "الموظف موقوف حالياً",
+  "check_in_not_available": "لا يمكن تسجيل الحضور",
+  "check_out_not_available": "لا يمكن تسجيل الانصراف",
+  "salary_payment_not_available": "لا يمكن صرف الراتب",
+  "advance_request_not_available": "لا يمكن إنشاء سلفة",
+  "employee_inactive": "الموظف غير نشط",
+  "operation_not_available_for_inactive": "هذه العملية غير متاحة للموظفين غير النشطين"
 }

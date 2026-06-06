@@ -511,5 +511,12 @@
   "payroll_status_ready": "Ready",
   "payroll_status_overdue": "Overdue",
   "payroll_in_progress_warning": "This period is still in progress. Payments are blocked until the period completes.",
-  "payroll_waiting_window_warning": "This period is completed, but is awaiting the designated payment window ({start}th to {end}th)."
+  "payroll_waiting_window_warning": "This period is completed, but is awaiting the designated payment window ({start}th to {end}th).",
+  "employee_suspended": "Employee is suspended",
+  "check_in_not_available": "Check-in is not available",
+  "check_out_not_available": "Check-out is not available",
+  "salary_payment_not_available": "Salary payment is not available",
+  "advance_request_not_available": "Advance request is not available",
+  "employee_inactive": "Employee is inactive",
+  "operation_not_available_for_inactive": "This operation is not available for inactive employees"
 }

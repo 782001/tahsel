@@ -7,6 +7,8 @@ import '../entities/employee_entity.dart';
 import '../entities/employee_paginated_lists.dart';
 import '../entities/payroll_entity.dart';
 import '../repositories/employee_repository.dart';
+import '../services/employee_operation_guard.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 
 class AddEmployeeUseCase {
   final EmployeeRepository repository;
@@ -69,15 +71,29 @@ class SearchEmployeesUseCase {
 
 class CheckInUseCase {
   final EmployeeRepository repository;
-  CheckInUseCase({required this.repository});
+  final EmployeeOperationGuard guard;
+  CheckInUseCase({required this.repository, required this.guard});
 
-  Future<Either<Failure, String>> call(AttendanceEntity attendance) {
-    return repository.checkInEmployee(attendance);
+  Future<Either<Failure, String>> call(AttendanceEntity attendance) async {
+    final empResult = await repository.getEmployee(attendance.uid, attendance.employeeId);
+    return empResult.fold(
+      (failure) => Left(failure),
+      (employee) async {
+        if (guard.isSuspended(employee.status ?? '')) {
+          return const Left(StatusViolationFailure(AppStrings.employeeSuspended));
+        }
+        if (guard.isInactive(employee.status ?? '')) {
+          return const Left(StatusViolationFailure(AppStrings.operationNotAvailableForInactive));
+        }
+        return repository.checkInEmployee(attendance);
+      },
+    );
   }
 }
 
 class CheckOutParams {
   final String uid;
+  final String employeeId;
   final String attendanceId;
   final DateTime checkOut;
   final double overtimeHours;
@@ -88,6 +104,7 @@ class CheckOutParams {
 
   CheckOutParams({
     required this.uid,
+    required this.employeeId,
     required this.attendanceId,
     required this.checkOut,
     required this.overtimeHours,
@@ -100,18 +117,31 @@ class CheckOutParams {
 
 class CheckOutUseCase {
   final EmployeeRepository repository;
-  CheckOutUseCase({required this.repository});
+  final EmployeeOperationGuard guard;
+  CheckOutUseCase({required this.repository, required this.guard});
 
-  Future<Either<Failure, void>> call(CheckOutParams params) {
-    return repository.checkOutEmployee(
-      uid: params.uid,
-      attendanceId: params.attendanceId,
-      checkOut: params.checkOut,
-      overtimeHours: params.overtimeHours,
-      deductionHours: params.deductionHours,
-      lateMinutes: params.lateMinutes,
-      status: params.status,
-      notes: params.notes,
+  Future<Either<Failure, void>> call(CheckOutParams params) async {
+    final empResult = await repository.getEmployee(params.uid, params.employeeId);
+    return empResult.fold(
+      (failure) => Left(failure),
+      (employee) async {
+        if (guard.isSuspended(employee.status ?? '')) {
+          return const Left(StatusViolationFailure(AppStrings.employeeSuspended));
+        }
+        if (guard.isInactive(employee.status ?? '')) {
+          return const Left(StatusViolationFailure(AppStrings.operationNotAvailableForInactive));
+        }
+        return repository.checkOutEmployee(
+          uid: params.uid,
+          attendanceId: params.attendanceId,
+          checkOut: params.checkOut,
+          overtimeHours: params.overtimeHours,
+          deductionHours: params.deductionHours,
+          lateMinutes: params.lateMinutes,
+          status: params.status,
+          notes: params.notes,
+        );
+      },
     );
   }
 }
@@ -148,17 +178,30 @@ class GetAttendanceUseCase {
 
 class PaySalaryUseCase {
   final EmployeeRepository repository;
-  PaySalaryUseCase({required this.repository});
+  final EmployeeOperationGuard guard;
+  PaySalaryUseCase({required this.repository, required this.guard});
 
   Future<Either<Failure, String>> call(
     PayrollEntity payroll, {
     List<String> attendanceIds = const [],
     List<String> advanceIds = const [],
-  }) {
-    return repository.paySalary(
-      payroll,
-      attendanceIds: attendanceIds,
-      advanceIds: advanceIds,
+  }) async {
+    final empResult = await repository.getEmployee(payroll.uid, payroll.employeeId);
+    return empResult.fold(
+      (failure) => Left(failure),
+      (employee) async {
+        if (guard.isSuspended(employee.status ?? '')) {
+          return const Left(StatusViolationFailure(AppStrings.employeeSuspended));
+        }
+        if (guard.isInactive(employee.status ?? '')) {
+          return const Left(StatusViolationFailure(AppStrings.operationNotAvailableForInactive));
+        }
+        return repository.paySalary(
+          payroll,
+          attendanceIds: attendanceIds,
+          advanceIds: advanceIds,
+        );
+      },
     );
   }
 }
@@ -193,10 +236,23 @@ class GetPayrollUseCase {
 
 class RequestAdvanceUseCase {
   final EmployeeRepository repository;
-  RequestAdvanceUseCase({required this.repository});
+  final EmployeeOperationGuard guard;
+  RequestAdvanceUseCase({required this.repository, required this.guard});
 
-  Future<Either<Failure, String>> call(AdvanceEntity advance) {
-    return repository.requestAdvance(advance);
+  Future<Either<Failure, String>> call(AdvanceEntity advance) async {
+    final empResult = await repository.getEmployee(advance.uid, advance.employeeId);
+    return empResult.fold(
+      (failure) => Left(failure),
+      (employee) async {
+        if (guard.isSuspended(employee.status ?? '')) {
+          return const Left(StatusViolationFailure(AppStrings.employeeSuspended));
+        }
+        if (guard.isInactive(employee.status ?? '')) {
+          return const Left(StatusViolationFailure(AppStrings.operationNotAvailableForInactive));
+        }
+        return repository.requestAdvance(advance);
+      },
+    );
   }
 }
 

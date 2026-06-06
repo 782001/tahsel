@@ -114,7 +114,7 @@ class AuthCubit extends Cubit<AuthState> {
     final result = await loginUseCase.call(
       LoginParameters(email: email, password: password),
     );
-
+AppLogger.printMessage(result.toString());
     result.fold((failure) => emit(AuthFailure(failure.message)), (user) async {
       // Automatic userType detection based on email (temporary test solution)
       String detectedType = AppStrings.cafe;
