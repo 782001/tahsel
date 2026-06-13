@@ -466,6 +466,7 @@
   "overtime_multiplier": "Overtime Multiplier",
   "custom_overtime_rate": "Custom Overtime Rate\n (EGP/hr)",
   "custom_deduction_rate": "Custom Deduction Rate\n (EGP/hr)",
+  "currency_egp_per_hour": "(EGP/hr)",  
   "advances": "Advances",
   "add_advance": "Add Advance",
   "request_advance": "Request Advance",

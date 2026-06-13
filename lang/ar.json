@@ -468,6 +468,7 @@
   "overtime_multiplier": "مضاعف الوقت الإضافي",
   "custom_overtime_rate": "أجر إضافي مخصص \n (ج.م/ساعة)",
   "custom_deduction_rate": "خصم مخصص بالساعة \n (ج.م/ساعة)",
+  "currency_egp_per_hour": "(ج.م/ساعة)",
   "advances": "السلف",
   "add_advance": "إضافة سلفة",
   "request_advance": "طلب سلفة",

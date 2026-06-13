@@ -535,6 +535,7 @@ class AppStrings {
   static const String expectedDailyHours = "expected_daily_hours";
   static const String overtimeMultiplier = "overtime_multiplier";
   static const String customOvertimeRate = "custom_overtime_rate";
+  static const String currencyEgpPerHour = "currency_egp_per_hour";
   static const String customDeductionRate = "custom_deduction_rate";
   static const String advances = "advances";
   static const String addAdvance = "add_advance";

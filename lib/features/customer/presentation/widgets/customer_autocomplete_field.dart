@@ -16,6 +16,7 @@ class CustomerAutocompleteField extends StatelessWidget {
   final FocusNode? focusNode;
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onSubmitted;
+  final ValueChanged<CustomerEntity>? onSelected;
 
   const CustomerAutocompleteField({
     super.key,
@@ -28,6 +29,7 @@ class CustomerAutocompleteField extends StatelessWidget {
     this.focusNode,
     this.textInputAction,
     this.onSubmitted,
+    this.onSelected,
   });
 
   @override
@@ -123,6 +125,9 @@ class CustomerAutocompleteField extends StatelessWidget {
                             ),
                             onTap: () {
                               onSelected(option);
+                              if (this.onSelected != null) {
+                                this.onSelected!(option);
+                              }
                             },
                           );
                         },

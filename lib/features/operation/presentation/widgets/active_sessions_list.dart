@@ -2,10 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/extensions/extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/features/customer/presentation/widgets/customer_autocomplete_field.dart';
 import 'package:tahsel/features/operation/domain/entities/ps_session_entity.dart';
 import 'package:tahsel/features/operation/presentation/cubit/ps_session_cubit.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
@@ -294,7 +295,7 @@ class _ActiveSessionCardState extends State<ActiveSessionCard> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          '${AppStrings.hourlyRateKey.tr()}: ${session.rate.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}/hr',
+                          '${AppStrings.hourlyRateKey.tr()}: ${session.rate.toSmartAmount()} ${AppStrings.currencyEgpPerHour.tr()}',
                           style: TextStyles.customStyle(
                             color: AppColors.blackLight,
                             fontSize: 13,
@@ -482,24 +483,39 @@ class _EndSessionSheet extends StatefulWidget {
 }
 
 class _EndSessionSheetState extends State<_EndSessionSheet> {
+  final _customerController = TextEditingController();
   final _paidController = TextEditingController();
   final _ledgerController = TextEditingController();
   final _turnCountController = TextEditingController();
+  final _customerFocus = FocusNode();
   final _paidFocus = FocusNode();
   final _ledgerFocus = FocusNode();
   final _turnCountFocus = FocusNode();
 
   late double _totalAmount;
   int _turnCount = 1;
+  bool _customerTouched = false; // tracks if user interacted with name field
+  bool _customerNameTapped = false;
+  String _lastSelectedCustomerName = '';
 
   @override
   void initState() {
     super.initState();
+
+    // Pre-fill customer name if session already has one
+    final initialName = widget.session.customerName ?? '';
+    _customerController.text = initialName;
+    if (initialName.isNotEmpty) {
+      _customerNameTapped = true;
+      _lastSelectedCustomerName = initialName;
+    }
+
     _turnCount = widget.session.turnCount ?? 1;
     _turnCountController.text = _turnCount.toString();
     _updateTotalAmount();
 
-    _paidController.text = _totalAmount.toStringAsFixed(1);
+    // Default to 0 — operator must explicitly enter amount or tap "Full Payment"
+    _paidController.text = '0';
 
     _turnCountController.addListener(() {
       final parsed = int.tryParse(_turnCountController.text) ?? 1;
@@ -507,8 +523,25 @@ class _EndSessionSheetState extends State<_EndSessionSheet> {
         setState(() {
           _turnCount = parsed;
           _updateTotalAmount();
-          _paidController.text = _totalAmount.toStringAsFixed(1);
+          // Reset paid to 0 when turn count changes so operator re-confirms
+          _paidController.text = '0';
         });
+      }
+    });
+
+    // Mark field as touched when customer name changes and reset tapped if typed
+    _customerController.addListener(() {
+      if (_customerController.text != _lastSelectedCustomerName) {
+        if (_customerNameTapped) {
+          setState(() {
+            _customerNameTapped = false;
+          });
+        }
+      }
+      if (!_customerTouched && _customerController.text.isNotEmpty) {
+        setState(() => _customerTouched = true);
+      } else {
+        setState(() {});
       }
     });
   }
@@ -517,20 +550,47 @@ class _EndSessionSheetState extends State<_EndSessionSheet> {
     if (widget.session.subType == 'turn') {
       _totalAmount = _turnCount * widget.session.rate;
     } else {
-      // Time-based: calculated amount at this moment
-      _totalAmount = widget.session.calculatedAmount;
+      _totalAmount = double.parse(
+        widget.session.calculatedAmount.toStringAsFixed(2),
+      );
     }
   }
 
   @override
   void dispose() {
+    _customerController.dispose();
     _paidController.dispose();
     _ledgerController.dispose();
     _turnCountController.dispose();
+    _customerFocus.dispose();
     _paidFocus.dispose();
     _ledgerFocus.dispose();
     _turnCountFocus.dispose();
     super.dispose();
+  }
+
+  /// Returns true when the form is valid and submission is allowed.
+  bool get _canSubmit {
+    final paid = double.tryParse(_paidController.text) ?? 0.0;
+    final hasDebt = paid < _totalAmount;
+    if (hasDebt) {
+      // Any non-empty name is accepted — new or existing
+      if (_customerController.text.trim().isEmpty) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /// Whether to show the "customer name required" error.
+  String? get _customerError {
+    final paid = double.tryParse(_paidController.text) ?? 0.0;
+    final hasDebt = paid < _totalAmount;
+    // Show error only when field is touched AND has debt AND name is empty
+    if (_customerTouched && hasDebt && _customerController.text.trim().isEmpty) {
+      return AppStrings.validationCustomerNameRequired.tr();
+    }
+    return null;
   }
 
   @override
@@ -542,6 +602,9 @@ class _EndSessionSheetState extends State<_EndSessionSheet> {
     final elapsedText = AppStrings.sessionElapsedFormat.tr(
       namedArgs: {'hours': hours.toString(), 'minutes': minutes.toString()},
     );
+
+    final paid = double.tryParse(_paidController.text) ?? 0.0;
+    final hasDebt = paid < _totalAmount;
 
     return Padding(
       padding: EdgeInsets.only(
@@ -561,6 +624,7 @@ class _EndSessionSheetState extends State<_EndSessionSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Handle bar
               Center(
                 child: Container(
                   width: 40,
@@ -582,12 +646,7 @@ class _EndSessionSheetState extends State<_EndSessionSheet> {
               ),
               const SizedBox(height: 16),
 
-              // Details
-              if (widget.session.customerName != null)
-                _buildSummaryItem(
-                  AppStrings.customerName.tr(),
-                  widget.session.customerName!,
-                ),
+              // Session summary
               if (widget.session.deviceId != null)
                 _buildSummaryItem(
                   AppStrings.deviceLabel.tr(),
@@ -602,7 +661,7 @@ class _EndSessionSheetState extends State<_EndSessionSheet> {
 
               const Divider(height: 24, thickness: 1),
 
-              // For turns, show match/turn counter
+              // Turn counter (only for turn-based sessions)
               if (isTurn) ...[
                 Text(
                   AppStrings.turnCount.tr(),
@@ -650,7 +709,7 @@ class _EndSessionSheetState extends State<_EndSessionSheet> {
                 const SizedBox(height: 16),
               ],
 
-              // Total Due Display
+              // Total Due
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -663,7 +722,7 @@ class _EndSessionSheetState extends State<_EndSessionSheet> {
                     ),
                   ),
                   Text(
-                    "${_totalAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}",
+                    "${_totalAmount.toStringAsFixed(2)} ${AppStrings.currencyEgp.tr()}",
                     style: TextStyles.customStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -688,7 +747,7 @@ class _EndSessionSheetState extends State<_EndSessionSheet> {
                   TextButton(
                     onPressed: () {
                       setState(() {
-                        _paidController.text = _totalAmount.toStringAsFixed(1);
+                        _paidController.text = _totalAmount.toStringAsFixed(2);
                       });
                     },
                     child: Text(
@@ -709,37 +768,100 @@ class _EndSessionSheetState extends State<_EndSessionSheet> {
                 isNumber: true,
                 focusNode: _paidFocus,
                 textInputAction: TextInputAction.next,
-                onSubmitted: (_) => _ledgerFocus.requestFocus(),
+                onSubmitted: (_) => _customerFocus.requestFocus(),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
 
-              // // Ledger Number
-              // Text(
-              //   AppStrings.ledgerNumber.tr(),
-              //   style: TextStyles.customStyle(
-              //     fontWeight: FontWeight.bold,
-              //     fontSize: 16,
-              //   ),
-              // ),
-              // const SizedBox(height: 8),
-              // QuickAddTextField(
-              //   hint: AppStrings.ledgerNumber.tr(),
-              //   controller: _ledgerController,
-              //   icon: Icons.menu_book_outlined,
-              //   isNumber: true,
-              //   focusNode: _ledgerFocus,
-              //   textInputAction: TextInputAction.done,
-              //   onSubmitted: (_) => _submit(),
-              // ),
+              // ── Customer Name Autocomplete ────────────────────────────────
+              Row(
+                children: [
+                  Text(
+                    AppStrings.customerName.tr(),
+                    style: TextStyles.customStyle(
+                      color: AppColors.black,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  if (hasDebt) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        AppStrings.requiredField.tr(),
+                        style: TextStyles.customStyle(
+                          color: Colors.red[700],
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 8),
+              CustomerAutocompleteField(
+                hint: AppStrings.customerNameHint.tr(),
+                controller: _customerController,
+                errorText: _customerError,
+                icon: Icons.person_outline,
+                focusNode: _customerFocus,
+                textInputAction: TextInputAction.done,
+                onSelected: (customer) {
+                  setState(() {
+                    _customerNameTapped = true;
+                    _lastSelectedCustomerName = customer.name;
+                    _customerTouched = true;
+                  });
+                },
+                onSubmitted: (_) {
+                  setState(() => _customerTouched = true);
+                  if (_canSubmit) _submit();
+                },
+              ),
+              // Hint when debt exists and name field is empty
+              if (hasDebt && _customerController.text.trim().isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        size: 14,
+                        color: Colors.red[600],
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          AppStrings.validationCustomerNameRequired.tr(),
+                          style: TextStyles.customStyle(
+                            color: Colors.red[600],
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               const SizedBox(height: 24),
 
-              // Confirm button
+              // Confirm button — disabled when customer name is required but missing
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _submit,
+                  onPressed: () {
+                    setState(() => _customerTouched = true);
+                    if (_canSubmit) _submit();
+                  },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+                    backgroundColor: _canSubmit ? Colors.green : Colors.grey,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -789,8 +911,13 @@ class _EndSessionSheetState extends State<_EndSessionSheet> {
   }
 
   void _submit() {
-    final paid = double.tryParse(_paidController.text) ?? 0.0;
-    final ledger = _ledgerController.text.trim();
+    // Cap paid at total — never accept overpayment
+    final rawPaid = double.tryParse(_paidController.text) ?? 0.0;
+    final paid = rawPaid > _totalAmount ? _totalAmount : rawPaid;
+
+    final customerName = _customerController.text.trim().isNotEmpty
+        ? _customerController.text.trim()
+        : widget.session.customerName;
 
     widget.psSessionCubit.endSession(
       uid: AppStrings.userToken,
@@ -798,9 +925,9 @@ class _EndSessionSheetState extends State<_EndSessionSheet> {
       endTime: DateTime.now(),
       totalAmount: _totalAmount,
       paidAmount: paid,
-      customerName: widget.session.customerName,
+      customerName: customerName,
       phoneNumber: widget.session.phoneNumber,
-      ledgerNumber: ledger.isNotEmpty ? ledger : null,
+      ledgerNumber: null,
       subType: widget.session.subType,
       turnCount: widget.session.subType == 'turn' ? _turnCount : null,
     );

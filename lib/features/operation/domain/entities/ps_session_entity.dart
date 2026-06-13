@@ -64,8 +64,8 @@ class PsSessionEntity extends Equatable {
     if (subType == 'turn') {
       return (turnCount ?? 0) * rate;
     }
-    // time-based: (rate / 60) * elapsedMinutes
-    return (rate / 60.0) * elapsedMinutes;
+    // time-based: (rate / 3600) * elapsedSeconds for smooth per-second updates
+    return (rate / 3600.0) * elapsed.inSeconds;
   }
 
   /// Whether this session is currently running.
