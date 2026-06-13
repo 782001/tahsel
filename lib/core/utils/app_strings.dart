@@ -604,4 +604,24 @@ class AppStrings {
   static const String advanceRequestNotAvailable = "advance_request_not_available";
   static const String employeeInactive = "employee_inactive";
   static const String operationNotAvailableForInactive = "operation_not_available_for_inactive";
+
+  // PlayStation Session Tracking
+  static const String startSession = "start_session";
+  static const String endSession = "end_session";
+  static const String endSessionConfirm = "end_session_confirm";
+  static const String activeSessionsTitle = "active_sessions_title";
+  static const String noActiveSessions = "no_active_sessions";
+  static const String sessionStartedSuccess = "session_started_success";
+  static const String sessionEndedSuccess = "session_ended_success";
+  static const String sessionElapsed = "session_elapsed";
+  static const String sessionElapsedFormat = "session_elapsed_format";
+  static const String deviceLabel = "device_label";
+  static const String deviceHint = "device_hint";
+  static const String roomLabel = "room_label";
+  static const String roomHint = "room_hint";
+  static const String sessionRunning = "session_running";
+  static const String sessionCalculatedAmount = "session_calculated_amount";
+  static const String validationDeviceOccupied = "validation_device_occupied";
+  static const String validationRoomOccupied = "validation_room_occupied";
+  static const String validationDeviceOrRoomRequired = "validation_device_or_room_required";
 }

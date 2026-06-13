@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 
 class ReportsTimeRangeSelector extends StatefulWidget {
   final Function(int index) onTabChanged;
@@ -23,7 +25,12 @@ class ReportsTimeRangeSelector extends StatefulWidget {
 
 class _ReportsTimeRangeSelectorState extends State<ReportsTimeRangeSelector> {
   late int _selectedIndex;
-  final List<String> _tabs = [
+  final List<String> _tabsCafe = [
+    AppStrings.daily,
+    AppStrings.weekly,
+    AppStrings.monthly,
+  ];
+   final List<String> _tabsShop = [
     AppStrings.daily,
     AppStrings.weekly,
     AppStrings.monthly,
@@ -50,7 +57,9 @@ class _ReportsTimeRangeSelectorState extends State<ReportsTimeRangeSelector> {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          double tabWidth = (constraints.maxWidth) / _tabs.length;
+          final isShop = context.read<MainLayoutCubit>().isShop;
+          final tabs = isShop?_tabsShop:_tabsCafe;
+          double tabWidth = (constraints.maxWidth) / tabs.length;
 
           return Stack(
             children: [
@@ -59,7 +68,7 @@ class _ReportsTimeRangeSelectorState extends State<ReportsTimeRangeSelector> {
                 duration: const Duration(milliseconds: 250),
                 curve: Curves.easeInOut,
                 alignment: AlignmentDirectional(
-                  -1.0 + (_selectedIndex * 2 / (_tabs.length - 1)),
+                  -1.0 + (_selectedIndex * 2 / (tabs.length - 1)),
                   0,
                 ),
                 child: Container(
@@ -81,7 +90,7 @@ class _ReportsTimeRangeSelectorState extends State<ReportsTimeRangeSelector> {
               // Interaction Layer
               Row(
                 children: List.generate(
-                  _tabs.length,
+                  tabs.length,
                   (index) => Expanded(
                     child: GestureDetector(
                       onTap: () {
@@ -91,7 +100,7 @@ class _ReportsTimeRangeSelectorState extends State<ReportsTimeRangeSelector> {
                       behavior: HitTestBehavior.opaque,
                       child: Center(
                         child: Text(
-                          _tabs[index].tr(),
+                          tabs[index].tr(),
                           style: TextStyles.customStyle(
                             fontSize: 14,
                             fontWeight: _selectedIndex == index
