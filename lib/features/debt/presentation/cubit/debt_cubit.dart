@@ -50,6 +50,7 @@ class DebtCubit extends Cubit<DebtState> {
     required String? ledgerNumber,
     String? operationId,
   }) async {
+    if (state is DebtLoading) return;
     final sanitizedName = customerName.replaceAll('/', ' ').trim();
     emit(DebtLoading());
 
@@ -167,6 +168,7 @@ class DebtCubit extends Cubit<DebtState> {
     required double totalRemainingBefore,
     String? note,
   }) async {
+    if (state is DebtLoading) return;
     final sanitizedName = customerName.replaceAll('/', ' ').trim();
     emit(DebtLoading());
     final result = await payDebtUseCase(
@@ -191,6 +193,7 @@ class DebtCubit extends Cubit<DebtState> {
     required double totalAmount,
     String? note,
   }) async {
+    if (state is DebtLoading) return;
     final sanitizedName = customerName.replaceAll('/', ' ').trim();
     emit(DebtLoading());
     final result = await markCustomerAsPaidUseCase(
@@ -215,6 +218,7 @@ class DebtCubit extends Cubit<DebtState> {
     required double totalRemainingBefore,
     String? note,
   }) async {
+    if (state is DebtLoading) return;
     emit(DebtLoading());
     final result = await payItemDebtUseCase(
       PayItemDebtParams(debt: debt, amountToPay: amount),
@@ -236,6 +240,7 @@ class DebtCubit extends Cubit<DebtState> {
     required DebtEntity debt,
     required double totalRemainingBefore,
   }) async {
+    if (state is DebtLoading) return;
     emit(DebtLoading());
     final result = await markItemAsPaidUseCase(debt);
     result.fold((failure) => emit(DebtFailure(message: failure.message)), (_) {
@@ -253,6 +258,7 @@ class DebtCubit extends Cubit<DebtState> {
   }
 
   Future<void> deleteCustomerDebts(String uid, String customerName) async {
+    if (state is DebtLoading) return;
     final sanitizedName = customerName.replaceAll('/', ' ').trim();
     emit(DebtLoading());
     final result = await deleteCustomerDebtUseCase(
@@ -265,6 +271,7 @@ class DebtCubit extends Cubit<DebtState> {
   }
 
   Future<void> deleteDebtItem(String uid, String debtId) async {
+    if (state is DebtLoading) return;
     emit(DebtLoading());
     final result = await deleteDebtItemUseCase(
       DeleteDebtItemParams(uid: uid, debtId: debtId),

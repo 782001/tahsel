@@ -378,16 +378,32 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
                                               (state.items.isEmpty ||
                                                   state.items.any(
                                                     (i) => i.isPending,
-                                                  ))
+                                                  ) ||
+                                                  state.status ==
+                                                      MyDebtDetailsStatus
+                                                          .loading)
                                               ? null
                                               : () => _onPayPartial(
                                                   context,
                                                   state.remainingAmount,
                                                 ),
-                                          icon: const Icon(
-                                            Icons.payment_rounded,
-                                            size: 18,
-                                          ),
+                                          icon:
+                                              state.status ==
+                                                  MyDebtDetailsStatus.loading
+                                              ? SizedBox(
+                                                  height: 18,
+                                                  width: 18,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                        color: AppColors
+                                                            .primaryColor,
+                                                      ),
+                                                )
+                                              : const Icon(
+                                                  Icons.payment_rounded,
+                                                  size: 18,
+                                                ),
                                           label: Text(
                                             AppStrings.partialPayment.tr(),
                                           ),
@@ -412,16 +428,32 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
                                               (state.items.isEmpty ||
                                                   state.items.any(
                                                     (i) => i.isPending,
-                                                  ))
+                                                  ) ||
+                                                  state.status ==
+                                                      MyDebtDetailsStatus
+                                                          .loading)
                                               ? null
                                               : () => _onPayFull(
                                                   context,
                                                   state.remainingAmount,
                                                 ),
-                                          icon: const Icon(
-                                            Icons.check_circle_rounded,
-                                            size: 18,
-                                          ),
+                                          icon:
+                                              state.status ==
+                                                  MyDebtDetailsStatus.loading
+                                              ? SizedBox(
+                                                  height: 18,
+                                                  width: 18,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                        color: AppColors
+                                                            .primaryColor,
+                                                      ),
+                                                )
+                                              : const Icon(
+                                                  Icons.check_circle_rounded,
+                                                  size: 18,
+                                                ),
                                           label: Text(
                                             AppStrings.fullSettlement.tr(),
                                           ),
@@ -570,6 +602,8 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
                               onPayFull: (i) => _onPayItemFull(context, i),
                               onDelete: (i) => _onDeleteItem(context, i),
                               onRefresh: _loadData,
+                              isFullPaying:
+                                  state.status == MyDebtDetailsStatus.loading,
                             );
                           }, childCount: state.items.length),
                         ),
@@ -588,6 +622,8 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
                               onPayFull: (i) => _onPayItemFull(context, i),
                               onDelete: (i) => _onDeleteItem(context, i),
                               onRefresh: _loadData,
+                              isFullPaying:
+                                  state.status == MyDebtDetailsStatus.loading,
                             ),
                           );
                         }, childCount: state.items.length),

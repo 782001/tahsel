@@ -255,6 +255,13 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
     String? details,
     String? phone,
   }) async {
+    if (state.status == MyDebtsStatus.loading ||
+        state.status == MyDebtsStatus.addingDebt ||
+        state.status == MyDebtsStatus.addingPayment ||
+        state.status == MyDebtsStatus.markingAsPaid ||
+        state.status == MyDebtsStatus.deletingDebt) {
+      return;
+    }
     // Sanitize personName: replace '/' with ' ' to avoid Firestore path segment errors
     final sanitizedName = personName.replaceAll('/', ' ').trim();
 
@@ -304,6 +311,13 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
     required double amount,
     required double totalRemainingBefore,
   }) async {
+    if (state.status == MyDebtsStatus.loading ||
+        state.status == MyDebtsStatus.addingDebt ||
+        state.status == MyDebtsStatus.addingPayment ||
+        state.status == MyDebtsStatus.markingAsPaid ||
+        state.status == MyDebtsStatus.deletingDebt) {
+      return;
+    }
     final sanitizedName = personName.replaceAll('/', ' ').trim();
     if (isClosed) return;
     emit(

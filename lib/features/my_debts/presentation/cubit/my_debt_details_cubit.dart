@@ -164,6 +164,8 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
     required String personName,
     String? note,
   }) async {
+    if (state.status == MyDebtDetailsStatus.loading) return;
+    emit(state.copyWith(status: MyDebtDetailsStatus.loading));
     final result = await payItemUseCase(
       uid: uid,
       debtId: debtId,
@@ -171,16 +173,21 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
       note: note,
     );
 
-    result.fold((f) => emit(state.copyWith(message: f.message)), (_) {
-      emit(
-        state.copyWith(
-          lastPaymentAmount: amount,
-          lastPaymentRemaining: state.remainingAmount - amount,
-          lastPaymentNote: note,
-        ),
-      );
-      loadDetails(uid, personName);
-    });
+    result.fold(
+      (f) => emit(
+        state.copyWith(status: MyDebtDetailsStatus.error, message: f.message),
+      ),
+      (_) {
+        emit(
+          state.copyWith(
+            lastPaymentAmount: amount,
+            lastPaymentRemaining: state.remainingAmount - amount,
+            lastPaymentNote: note,
+          ),
+        );
+        loadDetails(uid, personName);
+      },
+    );
   }
 
   Future<void> addDebt({
@@ -191,6 +198,7 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
     String? description,
     String? phone,
   }) async {
+    if (state.status == MyDebtDetailsStatus.loading) return;
     emit(state.copyWith(status: MyDebtDetailsStatus.loading));
 
     final now = DateTime.now();
@@ -225,6 +233,7 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
     required double amount,
     String? note,
   }) async {
+    if (state.status == MyDebtDetailsStatus.loading) return;
     emit(state.copyWith(status: MyDebtDetailsStatus.loading));
     final result = await distributePaymentUseCase(
       uid: uid,
@@ -251,6 +260,7 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
   }
 
   Future<void> deleteItem(String uid, String debtId, String personName) async {
+    if (state.status == MyDebtDetailsStatus.loading) return;
     emit(state.copyWith(status: MyDebtDetailsStatus.loading));
     final result = await deleteItemUseCase(uid, debtId);
     result.fold(

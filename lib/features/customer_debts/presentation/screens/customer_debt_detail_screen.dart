@@ -408,64 +408,94 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                           ),
                           SizedBox(height: 20.h),
                           if (currentDetail.totalDebt != 0)
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: ElevatedButton.icon(
-                                    onPressed: () => _onPayPartial(
-                                      context,
-                                      currentDetail.customerName,
-                                      currentDetail.totalDebt,
-                                    ),
-                                    icon: const Icon(
-                                      Icons.payment_rounded,
-                                      size: 18,
-                                    ),
-                                    label: Text(AppStrings.partialPayment.tr()),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.primaryColor,
-                                      foregroundColor: Colors.white,
-                                      padding: EdgeInsets.symmetric(
-                                        vertical: 12.h,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          12.r,
+                            BlocBuilder<DebtCubit, DebtState>(
+                              builder: (context, state) {
+                                final isLoading = state is DebtLoading;
+                                return Row(
+                                  children: [
+                                    Expanded(
+                                      child: ElevatedButton.icon(
+                                        onPressed: isLoading
+                                            ? null
+                                            : () => _onPayPartial(
+                                                  context,
+                                                  currentDetail.customerName,
+                                                  currentDetail.totalDebt,
+                                                ),
+                                        icon: isLoading
+                                            ?  SizedBox(
+                                                height: 18,
+                                                width: 18,
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  color: AppColors.primaryColor,
+                                                ),
+                                              )
+                                            : const Icon(
+                                                Icons.payment_rounded,
+                                                size: 18,
+                                              ),
+                                        label:
+                                            Text(AppStrings.partialPayment.tr()),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor:
+                                              AppColors.primaryColor,
+                                          foregroundColor: Colors.white,
+                                          padding: EdgeInsets.symmetric(
+                                            vertical: 12.h,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              12.r,
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ),
-                                SizedBox(width: 12.w),
-                                Expanded(
-                                  child: OutlinedButton.icon(
-                                    onPressed: () => _onPayFull(
-                                      context,
-                                      currentDetail.customerName,
-                                      currentDetail.totalDebt,
-                                    ),
-                                    icon: const Icon(
-                                      Icons.check_circle_rounded,
-                                      size: 18,
-                                    ),
-                                    label: Text(AppStrings.fullSettlement.tr()),
-                                    style: OutlinedButton.styleFrom(
-                                      side: BorderSide(
-                                        color: AppColors.primaryColor,
-                                      ),
-                                      foregroundColor: AppColors.primaryColor,
-                                      padding: EdgeInsets.symmetric(
-                                        vertical: 12.h,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          12.r,
+                                    SizedBox(width: 12.w),
+                                    Expanded(
+                                      child: OutlinedButton.icon(
+                                        onPressed: isLoading
+                                            ? null
+                                            : () => _onPayFull(
+                                                  context,
+                                                  currentDetail.customerName,
+                                                  currentDetail.totalDebt,
+                                                ),
+                                        icon: isLoading
+                                            ?  SizedBox(
+                                                height: 18,
+                                                width: 18,
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2, color: AppColors.primaryColor,
+                                                ),
+                                              )
+                                            : const Icon(
+                                                Icons.check_circle_rounded,
+                                                size: 18,
+                                              ),
+                                        label:
+                                            Text(AppStrings.fullSettlement.tr()),
+                                        style: OutlinedButton.styleFrom(
+                                          side: BorderSide(
+                                            color: AppColors.primaryColor,
+                                          ),
+                                          foregroundColor:
+                                              AppColors.primaryColor,
+                                          padding: EdgeInsets.symmetric(
+                                            vertical: 12.h,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              12.r,
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ),
-                              ],
+                                  ],
+                                );
+                              },
                             ),
                         ],
                       ),
