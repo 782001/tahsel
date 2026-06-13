@@ -41,7 +41,7 @@ class ActiveSessionsList extends StatelessWidget {
             Text(
               AppStrings.noActiveSessions.tr(),
               style: TextStyles.customStyle(
-                color: AppColors.blackLight,
+                color: AppColors.blackLight.withValues(alpha: 0.3),
                 fontWeight: FontWeight.w500,
                 fontSize: 16,
               ),
@@ -587,7 +587,9 @@ class _EndSessionSheetState extends State<_EndSessionSheet> {
     final paid = double.tryParse(_paidController.text) ?? 0.0;
     final hasDebt = paid < _totalAmount;
     // Show error only when field is touched AND has debt AND name is empty
-    if (_customerTouched && hasDebt && _customerController.text.trim().isEmpty) {
+    if (_customerTouched &&
+        hasDebt &&
+        _customerController.text.trim().isEmpty) {
       return AppStrings.validationCustomerNameRequired.tr();
     }
     return null;
