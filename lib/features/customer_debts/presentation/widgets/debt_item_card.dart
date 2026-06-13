@@ -4,6 +4,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/customer_debts/data/models/debt_item_model.dart';
 import 'package:tahsel/routes/app_routes.dart';
 
@@ -27,7 +28,7 @@ class DebtItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isSettled = item.remainingDebt <= 0;
-
+    final bool isDesktop = ResponsiveLayout.isDesktop(context);
     return InkWell(
       key: ValueKey(item.entity.id),
       onTap: () async {
@@ -63,7 +64,7 @@ class DebtItemCard extends StatelessWidget {
           ],
         ),
         child: Padding(
-          padding: EdgeInsets.all(16.r),
+          padding: EdgeInsets.all(isDesktop ? 16 : 16.r),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -73,8 +74,8 @@ class DebtItemCard extends StatelessWidget {
                 children: [
                   // Transaction number badge
                   Container(
-                    width: 28.r,
-                    height: 28.r,
+                    width: isDesktop ? 28 : 28.r,
+                    height: isDesktop ? 28 : 28.r,
                     decoration: BoxDecoration(
                       color: AppColors.primaryColor.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
@@ -89,7 +90,7 @@ class DebtItemCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  SizedBox(width: 12.w),
+                  SizedBox(width: isDesktop ? 12 : 12.w),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,15 +110,15 @@ class DebtItemCard extends StatelessWidget {
                           children: [
                             Icon(
                               Icons.calendar_today_outlined,
-                              size: 11.r,
+                              size: isDesktop ? 11 : 11.r,
                               color: AppColors.disabledColor,
                             ),
-                            SizedBox(width: 4.w),
+                            SizedBox(width: isDesktop ? 8 : 4.w),
                             Text(
                               item.date,
                               style: TextStyles.customStyle(
                                 color: AppColors.disabledColor,
-                                fontSize: 11,
+                                fontSize: isDesktop ? 13 : 11,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),

@@ -79,10 +79,10 @@ class CheckInUseCase {
     return empResult.fold(
       (failure) => Left(failure),
       (employee) async {
-        if (guard.isSuspended(employee.status ?? '')) {
+        if (guard.isSuspended(employee.status)) {
           return const Left(StatusViolationFailure(AppStrings.employeeSuspended));
         }
-        if (guard.isInactive(employee.status ?? '')) {
+        if (guard.isInactive(employee.status)) {
           return const Left(StatusViolationFailure(AppStrings.operationNotAvailableForInactive));
         }
         return repository.checkInEmployee(attendance);
@@ -125,10 +125,10 @@ class CheckOutUseCase {
     return empResult.fold(
       (failure) => Left(failure),
       (employee) async {
-        if (guard.isSuspended(employee.status ?? '')) {
+        if (guard.isSuspended(employee.status)) {
           return const Left(StatusViolationFailure(AppStrings.employeeSuspended));
         }
-        if (guard.isInactive(employee.status ?? '')) {
+        if (guard.isInactive(employee.status)) {
           return const Left(StatusViolationFailure(AppStrings.operationNotAvailableForInactive));
         }
         return repository.checkOutEmployee(
@@ -190,10 +190,10 @@ class PaySalaryUseCase {
     return empResult.fold(
       (failure) => Left(failure),
       (employee) async {
-        if (guard.isSuspended(employee.status ?? '')) {
+        if (guard.isSuspended(employee.status)) {
           return const Left(StatusViolationFailure(AppStrings.employeeSuspended));
         }
-        if (guard.isInactive(employee.status ?? '')) {
+        if (guard.isInactive(employee.status)) {
           return const Left(StatusViolationFailure(AppStrings.operationNotAvailableForInactive));
         }
         return repository.paySalary(
@@ -244,10 +244,10 @@ class RequestAdvanceUseCase {
     return empResult.fold(
       (failure) => Left(failure),
       (employee) async {
-        if (guard.isSuspended(employee.status ?? '')) {
+        if (guard.isSuspended(employee.status)) {
           return const Left(StatusViolationFailure(AppStrings.employeeSuspended));
         }
-        if (guard.isInactive(employee.status ?? '')) {
+        if (guard.isInactive(employee.status)) {
           return const Left(StatusViolationFailure(AppStrings.operationNotAvailableForInactive));
         }
         return repository.requestAdvance(advance);

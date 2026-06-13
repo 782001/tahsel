@@ -1455,7 +1455,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
     List<AttendanceEntity> attendanceLogs,
     List<PayrollEntity> payrollLogs,
   ) {
-    final today = DateTime.now().day;
+    // final today = DateTime.now().day;
     final start = employee.paymentWindowStart;
     final end = employee.paymentWindowEnd;
 
@@ -2499,23 +2499,23 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
 
     switch (status) {
       case 'in_progress':
-        badgeColor = Colors.blue.shade100.withOpacity(0.2);
+        badgeColor = Colors.blue.shade100.withValues(alpha: 0.2);
         textColor = Colors.blue.shade200;
         labelKey = AppStrings.payrollStatusInProgress;
         break;
       case 'waiting_window':
-        badgeColor = Colors.orange.shade100.withOpacity(0.2);
+        badgeColor = Colors.orange.shade100.withValues(alpha: 0.2);
         textColor = Colors.orange.shade200;
         labelKey = AppStrings.payrollStatusWaitingWindow;
         break;
       case 'overdue':
-        badgeColor = Colors.red.shade100.withOpacity(0.2);
+        badgeColor = Colors.red.shade100.withValues(alpha: 0.2);
         textColor = Colors.red.shade300;
         labelKey = AppStrings.payrollStatusOverdue;
         break;
       case 'ready':
       default:
-        badgeColor = Colors.green.shade100.withOpacity(0.2);
+        badgeColor = Colors.green.shade100.withValues(alpha: 0.2);
         textColor = Colors.green.shade300;
         labelKey = AppStrings.payrollStatusReady;
         break;
@@ -2526,7 +2526,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
       decoration: BoxDecoration(
         color: badgeColor,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: textColor.withOpacity(0.3)),
+        border: Border.all(color: textColor.withValues(alpha: 0.3)),
       ),
       child: Text(
         labelKey.tr(),
