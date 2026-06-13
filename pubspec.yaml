@@ -131,9 +131,9 @@ flutter_launcher_icons:
     generate: true
     image_path: "assets/images/appLogoWindows.png"  
     icon_size: 256      
-  image_path: "assets/images/appLogo.png"
+  image_path: "assets/images/appLogoIcon.png"
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/images/appLogo.png"
+  adaptive_icon_foreground: "assets/images/appLogoIcon.png"
 
 flutter_native_splash:
   color: "#1E56A0"
