@@ -217,6 +217,10 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
       batch.set(summaryRef, {
         'totalDebts': FieldValue.increment(remainingAmount),
         'unpaidDebts': FieldValue.increment(remainingAmount),
+        if (paidAmount > 0)
+          'totalCollected': FieldValue.increment(paidAmount),
+        if (remainingAmount > 0)
+          'debtCustomersCount': FieldValue.increment(1),
         'lastUpdatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     }

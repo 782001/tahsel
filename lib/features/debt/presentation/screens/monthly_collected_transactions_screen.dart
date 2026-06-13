@@ -89,7 +89,10 @@ class _MonthlyCollectedTransactionsScreenState
         },
         (paginatedResult) {
           setState(() {
-            _payments.addAll(paginatedResult.items);
+            // Only show actual collections (exclude debtAdded type)
+            final actualCollections = paginatedResult.items
+                .where((p) => p.type != PaymentType.debtAdded);
+            _payments.addAll(actualCollections);
             _lastDocument = paginatedResult.lastDocument;
             _hasMore = paginatedResult.hasMore;
             _isLoading = false;
@@ -126,7 +129,10 @@ class _MonthlyCollectedTransactionsScreenState
         },
         (paginatedResult) {
           setState(() {
-            _payments.addAll(paginatedResult.items);
+            // Only show actual collections (exclude debtAdded type)
+            final actualCollections = paginatedResult.items
+                .where((p) => p.type != PaymentType.debtAdded);
+            _payments.addAll(actualCollections);
             _lastDocument = paginatedResult.lastDocument;
             _hasMore = paginatedResult.hasMore;
             _isLoadingMore = false;

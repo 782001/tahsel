@@ -8,7 +8,6 @@ import '../../../../core/utils/summary_helper.dart';
 import '../../domain/entities/payment_entity.dart';
 import '../models/debt_model.dart';
 import '../models/payment_model.dart';
-import 'package:flutter/foundation.dart';
 import '../../domain/entities/monthly_collected_amount.dart';
 
 abstract class DebtRemoteDataSource {
@@ -133,26 +132,34 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           .where(FieldPath.documentId, isLessThanOrEqualTo: 'monthly_\uf8ff')
           .get();
 
-      final List<MonthlyCollectedAmount> results = [];
-
-      for (final doc in snapshot.docs) {
+      final List<Future<MonthlyCollectedAmount?>> futures = snapshot.docs.map((doc) async {
         final data = doc.data();
         final docId = doc.id; // e.g. "monthly_2024-05"
         final parts = docId.split('_');
-        if (parts.length < 2) continue;
+        if (parts.length < 2) return null;
         final dateParts = parts[1].split('-');
-        if (dateParts.length < 2) continue;
+        if (dateParts.length < 2) return null;
 
         final year = int.tryParse(dateParts[0]) ?? 0;
         final month = int.tryParse(dateParts[1]) ?? 0;
-        if (year == 0 || month == 0) continue;
+        if (year == 0 || month == 0) return null;
 
-        double totalAmount = 0.0;
-        if (data.containsKey('totalCollected') &&
-            data['totalCollected'] != null) {
-          totalAmount = (data['totalCollected'] as num).toDouble();
+        // Smart Caching with Self-Healing: check if cached totalCollected is available and already healed
+        final now = DateTime.now();
+        final isCurrentMonth = (now.year == year && now.month == month);
+        
+        final cachedVal = data.containsKey('totalCollected') && data['totalCollected'] != null
+            ? (data['totalCollected'] as num).toDouble()
+            : null;
+        final isHealed = data['isHealed'] == true;
+
+        double computedSum = 0.0;
+
+        if (cachedVal != null && !isCurrentMonth && isHealed) {
+          // For past months that are already healed, rely on the summary cache document directly
+          computedSum = cachedVal;
         } else {
-          // Self-healing: compute aggregate totalCollected and update Firestore
+          // Perform accurate memory-based aggregation on the server data
           final startOfMonth = DateTime(year, month, 1);
           final endOfMonth = DateTime(
             year,
@@ -172,43 +179,38 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
                 isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth),
               );
 
-          double computedSum = 0.0;
-          if (defaultTargetPlatform == TargetPlatform.windows) {
-            final snap = await paymentsQuery.get();
-            for (var paymentDoc in snap.docs) {
-              final type = paymentDoc.data()['type'] as String?;
-              if (type == 'full' || type == 'partial' || type == 'settlement') {
-                computedSum +=
-                    (paymentDoc.data()['amountPaid'] as num?)?.toDouble() ??
-                    0.0;
-              }
+          final snap = await paymentsQuery.get();
+          for (var paymentDoc in snap.docs) {
+            final type = paymentDoc.data()['type'] as String?;
+            if (type == 'full' || type == 'partial' || type == 'settlement') {
+              computedSum +=
+                  (paymentDoc.data()['amountPaid'] as num?)?.toDouble() ??
+                  0.0;
             }
-          } else {
-            final aggregateSnapshot = await paymentsQuery
-                .aggregate(sum('amountPaid'))
-                .get();
-            computedSum = (aggregateSnapshot.getSum('amountPaid') ?? 0.0)
-                .toDouble();
           }
 
-          // Save this to the summary document to heal the cache
-          await doc.reference.set({
-            'totalCollected': computedSum,
-            'lastUpdatedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
-
-          totalAmount = computedSum;
+          // Heal summary document if missing, incorrect, or not yet marked as healed
+          if (cachedVal != computedSum || !isHealed) {
+            await doc.reference.set({
+              'totalCollected': computedSum,
+              'isHealed': true,
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          }
         }
 
-        results.add(
-          MonthlyCollectedAmount(
-            year: year,
-            month: month,
-            totalAmount: totalAmount,
-            payments: const [],
-          ),
+        return MonthlyCollectedAmount(
+          year: year,
+          month: month,
+          totalAmount: computedSum,
+          payments: const [],
         );
-      }
+      }).toList();
+
+      final List<MonthlyCollectedAmount?> resultsWithNulls = await Future.wait(futures);
+      final List<MonthlyCollectedAmount> results = resultsWithNulls
+          .whereType<MonthlyCollectedAmount>()
+          .toList();
 
       // Sort by date descending (latest month first)
       results.sort((a, b) {
@@ -478,20 +480,47 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             unpaidSnapshot.docs.first.id == debt.id;
 
         // Update Summaries
-        final summaryKeys = SummaryHelper.getSummaryKeys(
-          debt.timestamp ?? DateTime.now(),
-        );
-        for (final key in summaryKeys) {
-          final summaryRef = userRef.collection('summaries').doc(key);
+        final Map<String, Map<String, double>> summaryAccumulator = {};
 
-          transaction.set(summaryRef, {
-            'totalDebts': FieldValue.increment(-payment.amountPaid),
-            'unpaidDebts': FieldValue.increment(-payment.amountPaid),
-            'totalCollected': FieldValue.increment(payment.amountPaid),
-            if (isPaid) 'paidDebts': FieldValue.increment(currentTotal),
-            if (becameFullyPaid) 'debtCustomersCount': FieldValue.increment(-1),
-            'lastUpdatedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
+        void addSummaryIncrement(String key, String field, double value) {
+          summaryAccumulator.putIfAbsent(key, () => {});
+          summaryAccumulator[key]![field] = (summaryAccumulator[key]![field] ?? 0.0) + value;
+        }
+
+        // Debt metrics are grouped by debt creation date
+        final debtKeys = SummaryHelper.getSummaryKeys(debt.timestamp ?? DateTime.now());
+        for (final key in debtKeys) {
+          addSummaryIncrement(key, 'totalDebts', -payment.amountPaid);
+          addSummaryIncrement(key, 'unpaidDebts', -payment.amountPaid);
+          if (isPaid) {
+            addSummaryIncrement(key, 'paidDebts', currentTotal);
+          }
+        }
+
+        // Customer status update is grouped by current timestamp
+        if (becameFullyPaid) {
+          final currentKeys = SummaryHelper.getSummaryKeys(DateTime.now());
+          for (final key in currentKeys) {
+            addSummaryIncrement(key, 'debtCustomersCount', -1.0);
+          }
+        }
+
+        // Payment metrics (totalCollected) are grouped by actual payment transaction date (now)
+        final paymentKeys = SummaryHelper.getSummaryKeys(DateTime.now());
+        for (final key in paymentKeys) {
+          addSummaryIncrement(key, 'totalCollected', payment.amountPaid);
+        }
+
+        // Write accumulated summaries to Firestore
+        for (final entry in summaryAccumulator.entries) {
+          final summaryRef = userRef.collection('summaries').doc(entry.key);
+          final Map<String, dynamic> updateData = {};
+          entry.value.forEach((field, val) {
+            updateData[field] = FieldValue.increment(val);
+          });
+          updateData['lastUpdatedAt'] = FieldValue.serverTimestamp();
+
+          transaction.set(summaryRef, updateData, SetOptions(merge: true));
         }
       });
     } catch (e) {
@@ -535,6 +564,12 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
         // 2. ALL WRITES SECOND
         double remainingToPay = amount;
+        final Map<String, Map<String, double>> summaryAccumulator = {};
+
+        void addSummaryIncrement(String key, String field, double value) {
+          summaryAccumulator.putIfAbsent(key, () => {});
+          summaryAccumulator[key]![field] = (summaryAccumulator[key]![field] ?? 0.0) + value;
+        }
 
         for (var docSnap in snapshot.docs) {
           if (remainingToPay <= 0) break;
@@ -595,47 +630,53 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             'activityName': debtData['productOrSessionDetails'],
           });
 
-          // Update Summaries
-          final summaryKeys = SummaryHelper.getSummaryKeys(
-            (debtData['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
-          );
-          for (final key in summaryKeys) {
-            final summaryRef = firestore
-                .collection('users')
-                .doc(uid)
-                .collection('summaries')
-                .doc(key);
+          // Accumulate summary updates:
+          // 1. Debt metrics are grouped by debt creation date
+          final debtTimestamp = (debtData['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+          final debtKeys = SummaryHelper.getSummaryKeys(debtTimestamp);
+          for (final key in debtKeys) {
+            addSummaryIncrement(key, 'totalDebts', -paymentForThisItem);
+            addSummaryIncrement(key, 'unpaidDebts', -paymentForThisItem);
+            if (isPaid) {
+              addSummaryIncrement(key, 'paidDebts', currentTotal);
+            }
+          }
 
-            transaction.set(summaryRef, {
-              'totalDebts': FieldValue.increment(-paymentForThisItem),
-              'unpaidDebts': FieldValue.increment(-paymentForThisItem),
-              'totalCollected': FieldValue.increment(paymentForThisItem),
-              if (isPaid) 'paidDebts': FieldValue.increment(currentTotal),
-              'lastUpdatedAt': FieldValue.serverTimestamp(),
-            }, SetOptions(merge: true));
+          // 2. Payment metrics (totalCollected) are grouped by actual payment transaction date (now)
+          final paymentKeys = SummaryHelper.getSummaryKeys(DateTime.now());
+          for (final key in paymentKeys) {
+            addSummaryIncrement(key, 'totalCollected', paymentForThisItem);
           }
         }
 
         // After processing all debts for this customer, check if they are now fully paid
-        // If remainingToPay is 0 AND we went through the whole loop, they might be fully paid.
-        // Actually, if amount >= total unpaid amount of all items in snapshot.
         double totalUnpaidInSnapshot = snapshot.docs.fold(
           0.0,
           (sum, d) => sum + (d.data()['remainingAmount'] as num).toDouble(),
         );
         if (amount >= totalUnpaidInSnapshot - 1e-9) {
-          final summaryKeys = SummaryHelper.getSummaryKeys(DateTime.now());
-          for (final key in summaryKeys) {
-            final summaryRef = firestore
-                .collection('users')
-                .doc(uid)
-                .collection('summaries')
-                .doc(key);
-            transaction.set(summaryRef, {
-              'debtCustomersCount': FieldValue.increment(-1),
-            }, SetOptions(merge: true));
+          final nowKeys = SummaryHelper.getSummaryKeys(DateTime.now());
+          for (final key in nowKeys) {
+            addSummaryIncrement(key, 'debtCustomersCount', -1.0);
           }
         }
+
+        // Write all accumulated summaries to Firestore
+        summaryAccumulator.forEach((key, fields) {
+          final summaryRef = firestore
+              .collection('users')
+              .doc(uid)
+              .collection('summaries')
+              .doc(key);
+
+          final Map<String, dynamic> updateData = {};
+          fields.forEach((field, val) {
+            updateData[field] = FieldValue.increment(val);
+          });
+          updateData['lastUpdatedAt'] = FieldValue.serverTimestamp();
+
+          transaction.set(summaryRef, updateData, SetOptions(merge: true));
+        });
       });
     } catch (e) {
       FirebaseErrorHandler.handle(e);
@@ -672,6 +713,13 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         }
 
         // 2. ALL WRITES SECOND
+        final Map<String, Map<String, double>> summaryAccumulator = {};
+
+        void addSummaryIncrement(String key, String field, double value) {
+          summaryAccumulator.putIfAbsent(key, () => {});
+          summaryAccumulator[key]![field] = (summaryAccumulator[key]![field] ?? 0.0) + value;
+        }
+
         for (var docSnap in snapshot.docs) {
           final debtData = docSnap.data();
           final debtId = docSnap.id;
@@ -715,39 +763,45 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             'activityName': debtData['productOrSessionDetails'],
           });
 
-          // Update Summaries
-          final summaryKeys = SummaryHelper.getSummaryKeys(
-            (debtData['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
-          );
-          for (final key in summaryKeys) {
-            final summaryRef = firestore
-                .collection('users')
-                .doc(uid)
-                .collection('summaries')
-                .doc(key);
+          // Accumulate summary updates:
+          // 1. Debt metrics are grouped by debt creation date
+          final debtTimestamp = (debtData['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+          final debtKeys = SummaryHelper.getSummaryKeys(debtTimestamp);
+          for (final key in debtKeys) {
+            addSummaryIncrement(key, 'totalDebts', -amountToPay);
+            addSummaryIncrement(key, 'unpaidDebts', -amountToPay);
+            addSummaryIncrement(key, 'paidDebts', currentTotal);
+          }
 
-            transaction.set(summaryRef, {
-              'totalDebts': FieldValue.increment(-amountToPay),
-              'unpaidDebts': FieldValue.increment(-amountToPay),
-              'totalCollected': FieldValue.increment(amountToPay),
-              'paidDebts': FieldValue.increment(currentTotal),
-              'lastUpdatedAt': FieldValue.serverTimestamp(),
-            }, SetOptions(merge: true));
+          // 2. Payment metrics (totalCollected) are grouped by actual payment transaction date (now)
+          final paymentKeys = SummaryHelper.getSummaryKeys(DateTime.now());
+          for (final key in paymentKeys) {
+            addSummaryIncrement(key, 'totalCollected', amountToPay);
           }
         }
 
         // Decrement debtCustomersCount in summaries since customer is now fully paid
-        final summaryKeys = SummaryHelper.getSummaryKeys(DateTime.now());
-        for (final key in summaryKeys) {
+        final nowKeys = SummaryHelper.getSummaryKeys(DateTime.now());
+        for (final key in nowKeys) {
+          addSummaryIncrement(key, 'debtCustomersCount', -1.0);
+        }
+
+        // Write all accumulated summaries to Firestore
+        summaryAccumulator.forEach((key, fields) {
           final summaryRef = firestore
               .collection('users')
               .doc(uid)
               .collection('summaries')
               .doc(key);
-          transaction.set(summaryRef, {
-            'debtCustomersCount': FieldValue.increment(-1),
-          }, SetOptions(merge: true));
-        }
+
+          final Map<String, dynamic> updateData = {};
+          fields.forEach((field, val) {
+            updateData[field] = FieldValue.increment(val);
+          });
+          updateData['lastUpdatedAt'] = FieldValue.serverTimestamp();
+
+          transaction.set(summaryRef, updateData, SetOptions(merge: true));
+        });
       });
     } catch (e) {
       FirebaseErrorHandler.handle(e);
@@ -767,10 +821,15 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
       if (snapshot.docs.isEmpty) return;
 
-      // Track summary decrements and refs
+      // Track summary updates and document references to delete
       final Map<String, Map<String, double>> summaryUpdates = {};
       final List<DocumentReference> allRefs = [];
       bool hadUnpaid = false;
+
+      void addSummaryIncrement(String key, String field, double value) {
+        summaryUpdates.putIfAbsent(key, () => {});
+        summaryUpdates[key]![field] = (summaryUpdates[key]![field] ?? 0.0) + value;
+      }
 
       // 1. Pre-calculate if there are any unpaid debts for this customer
       for (var doc in snapshot.docs) {
@@ -789,31 +848,14 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         final total = (data['totalAmount'] as num?)?.toDouble() ?? 0.0;
         final isPaid = (data['isPaid'] as bool?) ?? false;
 
-        final paid = (data['paidAmount'] as num?)?.toDouble() ?? 0.0;
-
-        final keys = SummaryHelper.getSummaryKeys(timestamp);
-        for (final key in keys) {
-          summaryUpdates.putIfAbsent(
-            key,
-            () => {
-              'totalDebts': 0.0,
-              'unpaidDebts': 0.0,
-              'paidDebts': 0.0,
-              'totalCollected': 0.0,
-            },
-          );
-          summaryUpdates[key]!['totalDebts'] =
-              (summaryUpdates[key]!['totalDebts'] ?? 0) - remaining;
+        // Debt metrics are decremented using the debt's original creation timestamp
+        final debtKeys = SummaryHelper.getSummaryKeys(timestamp);
+        for (final key in debtKeys) {
+          addSummaryIncrement(key, 'totalDebts', -remaining);
           if (!isPaid) {
-            summaryUpdates[key]!['unpaidDebts'] =
-                (summaryUpdates[key]!['unpaidDebts'] ?? 0) - remaining;
+            addSummaryIncrement(key, 'unpaidDebts', -remaining);
           } else {
-            summaryUpdates[key]!['paidDebts'] =
-                (summaryUpdates[key]!['paidDebts'] ?? 0) - total;
-          }
-          if (paid > 0) {
-            summaryUpdates[key]!['totalCollected'] =
-                (summaryUpdates[key]!['totalCollected'] ?? 0) - paid;
+            addSummaryIncrement(key, 'paidDebts', -total);
           }
         }
 
@@ -821,10 +863,32 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         final paymentsSnapshot = await doc.reference
             .collection('payments')
             .get();
+
         for (var paymentDoc in paymentsSnapshot.docs) {
           allRefs.add(paymentDoc.reference);
+
+          final paymentData = paymentDoc.data();
+          final type = paymentData['type'] as String?;
+          final amountPaid = (paymentData['amountPaid'] as num?)?.toDouble() ?? 0.0;
+          final paymentCreatedAt = (paymentData['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+
+          // Decrement totalCollected using actual payment documents and their timestamps
+          if (type == 'full' || type == 'partial' || type == 'settlement') {
+            final paymentKeys = SummaryHelper.getSummaryKeys(paymentCreatedAt);
+            for (final key in paymentKeys) {
+              addSummaryIncrement(key, 'totalCollected', -amountPaid);
+            }
+          }
         }
         allRefs.add(doc.reference);
+      }
+
+      // Customer status decrement is grouped under current month
+      if (hadUnpaid) {
+        final nowKeys = SummaryHelper.getSummaryKeys(DateTime.now());
+        for (final key in nowKeys) {
+          addSummaryIncrement(key, 'debtCustomersCount', -1.0);
+        }
       }
 
       // 3. Batch commit in chunks of 500
@@ -840,24 +904,20 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
         // Only add summary updates to the FIRST batch
         if (i == 0) {
-          summaryUpdates.forEach((key, updates) {
+          summaryUpdates.forEach((key, fields) {
             final summaryRef = firestore
                 .collection('users')
                 .doc(uid)
                 .collection('summaries')
                 .doc(key);
-            batch.set(summaryRef, {
-              'totalDebts': FieldValue.increment(updates['totalDebts']!),
-              'unpaidDebts': FieldValue.increment(updates['unpaidDebts']!),
-              'paidDebts': FieldValue.increment(updates['paidDebts']!),
-              if (updates['totalCollected'] != null &&
-                  updates['totalCollected']! != 0)
-                'totalCollected': FieldValue.increment(
-                  updates['totalCollected']!,
-                ),
-              if (hadUnpaid) 'debtCustomersCount': FieldValue.increment(-1),
-              'lastUpdatedAt': FieldValue.serverTimestamp(),
-            }, SetOptions(merge: true));
+
+            final Map<String, dynamic> updateData = {};
+            fields.forEach((field, val) {
+              updateData[field] = FieldValue.increment(val);
+            });
+            updateData['lastUpdatedAt'] = FieldValue.serverTimestamp();
+
+            batch.set(summaryRef, updateData, SetOptions(merge: true));
           });
         }
 
@@ -920,8 +980,6 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           (debtDoc.data()?['remainingAmount'] as num?)?.toDouble() ?? 0.0;
       final totalAmount =
           (debtDoc.data()?['totalAmount'] as num?)?.toDouble() ?? 0.0;
-      final paidAmount =
-          (debtDoc.data()?['paidAmount'] as num?)?.toDouble() ?? 0.0;
       final isPaid = (debtDoc.data()?['isPaid'] as bool?) ?? false;
 
       // Check if this was the last unpaid debt for this customer BEFORE the loop
@@ -941,25 +999,64 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         }
       }
 
-      final summaryKeys = SummaryHelper.getSummaryKeys(timestamp);
-      for (final key in summaryKeys) {
+      // Build accumulator for grouped summary updates
+      final Map<String, Map<String, double>> summaryAccumulator = {};
+
+      void addSummaryIncrement(String key, String field, double value) {
+        summaryAccumulator.putIfAbsent(key, () => {});
+        summaryAccumulator[key]![field] = (summaryAccumulator[key]![field] ?? 0.0) + value;
+      }
+
+      // Debt metrics are decremented using the debt's original creation timestamp
+      final debtKeys = SummaryHelper.getSummaryKeys(timestamp);
+      for (final key in debtKeys) {
+        addSummaryIncrement(key, 'totalDebts', -remainingAmount);
+        if (!isPaid) {
+          addSummaryIncrement(key, 'unpaidDebts', -remainingAmount);
+        } else {
+          addSummaryIncrement(key, 'paidDebts', -totalAmount);
+        }
+      }
+
+      // Decrement totalCollected using actual payment documents and their timestamps
+      for (var paymentDoc in paymentsSnapshot.docs) {
+        final paymentData = paymentDoc.data();
+        final type = paymentData['type'] as String?;
+        final amountPaid = (paymentData['amountPaid'] as num?)?.toDouble() ?? 0.0;
+        final paymentCreatedAt = (paymentData['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+
+        if (type == 'full' || type == 'partial' || type == 'settlement') {
+          final paymentKeys = SummaryHelper.getSummaryKeys(paymentCreatedAt);
+          for (final key in paymentKeys) {
+            addSummaryIncrement(key, 'totalCollected', -amountPaid);
+          }
+        }
+      }
+
+      // Customer status decrement is grouped under current month
+      if (shouldDecrementCustomerCount) {
+        final nowKeys = SummaryHelper.getSummaryKeys(DateTime.now());
+        for (final key in nowKeys) {
+          addSummaryIncrement(key, 'debtCustomersCount', -1.0);
+        }
+      }
+
+      // Write all accumulated summaries to the batch
+      summaryAccumulator.forEach((key, fields) {
         final summaryRef = firestore
             .collection('users')
             .doc(uid)
             .collection('summaries')
             .doc(key);
 
-        batch.set(summaryRef, {
-          'totalDebts': FieldValue.increment(-remainingAmount),
-          if (!isPaid) 'unpaidDebts': FieldValue.increment(-remainingAmount),
-          if (isPaid) 'paidDebts': FieldValue.increment(-totalAmount),
-          if (paidAmount > 0)
-            'totalCollected': FieldValue.increment(-paidAmount),
-          if (shouldDecrementCustomerCount)
-            'debtCustomersCount': FieldValue.increment(-1),
-          'lastUpdatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
-      }
+        final Map<String, dynamic> updateData = {};
+        fields.forEach((field, val) {
+          updateData[field] = FieldValue.increment(val);
+        });
+        updateData['lastUpdatedAt'] = FieldValue.serverTimestamp();
+
+        batch.set(summaryRef, updateData, SetOptions(merge: true));
+      });
 
       await batch.commit();
     } catch (e) {
@@ -1187,27 +1284,48 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           }
         }
 
-        // Update Summaries
-        final summaryKeys = SummaryHelper.getSummaryKeys(
-          (debtSnap.data()?['timestamp'] as Timestamp?)?.toDate() ??
-              DateTime.now(),
-        );
-        for (final key in summaryKeys) {
+        // Update Summaries using decoupled accumulator pattern
+        final Map<String, Map<String, double>> summaryAccumulator = {};
+
+        void addSummaryIncrement(String key, String field, double value) {
+          summaryAccumulator.putIfAbsent(key, () => {});
+          summaryAccumulator[key]![field] = (summaryAccumulator[key]![field] ?? 0.0) + value;
+        }
+
+        final double summaryDelta = relatedTo == 'debt' ? delta : -delta;
+
+        // Debt metrics are grouped by debt creation date
+        final debtTimestamp = (debtSnap.data()?['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+        final debtKeys = SummaryHelper.getSummaryKeys(debtTimestamp);
+        for (final key in debtKeys) {
+          addSummaryIncrement(key, 'totalDebts', summaryDelta);
+          addSummaryIncrement(key, 'unpaidDebts', summaryDelta);
+        }
+
+        // Payment metrics (totalCollected) are grouped by the payment's own createdAt date
+        if (relatedTo == 'payment') {
+          final paymentTimestamp = targetPayment.createdAt ?? DateTime.now();
+          final paymentKeys = SummaryHelper.getSummaryKeys(paymentTimestamp);
+          for (final key in paymentKeys) {
+            addSummaryIncrement(key, 'totalCollected', delta);
+          }
+        }
+
+        // Write all accumulated summaries
+        for (final entry in summaryAccumulator.entries) {
           final summaryRef = firestore
               .collection('users')
               .doc(uid)
               .collection('summaries')
-              .doc(key);
+              .doc(entry.key);
 
-          final double summaryDelta = relatedTo == 'debt' ? delta : -delta;
+          final Map<String, dynamic> updateData = {};
+          entry.value.forEach((field, val) {
+            updateData[field] = FieldValue.increment(val);
+          });
+          updateData['lastUpdatedAt'] = FieldValue.serverTimestamp();
 
-          transaction.set(summaryRef, {
-            'totalDebts': FieldValue.increment(summaryDelta),
-            'unpaidDebts': FieldValue.increment(summaryDelta),
-            if (relatedTo == 'payment')
-              'totalCollected': FieldValue.increment(delta),
-            'lastUpdatedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
+          transaction.set(summaryRef, updateData, SetOptions(merge: true));
         }
       });
     } catch (e) {
@@ -1301,29 +1419,50 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           }
         }
 
-        // Update Summaries
-        final summaryKeys = SummaryHelper.getSummaryKeys(
-          (debtSnap.data()?['timestamp'] as Timestamp?)?.toDate() ??
-              DateTime.now(),
-        );
-        for (final key in summaryKeys) {
+        // Update Summaries using decoupled accumulator pattern
+        final Map<String, Map<String, double>> summaryAccumulator = {};
+
+        void addSummaryIncrement(String key, String field, double value) {
+          summaryAccumulator.putIfAbsent(key, () => {});
+          summaryAccumulator[key]![field] = (summaryAccumulator[key]![field] ?? 0.0) + value;
+        }
+
+        final double summaryDelta = relatedTo == 'debt'
+            ? -amountToDelete
+            : amountToDelete;
+
+        // Debt metrics are grouped by debt creation date
+        final debtTimestamp = (debtSnap.data()?['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+        final debtKeys = SummaryHelper.getSummaryKeys(debtTimestamp);
+        for (final key in debtKeys) {
+          addSummaryIncrement(key, 'totalDebts', summaryDelta);
+          addSummaryIncrement(key, 'unpaidDebts', summaryDelta);
+        }
+
+        // Payment metrics (totalCollected) reversal uses the payment's own createdAt date
+        if (relatedTo == 'payment') {
+          final paymentTimestamp = targetPayment.createdAt ?? DateTime.now();
+          final paymentKeys = SummaryHelper.getSummaryKeys(paymentTimestamp);
+          for (final key in paymentKeys) {
+            addSummaryIncrement(key, 'totalCollected', -amountToDelete);
+          }
+        }
+
+        // Write all accumulated summaries
+        for (final entry in summaryAccumulator.entries) {
           final summaryRef = firestore
               .collection('users')
               .doc(uid)
               .collection('summaries')
-              .doc(key);
+              .doc(entry.key);
 
-          final double summaryDelta = relatedTo == 'debt'
-              ? -amountToDelete
-              : amountToDelete;
+          final Map<String, dynamic> updateData = {};
+          entry.value.forEach((field, val) {
+            updateData[field] = FieldValue.increment(val);
+          });
+          updateData['lastUpdatedAt'] = FieldValue.serverTimestamp();
 
-          transaction.set(summaryRef, {
-            'totalDebts': FieldValue.increment(summaryDelta),
-            'unpaidDebts': FieldValue.increment(summaryDelta),
-            if (relatedTo == 'payment')
-              'totalCollected': FieldValue.increment(-amountToDelete),
-            'lastUpdatedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
+          transaction.set(summaryRef, updateData, SetOptions(merge: true));
         }
       });
     } catch (e) {
