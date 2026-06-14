@@ -1199,6 +1199,29 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           .doc(debtId);
       final paymentRef = debtRef.collection('payments').doc(paymentId);
 
+      final debtDoc = await debtRef.get();
+      if (!debtDoc.exists) throw Exception('Debt not found');
+
+      final debtData = debtDoc.data() as Map<String, dynamic>;
+      final customerName = debtData['customerName'] as String?;
+
+      bool wasCustomerFullyPaid = false;
+      int unpaidDebtsCount = 0;
+      bool isThisDebtInUnpaidList = false;
+
+      if (customerName != null && customerName.isNotEmpty) {
+        final unpaidSnapshot = await firestore
+            .collection('users')
+            .doc(uid)
+            .collection('debts')
+            .where('customerName', isEqualTo: customerName)
+            .where('isPaid', isEqualTo: false)
+            .get();
+        unpaidDebtsCount = unpaidSnapshot.docs.length;
+        wasCustomerFullyPaid = unpaidSnapshot.docs.isEmpty;
+        isThisDebtInUnpaidList = unpaidSnapshot.docs.any((doc) => doc.id == debtId);
+      }
+
       await firestore.runTransaction((transaction) async {
         final debtSnap = await transaction.get(debtRef);
         if (!debtSnap.exists) throw Exception('Debt not found');
@@ -1248,17 +1271,39 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           'lastUpdatedAt': FieldValue.serverTimestamp(),
         });
 
-        // Update stored totals for summary cards
+        // Compute new values
+        final currentTotal = (debtData['totalAmount'] as num).toDouble();
+        final currentPaid = (debtData['paidAmount'] as num).toDouble();
+        final currentRemaining = (debtData['remainingAmount'] as num).toDouble();
+        final originalIsPaid = (debtData['isPaid'] as bool?) ?? false;
+
+        double newTotalAmount = currentTotal;
+        double newPaidAmount = currentPaid;
+        double newRemainingAmount = currentRemaining;
+
+        if (relatedTo == 'debt') {
+          newTotalAmount = currentTotal + delta;
+          newRemainingAmount = currentRemaining + delta;
+        } else {
+          newPaidAmount = currentPaid + delta;
+          newRemainingAmount = currentRemaining - delta;
+        }
+
+        final bool newIsPaid = newRemainingAmount <= 1e-9;
+
+        // Update stored totals and isPaid
         if (relatedTo == 'debt') {
           transaction.update(debtRef, {
-            'totalAmount': FieldValue.increment(delta),
-            'remainingAmount': FieldValue.increment(delta),
+            'totalAmount': newTotalAmount,
+            'remainingAmount': newRemainingAmount,
+            'isPaid': newIsPaid,
             'lastUpdatedAt': FieldValue.serverTimestamp(),
           });
         } else {
           transaction.update(debtRef, {
-            'paidAmount': FieldValue.increment(delta),
-            'remainingAmount': FieldValue.increment(-delta),
+            'paidAmount': newPaidAmount,
+            'remainingAmount': newRemainingAmount,
+            'isPaid': newIsPaid,
             'lastUpdatedAt': FieldValue.serverTimestamp(),
           });
         }
@@ -1273,13 +1318,13 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
               .doc(operationId);
           if (relatedTo == 'debt') {
             transaction.update(opRef, {
-              'totalAmount': FieldValue.increment(delta),
-              'remainingDebt': FieldValue.increment(delta),
+              'totalAmount': newTotalAmount,
+              'remainingDebt': newRemainingAmount,
             });
           } else {
             transaction.update(opRef, {
-              'paidAmount': FieldValue.increment(delta),
-              'remainingDebt': FieldValue.increment(-delta),
+              'paidAmount': newPaidAmount,
+              'remainingDebt': newRemainingAmount,
             });
           }
         }
@@ -1300,6 +1345,32 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         for (final key in debtKeys) {
           addSummaryIncrement(key, 'totalDebts', summaryDelta);
           addSummaryIncrement(key, 'unpaidDebts', summaryDelta);
+
+          if (originalIsPaid && !newIsPaid) {
+            // Paid to unpaid: decrement paidDebts by total amount
+            addSummaryIncrement(key, 'paidDebts', -currentTotal);
+          } else if (!originalIsPaid && newIsPaid) {
+            // Unpaid to paid: increment paidDebts by new total amount
+            addSummaryIncrement(key, 'paidDebts', newTotalAmount);
+          }
+        }
+
+        // Customer count and status updates
+        if (originalIsPaid && !newIsPaid && wasCustomerFullyPaid) {
+          // Customer went from fully paid to unpaid: increment customer count (grouped by current time)
+          final nowKeys = SummaryHelper.getSummaryKeys(DateTime.now());
+          for (final key in nowKeys) {
+            addSummaryIncrement(key, 'debtCustomersCount', 1.0);
+          }
+        } else if (!originalIsPaid && newIsPaid) {
+          // Unpaid to paid: check if customer became fully paid
+          final bool becameFullyPaid = unpaidDebtsCount == 1 && isThisDebtInUnpaidList;
+          if (becameFullyPaid) {
+            final nowKeys = SummaryHelper.getSummaryKeys(DateTime.now());
+            for (final key in nowKeys) {
+              addSummaryIncrement(key, 'debtCustomersCount', -1.0);
+            }
+          }
         }
 
         // Payment metrics (totalCollected) are grouped by the payment's own createdAt date
@@ -1348,6 +1419,25 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           .doc(debtId);
       final paymentRef = debtRef.collection('payments').doc(paymentId);
 
+      final debtDoc = await debtRef.get();
+      if (!debtDoc.exists) throw Exception('Debt not found');
+
+      final debtData = debtDoc.data() as Map<String, dynamic>;
+      final customerName = debtData['customerName'] as String?;
+
+      bool wasCustomerFullyPaid = false;
+      if (customerName != null && customerName.isNotEmpty) {
+        final unpaidSnapshot = await firestore
+            .collection('users')
+            .doc(uid)
+            .collection('debts')
+            .where('customerName', isEqualTo: customerName)
+            .where('isPaid', isEqualTo: false)
+            .limit(1)
+            .get();
+        wasCustomerFullyPaid = unpaidSnapshot.docs.isEmpty;
+      }
+
       await firestore.runTransaction((transaction) async {
         final debtSnap = await transaction.get(debtRef);
         if (!debtSnap.exists) throw Exception('Debt not found');
@@ -1382,18 +1472,40 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         // Direct Mutation: Delete the same item
         transaction.delete(paymentRef);
 
-        // Update stored totals
+        // Calculate new values
+        final currentTotal = (debtData['totalAmount'] as num).toDouble();
+        final currentPaid = (debtData['paidAmount'] as num).toDouble();
+        final currentRemaining = (debtData['remainingAmount'] as num).toDouble();
+        final originalIsPaid = (debtData['isPaid'] as bool?) ?? false;
         final amountToDelete = targetPayment.amountPaid;
+
+        double newTotalAmount = currentTotal;
+        double newPaidAmount = currentPaid;
+        double newRemainingAmount = currentRemaining;
+
+        if (relatedTo == 'debt') {
+          newTotalAmount = currentTotal - amountToDelete;
+          newRemainingAmount = currentRemaining - amountToDelete;
+        } else {
+          newPaidAmount = currentPaid - amountToDelete;
+          newRemainingAmount = currentRemaining + amountToDelete;
+        }
+
+        final bool newIsPaid = newRemainingAmount <= 1e-9;
+
+        // Update stored totals and isPaid
         if (relatedTo == 'debt') {
           transaction.update(debtRef, {
-            'totalAmount': FieldValue.increment(-amountToDelete),
-            'remainingAmount': FieldValue.increment(-amountToDelete),
+            'totalAmount': newTotalAmount,
+            'remainingAmount': newRemainingAmount,
+            'isPaid': newIsPaid,
             'lastUpdatedAt': FieldValue.serverTimestamp(),
           });
         } else {
           transaction.update(debtRef, {
-            'paidAmount': FieldValue.increment(-amountToDelete),
-            'remainingAmount': FieldValue.increment(amountToDelete),
+            'paidAmount': newPaidAmount,
+            'remainingAmount': newRemainingAmount,
+            'isPaid': newIsPaid,
             'lastUpdatedAt': FieldValue.serverTimestamp(),
           });
         }
@@ -1408,13 +1520,13 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
               .doc(operationId);
           if (relatedTo == 'debt') {
             transaction.update(opRef, {
-              'totalAmount': FieldValue.increment(-amountToDelete),
-              'remainingDebt': FieldValue.increment(-amountToDelete),
+              'totalAmount': newTotalAmount,
+              'remainingDebt': newRemainingAmount,
             });
           } else {
             transaction.update(opRef, {
-              'paidAmount': FieldValue.increment(-amountToDelete),
-              'remainingDebt': FieldValue.increment(amountToDelete),
+              'paidAmount': newPaidAmount,
+              'remainingDebt': newRemainingAmount,
             });
           }
         }
@@ -1437,6 +1549,20 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         for (final key in debtKeys) {
           addSummaryIncrement(key, 'totalDebts', summaryDelta);
           addSummaryIncrement(key, 'unpaidDebts', summaryDelta);
+
+          if (originalIsPaid && !newIsPaid) {
+            // Paid to unpaid: decrement paidDebts by total amount
+            addSummaryIncrement(key, 'paidDebts', -currentTotal);
+          }
+        }
+
+        // Customer status update
+        if (originalIsPaid && !newIsPaid && wasCustomerFullyPaid) {
+          // Customer went from fully paid to unpaid: increment customer count (grouped by current time)
+          final nowKeys = SummaryHelper.getSummaryKeys(DateTime.now());
+          for (final key in nowKeys) {
+            addSummaryIncrement(key, 'debtCustomersCount', 1.0);
+          }
         }
 
         // Payment metrics (totalCollected) reversal uses the payment's own createdAt date
