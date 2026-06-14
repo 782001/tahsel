@@ -540,5 +540,7 @@
   "validation_device_occupied": "الجهاز مشغول بالفعل في جلسة نشطة أخرى",
   "validation_room_occupied": "الغرفة مشغولة بالفعل في جلسة نشطة أخرى",
   "validation_device_or_room_required": "يجب تحديد الجهاز أو الغرفة لبدء الجلسة",
-  "hourly_rate_key": "سعر الساعة"
+  "hourly_rate_key": "سعر الساعة",
+  "attendance_already_registered": "تم تسجيل حضور/غياب لهذا الموظف في هذا اليوم بالفعل. لا يمكن إضافة سجل مكرر.",
+  "attendance_already_registered_short": "الحضور مسجل بالفعل لهذا اليوم."
 }

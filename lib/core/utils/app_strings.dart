@@ -625,4 +625,8 @@ class AppStrings {
   static const String validationDeviceOccupied = "validation_device_occupied";
   static const String validationRoomOccupied = "validation_room_occupied";
   static const String validationDeviceOrRoomRequired = "validation_device_or_room_required";
+
+  // Attendance Duplicate Prevention
+  static const String attendanceAlreadyRegistered = "attendance_already_registered";
+  static const String attendanceAlreadyRegisteredShort = "attendance_already_registered_short";
 }

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:tahsel/core/error/failures.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 
@@ -135,9 +136,10 @@ class EmployeeCubit extends Cubit<EmployeeState> {
   Future<void> checkIn(AttendanceEntity attendance) async {
     emit(EmployeeLoading());
     final result = await checkInUseCase(attendance);
-    result.fold((failure) => emit(EmployeeFailure(failure.message)), (id) {
-      emit(EmployeeActionSuccess(AppStrings.checkinSuccess.tr()));
-    });
+    result.fold(
+      (failure) => emit(EmployeeFailure(failure.message)),
+      (id) => emit(EmployeeActionSuccess(AppStrings.checkinSuccess.tr())),
+    );
   }
 
   Future<void> markAbsentOrExcused({
@@ -164,7 +166,13 @@ class EmployeeCubit extends Cubit<EmployeeState> {
     );
     final result = await checkInUseCase(attendance);
     result.fold(
-      (failure) => emit(EmployeeFailure(failure.message)),
+      (failure) {
+        if (failure is DuplicateAttendanceFailure) {
+          emit(EmployeeFailure(AppStrings.attendanceAlreadyRegisteredShort.tr()));
+        } else {
+          emit(EmployeeFailure(failure.message));
+        }
+      },
       (id) {
         final successMessage = status == 'absent'
             ? AppStrings.absentRecorded.tr()

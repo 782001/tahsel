@@ -104,6 +104,8 @@ class EmployeeRepositoryImpl implements EmployeeRepository {
       final model = AttendanceModel.fromEntity(attendance);
       final id = await remoteDataSource.checkInEmployee(model);
       return Right(id);
+    } on DuplicateAttendanceException {
+      return const Left(DuplicateAttendanceFailure('duplicate_attendance'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

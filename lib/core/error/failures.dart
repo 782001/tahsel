@@ -32,3 +32,14 @@ class OfflineFailure extends Failure {
 class StatusViolationFailure extends Failure {
   const StatusViolationFailure(super.message);
 }
+
+class DuplicateAttendanceFailure extends Failure {
+  const DuplicateAttendanceFailure(super.message);
+}
+
+/// Thrown by the data source layer when an attendance record already exists
+/// for the same employee on the same date. Caught and mapped to
+/// [DuplicateAttendanceFailure] by the repository layer.
+class DuplicateAttendanceException implements Exception {
+  const DuplicateAttendanceException();
+}

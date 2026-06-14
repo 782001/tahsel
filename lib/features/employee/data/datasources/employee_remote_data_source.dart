@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/error/failures.dart';
 import '../../../../core/error/firebase_error_handler.dart';
 import '../models/advance_model.dart';
 import '../models/attendance_model.dart';
@@ -201,12 +202,35 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
   Future<String> checkInEmployee(AttendanceModel attendance) async {
     try {
       final userRef = firestore.collection('users').doc(attendance.uid);
+
+      // ── Duplicate Guard (absent / excused only) ──────────────────────────
+      // Regular check-ins (present, late, half_day, …) bypass this guard.
+      // Only 'absent' and 'excused' records are subject to the uniqueness
+      // constraint because they are registered outside of the normal
+      // check-in/check-out flow and must never be duplicated on the same day.
+      const guardedStatuses = {'absent', 'excused'};
+      if (guardedStatuses.contains(attendance.status)) {
+        final existingSnapshot = await userRef
+            .collection('attendances')
+            .where('employeeId', isEqualTo: attendance.employeeId)
+            .where('date', isEqualTo: attendance.date)
+            .limit(1)
+            .get();
+
+        if (existingSnapshot.docs.isNotEmpty) {
+          throw const DuplicateAttendanceException();
+        }
+      }
+      // ────────────────────────────────────────────────────────────────────
+
       final docRef = (attendance.id != null && attendance.id!.isNotEmpty)
           ? userRef.collection('attendances').doc(attendance.id)
           : userRef.collection('attendances').doc();
 
       await docRef.set(attendance.toJson());
       return docRef.id;
+    } on DuplicateAttendanceException {
+      rethrow;
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       throw Exception('Failed to check in: $e');

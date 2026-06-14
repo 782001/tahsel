@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:tahsel/core/services/injection_container.dart';
-import 'package:tahsel/features/employee/domain/services/employee_operation_guard.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:tahsel/core/extensions/extensions.dart';
+import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
@@ -13,6 +13,7 @@ import 'package:tahsel/features/employee/domain/entities/advance_entity.dart';
 import 'package:tahsel/features/employee/domain/entities/attendance_entity.dart';
 import 'package:tahsel/features/employee/domain/entities/employee_entity.dart';
 import 'package:tahsel/features/employee/domain/entities/payroll_entity.dart';
+import 'package:tahsel/features/employee/domain/services/employee_operation_guard.dart';
 import 'package:tahsel/features/employee/domain/utils/monthly_payroll_calculator.dart';
 import 'package:tahsel/features/employee/presentation/cubit/employee_cubit.dart';
 import 'package:tahsel/features/employee/presentation/cubit/employee_state.dart';
@@ -42,6 +43,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
   final ScrollController _payrollScrollController = ScrollController();
   final ScrollController _advanceScrollController = ScrollController();
   final EmployeeOperationGuard _guard = sl<EmployeeOperationGuard>();
+  EmployeeDetailsFetchSuccess? _cachedDetails;
 
   /// Shows a SnackBar explaining why an action is blocked based on status.
   void _showStatusBlockedSnackBar(String status) {
@@ -55,10 +57,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppColors.error,
-      ),
+      SnackBar(content: Text(message), backgroundColor: AppColors.error),
     );
   }
 
@@ -251,7 +250,15 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
               }
             },
             builder: (context, state) {
-              if (state is EmployeeLoading) {
+              if (state is EmployeeDetailsFetchSuccess) {
+                _cachedDetails = state;
+              }
+
+              final detailsState = state is EmployeeDetailsFetchSuccess
+                  ? state
+                  : _cachedDetails;
+
+              if (state is EmployeeLoading && detailsState == null) {
                 return Center(
                   child: CircularProgressIndicator(
                     color: AppColors.primaryColor,
@@ -260,8 +267,8 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                 );
               }
 
-              if (state is EmployeeDetailsFetchSuccess) {
-                final employee = state.employee;
+              if (detailsState != null) {
+                final employee = detailsState.employee;
                 Color statusColor = AppColors.success;
                 if (employee.status == 'suspended') {
                   statusColor = AppColors.error;
@@ -269,8 +276,8 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                   statusColor = AppColors.blackLight;
                 }
 
-                final attendanceLogs = state.attendanceLogs;
-                final payrollLogs = state.payrollLogs;
+                final attendanceLogs = detailsState.attendanceLogs;
+                final payrollLogs = detailsState.payrollLogs;
 
                 AttendanceEntity? activeCheckIn;
                 for (final log in attendanceLogs) {
@@ -294,7 +301,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                 final double workedHours = pending['unpaidWorkedHours'];
                 final int unpaidCount = pending['unpaidCount'];
 
-                final paidAdvances = state.advanceLogs
+                final paidAdvances = detailsState.advanceLogs
                     .where((adv) => adv.status == 'paid')
                     .toList();
 
@@ -383,9 +390,10 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                                                   dateFormatter,
                                                   true,
                                                   attendanceLogs,
-                                                  state
+                                                  detailsState
                                                       .isPaginationLoadingAttendance,
-                                                  state.hasReachedMaxAttendance,
+                                                  detailsState
+                                                      .hasReachedMaxAttendance,
                                                 ),
                                                 CustomScrollView(
                                                   controller:
@@ -394,9 +402,9 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                                                     _buildPayrollList(
                                                       true,
                                                       payrollLogs,
-                                                      state
+                                                      detailsState
                                                           .isPaginationLoadingPayroll,
-                                                      state
+                                                      detailsState
                                                           .hasReachedMaxPayroll,
                                                     ),
                                                   ],
@@ -404,10 +412,11 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                                                 _buildAdvancesTab(
                                                   employee,
                                                   true,
-                                                  state.advanceLogs,
-                                                  state
+                                                  detailsState.advanceLogs,
+                                                  detailsState
                                                       .isPaginationLoadingAdvance,
-                                                  state.hasReachedMaxAdvance,
+                                                  detailsState
+                                                      .hasReachedMaxAdvance,
                                                 ),
                                               ],
                                             ),
@@ -443,8 +452,9 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                                           false,
                                           dateFormatter,
                                           attendanceLogs,
-                                          state.isPaginationLoadingAttendance,
-                                          state.hasReachedMaxAttendance,
+                                          detailsState
+                                              .isPaginationLoadingAttendance,
+                                          detailsState.hasReachedMaxAttendance,
                                           activeCheckIn,
                                         ),
                                         _buildPayrollTab(
@@ -452,8 +462,9 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                                           false,
                                           pending,
                                           payrollLogs,
-                                          state.isPaginationLoadingPayroll,
-                                          state.hasReachedMaxPayroll,
+                                          detailsState
+                                              .isPaginationLoadingPayroll,
+                                          detailsState.hasReachedMaxPayroll,
                                           netSalary,
                                           baseSalary,
                                           overtimeComp,
@@ -467,9 +478,10 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                                         _buildAdvancesTab(
                                           employee,
                                           false,
-                                          state.advanceLogs,
-                                          state.isPaginationLoadingAdvance,
-                                          state.hasReachedMaxAdvance,
+                                          detailsState.advanceLogs,
+                                          detailsState
+                                              .isPaginationLoadingAdvance,
+                                          detailsState.hasReachedMaxAdvance,
                                         ),
                                       ],
                                     ),
@@ -483,7 +495,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
               }
 
               if (state is EmployeeFailure) {
-                debugPrint(state.message);
+                AppLogger.printMessage(state.message);
                 return Center(
                   child: Text(
                     AppStrings.noData.tr(),
@@ -731,10 +743,10 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                 ElevatedButton.icon(
                   onPressed: _guard.canCheckOut(employee.status)
                       ? () => _showCheckInOutDialog(
-                            employee,
-                            activeCheckIn,
-                            attendanceLogs,
-                          )
+                          employee,
+                          activeCheckIn,
+                          attendanceLogs,
+                        )
                       : () => _showStatusBlockedSnackBar(employee.status),
                   icon: const Icon(
                     Icons.logout_rounded,
@@ -773,10 +785,10 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                 ElevatedButton.icon(
                   onPressed: _guard.canCheckIn(employee.status)
                       ? () => _showCheckInOutDialog(
-                            employee,
-                            activeCheckIn,
-                            attendanceLogs,
-                          )
+                          employee,
+                          activeCheckIn,
+                          attendanceLogs,
+                        )
                       : () => _showStatusBlockedSnackBar(employee.status),
                   icon: const Icon(
                     Icons.login_rounded,
@@ -806,7 +818,11 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                 if (employee.salaryType == "monthly") ...[
                   OutlinedButton.icon(
                     onPressed: _guard.canModifyAttendance(employee.status)
-                        ? () => _showMarkExceptionDialog(context, employee, 'absent')
+                        ? () => _showMarkExceptionDialog(
+                            context,
+                            employee,
+                            'absent',
+                          )
                         : () => _showStatusBlockedSnackBar(employee.status),
                     icon: Icon(
                       Icons.cancel_outlined,
@@ -834,7 +850,11 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                   ),
                   OutlinedButton.icon(
                     onPressed: _guard.canModifyAttendance(employee.status)
-                        ? () => _showMarkExceptionDialog(context, employee, 'excused')
+                        ? () => _showMarkExceptionDialog(
+                            context,
+                            employee,
+                            'excused',
+                          )
                         : () => _showStatusBlockedSnackBar(employee.status),
                     icon: Icon(
                       Icons.event_busy_rounded,
@@ -1470,7 +1490,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
         borderRadius: BorderRadius.circular(16.r),
         gradient: LinearGradient(
           colors: [
-            AppColors.primaryColor,
+            AppColors.blue100,
             AppColors.primaryColor.withValues(alpha: 0.85),
           ],
           begin: Alignment.topLeft,
@@ -1632,8 +1652,8 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
               onPressed: !isWithinWindow
                   ? null
                   : !_guard.canPaySalary(employee.status)
-                      ? () => _showStatusBlockedSnackBar(employee.status)
-                      : () {
+                  ? () => _showStatusBlockedSnackBar(employee.status)
+                  : () {
                       if (context.read<ConnectivityCubit>().state
                           is ConnectivityDisconnected) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -2218,7 +2238,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
               }) {
                 context.read<EmployeeCubit>().checkOut(
                   uid: AppStrings.userToken,
-                  employeeId: employee.id??"",
+                  employeeId: employee.id ?? "",
                   attendanceId: attendanceId,
                   checkOutTime: checkOutTime,
                   overtimeHours: overtimeHours,

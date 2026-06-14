@@ -538,5 +538,7 @@
   "validation_device_occupied": "Device is already occupied in another active session",
   "validation_room_occupied": "Room is already occupied in another active session",
   "validation_device_or_room_required": "Device or Room must be specified to start session",
-  "hourly_rate_key": "Hourly Rate"
+  "hourly_rate_key": "Hourly Rate",
+  "attendance_already_registered": "Attendance for this employee on this date is already recorded. Cannot add a duplicate record.",
+  "attendance_already_registered_short": "Attendance already recorded for this date."
 }
