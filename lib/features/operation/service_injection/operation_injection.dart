@@ -52,7 +52,11 @@ Future<void> initOperation() async {
     ),
   );
   sl.registerLazySingleton<PsSessionRepository>(
-    () => PsSessionRepositoryImpl(remoteDataSource: sl()),
+    () => PsSessionRepositoryImpl(
+      remoteDataSource: sl(),
+      offlineSyncRepository: sl(),
+      connectionChecker: sl(),
+    ),
   );
 
   // Data sources

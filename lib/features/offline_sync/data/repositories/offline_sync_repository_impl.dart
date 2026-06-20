@@ -58,8 +58,8 @@ class OfflineSyncRepositoryImpl implements OfflineSyncRepository {
     _syncCompleter = Completer<void>();
 
     try {
-      final pendingRecords = await localDataSource.getPendingRecords();
-      final totalRecords = pendingRecords.length;
+      final rawPending = await localDataSource.getPendingRecords();
+      final totalRecords = rawPending.length;
 
       if (totalRecords == 0) {
         _isSyncing = false;
@@ -70,6 +70,17 @@ class OfflineSyncRepositoryImpl implements OfflineSyncRepository {
       AppLogger.printMessage(
         "[OfflineSync] Found $totalRecords pending records. Starting upload...",
       );
+
+      // Sort so that ps_session_start records are always processed BEFORE
+      // ps_session_end records. Other types keep their original insertion order.
+      int typeOrder(String type) {
+        if (type == 'ps_session_start') return 0;
+        if (type == 'ps_session_end') return 2;
+        return 1;
+      }
+
+      final pendingRecords = List<OfflineRecord>.from(rawPending)
+        ..sort((a, b) => typeOrder(a.type).compareTo(typeOrder(b.type)));
 
       int successCount = 0;
       int failureCount = 0;

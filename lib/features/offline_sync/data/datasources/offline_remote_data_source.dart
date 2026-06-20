@@ -33,6 +33,10 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
         await _syncCheckOutUpdate(record, payload);
       } else if (record.type == 'settle_advances') {
         await _syncSettleAdvances(record, payload);
+      } else if (record.type == 'ps_session_start') {
+        await _syncPsSessionStart(record, payload);
+      } else if (record.type == 'ps_session_end') {
+        await _syncPsSessionEnd(record, payload);
       } else {
         // Simple collection sync (e.g., expenses, operations, employees, attendance_checkin, payroll, advance)
         await _syncSimpleRecord(record, payload);
@@ -411,6 +415,166 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
     for (final id in advanceIds) {
       final docRef = userRef.collection('advances').doc(id);
       batch.update(docRef, {'status': 'deducted', 'payrollId': payrollId});
+    }
+
+    await batch.commit();
+  }
+
+  Future<void> _syncPsSessionStart(
+    OfflineRecord record,
+    Map<String, dynamic> payload,
+  ) async {
+    final uid = payload['uid'] as String;
+    final docRef = firestore
+        .collection('users')
+        .doc(uid)
+        .collection('ps_sessions')
+        .doc(record.id);
+
+    // Idempotency check
+    final docSnapshot = await docRef.get();
+    if (docSnapshot.exists) {
+      AppLogger.printMessage(
+        "[OfflineSync] Session ${record.id} already exists. Skipping.",
+      );
+      return;
+    }
+
+    // Convert dates in payload from ISO8601 strings to Timestamp for Firestore
+    if (payload['startTime'] is String) {
+      payload['startTime'] = Timestamp.fromDate(DateTime.parse(payload['startTime']));
+    }
+    if (payload['endTime'] is String) {
+      payload['endTime'] = Timestamp.fromDate(DateTime.parse(payload['endTime']));
+    }
+    if (payload['createdAt'] is String) {
+      payload['createdAt'] = Timestamp.fromDate(DateTime.parse(payload['createdAt']));
+    }
+
+    payload['syncedAt'] = FieldValue.serverTimestamp();
+
+    await docRef.set(payload);
+  }
+
+  Future<void> _syncPsSessionEnd(
+    OfflineRecord record,
+    Map<String, dynamic> payload,
+  ) async {
+    final uid = payload['uid'] as String;
+    final sessionId = payload['sessionId'] as String;
+    final endTimeStr = payload['endTime'] as String;
+    final endTime = DateTime.parse(endTimeStr);
+    final totalAmount = (payload['totalAmount'] as num).toDouble();
+    final paidAmount = (payload['paidAmount'] as num).toDouble();
+    final turnCount = payload['turnCount'] as int?;
+
+    final sessionRef = firestore
+        .collection('users')
+        .doc(uid)
+        .collection('ps_sessions')
+        .doc(sessionId);
+
+    // Try Firestore first; if not there (ps_session_start still pending),
+    // fall back to the session snapshot embedded inside the end payload.
+    final sessionDoc = await sessionRef.get();
+    Map<String, dynamic> sessionData;
+
+    if (sessionDoc.exists) {
+      sessionData = sessionDoc.data()!;
+    } else {
+      final snapshot = payload['sessionSnapshot'] as Map<String, dynamic>?;
+      if (snapshot == null) {
+        throw Exception(
+          '[OfflineSync] Session not found and no snapshot available for: $sessionId',
+        );
+      }
+
+      AppLogger.printMessage(
+        '[OfflineSync] Session $sessionId not yet in Firestore – '
+        'creating from embedded snapshot before ending it.',
+      );
+
+      // Rehydrate ISO8601 date strings to Firestore Timestamps
+      final startPayload = Map<String, dynamic>.from(snapshot);
+      if (startPayload['startTime'] is String) {
+        startPayload['startTime'] =
+            Timestamp.fromDate(DateTime.parse(startPayload['startTime']));
+      }
+      if (startPayload['endTime'] is String) {
+        startPayload['endTime'] =
+            Timestamp.fromDate(DateTime.parse(startPayload['endTime']));
+      }
+      if (startPayload['createdAt'] is String) {
+        startPayload['createdAt'] =
+            Timestamp.fromDate(DateTime.parse(startPayload['createdAt']));
+      }
+      startPayload['syncedAt'] = FieldValue.serverTimestamp();
+      await sessionRef.set(startPayload);
+      sessionData = snapshot;
+    }
+
+    // Parse startTime (Firestore Timestamp or ISO8601 String)
+    final startTimeVal = sessionData['startTime'];
+    DateTime startTime;
+    if (startTimeVal is Timestamp) {
+      startTime = startTimeVal.toDate();
+    } else {
+      startTime = DateTime.parse(startTimeVal as String);
+    }
+
+    final subType = sessionData['subType'] ?? 'time';
+    final rate = (sessionData['rate'] ?? 0).toDouble();
+    final ledgerNumber = sessionData['ledgerNumber'] as String?;
+    final remainingDebt =
+        (totalAmount - paidAmount) > 0 ? (totalAmount - paidAmount) : 0.0;
+
+    final batch = firestore.batch();
+
+    // 1. Mark session as completed
+    batch.update(sessionRef, {
+      'endTime': Timestamp.fromDate(endTime),
+      'status': 'completed',
+      'totalAmount': totalAmount,
+      'paidAmount': paidAmount,
+      'remainingDebt': remainingDebt,
+      if (turnCount != null) 'turnCount': turnCount,
+    });
+
+    // 2. Create operation record for billing and reporting
+    final durationMinutes = endTime.difference(startTime).inMinutes;
+    final operationPayload = {
+      'uid': uid,
+      'type': AppStrings.playStation,
+      'subType': subType,
+      'customerName': sessionData['customerName'],
+      'phoneNumber': sessionData['phoneNumber'],
+      'totalAmount': totalAmount,
+      'paidAmount': paidAmount,
+      'remainingDebt': remainingDebt,
+      'timestamp': Timestamp.fromDate(startTime),
+      'lastUpdatedAt': Timestamp.fromDate(endTime),
+      'durationMinutes': subType == 'time' ? durationMinutes : null,
+      'turnCount': turnCount ?? sessionData['turnCount'],
+      'rate': rate,
+      'ledgerNumber': ledgerNumber,
+      'syncedAt': FieldValue.serverTimestamp(),
+    };
+
+    final userRef = firestore.collection('users').doc(uid);
+    // Use sessionId as the operation doc ID for idempotency on retry
+    final operationRef = userRef.collection('operations').doc(sessionId);
+    batch.set(operationRef, operationPayload, SetOptions(merge: true));
+
+    // 3. Increment monthly and all-time summaries
+    final summaryKeys = SummaryHelper.getSummaryKeys(startTime);
+    for (final key in summaryKeys) {
+      final summaryRef = userRef.collection('summaries').doc(key);
+      batch.set(summaryRef, {
+        'totalIncome': FieldValue.increment(totalAmount),
+        'playstationIncome': FieldValue.increment(totalAmount),
+        'transactionCount': FieldValue.increment(1),
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
     }
 
     await batch.commit();

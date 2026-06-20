@@ -39,7 +39,9 @@ class PsSessionRemoteDataSourceImpl implements PsSessionRemoteDataSource {
   @override
   Future<String> startSession(PsSessionModel session) async {
     try {
-      final docRef = _sessionsRef(session.uid).doc();
+      final docRef = session.id != null && session.id!.isNotEmpty
+          ? _sessionsRef(session.uid).doc(session.id)
+          : _sessionsRef(session.uid).doc();
       await docRef.set(session.toJson());
       return docRef.id;
     } catch (e) {
