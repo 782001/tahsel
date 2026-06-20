@@ -55,12 +55,15 @@ class AuthRepositoryImpl implements AuthBaseRepository {
   String _mapExceptionToMessage(String code) {
     switch (code) {
       case 'user-not-found':
+      case 'user_not_found':
+        return 'auth_user_not_found';
       case 'wrong-password':
       case 'invalid-credential':
         return 'auth_invalid_credential';
       case 'invalid-email':
         return 'auth_invalid_email';
       case 'user-disabled':
+      case 'auth_user_disabled':
         return 'auth_user_disabled';
       case 'too-many-requests':
         return 'auth_too_many_requests';
@@ -68,6 +71,12 @@ class AuthRepositoryImpl implements AuthBaseRepository {
         return 'auth_network_error';
       case 'internal-error':
         return 'auth_default_error';
+      case 'account_suspended':
+        return 'account_suspended';
+      case 'account_expired':
+        return 'account_expired';
+      case 'platform_not_allowed':
+        return 'platform_not_allowed';
       default:
         return 'auth_default_error';
     }

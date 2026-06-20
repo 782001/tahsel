@@ -32,6 +32,8 @@ import 'package:tahsel/features/employee/presentation/cubit/employee_cubit.dart'
 import 'package:tahsel/features/employee/presentation/screens/employee_list_screen.dart';
 import 'package:tahsel/features/employee/presentation/screens/employee_details_screen.dart';
 import 'package:tahsel/features/employee/presentation/screens/employee_reports_screen.dart';
+import 'package:tahsel/features/standard_features/security/presentation/screens/access_restricted_screen.dart';
+import 'package:tahsel/features/standard_features/security/presentation/screens/subscription_expired_screen.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -40,6 +42,8 @@ class AppRoutes {
   static const String mainLayout = '/main-layout';
   static const String login = '/login';
   static const String securityWarning = '/security-warning';
+  static const String accessRestricted = '/access-restricted';
+  static const String subscriptionExpired = '/subscription-expired';
   static const String addExpense = '/add-expense';
   static const String incomeDetails = '/income-details';
   static const String debtDetails = '/debt-details';
@@ -101,6 +105,16 @@ class AppRoutes {
             isRooted: args?['isRooted'] ?? false,
             isDevMode: args?['isDevMode'] ?? false,
           ),
+        );
+      case accessRestricted:
+        final reason = settings.arguments as AccessRestrictionReason;
+        return MaterialPageRoute(
+          builder: (_) => AccessRestrictedScreen(reason: reason),
+        );
+      case subscriptionExpired:
+        final args = settings.arguments as SubscriptionExpiredArgs;
+        return MaterialPageRoute(
+          builder: (_) => SubscriptionExpiredScreen(args: args),
         );
       case addExpense:
         return MaterialPageRoute(builder: (_) => const AddExpenseScreen());
@@ -212,6 +226,16 @@ class AppRoutes {
           isRooted: args?['isRooted'] ?? false,
           isDevMode: args?['isDevMode'] ?? false,
         );
+      },
+      accessRestricted: (context) {
+        final reason =
+            ModalRoute.of(context)?.settings.arguments as AccessRestrictionReason;
+        return AccessRestrictedScreen(reason: reason);
+      },
+      subscriptionExpired: (context) {
+        final args =
+            ModalRoute.of(context)?.settings.arguments as SubscriptionExpiredArgs;
+        return SubscriptionExpiredScreen(args: args);
       },
       addExpense: (_) => const AddExpenseScreen(),
     };

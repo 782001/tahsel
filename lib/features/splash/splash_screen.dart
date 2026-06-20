@@ -1,3 +1,6 @@
+import 'dart:io' show Platform;
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,6 +15,8 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/assets.dart';
 import 'package:tahsel/features/auth/domain/usecases/logout_usecase.dart';
+import 'package:tahsel/features/standard_features/security/presentation/screens/access_restricted_screen.dart';
+import 'package:tahsel/features/standard_features/security/presentation/screens/subscription_expired_screen.dart';
 import 'package:tahsel/routes/app_routes.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -92,23 +97,119 @@ class _SplashScreenState extends State<SplashScreen>
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        await user.reload();
-      } else {
-        // Firebase says no user but local said yes? Only clear if online.
-        if (hasInternet) {
-          _handleInvalidSession();
+      if (user == null) {
+        _handleInvalidSession();
+        nav().pushNamedAndRemoveUntil(AppRoutes.login);
+        return;
+      }
+
+      await user.reload();
+
+      // Fetch user data from Firestore
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (!doc.exists) {
+        _handleInvalidSession();
+        nav().pushNamedAndRemoveUntil(AppRoutes.login);
+        return;
+      }
+
+      final data = doc.data();
+      if (data == null) {
+        _handleInvalidSession();
+        nav().pushNamedAndRemoveUntil(AppRoutes.login);
+        return;
+      }
+
+      // ── 1. Account status gate ────────────────────────────────────────
+      final accountStatus = (data['accountStatus'] as String?) ?? 'active';
+      if (accountStatus == 'deleted' || accountStatus == 'disabled') {
+        _handleInvalidSession();
+        nav().pushNamedAndRemoveUntil(
+          AppRoutes.accessRestricted,
+          arguments: AccessRestrictionReason.disabled,
+        );
+        return;
+      }
+      if (accountStatus == 'suspended') {
+        _handleInvalidSession();
+        nav().pushNamedAndRemoveUntil(
+          AppRoutes.accessRestricted,
+          arguments: AccessRestrictionReason.suspended,
+        );
+        return;
+      }
+
+      // ── 2. Subscription expiry check with grace period ──────────────────
+      final subscriptionStart = data['subscriptionStart'] != null
+          ? (data['subscriptionStart'] as Timestamp).toDate()
+          : null;
+      final subscriptionEnd = data['subscriptionEnd'] != null
+          ? (data['subscriptionEnd'] as Timestamp).toDate()
+          : null;
+          final email = data['email'] as String? ?? '';
+          final fullName = data['fullName'] as String? ?? '';
+      final gracePeriodEnd = subscriptionEnd?.add(const Duration(days: 10));
+      final now = DateTime.now();
+
+      final isExpired =
+          accountStatus == 'expired' ||
+          (gracePeriodEnd != null && now.isAfter(gracePeriodEnd));
+
+      if (isExpired) {
+        if (accountStatus != 'expired') {
+          FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+            'accountStatus': 'expired',
+          }).ignore();
         }
+        _handleInvalidSession();
+        nav().pushNamedAndRemoveUntil(
+          AppRoutes.subscriptionExpired,
+          arguments: SubscriptionExpiredArgs(
+            accountStatus: 'expired',
+            subscriptionStart: subscriptionStart,
+            subscriptionEnd: subscriptionEnd,
+            gracePeriodEnd: gracePeriodEnd,
+            email: email,
+            fullName: fullName,
+          ),
+        );
+        return;
+      }
+
+      // ── 3. Platform restriction check ─────────────────────────────────
+      final platformType = (data['platformType'] as String?) ?? 'mobile';
+      String currentPlatform = 'mobile';
+      try {
+        if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+          currentPlatform = 'desktop';
+        }
+      } catch (_) {}
+
+      if (!_isPlatformAllowed(platformType, currentPlatform)) {
+        _handleInvalidSession();
+        nav().pushNamedAndRemoveUntil(
+          AppRoutes.accessRestricted,
+          arguments: AccessRestrictionReason.platformNotAllowed,
+        );
+        return;
       }
     } catch (e) {
-      // Only logout if it's NOT a network error
       if (e.toString().contains('network-request-failed') ||
           e.toString().contains('connection-failed')) {
         return; // Ignore network errors, keep local session
       }
-      // User likely deleted or disabled on server
       _handleInvalidSession();
+      nav().pushNamedAndRemoveUntil(AppRoutes.login);
     }
+  }
+
+  bool _isPlatformAllowed(String platformType, String currentPlatform) {
+    if (platformType == 'both') return true;
+    return platformType == currentPlatform;
   }
 
   void _handleInvalidSession() async {

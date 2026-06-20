@@ -8,6 +8,7 @@ import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_state.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/main_layout/presentation/widgets/bottom_nav_bar.dart';
+import 'package:tahsel/features/main_layout/presentation/widgets/grace_period_warning_banner.dart';
 import 'package:tahsel/features/main_layout/presentation/widgets/side_nav_bar.dart';
 import 'package:tahsel/features/offline_sync/presentation/widgets/offline_banner.dart';
 import 'package:tahsel/features/offline_sync/presentation/widgets/sync_status_listener.dart';
@@ -85,16 +86,23 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
                       body: SafeArea(
                         child: SyncStatusListener(
                           child: OfflineBanner(
-                            child: ResponsiveLayout(
-                              mobile: cubit.screens[cubit.currentIndex],
-                              desktop: Row(
-                                children: [
-                                  SideNavBar(cubit: cubit),
-                                  Expanded(
-                                    child: cubit.screens[cubit.currentIndex],
+                            child: Column(
+                              children: [
+                                const GracePeriodWarningBanner(),
+                                Expanded(
+                                  child: ResponsiveLayout(
+                                    mobile: cubit.screens[cubit.currentIndex],
+                                    desktop: Row(
+                                      children: [
+                                        SideNavBar(cubit: cubit),
+                                        Expanded(
+                                          child: cubit.screens[cubit.currentIndex],
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
                         ),

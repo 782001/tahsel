@@ -7,14 +7,23 @@ class UserModel extends UserEntity {
     required super.email,
     required super.userType,
     super.displayName,
+    super.accountStatus = 'active',
+    super.platformType = 'mobile',
   });
 
-  factory UserModel.fromFirebaseUser(User user, {String? userType}) {
+  factory UserModel.fromFirebaseUser(
+    User user, {
+    String? userType,
+    String? accountStatus,
+    String? platformType,
+  }) {
     return UserModel(
       uid: user.uid,
       email: user.email ?? '',
       displayName: user.displayName,
       userType: userType ?? 'cafe',
+      accountStatus: accountStatus ?? 'active',
+      platformType: platformType ?? 'mobile',
     );
   }
 }

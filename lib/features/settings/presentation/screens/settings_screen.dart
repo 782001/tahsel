@@ -12,6 +12,7 @@ import 'package:tahsel/features/settings/presentation/widgets/appearance_card.da
 import 'package:tahsel/features/settings/presentation/widgets/language_option.dart';
 import 'package:tahsel/features/settings/presentation/widgets/logout_button.dart';
 import 'package:tahsel/features/settings/presentation/widgets/section_header.dart';
+import 'package:tahsel/features/settings/presentation/widgets/subscription_info_widget.dart';
 import 'package:tahsel/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_cubit.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_state.dart';
@@ -170,6 +171,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 }
                               },
                             ),
+
+                            SizedBox(height: isDesktop ? 32 : 32.h),
+
+                            // Subscription Section
+                            SectionHeader(
+                              title: AppStrings.subscriptionSection.tr(),
+                            ),
+                            const SubscriptionInfoWidget(),
 
                             SizedBox(height: isDesktop ? 32 : 32.h),
 

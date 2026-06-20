@@ -28,31 +28,91 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSourceBase {
         password: parameters.password,
       );
       if (userCredential.user != null) {
-        // Fetch user type from Firestore
+        // Fetch user document from Firestore
         final doc = await firestore
             .collection('users')
             .doc(userCredential.user!.uid)
             .get();
         final data = doc.data();
 
-        final userType = data != null && data.containsKey('userType')
-            ? data['userType']
+        if (data == null) {
+          await firebaseAuth.signOut();
+          throw ServerException('user_not_found');
+        }
+
+        // ── 1. Account status gate ────────────────────────────────────────
+        final accountStatus = (data['accountStatus'] as String?) ?? 'active';
+        if (accountStatus == 'deleted' || accountStatus == 'disabled') {
+          await firebaseAuth.signOut();
+          throw ServerException('auth_user_disabled');
+        }
+        if (accountStatus == 'suspended') {
+          await firebaseAuth.signOut();
+          throw ServerException('account_suspended');
+        }
+
+        // ── 2. Subscription / grace-period gate ──────────────────────────
+        final subscriptionEnd = data['subscriptionEnd'] != null
+            ? (data['subscriptionEnd'] as Timestamp).toDate()
+            : null;
+        final now = DateTime.now();
+        if (subscriptionEnd != null && now.isAfter(subscriptionEnd)) {
+          // Grace period is 10 days after subscriptionEnd
+          final gracePeriodEnd = subscriptionEnd.add(const Duration(days: 10));
+          if (now.isAfter(gracePeriodEnd)) {
+            // Past grace period → optimistically mark as expired (best-effort)
+            if (accountStatus != 'expired') {
+              firestore
+                  .collection('users')
+                  .doc(userCredential.user!.uid)
+                  .update({'accountStatus': 'expired'})
+                  .ignore();
+            }
+            await firebaseAuth.signOut();
+            throw ServerException('account_expired');
+          }
+          // Still within grace period — allow login
+        }
+
+        // ── 3. Platform restriction gate ─────────────────────────────────
+        final platformType = (data['platformType'] as String?) ?? 'mobile';
+        final currentPlatform = parameters.currentPlatform;
+        if (!_isPlatformAllowed(platformType, currentPlatform)) {
+          await firebaseAuth.signOut();
+          throw ServerException('platform_not_allowed');
+        }
+
+        // ── 4. Success ────────────────────────────────────────────────────
+        final userType = data.containsKey('userType')
+            ? data['userType'] as String
             : 'cafe';
+
         return UserModel.fromFirebaseUser(
           userCredential.user!,
           userType: userType,
+          accountStatus: accountStatus,
+          platformType: platformType,
         );
       } else {
-        throw Exception("User not found");
+        throw Exception('User not found');
       }
     } on FirebaseAuthException catch (e) {
-      AppLogger.printMessage(e.code);
+      AppLogger.printMessage(
+        'FirebaseAuthException: [${e.code}] - ${e.message}',
+      );
       throw ServerException(e.code);
+    } on ServerException {
+      rethrow;
     } catch (e) {
       AppLogger.printMessage(e.toString());
-
       throw ServerException('default');
     }
+  }
+
+  /// Returns true if [platformType] (Firestore value) allows [currentPlatform].
+  bool _isPlatformAllowed(String platformType, String currentPlatform) {
+    if (platformType == 'both') return true;
+    return platformType == currentPlatform;
   }
 
   @override
@@ -60,7 +120,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSourceBase {
     try {
       await firestore.terminate();
       await firestore.clearPersistence();
-    } catch (e) {
+    } catch (_) {
       // Ignore if cache is already cleared or throws
     }
     await firebaseAuth.signOut();

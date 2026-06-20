@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +14,6 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
-import 'package:tahsel/features/auth/domain/entities/user_entity.dart';
 import 'package:tahsel/features/reports/presentation/cubit/reports_cubit/reports_cubit.dart';
 import 'package:tahsel/features/customer/presentation/cubit/customer_cubit.dart';
 import 'package:tahsel/features/product/presentation/cubit/product_cubit.dart';
@@ -41,6 +41,14 @@ class AuthCubit extends Cubit<AuthState> {
     _authSubscription = FirebaseAuth.instance.userChanges().listen((
       User? user,
     ) async {
+      // Ignore background auth stream events while actively logging in or out
+      if (state is AuthLoading) {
+        AppLogger.printMessage(
+          '[AuthCubit] Ignoring userChanges event during AuthLoading state',
+        );
+        return;
+      }
+
       final bool hasInternet =
           await sl<InternetConnectionChecker>().hasConnection;
 
@@ -83,13 +91,18 @@ class AuthCubit extends Cubit<AuthState> {
           try {
             await user.reload();
           } catch (e) {
-            // Only logout if it's NOT a network error
+            // Only logout if it's NOT a network error and NOT a "no-signed-in-user" status
             final errorStr = e.toString().toLowerCase();
             if (errorStr.contains('network-request-failed') ||
                 errorStr.contains('connection-failed') ||
                 errorStr.contains('no internet')) {
               AppLogger.printMessage(
                 'User reload failed due to network - keeping session: $e',
+              );
+            } else if (errorStr.contains('no-signed-in-user') ||
+                errorStr.contains('no-signed-in')) {
+              AppLogger.printMessage(
+                'User reload failed because user is already signed out: $e',
               );
             } else {
               AppLogger.printMessage(
@@ -111,43 +124,43 @@ class AuthCubit extends Cubit<AuthState> {
 
   Future<void> login(String email, String password) async {
     emit(AuthLoading());
-    final result = await loginUseCase.call(
-      LoginParameters(email: email, password: password),
-    );
-AppLogger.printMessage(result.toString());
-    result.fold((failure) => emit(AuthFailure(failure.message)), (user) async {
-      // Automatic userType detection based on email (temporary test solution)
-      String detectedType = AppStrings.cafe;
-      if (email.toLowerCase().contains('.shop') ||
-          user.userType == AppStrings.shop) {
-        detectedType = AppStrings.shop;
-      }
 
+    // Detect current platform: desktop = Windows, mobile = everything else
+    String currentPlatform = 'mobile';
+    try {
+      if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+        currentPlatform = 'desktop';
+      }
+    } catch (_) {
+      // On web or other environments where Platform throws — default to mobile
+    }
+
+    final result = await loginUseCase.call(
+      LoginParameters(
+        email: email,
+        password: password,
+        currentPlatform: currentPlatform,
+      ),
+    );
+    AppLogger.printMessage(result.toString());
+    result.fold((failure) => emit(AuthFailure(failure.message)), (user) async {
       final secureStorage = sl<SecureStorageHelper>();
       await secureStorage.saveData(key: 'token', value: user.uid);
       await secureStorage.saveData(key: 'email', value: user.email);
       await secureStorage.saveData(
         key: AppStrings.userTypeKey,
-        value: detectedType,
+        value: user.userType,
       );
 
       // Update global session strings
       AppStrings.userToken = user.uid;
-      AppStrings.userType = detectedType;
+      AppStrings.userType = user.userType;
 
       AppLogger.printMessage(
-        'User logged in successfully: ${user.uid} ($detectedType detected from email)',
+        'User logged in successfully: ${user.uid} (${user.userType})',
       );
 
-      // Override the user object with the detected type for immediate UI response
-      final updatedUser = UserEntity(
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        userType: detectedType,
-      );
-
-      emit(AuthSuccess(updatedUser));
+      emit(AuthSuccess(user));
     });
   }
 

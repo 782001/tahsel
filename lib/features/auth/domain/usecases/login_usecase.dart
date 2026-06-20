@@ -20,9 +20,15 @@ class LoginUseCase extends BaseUseCase<UserEntity, LoginParameters> {
 class LoginParameters extends Equatable {
   final String email;
   final String password;
+  /// 'mobile' or 'desktop' — derived from dart:io / Platform at call site.
+  final String currentPlatform;
 
-  const LoginParameters({required this.email, required this.password});
+  const LoginParameters({
+    required this.email,
+    required this.password,
+    this.currentPlatform = 'mobile',
+  });
 
   @override
-  List<Object?> get props => [email, password];
+  List<Object?> get props => [email, password, currentPlatform];
 }

@@ -19,6 +19,29 @@ class AppStrings {
   static String userToken = '';
   static String userType = 'cafe';
 
+  /// Central support phone number — change here to update all WhatsApp links.
+  static const String supportPhoneNumber = '+201028341201';
+
+  // Subscription & Account
+  static const String subscriptionStatus = 'subscription_status';
+  static const String accountStatus = 'account_status';
+  static const String userTypeLabel = 'user_type_label';
+  static const String platformTypeLabel = 'platform_type_label';
+  static const String subscriptionStart = 'subscription_start';
+  static const String subscriptionEnd = 'subscription_end';
+  static const String gracePeriodEnd = 'grace_period_end';
+  static const String remainingDays = 'remaining_days';
+  static const String graceDaysRemaining = 'grace_days_remaining';
+  static const String renewSubscription = 'renew_subscription';
+  static const String subscriptionExpiredTitle = 'subscription_expired_title';
+  static const String gracePeriodEnded = 'grace_period_ended';
+  static const String renewToContinue = 'renew_to_continue';
+  static const String subscriptionSection = 'subscription_section';
+  static const String graceWarningBanner = 'grace_warning_banner';
+  static const String notSet = 'not_set';
+  static const String days = 'days';
+
+
   ///-----------------------------
   ///-----------------------------
   ///---------Language-------------
