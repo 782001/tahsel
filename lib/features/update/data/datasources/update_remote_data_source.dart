@@ -66,7 +66,7 @@ class UpdateRemoteDataSourceImpl implements UpdateRemoteDataSource {
     return null;
   }
 
-  @override
+ @override
   Future<void> downloadAndInstall({
     required String url,
     required String fileName,
