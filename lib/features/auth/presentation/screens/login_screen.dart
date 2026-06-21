@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -13,7 +15,6 @@ import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/offline_sync/presentation/widgets/offline_banner.dart';
 import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/text_fields/custom_text_form_field.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';

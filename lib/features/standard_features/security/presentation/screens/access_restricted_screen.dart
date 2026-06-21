@@ -7,7 +7,6 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/routes/app_routes.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// The reason why access was restricted, determines the icon & body text.
 enum AccessRestrictionReason {
@@ -144,7 +143,8 @@ class AccessRestrictedScreen extends StatelessWidget {
                       final success = await WhatsAppService.sendMessage(
                         phoneNumber: AppStrings.supportPhoneNumber,
                         message: "مرحبا اريد تجديد الاشتراك في برنامج تحصيل",
-                      );
+                      );// ignore_for_file: use_build_context_synchronously
+
                       if (!success) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -196,33 +196,4 @@ class AccessRestrictedScreen extends StatelessWidget {
     );
   }
 
-  void _showError(String message, context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.error_outline, color: Colors.white, size: 24.sp),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Text(
-                message.tr(),
-                style: TextStyles.customStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: AppColors.error,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.r),
-        ),
-        margin: EdgeInsets.all(16.w),
-        elevation: 4,
-      ),
-    );
-  }
 }

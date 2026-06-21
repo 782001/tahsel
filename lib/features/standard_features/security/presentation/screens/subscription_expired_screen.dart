@@ -176,6 +176,7 @@ class SubscriptionExpiredScreen extends StatelessWidget {
                           message:
                               "مرحبا اريد تجديد الاشتراك في برنامج تحصيل\n ${fmt(args.subscriptionStart)}  ${fmt(args.subscriptionEnd)} ${fmt(args.gracePeriodEnd)} \nودا الايميل الخاص بيا ${args.email} \nودا الاسم الخاص بيا ${args.fullName} \n",
                         );
+                        // ignore_for_file: use_build_context_synchronously
 
                         if (!success) {
                           ScaffoldMessenger.of(context).showSnackBar(
