@@ -6,6 +6,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/shared/widgets/fields/text_widget.dart';
 import '../../data/models/app_version_model.dart';
 import '../cubit/update_cubit.dart';
@@ -22,6 +23,7 @@ class UpdateDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDesktop = ResponsiveLayout.isDesktop(context);
     return PopScope(
       canPop: !versionInfo.forceUpdate,
       child: Center(
@@ -32,16 +34,16 @@ class UpdateDialog extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16.r),
             ),
-            titlePadding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 10.h),
-            contentPadding: EdgeInsets.fromLTRB(24.w, 10.h, 24.w, 24.h),
+            titlePadding: EdgeInsets.fromLTRB(isDesktop?24:24.w,isDesktop?24: 24.h,isDesktop?24: 24.w,isDesktop?10: 10.h),
+            contentPadding: EdgeInsets.fromLTRB(isDesktop?24:24.w,isDesktop?10: 10.h,isDesktop?24: 24.w,isDesktop?24: 24.h),
             title: Row(
               children: [
                 Icon(
                   Icons.system_update_rounded,
                   color: AppColors.primaryColor,
-                  size: 28.h,
+                  size: isDesktop?28:28.h,
                 ),
-                SizedBox(width: 12.w),
+                SizedBox(width:isDesktop?12: 12.w),
                 Expanded(
                   child: TextWidget(
                     AppStrings.newUpdateAvailable.tr(),
@@ -59,12 +61,12 @@ class UpdateDialog extends StatelessWidget {
                   return Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      SizedBox(height: 8.h),
+                      SizedBox(height:isDesktop?8: 8.h),
                       CircularProgressIndicator(
                         color: AppColors.primaryColor,
                         strokeWidth: 2.5,
                       ),
-                      SizedBox(height: 16.h),
+                      SizedBox(height:isDesktop?16: 16.h),
                       TextWidget(
                         AppStrings.openingStore.tr(),
                         style: TextStyles.font14Weight400RightAligned()
@@ -85,19 +87,19 @@ class UpdateDialog extends StatelessWidget {
                         style: TextStyles.font14Weight400RightAligned()
                             .copyWith(color: AppColors.subTitleColor),
                       ),
-                      SizedBox(height: 20.h),
+                      SizedBox(height: isDesktop?20:  20.h),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(10.r),
                         child: LinearProgressIndicator(
                           value: state.progress,
-                          minHeight: 8.h,
+                          minHeight:isDesktop?8: 8.h,
                           backgroundColor: AppColors.veryLightGrey,
                           valueColor: AlwaysStoppedAnimation<Color>(
                             AppColors.primaryColor,
                           ),
                         ),
                       ),
-                      SizedBox(height: 12.h),
+                      SizedBox(height:isDesktop?12: 12.h),
                       TextWidget(
                         "${(state.progress * 100).toInt()}%",
                         style: TextStyles.font16WeightBoldText().copyWith(
@@ -137,8 +139,8 @@ class UpdateDialog extends StatelessWidget {
                   children: [
                     Container(
                       padding: EdgeInsets.symmetric(
-                        horizontal: 12.w,
-                        vertical: 6.h,
+                        horizontal:isDesktop?12: 12.w,
+                        vertical:isDesktop?6: 6.h,
                       ),
                       decoration: BoxDecoration(
                         color: AppColors.primaryColor.withValues(alpha: 0.1),
@@ -151,7 +153,7 @@ class UpdateDialog extends StatelessWidget {
                         ),
                       ),
                     ),
-                    SizedBox(height: 16.h),
+                    SizedBox(height:isDesktop?16: 16.h),
                     TextWidget(
                       versionInfo.updateMessage,
                       style: TextStyles.font16Weight400Text().copyWith(
@@ -159,19 +161,19 @@ class UpdateDialog extends StatelessWidget {
                       ),
                     ),
                     if (_isStorePlatform) ...[
-                      SizedBox(height: 12.h),
+                      SizedBox(height:isDesktop?  12: 12.h),
                       Row(
                         children: [
                           Icon(
                             Platform.isIOS ? Icons.apple : Icons.shop_rounded,
-                            size: 16.h,
+                            size:isDesktop?16: 16.h,
                             color: AppColors.subTitleColor,
                           ),
-                          SizedBox(width: 6.w),
+                          SizedBox(width:isDesktop?8: 6.w),
                           TextWidget(
                             AppStrings.updateViaStore.tr(args: [_storeName]),
                             style: TextStyles.customStyle(
-                              fontSize: 12,
+                              fontSize:isDesktop? 12: 12,
                               fontWeight: FontWeight.w400,
                               color: AppColors.subTitleColor,
                             ),
@@ -183,7 +185,7 @@ class UpdateDialog extends StatelessWidget {
                 );
               },
             ),
-            actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
+            actionsPadding: EdgeInsets.fromLTRB(isDesktop?16: 16.w, 0, isDesktop?16: 16.w, isDesktop?16: 16.h),
             actions: [
               BlocBuilder<UpdateCubit, UpdateState>(
                 builder: (context, state) {
@@ -207,7 +209,7 @@ class UpdateDialog extends StatelessWidget {
                             ),
                           ),
                         ),
-                      SizedBox(width: 8.w),
+                      SizedBox(width:isDesktop?8: 8.w),
                       ElevatedButton.icon(
                         icon: Icon(
                           _isStorePlatform
@@ -215,7 +217,7 @@ class UpdateDialog extends StatelessWidget {
                                     ? Icons.apple
                                     : Icons.shop_rounded)
                               : Icons.download_rounded,
-                          size: 18.h,
+                          size:isDesktop? 18: 18.h,
                           color: AppColors.isDark
                               ? AppColors.blackReal
                               : Colors.white,
@@ -226,8 +228,8 @@ class UpdateDialog extends StatelessWidget {
                               ? AppColors.blackReal
                               : Colors.white,
                           padding: EdgeInsets.symmetric(
-                            horizontal: 20.w,
-                            vertical: 12.h,
+                            horizontal:isDesktop?20: 20.w,
+                            vertical:isDesktop? 12: 12.h,
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.r),
