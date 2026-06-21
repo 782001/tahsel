@@ -22,11 +22,15 @@ class BuildReportInsightDetailRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: TextStyles.customStyle(
-            fontSize: 13,
-            color: AppColors.blackLight,
+        Flexible(
+          child: Text(
+            label,
+            style: TextStyles.customStyle(
+              fontSize: 13,
+              color: AppColors.blackLight,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
         Text(

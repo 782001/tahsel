@@ -84,7 +84,7 @@ class ReportsNetProfitCard extends StatelessWidget {
                   "$comparisonText  ${isPositive ? '↑↑' : '↓↓'}",
                   textAlign: TextAlign.center,
                   style: TextStyles.customStyle(
-                    fontSize: isDesktop ? 18 : 15,
+                    fontSize: isDesktop ? 24 : 15,
                     fontWeight: FontWeight.bold,
                     color: isPositive
                         ? AppColors.primaryColor

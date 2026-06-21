@@ -131,7 +131,7 @@ class MyDebtsSummaryCard extends StatelessWidget {
                 color: AppColors.disabledColor,
                 fontSize: 14,
               ),
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ),
