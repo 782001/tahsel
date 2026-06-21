@@ -52,12 +52,12 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'YOUR_IOS_API_KEY',
-    appId: 'YOUR_IOS_APP_ID',
-    messagingSenderId: 'YOUR_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    storageBucket: 'YOUR_STORAGE_BUCKET',
-    iosBundleId: 'YOUR_IOS_BUNDLE_ID',
+    apiKey: 'AIzaSyDWNaqhy3VShBAKCThzJeMRlkzwwmmuE9Q',
+    appId: '1:1016396879588:ios:d1db0da254e5a0bbd4fef1',
+    messagingSenderId: '1016396879588',
+    projectId: 'tahsel-9f124',
+    storageBucket: 'tahsel-9f124.firebasestorage.app',
+    iosBundleId: 'com.awadi.tahsel',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
