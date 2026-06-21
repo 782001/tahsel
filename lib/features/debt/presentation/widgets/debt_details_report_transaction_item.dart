@@ -171,11 +171,15 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
                       ),
                     ],
                     SizedBox(height: 4.h),
-                    Text(
-                      dateStr,
-                      style: TextStyles.customStyle(
-                        color: AppColors.disabledColor,
-                        fontSize: 11,
+                    Flexible(
+                      child: Text(
+                        dateStr,
+                        style: TextStyles.customStyle(
+                          color: AppColors.disabledColor,
+                          fontSize: 10,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
