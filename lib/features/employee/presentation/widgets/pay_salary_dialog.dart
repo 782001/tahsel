@@ -64,14 +64,18 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
   bool get _isPeriodAlreadyPaid {
     if (widget.employee.salaryType != 'monthly') return false;
 
-    final start = widget.periodStart ?? MonthlyPayrollCalculator.getPayrollPeriod(
-      closingDay: widget.employee.payrollClosingDay,
-      referenceDate: _paymentDate,
-    ).start;
-    final end = widget.periodEnd ?? MonthlyPayrollCalculator.getPayrollPeriod(
-      closingDay: widget.employee.payrollClosingDay,
-      referenceDate: _paymentDate,
-    ).end;
+    final start =
+        widget.periodStart ??
+        MonthlyPayrollCalculator.getPayrollPeriod(
+          closingDay: widget.employee.payrollClosingDay,
+          referenceDate: _paymentDate,
+        ).start;
+    final end =
+        widget.periodEnd ??
+        MonthlyPayrollCalculator.getPayrollPeriod(
+          closingDay: widget.employee.payrollClosingDay,
+          referenceDate: _paymentDate,
+        ).end;
 
     for (final log in widget.payrollLogs) {
       if (log.periodStart != null && log.periodEnd != null) {
@@ -85,7 +89,8 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
         }
       } else {
         // Fallback to monthKey match for historical records
-        final String expectedMonthKey = "${end.year}-${end.month.toString().padLeft(2, '0')}";
+        final String expectedMonthKey =
+            "${end.year}-${end.month.toString().padLeft(2, '0')}";
         if (log.monthKey == expectedMonthKey) {
           return true;
         }
@@ -116,8 +121,7 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
 
       if (widget.employee.salaryType == 'monthly') {
         // ALWAYS use 30-day fixed contract model for financial rates
-        defaultOvertimeRate =
-            baseAmount / (30.0 * dailyHours) * otMultiplier;
+        defaultOvertimeRate = baseAmount / (30.0 * dailyHours) * otMultiplier;
       } else if (widget.employee.salaryType == 'daily') {
         defaultOvertimeRate = baseAmount / dailyHours * otMultiplier;
       } else {
@@ -287,11 +291,15 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
                     SizedBox(height: 8.h),
                     Builder(
                       builder: (context) {
-                        final start = widget.periodStart ?? MonthlyPayrollCalculator.getPayrollPeriod(
+                        final start =
+                            widget.periodStart ??
+                            MonthlyPayrollCalculator.getPayrollPeriod(
                               closingDay: widget.employee.payrollClosingDay,
                               referenceDate: _paymentDate,
                             ).start;
-                        final end = widget.periodEnd ?? MonthlyPayrollCalculator.getPayrollPeriod(
+                        final end =
+                            widget.periodEnd ??
+                            MonthlyPayrollCalculator.getPayrollPeriod(
                               closingDay: widget.employee.payrollClosingDay,
                               referenceDate: _paymentDate,
                             ).end;
@@ -1078,17 +1086,17 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
 
       final start = widget.employee.salaryType == 'monthly'
           ? (widget.periodStart ??
-              MonthlyPayrollCalculator.getPayrollPeriod(
-                closingDay: widget.employee.payrollClosingDay,
-                referenceDate: _paymentDate,
-              ).start)
+                MonthlyPayrollCalculator.getPayrollPeriod(
+                  closingDay: widget.employee.payrollClosingDay,
+                  referenceDate: _paymentDate,
+                ).start)
           : null;
       final end = widget.employee.salaryType == 'monthly'
           ? (widget.periodEnd ??
-              MonthlyPayrollCalculator.getPayrollPeriod(
-                closingDay: widget.employee.payrollClosingDay,
-                referenceDate: _paymentDate,
-              ).end)
+                MonthlyPayrollCalculator.getPayrollPeriod(
+                  closingDay: widget.employee.payrollClosingDay,
+                  referenceDate: _paymentDate,
+                ).end)
           : null;
 
       final monthKey = widget.employee.salaryType == 'monthly' && end != null

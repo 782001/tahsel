@@ -15,6 +15,11 @@ class UpdateDialog extends StatelessWidget {
 
   const UpdateDialog({super.key, required this.versionInfo});
 
+  /// Returns true when the current platform updates via a store (not a direct download).
+  bool get _isStorePlatform => Platform.isAndroid || Platform.isIOS;
+
+  String get _storeName => Platform.isIOS ? 'App Store' : 'Google Play';
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -22,7 +27,6 @@ class UpdateDialog extends StatelessWidget {
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
-
           child: AlertDialog(
             backgroundColor: AppColors.surface,
             shape: RoundedRectangleBorder(
@@ -50,6 +54,28 @@ class UpdateDialog extends StatelessWidget {
             ),
             content: BlocBuilder<UpdateCubit, UpdateState>(
               builder: (context, state) {
+                // ── Redirecting to store (Android / iOS) ──────────────────
+                if (state is UpdateRedirectingToStore) {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(height: 8.h),
+                      CircularProgressIndicator(
+                        color: AppColors.primaryColor,
+                        strokeWidth: 2.5,
+                      ),
+                      SizedBox(height: 16.h),
+                      TextWidget(
+                        AppStrings.openingStore.tr(),
+                        style: TextStyles.font14Weight400RightAligned()
+                            .copyWith(color: AppColors.subTitleColor),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  );
+                }
+
+                // ── Windows: downloading ──────────────────────────────────
                 if (state is UpdateDownloading) {
                   return Column(
                     mainAxisSize: MainAxisSize.min,
@@ -82,11 +108,10 @@ class UpdateDialog extends StatelessWidget {
                   );
                 }
 
+                // ── Windows: installed ────────────────────────────────────
                 if (state is UpdateInstalled) {
                   return TextWidget(
-                    Platform.isAndroid
-                        ? AppStrings.updateReadyToInstall.tr()
-                        : AppStrings.updateReadyToOpen.tr(),
+                    AppStrings.updateReadyToOpen.tr(),
                     style: TextStyles.font16WeightBoldText().copyWith(
                       color: AppColors.success,
                     ),
@@ -94,6 +119,7 @@ class UpdateDialog extends StatelessWidget {
                   );
                 }
 
+                // ── Error ─────────────────────────────────────────────────
                 if (state is UpdateError) {
                   return TextWidget(
                     "${AppStrings.updateFailed.tr()}\n${state.message}",
@@ -104,6 +130,7 @@ class UpdateDialog extends StatelessWidget {
                   );
                 }
 
+                // ── Default: show version info & changelog ─────────────────
                 return Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,6 +158,27 @@ class UpdateDialog extends StatelessWidget {
                         color: AppColors.subTitleColor,
                       ),
                     ),
+                    if (_isStorePlatform) ...[
+                      SizedBox(height: 12.h),
+                      Row(
+                        children: [
+                          Icon(
+                            Platform.isIOS ? Icons.apple : Icons.shop_rounded,
+                            size: 16.h,
+                            color: AppColors.subTitleColor,
+                          ),
+                          SizedBox(width: 6.w),
+                          TextWidget(
+                            AppStrings.updateViaStore.tr(args: [_storeName]),
+                            style: TextStyles.customStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.subTitleColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 );
               },
@@ -139,9 +187,12 @@ class UpdateDialog extends StatelessWidget {
             actions: [
               BlocBuilder<UpdateCubit, UpdateState>(
                 builder: (context, state) {
-                  if (state is UpdateDownloading || state is UpdateInstalled) {
-                    return const SizedBox.shrink();
-                  }
+                  final bool isBusy =
+                      state is UpdateDownloading ||
+                      state is UpdateInstalled ||
+                      state is UpdateRedirectingToStore;
+
+                  if (isBusy) return const SizedBox.shrink();
 
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -157,14 +208,25 @@ class UpdateDialog extends StatelessWidget {
                           ),
                         ),
                       SizedBox(width: 8.w),
-                      ElevatedButton(
+                      ElevatedButton.icon(
+                        icon: Icon(
+                          _isStorePlatform
+                              ? (Platform.isIOS
+                                    ? Icons.apple
+                                    : Icons.shop_rounded)
+                              : Icons.download_rounded,
+                          size: 18.h,
+                          color: AppColors.isDark
+                              ? AppColors.blackReal
+                              : Colors.white,
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryColor,
                           foregroundColor: AppColors.isDark
                               ? AppColors.blackReal
                               : Colors.white,
                           padding: EdgeInsets.symmetric(
-                            horizontal: 24.w,
+                            horizontal: 20.w,
                             vertical: 12.h,
                           ),
                           shape: RoundedRectangleBorder(
@@ -175,8 +237,10 @@ class UpdateDialog extends StatelessWidget {
                         onPressed: () {
                           context.read<UpdateCubit>().startUpdate(versionInfo);
                         },
-                        child: TextWidget(
-                          AppStrings.updateNow.tr(),
+                        label: TextWidget(
+                          _isStorePlatform
+                              ? AppStrings.openStore.tr()
+                              : AppStrings.updateNow.tr(),
                           style: TextStyles.font14WeightBoldText().copyWith(
                             color: AppColors.isDark
                                 ? AppColors.blackReal

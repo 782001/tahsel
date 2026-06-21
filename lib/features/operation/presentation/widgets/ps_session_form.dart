@@ -154,7 +154,9 @@ class _PsSessionFormState extends State<PsSessionForm> {
 
           // Hourly / Turn Rate
           Text(
-            isTimeMode ? AppStrings.pricePerHour.tr() : AppStrings.pricePerTurn.tr(),
+            isTimeMode
+                ? AppStrings.pricePerHour.tr()
+                : AppStrings.pricePerTurn.tr(),
             style: TextStyles.customStyle(
               color: AppColors.black,
               fontWeight: FontWeight.bold,

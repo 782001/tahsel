@@ -96,7 +96,8 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
                                       children: [
                                         SideNavBar(cubit: cubit),
                                         Expanded(
-                                          child: cubit.screens[cubit.currentIndex],
+                                          child:
+                                              cubit.screens[cubit.currentIndex],
                                         ),
                                       ],
                                     ),

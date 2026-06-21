@@ -246,7 +246,7 @@ class MyDebtItemCard extends StatelessWidget {
                                       height: 16,
                                       width: 16,
                                       child: CircularProgressIndicator(
-                                         color: AppColors.primaryColor,
+                                        color: AppColors.primaryColor,
                                         strokeWidth: 2,
                                       ),
                                     ),

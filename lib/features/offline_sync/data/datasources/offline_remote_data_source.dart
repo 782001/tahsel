@@ -221,10 +221,8 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
       batch.set(summaryRef, {
         'totalDebts': FieldValue.increment(remainingAmount),
         'unpaidDebts': FieldValue.increment(remainingAmount),
-        if (paidAmount > 0)
-          'totalCollected': FieldValue.increment(paidAmount),
-        if (remainingAmount > 0)
-          'debtCustomersCount': FieldValue.increment(1),
+        if (paidAmount > 0) 'totalCollected': FieldValue.increment(paidAmount),
+        if (remainingAmount > 0) 'debtCustomersCount': FieldValue.increment(1),
         'lastUpdatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     }
@@ -442,13 +440,19 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
 
     // Convert dates in payload from ISO8601 strings to Timestamp for Firestore
     if (payload['startTime'] is String) {
-      payload['startTime'] = Timestamp.fromDate(DateTime.parse(payload['startTime']));
+      payload['startTime'] = Timestamp.fromDate(
+        DateTime.parse(payload['startTime']),
+      );
     }
     if (payload['endTime'] is String) {
-      payload['endTime'] = Timestamp.fromDate(DateTime.parse(payload['endTime']));
+      payload['endTime'] = Timestamp.fromDate(
+        DateTime.parse(payload['endTime']),
+      );
     }
     if (payload['createdAt'] is String) {
-      payload['createdAt'] = Timestamp.fromDate(DateTime.parse(payload['createdAt']));
+      payload['createdAt'] = Timestamp.fromDate(
+        DateTime.parse(payload['createdAt']),
+      );
     }
 
     payload['syncedAt'] = FieldValue.serverTimestamp();
@@ -497,16 +501,19 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
       // Rehydrate ISO8601 date strings to Firestore Timestamps
       final startPayload = Map<String, dynamic>.from(snapshot);
       if (startPayload['startTime'] is String) {
-        startPayload['startTime'] =
-            Timestamp.fromDate(DateTime.parse(startPayload['startTime']));
+        startPayload['startTime'] = Timestamp.fromDate(
+          DateTime.parse(startPayload['startTime']),
+        );
       }
       if (startPayload['endTime'] is String) {
-        startPayload['endTime'] =
-            Timestamp.fromDate(DateTime.parse(startPayload['endTime']));
+        startPayload['endTime'] = Timestamp.fromDate(
+          DateTime.parse(startPayload['endTime']),
+        );
       }
       if (startPayload['createdAt'] is String) {
-        startPayload['createdAt'] =
-            Timestamp.fromDate(DateTime.parse(startPayload['createdAt']));
+        startPayload['createdAt'] = Timestamp.fromDate(
+          DateTime.parse(startPayload['createdAt']),
+        );
       }
       startPayload['syncedAt'] = FieldValue.serverTimestamp();
       await sessionRef.set(startPayload);
@@ -525,8 +532,9 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
     final subType = sessionData['subType'] ?? 'time';
     final rate = (sessionData['rate'] ?? 0).toDouble();
     final ledgerNumber = sessionData['ledgerNumber'] as String?;
-    final remainingDebt =
-        (totalAmount - paidAmount) > 0 ? (totalAmount - paidAmount) : 0.0;
+    final remainingDebt = (totalAmount - paidAmount) > 0
+        ? (totalAmount - paidAmount)
+        : 0.0;
 
     final batch = firestore.batch();
 

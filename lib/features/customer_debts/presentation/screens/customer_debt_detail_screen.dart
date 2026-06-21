@@ -418,25 +418,28 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                                         onPressed: isLoading
                                             ? null
                                             : () => _onPayPartial(
-                                                  context,
-                                                  currentDetail.customerName,
-                                                  currentDetail.totalDebt,
-                                                ),
+                                                context,
+                                                currentDetail.customerName,
+                                                currentDetail.totalDebt,
+                                              ),
                                         icon: isLoading
-                                            ?  SizedBox(
+                                            ? SizedBox(
                                                 height: 18,
                                                 width: 18,
-                                                child: CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                  color: AppColors.primaryColor,
-                                                ),
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      color: AppColors
+                                                          .primaryColor,
+                                                    ),
                                               )
                                             : const Icon(
                                                 Icons.payment_rounded,
                                                 size: 18,
                                               ),
-                                        label:
-                                            Text(AppStrings.partialPayment.tr()),
+                                        label: Text(
+                                          AppStrings.partialPayment.tr(),
+                                        ),
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor:
                                               AppColors.primaryColor,
@@ -458,24 +461,28 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                                         onPressed: isLoading
                                             ? null
                                             : () => _onPayFull(
-                                                  context,
-                                                  currentDetail.customerName,
-                                                  currentDetail.totalDebt,
-                                                ),
+                                                context,
+                                                currentDetail.customerName,
+                                                currentDetail.totalDebt,
+                                              ),
                                         icon: isLoading
-                                            ?  SizedBox(
+                                            ? SizedBox(
                                                 height: 18,
                                                 width: 18,
-                                                child: CircularProgressIndicator(
-                                                  strokeWidth: 2, color: AppColors.primaryColor,
-                                                ),
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      color: AppColors
+                                                          .primaryColor,
+                                                    ),
                                               )
                                             : const Icon(
                                                 Icons.check_circle_rounded,
                                                 size: 18,
                                               ),
-                                        label:
-                                            Text(AppStrings.fullSettlement.tr()),
+                                        label: Text(
+                                          AppStrings.fullSettlement.tr(),
+                                        ),
                                         style: OutlinedButton.styleFrom(
                                           side: BorderSide(
                                             color: AppColors.primaryColor,

@@ -16,7 +16,7 @@ class AppVersionModel {
   });
 
   factory AppVersionModel.fromFirestore(Map<String, dynamic> json) {
-      String url = '';
+    String url = '';
     if (Platform.isAndroid) {
       url = json['android_download_url'] as String? ?? '';
     } else if (Platform.isWindows) {

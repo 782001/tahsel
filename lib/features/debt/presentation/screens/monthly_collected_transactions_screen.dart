@@ -90,8 +90,9 @@ class _MonthlyCollectedTransactionsScreenState
         (paginatedResult) {
           setState(() {
             // Only show actual collections (exclude debtAdded type)
-            final actualCollections = paginatedResult.items
-                .where((p) => p.type != PaymentType.debtAdded);
+            final actualCollections = paginatedResult.items.where(
+              (p) => p.type != PaymentType.debtAdded,
+            );
             _payments.addAll(actualCollections);
             _lastDocument = paginatedResult.lastDocument;
             _hasMore = paginatedResult.hasMore;
@@ -130,8 +131,9 @@ class _MonthlyCollectedTransactionsScreenState
         (paginatedResult) {
           setState(() {
             // Only show actual collections (exclude debtAdded type)
-            final actualCollections = paginatedResult.items
-                .where((p) => p.type != PaymentType.debtAdded);
+            final actualCollections = paginatedResult.items.where(
+              (p) => p.type != PaymentType.debtAdded,
+            );
             _payments.addAll(actualCollections);
             _lastDocument = paginatedResult.lastDocument;
             _hasMore = paginatedResult.hasMore;

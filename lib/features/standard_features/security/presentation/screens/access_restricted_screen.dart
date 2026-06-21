@@ -143,8 +143,7 @@ class AccessRestrictedScreen extends StatelessWidget {
                     onPressed: () async {
                       final success = await WhatsAppService.sendMessage(
                         phoneNumber: AppStrings.supportPhoneNumber,
-                        message:
-                            "مرحبا اريد تجديد الاشتراك في برنامج تحصيل",
+                        message: "مرحبا اريد تجديد الاشتراك في برنامج تحصيل",
                       );
                       if (!success) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -196,8 +195,6 @@ class AccessRestrictedScreen extends StatelessWidget {
       ),
     );
   }
-
-
 
   void _showError(String message, context) {
     ScaffoldMessenger.of(context).showSnackBar(

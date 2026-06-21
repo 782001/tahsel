@@ -296,7 +296,7 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
     }
   }
 
- @override
+  @override
   Future<int> cleanupOldReports() async {
     try {
       final uid = AppStrings.userToken;
@@ -348,7 +348,6 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
       rethrow;
     }
   }
-
 
   String _getSummaryKey(String period, DateTime date) {
     switch (period.toLowerCase()) {

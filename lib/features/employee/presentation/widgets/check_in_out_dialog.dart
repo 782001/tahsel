@@ -69,10 +69,7 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
   }
 
   String _status = 'present';
-  final List<String> _checkInStatuses = [
-    'present',
-    'late',
-  ];
+  final List<String> _checkInStatuses = ['present', 'late'];
 
   @override
   void initState() {
@@ -709,8 +706,10 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
         final checkInTime = _selectedTime;
         for (final record in _sameDayCompletedRecords) {
           if (record.checkOut == null) continue;
-          if ((checkInTime.isAfter(record.checkIn!) || checkInTime.isAtSameMomentAs(record.checkIn!)) &&
-              (checkInTime.isBefore(record.checkOut!) || checkInTime.isAtSameMomentAs(record.checkOut!))) {
+          if ((checkInTime.isAfter(record.checkIn!) ||
+                  checkInTime.isAtSameMomentAs(record.checkIn!)) &&
+              (checkInTime.isBefore(record.checkOut!) ||
+                  checkInTime.isAtSameMomentAs(record.checkOut!))) {
             final fmt = DateFormat('hh:mm a', AppStrings.currentLang);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

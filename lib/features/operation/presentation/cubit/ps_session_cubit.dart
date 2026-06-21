@@ -69,8 +69,9 @@ class PsSessionCubit extends Cubit<PsSessionState> {
       (failure) => emit(PsSessionFailure(message: failure.toString())),
       (_) {
         // Remove the ended session from local cache
-        _activeSessions =
-            _activeSessions.where((s) => s.id != sessionId).toList();
+        _activeSessions = _activeSessions
+            .where((s) => s.id != sessionId)
+            .toList();
         emit(PsSessionEnded(sessionId: sessionId));
       },
     );

@@ -118,8 +118,7 @@ class MonthlyPayrollCalculator {
     } else {
       if (salaryType == 'monthly') {
         // ALWAYS use 30-day fixed month contract model for financial rates
-        overtimeHourlyRate =
-            baseAmount / (30.0 * dailyHours) * otMultiplier;
+        overtimeHourlyRate = baseAmount / (30.0 * dailyHours) * otMultiplier;
       } else if (salaryType == 'daily') {
         overtimeHourlyRate = baseAmount / dailyHours * otMultiplier;
       } else {
@@ -171,10 +170,10 @@ class MonthlyPayrollCalculator {
 
       attendedDays = workedDays;
       allowedOffDays = employee.allowedPaidWeekendsPerMonth;
-      
+
       // ExpectedWorkingDays = ActualDaysInPeriod - AllowedPaidWeekends
       final int expectedWorkingDays = totalDaysInPeriod - allowedOffDays;
-      
+
       // MissingDays = ExpectedWorkingDays - WorkedDays
       missingDays = expectedWorkingDays - workedDays;
 
@@ -198,8 +197,7 @@ class MonthlyPayrollCalculator {
         // Financial calculations must ALWAYS use 30 days contract model
         final double dailyRate = baseAmount / 30.0;
         final double hourlyRate =
-            employee.customDeductionRate ??
-            (baseAmount / (30.0 * dailyHours));
+            employee.customDeductionRate ?? (baseAmount / (30.0 * dailyHours));
         final double deductionMultiplier = employee.dailyDeductionMultiplier;
 
         // STEP 2: Calculate actual overtime/deductions from attendance records.
@@ -217,8 +215,7 @@ class MonthlyPayrollCalculator {
           deductionDays = missingDays;
           bonusDays = 0;
           excessAbsentDays = deductionDays.toDouble();
-          pendingDeductions +=
-              deductionDays * dailyRate * deductionMultiplier;
+          pendingDeductions += deductionDays * dailyRate * deductionMultiplier;
         } else if (missingDays < 0) {
           // Unused off days / Extra worked days → convert to bonus hours.
           bonusDays = -missingDays;
@@ -288,19 +285,29 @@ class MonthlyPayrollCalculator {
     required DateTime now,
   }) {
     final List<({DateTime start, DateTime end})> periods = [];
-    
+
     // Get the period containing createdAt
-    var currentPeriod = getPayrollPeriod(closingDay: closingDay, referenceDate: createdAt);
-    final targetPeriod = getPayrollPeriod(closingDay: closingDay, referenceDate: now);
-    
+    var currentPeriod = getPayrollPeriod(
+      closingDay: closingDay,
+      referenceDate: createdAt,
+    );
+    final targetPeriod = getPayrollPeriod(
+      closingDay: closingDay,
+      referenceDate: now,
+    );
+
     // Add periods sequentially until we reach or pass targetPeriod.
-    while (currentPeriod.start.isBefore(targetPeriod.start) || currentPeriod.start.isAtSameMomentAs(targetPeriod.start)) {
+    while (currentPeriod.start.isBefore(targetPeriod.start) ||
+        currentPeriod.start.isAtSameMomentAs(targetPeriod.start)) {
       periods.add(currentPeriod);
       // To get the next period, start from the day after this period ends.
       final nextDay = currentPeriod.end.add(const Duration(days: 1));
-      currentPeriod = getPayrollPeriod(closingDay: closingDay, referenceDate: nextDay);
+      currentPeriod = getPayrollPeriod(
+        closingDay: closingDay,
+        referenceDate: nextDay,
+      );
     }
-    
+
     return periods;
   }
 
@@ -321,8 +328,10 @@ class MonthlyPayrollCalculator {
     required int windowEnd,
   }) {
     final int nextMonth = periodEnd.month == 12 ? 1 : periodEnd.month + 1;
-    final int nextMonthYear = periodEnd.month == 12 ? periodEnd.year + 1 : periodEnd.year;
-    
+    final int nextMonthYear = periodEnd.month == 12
+        ? periodEnd.year + 1
+        : periodEnd.year;
+
     if (windowStart <= windowEnd) {
       final start = DateTime(nextMonthYear, nextMonth, windowStart);
       final end = DateTime(nextMonthYear, nextMonth, windowEnd);
@@ -343,16 +352,17 @@ class MonthlyPayrollCalculator {
     required DateTime now,
   }) {
     final todayOnly = DateTime(now.year, now.month, now.day);
-    if (todayOnly.isBefore(period.end) || todayOnly.isAtSameMomentAs(period.end)) {
+    if (todayOnly.isBefore(period.end) ||
+        todayOnly.isAtSameMomentAs(period.end)) {
       return 'in_progress';
     }
-    
+
     final window = getPaymentWindow(
       periodEnd: period.end,
       windowStart: windowStart,
       windowEnd: windowEnd,
     );
-    
+
     if (todayOnly.isBefore(window.start)) {
       return 'waiting_window';
     } else if (todayOnly.isAfter(window.end)) {
@@ -376,7 +386,9 @@ class MonthlyPayrollCalculator {
       now: now,
     );
 
-    final completedPeriods = allPeriods.where((p) => isPeriodCompleted(period: p, now: now)).toList();
+    final completedPeriods = allPeriods
+        .where((p) => isPeriodCompleted(period: p, now: now))
+        .toList();
 
     // A completed period is unpaid if there's no payroll log matching its start & end dates.
     final unpaidPeriods = completedPeriods.where((p) {
@@ -391,7 +403,8 @@ class MonthlyPayrollCalculator {
         } else {
           // Fallback to monthKey match for legacy records
           final String logMonthKey = log.monthKey; // Format: 'yyyy-MM'
-          final String expectedMonthKey = "${p.end.year}-${p.end.month.toString().padLeft(2, '0')}";
+          final String expectedMonthKey =
+              "${p.end.year}-${p.end.month.toString().padLeft(2, '0')}";
           return logMonthKey == expectedMonthKey;
         }
       });

@@ -229,12 +229,14 @@ class AppRoutes {
       },
       accessRestricted: (context) {
         final reason =
-            ModalRoute.of(context)?.settings.arguments as AccessRestrictionReason;
+            ModalRoute.of(context)?.settings.arguments
+                as AccessRestrictionReason;
         return AccessRestrictedScreen(reason: reason);
       },
       subscriptionExpired: (context) {
         final args =
-            ModalRoute.of(context)?.settings.arguments as SubscriptionExpiredArgs;
+            ModalRoute.of(context)?.settings.arguments
+                as SubscriptionExpiredArgs;
         return SubscriptionExpiredScreen(args: args);
       },
       addExpense: (_) => const AddExpenseScreen(),

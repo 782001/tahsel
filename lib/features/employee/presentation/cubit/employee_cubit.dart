@@ -168,7 +168,9 @@ class EmployeeCubit extends Cubit<EmployeeState> {
     result.fold(
       (failure) {
         if (failure is DuplicateAttendanceFailure) {
-          emit(EmployeeFailure(AppStrings.attendanceAlreadyRegisteredShort.tr()));
+          emit(
+            EmployeeFailure(AppStrings.attendanceAlreadyRegisteredShort.tr()),
+          );
         } else {
           emit(EmployeeFailure(failure.message));
         }
@@ -291,18 +293,18 @@ class EmployeeCubit extends Cubit<EmployeeState> {
       GetAdvancesParams(uid: uid, employeeId: employeeId, limit: 15),
     );
 
-    employeeResult.fold(
-      (failure) => emit(EmployeeFailure(failure.message)),
-      (employee) {
-        attendanceResult.fold((failure) => emit(EmployeeFailure(failure.message)), (
-          attendancePaginated,
-        ) {
-          payrollResult.fold((failure) => emit(EmployeeFailure(failure.message)), (
-            payrollPaginated,
-          ) async {
-            advanceResult.fold((failure) => emit(EmployeeFailure(failure.message)), (
-              advancePaginated,
-            ) async {
+    employeeResult.fold((failure) => emit(EmployeeFailure(failure.message)), (
+      employee,
+    ) {
+      attendanceResult.fold((failure) => emit(EmployeeFailure(failure.message)), (
+        attendancePaginated,
+      ) {
+        payrollResult.fold((failure) => emit(EmployeeFailure(failure.message)), (
+          payrollPaginated,
+        ) async {
+          advanceResult.fold(
+            (failure) => emit(EmployeeFailure(failure.message)),
+            (advancePaginated) async {
               // Logic to fetch more attendance if needed to calculate pending salaries
               List<AttendanceEntity> currentAttendance = List.from(
                 attendancePaginated.attendanceLogs,
@@ -317,8 +319,9 @@ class EmployeeCubit extends Cubit<EmployeeState> {
                     payrollPaginated.payrollLogs.first.paymentDate;
                 while (currentAttendance.isNotEmpty &&
                     (currentAttendance.last.checkIn ??
-                            DateFormat('yyyy-MM-dd')
-                                .parse(currentAttendance.last.date))
+                            DateFormat(
+                              'yyyy-MM-dd',
+                            ).parse(currentAttendance.last.date))
                         .isAfter(latestPaymentDate) &&
                     !hasReachedMaxAttendance) {
                   final extraResult = await getAttendanceUseCase(
@@ -357,15 +360,17 @@ class EmployeeCubit extends Cubit<EmployeeState> {
                   lastPayrollDoc: payrollPaginated.lastDoc,
                   lastAdvanceDoc: advancePaginated.lastDoc,
                   hasReachedMaxAttendance: hasReachedMaxAttendance,
-                  hasReachedMaxPayroll: payrollPaginated.payrollLogs.length < 15,
-                  hasReachedMaxAdvance: advancePaginated.advanceLogs.length < 15,
+                  hasReachedMaxPayroll:
+                      payrollPaginated.payrollLogs.length < 15,
+                  hasReachedMaxAdvance:
+                      advancePaginated.advanceLogs.length < 15,
                 ),
               );
-            });
-          });
+            },
+          );
         });
-      },
-    );
+      });
+    });
   }
 
   Future<void> loadMoreAttendance(String uid, String employeeId) async {

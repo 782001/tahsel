@@ -30,7 +30,7 @@ class _ReportsTimeRangeSelectorState extends State<ReportsTimeRangeSelector> {
     AppStrings.weekly,
     AppStrings.monthly,
   ];
-   final List<String> _tabsShop = [
+  final List<String> _tabsShop = [
     AppStrings.daily,
     AppStrings.weekly,
     AppStrings.monthly,
@@ -58,7 +58,7 @@ class _ReportsTimeRangeSelectorState extends State<ReportsTimeRangeSelector> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isShop = context.read<MainLayoutCubit>().isShop;
-          final tabs = isShop?_tabsShop:_tabsCafe;
+          final tabs = isShop ? _tabsShop : _tabsCafe;
           double tabWidth = (constraints.maxWidth) / tabs.length;
 
           return Stack(

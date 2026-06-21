@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
-import 'package:open_filex/open_filex.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
@@ -66,15 +65,21 @@ class UpdateRemoteDataSourceImpl implements UpdateRemoteDataSource {
     return null;
   }
 
- @override
+  /// Downloads and installs the update — **Windows only**.
+  /// Android and iOS redirect to the store via [openDownloadLink] instead.
+  @override
   Future<void> downloadAndInstall({
     required String url,
     required String fileName,
     required Function(double) onProgress,
   }) async {
-    final directory = Platform.isAndroid
-        ? await getExternalStorageDirectory()
-        : await getDownloadsDirectory();
+    // Safety guard: this method should only be reached on Windows.
+    if (!Platform.isWindows) {
+      await openDownloadLink(url);
+      return;
+    }
+
+    final directory = await getDownloadsDirectory();
     final filePath = "${directory!.path}/$fileName";
 
     await dio.download(
@@ -87,24 +92,18 @@ class UpdateRemoteDataSourceImpl implements UpdateRemoteDataSource {
       },
     );
 
-    if (Platform.isAndroid) {
-      await OpenFilex.open(filePath);
-    } else if (Platform.isWindows) {
-      // Open the folder and select the file
-      await Process.run('explorer.exe', [
-        '/select,',
-        filePath.replaceAll('/', '\\'),
-      ]);
-    }
+    // Open the folder in Explorer and highlight the downloaded file.
+    await Process.run('explorer.exe', [
+      '/select,',
+      filePath.replaceAll('/', '\\'),
+    ]);
   }
 
+  /// Opens [url] in the system browser / store app.
+  /// Used for Android (Google Play) and iOS (App Store) update links.
   @override
   Future<void> openDownloadLink(String url) async {
     final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      throw 'Could not launch $url';
-    }
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 }

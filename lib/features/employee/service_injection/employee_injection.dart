@@ -38,12 +38,20 @@ class EmployeeInjection {
     sl.registerLazySingleton(() => EditEmployeeUseCase(repository: sl()));
     sl.registerLazySingleton(() => GetEmployeesUseCase(repository: sl()));
     sl.registerLazySingleton(() => SearchEmployeesUseCase(repository: sl()));
-    sl.registerLazySingleton(() => CheckInUseCase(repository: sl(), guard: sl()));
-    sl.registerLazySingleton(() => CheckOutUseCase(repository: sl(), guard: sl()));
+    sl.registerLazySingleton(
+      () => CheckInUseCase(repository: sl(), guard: sl()),
+    );
+    sl.registerLazySingleton(
+      () => CheckOutUseCase(repository: sl(), guard: sl()),
+    );
     sl.registerLazySingleton(() => GetAttendanceUseCase(repository: sl()));
-    sl.registerLazySingleton(() => PaySalaryUseCase(repository: sl(), guard: sl()));
+    sl.registerLazySingleton(
+      () => PaySalaryUseCase(repository: sl(), guard: sl()),
+    );
     sl.registerLazySingleton(() => GetPayrollUseCase(repository: sl()));
-    sl.registerLazySingleton(() => RequestAdvanceUseCase(repository: sl(), guard: sl()));
+    sl.registerLazySingleton(
+      () => RequestAdvanceUseCase(repository: sl(), guard: sl()),
+    );
     sl.registerLazySingleton(() => GetAdvancesUseCase(repository: sl()));
     sl.registerLazySingleton(() => SettleAdvancesUseCase(repository: sl()));
     sl.registerLazySingleton(() => GetEmployeeUseCase(repository: sl()));

@@ -39,10 +39,7 @@ class EndPsSessionUseCase implements BaseUseCase<Unit, EndPsSessionParams> {
   final PsSessionRepository repository;
   final DebtRepository debtRepository;
 
-  EndPsSessionUseCase({
-    required this.repository,
-    required this.debtRepository,
-  });
+  EndPsSessionUseCase({required this.repository, required this.debtRepository});
 
   @override
   Future<Either<Failure, Unit>> call(EndPsSessionParams params) async {
@@ -55,33 +52,30 @@ class EndPsSessionUseCase implements BaseUseCase<Unit, EndPsSessionParams> {
       turnCount: params.turnCount,
     );
 
-    return await result.fold(
-      (failure) async => Left(failure),
-      (_) async {
-        // If there's remaining debt, create a debt record
-        final remaining = params.totalAmount - params.paidAmount;
-        if (remaining > 0) {
-          final debt = DebtEntity(
-            uid: params.uid,
-            operationId: params.sessionId,
-            totalAmount: params.totalAmount,
-            paidAmount: params.paidAmount,
-            remainingAmount: remaining,
-            customerName: params.customerName,
-            productOrSessionDetails: params.subType == 'time'
-                ? AppStrings.psSessionTime.tr()
-                : AppStrings.psSessionTurn.tr(),
-            operationType: AppStrings.playStation,
-            timestamp: params.endTime,
-            ledgerNumber: params.ledgerNumber,
-            phoneNumber: params.phoneNumber,
-            isPaid: false,
-          );
-          await debtRepository.addDebt(debt);
-        }
-        return const Right(unit);
-      },
-    );
+    return await result.fold((failure) async => Left(failure), (_) async {
+      // If there's remaining debt, create a debt record
+      final remaining = params.totalAmount - params.paidAmount;
+      if (remaining > 0) {
+        final debt = DebtEntity(
+          uid: params.uid,
+          operationId: params.sessionId,
+          totalAmount: params.totalAmount,
+          paidAmount: params.paidAmount,
+          remainingAmount: remaining,
+          customerName: params.customerName,
+          productOrSessionDetails: params.subType == 'time'
+              ? AppStrings.psSessionTime.tr()
+              : AppStrings.psSessionTurn.tr(),
+          operationType: AppStrings.playStation,
+          timestamp: params.endTime,
+          ledgerNumber: params.ledgerNumber,
+          phoneNumber: params.phoneNumber,
+          isPaid: false,
+        );
+        await debtRepository.addDebt(debt);
+      }
+      return const Right(unit);
+    });
   }
 }
 

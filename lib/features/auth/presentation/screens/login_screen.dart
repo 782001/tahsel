@@ -99,16 +99,16 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Center(
                       child: SingleChildScrollView(
                         padding: EdgeInsets.symmetric(
-                          horizontal:isDesktop?24: 24.w,
-                          vertical:isDesktop?48: 48.h,
+                          horizontal: isDesktop ? 24 : 24.w,
+                          vertical: isDesktop ? 48 : 48.h,
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             // Branding Area
                             Container(
-                              width:isDesktop?64: 64.w,
-                              height:isDesktop?64: 64.w,
+                              width: isDesktop ? 64 : 64.w,
+                              height: isDesktop ? 64 : 64.w,
                               decoration: BoxDecoration(
                                 color: AppColors.primaryColor,
                                 borderRadius: BorderRadius.circular(16.r),
@@ -122,8 +122,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               child: Image.asset(
                                 Assets.imagesAppLogo,
-                                width: isDesktop?35:32.w,
-                                height:isDesktop?35: 32.w,
+                                width: isDesktop ? 35 : 32.w,
+                                height: isDesktop ? 35 : 32.w,
                               ),
                             ),
                             SizedBox(height: 16.h),
@@ -135,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
-                            SizedBox(height: isDesktop?4:4.h),
+                            SizedBox(height: isDesktop ? 4 : 4.h),
                             Text(
                               AppStrings.loginSubtitle.tr(),
                               style: TextStyles.customStyle(
@@ -144,12 +144,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
-                            SizedBox(height: isDesktop?40:40.h),
+                            SizedBox(height: isDesktop ? 40 : 40.h),
 
                             // Login Card
                             Container(
                               width: double.infinity,
-                              padding: EdgeInsets.all(isDesktop?32:32.w),
+                              padding: EdgeInsets.all(isDesktop ? 32 : 32.w),
                               decoration: BoxDecoration(
                                 color:
                                     AppColors.scafoldBackGround ==
@@ -178,7 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                    SizedBox(height:isDesktop?24: 24.h),
+                                    SizedBox(height: isDesktop ? 24 : 24.h),
 
                                     // Email Field
                                     CustomTextFormField(
@@ -201,7 +201,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         return null;
                                       },
                                     ),
-                                    SizedBox(height: isDesktop?24:24.h),
+                                    SizedBox(height: isDesktop ? 24 : 24.h),
 
                                     // Password Field
                                     CustomTextFormField(
@@ -224,7 +224,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         return null;
                                       },
                                     ),
-                                    SizedBox(height: isDesktop?32:32.h),
+                                    SizedBox(height: isDesktop ? 32 : 32.h),
 
                                     // Login Button
                                     BlocConsumer<AuthCubit, AuthState>(
@@ -265,7 +265,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           },
                                           child: Container(
                                             width: double.infinity,
-                                            height:isDesktop?56: 56.h,
+                                            height: isDesktop ? 56 : 56.h,
                                             decoration: BoxDecoration(
                                               color: AppColors.primaryColor,
                                               borderRadius:
@@ -287,15 +287,19 @@ class _LoginScreenState extends State<LoginScreen> {
                                                   AppStrings.login.tr(),
                                                   style: TextStyles.customStyle(
                                                     color: Colors.white,
-                                                    fontSize:isDesktop?16: 16.sp,
+                                                    fontSize: isDesktop
+                                                        ? 16
+                                                        : 16.sp,
                                                     fontWeight: FontWeight.bold,
                                                   ),
                                                 ),
-                                                SizedBox(width:isDesktop?8: 8.w),
-                                                 Icon(
+                                                SizedBox(
+                                                  width: isDesktop ? 8 : 8.w,
+                                                ),
+                                                Icon(
                                                   Icons.arrow_forward,
                                                   color: Colors.white,
-                                                  size:isDesktop?20: 20.sp,
+                                                  size: isDesktop ? 20 : 20.sp,
                                                 ),
                                               ],
                                             ),
@@ -308,7 +312,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     // Contact Manager text
                                     Container(
                                       width: double.infinity,
-                                      padding: EdgeInsets.only(top:isDesktop?024: 24.h),
+                                      padding: EdgeInsets.only(
+                                        top: isDesktop ? 024 : 24.h,
+                                      ),
                                       decoration: BoxDecoration(
                                         border: Border(
                                           top: BorderSide(
@@ -330,20 +336,29 @@ class _LoginScreenState extends State<LoginScreen> {
                                             ),
                                           ),
                                           GestureDetector(
-                                           onTap: () async {
-                  final success = await WhatsAppService.sendMessage(
-                    phoneNumber: AppStrings.supportPhoneNumber,
-                    message:
-                        "مرحبا اريد الاشتراك في برنامج تحصيل",
-                  );
-                  if (mounted && !success) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(AppStrings.whatsappNotInstalled.tr()),
-                      ),
-                    );
-                  }
-                }, child: Text(
+                                            onTap: () async {
+                                              final success =
+                                                  await WhatsAppService.sendMessage(
+                                                    phoneNumber: AppStrings
+                                                        .supportPhoneNumber,
+                                                    message:
+                                                        "مرحبا اريد الاشتراك في برنامج تحصيل",
+                                                  );
+                                              if (mounted && !success) {
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      AppStrings
+                                                          .whatsappNotInstalled
+                                                          .tr(),
+                                                    ),
+                                                  ),
+                                                );
+                                              }
+                                            },
+                                            child: Text(
                                               AppStrings.contactManager.tr(),
                                               style:
                                                   TextStyles.customStyle(
@@ -364,7 +379,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                             ),
-                            SizedBox(height: isDesktop?32:32.h),
+                            SizedBox(height: isDesktop ? 32 : 32.h),
                           ],
                         ),
                       ),

@@ -41,7 +41,6 @@ class AppStrings {
   static const String notSet = 'not_set';
   static const String days = 'days';
 
-
   ///-----------------------------
   ///-----------------------------
   ///---------Language-------------
@@ -446,6 +445,9 @@ class AppStrings {
   static const String updateFailed = "update_failed";
   static const String updateReadyToInstall = "update_ready_to_install";
   static const String updateReadyToOpen = "update_ready_to_open";
+  static const String openStore = "open_store";
+  static const String openingStore = "opening_store";
+  static const String updateViaStore = "update_via_store";
   // Comparison Labels
   static const String earningsComparison = "earnings_comparison";
   static const String earningsToday = "earnings_today";
@@ -612,22 +614,27 @@ class AppStrings {
 
   // Payroll Period Statuses
   static const String payrollStatusInProgress = "payroll_status_in_progress";
-  static const String payrollStatusWaitingWindow = "payroll_status_waiting_window";
+  static const String payrollStatusWaitingWindow =
+      "payroll_status_waiting_window";
   static const String payrollStatusReady = "payroll_status_ready";
   static const String payrollStatusOverdue = "payroll_status_overdue";
 
   // Payroll Warnings
   static const String payrollInProgressWarning = "payroll_in_progress_warning";
-  static const String payrollWaitingWindowWarning = "payroll_waiting_window_warning";
+  static const String payrollWaitingWindowWarning =
+      "payroll_waiting_window_warning";
 
   // Employee Status Enforcement Warnings
   static const String employeeSuspended = "employee_suspended";
   static const String checkInNotAvailable = "check_in_not_available";
   static const String checkOutNotAvailable = "check_out_not_available";
-  static const String salaryPaymentNotAvailable = "salary_payment_not_available";
-  static const String advanceRequestNotAvailable = "advance_request_not_available";
+  static const String salaryPaymentNotAvailable =
+      "salary_payment_not_available";
+  static const String advanceRequestNotAvailable =
+      "advance_request_not_available";
   static const String employeeInactive = "employee_inactive";
-  static const String operationNotAvailableForInactive = "operation_not_available_for_inactive";
+  static const String operationNotAvailableForInactive =
+      "operation_not_available_for_inactive";
 
   // PlayStation Session Tracking
   static const String startSession = "start_session";
@@ -647,9 +654,12 @@ class AppStrings {
   static const String sessionCalculatedAmount = "session_calculated_amount";
   static const String validationDeviceOccupied = "validation_device_occupied";
   static const String validationRoomOccupied = "validation_room_occupied";
-  static const String validationDeviceOrRoomRequired = "validation_device_or_room_required";
+  static const String validationDeviceOrRoomRequired =
+      "validation_device_or_room_required";
 
   // Attendance Duplicate Prevention
-  static const String attendanceAlreadyRegistered = "attendance_already_registered";
-  static const String attendanceAlreadyRegisteredShort = "attendance_already_registered_short";
+  static const String attendanceAlreadyRegistered =
+      "attendance_already_registered";
+  static const String attendanceAlreadyRegisteredShort =
+      "attendance_already_registered_short";
 }

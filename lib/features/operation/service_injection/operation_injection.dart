@@ -38,9 +38,11 @@ Future<void> initOperation() async {
     ),
   );
   sl.registerLazySingleton(() => CalculateRemainingDebtUseCase());
-  
+
   sl.registerLazySingleton(() => StartPsSessionUseCase(repository: sl()));
-  sl.registerLazySingleton(() => EndPsSessionUseCase(repository: sl(), debtRepository: sl()));
+  sl.registerLazySingleton(
+    () => EndPsSessionUseCase(repository: sl(), debtRepository: sl()),
+  );
   sl.registerLazySingleton(() => GetActiveSessionsUseCase(repository: sl()));
 
   // Repository
@@ -72,4 +74,3 @@ Future<void> initOperation() async {
     sl.registerLazySingleton(() => FirebaseFirestore.instance);
   }
 }
-

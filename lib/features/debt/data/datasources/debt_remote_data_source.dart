@@ -132,7 +132,9 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           .where(FieldPath.documentId, isLessThanOrEqualTo: 'monthly_\uf8ff')
           .get();
 
-      final List<Future<MonthlyCollectedAmount?>> futures = snapshot.docs.map((doc) async {
+      final List<Future<MonthlyCollectedAmount?>> futures = snapshot.docs.map((
+        doc,
+      ) async {
         final data = doc.data();
         final docId = doc.id; // e.g. "monthly_2024-05"
         final parts = docId.split('_');
@@ -147,8 +149,9 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         // Smart Caching with Self-Healing: check if cached totalCollected is available and already healed
         final now = DateTime.now();
         final isCurrentMonth = (now.year == year && now.month == month);
-        
-        final cachedVal = data.containsKey('totalCollected') && data['totalCollected'] != null
+
+        final cachedVal =
+            data.containsKey('totalCollected') && data['totalCollected'] != null
             ? (data['totalCollected'] as num).toDouble()
             : null;
         final isHealed = data['isHealed'] == true;
@@ -184,8 +187,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             final type = paymentDoc.data()['type'] as String?;
             if (type == 'full' || type == 'partial' || type == 'settlement') {
               computedSum +=
-                  (paymentDoc.data()['amountPaid'] as num?)?.toDouble() ??
-                  0.0;
+                  (paymentDoc.data()['amountPaid'] as num?)?.toDouble() ?? 0.0;
             }
           }
 
@@ -207,7 +209,9 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         );
       }).toList();
 
-      final List<MonthlyCollectedAmount?> resultsWithNulls = await Future.wait(futures);
+      final List<MonthlyCollectedAmount?> resultsWithNulls = await Future.wait(
+        futures,
+      );
       final List<MonthlyCollectedAmount> results = resultsWithNulls
           .whereType<MonthlyCollectedAmount>()
           .toList();
@@ -484,11 +488,14 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
         void addSummaryIncrement(String key, String field, double value) {
           summaryAccumulator.putIfAbsent(key, () => {});
-          summaryAccumulator[key]![field] = (summaryAccumulator[key]![field] ?? 0.0) + value;
+          summaryAccumulator[key]![field] =
+              (summaryAccumulator[key]![field] ?? 0.0) + value;
         }
 
         // Debt metrics are grouped by debt creation date
-        final debtKeys = SummaryHelper.getSummaryKeys(debt.timestamp ?? DateTime.now());
+        final debtKeys = SummaryHelper.getSummaryKeys(
+          debt.timestamp ?? DateTime.now(),
+        );
         for (final key in debtKeys) {
           addSummaryIncrement(key, 'totalDebts', -payment.amountPaid);
           addSummaryIncrement(key, 'unpaidDebts', -payment.amountPaid);
@@ -568,7 +575,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
         void addSummaryIncrement(String key, String field, double value) {
           summaryAccumulator.putIfAbsent(key, () => {});
-          summaryAccumulator[key]![field] = (summaryAccumulator[key]![field] ?? 0.0) + value;
+          summaryAccumulator[key]![field] =
+              (summaryAccumulator[key]![field] ?? 0.0) + value;
         }
 
         for (var docSnap in snapshot.docs) {
@@ -632,7 +640,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
           // Accumulate summary updates:
           // 1. Debt metrics are grouped by debt creation date
-          final debtTimestamp = (debtData['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+          final debtTimestamp =
+              (debtData['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
           final debtKeys = SummaryHelper.getSummaryKeys(debtTimestamp);
           for (final key in debtKeys) {
             addSummaryIncrement(key, 'totalDebts', -paymentForThisItem);
@@ -717,7 +726,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
         void addSummaryIncrement(String key, String field, double value) {
           summaryAccumulator.putIfAbsent(key, () => {});
-          summaryAccumulator[key]![field] = (summaryAccumulator[key]![field] ?? 0.0) + value;
+          summaryAccumulator[key]![field] =
+              (summaryAccumulator[key]![field] ?? 0.0) + value;
         }
 
         for (var docSnap in snapshot.docs) {
@@ -765,7 +775,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
           // Accumulate summary updates:
           // 1. Debt metrics are grouped by debt creation date
-          final debtTimestamp = (debtData['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+          final debtTimestamp =
+              (debtData['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
           final debtKeys = SummaryHelper.getSummaryKeys(debtTimestamp);
           for (final key in debtKeys) {
             addSummaryIncrement(key, 'totalDebts', -amountToPay);
@@ -828,7 +839,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
       void addSummaryIncrement(String key, String field, double value) {
         summaryUpdates.putIfAbsent(key, () => {});
-        summaryUpdates[key]![field] = (summaryUpdates[key]![field] ?? 0.0) + value;
+        summaryUpdates[key]![field] =
+            (summaryUpdates[key]![field] ?? 0.0) + value;
       }
 
       // 1. Pre-calculate if there are any unpaid debts for this customer
@@ -869,8 +881,11 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
           final paymentData = paymentDoc.data();
           final type = paymentData['type'] as String?;
-          final amountPaid = (paymentData['amountPaid'] as num?)?.toDouble() ?? 0.0;
-          final paymentCreatedAt = (paymentData['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+          final amountPaid =
+              (paymentData['amountPaid'] as num?)?.toDouble() ?? 0.0;
+          final paymentCreatedAt =
+              (paymentData['createdAt'] as Timestamp?)?.toDate() ??
+              DateTime.now();
 
           // Decrement totalCollected using actual payment documents and their timestamps
           if (type == 'full' || type == 'partial' || type == 'settlement') {
@@ -1004,7 +1019,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
       void addSummaryIncrement(String key, String field, double value) {
         summaryAccumulator.putIfAbsent(key, () => {});
-        summaryAccumulator[key]![field] = (summaryAccumulator[key]![field] ?? 0.0) + value;
+        summaryAccumulator[key]![field] =
+            (summaryAccumulator[key]![field] ?? 0.0) + value;
       }
 
       // Debt metrics are decremented using the debt's original creation timestamp
@@ -1022,8 +1038,11 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
       for (var paymentDoc in paymentsSnapshot.docs) {
         final paymentData = paymentDoc.data();
         final type = paymentData['type'] as String?;
-        final amountPaid = (paymentData['amountPaid'] as num?)?.toDouble() ?? 0.0;
-        final paymentCreatedAt = (paymentData['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+        final amountPaid =
+            (paymentData['amountPaid'] as num?)?.toDouble() ?? 0.0;
+        final paymentCreatedAt =
+            (paymentData['createdAt'] as Timestamp?)?.toDate() ??
+            DateTime.now();
 
         if (type == 'full' || type == 'partial' || type == 'settlement') {
           final paymentKeys = SummaryHelper.getSummaryKeys(paymentCreatedAt);
@@ -1219,7 +1238,9 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             .get();
         unpaidDebtsCount = unpaidSnapshot.docs.length;
         wasCustomerFullyPaid = unpaidSnapshot.docs.isEmpty;
-        isThisDebtInUnpaidList = unpaidSnapshot.docs.any((doc) => doc.id == debtId);
+        isThisDebtInUnpaidList = unpaidSnapshot.docs.any(
+          (doc) => doc.id == debtId,
+        );
       }
 
       await firestore.runTransaction((transaction) async {
@@ -1274,7 +1295,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         // Compute new values
         final currentTotal = (debtData['totalAmount'] as num).toDouble();
         final currentPaid = (debtData['paidAmount'] as num).toDouble();
-        final currentRemaining = (debtData['remainingAmount'] as num).toDouble();
+        final currentRemaining = (debtData['remainingAmount'] as num)
+            .toDouble();
         final originalIsPaid = (debtData['isPaid'] as bool?) ?? false;
 
         double newTotalAmount = currentTotal;
@@ -1334,13 +1356,16 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
         void addSummaryIncrement(String key, String field, double value) {
           summaryAccumulator.putIfAbsent(key, () => {});
-          summaryAccumulator[key]![field] = (summaryAccumulator[key]![field] ?? 0.0) + value;
+          summaryAccumulator[key]![field] =
+              (summaryAccumulator[key]![field] ?? 0.0) + value;
         }
 
         final double summaryDelta = relatedTo == 'debt' ? delta : -delta;
 
         // Debt metrics are grouped by debt creation date
-        final debtTimestamp = (debtSnap.data()?['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+        final debtTimestamp =
+            (debtSnap.data()?['timestamp'] as Timestamp?)?.toDate() ??
+            DateTime.now();
         final debtKeys = SummaryHelper.getSummaryKeys(debtTimestamp);
         for (final key in debtKeys) {
           addSummaryIncrement(key, 'totalDebts', summaryDelta);
@@ -1364,7 +1389,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           }
         } else if (!originalIsPaid && newIsPaid) {
           // Unpaid to paid: check if customer became fully paid
-          final bool becameFullyPaid = unpaidDebtsCount == 1 && isThisDebtInUnpaidList;
+          final bool becameFullyPaid =
+              unpaidDebtsCount == 1 && isThisDebtInUnpaidList;
           if (becameFullyPaid) {
             final nowKeys = SummaryHelper.getSummaryKeys(DateTime.now());
             for (final key in nowKeys) {
@@ -1475,7 +1501,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         // Calculate new values
         final currentTotal = (debtData['totalAmount'] as num).toDouble();
         final currentPaid = (debtData['paidAmount'] as num).toDouble();
-        final currentRemaining = (debtData['remainingAmount'] as num).toDouble();
+        final currentRemaining = (debtData['remainingAmount'] as num)
+            .toDouble();
         final originalIsPaid = (debtData['isPaid'] as bool?) ?? false;
         final amountToDelete = targetPayment.amountPaid;
 
@@ -1536,7 +1563,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
         void addSummaryIncrement(String key, String field, double value) {
           summaryAccumulator.putIfAbsent(key, () => {});
-          summaryAccumulator[key]![field] = (summaryAccumulator[key]![field] ?? 0.0) + value;
+          summaryAccumulator[key]![field] =
+              (summaryAccumulator[key]![field] ?? 0.0) + value;
         }
 
         final double summaryDelta = relatedTo == 'debt'
@@ -1544,7 +1572,9 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             : amountToDelete;
 
         // Debt metrics are grouped by debt creation date
-        final debtTimestamp = (debtSnap.data()?['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+        final debtTimestamp =
+            (debtSnap.data()?['timestamp'] as Timestamp?)?.toDate() ??
+            DateTime.now();
         final debtKeys = SummaryHelper.getSummaryKeys(debtTimestamp);
         for (final key in debtKeys) {
           addSummaryIncrement(key, 'totalDebts', summaryDelta);

@@ -617,7 +617,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             const SizedBox(height: 32),
                             ActiveSessionsList(
-                              sessions: context.watch<PsSessionCubit>().activeSessions,
+                              sessions: context
+                                  .watch<PsSessionCubit>()
+                                  .activeSessions,
                             ),
                           ] else ...[
                             // PS Mode Sub-tabs (only for Turn mode since PsSessionForm has it internally for Time mode)
@@ -725,8 +727,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           QuickActionButton(
                             label: AppStrings.confirmOperation.tr(),
                             icon: Icons.check_circle_outline,
-                            onPressed: (state is OperationLoading ||
-                                    context.watch<DebtCubit>().state is DebtLoading)
+                            onPressed:
+                                (state is OperationLoading ||
+                                    context.watch<DebtCubit>().state
+                                        is DebtLoading)
                                 ? null
                                 : () => _submitOperation(context),
                           ),
@@ -754,7 +758,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       context.watch<DebtCubit>().state is DebtLoading ||
                       (_selectedMode == QuickAddMode.playStation &&
                           _psSubMode == PlayStationMode.time &&
-                          context.watch<PsSessionCubit>().state is PsSessionLoading))
+                          context.watch<PsSessionCubit>().state
+                              is PsSessionLoading))
                     Container(
                       color: Colors.black.withValues(alpha: 0.3),
                       child: Center(

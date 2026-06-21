@@ -22,6 +22,9 @@ class UpdateInstalled extends UpdateState {}
 
 class UpdateRedirected extends UpdateState {}
 
+/// Emitted while the app is launching the store URL (Play Store / App Store).
+class UpdateRedirectingToStore extends UpdateState {}
+
 class UpdateError extends UpdateState {
   final String message;
   UpdateError(this.message);

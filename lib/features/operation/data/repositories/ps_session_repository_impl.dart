@@ -38,8 +38,11 @@ class PsSessionRepositoryImpl implements PsSessionRepository {
       'subType': session.subType,
       'rate': session.rate,
       'startTime': session.startTime.toIso8601String(),
-      if (session.endTime != null) 'endTime': session.endTime!.toIso8601String(),
-      'status': session.status == PsSessionStatus.completed ? 'completed' : 'active',
+      if (session.endTime != null)
+        'endTime': session.endTime!.toIso8601String(),
+      'status': session.status == PsSessionStatus.completed
+          ? 'completed'
+          : 'active',
       'totalAmount': session.totalAmount,
       'paidAmount': session.paidAmount,
       'remainingDebt': session.remainingDebt,
@@ -56,17 +59,25 @@ class PsSessionRepositoryImpl implements PsSessionRepository {
       if (jsonStr != null) {
         try {
           final jsonMap = jsonDecode(jsonStr) as Map<String, dynamic>;
-          jsonMap['startTime'] = Timestamp.fromDate(DateTime.parse(jsonMap['startTime']));
+          jsonMap['startTime'] = Timestamp.fromDate(
+            DateTime.parse(jsonMap['startTime']),
+          );
           if (jsonMap['endTime'] != null) {
-            jsonMap['endTime'] = Timestamp.fromDate(DateTime.parse(jsonMap['endTime']));
+            jsonMap['endTime'] = Timestamp.fromDate(
+              DateTime.parse(jsonMap['endTime']),
+            );
           }
           if (jsonMap['createdAt'] != null) {
-            jsonMap['createdAt'] = Timestamp.fromDate(DateTime.parse(jsonMap['createdAt']));
+            jsonMap['createdAt'] = Timestamp.fromDate(
+              DateTime.parse(jsonMap['createdAt']),
+            );
           }
           final session = PsSessionModel.fromJson(jsonMap, key as String);
           list.add(session);
         } catch (e) {
-          AppLogger.printMessage("[PsSessionRepo] Error decoding local session $key: $e");
+          AppLogger.printMessage(
+            "[PsSessionRepo] Error decoding local session $key: $e",
+          );
         }
       }
     }
@@ -74,13 +85,12 @@ class PsSessionRepositoryImpl implements PsSessionRepository {
   }
 
   @override
-  Future<Either<Failure, String>> startSession(
-    PsSessionEntity session,
-  ) async {
+  Future<Either<Failure, String>> startSession(PsSessionEntity session) async {
     try {
       // 1. Generate localId
       final transactionDate = session.createdAt;
-      final fingerprint = '${session.uid}_${session.deviceId}_${session.roomId}_${transactionDate.millisecondsSinceEpoch}';
+      final fingerprint =
+          '${session.uid}_${session.deviceId}_${session.roomId}_${transactionDate.millisecondsSinceEpoch}';
       final localId = 'sess_${fingerprint.hashCode.toString()}';
 
       final sessionWithId = session.copyWith(id: localId);
@@ -104,18 +114,17 @@ class PsSessionRepositoryImpl implements PsSessionRepository {
         collectionName: 'users/${session.uid}/ps_sessions',
       );
 
-      final saveResult = await offlineSyncRepository.saveOfflineRecord(offlineRecord);
-
-      return saveResult.fold(
-        (failure) => Left(failure),
-        (_) async {
-          final hasConnection = await connectionChecker.hasConnection;
-          if (hasConnection) {
-            await offlineSyncRepository.syncSingleRecord(offlineRecord);
-          }
-          return Right(localId);
-        },
+      final saveResult = await offlineSyncRepository.saveOfflineRecord(
+        offlineRecord,
       );
+
+      return saveResult.fold((failure) => Left(failure), (_) async {
+        final hasConnection = await connectionChecker.hasConnection;
+        if (hasConnection) {
+          await offlineSyncRepository.syncSingleRecord(offlineRecord);
+        }
+        return Right(localId);
+      });
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -173,18 +182,17 @@ class PsSessionRepositoryImpl implements PsSessionRepository {
         collectionName: 'users/$uid/ps_sessions',
       );
 
-      final saveResult = await offlineSyncRepository.saveOfflineRecord(offlineRecord);
-
-      return saveResult.fold(
-        (failure) => Left(failure),
-        (_) async {
-          final hasConnection = await connectionChecker.hasConnection;
-          if (hasConnection) {
-            await offlineSyncRepository.syncSingleRecord(offlineRecord);
-          }
-          return const Right(unit);
-        },
+      final saveResult = await offlineSyncRepository.saveOfflineRecord(
+        offlineRecord,
       );
+
+      return saveResult.fold((failure) => Left(failure), (_) async {
+        final hasConnection = await connectionChecker.hasConnection;
+        if (hasConnection) {
+          await offlineSyncRepository.syncSingleRecord(offlineRecord);
+        }
+        return const Right(unit);
+      });
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -198,22 +206,20 @@ class PsSessionRepositoryImpl implements PsSessionRepository {
       final localBox = await _activeSessionsBox;
 
       // Fetch pending ended session IDs from offline records to filter them out
-      final pendingRecordsResult = await offlineSyncRepository.getPendingRecords();
+      final pendingRecordsResult = await offlineSyncRepository
+          .getPendingRecords();
       final pendingEndIds = <String>{};
-      pendingRecordsResult.fold(
-        (_) {},
-        (records) {
-          for (final record in records) {
-            if (record.type == 'ps_session_end') {
-              // End records use key format "${sessionId}_end" — extract base sessionId
-              final baseId = record.id.endsWith('_end')
-                  ? record.id.substring(0, record.id.length - 4)
-                  : record.id;
-              pendingEndIds.add(baseId);
-            }
+      pendingRecordsResult.fold((_) {}, (records) {
+        for (final record in records) {
+          if (record.type == 'ps_session_end') {
+            // End records use key format "${sessionId}_end" — extract base sessionId
+            final baseId = record.id.endsWith('_end')
+                ? record.id.substring(0, record.id.length - 4)
+                : record.id;
+            pendingEndIds.add(baseId);
           }
-        },
-      );
+        }
+      });
 
       final hasConnection = await connectionChecker.hasConnection;
       if (hasConnection) {
@@ -246,7 +252,9 @@ class PsSessionRepositoryImpl implements PsSessionRepository {
 
           return Right(finalSessions);
         } catch (e) {
-          AppLogger.printMessage("[PsSessionRepo] Remote fetch failed, falling back to local cache: $e");
+          AppLogger.printMessage(
+            "[PsSessionRepo] Remote fetch failed, falling back to local cache: $e",
+          );
           final localSessions = _getLocalSessions(localBox);
           final finalSessions = localSessions
               .where((s) => !pendingEndIds.contains(s.id))
@@ -275,7 +283,10 @@ class PsSessionRepositoryImpl implements PsSessionRepository {
       final hasConnection = await connectionChecker.hasConnection;
       if (hasConnection) {
         try {
-          final remoteSession = await remoteDataSource.getSessionById(uid, sessionId);
+          final remoteSession = await remoteDataSource.getSessionById(
+            uid,
+            sessionId,
+          );
           if (remoteSession != null) {
             return Right(remoteSession);
           }
@@ -287,12 +298,18 @@ class PsSessionRepositoryImpl implements PsSessionRepository {
       final jsonStr = localBox.get(sessionId);
       if (jsonStr != null) {
         final jsonMap = jsonDecode(jsonStr) as Map<String, dynamic>;
-        jsonMap['startTime'] = Timestamp.fromDate(DateTime.parse(jsonMap['startTime']));
+        jsonMap['startTime'] = Timestamp.fromDate(
+          DateTime.parse(jsonMap['startTime']),
+        );
         if (jsonMap['endTime'] != null) {
-          jsonMap['endTime'] = Timestamp.fromDate(DateTime.parse(jsonMap['endTime']));
+          jsonMap['endTime'] = Timestamp.fromDate(
+            DateTime.parse(jsonMap['endTime']),
+          );
         }
         if (jsonMap['createdAt'] != null) {
-          jsonMap['createdAt'] = Timestamp.fromDate(DateTime.parse(jsonMap['createdAt']));
+          jsonMap['createdAt'] = Timestamp.fromDate(
+            DateTime.parse(jsonMap['createdAt']),
+          );
         }
         final session = PsSessionModel.fromJson(jsonMap, sessionId);
         return Right(session);

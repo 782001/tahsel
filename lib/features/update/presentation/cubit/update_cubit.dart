@@ -34,7 +34,22 @@ class UpdateCubit extends Cubit<UpdateState> {
   }
 
   Future<void> startUpdate(AppVersionModel versionInfo) async {
-    final extension = Platform.isAndroid ? 'apk' : 'zip';
+    // Android & iOS: open the store link directly (Play Store / App Store)
+    if (Platform.isAndroid || Platform.isIOS) {
+      try {
+        emit(UpdateRedirectingToStore());
+        await _downloadUpdateUseCase.openDownloadLink(versionInfo.downloadUrl);
+        emit(
+          UpdateAvailable(versionInfo),
+        ); // return to available so dialog stays open
+      } catch (e) {
+        emit(UpdateError(e.toString()));
+      }
+      return;
+    }
+
+    // Windows: download the binary and open installer as before
+    final extension = 'zip';
     final fileName = "tahsel-${versionInfo.versionName}.$extension";
 
     emit(UpdateDownloading(0));

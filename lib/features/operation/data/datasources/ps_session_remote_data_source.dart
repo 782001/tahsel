@@ -69,8 +69,9 @@ class PsSessionRemoteDataSourceImpl implements PsSessionRemoteDataSource {
 
       final sessionData = sessionDoc.data()!;
       final session = PsSessionModel.fromJson(sessionData, sessionId);
-      final remainingDebt =
-          (totalAmount - paidAmount) > 0 ? (totalAmount - paidAmount) : 0.0;
+      final remainingDebt = (totalAmount - paidAmount) > 0
+          ? (totalAmount - paidAmount)
+          : 0.0;
 
       final batch = firestore.batch();
 
@@ -146,10 +147,7 @@ class PsSessionRemoteDataSourceImpl implements PsSessionRemoteDataSource {
   }
 
   @override
-  Future<PsSessionModel?> getSessionById(
-    String uid,
-    String sessionId,
-  ) async {
+  Future<PsSessionModel?> getSessionById(String uid, String sessionId) async {
     try {
       final doc = await _sessionsRef(uid).doc(sessionId).get();
       if (doc.exists) {

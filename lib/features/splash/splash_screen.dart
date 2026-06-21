@@ -150,8 +150,8 @@ class _SplashScreenState extends State<SplashScreen>
       final subscriptionEnd = data['subscriptionEnd'] != null
           ? (data['subscriptionEnd'] as Timestamp).toDate()
           : null;
-          final email = data['email'] as String? ?? '';
-          final fullName = data['fullName'] as String? ?? '';
+      final email = data['email'] as String? ?? '';
+      final fullName = data['fullName'] as String? ?? '';
       final gracePeriodEnd = subscriptionEnd?.add(const Duration(days: 10));
       final now = DateTime.now();
 

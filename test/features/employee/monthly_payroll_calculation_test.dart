@@ -61,7 +61,10 @@ void main() {
         expect(result['pendingDeductions'], 0.0);
         expect(result['netSalary'], 0.0);
         expect(result['attendedDays'], 0);
-        expect(result['absentDays'], 30.0); // Derived: 30 days in period - 0 worked
+        expect(
+          result['absentDays'],
+          30.0,
+        ); // Derived: 30 days in period - 0 worked
         expect(result['unpaidDays'], 0.0); // Zeroed since workedDays == 0
       },
     );
@@ -77,28 +80,26 @@ void main() {
         // baseAmount = 6000.0. dailyHours = 8.0. period days = 30.
         // overtimeHourlyRate = 6000.0 / (30 * 8.0) * 1.5 = 25.0 * 1.5 = 37.5.
         // Expected overtime compensation = 16.0 * 37.5 = 600.0.
-        final logs = List.generate(
-          28,
-          (index) {
-            // Reference date is 2026-05-10, so period starts 2026-04-26 and ends 2026-05-25.
-            final day = index < 5 ? (26 + index) : (index - 4);
-            final month = index < 5 ? 4 : 5;
-            final dateStr = '2026-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
-            return AttendanceEntity(
-              id: 'att_$index',
-              employeeId: 'emp1',
-              employeeName: 'John Doe',
-              uid: 'user123',
-              checkIn: DateTime(2026, month, day, 9, 0),
-              checkOut: DateTime(2026, month, day, 17, 0),
-              date: dateStr,
-              status: 'present',
-              overtimeHours: 0.0,
-              lateMinutes: 0,
-              notes: '',
-            );
-          },
-        );
+        final logs = List.generate(28, (index) {
+          // Reference date is 2026-05-10, so period starts 2026-04-26 and ends 2026-05-25.
+          final day = index < 5 ? (26 + index) : (index - 4);
+          final month = index < 5 ? 4 : 5;
+          final dateStr =
+              '2026-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+          return AttendanceEntity(
+            id: 'att_$index',
+            employeeId: 'emp1',
+            employeeName: 'John Doe',
+            uid: 'user123',
+            checkIn: DateTime(2026, month, day, 9, 0),
+            checkOut: DateTime(2026, month, day, 17, 0),
+            date: dateStr,
+            status: 'present',
+            overtimeHours: 0.0,
+            lateMinutes: 0,
+            notes: '',
+          );
+        });
 
         final result = MonthlyPayrollCalculator.calculate(
           employee: monthlyEmployee,
@@ -129,27 +130,25 @@ void main() {
         // Expected absence deduction = 2 * 200.0 * 1.5 = 600.0.
         // Unused weekends = 0.
         // Overtime hours = 0.
-        final logs = List.generate(
-          24,
-          (index) {
-            final day = index < 5 ? (26 + index) : (index - 4);
-            final month = index < 5 ? 4 : 5;
-            final dateStr = '2026-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
-            return AttendanceEntity(
-              id: 'att_$index',
-              employeeId: 'emp1',
-              employeeName: 'John Doe',
-              uid: 'user123',
-              checkIn: DateTime(2026, month, day, 9, 0),
-              checkOut: DateTime(2026, month, day, 17, 0),
-              date: dateStr,
-              status: 'present',
-              overtimeHours: 0.0,
-              lateMinutes: 0,
-              notes: '',
-            );
-          },
-        );
+        final logs = List.generate(24, (index) {
+          final day = index < 5 ? (26 + index) : (index - 4);
+          final month = index < 5 ? 4 : 5;
+          final dateStr =
+              '2026-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+          return AttendanceEntity(
+            id: 'att_$index',
+            employeeId: 'emp1',
+            employeeName: 'John Doe',
+            uid: 'user123',
+            checkIn: DateTime(2026, month, day, 9, 0),
+            checkOut: DateTime(2026, month, day, 17, 0),
+            date: dateStr,
+            status: 'present',
+            overtimeHours: 0.0,
+            lateMinutes: 0,
+            notes: '',
+          );
+        });
 
         final result = MonthlyPayrollCalculator.calculate(
           employee: monthlyEmployee,
@@ -190,27 +189,25 @@ void main() {
         );
 
         // Employee attended all 30 days
-        final logs = List.generate(
-          30,
-          (index) {
-            final day = index < 5 ? (26 + index) : (index - 4);
-            final month = index < 5 ? 4 : 5;
-            final dateStr = '2026-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
-            return AttendanceEntity(
-              id: 'att_$index',
-              employeeId: 'emp1',
-              employeeName: 'John Doe',
-              uid: 'user123',
-              checkIn: DateTime(2026, month, day, 9, 0),
-              checkOut: DateTime(2026, month, day, 17, 0),
-              date: dateStr,
-              status: 'present',
-              overtimeHours: 0.0,
-              lateMinutes: 0,
-              notes: '',
-            );
-          },
-        );
+        final logs = List.generate(30, (index) {
+          final day = index < 5 ? (26 + index) : (index - 4);
+          final month = index < 5 ? 4 : 5;
+          final dateStr =
+              '2026-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+          return AttendanceEntity(
+            id: 'att_$index',
+            employeeId: 'emp1',
+            employeeName: 'John Doe',
+            uid: 'user123',
+            checkIn: DateTime(2026, month, day, 9, 0),
+            checkOut: DateTime(2026, month, day, 17, 0),
+            date: dateStr,
+            status: 'present',
+            overtimeHours: 0.0,
+            lateMinutes: 0,
+            notes: '',
+          );
+        });
 
         // Absences = 0. Allowed paid weekends = 4. Unused weekends = 4 days.
         // Weekend bonus hours = 4 * 8.0 = 32.0 hours.
@@ -233,75 +230,70 @@ void main() {
       },
     );
 
-    test(
-      'Should handle custom overtime and custom deduction rate overrides',
-      () {
-        final customEmployee = EmployeeEntity(
-          id: 'emp1',
+    test('Should handle custom overtime and custom deduction rate overrides', () {
+      final customEmployee = EmployeeEntity(
+        id: 'emp1',
+        uid: 'user123',
+        name: 'John Doe',
+        phone: '123456',
+        role: 'Engineer',
+        salaryAmount: 6000.0,
+        salaryType: 'monthly',
+        status: 'active',
+        createdAt: DateTime(2026, 1, 1),
+        notes: '',
+        allowedPaidWeekendsPerMonth: 4,
+        dailyDeductionMultiplier: 1.5,
+        expectedDailyHours: 8.0,
+        overtimeMultiplier: 1.5,
+        outstandingBalance: 0.0,
+        customOvertimeRate: 50.0,
+        customDeductionRate: 30.0,
+      );
+
+      // Attended 30 days, first record has 2 hours overtime and 1.5 deduction hours.
+      final logs = List.generate(30, (index) {
+        final day = index < 5 ? (26 + index) : (index - 4);
+        final month = index < 5 ? 4 : 5;
+        final dateStr =
+            '2026-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+        return AttendanceEntity(
+          id: 'att_$index',
+          employeeId: 'emp1',
+          employeeName: 'John Doe',
           uid: 'user123',
-          name: 'John Doe',
-          phone: '123456',
-          role: 'Engineer',
-          salaryAmount: 6000.0,
-          salaryType: 'monthly',
-          status: 'active',
-          createdAt: DateTime(2026, 1, 1),
+          checkIn: DateTime(2026, month, day, 9, 0),
+          checkOut: DateTime(2026, month, day, 17, 0),
+          date: dateStr,
+          status: 'present',
+          overtimeHours: index == 0 ? 2.0 : 0.0,
+          lateMinutes: 0,
           notes: '',
-          allowedPaidWeekendsPerMonth: 4,
-          dailyDeductionMultiplier: 1.5,
-          expectedDailyHours: 8.0,
-          overtimeMultiplier: 1.5,
-          outstandingBalance: 0.0,
-          customOvertimeRate: 50.0,
-          customDeductionRate: 30.0,
+          deductionHours: index == 0 ? 1.5 : 0.0,
         );
+      });
 
-        // Attended 30 days, first record has 2 hours overtime and 1.5 deduction hours.
-        final logs = List.generate(
-          30,
-          (index) {
-            final day = index < 5 ? (26 + index) : (index - 4);
-            final month = index < 5 ? 4 : 5;
-            final dateStr = '2026-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
-            return AttendanceEntity(
-              id: 'att_$index',
-              employeeId: 'emp1',
-              employeeName: 'John Doe',
-              uid: 'user123',
-              checkIn: DateTime(2026, month, day, 9, 0),
-              checkOut: DateTime(2026, month, day, 17, 0),
-              date: dateStr,
-              status: 'present',
-              overtimeHours: index == 0 ? 2.0 : 0.0,
-              lateMinutes: 0,
-              notes: '',
-              deductionHours: index == 0 ? 1.5 : 0.0,
-            );
-          },
-        );
+      // Unused weekends = 4.
+      // Weekend bonus hours = 4 * 8 = 32 hours.
+      // Total overtime hours = 2.0 (actual) + 32.0 (weekend) = 34.0 hours.
+      // Overtime comp = 34.0 * 50.0 (custom rate) = 1700.0.
+      // Deductions = 1.5 hours * 30.0 (custom rate) = 45.0.
+      // Net salary = 6000.0 + 1700.0 - 45.0 = 7655.0.
+      final result = MonthlyPayrollCalculator.calculate(
+        employee: customEmployee,
+        attendanceLogs: logs,
+        referenceDate: DateTime(2026, 5, 10),
+      );
 
-        // Unused weekends = 4.
-        // Weekend bonus hours = 4 * 8 = 32 hours.
-        // Total overtime hours = 2.0 (actual) + 32.0 (weekend) = 34.0 hours.
-        // Overtime comp = 34.0 * 50.0 (custom rate) = 1700.0.
-        // Deductions = 1.5 hours * 30.0 (custom rate) = 45.0.
-        // Net salary = 6000.0 + 1700.0 - 45.0 = 7655.0.
-        final result = MonthlyPayrollCalculator.calculate(
-          employee: customEmployee,
-          attendanceLogs: logs,
-          referenceDate: DateTime(2026, 5, 10),
-        );
-
-        expect(result['pendingBase'], 6000.0);
-        expect(result['unpaidOvertimeHours'], 34.0);
-        expect(result['pendingOvertimeComp'], 1700.0);
-        expect(result['pendingDeductions'], 45.0);
-        expect(result['netSalary'], 7655.0);
-        expect(result['attendedDays'], 30);
-        expect(result['absentDays'], 0.0);
-        expect(result['unpaidDays'], 0.0);
-      },
-    );
+      expect(result['pendingBase'], 6000.0);
+      expect(result['unpaidOvertimeHours'], 34.0);
+      expect(result['pendingOvertimeComp'], 1700.0);
+      expect(result['pendingDeductions'], 45.0);
+      expect(result['netSalary'], 7655.0);
+      expect(result['attendedDays'], 30);
+      expect(result['absentDays'], 0.0);
+      expect(result['unpaidDays'], 0.0);
+    });
 
     test(
       'Edge Case: 31-day period should use actual period for expectedWorkingDays but 30-day model for financial rates',
@@ -311,28 +303,25 @@ void main() {
         // expectedWorkingDays = 31 - 4 = 27
         // Employee worked 27 days → missingDays = 0, no bonus, no deduction
         // Overtime rate uses 30-day model: 6000 / (30 * 8) * 1.5 = 37.5
-        final logs = List.generate(
-          27,
-          (index) {
-            // Spread across 2026-07-26 to 2026-08-21
-            final date = DateTime(2026, 7, 26).add(Duration(days: index));
-            final dateStr =
-                '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-            return AttendanceEntity(
-              id: 'att_$index',
-              employeeId: 'emp1',
-              employeeName: 'John Doe',
-              uid: 'user123',
-              checkIn: DateTime(date.year, date.month, date.day, 9, 0),
-              checkOut: DateTime(date.year, date.month, date.day, 17, 0),
-              date: dateStr,
-              status: 'present',
-              overtimeHours: 0.0,
-              lateMinutes: 0,
-              notes: '',
-            );
-          },
-        );
+        final logs = List.generate(27, (index) {
+          // Spread across 2026-07-26 to 2026-08-21
+          final date = DateTime(2026, 7, 26).add(Duration(days: index));
+          final dateStr =
+              '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+          return AttendanceEntity(
+            id: 'att_$index',
+            employeeId: 'emp1',
+            employeeName: 'John Doe',
+            uid: 'user123',
+            checkIn: DateTime(date.year, date.month, date.day, 9, 0),
+            checkOut: DateTime(date.year, date.month, date.day, 17, 0),
+            date: dateStr,
+            status: 'present',
+            overtimeHours: 0.0,
+            lateMinutes: 0,
+            notes: '',
+          );
+        });
 
         final result = MonthlyPayrollCalculator.calculate(
           employee: monthlyEmployee,
@@ -363,27 +352,24 @@ void main() {
         // Employee worked 22 days → missingDays = 24 - 22 = 2
         // dailyRate = 6000 / 30 = 200.0 (NOT 6000/28)
         // deduction = 2 * 200 * 1.5 = 600.0
-        final logs = List.generate(
-          22,
-          (index) {
-            final date = DateTime(2026, 2, 26).add(Duration(days: index));
-            final dateStr =
-                '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-            return AttendanceEntity(
-              id: 'att_$index',
-              employeeId: 'emp1',
-              employeeName: 'John Doe',
-              uid: 'user123',
-              checkIn: DateTime(date.year, date.month, date.day, 9, 0),
-              checkOut: DateTime(date.year, date.month, date.day, 17, 0),
-              date: dateStr,
-              status: 'present',
-              overtimeHours: 0.0,
-              lateMinutes: 0,
-              notes: '',
-            );
-          },
-        );
+        final logs = List.generate(22, (index) {
+          final date = DateTime(2026, 2, 26).add(Duration(days: index));
+          final dateStr =
+              '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+          return AttendanceEntity(
+            id: 'att_$index',
+            employeeId: 'emp1',
+            employeeName: 'John Doe',
+            uid: 'user123',
+            checkIn: DateTime(date.year, date.month, date.day, 9, 0),
+            checkOut: DateTime(date.year, date.month, date.day, 17, 0),
+            date: dateStr,
+            status: 'present',
+            overtimeHours: 0.0,
+            lateMinutes: 0,
+            notes: '',
+          );
+        });
 
         final result = MonthlyPayrollCalculator.calculate(
           employee: monthlyEmployee,
@@ -412,27 +398,24 @@ void main() {
         // bonusDays = 2, bonusHours = 2 * 8 = 16
         // overtimeRate = 6000 / (30 * 8) * 1.5 = 37.5
         // overtimeComp = 16 * 37.5 = 600.0
-        final logs = List.generate(
-          29,
-          (index) {
-            final date = DateTime(2026, 7, 26).add(Duration(days: index));
-            final dateStr =
-                '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-            return AttendanceEntity(
-              id: 'att_$index',
-              employeeId: 'emp1',
-              employeeName: 'John Doe',
-              uid: 'user123',
-              checkIn: DateTime(date.year, date.month, date.day, 9, 0),
-              checkOut: DateTime(date.year, date.month, date.day, 17, 0),
-              date: dateStr,
-              status: 'present',
-              overtimeHours: 0.0,
-              lateMinutes: 0,
-              notes: '',
-            );
-          },
-        );
+        final logs = List.generate(29, (index) {
+          final date = DateTime(2026, 7, 26).add(Duration(days: index));
+          final dateStr =
+              '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+          return AttendanceEntity(
+            id: 'att_$index',
+            employeeId: 'emp1',
+            employeeName: 'John Doe',
+            uid: 'user123',
+            checkIn: DateTime(date.year, date.month, date.day, 9, 0),
+            checkOut: DateTime(date.year, date.month, date.day, 17, 0),
+            date: dateStr,
+            status: 'present',
+            overtimeHours: 0.0,
+            lateMinutes: 0,
+            notes: '',
+          );
+        });
 
         final result = MonthlyPayrollCalculator.calculate(
           employee: monthlyEmployee,
@@ -458,28 +441,25 @@ void main() {
         // Period: 30 days, allowedOffDays = 4
         // expectedWorkingDays = 30 - 4 = 26
         // Employee worked exactly 26 days → missingDays = 0
-        final logs = List.generate(
-          26,
-          (index) {
-            final day = index < 5 ? (26 + index) : (index - 4);
-            final month = index < 5 ? 4 : 5;
-            final dateStr =
-                '2026-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
-            return AttendanceEntity(
-              id: 'att_$index',
-              employeeId: 'emp1',
-              employeeName: 'John Doe',
-              uid: 'user123',
-              checkIn: DateTime(2026, month, day, 9, 0),
-              checkOut: DateTime(2026, month, day, 17, 0),
-              date: dateStr,
-              status: 'present',
-              overtimeHours: 0.0,
-              lateMinutes: 0,
-              notes: '',
-            );
-          },
-        );
+        final logs = List.generate(26, (index) {
+          final day = index < 5 ? (26 + index) : (index - 4);
+          final month = index < 5 ? 4 : 5;
+          final dateStr =
+              '2026-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+          return AttendanceEntity(
+            id: 'att_$index',
+            employeeId: 'emp1',
+            employeeName: 'John Doe',
+            uid: 'user123',
+            checkIn: DateTime(2026, month, day, 9, 0),
+            checkOut: DateTime(2026, month, day, 17, 0),
+            date: dateStr,
+            status: 'present',
+            overtimeHours: 0.0,
+            lateMinutes: 0,
+            notes: '',
+          );
+        });
 
         final result = MonthlyPayrollCalculator.calculate(
           employee: monthlyEmployee,
@@ -655,7 +635,11 @@ void main() {
         salaryAmount: 6000.0,
         salaryType: 'monthly',
         status: 'active',
-        createdAt: DateTime(2026, 3, 28), // Created inside period 26/03 -> 25/04
+        createdAt: DateTime(
+          2026,
+          3,
+          28,
+        ), // Created inside period 26/03 -> 25/04
         notes: '',
         allowedPaidWeekendsPerMonth: 4,
         paymentWindowStart: 1,
@@ -664,140 +648,178 @@ void main() {
       );
     });
 
-    test('getPeriodsSinceCreation returns all periods from creation month to reference date', () {
-      final now = DateTime(2026, 6, 10);
-      final periods = MonthlyPayrollCalculator.getPeriodsSinceCreation(
-        createdAt: employee.createdAt,
-        closingDay: employee.payrollClosingDay,
-        now: now,
-      );
+    test(
+      'getPeriodsSinceCreation returns all periods from creation month to reference date',
+      () {
+        final now = DateTime(2026, 6, 10);
+        final periods = MonthlyPayrollCalculator.getPeriodsSinceCreation(
+          createdAt: employee.createdAt,
+          closingDay: employee.payrollClosingDay,
+          now: now,
+        );
 
-      // Expected periods:
-      // 1. 26/03/2026 -> 25/04/2026 (created inside this)
-      // 2. 26/04/2026 -> 25/05/2026
-      // 3. 26/05/2026 -> 25/06/2026 (current period containing now 10/06)
-      expect(periods.length, 3);
-      expect(periods[0].start, DateTime(2026, 3, 26));
-      expect(periods[0].end, DateTime(2026, 4, 25));
-      expect(periods[1].start, DateTime(2026, 4, 26));
-      expect(periods[1].end, DateTime(2026, 5, 25));
-      expect(periods[2].start, DateTime(2026, 5, 26));
-      expect(periods[2].end, DateTime(2026, 6, 25));
-    });
+        // Expected periods:
+        // 1. 26/03/2026 -> 25/04/2026 (created inside this)
+        // 2. 26/04/2026 -> 25/05/2026
+        // 3. 26/05/2026 -> 25/06/2026 (current period containing now 10/06)
+        expect(periods.length, 3);
+        expect(periods[0].start, DateTime(2026, 3, 26));
+        expect(periods[0].end, DateTime(2026, 4, 25));
+        expect(periods[1].start, DateTime(2026, 4, 26));
+        expect(periods[1].end, DateTime(2026, 5, 25));
+        expect(periods[2].start, DateTime(2026, 5, 26));
+        expect(periods[2].end, DateTime(2026, 6, 25));
+      },
+    );
 
-    test('isPeriodCompleted returns true only when today is after the period end', () {
-      final period = (start: DateTime(2026, 4, 26), end: DateTime(2026, 5, 25));
+    test(
+      'isPeriodCompleted returns true only when today is after the period end',
+      () {
+        final period = (
+          start: DateTime(2026, 4, 26),
+          end: DateTime(2026, 5, 25),
+        );
 
-      // Today is before end
-      expect(MonthlyPayrollCalculator.isPeriodCompleted(period: period, now: DateTime(2026, 5, 20)), false);
-      // Today is exactly on end
-      expect(MonthlyPayrollCalculator.isPeriodCompleted(period: period, now: DateTime(2026, 5, 25)), false);
-      // Today is day after end
-      expect(MonthlyPayrollCalculator.isPeriodCompleted(period: period, now: DateTime(2026, 5, 26)), true);
-    });
+        // Today is before end
+        expect(
+          MonthlyPayrollCalculator.isPeriodCompleted(
+            period: period,
+            now: DateTime(2026, 5, 20),
+          ),
+          false,
+        );
+        // Today is exactly on end
+        expect(
+          MonthlyPayrollCalculator.isPeriodCompleted(
+            period: period,
+            now: DateTime(2026, 5, 25),
+          ),
+          false,
+        );
+        // Today is day after end
+        expect(
+          MonthlyPayrollCalculator.isPeriodCompleted(
+            period: period,
+            now: DateTime(2026, 5, 26),
+          ),
+          true,
+        );
+      },
+    );
 
-    test('getPaymentWindow calculates correct window dates for standard and wrap-around windows', () {
-      // Standard window: 1 to 5, periodEnd = 25/05/2026
-      final window1 = MonthlyPayrollCalculator.getPaymentWindow(
-        periodEnd: DateTime(2026, 5, 25),
-        windowStart: 1,
-        windowEnd: 5,
-      );
-      expect(window1.start, DateTime(2026, 6, 1));
-      expect(window1.end, DateTime(2026, 6, 5));
-
-      // Wrap-around window: 28 to 5, periodEnd = 25/05/2026
-      final window2 = MonthlyPayrollCalculator.getPaymentWindow(
-        periodEnd: DateTime(2026, 5, 25),
-        windowStart: 28,
-        windowEnd: 5,
-      );
-      expect(window2.start, DateTime(2026, 5, 28));
-      expect(window2.end, DateTime(2026, 6, 5));
-    });
-
-    test('getPeriodStatus returns correct state (in_progress, waiting_window, ready, overdue)', () {
-      final period = (start: DateTime(2026, 4, 26), end: DateTime(2026, 5, 25));
-
-      // 1. In Progress: today is 20/05/2026
-      expect(
-        MonthlyPayrollCalculator.getPeriodStatus(
-          period: period,
+    test(
+      'getPaymentWindow calculates correct window dates for standard and wrap-around windows',
+      () {
+        // Standard window: 1 to 5, periodEnd = 25/05/2026
+        final window1 = MonthlyPayrollCalculator.getPaymentWindow(
+          periodEnd: DateTime(2026, 5, 25),
           windowStart: 1,
           windowEnd: 5,
-          now: DateTime(2026, 5, 20),
-        ),
-        'in_progress',
-      );
+        );
+        expect(window1.start, DateTime(2026, 6, 1));
+        expect(window1.end, DateTime(2026, 6, 5));
 
-      // 2. Waiting Window: today is 28/05/2026 (window starts 01/06)
-      expect(
-        MonthlyPayrollCalculator.getPeriodStatus(
-          period: period,
-          windowStart: 1,
+        // Wrap-around window: 28 to 5, periodEnd = 25/05/2026
+        final window2 = MonthlyPayrollCalculator.getPaymentWindow(
+          periodEnd: DateTime(2026, 5, 25),
+          windowStart: 28,
           windowEnd: 5,
-          now: DateTime(2026, 5, 28),
-        ),
-        'waiting_window',
-      );
+        );
+        expect(window2.start, DateTime(2026, 5, 28));
+        expect(window2.end, DateTime(2026, 6, 5));
+      },
+    );
 
-      // 3. Ready: today is 03/06/2026 (window is 01/06 -> 05/06)
-      expect(
-        MonthlyPayrollCalculator.getPeriodStatus(
-          period: period,
-          windowStart: 1,
-          windowEnd: 5,
-          now: DateTime(2026, 6, 3),
-        ),
-        'ready',
-      );
+    test(
+      'getPeriodStatus returns correct state (in_progress, waiting_window, ready, overdue)',
+      () {
+        final period = (
+          start: DateTime(2026, 4, 26),
+          end: DateTime(2026, 5, 25),
+        );
 
-      // 4. Overdue: today is 10/06/2026
-      expect(
-        MonthlyPayrollCalculator.getPeriodStatus(
-          period: period,
-          windowStart: 1,
-          windowEnd: 5,
-          now: DateTime(2026, 6, 10),
-        ),
-        'overdue',
-      );
-    });
+        // 1. In Progress: today is 20/05/2026
+        expect(
+          MonthlyPayrollCalculator.getPeriodStatus(
+            period: period,
+            windowStart: 1,
+            windowEnd: 5,
+            now: DateTime(2026, 5, 20),
+          ),
+          'in_progress',
+        );
 
-    test('getUnpaidCompletedPeriods excludes paid periods and the in-progress period', () {
-      final now = DateTime(2026, 6, 10);
-      final List<PayrollEntity> payrollLogs = [
-        PayrollEntity(
-          uid: 'user123',
-          employeeId: 'emp_fifo',
-          employeeName: 'FIFO Employee',
-          paymentDate: DateTime(2026, 4, 28),
-          amount: 6000.0,
-          bonus: 0.0,
-          deduction: 0.0,
-          overtimeCompensation: 0.0,
-          netSalary: 6000.0,
-          monthKey: '2026-04',
-          notes: '',
-          salaryType: 'monthly',
-          periodStart: DateTime(2026, 3, 26),
-          periodEnd: DateTime(2026, 4, 25),
-        ),
-      ];
+        // 2. Waiting Window: today is 28/05/2026 (window starts 01/06)
+        expect(
+          MonthlyPayrollCalculator.getPeriodStatus(
+            period: period,
+            windowStart: 1,
+            windowEnd: 5,
+            now: DateTime(2026, 5, 28),
+          ),
+          'waiting_window',
+        );
 
-      final unpaid = MonthlyPayrollCalculator.getUnpaidCompletedPeriods(
-        employee: employee,
-        payrollLogs: payrollLogs,
-        now: now,
-      );
+        // 3. Ready: today is 03/06/2026 (window is 01/06 -> 05/06)
+        expect(
+          MonthlyPayrollCalculator.getPeriodStatus(
+            period: period,
+            windowStart: 1,
+            windowEnd: 5,
+            now: DateTime(2026, 6, 3),
+          ),
+          'ready',
+        );
 
-      // 1. 26/03 -> 25/04: Paid (in logs)
-      // 2. 26/04 -> 25/05: Completed and Unpaid -> should be returned
-      // 3. 26/05 -> 25/06: In Progress (contains 10/06) -> should be excluded
-      expect(unpaid.length, 1);
-      expect(unpaid[0].start, DateTime(2026, 4, 26));
-      expect(unpaid[0].end, DateTime(2026, 5, 25));
-    });
+        // 4. Overdue: today is 10/06/2026
+        expect(
+          MonthlyPayrollCalculator.getPeriodStatus(
+            period: period,
+            windowStart: 1,
+            windowEnd: 5,
+            now: DateTime(2026, 6, 10),
+          ),
+          'overdue',
+        );
+      },
+    );
+
+    test(
+      'getUnpaidCompletedPeriods excludes paid periods and the in-progress period',
+      () {
+        final now = DateTime(2026, 6, 10);
+        final List<PayrollEntity> payrollLogs = [
+          PayrollEntity(
+            uid: 'user123',
+            employeeId: 'emp_fifo',
+            employeeName: 'FIFO Employee',
+            paymentDate: DateTime(2026, 4, 28),
+            amount: 6000.0,
+            bonus: 0.0,
+            deduction: 0.0,
+            overtimeCompensation: 0.0,
+            netSalary: 6000.0,
+            monthKey: '2026-04',
+            notes: '',
+            salaryType: 'monthly',
+            periodStart: DateTime(2026, 3, 26),
+            periodEnd: DateTime(2026, 4, 25),
+          ),
+        ];
+
+        final unpaid = MonthlyPayrollCalculator.getUnpaidCompletedPeriods(
+          employee: employee,
+          payrollLogs: payrollLogs,
+          now: now,
+        );
+
+        // 1. 26/03 -> 25/04: Paid (in logs)
+        // 2. 26/04 -> 25/05: Completed and Unpaid -> should be returned
+        // 3. 26/05 -> 25/06: In Progress (contains 10/06) -> should be excluded
+        expect(unpaid.length, 1);
+        expect(unpaid[0].start, DateTime(2026, 4, 26));
+        expect(unpaid[0].end, DateTime(2026, 5, 25));
+      },
+    );
   });
 }
-
