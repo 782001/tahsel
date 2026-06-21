@@ -141,8 +141,19 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
           .get();
 
       if (existing.docs.isNotEmpty) {
+        // Customer document exists — just update the preference
         await existing.docs.first.reference.update({
           'notificationPreference': preference,
+        });
+      } else {
+        // Customer has no document yet (added via an older/direct debt flow).
+        // Upsert a minimal document so the preference is persisted.
+        await collection.add({
+          'name': normalizedName,
+          'notificationPreference': preference,
+          'lastUsedAt': Timestamp.now(),
+          'totalTransactions': 0,
+          'phoneNumber': null,
         });
       }
     } catch (e) {
