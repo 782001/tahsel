@@ -54,7 +54,7 @@
 		<key>UIMainStoryboardFile</key>
 		<string>Main</string>
 		<key>NSContactsUsageDescription</key>
-		<string>نحتاج الوصول إلى جهات الاتصال الخاصة بك لعرضها في التطبيق</string>
+		<string>Reason we need access to the contact list</string>
 		<key>UISupportedInterfaceOrientations</key>
 		<array>
 			<string>UIInterfaceOrientationPortrait</string>

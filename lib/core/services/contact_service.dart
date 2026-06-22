@@ -21,14 +21,23 @@ class ContactService {
       return null;
     }
     try {
-      if (await FlutterContacts.requestPermission(readonly: true)) {
-        final contact = await FlutterContacts.openExternalPick();
-        if (contact != null) {
-          final fullContact = await FlutterContacts.getContact(contact.id);
+      bool isPermissionGranted = await FlutterContacts.permissions.has(PermissionType.read);
+      if (!isPermissionGranted) {
+        final status = await FlutterContacts.permissions.request(PermissionType.read);
+        isPermissionGranted = status == PermissionStatus.granted || status == PermissionStatus.limited;
+      }
+
+      if (isPermissionGranted) {
+        final contact = await FlutterContacts.native.showPicker();
+        if (contact != null && contact.id != null) {
+          final fullContact = await FlutterContacts.get(
+            contact.id!,
+            properties: ContactProperties.all,
+          );
           if (fullContact != null) {
             String? phone;
             if (fullContact.phones.isEmpty) {
-              return {'name': fullContact.displayName, 'phone': ''};
+              return {'name': fullContact.displayName ?? '', 'phone': ''};
             } else if (fullContact.phones.length == 1) {
               phone = fullContact.phones.first.number;
             } else {
@@ -61,7 +70,7 @@ class ContactService {
 
             if (phone != null) {
               return {
-                'name': fullContact.displayName,
+                'name': fullContact.displayName ?? '',
                 'phone': phone.replaceAll(RegExp(r'\s+'), ''),
               };
             }
