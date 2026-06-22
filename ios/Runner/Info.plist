@@ -70,7 +70,5 @@
 		</array>
 		<key>UIStatusBarHidden</key>
 		<false/>
-	<key>NSContactsUsageDescription</key>
-	<string>يحتاج التطبيق للوصول إلى جهات الاتصال لتسهيل تحديد أرقام الهواتف.</string>
 	</dict>
 </plist>
