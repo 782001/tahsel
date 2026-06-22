@@ -2,10 +2,12 @@ import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_summary_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_summary_state.dart';
 import 'package:tahsel/features/my_debts/presentation/widgets/skeletons/my_debts_summary_skeleton.dart';
@@ -34,12 +36,12 @@ class MyDebtsSummaryCard extends StatelessWidget {
           totalPaid = 0;
           totalPeople = 0;
         }
-
+        final bool isDesktop =ResponsiveLayout.isDesktop(context);
         return FadeInDown(
           duration: const Duration(milliseconds: 500),
           child: Container(
-            margin: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
-            padding: EdgeInsets.all(20.r),
+            margin: EdgeInsets.symmetric(horizontal: isDesktop?24:24.w, vertical: isDesktop?16:16.h),
+            padding: EdgeInsets.all(isDesktop?20:20.r),
             decoration: BoxDecoration(
               color: AppColors.debtCardSurface,
               borderRadius: BorderRadius.circular(20.r),
@@ -64,7 +66,7 @@ class MyDebtsSummaryCard extends StatelessWidget {
                 Row(
                   children: [
                     Container(
-                      padding: EdgeInsets.all(8.r),
+                      padding: EdgeInsets.all(    isDesktop?8:8.r),
                       decoration: BoxDecoration(
                         color: AppColors.primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12.r),
@@ -75,27 +77,27 @@ class MyDebtsSummaryCard extends StatelessWidget {
                         size: 24,
                       ),
                     ),
-                    SizedBox(width: 12.w),
+                    SizedBox(width:   isDesktop?12:12.w),
                     Text(
                       AppStrings.whatIOweOutside.tr(),
                       style: TextStyles.customStyle(
                         color: AppColors.textColor,
-                        fontSize: 16,
+                        fontSize:   16,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: 16.h),
+                SizedBox(height:    isDesktop?16:16.h),
                 Text(
-                  '${totalOwed.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
+                  '${totalOwed.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                   style: TextStyles.customStyle(
                     color: AppColors.primaryColor,
-                    fontSize: 28,
+                    fontSize:  28,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(height: 12.h),
+                SizedBox(height:  isDesktop?12:12.h),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -105,7 +107,7 @@ class MyDebtsSummaryCard extends StatelessWidget {
                     ),
                     _buildInfoItem(
                       Icons.check_circle_outline,
-                      '${AppStrings.paid.tr()}: ${totalPaid.toStringAsFixed(1)}',
+                      '${AppStrings.paid.tr()}: ${totalPaid.toSmartAmount()}',
                     ),
                   ],
                 ),
