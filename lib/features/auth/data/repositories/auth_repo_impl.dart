@@ -52,6 +52,28 @@ class AuthRepositoryImpl implements AuthBaseRepository {
     await remoteDataSource.logout();
   }
 
+  @override
+  Future<Either<Failure, void>> deleteAccount() async {
+    if (!await connectionChecker.hasConnection) {
+      return const Left(ServerFailure('delete_account_network_error'));
+    }
+
+    try {
+      await remoteDataSource.deleteAccount();
+      // Clear all locally stored credentials
+      await secureStorage.deleteData(key: 'token');
+      await secureStorage.deleteData(key: 'email');
+      await secureStorage.deleteData(key: AppStrings.userTypeKey);
+      return const Right(null);
+    } on ServerException catch (e) {
+      AppLogger.printMessage('deleteAccount ServerException: ${e.code}');
+      return Left(ServerFailure(_mapDeleteAccountException(e.code)));
+    } catch (e) {
+      AppLogger.printMessage('deleteAccount error: $e');
+      return const Left(ServerFailure('delete_account_failed'));
+    }
+  }
+
   String _mapExceptionToMessage(String code) {
     switch (code) {
       case 'user-not-found':
@@ -65,6 +87,8 @@ class AuthRepositoryImpl implements AuthBaseRepository {
       case 'user-disabled':
       case 'auth_user_disabled':
         return 'auth_user_disabled';
+      case 'auth_user_deleted':
+        return 'auth_user_deleted';
       case 'too-many-requests':
         return 'auth_too_many_requests';
       case 'network-request-failed':
@@ -79,6 +103,17 @@ class AuthRepositoryImpl implements AuthBaseRepository {
         return 'platform_not_allowed';
       default:
         return 'auth_default_error';
+    }
+  }
+
+  String _mapDeleteAccountException(String code) {
+    switch (code) {
+      case 'requires_recent_login':
+        return 'delete_account_requires_reauth';
+      case 'network-request-failed':
+        return 'delete_account_network_error';
+      default:
+        return 'delete_account_failed';
     }
   }
 }

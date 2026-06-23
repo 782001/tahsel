@@ -223,6 +223,7 @@
   "auth_invalid_email": "Invalid email",
   "auth_invalid_credential": "Invalid email or password",
   "auth_user_disabled": "This account has been disabled",
+  "auth_user_deleted": "This account has been deleted",
   "auth_too_many_requests": "Too many attempts, try again later",
   "auth_default_error": "An error occurred, try again",
   "auth_network_error": "No internet connection",
@@ -584,5 +585,14 @@
   "banner_renew": "Renew",
   "could_not_load_subscription": "Could not load subscription details",
   "could_not_open_whatsapp": "Could not open WhatsApp",
-  "not_set": "Not Set"
+  "not_set": "Not Set",
+  "delete_account": "Delete Account",
+  "delete_account_title": "Delete Account",
+  "delete_account_description": "Your account and subscription will be permanently deleted.\n\nYou will no longer be able to sign in with this account.\n\nThis action cannot be undone.",
+  "delete_account_warning": "This action cannot be undone.",
+  "delete_account_confirm": "Delete Account",
+  "account_deleted_successfully": "Account deleted successfully",
+  "delete_account_network_error": "No internet connection. Please try again.",
+  "delete_account_requires_reauth": "Your session has expired. Please logout and login again, then retry.",
+  "delete_account_failed": "Failed to delete account. Please try again."
 }

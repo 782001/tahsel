@@ -5,6 +5,7 @@ import '../data/repositories/auth_repo_impl.dart';
 import '../domain/repositories/auth_repo_base.dart';
 import '../domain/usecases/login_usecase.dart';
 import '../domain/usecases/logout_usecase.dart';
+import '../domain/usecases/delete_account_usecase.dart';
 import '../presentation/cubit/auth_cubit.dart';
 
 import 'package:internet_connection_checker/internet_connection_checker.dart';
@@ -20,12 +21,17 @@ class AuthInjection {
 
     // Cubit
     sl.registerFactory(
-      () => AuthCubit(loginUseCase: sl(), logoutUseCase: sl()),
+      () => AuthCubit(
+        loginUseCase: sl(),
+        logoutUseCase: sl(),
+        deleteAccountUseCase: sl(),
+      ),
     );
 
     // Use cases
     sl.registerLazySingleton(() => LoginUseCase(baseRepository: sl()));
     sl.registerLazySingleton(() => LogoutUseCase(baseRepository: sl()));
+    sl.registerLazySingleton(() => DeleteAccountUseCase(baseRepository: sl()));
 
     // Repository
     sl.registerLazySingleton<AuthBaseRepository>(

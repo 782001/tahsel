@@ -31,3 +31,16 @@ class AuthFailure extends AuthState {
 }
 
 class AuthUnauthenticated extends AuthState {}
+
+class AuthDeleteLoading extends AuthState {}
+
+class AuthDeleteSuccess extends AuthState {}
+
+class AuthDeleteFailure extends AuthState {
+  final String message;
+
+  const AuthDeleteFailure(this.message);
+
+  @override
+  List<Object> get props => [message];
+}

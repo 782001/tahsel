@@ -9,6 +9,7 @@ import '../models/user_model.dart';
 abstract class AuthRemoteDataSourceBase {
   Future<UserModel> login({required LoginParameters parameters});
   Future<void> logout();
+  Future<void> deleteAccount();
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSourceBase {
@@ -42,7 +43,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSourceBase {
 
         // ── 1. Account status gate ────────────────────────────────────────
         final accountStatus = (data['accountStatus'] as String?) ?? 'active';
-        if (accountStatus == 'deleted' || accountStatus == 'disabled') {
+        if (accountStatus == 'deleted') {
+          await firebaseAuth.signOut();
+          throw ServerException('auth_user_deleted');
+        }
+        if (accountStatus == 'disabled') {
           await firebaseAuth.signOut();
           throw ServerException('auth_user_disabled');
         }
@@ -124,5 +129,23 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSourceBase {
       // Ignore if cache is already cleared or throws
     }
     await firebaseAuth.signOut();
+  }
+
+  @override
+  Future<void> deleteAccount() async {
+    final user = firebaseAuth.currentUser;
+    if (user == null) throw ServerException('user_not_found');
+
+    try {
+      await firestore
+          .collection('users')
+          .doc(user.uid)
+          .update({'accountStatus': 'deleted'})
+          .timeout(const Duration(seconds: 10));
+    } on FirebaseException catch (e) {
+      throw ServerException(e.code);
+    } catch (e) {
+      throw ServerException('delete_account_failed');
+    }
   }
 }

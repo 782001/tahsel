@@ -223,6 +223,7 @@
   "auth_invalid_email": "البريد الإلكتروني غير صالح",
   "auth_invalid_credential": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
   "auth_user_disabled": "تم تعطيل هذا الحساب",
+  "auth_user_deleted": "تم حذف هذا الحساب",
   "auth_too_many_requests": "عدد محاولات كثيرة، حاول لاحقاً",
   "auth_default_error": "حدث خطأ، حاول مرة أخرى",
   "auth_network_error": "لا يوجد اتصال بالإنترنت",
@@ -586,5 +587,14 @@
   "banner_renew": "تجديد",
   "could_not_load_subscription": "تعذر تحميل بيانات الاشتراك",
   "could_not_open_whatsapp": "تعذر فتح واتساب",
-  "not_set": "غير محدد"
+  "not_set": "غير محدد",
+  "delete_account": "حذف الحساب",
+  "delete_account_title": "حذف الحساب",
+  "delete_account_description": "سيتم حذف حسابك نهائياً وإلغاء الاشتراك المرتبط به.\n\nلن تتمكن من تسجيل الدخول مرة أخرى باستخدام هذا الحساب.\n\nهذا الإجراء لا يمكن التراجع عنه.",
+  "delete_account_warning": "هذا الإجراء لا يمكن التراجع عنه.",
+  "delete_account_confirm": "حذف الحساب",
+  "account_deleted_successfully": "تم حذف الحساب بنجاح",
+  "delete_account_network_error": "لا يوجد اتصال بالإنترنت. يرجى المحاولة مرة أخرى.",
+  "delete_account_requires_reauth": "انتهت صلاحية جلستك. يرجى تسجيل الخروج وإعادة تسجيل الدخول ثم المحاولة مرة أخرى.",
+  "delete_account_failed": "فشل حذف الحساب. يرجى المحاولة مرة أخرى."
 }

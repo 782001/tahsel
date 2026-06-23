@@ -25,15 +25,21 @@ import 'package:tahsel/routes/app_routes.dart';
 
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/logout_usecase.dart';
+import '../../domain/usecases/delete_account_usecase.dart';
 import 'auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   final LoginUseCase loginUseCase;
   final LogoutUseCase logoutUseCase;
+  final DeleteAccountUseCase deleteAccountUseCase;
   StreamSubscription? _authSubscription;
+  bool _isDeletingAccount = false;
 
-  AuthCubit({required this.loginUseCase, required this.logoutUseCase})
-    : super(AuthInitial()) {
+  AuthCubit({
+    required this.loginUseCase,
+    required this.logoutUseCase,
+    required this.deleteAccountUseCase,
+  }) : super(AuthInitial()) {
     _listenToAuthChanges();
   }
 
@@ -42,9 +48,9 @@ class AuthCubit extends Cubit<AuthState> {
       User? user,
     ) async {
       // Ignore background auth stream events while actively logging in or out
-      if (state is AuthLoading) {
+      if (state is AuthLoading || _isDeletingAccount) {
         AppLogger.printMessage(
-          '[AuthCubit] Ignoring userChanges event during AuthLoading state',
+          '[AuthCubit] Ignoring userChanges event during AuthLoading/AuthDeleting state',
         );
         return;
       }
@@ -188,6 +194,8 @@ class AuthCubit extends Cubit<AuthState> {
 
     if (state is AuthUnauthenticated) return;
 
+    final isDeleteSuccess = state is AuthDeleteSuccess;
+
     await logoutUseCase.call(const NoParams());
     await _clearSessionData();
     emit(AuthUnauthenticated());
@@ -197,10 +205,12 @@ class AuthCubit extends Cubit<AuthState> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            AppStrings.sessionExpired.tr(),
+            isDeleteSuccess
+                ? AppStrings.accountDeletedSuccessfully.tr()
+                : AppStrings.sessionExpired.tr(),
             style: TextStyles.customStyle(color: AppColors.white),
           ),
-          backgroundColor: AppColors.error,
+          backgroundColor: isDeleteSuccess ? AppColors.success : AppColors.error,
         ),
       );
       sl<NavigatorService>().pushNamedAndRemoveUntil(AppRoutes.login);
@@ -226,5 +236,26 @@ class AuthCubit extends Cubit<AuthState> {
     sl<DebtCubit>().clearData();
     sl<MyDebtsCubit>().clearData();
     sl<OperationCubit>().clearData();
+  }
+
+  Future<void> deleteAccount() async {
+    _isDeletingAccount = true;
+    emit(AuthDeleteLoading());
+
+    final result = await deleteAccountUseCase.call(const NoParams());
+
+    result.fold(
+      (failure) {
+        _isDeletingAccount = false;
+        emit(AuthDeleteFailure(failure.message));
+      },
+      (_) async {
+        emit(AuthDeleteSuccess());
+        _isDeletingAccount = false;
+
+        // Perform force logout to clean all local caches, storage, and navigate to login
+        await forceLogout();
+      },
+    );
   }
 }

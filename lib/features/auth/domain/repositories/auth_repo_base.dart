@@ -10,4 +10,6 @@ abstract class AuthBaseRepository {
   });
 
   Future<void> logout();
+
+  Future<Either<Failure, void>> deleteAccount();
 }

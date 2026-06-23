@@ -294,6 +294,7 @@ class AppStrings {
   static const String authInvalidEmail = "auth_invalid_email";
   static const String authInvalidCredential = "auth_invalid_credential";
   static const String authUserDisabled = "auth_user_disabled";
+  static const String authUserDeleted = "auth_user_deleted";
   static const String authTooManyRequests = "auth_too_many_requests";
   static const String authDefaultError = "auth_default_error";
   static const String authNetworkError = "auth_network_error";
@@ -662,4 +663,15 @@ class AppStrings {
       "attendance_already_registered";
   static const String attendanceAlreadyRegisteredShort =
       "attendance_already_registered_short";
+
+  // Delete Account
+  static const String deleteAccount = "delete_account";
+  static const String deleteAccountTitle = "delete_account_title";
+  static const String deleteAccountDescription = "delete_account_description";
+  static const String deleteAccountWarning = "delete_account_warning";
+  static const String deleteAccountConfirm = "delete_account_confirm";
+  static const String accountDeletedSuccessfully = "account_deleted_successfully";
+  static const String deleteAccountNetworkError = "delete_account_network_error";
+  static const String deleteAccountRequiresReauth = "delete_account_requires_reauth";
+  static const String deleteAccountFailed = "delete_account_failed";
 }
