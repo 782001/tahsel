@@ -25,43 +25,45 @@ class UpdateRemoteDataSourceImpl implements UpdateRemoteDataSource {
 
   UpdateRemoteDataSourceImpl({required this.firestore, required this.dio});
 
+  // Matches AdminConstants.systemSettingsCollection / appVersionDoc in the
+  // dashboard — both apps must point to the same Firestore path.
+  static const _collection = 'app_config';
+  static const _document = 'version_control';
+
   @override
   Future<AppVersionModel?> checkForUpdate() async {
     final PackageInfo packageInfo = await PackageInfo.fromPlatform();
     final currentBuildNumber = int.tryParse(packageInfo.buildNumber) ?? 0;
 
-    AppLogger.printMessage("DEBUG: Checking for update...");
-    AppLogger.printMessage("DEBUG: Current Build Number: $currentBuildNumber");
+    AppLogger.printMessage('DEBUG: Checking for update...');
+    AppLogger.printMessage('DEBUG: Current Build Number: $currentBuildNumber');
 
-    final doc = await firestore
-        .collection('app_config')
-        .doc('version_control')
-        .get();
+    final doc = await firestore.collection(_collection).doc(_document).get();
 
     if (!doc.exists) {
       AppLogger.printMessage(
-        "DEBUG: Firestore document 'app_config/version_control' does not exist.",
+        "DEBUG: Firestore document '$_collection/$_document' does not exist.",
       );
       return null;
     }
 
     final data = doc.data();
     if (data == null) {
-      AppLogger.printMessage("DEBUG: Firestore document data is null.");
+      AppLogger.printMessage('DEBUG: Firestore document data is null.');
       return null;
     }
 
     final latestAppVersion = AppVersionModel.fromFirestore(data);
     AppLogger.printMessage(
-      "DEBUG: Latest Version from Firestore: ${latestAppVersion.latestVersion}",
+      'DEBUG: Latest Build Number from Firestore: ${latestAppVersion.buildNumber}',
     );
 
-    if (latestAppVersion.latestVersion > currentBuildNumber) {
-      AppLogger.printMessage("DEBUG: Update available!");
+    if (latestAppVersion.buildNumber > currentBuildNumber) {
+      AppLogger.printMessage('DEBUG: Update available!');
       return latestAppVersion;
     }
 
-    AppLogger.printMessage("DEBUG: No update available.");
+    AppLogger.printMessage('DEBUG: No update available.');
     return null;
   }
 
@@ -80,7 +82,7 @@ class UpdateRemoteDataSourceImpl implements UpdateRemoteDataSource {
     }
 
     final directory = await getDownloadsDirectory();
-    final filePath = "${directory!.path}/$fileName";
+    final filePath = '${directory!.path}/$fileName';
 
     await dio.download(
       url,

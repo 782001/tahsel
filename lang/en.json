@@ -366,6 +366,8 @@
   "open_store": "Update Now",
   "opening_store": "Opening the store, please wait...",
   "update_via_store": "The update will be installed via {0}",
+  "release_notes": "Release Notes",
+  "update_title": "New Update",
   "earnings_comparison": "Earnings Comparison",
   "earnings_today": "Today's Earnings",
   "earnings_yesterday": "Yesterday's Earnings",

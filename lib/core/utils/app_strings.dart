@@ -449,6 +449,8 @@ class AppStrings {
   static const String openStore = "open_store";
   static const String openingStore = "opening_store";
   static const String updateViaStore = "update_via_store";
+  static const String releaseNotes = "release_notes";
+  static const String updateTitle = "update_title";
   // Comparison Labels
   static const String earningsComparison = "earnings_comparison";
   static const String earningsToday = "earnings_today";

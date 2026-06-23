@@ -46,7 +46,9 @@ class UpdateDialog extends StatelessWidget {
                 SizedBox(width:isDesktop?12: 12.w),
                 Expanded(
                   child: TextWidget(
-                    AppStrings.newUpdateAvailable.tr(),
+                    versionInfo.updateTitle.isNotEmpty
+                        ? versionInfo.updateTitle
+                        : AppStrings.newUpdateAvailable.tr(),
                     style: TextStyles.font18WeightBoldText().copyWith(
                       color: AppColors.textColor,
                     ),
@@ -153,13 +155,58 @@ class UpdateDialog extends StatelessWidget {
                         ),
                       ),
                     ),
-                    SizedBox(height:isDesktop?16: 16.h),
-                    TextWidget(
-                      versionInfo.updateMessage,
-                      style: TextStyles.font16Weight400Text().copyWith(
-                        color: AppColors.subTitleColor,
+                    if (versionInfo.updateMessage.isNotEmpty) ...[
+                      SizedBox(height:isDesktop?16: 16.h),
+                      TextWidget(
+                        versionInfo.updateMessage,
+                        style: TextStyles.font16Weight400Text().copyWith(
+                          color: AppColors.subTitleColor,
+                        ),
                       ),
-                    ),
+                    ],
+                    if (versionInfo.releaseNotes.isNotEmpty) ...[
+                      SizedBox(height: isDesktop ? 16 : 16.h),
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(isDesktop ? 12 : 12.w),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryColor.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(8.r),
+                          border: Border.all(
+                            color: AppColors.primaryColor.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.new_releases_rounded,
+                                  size: isDesktop ? 14 : 14.h,
+                                  color: AppColors.primaryColor,
+                                ),
+                                SizedBox(width: isDesktop ? 6 : 6.w),
+                                TextWidget(
+                                  AppStrings.releaseNotes.tr(),
+                                  style: TextStyles.font14WeightBoldText().copyWith(
+                                    color: AppColors.primaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: isDesktop ? 8 : 8.h),
+                            TextWidget(
+                              versionInfo.releaseNotes,
+                              style: TextStyles.font14Weight400RightAligned().copyWith(
+                                color: AppColors.subTitleColor,
+                                height: 1.6,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     if (_isStorePlatform) ...[
                       SizedBox(height:isDesktop?  12: 12.h),
                       Row(

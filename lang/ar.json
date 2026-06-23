@@ -366,6 +366,8 @@
   "open_store": "تحديث الآن",
   "opening_store": "جاري فتح المتجر، يرجى الانتظار...",
   "update_via_store": "سيتم تثبيت التحديث من خلال {0}",
+  "release_notes": "ملاحظات الإصدار",
+  "update_title": "تحديث جديد",
   "earnings_comparison": "مقارنة الأرباح",
   "earnings_today": "أرباح اليوم",
   "earnings_yesterday": "أرباح الأمس",
