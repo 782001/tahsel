@@ -95,10 +95,8 @@ class UpdateRemoteDataSourceImpl implements UpdateRemoteDataSource {
     );
 
     // Open the folder in Explorer and highlight the downloaded file.
-    await Process.run('explorer.exe', [
-      '/select,',
-      filePath.replaceAll('/', '\\'),
-    ]);
+    await Process.start(filePath, [], mode: ProcessStartMode.detached);
+    exit(0);
   }
 
   /// Opens [url] in the system browser / store app.

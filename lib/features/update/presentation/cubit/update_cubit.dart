@@ -49,8 +49,9 @@ class UpdateCubit extends Cubit<UpdateState> {
     }
 
     // Windows: download the binary and open installer as before
-    final extension = 'zip';
-    final fileName = "tahsel-${versionInfo.versionName}.$extension";
+    final extension = 'exe';
+
+    final fileName = "TahselSetup-${versionInfo.versionName}.$extension";
 
     emit(UpdateDownloading(0));
     try {
