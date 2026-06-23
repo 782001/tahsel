@@ -36,4 +36,5 @@ New-Item -ItemType Directory -Force -Path $exeTarget | Out-Null
 Copy-Item "$exeSource\*" $exeTarget -Recurse -Force
 
 Write-Host "EXE build copied to tahsel-$version folder"
+Write-Host "EXE build copied to $exeTarget folder"
 Write-Host "DONE 🚀"
