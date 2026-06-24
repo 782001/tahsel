@@ -320,7 +320,7 @@ class _SubscriptionInfoWidgetState extends State<SubscriptionInfoWidget> {
                   final success = await WhatsAppService.sendMessage(
                     phoneNumber: AppStrings.supportPhoneNumber,
                     message:
-                        "مرحبا اريد تجديد الاشتراك في برنامج تحصيل\n ودا الايميل بتاعي  : $email\n ودا الاسم بتاعي $fullName",
+                        "مرحبا اريد تجديد الحساب في برنامج تحصيل\n ودا الايميل بتاعي  : $email\n ودا الاسم بتاعي $fullName",
                   );
                   if (mounted && !success) {
                     ScaffoldMessenger.of(context).showSnackBar(

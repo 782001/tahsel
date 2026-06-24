@@ -324,7 +324,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           ),
                                         ),
                                       ),
-                                      child: Row(
+                                      child: Column(
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
                                         children: [
@@ -343,7 +343,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                                     phoneNumber: AppStrings
                                                         .supportPhoneNumber,
                                                     message:
-                                                        "مرحبا اريد الاشتراك في برنامج تحصيل",
+                                                        "مرحبا اريد الحصول علي حساب في برنامج تحصيل",
                                                   );
                                               if (mounted && !success) {
                                                 ScaffoldMessenger.of(

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -115,9 +117,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               SizedBox(height: isDesktop ? 32 : 32.h),
 
                               // Appearance Section
-                              SectionHeader(
-                                title: AppStrings.appearance.tr(),
-                              ),
+                              SectionHeader(title: AppStrings.appearance.tr()),
                               BlocBuilder<ThemeCubit, ThemeState>(
                                 builder: (context, themeState) {
                                   final isDark =
@@ -193,13 +193,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 },
                               ),
 
-                              SizedBox(height: isDesktop ? 32 : 32.h),
+                              if (!Platform.isIOS)
+                                SizedBox(height: isDesktop ? 32 : 32.h),
 
                               // Subscription Section
-                              SectionHeader(
-                                title: AppStrings.subscriptionSection.tr(),
-                              ),
-                              const SubscriptionInfoWidget(),
+                              if (!Platform.isIOS)
+                                SectionHeader(
+                                  title: AppStrings.subscriptionSection.tr(),
+                                ),
+                              if (!Platform.isIOS)
+                                const SubscriptionInfoWidget(),
 
                               SizedBox(height: isDesktop ? 32 : 32.h),
 
@@ -277,9 +280,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               SizedBox(height: isDesktop ? 32 : 32.h),
 
                               // Account Section
-                              SectionHeader(
-                                title: AppStrings.account.tr(),
-                              ),
+                              SectionHeader(title: AppStrings.account.tr()),
                               const DeleteAccountTile(),
 
                               SizedBox(height: isDesktop ? 32 : 32.h),

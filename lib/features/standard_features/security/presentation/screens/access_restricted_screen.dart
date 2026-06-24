@@ -142,7 +142,7 @@ class AccessRestrictedScreen extends StatelessWidget {
                     onPressed: () async {
                       final success = await WhatsAppService.sendMessage(
                         phoneNumber: AppStrings.supportPhoneNumber,
-                        message: "مرحبا اريد تجديد الاشتراك في برنامج تحصيل",
+                        message: "مرحبا اريد تجديد الحساب في برنامج تحصيل",
                       );// ignore_for_file: use_build_context_synchronously
 
                       if (!success) {
