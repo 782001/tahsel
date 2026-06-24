@@ -10,6 +10,7 @@ class AppStrings {
   static const String englishCode = "en";
   static const String locale = "locale";
   static const String unknown = "unknown";
+  static const String tahselWebsiteUrl = "https://782001.github.io/tahsel-web/";
 
   // Auth Screen
   static const String login = "login";
@@ -672,8 +673,13 @@ class AppStrings {
   static const String deleteAccountDescription = "delete_account_description";
   static const String deleteAccountWarning = "delete_account_warning";
   static const String deleteAccountConfirm = "delete_account_confirm";
-  static const String accountDeletedSuccessfully = "account_deleted_successfully";
-  static const String deleteAccountNetworkError = "delete_account_network_error";
-  static const String deleteAccountRequiresReauth = "delete_account_requires_reauth";
+  static const String accountDeletedSuccessfully =
+      "account_deleted_successfully";
+  static const String deleteAccountNetworkError =
+      "delete_account_network_error";
+  static const String deleteAccountRequiresReauth =
+      "delete_account_requires_reauth";
   static const String deleteAccountFailed = "delete_account_failed";
+  static const String officialWebsite = "officialWebsite";
+static const String officialWebsiteDesc = "officialWebsiteDesc";
 }

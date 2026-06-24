@@ -596,5 +596,7 @@
   "account_deleted_successfully": "Account deleted successfully",
   "delete_account_network_error": "No internet connection. Please try again.",
   "delete_account_requires_reauth": "Your session has expired. Please logout and login again, then retry.",
-  "delete_account_failed": "Failed to delete account. Please try again."
+  "delete_account_failed": "Failed to delete account. Please try again.",
+  "officialWebsite": "Tahsel Official Website",
+  "officialWebsiteDesc": "Visit Tahsel's official website to learn about features and the latest updates"
 }

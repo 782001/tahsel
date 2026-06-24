@@ -598,5 +598,7 @@
   "account_deleted_successfully": "تم حذف الحساب بنجاح",
   "delete_account_network_error": "لا يوجد اتصال بالإنترنت. يرجى المحاولة مرة أخرى.",
   "delete_account_requires_reauth": "انتهت صلاحية جلستك. يرجى تسجيل الخروج وإعادة تسجيل الدخول ثم المحاولة مرة أخرى.",
-  "delete_account_failed": "فشل حذف الحساب. يرجى المحاولة مرة أخرى."
+  "delete_account_failed": "فشل حذف الحساب. يرجى المحاولة مرة أخرى.",
+  "officialWebsite": "الموقع الرسمي لتحصيل",
+  "officialWebsiteDesc": "زيارة الموقع الرسمي لتطبيق تحصيل ومعرفة المميزات وأحدث التحديثات"
 }
