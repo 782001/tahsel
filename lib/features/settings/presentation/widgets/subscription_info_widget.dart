@@ -70,7 +70,7 @@ class _SubscriptionInfoWidgetState extends State<SubscriptionInfoWidget> {
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-
+final isDesktop = ResponsiveLayout.isDesktop(context);
     if (_isLoading) {
       return Card(
         color: AppColors.surface,
@@ -79,7 +79,7 @@ class _SubscriptionInfoWidgetState extends State<SubscriptionInfoWidget> {
         ),
         elevation: 0,
         child: Padding(
-          padding: EdgeInsets.all(20.w),
+          padding: EdgeInsets.all(isDesktop ? 20 : 20.w),
           child: const Center(child: CircularProgressIndicator()),
         ),
       );
@@ -93,25 +93,25 @@ class _SubscriptionInfoWidgetState extends State<SubscriptionInfoWidget> {
         ),
         elevation: 0,
         child: Padding(
-          padding: EdgeInsets.all(20.w),
+          padding: EdgeInsets.all(isDesktop ? 20 : 20.w),
           child: Column(
             children: [
               Icon(
                 Icons.error_outline_rounded,
                 color: AppColors.error,
-                size: 40.w,
+                size: isDesktop ? 40 : 40.w,
               ),
-              SizedBox(height: 12.h),
+              SizedBox(height: isDesktop ? 12 : 12.h),
               Text(
                 'Could not load subscription details'.tr(),
                 style: TextStyles.customStyle(
-                  fontSize: 14,
+                  fontSize: isDesktop ? 14 : 14,
                   color: AppColors.error,
                   fontWeight: FontWeight.w600,
                 ),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: 12.h),
+              SizedBox(height: isDesktop ? 12 : 12.h),
               TextButton.icon(
                 onPressed: _fetchSubscriptionData,
                 icon: const Icon(Icons.refresh_rounded),
@@ -185,7 +185,6 @@ class _SubscriptionInfoWidgetState extends State<SubscriptionInfoWidget> {
     String fmtDate(DateTime? d) =>
         d != null ? df.format(d) : AppStrings.notSet.tr();
 
-    final isDesktop = ResponsiveLayout.isDesktop(context);
 
     return Card(
       color: isDark ? AppColors.surface : AppColors.whiteColor,

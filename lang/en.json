@@ -590,7 +590,7 @@
   "not_set": "Not Set",
   "delete_account": "Delete Account",
   "delete_account_title": "Delete Account",
-  "delete_account_description": "Your account and subscription will be permanently deleted.\n\nYou will no longer be able to sign in with this account.\n\nThis action cannot be undone.",
+  "delete_account_description": "Your account will be permanently deleted.\n\nYou will no longer be able to sign in with this account.\n\nThis action cannot be undone.",
   "delete_account_warning": "This action cannot be undone.",
   "delete_account_confirm": "Delete Account",
   "account_deleted_successfully": "Account deleted successfully",

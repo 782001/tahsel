@@ -1,5 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -308,74 +310,76 @@ class _LoginScreenState extends State<LoginScreen> {
                                         );
                                       },
                                     ),
-                                    SizedBox(height: 24.h),
+                                    if (!Platform.isIOS) SizedBox(height: 24.h),
 
                                     // Contact Manager text
-                                    Container(
-                                      width: double.infinity,
-                                      padding: EdgeInsets.only(
-                                        top: isDesktop ? 024 : 24.h,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        border: Border(
-                                          top: BorderSide(
-                                            color: AppColors.disabledColor
-                                                .withValues(alpha: 0.1),
+                                    if (!Platform.isIOS)
+                                      Container(
+                                        width: double.infinity,
+                                        padding: EdgeInsets.only(
+                                          top: isDesktop ? 024 : 24.h,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          border: Border(
+                                            top: BorderSide(
+                                              color: AppColors.disabledColor
+                                                  .withValues(alpha: 0.1),
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            AppStrings.noAccount.tr(),
-                                            style: TextStyles.customStyle(
-                                              color: AppColors.disabledColor,
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w500,
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              AppStrings.noAccount.tr(),
+                                              style: TextStyles.customStyle(
+                                                color: AppColors.disabledColor,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                              ),
                                             ),
-                                          ),
-                                          GestureDetector(
-                                            onTap: () async {
-                                              final success =
-                                                  await WhatsAppService.sendMessage(
-                                                    phoneNumber: AppStrings
-                                                        .supportPhoneNumber,
-                                                    message:
-                                                        "مرحبا اريد الحصول علي حساب في برنامج تحصيل",
-                                                  );
-                                              if (mounted && !success) {
-                                                ScaffoldMessenger.of(
-                                                  context,
-                                                ).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text(
-                                                      AppStrings
-                                                          .whatsappNotInstalled
-                                                          .tr(),
+                                            GestureDetector(
+                                              onTap: () async {
+                                                final success =
+                                                    await WhatsAppService.sendMessage(
+                                                      phoneNumber: AppStrings
+                                                          .supportPhoneNumber,
+                                                      message:
+                                                          "مرحبا اريد الحصول علي حساب في برنامج تحصيل",
+                                                    );
+                                                if (mounted && !success) {
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        AppStrings
+                                                            .whatsappNotInstalled
+                                                            .tr(),
+                                                      ),
                                                     ),
-                                                  ),
-                                                );
-                                              }
-                                            },
-                                            child: Text(
-                                              AppStrings.contactManager.tr(),
-                                              style:
-                                                  TextStyles.customStyle(
-                                                    color:
-                                                        AppColors.primaryColor,
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.bold,
-                                                  ).copyWith(
-                                                    decoration: TextDecoration
-                                                        .underline,
-                                                  ),
+                                                  );
+                                                }
+                                              },
+                                              child: Text(
+                                                AppStrings.contactManager.tr(),
+                                                style:
+                                                    TextStyles.customStyle(
+                                                      color: AppColors
+                                                          .primaryColor,
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ).copyWith(
+                                                      decoration: TextDecoration
+                                                          .underline,
+                                                    ),
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
-                                    ),
                                   ],
                                 ),
                               ),

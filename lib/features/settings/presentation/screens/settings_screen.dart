@@ -286,81 +286,84 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               SizedBox(height: isDesktop ? 32 : 32.h),
 
                               // Official Website Section
-                              SectionHeader(
-                                title: AppStrings.officialWebsite.tr(),
-                              ),
+                              if (!Platform.isIOS)
+                                SectionHeader(
+                                  title: AppStrings.officialWebsite.tr(),
+                                ),
 
-                              InkWell(
-                                onTap: () async {
-                                  final uri = Uri.parse(
-                                    AppStrings.tahselWebsiteUrl,
-                                  );
+                              if (!Platform.isIOS)
+                                InkWell(
+                                  onTap: () async {
+                                    final uri = Uri.parse(
+                                      AppStrings.tahselWebsiteUrl,
+                                    );
 
-                                  await launchUrl(
-                                    uri,
-                                    mode: LaunchMode.externalApplication,
-                                  );
-                                },
-                                borderRadius: BorderRadius.circular(12.r),
-                                child: Container(
-                                  padding: EdgeInsets.all(
-                                    isDesktop ? 16 : 14.w,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.whiteColor,
-                                    borderRadius: BorderRadius.circular(12.r),
-                                    border: Border.all(
-                                      color: AppColors.veryLightGrey,
+                                    await launchUrl(
+                                      uri,
+                                      mode: LaunchMode.externalApplication,
+                                    );
+                                  },
+                                  borderRadius: BorderRadius.circular(12.r),
+                                  child: Container(
+                                    padding: EdgeInsets.all(
+                                      isDesktop ? 16 : 14.w,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.whiteColor,
+                                      borderRadius: BorderRadius.circular(12.r),
+                                      border: Border.all(
+                                        color: AppColors.veryLightGrey,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        CircleAvatar(
+                                          backgroundColor: AppColors
+                                              .primaryColor
+                                              .withValues(alpha: 0.1),
+                                          radius: 20.r,
+                                          child: Icon(
+                                            Icons.language_rounded,
+                                            color: AppColors.primaryColor,
+                                          ),
+                                        ),
+                                        SizedBox(width: isDesktop ? 16 : 16.w),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                AppStrings.officialWebsite.tr(),
+                                                style: TextStyles.customStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: AppColors.blackReal,
+                                                ),
+                                              ),
+                                              SizedBox(
+                                                height: isDesktop ? 4 : 4.h,
+                                              ),
+                                              Text(
+                                                AppStrings.officialWebsiteDesc
+                                                    .tr(),
+                                                style: TextStyles.customStyle(
+                                                  fontSize: 12,
+                                                  color: AppColors.sandText,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Icon(
+                                          Icons.open_in_new_rounded,
+                                          size: isDesktop ? 18 : 18.sp,
+                                          color: AppColors.sandText,
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  child: Row(
-                                    children: [
-                                      CircleAvatar(
-                                        backgroundColor: AppColors.primaryColor
-                                            .withValues(alpha: 0.1),
-                                        radius: 20.r,
-                                        child: Icon(
-                                          Icons.language_rounded,
-                                          color: AppColors.primaryColor,
-                                        ),
-                                      ),
-                                      SizedBox(width: isDesktop ? 16 : 16.w),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              AppStrings.officialWebsite.tr(),
-                                              style: TextStyles.customStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppColors.blackReal,
-                                              ),
-                                            ),
-                                            SizedBox(
-                                              height: isDesktop ? 4 : 4.h,
-                                            ),
-                                            Text(
-                                              AppStrings.officialWebsiteDesc
-                                                  .tr(),
-                                              style: TextStyles.customStyle(
-                                                fontSize: 12,
-                                                color: AppColors.sandText,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      Icon(
-                                        Icons.open_in_new_rounded,
-                                        size: isDesktop ? 18 : 18.sp,
-                                        color: AppColors.sandText,
-                                      ),
-                                    ],
-                                  ),
                                 ),
-                              ),
                               SizedBox(height: isDesktop ? 32 : 32.h),
 
                               // Logout button
