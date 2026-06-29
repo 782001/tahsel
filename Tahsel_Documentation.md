@@ -59211,3 +59211,12327 @@ The Offline Mode module is now fully documented, covering:
 **PART 16 — Firebase Data Model**
 
 This section documents the complete Firestore database architecture, including collections, documents, relationships, field definitions, naming conventions, indexing strategy, and how every module stores and retrieves data.
+# PART 16 — Firebase Data Model
+
+# 16.1 Database Architecture Overview
+
+## Overview
+
+The **Firebase Data Model** defines the complete Firestore architecture used by Tahsel.
+
+It specifies how business entities are stored, how documents relate to one another, and how every application module interacts with Firestore.
+
+The architecture is designed around the following principles:
+
+* Clean Architecture
+* Scalability
+* Financial Integrity
+* High Performance
+* Multi-Platform Compatibility
+* Future Expandability
+
+Every module follows the same database design philosophy.
+
+---
+
+# Objectives
+
+The Firebase Data Model is designed to:
+
+* Keep business data organized.
+* Minimize Firestore reads.
+* Prevent duplicated information.
+* Support future features.
+* Maintain financial consistency.
+* Support Android, Windows, iOS, and future platforms.
+
+---
+
+# Database Type
+
+Tahsel uses:
+
+```text id="db01"
+Firebase Firestore
+```
+
+Firestore is the only permanent business database.
+
+No secondary production database currently exists.
+
+---
+
+# Source of Truth
+
+The permanent source of truth is:
+
+```text id="db02"
+Firestore
+```
+
+Every module eventually synchronizes with Firestore.
+
+Local storage is temporary and exists only for supported offline features.
+
+---
+
+# General Architecture
+
+```text id="db03"
+Authentication
+
+↓
+
+Users Collection
+
+↓
+
+Business Modules
+
+↓
+
+Reports Engine
+
+↓
+
+Dashboard
+
+↓
+
+Analytics
+```
+
+Every business module owns its own collection(s).
+
+Modules communicate through document references and identifiers rather than duplicated business data.
+
+---
+
+# Database Design Principles
+
+The Firestore structure follows these principles:
+
+* Single Source of Truth
+* Normalized Business Data
+* Minimal Duplication
+* Immutable Business History
+* Scalable Collections
+* Predictable Relationships
+
+---
+
+# Module Separation
+
+Each business module stores its own data.
+
+Examples:
+
+* Customer Debts
+* Expenses
+* Employees
+* Installments
+* Shop
+* PlayStation
+
+Business logic never mixes unrelated collections.
+
+---
+
+# Document Ownership
+
+Every Firestore document has a single owner.
+
+Examples:
+
+Customer document:
+
+Owns:
+
+* Customer Information
+
+Payment document:
+
+Owns:
+
+* Payment Information
+
+Expense document:
+
+Owns:
+
+* Expense Information
+
+No document stores another module's business logic.
+
+---
+
+# Relationships
+
+Modules communicate using identifiers.
+
+Example:
+
+```text id="db04"
+Customer
+
+↓
+
+Customer ID
+
+↓
+
+Debt
+
+↓
+
+Payment
+```
+
+Documents reference each other without duplicating complete business records.
+
+---
+
+# Collection Strategy
+
+Collections are organized by business domain.
+
+Benefits:
+
+* Easier maintenance.
+* Faster queries.
+* Better scalability.
+* Cleaner security rules.
+
+---
+
+# Naming Convention
+
+Collections use:
+
+```text id="db05"
+camelCase
+```
+
+Document fields also use:
+
+```text id="db06"
+camelCase
+```
+
+Naming remains consistent across the entire project.
+
+---
+
+# Immutable Business Records
+
+Financial operations remain immutable whenever possible.
+
+Examples:
+
+* Payment history
+* Expense history
+* Installment history
+
+Business history is preserved for reporting and auditing.
+
+---
+
+# Timestamp Policy
+
+Every business document contains:
+
+```text id="db07"
+createdAt
+```
+
+Optional technical metadata:
+
+```text id="db08"
+syncedAt
+```
+
+Responsibilities remain identical throughout the system.
+
+---
+
+# Document Identifiers
+
+Each document owns:
+
+```text id="db09"
+Unique Document ID
+```
+
+Identifiers remain stable.
+
+Document IDs never change after creation.
+
+---
+
+# Reports Relationship
+
+Reports never own business data.
+
+Reports always consume Firestore collections dynamically.
+
+No report values are stored permanently.
+
+---
+
+# Dashboard Relationship
+
+Dashboard consumes:
+
+* Aggregated data.
+* Business statistics.
+* Report summaries.
+
+Dashboard never stores duplicated business information.
+
+---
+
+# Offline Relationship
+
+Supported modules may temporarily store local data.
+
+After synchronization:
+
+Firestore becomes the permanent source of truth.
+
+Employee Management intentionally does not participate in Offline Mode.
+
+---
+
+# Scalability
+
+The architecture supports future modules without structural redesign.
+
+Examples:
+
+* CRM
+* Reservations
+* Loyalty Programs
+* Accounting
+* AI Analytics
+
+Each new module may introduce new collections without impacting existing business domains.
+
+---
+
+# Performance
+
+Database design minimizes:
+
+* Firestore reads.
+* Firestore writes.
+* Document duplication.
+* Nested document complexity.
+
+Collections are designed for indexed queries.
+
+---
+
+# Security
+
+Every Firestore operation requires:
+
+* Authentication.
+* Authorization.
+* Firestore Security Rules.
+
+Business permissions are enforced outside the UI.
+
+---
+
+# Business Rules
+
+* Firestore is the permanent source of truth.
+* Every module owns its own collections.
+* Business data is never unnecessarily duplicated.
+* Document ownership is clearly defined.
+* Reports consume Firestore dynamically.
+* Dashboard consumes aggregated data only.
+* createdAt is the official business timestamp.
+* syncedAt is technical metadata only.
+* Employee Management does not support Offline Mode.
+* The architecture is designed for long-term scalability.
+
+---
+
+# Architecture
+
+```text id="db10"
+Firebase Auth
+
+↓
+
+Firestore
+
+↓
+
+Business Collections
+
+↓
+
+Repositories
+
+↓
+
+UseCases
+
+↓
+
+Cubit
+
+↓
+
+UI
+```
+
+---
+
+# End of Section
+
+Next Section:
+
+**16.2 Firestore Collections**
+
+This section documents every Firestore collection in the project, its purpose, ownership, relationships, primary fields, indexing considerations, and how each module stores its business data.
+# PART 16 — Firebase Data Model
+
+# 16.2 Firestore Collections
+
+## Overview
+
+This section documents every Firestore collection used by Tahsel.
+
+Each collection has a clearly defined business responsibility and owns only the data that belongs to its business domain.
+
+Collections never duplicate business information unnecessarily.
+
+Relationships are maintained using document identifiers.
+
+---
+
+# Design Principles
+
+Every Firestore collection follows these rules:
+
+* Single Responsibility.
+* Independent Business Domain.
+* Minimal Data Duplication.
+* Scalable Structure.
+* Predictable Relationships.
+* Indexed Query Support.
+
+---
+
+# Collection Overview
+
+The current database consists of the following primary collections:
+
+```text id="col01"
+users
+
+customerDebts
+
+customerDebtTransactions
+
+myDebts
+
+myDebtTransactions
+
+expenses
+
+expenseCategories
+
+employees
+
+employeeAttendance
+
+employeeSalaries
+
+installments
+
+installmentTransactions
+
+products
+
+productCategories
+
+sales
+
+playStationRooms
+
+playStationSessions
+
+appSettings
+
+appVersions
+```
+
+Future collections may be added without affecting existing modules.
+
+---
+
+# users
+
+Purpose:
+
+Stores every authenticated business account.
+
+Contains:
+
+* Authentication Information
+* Subscription Information
+* Account Status
+* Platform Restrictions
+* Business Information
+
+Relationships:
+
+Parent collection for all business operations.
+
+---
+
+# customerDebts
+
+Purpose:
+
+Stores customer debt records.
+
+Contains:
+
+* Customer Information
+* Original Debt Amount
+* Remaining Balance
+* Debt Status
+
+Relationships:
+
+One customer debt owns multiple payment transactions.
+
+---
+
+# customerDebtTransactions
+
+Purpose:
+
+Stores every payment made toward customer debts.
+
+Contains:
+
+* Payment Amount
+* Payment Date
+* Notes
+* Notification Information
+
+Relationships:
+
+Belongs to one customer debt.
+
+Reports consume this collection for financial calculations.
+
+---
+
+# myDebts
+
+Purpose:
+
+Stores personal debts belonging to the business owner.
+
+Separated from customer debts.
+
+Relationships:
+
+Owns personal payment transactions.
+
+---
+
+# myDebtTransactions
+
+Purpose:
+
+Stores payments related to personal debts.
+
+Used only by the My Debts module.
+
+---
+
+# expenses
+
+Purpose:
+
+Stores business expenses.
+
+Contains:
+
+* Amount
+* Category
+* Notes
+* createdAt
+
+Relationships:
+
+Reports consume this collection directly.
+
+---
+
+# expenseCategories
+
+Purpose:
+
+Stores configurable expense categories.
+
+Examples:
+
+* Rent
+* Electricity
+* Internet
+* Supplies
+
+Future categories can be added dynamically.
+
+---
+
+# employees
+
+Purpose:
+
+Stores employee information.
+
+Contains:
+
+* Personal Information
+* Employment Status
+* Salary Configuration
+
+Offline support is intentionally disabled.
+
+---
+
+# employeeAttendance
+
+Purpose:
+
+Stores attendance records.
+
+Contains:
+
+* Check-In
+* Check-Out
+* Attendance Status
+
+Relationships:
+
+Belongs to one employee.
+
+---
+
+# employeeSalaries
+
+Purpose:
+
+Stores salary payment history.
+
+Contains:
+
+* Salary Period
+* Paid Amount
+* Bonuses
+* Deductions
+
+Future payroll reports consume this collection.
+
+---
+
+# installments
+
+Purpose:
+
+Stores installment contracts.
+
+Contains:
+
+* Customer Information
+* Installment Amount
+* Remaining Balance
+
+Relationships:
+
+Owns installment payment transactions.
+
+---
+
+# installmentTransactions
+
+Purpose:
+
+Stores installment payments.
+
+Contains:
+
+* Payment Amount
+* createdAt
+* Notes
+
+Used by reports and collection analytics.
+
+---
+
+# products
+
+Purpose:
+
+Stores inventory products.
+
+Future:
+
+Supports sales analytics.
+
+---
+
+# productCategories
+
+Purpose:
+
+Stores shop product categories.
+
+Examples:
+
+* Drinks
+* Snacks
+* Accessories
+
+---
+
+# sales
+
+Purpose:
+
+Stores completed sales transactions.
+
+Future reports consume this collection.
+
+Inventory updates remain independent.
+
+---
+
+# playStationRooms
+
+Purpose:
+
+Stores PlayStation rooms.
+
+Contains:
+
+* Room Information
+* Device Information
+* Status
+
+Future session management depends on this collection.
+
+---
+
+# playStationSessions
+
+Purpose:
+
+Stores completed gaming sessions.
+
+Contains:
+
+* Session Duration
+* Revenue
+* Start Time
+* End Time
+
+Reports consume completed sessions only.
+
+---
+
+# appSettings
+
+Purpose:
+
+Stores global application configuration.
+
+Examples:
+
+* Support Phone
+* WhatsApp Number
+* Business Name
+* Notification Settings
+
+Application configuration is centralized here.
+
+---
+
+# appVersions
+
+Purpose:
+
+Stores version management information.
+
+Contains:
+
+* Android Version
+* iOS Version
+* Windows Version
+* Force Update Flag
+
+Used during application startup.
+
+---
+
+# Collection Relationships
+
+```text id="col02"
+users
+
+│
+
+├── customerDebts
+
+│     └── customerDebtTransactions
+
+│
+
+├── myDebts
+
+│     └── myDebtTransactions
+
+│
+
+├── expenses
+
+│
+
+├── employees
+
+│     ├── employeeAttendance
+
+│     └── employeeSalaries
+
+│
+
+├── installments
+
+│     └── installmentTransactions
+
+│
+
+├── products
+
+│     └── sales
+
+│
+
+├── playStationRooms
+
+│     └── playStationSessions
+
+│
+
+├── appSettings
+
+└── appVersions
+```
+
+---
+
+# Query Strategy
+
+Collections are queried independently.
+
+Cross-module aggregation occurs inside:
+
+```text id="col03"
+Reports UseCases
+```
+
+Firestore never performs business aggregation.
+
+---
+
+# Performance
+
+Optimizations:
+
+* Small focused collections.
+* Indexed createdAt.
+* Indexed status fields.
+* Indexed customer identifiers.
+* Minimal nested structures.
+
+Supports large-scale business growth.
+
+---
+
+# Security
+
+Every collection is protected by:
+
+* Firebase Authentication.
+* Firestore Security Rules.
+* Business Permissions.
+
+Unauthorized access is rejected.
+
+---
+
+# Business Rules
+
+* Every collection owns one business domain.
+* Business logic is never shared between collections.
+* Reports aggregate data across collections dynamically.
+* Document relationships use identifiers.
+* createdAt is present on every business document.
+* Firestore remains the single source of truth.
+* Employee collections intentionally do not support Offline Mode.
+* Future modules introduce new collections instead of modifying existing business domains.
+* Financial history remains immutable whenever possible.
+
+---
+
+# Architecture
+
+```text id="col04"
+Firestore
+
+↓
+
+Collections
+
+↓
+
+Repositories
+
+↓
+
+UseCases
+
+↓
+
+Cubit
+
+↓
+
+UI
+```
+
+---
+
+# End of Section
+
+Next Section:
+
+**16.3 Firestore Document Structure & Field Definitions**
+
+This section documents every important document structure, required fields, optional fields, data types, naming conventions, validation rules, and relationships used throughout the Firebase database.
+# PART 16 — Firebase Data Model
+
+# 16.3 Firestore Document Structure & Field Definitions
+
+## Overview
+
+This section defines the standard structure used by Firestore documents throughout the Tahsel system.
+
+Although each business module owns different fields, all documents follow the same architectural principles to ensure consistency, maintainability, and scalability.
+
+The purpose of this section is to standardize:
+
+* Field naming.
+* Required fields.
+* Optional fields.
+* Data types.
+* Validation rules.
+* Timestamp usage.
+
+---
+
+# Design Principles
+
+Every Firestore document follows these principles:
+
+* Predictable structure.
+* Stable identifiers.
+* Minimal duplication.
+* Immutable business history.
+* Strong typing.
+* Easy serialization.
+
+---
+
+# Standard Business Document
+
+A typical business document contains:
+
+```text id="doc01"
+Document ID
+
+Business Fields
+
+createdAt
+
+(Optional)
+
+syncedAt
+
+(Optional)
+
+Technical Metadata
+```
+
+Business modules extend this structure with their own fields.
+
+---
+
+# Document Identifier
+
+Every document owns:
+
+```text id="doc02"
+Document ID
+```
+
+Characteristics:
+
+* Globally unique.
+* Immutable.
+* Never reused.
+* Never modified.
+
+Document IDs uniquely identify business entities.
+
+---
+
+# Required Fields
+
+Every business document should include:
+
+```text id="doc03"
+id
+
+createdAt
+```
+
+Additional required fields depend on the module.
+
+Example:
+
+Expense:
+
+* Amount
+* Category
+* createdAt
+
+Payment:
+
+* Amount
+* Debt ID
+* createdAt
+
+---
+
+# Optional Fields
+
+Examples:
+
+* Notes
+* Description
+* syncedAt
+* Updated Metadata
+
+Optional fields may be null.
+
+Business logic must handle missing values safely.
+
+---
+
+# Naming Convention
+
+Every Firestore field uses:
+
+```text id="doc04"
+camelCase
+```
+
+Examples:
+
+```text id="doc05"
+createdAt
+
+customerId
+
+remainingDebt
+
+subscriptionEndDate
+```
+
+Snake case is not used.
+
+---
+
+# Timestamp Fields
+
+Business timestamp:
+
+```text id="doc06"
+createdAt
+```
+
+Technical timestamp:
+
+```text id="doc07"
+syncedAt
+```
+
+Responsibilities remain consistent throughout the project.
+
+---
+
+# createdAt
+
+Purpose:
+
+Represents the exact business operation time.
+
+Used by:
+
+* Reports
+* Analytics
+* Collections
+* Business History
+
+Rules:
+
+* Assigned once.
+* Immutable.
+* Never overwritten.
+
+---
+
+# syncedAt
+
+Purpose:
+
+Represents synchronization time.
+
+Used only for:
+
+* Debugging.
+* Synchronization Monitoring.
+* Technical Diagnostics.
+
+Never affects business calculations.
+
+---
+
+# Numeric Fields
+
+Financial values use numeric data types.
+
+Examples:
+
+* Debt Amount
+* Payment Amount
+* Expense Amount
+* Salary
+
+Financial values are never stored as formatted strings.
+
+---
+
+# Boolean Fields
+
+Examples:
+
+```text id="doc08"
+isPaid
+
+isActive
+
+isDeleted
+
+isSuspended
+```
+
+Booleans represent system state only.
+
+Business calculations never depend solely on UI state.
+
+---
+
+# Enum Fields
+
+Examples:
+
+```text id="doc09"
+accountStatus
+
+platformType
+
+notificationMethod
+
+userType
+```
+
+Only supported values are accepted.
+
+Invalid values are rejected during validation.
+
+---
+
+# Relationship Fields
+
+Relationships use identifiers.
+
+Examples:
+
+```text id="doc10"
+customerId
+
+employeeId
+
+debtId
+
+installmentId
+```
+
+Complete business objects are never duplicated.
+
+---
+
+# Nullable Fields
+
+Nullable fields include:
+
+* Notes
+* Description
+* Phone Extension
+* Additional Metadata
+
+Business logic must safely handle null values.
+
+---
+
+# Validation Rules
+
+Before writing to Firestore:
+
+Validate:
+
+* Required fields exist.
+* Numeric values are valid.
+* Enum values are supported.
+* Relationships reference valid entities.
+
+Invalid documents are rejected.
+
+---
+
+# Serialization
+
+Every document supports:
+
+```text id="doc11"
+Entity
+
+↓
+
+Model
+
+↓
+
+JSON
+
+↓
+
+Firestore
+```
+
+The reverse process follows the same structure.
+
+Serialization remains centralized inside the Data Layer.
+
+---
+
+# Business Integrity
+
+Business documents never contain:
+
+* Calculated totals.
+* Cached report values.
+* Derived analytics.
+
+Derived values are always calculated dynamically.
+
+---
+
+# Performance
+
+Optimizations:
+
+* Small documents.
+* Minimal nested objects.
+* Indexed query fields.
+* Efficient serialization.
+
+Supports large Firestore datasets.
+
+---
+
+# Security
+
+Every document requires:
+
+* Authentication.
+* Authorization.
+* Firestore Security Rules.
+
+Unauthorized modifications are rejected.
+
+---
+
+# Business Rules
+
+* Every document owns one immutable identifier.
+* createdAt is mandatory for business documents.
+* syncedAt is optional technical metadata.
+* Field names always use camelCase.
+* Financial values use numeric types.
+* Relationships use identifiers.
+* Business documents never store derived analytics.
+* Validation occurs before Firestore writes.
+* Serialization belongs to the Data Layer.
+* Firestore remains the single source of truth.
+
+---
+
+# Architecture
+
+```text id="doc12"
+Entity
+
+↓
+
+Model
+
+↓
+
+JSON
+
+↓
+
+Firestore Document
+
+↓
+
+Repository
+
+↓
+
+UseCase
+
+↓
+
+Cubit
+
+↓
+
+UI
+```
+
+---
+
+# End of Section
+
+Next Section:
+
+**16.4 Collection Relationships & Data Ownership**
+
+This section documents parent-child relationships, ownership rules, reference strategy, data normalization, cascading behavior, and the business rules governing how collections interact while avoiding duplicated business data.
+# PART 16 — Firebase Data Model
+
+# 16.4 Collection Relationships & Data Ownership
+
+## Overview
+
+The **Collection Relationships & Data Ownership** model defines how Firestore collections interact while preserving data integrity and preventing unnecessary duplication.
+
+Every business entity has a single owner.
+
+Relationships between collections are established using document identifiers rather than embedding complete business objects.
+
+This approach keeps the database scalable, maintainable, and financially consistent.
+
+---
+
+# Objectives
+
+The relationship model guarantees:
+
+* Single ownership.
+* Clear business boundaries.
+* Minimal duplication.
+* Consistent financial history.
+* Efficient Firestore queries.
+* Easy future expansion.
+
+---
+
+# Ownership Principle
+
+Every business entity belongs to exactly one collection.
+
+Examples:
+
+```text id="rel01"
+Customer
+
+↓
+
+users
+```
+
+```text id="rel02"
+Expense
+
+↓
+
+expenses
+```
+
+```text id="rel03"
+Debt Payment
+
+↓
+
+customerDebtTransactions
+```
+
+Ownership is never shared.
+
+---
+
+# Relationship Strategy
+
+Tahsel uses:
+
+```text id="rel04"
+Reference By Identifier
+```
+
+instead of:
+
+```text id="rel05"
+Full Object Duplication
+```
+
+This keeps business information synchronized automatically.
+
+---
+
+# Example Relationship
+
+```text id="rel06"
+Customer
+
+↓
+
+customerId
+
+↓
+
+Debt
+
+↓
+
+debtId
+
+↓
+
+Payment
+```
+
+Every relationship uses identifiers only.
+
+---
+
+# Parent-Child Relationships
+
+Examples:
+
+```text id="rel07"
+Customer Debt
+
+↓
+
+Customer Debt Transactions
+```
+
+```text id="rel08"
+Installment
+
+↓
+
+Installment Transactions
+```
+
+```text id="rel09"
+Employee
+
+↓
+
+Attendance
+```
+
+```text id="rel10"
+Employee
+
+↓
+
+Salary History
+```
+
+Each child belongs to exactly one parent.
+
+---
+
+# Independent Collections
+
+Some collections have no business parent.
+
+Examples:
+
+* Expenses
+* App Settings
+* App Versions
+
+These collections remain independent.
+
+---
+
+# Data Normalization
+
+Tahsel follows a normalized data model.
+
+Business information exists only once.
+
+Example:
+
+Customer Name belongs to:
+
+```text id="rel11"
+users
+```
+
+Payment documents reference:
+
+```text id="rel12"
+customerId
+```
+
+instead of duplicating the entire customer object.
+
+---
+
+# Controlled Duplication
+
+Very small amounts of duplication are acceptable only when they improve performance and do not create financial inconsistency.
+
+Examples:
+
+* Cached display names.
+* Cached profile images.
+
+Financial values are **never duplicated**.
+
+---
+
+# Financial Ownership
+
+Financial ownership remains isolated.
+
+Example:
+
+Customer Debt owns:
+
+* Original Debt Amount
+
+Payment owns:
+
+* Payment Amount
+
+Reports derive totals dynamically.
+
+No report values are stored inside business documents.
+
+---
+
+# Deletion Rules
+
+Deleting a parent document never deletes financial history automatically.
+
+Historical transactions must remain available for:
+
+* Reports.
+* Auditing.
+* Financial Integrity.
+
+Where deletion is supported, soft deletion is preferred for business entities with historical value.
+
+---
+
+# Update Rules
+
+Updating a parent entity:
+
+Example:
+
+Customer Name
+
+does **not** modify historical payment amounts.
+
+Financial history remains immutable.
+
+Only current customer information changes.
+
+---
+
+# Cross-Module Relationships
+
+Examples:
+
+Customer Debts
+
+↓
+
+Reports
+
+Expenses
+
+↓
+
+Reports
+
+Installments
+
+↓
+
+Reports
+
+Every module contributes independently.
+
+Reports aggregate the data.
+
+Modules never directly manipulate each other's collections.
+
+---
+
+# Dashboard Relationship
+
+Dashboard consumes:
+
+* Reports
+* Statistics
+* Aggregated business data
+
+Dashboard never becomes the owner of business entities.
+
+---
+
+# Firestore Query Strategy
+
+Relationships are resolved using:
+
+* Document IDs
+* Indexed Fields
+
+The application avoids expensive nested document traversal.
+
+---
+
+# Future Scalability
+
+The relationship model supports adding future modules such as:
+
+* CRM
+* Reservations
+* Loyalty Programs
+* Accounting
+* AI Analytics
+
+without restructuring existing collections.
+
+---
+
+# Performance
+
+Optimizations:
+
+* Normalized collections.
+* Identifier-based relationships.
+* Indexed foreign keys.
+* Small document sizes.
+* Minimal duplicated data.
+
+Designed for enterprise-scale Firestore usage.
+
+---
+
+# Security
+
+Relationship validation ensures:
+
+* Referenced documents exist.
+* Unauthorized relationships cannot be created.
+* Invalid identifiers are rejected.
+
+---
+
+# Business Rules
+
+* Every document has exactly one owner.
+* Parent-child relationships use identifiers.
+* Business entities are normalized.
+* Financial values are never duplicated.
+* Reports derive all financial totals dynamically.
+* Historical financial transactions remain immutable.
+* Dashboard consumes aggregated data only.
+* Collection ownership never changes after creation.
+* Firestore remains the single source of truth.
+* The architecture is optimized for long-term scalability.
+
+---
+
+# Architecture
+
+```text id="rel13"
+users
+
+│
+
+├── customerDebts
+
+│     └── customerDebtTransactions
+
+│
+
+├── installments
+
+│     └── installmentTransactions
+
+│
+
+├── employees
+
+│     ├── employeeAttendance
+
+│     └── employeeSalaries
+
+│
+
+├── expenses
+
+│
+
+├── products
+
+│     └── sales
+
+│
+
+└── playStationRooms
+
+      └── playStationSessions
+
+↓
+
+Reports Engine
+
+↓
+
+Dashboard
+```
+
+---
+
+# End of Section
+
+Next Section:
+
+**16.5 Firestore Indexing Strategy**
+
+This section documents Firestore indexing, query optimization, composite indexes, searchable fields, sorting strategy, performance considerations, and all business rules governing efficient database access.
+# PART 16 — Firebase Data Model
+
+# 16.5 Firestore Indexing Strategy
+
+## Overview
+
+The **Firestore Indexing Strategy** defines how Tahsel optimizes database queries to achieve high performance while minimizing Firestore read costs.
+
+Proper indexing is essential because almost every screen in the application depends on filtering, sorting, or searching business data.
+
+Without appropriate indexes, queries become slower, more expensive, and may exceed Firestore query limitations.
+
+---
+
+# Objectives
+
+The indexing strategy is designed to:
+
+* Reduce Firestore read latency.
+* Minimize Firestore costs.
+* Improve query performance.
+* Support scalable datasets.
+* Enable efficient filtering and sorting.
+
+---
+
+# Indexing Principles
+
+Every index should:
+
+* Serve a real business query.
+* Reduce unnecessary reads.
+* Avoid duplicated indexes.
+* Match actual application usage.
+
+Indexes are created only when they improve application performance.
+
+---
+
+# Frequently Indexed Fields
+
+The following fields are indexed across multiple collections:
+
+```text id="idx01"
+createdAt
+
+accountStatus
+
+customerId
+
+employeeId
+
+subscriptionEndDate
+
+platformType
+
+userType
+```
+
+These fields are commonly used in filtering and sorting operations.
+
+---
+
+# Business Date Index
+
+The most important index in the application is:
+
+```text id="idx02"
+createdAt
+```
+
+It powers:
+
+* Daily Reports
+* Weekly Reports
+* Monthly Reports
+* Yearly Reports
+* Collected Amount
+* Expenses Reports
+* Financial Analytics
+
+Business grouping always depends on this field.
+
+---
+
+# Customer Queries
+
+Customer-related screens commonly query:
+
+```text id="idx03"
+customerId
+```
+
+Examples:
+
+* Customer Debts
+* Customer Payments
+* Customer Reports
+
+This field should always be indexed.
+
+---
+
+# Employee Queries
+
+Employee-related screens commonly query:
+
+```text id="idx04"
+employeeId
+```
+
+Examples:
+
+* Attendance
+* Salary History
+
+Supports efficient employee filtering.
+
+---
+
+# Subscription Queries
+
+Dashboard periodically checks:
+
+```text id="idx05"
+subscriptionEndDate
+
+accountStatus
+```
+
+These fields allow efficient identification of expired accounts during automatic subscription validation.
+
+---
+
+# Platform Queries
+
+Platform restriction screens use:
+
+```text id="idx06"
+platformType
+```
+
+Possible values:
+
+* mobile
+* desktop
+* both
+
+Indexing enables efficient filtering and administration.
+
+---
+
+# Status Queries
+
+Frequently filtered status fields include:
+
+```text id="idx07"
+accountStatus
+```
+
+Possible values:
+
+* active
+* inactive
+* suspended
+* deleted
+* expired
+
+These values are frequently displayed in Dashboard user management.
+
+---
+
+# Composite Indexes
+
+Some screens require filtering and sorting simultaneously.
+
+Typical examples include:
+
+```text id="idx08"
+accountStatus
+
++
+
+subscriptionEndDate
+```
+
+```text id="idx09"
+customerId
+
++
+
+createdAt
+```
+
+```text id="idx10"
+employeeId
+
++
+
+createdAt
+```
+
+These combinations improve query efficiency.
+
+---
+
+# Search Optimization
+
+Tahsel performs search using indexed fields where possible.
+
+Examples:
+
+* Customer Name
+* Customer Phone
+* Employee Name
+
+Search inputs continue using debounce to minimize Firestore reads.
+
+---
+
+# Sorting Strategy
+
+Common sorting fields include:
+
+* createdAt
+* subscriptionEndDate
+* accountStatus
+
+Sorting occurs directly inside Firestore whenever possible.
+
+---
+
+# Reports Optimization
+
+Reports primarily query:
+
+```text id="idx11"
+createdAt
+```
+
+and aggregate data in UseCases.
+
+Firestore is responsible only for efficient retrieval.
+
+Business calculations never occur inside Firestore.
+
+---
+
+# Large Dataset Support
+
+The indexing strategy supports:
+
+* Thousands of customers.
+* Thousands of payments.
+* Years of business history.
+
+Performance remains predictable as the database grows.
+
+---
+
+# Firestore Cost Optimization
+
+Indexes help reduce:
+
+* Read Operations
+* Query Time
+* Network Usage
+
+The application intentionally avoids unnecessary realtime listeners for reporting features.
+
+---
+
+# Dashboard Relationship
+
+Dashboard statistics rely on indexed queries to load quickly.
+
+Examples:
+
+* Active Users
+* Expired Accounts
+* Suspended Accounts
+* Subscription Checks
+
+---
+
+# Security
+
+Indexes improve query performance only.
+
+They never bypass:
+
+* Firestore Security Rules.
+* Authentication.
+* Authorization.
+
+Security validation always occurs independently.
+
+---
+
+# Business Rules
+
+* Every frequently queried field should be indexed.
+* createdAt is the primary reporting index.
+* Composite indexes are created only when required.
+* Financial calculations occur inside UseCases, not Firestore.
+* Search uses indexed fields with debounce.
+* Sorting occurs inside Firestore whenever possible.
+* Indexes reduce Firestore read costs.
+* Security is independent of indexing.
+* Firestore remains the single source of truth.
+* Indexes are optimized based on real application usage.
+
+---
+
+# Architecture
+
+```text id="idx12"
+Firestore
+
+↓
+
+Indexes
+
+↓
+
+Efficient Queries
+
+↓
+
+Repositories
+
+↓
+
+UseCases
+
+↓
+
+Cubit
+
+↓
+
+UI
+```
+
+---
+
+# End of PART 16 — Firebase Data Model
+
+The Firebase Data Model is now fully documented, covering:
+
+* Database Architecture Overview
+* Firestore Collections
+* Document Structure & Field Definitions
+* Collection Relationships & Data Ownership
+* Firestore Indexing Strategy
+
+---
+
+# Next Part
+
+**PART 17 — Localization**
+
+This section documents the localization architecture, ARB file organization, translation workflow, supported languages, key naming conventions, dynamic language switching, formatting rules, and all business rules governing multilingual support throughout the application.
+# PART 17 — Localization
+
+# 17.1 Localization Architecture Overview
+
+## Overview
+
+Tahsel is fully localized using Flutter's official localization system.
+
+The application supports multiple languages while maintaining a single codebase and a unified user experience across all supported platforms.
+
+Every user-facing string is retrieved from localization resources.
+
+Hardcoded text is not allowed inside the application.
+
+---
+
+# Objectives
+
+The localization system is designed to:
+
+* Support multiple languages.
+* Maintain consistent terminology.
+* Simplify translation management.
+* Enable future language expansion.
+* Keep UI synchronized with language changes.
+
+---
+
+# Supported Languages
+
+Current supported languages:
+
+```text id="loc01"
+Arabic (ar)
+
+English (en)
+```
+
+Future languages can be added without changing business logic.
+
+Examples:
+
+* French
+* Turkish
+* German
+* Spanish
+
+---
+
+# Localization Engine
+
+Tahsel uses Flutter's official localization system.
+
+Components:
+
+```text id="loc02"
+ARB Files
+
+↓
+
+Localization Generator
+
+↓
+
+Generated Localization Class
+
+↓
+
+UI
+```
+
+The generated localization class is the only source of translated text inside the UI.
+
+---
+
+# Source of Truth
+
+The permanent source of localization data is:
+
+```text id="loc03"
+ARB Files
+```
+
+UI widgets never own translation strings.
+
+---
+
+# File Organization
+
+Current structure:
+
+```text id="loc04"
+lib/
+
+└── l10n/
+
+      app_en.arb
+
+      app_ar.arb
+```
+
+Every language owns one ARB file.
+
+---
+
+# Translation Workflow
+
+Translation lifecycle:
+
+```text id="loc05"
+ARB File
+
+↓
+
+Flutter Generator
+
+↓
+
+Localization Class
+
+↓
+
+Widgets
+```
+
+Developers never edit generated localization files manually.
+
+---
+
+# Key Naming Convention
+
+Localization keys use:
+
+```text id="loc06"
+camelCase
+```
+
+Examples:
+
+```text id="loc07"
+login
+
+logout
+
+subscriptionStatus
+
+remainingDays
+
+customerDebts
+
+monthlyReport
+```
+
+Keys should describe business meaning rather than UI placement.
+
+---
+
+# Hardcoded Text Policy
+
+The following is prohibited:
+
+```text id="loc08"
+Text(
+
+"Login"
+
+)
+```
+
+Correct usage:
+
+```text id="loc09"
+context.l10n.login
+```
+
+Every visible string must originate from localization resources.
+
+---
+
+# Dynamic Language Switching
+
+Users can change application language.
+
+When language changes:
+
+* Widgets rebuild automatically.
+* Navigation remains unchanged.
+* Business data remains unchanged.
+
+No application restart is required.
+
+---
+
+# Business Logic
+
+Localization affects only presentation.
+
+Business logic never depends on:
+
+* Display Language
+* Localized Labels
+* UI Text
+
+UseCases and repositories always use internal business values.
+
+---
+
+# Number Formatting
+
+Numeric values follow the active locale.
+
+Examples:
+
+* Currency
+* Decimal Formatting
+* Large Numbers
+
+Formatting remains consistent across the application.
+
+---
+
+# Date Formatting
+
+Dates follow localization settings.
+
+Examples:
+
+* Month Names
+* Weekday Names
+* Date Order
+
+Business calculations remain independent of display formatting.
+
+---
+
+# Currency Formatting
+
+Displayed currency follows localization formatting.
+
+Business calculations always use numeric values internally.
+
+Formatting never changes stored financial values.
+
+---
+
+# RTL & LTR Support
+
+Arabic:
+
+```text id="loc10"
+RTL
+```
+
+English:
+
+```text id="loc11"
+LTR
+```
+
+The UI automatically adapts layout direction.
+
+---
+
+# Module Coverage
+
+Localization applies to every module.
+
+Examples:
+
+* Authentication
+* Dashboard
+* Customer Debts
+* My Debts
+* Expenses
+* Employees
+* Installments
+* Reports
+* Settings
+* Subscription
+* Notifications
+
+No module is exempt.
+
+---
+
+# Error Messages
+
+Every user-facing error message must be localized.
+
+Examples:
+
+* Network Error
+* Invalid Credentials
+* No Data Available
+* Permission Denied
+
+Error messages are never hardcoded.
+
+---
+
+# Validation Messages
+
+Validation messages also originate from ARB files.
+
+Examples:
+
+* Required Field
+* Invalid Phone Number
+* Invalid Amount
+
+Validation logic remains language-independent.
+
+---
+
+# Performance
+
+Localization is loaded once during application startup.
+
+Generated localization classes provide efficient runtime access.
+
+No runtime translation parsing occurs.
+
+---
+
+# Security
+
+Localization contains presentation text only.
+
+Business permissions, security rules, and validation remain language-independent.
+
+---
+
+# Business Rules
+
+* ARB files are the only source of translations.
+* Hardcoded UI text is prohibited.
+* Localization keys use camelCase.
+* Business logic never depends on translated values.
+* Dynamic language switching is fully supported.
+* RTL and LTR layouts are supported.
+* Numeric values remain numeric internally.
+* Dates are formatted according to locale only.
+* Generated localization files are never edited manually.
+* Every user-facing string must be localized.
+
+---
+
+# Architecture
+
+```text id="loc12"
+ARB Files
+
+↓
+
+Flutter Localization Generator
+
+↓
+
+Generated Localization Class
+
+↓
+
+Cubit
+
+↓
+
+UI
+```
+
+---
+
+# End of Section
+
+Next Section:
+
+**17.2 ARB File Organization & Translation Keys**
+
+This section documents ARB file structure, translation key organization, naming standards, module grouping, metadata, maintainability guidelines, and all business rules governing localization resources.
+# PART 17 — Localization
+
+# 17.2 ARB File Organization & Translation Keys
+
+## Overview
+
+Tahsel organizes all translations using **Application Resource Bundle (ARB)** files.
+
+Every user-facing text is represented by a unique localization key.
+
+The organization of ARB files is designed to make translations:
+
+* Easy to maintain.
+* Easy to review.
+* Easy to extend.
+* Consistent across the entire application.
+
+Translation keys represent business concepts rather than screen layouts.
+
+---
+
+# Objectives
+
+The ARB structure is designed to:
+
+* Eliminate duplicated translations.
+* Standardize naming.
+* Simplify future language additions.
+* Improve maintainability.
+* Keep translations consistent across modules.
+
+---
+
+# ARB File Structure
+
+Current structure:
+
+```text id="arb01"
+lib/
+
+└── l10n/
+
+      app_en.arb
+
+      app_ar.arb
+```
+
+Each language owns exactly one primary translation file.
+
+---
+
+# Translation Key Structure
+
+Every translation consists of:
+
+```text id="arb02"
+Key
+
+↓
+
+Value
+
+↓
+
+Optional Description
+```
+
+Example:
+
+```text id="arb03"
+login
+
+↓
+
+Login
+```
+
+---
+
+# Key Naming Rules
+
+Keys always use:
+
+```text id="arb04"
+camelCase
+```
+
+Examples:
+
+```text id="arb05"
+login
+
+logout
+
+subscriptionExpired
+
+customerDebts
+
+remainingDebt
+
+monthlyCollection
+
+employeeSalary
+```
+
+Snake case and spaces are never used.
+
+---
+
+# Business-Oriented Naming
+
+Keys describe business meaning.
+
+Correct:
+
+```text id="arb06"
+subscriptionStatus
+```
+
+Incorrect:
+
+```text id="arb07"
+textUnderProfileCard
+```
+
+The same key should remain valid even if the UI layout changes.
+
+---
+
+# Module Grouping
+
+Translation keys are logically grouped by business module.
+
+Examples:
+
+Authentication
+
+```text id="arb08"
+login
+
+logout
+
+rememberMe
+
+forgotPassword
+```
+
+Customer Debts
+
+```text id="arb09"
+customerDebts
+
+remainingDebt
+
+partialPayment
+
+fullPayment
+```
+
+Employees
+
+```text id="arb10"
+employee
+
+attendance
+
+salary
+
+absence
+```
+
+Reports
+
+```text id="arb11"
+dailyReport
+
+weeklyReport
+
+monthlyReport
+
+yearlyReport
+```
+
+---
+
+# Shared Keys
+
+Frequently used words appear only once.
+
+Examples:
+
+```text id="arb12"
+save
+
+cancel
+
+delete
+
+edit
+
+search
+
+confirm
+```
+
+The same translation key is reused throughout the application.
+
+---
+
+# Duplicate Prevention
+
+Two keys should never represent the same meaning.
+
+Example:
+
+Avoid:
+
+```text id="arb13"
+save
+
+saveButton
+
+saveText
+```
+
+Instead:
+
+```text id="arb14"
+save
+```
+
+Reuse the same translation everywhere.
+
+---
+
+# Descriptions
+
+Where appropriate, translation metadata may include descriptions to help translators understand context.
+
+Example:
+
+```text id="arb15"
+subscriptionExpired
+
+Description:
+
+Shown when user subscription has expired.
+```
+
+Descriptions are not displayed to users.
+
+---
+
+# Placeholders
+
+Parameterized strings use placeholders.
+
+Example:
+
+```text id="arb16"
+remainingDays
+
+↓
+
+Remaining
+
+{days}
+
+Days
+```
+
+Placeholders allow dynamic values while keeping translations localized.
+
+---
+
+# Pluralization
+
+Future translations may support plural forms.
+
+Examples:
+
+* Day / Days
+* Payment / Payments
+* Employee / Employees
+
+Pluralization follows Flutter localization capabilities.
+
+---
+
+# Date & Time Labels
+
+Examples:
+
+```text id="arb17"
+today
+
+yesterday
+
+thisWeek
+
+thisMonth
+
+thisYear
+```
+
+Business logic remains independent of displayed labels.
+
+---
+
+# Error Messages
+
+Examples:
+
+```text id="arb18"
+networkError
+
+permissionDenied
+
+unexpectedError
+
+noDataAvailable
+```
+
+Errors are fully localized.
+
+---
+
+# Validation Messages
+
+Examples:
+
+```text id="arb19"
+requiredField
+
+invalidPhone
+
+invalidAmount
+
+passwordTooShort
+```
+
+Validation remains language-independent.
+
+---
+
+# Future Expansion
+
+Adding a new language requires:
+
+1. Create new ARB file.
+2. Translate all existing keys.
+3. Regenerate localization files.
+
+Business logic requires no modification.
+
+---
+
+# Performance
+
+Generated localization classes provide:
+
+* Constant-time lookup.
+* Minimal memory usage.
+* No runtime parsing.
+
+Translation retrieval is highly efficient.
+
+---
+
+# Maintainability
+
+When introducing new features:
+
+* Add new keys only if necessary.
+* Reuse existing keys whenever possible.
+* Remove obsolete keys after feature removal.
+
+Unused translations should not accumulate.
+
+---
+
+# Security
+
+Localization resources contain presentation text only.
+
+No business logic, permissions, API keys, or sensitive information may be stored inside ARB files.
+
+---
+
+# Business Rules
+
+* Every user-facing string must have a localization key.
+* Keys always use camelCase.
+* Keys represent business meaning.
+* Duplicate keys are avoided.
+* Shared business terms reuse the same key.
+* Hardcoded UI text is prohibited.
+* Placeholder values use ARB parameters.
+* Generated localization files are never edited manually.
+* Translation descriptions improve maintainability.
+* Localization resources contain presentation data only.
+
+---
+
+# Architecture
+
+```text id="arb20"
+Feature
+
+↓
+
+Localization Key
+
+↓
+
+ARB File
+
+↓
+
+Flutter Generator
+
+↓
+
+Generated Localization Class
+
+↓
+
+UI
+```
+
+---
+
+# End of Section
+
+Next Section:
+
+**17.3 Dynamic Language Switching & RTL/LTR Behavior**
+
+This section documents runtime language switching, state updates, RTL/LTR layout handling, persistence of user language preference, widget rebuilding, and all business rules governing multilingual user experience.
+# PART 17 — Localization
+
+# 17.3 Dynamic Language Switching & RTL/LTR Behavior
+
+## Overview
+
+Tahsel supports **dynamic language switching** without requiring the application to restart.
+
+Users can change the application language at runtime, and the entire interface updates automatically while preserving the current application state.
+
+Language switching affects only the presentation layer.
+
+Business logic, authentication, financial calculations, and stored data remain unchanged.
+
+---
+
+# Objectives
+
+Dynamic language switching allows users to:
+
+* Instantly change application language.
+* Continue working without restarting the application.
+* Maintain the current navigation state.
+* Preserve entered business data.
+* Receive a consistent multilingual experience.
+
+---
+
+# Supported Languages
+
+Current supported languages:
+
+```text id="lang01"
+Arabic
+
+English
+```
+
+Future languages can be added without modifying business logic.
+
+---
+
+# Language Switching Flow
+
+```text id="lang02"
+User Changes Language
+
+↓
+
+Localization Cubit
+
+↓
+
+Application Locale Updated
+
+↓
+
+Widgets Rebuild
+
+↓
+
+Updated UI
+```
+
+Only presentation is refreshed.
+
+---
+
+# State Management
+
+Language changes are managed through the application's existing state management architecture.
+
+Responsibilities:
+
+* Store selected locale.
+* Notify the UI.
+* Trigger widget rebuilding.
+
+Business Cubits remain unaffected.
+
+---
+
+# Widget Rebuilding
+
+After changing language:
+
+The following update automatically:
+
+* Text
+* Buttons
+* Dialogs
+* Menus
+* Reports
+* Settings
+* Error Messages
+
+Business data remains exactly the same.
+
+---
+
+# Navigation
+
+Changing language never resets:
+
+* Navigation Stack
+* Current Screen
+* User Session
+* Business Forms
+
+The user remains on the same page.
+
+---
+
+# Form Preservation
+
+If the user is filling a form:
+
+Example:
+
+* Add Customer
+* Add Expense
+* Add Debt
+
+Changing language updates labels only.
+
+Entered values remain unchanged.
+
+---
+
+# RTL Support
+
+Arabic uses:
+
+```text id="lang03"
+Right-To-Left (RTL)
+```
+
+The framework automatically adjusts:
+
+* Text Direction
+* Layout Direction
+* Alignment
+* Navigation Elements
+
+---
+
+# LTR Support
+
+English uses:
+
+```text id="lang04"
+Left-To-Right (LTR)
+```
+
+The layout automatically switches accordingly.
+
+---
+
+# Responsive Layout
+
+RTL/LTR behavior works consistently across:
+
+* Android
+* Windows
+* iOS
+
+Responsive layouts remain fully functional regardless of language direction.
+
+---
+
+# Icons & Layout
+
+Directional icons automatically adapt where appropriate.
+
+Examples:
+
+* Back Navigation
+* Forward Navigation
+* Drawer Alignment
+
+Business icons remain unchanged.
+
+---
+
+# Language Persistence
+
+The selected language is stored locally.
+
+When the application launches again:
+
+```text id="lang05"
+Saved Language
+
+↓
+
+Application Starts
+
+↓
+
+Restore Locale
+```
+
+The user does not need to choose the language again.
+
+---
+
+# Reports
+
+Changing language updates:
+
+* Month Names
+* Weekday Names
+* Report Labels
+* Chart Labels
+
+Report values remain identical.
+
+Only presentation changes.
+
+---
+
+# Dashboard
+
+Dashboard widgets automatically update:
+
+* Titles
+* Labels
+* Cards
+* Buttons
+
+Business statistics remain unchanged.
+
+---
+
+# Notifications
+
+Future notifications respect the selected language whenever possible.
+
+Notification logic remains language-independent.
+
+---
+
+# Error Messages
+
+Every error message updates immediately after language switching.
+
+Examples:
+
+* Network Error
+* Invalid Login
+* Subscription Expired
+
+No restart is required.
+
+---
+
+# Performance
+
+Optimizations:
+
+* Locale loaded once.
+* Widgets rebuild efficiently.
+* Business Cubits remain unchanged.
+* No unnecessary database requests.
+* No report recalculation.
+
+Language changes affect presentation only.
+
+---
+
+# Security
+
+Changing language never affects:
+
+* Authentication
+* Authorization
+* Firestore Security Rules
+* Subscription Status
+* User Permissions
+
+Security remains completely independent from localization.
+
+---
+
+# Business Rules
+
+* Language switching occurs without restarting the application.
+* Only the presentation layer is rebuilt.
+* Business data never changes during localization updates.
+* Navigation state is preserved.
+* Form data is preserved.
+* Arabic uses RTL.
+* English uses LTR.
+* Selected language persists between application launches.
+* Reports update presentation only.
+* Business logic remains language-independent.
+
+---
+
+# Architecture
+
+```text id="lang06"
+User
+
+↓
+
+Language Selection
+
+↓
+
+Localization Cubit
+
+↓
+
+Application Locale
+
+↓
+
+Widget Rebuild
+
+↓
+
+Updated UI
+```
+
+---
+
+# End of Section
+
+Next Section:
+
+**17.4 Localization Best Practices & Development Guidelines**
+
+This section documents localization standards for developers, translation maintenance, key reuse, placeholder usage, future language expansion, code review rules, and all best practices governing multilingual development in Tahsel.
+# PART 17 — Localization
+
+# 17.4 Localization Best Practices & Development Guidelines
+
+## Overview
+
+This section defines the localization standards that every developer must follow while working on Tahsel.
+
+These guidelines ensure that all newly developed features remain fully multilingual, maintainable, and consistent with the existing localization architecture.
+
+Localization is considered a mandatory part of feature development, not an optional enhancement.
+
+---
+
+# Objectives
+
+Localization guidelines ensure:
+
+* Consistent translations.
+* High code quality.
+* Easy maintenance.
+* Simple future language expansion.
+* Predictable development workflow.
+
+---
+
+# Localization First
+
+Whenever a new feature is implemented:
+
+The developer must:
+
+1. Create localization keys.
+2. Add translations.
+3. Regenerate localization files.
+4. Use generated localization methods.
+
+Development is considered incomplete until localization is finished.
+
+---
+
+# Never Hardcode Text
+
+The following is prohibited:
+
+```dart
+Text("Customer Debts")
+```
+
+Correct approach:
+
+```dart
+Text(context.l10n.customerDebts)
+```
+
+Every user-visible string must originate from localization resources.
+
+---
+
+# Reuse Existing Keys
+
+Before creating a new key:
+
+Search existing localization resources.
+
+Example:
+
+If:
+
+```text id="best01"
+save
+```
+
+already exists,
+
+never create:
+
+```text id="best02"
+saveButton
+```
+
+Reuse existing business terminology.
+
+---
+
+# Business-Oriented Keys
+
+Keys describe business meaning.
+
+Correct:
+
+```text id="best03"
+remainingDebt
+
+subscriptionExpired
+
+monthlyCollection
+```
+
+Incorrect:
+
+```text id="best04"
+blueButtonText
+
+cardTitle1
+```
+
+UI layout must never influence localization keys.
+
+---
+
+# Placeholder Usage
+
+Dynamic values must use placeholders.
+
+Example:
+
+```text id="best05"
+Remaining:
+
+{days}
+
+Days
+```
+
+Never concatenate translated strings manually.
+
+Correct placeholder usage improves translation quality.
+
+---
+
+# Consistent Terminology
+
+The same business concept must always use the same translation.
+
+Example:
+
+Customer Debt
+
+must never appear elsewhere as:
+
+* Customer Loan
+* Debt Record
+* Financial Record
+
+unless they represent different business concepts.
+
+Consistency is mandatory.
+
+---
+
+# Translation Review
+
+Whenever new keys are added:
+
+Verify:
+
+* Arabic translation.
+* English translation.
+* Grammar.
+* Business terminology.
+* Capitalization consistency.
+
+Translation quality is part of code review.
+
+---
+
+# Remove Obsolete Keys
+
+When features are permanently removed:
+
+Unused localization keys should also be removed.
+
+Dead translations should not accumulate.
+
+---
+
+# Module Organization
+
+Keep related translations grouped logically.
+
+Examples:
+
+Authentication
+
+Customer Debts
+
+Employees
+
+Reports
+
+Settings
+
+Subscription
+
+Logical grouping improves maintainability.
+
+---
+
+# Generated Files
+
+Generated localization files:
+
+* Must never be edited manually.
+* Must always be regenerated after ARB updates.
+
+Only ARB files should be modified directly.
+
+---
+
+# Future Language Expansion
+
+When introducing a new language:
+
+No code changes should be required.
+
+Only:
+
+* New ARB file.
+* New translations.
+* Localization regeneration.
+
+Business logic remains unchanged.
+
+---
+
+# Testing
+
+Every new feature must be tested in:
+
+* Arabic
+* English
+
+Verify:
+
+* Text visibility.
+* Layout.
+* RTL/LTR behavior.
+* Placeholder replacement.
+* Overflow handling.
+
+Localization testing is mandatory before release.
+
+---
+
+# Responsive Behavior
+
+Long translated strings must not:
+
+* Overflow.
+* Clip.
+* Break layouts.
+
+Widgets should adapt gracefully to varying text lengths.
+
+---
+
+# Performance
+
+Localization should never:
+
+* Trigger additional Firestore reads.
+* Cause unnecessary widget rebuilds.
+* Affect business calculations.
+
+Only presentation updates.
+
+---
+
+# Security
+
+Localization resources must never contain:
+
+* API Keys.
+* Authentication Tokens.
+* Business Secrets.
+* Security Rules.
+
+Only presentation text belongs in ARB files.
+
+---
+
+# Code Review Checklist
+
+Before merging a feature:
+
+Verify:
+
+* No hardcoded text.
+* New keys added to both languages.
+* Existing keys reused where appropriate.
+* Placeholder usage is correct.
+* Generated localization files updated.
+* RTL/LTR tested.
+* Layout remains responsive.
+
+---
+
+# Business Rules
+
+* Hardcoded UI text is prohibited.
+* ARB files are the only translation source.
+* Keys represent business concepts.
+* Existing keys should be reused.
+* Placeholder parameters replace manual concatenation.
+* Generated localization files are never edited manually.
+* Every feature requires Arabic and English translations.
+* Localization is mandatory before feature completion.
+* Business logic remains language-independent.
+* Localization affects presentation only.
+
+---
+
+# Architecture
+
+```text id="best06"
+New Feature
+
+↓
+
+Localization Keys
+
+↓
+
+ARB Files
+
+↓
+
+Flutter Generator
+
+↓
+
+Generated Localization Class
+
+↓
+
+UI
+```
+
+---
+
+# End of PART 17 — Localization
+
+The Localization module is now fully documented, covering:
+
+* Localization Architecture Overview
+* ARB File Organization & Translation Keys
+* Dynamic Language Switching & RTL/LTR Behavior
+* Localization Best Practices & Development Guidelines
+
+---
+
+# Next Part
+
+**PART 18 — UI/UX Guidelines**
+
+This section documents the complete design system used throughout Tahsel, including color palette, typography, spacing, responsive layouts, Dark Mode, Light Mode, Windows/Desktop adaptations, Android/iOS behavior, reusable components, accessibility, and UI consistency standards.
+# PART 18 — UI/UX Guidelines
+
+# 18.1 Design System Overview
+
+## Overview
+
+The **Tahsel Design System** defines the visual language and user experience standards used throughout the application.
+
+Its purpose is to ensure that every screen, dialog, card, button, and interaction follows a unified design philosophy regardless of platform or feature.
+
+The design system is shared across:
+
+* Tahsel User App
+* Tahsel Dashboard
+
+This guarantees visual consistency and reduces maintenance costs.
+
+---
+
+# Objectives
+
+The design system aims to:
+
+* Provide a consistent user experience.
+* Reduce UI duplication.
+* Improve usability.
+* Increase development speed.
+* Support responsive layouts.
+* Maintain accessibility standards.
+
+---
+
+# Design Philosophy
+
+Tahsel follows these principles:
+
+* Simplicity.
+* Consistency.
+* Readability.
+* Speed.
+* Predictability.
+* Business-first interfaces.
+
+The UI prioritizes efficiency over decorative elements.
+
+---
+
+# Design System Layers
+
+```text id="ui01"
+Design Tokens
+
+↓
+
+Theme
+
+↓
+
+Reusable Components
+
+↓
+
+Feature Screens
+
+↓
+
+Application
+```
+
+Each layer builds upon the previous one.
+
+---
+
+# Source of Truth
+
+The UI uses centralized resources.
+
+Examples:
+
+* AppColors
+* TextStyles
+* Dimensions
+* Border Radius
+* Animation Durations
+
+Hardcoded design values are prohibited.
+
+---
+
+# Color System
+
+Colors are managed exclusively through:
+
+```text id="ui02"
+AppColors
+```
+
+No widget should define arbitrary colors.
+
+Examples:
+
+* Primary
+* Secondary
+* Success
+* Warning
+* Error
+* Surface
+* Background
+
+---
+
+# Typography
+
+Typography is centralized inside:
+
+```text id="ui03"
+TextStyles
+```
+
+Text widgets should never manually define:
+
+* Font Size
+* Font Weight
+* Letter Spacing
+
+unless absolutely necessary.
+
+---
+
+# Component Reuse
+
+Reusable components include:
+
+* Primary Buttons
+* Secondary Buttons
+* Text Fields
+* Cards
+* Dialogs
+* App Bars
+* Bottom Sheets
+* Loading Indicators
+
+Existing widgets should always be reused before creating new ones.
+
+---
+
+# Screen Structure
+
+Most screens follow the same structure:
+
+```text id="ui04"
+App Bar
+
+↓
+
+Header
+
+↓
+
+Content
+
+↓
+
+Optional FAB
+
+↓
+
+Dialogs
+
+↓
+
+Bottom Sheets
+```
+
+This creates predictable navigation throughout the application.
+
+---
+
+# Financial Screens
+
+Financial screens prioritize:
+
+* Readability.
+* Large numeric values.
+* Clear status indicators.
+* Consistent spacing.
+
+Financial information should always be easy to scan.
+
+---
+
+# Dashboard Design
+
+Dashboard emphasizes:
+
+* Statistics
+* Quick Actions
+* Reports
+* Business Health
+
+The most important information appears first.
+
+---
+
+# Forms
+
+Forms should:
+
+* Validate immediately when appropriate.
+* Display helpful error messages.
+* Preserve entered data.
+* Support keyboard navigation on desktop.
+
+Forms must remain responsive on every supported platform.
+
+---
+
+# Dialog Design
+
+Dialogs are used for:
+
+* Confirmations.
+* Editing.
+* Deletion.
+* Warnings.
+
+Dialogs should remain focused on a single task.
+
+Nested dialogs should be avoided.
+
+---
+
+# Icons
+
+Icons should communicate intent clearly.
+
+Examples:
+
+* Add
+* Edit
+* Delete
+* Search
+* Refresh
+* Reports
+
+Icons remain consistent across all modules.
+
+---
+
+# Animation Philosophy
+
+Animations should be:
+
+* Fast.
+* Smooth.
+* Purposeful.
+
+Animations must never delay business workflows.
+
+---
+
+# Empty States
+
+When no data exists:
+
+Display:
+
+* Illustration (where appropriate).
+* Helpful message.
+* Clear next action.
+
+Avoid blank screens.
+
+---
+
+# Error States
+
+Error screens should explain:
+
+* What happened.
+* What the user can do next.
+
+Technical implementation details should never be exposed.
+
+---
+
+# Loading States
+
+Loading indicators should appear during:
+
+* API Requests
+* Synchronization
+* Report Generation
+* Authentication
+
+Loading states prevent duplicate user actions.
+
+---
+
+# Consistency
+
+Every module follows the same design language.
+
+Examples:
+
+* Customer Debts
+* Expenses
+* Employees
+* Reports
+* Settings
+
+Users should immediately recognize common UI patterns.
+
+---
+
+# Performance
+
+The UI is optimized by:
+
+* Reusing widgets.
+* Minimizing rebuilds.
+* Efficient scrolling.
+* Lazy loading where appropriate.
+
+Visual performance is treated as a core requirement.
+
+---
+
+# Accessibility
+
+The UI supports:
+
+* Clear contrast.
+* Readable typography.
+* Large touch targets.
+* Consistent navigation.
+
+Accessibility improvements should never compromise usability.
+
+---
+
+# Business Rules
+
+* AppColors is the only source of application colors.
+* TextStyles is the only source of typography.
+* Hardcoded colors are prohibited.
+* Hardcoded typography is prohibited.
+* Existing reusable widgets should always be preferred.
+* Financial information must remain highly readable.
+* Dialogs should focus on a single task.
+* Empty states should guide the user.
+* Error messages should be understandable.
+* UI consistency takes priority over feature-specific styling.
+
+---
+
+# Architecture
+
+```text id="ui05"
+AppColors
+
++
+
+TextStyles
+
+↓
+
+Reusable Widgets
+
+↓
+
+Feature Screens
+
+↓
+
+Application UI
+```
+
+---
+
+# End of Section
+
+Next Section:
+
+**18.2 Color Palette & Theme System**
+
+This section documents the complete color system, theme architecture, Dark Mode, Light Mode, semantic colors, state colors, and all business rules governing visual consistency throughout Tahsel.
+# PART 18 — UI/UX Guidelines
+
+# 18.2 Color Palette & Theme System
+
+## Overview
+
+The **Color Palette & Theme System** defines every color used throughout Tahsel.
+
+Rather than allowing individual screens to choose colors independently, the entire application relies on a centralized theme system to ensure consistency, maintainability, and accessibility.
+
+Both the Tahsel User App and Tahsel Dashboard use the same design philosophy.
+
+---
+
+# Objectives
+
+The theme system is designed to:
+
+* Maintain visual consistency.
+* Support Dark Mode and Light Mode.
+* Simplify UI maintenance.
+* Improve accessibility.
+* Eliminate hardcoded colors.
+
+---
+
+# Source of Truth
+
+All application colors originate from:
+
+```text id="theme01"
+AppColors
+```
+
+No widget should define custom colors directly.
+
+Example:
+
+Correct:
+
+```text id="theme02"
+AppColors.primary
+```
+
+Incorrect:
+
+```text id="theme03"
+Color(0xFF2196F3)
+```
+
+---
+
+# Theme Architecture
+
+```text id="theme04"
+AppColors
+
+↓
+
+Application Theme
+
+↓
+
+Widgets
+
+↓
+
+Screens
+```
+
+Every widget consumes colors through the active application theme.
+
+---
+
+# Supported Themes
+
+Tahsel currently supports:
+
+```text id="theme05"
+Light Theme
+
+Dark Theme
+```
+
+Both themes provide identical functionality.
+
+Only visual appearance changes.
+
+---
+
+# Primary Color
+
+The primary color represents:
+
+* Brand Identity.
+* Main Buttons.
+* Active Controls.
+* Selected States.
+
+Primary colors should never be used for warnings or destructive actions.
+
+---
+
+# Secondary Color
+
+Secondary colors are used for:
+
+* Supporting UI elements.
+* Informational highlights.
+* Secondary actions.
+
+They complement the primary brand color.
+
+---
+
+# Success Color
+
+Success colors indicate:
+
+* Completed Operations.
+* Successful Payments.
+* Successful Synchronization.
+* Positive Business Status.
+
+Examples:
+
+* Payment Completed
+* Salary Paid
+* Active Subscription
+
+---
+
+# Warning Color
+
+Warning colors indicate:
+
+* Grace Period
+* Pending Operations
+* Validation Warnings
+* Attention Required
+
+Warnings should not imply failure.
+
+---
+
+# Error Color
+
+Error colors indicate:
+
+* Failed Operations.
+* Invalid Input.
+* Account Suspension.
+* Subscription Expiration.
+* Delete Actions.
+
+Error colors should immediately communicate critical issues.
+
+---
+
+# Neutral Colors
+
+Neutral colors are used for:
+
+* Backgrounds.
+* Dividers.
+* Borders.
+* Disabled Elements.
+* Secondary Text.
+
+Neutral colors should never compete with primary business information.
+
+---
+
+# Surface Colors
+
+Surface colors define:
+
+* Cards.
+* Dialogs.
+* Bottom Sheets.
+* Menus.
+
+Surface colors adapt automatically to the active theme.
+
+---
+
+# Background Colors
+
+Background colors define:
+
+* Scaffold Background.
+* Screen Background.
+* Empty Areas.
+
+Backgrounds remain visually comfortable during extended usage.
+
+---
+
+# Text Colors
+
+Typography colors are selected based on:
+
+* Theme.
+* Contrast.
+* Readability.
+
+Primary text always has the highest visual priority.
+
+Secondary text provides supporting information.
+
+---
+
+# Status Colors
+
+Common status mappings:
+
+Active
+
+↓
+
+Success Color
+
+---
+
+Suspended
+
+↓
+
+Error Color
+
+---
+
+Expired
+
+↓
+
+Warning/Error Color
+
+---
+
+Inactive
+
+↓
+
+Neutral Color
+
+---
+
+Deleted
+
+↓
+
+Error Color
+
+Status colors remain consistent throughout the application.
+
+---
+
+# Financial Colors
+
+Financial information uses semantic colors.
+
+Examples:
+
+Positive Values
+
+↓
+
+Success
+
+---
+
+Outstanding Balance
+
+↓
+
+Primary Text
+
+---
+
+Warnings
+
+↓
+
+Warning
+
+Financial values should never rely solely on color to communicate meaning.
+
+---
+
+# Dark Mode
+
+Dark Mode automatically adjusts:
+
+* Backgrounds.
+* Cards.
+* Text.
+* Icons.
+* Dialogs.
+* Dividers.
+
+Business hierarchy remains identical to Light Mode.
+
+---
+
+# Light Mode
+
+Light Mode provides:
+
+* High readability.
+* Strong contrast.
+* Clean business presentation.
+
+The layout remains identical to Dark Mode.
+
+---
+
+# Theme Switching
+
+Users can switch themes without restarting the application.
+
+Theme changes rebuild only the presentation layer.
+
+Business state remains unchanged.
+
+---
+
+# Responsive Consistency
+
+Theme behavior remains identical across:
+
+* Android
+* Windows
+* iOS
+
+No platform receives a different visual identity.
+
+---
+
+# Accessibility
+
+Color choices maintain sufficient contrast for readability.
+
+Important information should never rely on color alone.
+
+Icons, labels, and text provide additional context.
+
+---
+
+# Performance
+
+The theme is loaded once during application startup.
+
+Widgets consume centralized theme resources.
+
+No runtime color calculations are performed unnecessarily.
+
+---
+
+# Business Rules
+
+* AppColors is the only source of application colors.
+* Hardcoded colors are prohibited.
+* Light Theme and Dark Theme are fully supported.
+* Success, Warning, and Error colors have fixed semantic meanings.
+* Financial information must remain readable in every theme.
+* Surface colors adapt automatically.
+* Theme changes affect presentation only.
+* Business logic never depends on theme selection.
+* Accessibility is mandatory.
+* Visual consistency takes priority over feature-specific customization.
+
+---
+
+# Architecture
+
+```text id="theme06"
+AppColors
+
+↓
+
+Application Theme
+
+↓
+
+Light Theme
+
+Dark Theme
+
+↓
+
+Reusable Widgets
+
+↓
+
+Feature Screens
+```
+
+---
+
+# End of Section
+
+Next Section:
+
+**18.3 Typography, Spacing & Responsive Layout**
+
+This section documents typography standards, spacing system, sizing guidelines, ScreenUtil usage, responsive layouts, desktop adaptations, mobile layouts, and all business rules governing visual hierarchy and responsive design.
+# PART 18 — UI/UX Guidelines
+
+# 18.3 Typography, Spacing & Responsive Layout
+
+## Overview
+
+Typography, spacing, and responsive layout form the foundation of Tahsel's user experience.
+
+Every screen follows a unified visual hierarchy that ensures readability, consistency, and usability across all supported platforms.
+
+The application is designed to work seamlessly on:
+
+* Android
+* Windows
+* iOS
+
+without maintaining separate UI implementations.
+
+---
+
+# Objectives
+
+The layout system is designed to:
+
+* Maintain visual consistency.
+* Improve readability.
+* Support responsive interfaces.
+* Reduce UI duplication.
+* Scale across different screen sizes.
+
+---
+
+# Typography Source
+
+All typography originates from:
+
+```text id="typo01"
+TextStyles
+```
+
+Developers should never define custom font sizes or font weights inside widgets.
+
+Correct:
+
+```text id="typo02"
+TextStyles.titleLarge
+```
+
+Incorrect:
+
+```text id="typo03"
+TextStyle(
+fontSize: 22,
+fontWeight: FontWeight.bold
+)
+```
+
+---
+
+# Typography Hierarchy
+
+Tahsel follows a consistent hierarchy:
+
+* Display
+* Headline
+* Title
+* Body
+* Label
+* Caption
+
+Every text element belongs to one of these categories.
+
+---
+
+# Titles
+
+Titles are used for:
+
+* Screen Names
+* Dialog Titles
+* Report Titles
+* Section Headers
+
+Titles receive the highest visual emphasis.
+
+---
+
+# Body Text
+
+Body text displays:
+
+* Descriptions
+* Notes
+* Instructions
+* Report Details
+
+Body text prioritizes readability over decoration.
+
+---
+
+# Labels
+
+Labels identify:
+
+* Form Fields
+* Cards
+* Statistics
+* Summary Values
+
+Labels remain visually consistent throughout the application.
+
+---
+
+# Financial Values
+
+Financial values receive special emphasis.
+
+Examples:
+
+* Remaining Debt
+* Total Paid
+* Monthly Collection
+* Salary
+
+They should be:
+
+* Larger.
+* Easily distinguishable.
+* Consistently formatted.
+
+---
+
+# Spacing System
+
+Spacing follows a predictable design system.
+
+Instead of arbitrary spacing values, reusable spacing standards are applied.
+
+Spacing is used consistently between:
+
+* Cards
+* Buttons
+* Form Fields
+* Sections
+* Dialog Content
+
+---
+
+# Layout Consistency
+
+Every screen follows similar spacing patterns.
+
+Example:
+
+```text id="typo04"
+Header
+
+↓
+
+Section
+
+↓
+
+Card
+
+↓
+
+Section
+
+↓
+
+Footer
+```
+
+This improves navigation familiarity.
+
+---
+
+# Responsive Framework
+
+Tahsel uses:
+
+```text id="typo05"
+flutter_screenutil
+```
+
+for responsive scaling.
+
+This allows consistent UI proportions across:
+
+* Phones
+* Tablets
+* Desktop
+* Large Monitors
+
+---
+
+# Screen Scaling
+
+Responsive scaling applies to:
+
+* Width
+* Height
+* Font Size
+* Border Radius
+* Padding
+* Margins
+
+Scaling remains proportional across devices.
+
+---
+
+# Desktop Layout
+
+Windows screens take advantage of larger displays.
+
+Examples:
+
+* Wider cards.
+* Multi-column layouts.
+* Larger data tables.
+* Expanded side navigation.
+
+Desktop layouts prioritize productivity.
+
+---
+
+# Mobile Layout
+
+Mobile layouts prioritize:
+
+* Vertical scrolling.
+* Touch accessibility.
+* Compact information density.
+
+Content remains easy to reach using one hand where possible.
+
+---
+
+# Adaptive Components
+
+Reusable widgets automatically adapt to available screen space.
+
+Examples:
+
+* Cards
+* Dialogs
+* Bottom Sheets
+* Lists
+* Forms
+
+No duplicate widgets are required for different platforms.
+
+---
+
+# Large Screens
+
+On large monitors:
+
+The application avoids excessively stretched content.
+
+Content width remains controlled to preserve readability.
+
+---
+
+# Small Screens
+
+On small devices:
+
+Widgets adapt by:
+
+* Wrapping text.
+* Adjusting spacing.
+* Expanding vertically when necessary.
+
+Horizontal scrolling is avoided whenever possible.
+
+---
+
+# Overflow Prevention
+
+UI elements must never:
+
+* Overflow.
+* Clip text.
+* Hide important actions.
+
+Long localized strings must remain readable.
+
+---
+
+# Lists
+
+Long business lists use:
+
+* Efficient scrolling.
+* Lazy rendering.
+* Reusable list items.
+
+Large datasets remain responsive.
+
+---
+
+# Tables
+
+Desktop-specific tables prioritize:
+
+* Readability.
+* Sorting.
+* Scanning efficiency.
+
+Horizontal scrolling should only be used when absolutely necessary.
+
+---
+
+# Dialog Responsiveness
+
+Dialogs automatically adapt to:
+
+* Screen Width
+* Screen Height
+* Platform
+
+Desktop dialogs are generally wider than mobile dialogs.
+
+---
+
+# Accessibility
+
+Typography supports:
+
+* Comfortable reading.
+* Clear hierarchy.
+* Adequate spacing.
+* Large tap targets.
+
+Accessibility is considered during every UI implementation.
+
+---
+
+# Performance
+
+Optimizations:
+
+* Reusable widgets.
+* Minimal rebuilds.
+* Responsive scaling via ScreenUtil.
+* Efficient list rendering.
+* Lightweight layouts.
+
+Responsive behavior must not negatively impact performance.
+
+---
+
+# Business Rules
+
+* TextStyles is the only source of typography.
+* flutter_screenutil is used for responsive scaling.
+* Hardcoded font sizes are prohibited.
+* Hardcoded spacing values should be avoided.
+* Financial values receive higher visual emphasis.
+* Desktop layouts optimize productivity.
+* Mobile layouts optimize touch interaction.
+* Overflow must always be prevented.
+* Responsive behavior must remain consistent across platforms.
+* Accessibility is mandatory.
+
+---
+
+# Architecture
+
+```text id="typo06"
+TextStyles
+
++
+
+ScreenUtil
+
+↓
+
+Reusable Widgets
+
+↓
+
+Responsive Layout
+
+↓
+
+Feature Screens
+```
+
+---
+
+# End of Section
+
+Next Section:
+
+**18.4 Reusable Components & UI Consistency**
+
+This section documents reusable widgets, component standards, dialogs, cards, buttons, form controls, loading indicators, empty states, error states, and all business rules governing UI consistency across the entire Tahsel ecosystem.
+# PART 18 — UI/UX Guidelines
+
+# 18.4 Reusable Components & UI Consistency
+
+## Overview
+
+Tahsel is built around a **component-driven UI architecture**.
+
+Rather than designing every screen independently, the application relies on a library of reusable UI components that provide a consistent user experience across all business modules.
+
+Every screen should feel like part of the same application regardless of the feature being used.
+
+---
+
+# Objectives
+
+The reusable component system is designed to:
+
+* Eliminate duplicated UI code.
+* Maintain visual consistency.
+* Improve maintainability.
+* Accelerate feature development.
+* Simplify future design updates.
+
+---
+
+# Component Philosophy
+
+Every UI element should answer the following question:
+
+> Does a similar component already exist?
+
+If the answer is yes:
+
+Reuse it.
+
+Creating a new widget should be the last option.
+
+---
+
+# Shared Components
+
+The application reuses components such as:
+
+* Primary Buttons
+* Secondary Buttons
+* Text Fields
+* Search Fields
+* Cards
+* Dialogs
+* Bottom Sheets
+* Loading Indicators
+* Empty States
+* Error States
+* Confirmation Dialogs
+
+These components should remain visually identical across modules.
+
+---
+
+# Buttons
+
+Buttons follow a consistent hierarchy.
+
+Primary Button
+
+Purpose:
+
+* Save
+* Confirm
+* Submit
+* Continue
+
+---
+
+Secondary Button
+
+Purpose:
+
+* Cancel
+* Back
+* Close
+* Skip
+
+---
+
+Danger Button
+
+Purpose:
+
+* Delete
+* Remove
+* Permanent Actions
+
+Danger actions always use the application's semantic error color.
+
+---
+
+# Text Fields
+
+Every form field uses the same reusable text field component.
+
+Features:
+
+* Validation
+* Error Display
+* Prefix Icons
+* Suffix Icons
+* Password Visibility
+* Localization
+* Theme Support
+
+Behavior remains identical across every module.
+
+---
+
+# Search Fields
+
+Search inputs share:
+
+* Same layout.
+* Same debounce behavior.
+* Same styling.
+* Same placeholder style.
+
+Search behavior remains predictable.
+
+---
+
+# Cards
+
+Cards are used extensively throughout Tahsel.
+
+Examples:
+
+* Customer Cards
+* Employee Cards
+* Expense Cards
+* Statistics Cards
+* Subscription Cards
+
+Cards share:
+
+* Border Radius
+* Elevation
+* Padding
+* Shadows
+* Typography
+
+---
+
+# Dialogs
+
+Dialogs use one consistent style.
+
+Common dialog types:
+
+* Confirmation
+* Delete
+* Edit
+* Information
+* Warning
+
+Dialogs should never introduce unique styling for individual modules.
+
+---
+
+# Bottom Sheets
+
+Bottom Sheets are used for:
+
+* Filters
+* Quick Actions
+* Selection Lists
+
+Their spacing and animation remain consistent.
+
+---
+
+# Loading Indicators
+
+Loading indicators appear during:
+
+* API Requests
+* Firestore Reads
+* Report Generation
+* Authentication
+* Synchronization
+
+The same loading component should be reused everywhere.
+
+---
+
+# Empty States
+
+Empty states include:
+
+* Friendly illustration (when appropriate)
+* Localized message
+* Optional action button
+
+Example:
+
+"No expenses available."
+
+instead of displaying an empty list.
+
+---
+
+# Error States
+
+Error components should communicate:
+
+* What happened.
+* Suggested next action.
+
+Error UI should remain friendly and informative.
+
+---
+
+# Status Indicators
+
+Status badges follow semantic colors.
+
+Examples:
+
+Active
+
+↓
+
+Success
+
+---
+
+Pending
+
+↓
+
+Warning
+
+---
+
+Suspended
+
+↓
+
+Error
+
+---
+
+Expired
+
+↓
+
+Warning/Error
+
+Status indicators remain visually identical across modules.
+
+---
+
+# Lists
+
+List items should reuse common row layouts.
+
+Examples:
+
+* Leading Icon
+* Title
+* Subtitle
+* Trailing Action
+
+This improves scanning efficiency.
+
+---
+
+# Action Menus
+
+Popup menus and contextual actions should:
+
+* Follow consistent ordering.
+* Use the same icons.
+* Group destructive actions separately.
+
+Example:
+
+Edit
+
+↓
+
+Duplicate
+
+↓
+
+Delete
+
+---
+
+# Confirmation Pattern
+
+Every destructive action follows the same interaction pattern:
+
+```text id="reuse01"
+User Action
+
+↓
+
+Confirmation Dialog
+
+↓
+
+User Confirms
+
+↓
+
+Business Logic Executes
+```
+
+No destructive action should occur immediately without confirmation.
+
+---
+
+# Animations
+
+Reusable animations include:
+
+* Page Transitions
+* Dialog Appearance
+* Bottom Sheet Animation
+* List Updates
+
+Animation timing remains consistent throughout the application.
+
+---
+
+# Accessibility
+
+Reusable components support:
+
+* Proper touch targets.
+* Readable typography.
+* Semantic colors.
+* Keyboard navigation (Desktop).
+* Screen reader compatibility where applicable.
+
+Accessibility is built into components rather than individual screens.
+
+---
+
+# Performance
+
+Reusable widgets improve performance by:
+
+* Reducing duplicated code.
+* Simplifying rebuilds.
+* Encouraging widget const usage where applicable.
+* Standardizing rendering behavior.
+
+---
+
+# Business Rules
+
+* Existing components should always be reused before creating new ones.
+* Buttons follow a fixed visual hierarchy.
+* Dialogs use a unified design.
+* Cards maintain consistent spacing and styling.
+* Search fields reuse the same behavior.
+* Loading indicators remain consistent.
+* Empty states guide the user.
+* Error states explain problems clearly.
+* Destructive actions require confirmation.
+* UI consistency has higher priority than feature-specific customization.
+
+---
+
+# Architecture
+
+```text id="reuse02"
+Design System
+
+↓
+
+Reusable Components
+
+↓
+
+Feature Screens
+
+↓
+
+Application
+```
+
+---
+
+# End of Section
+
+Next Section:
+
+**18.5 Dark Mode, Accessibility & UX Best Practices**
+
+This section documents Dark Mode behavior, accessibility standards, keyboard navigation, touch targets, usability guidelines, visual feedback, platform-specific UX considerations, and the overall user experience principles followed throughout Tahsel.
+# PART 18 — UI/UX Guidelines
+
+# 18.5 Dark Mode, Accessibility & UX Best Practices
+
+## Overview
+
+Tahsel is designed to provide a comfortable, accessible, and predictable user experience across all supported platforms.
+
+This section defines how the application behaves in different visual themes, how accessibility is supported, and which UX principles every feature must follow.
+
+These standards apply to:
+
+* Tahsel User App
+* Tahsel Dashboard
+
+---
+
+# Objectives
+
+The UX standards aim to:
+
+* Improve usability.
+* Reduce user errors.
+* Increase accessibility.
+* Maintain visual consistency.
+* Create predictable interactions.
+* Improve long-term user satisfaction.
+
+---
+
+# Dark Mode
+
+Tahsel fully supports:
+
+```text id="ux01"
+Dark Theme
+```
+
+Dark Mode is not treated as a separate application.
+
+Only colors change.
+
+Business logic remains identical.
+
+---
+
+# Light Mode
+
+Tahsel also supports:
+
+```text id="ux02"
+Light Theme
+```
+
+Every screen must look correct in both themes.
+
+No feature should work differently based on the selected theme.
+
+---
+
+# Theme Consistency
+
+Dark Mode and Light Mode share:
+
+* Layout
+* Navigation
+* Typography
+* Components
+* Animations
+
+Only semantic colors are adjusted.
+
+---
+
+# Theme Switching
+
+Users can switch themes instantly.
+
+The application:
+
+* Preserves navigation.
+* Preserves forms.
+* Preserves session.
+* Preserves business state.
+
+Only the UI rebuilds.
+
+---
+
+# Accessibility Philosophy
+
+Accessibility is considered during the design of every feature.
+
+Accessibility is not treated as a later enhancement.
+
+---
+
+# Readability
+
+Every screen should prioritize:
+
+* High contrast.
+* Clear typography.
+* Logical spacing.
+* Visual hierarchy.
+
+Business information should remain easy to scan.
+
+---
+
+# Touch Targets
+
+Interactive elements should provide sufficiently large touch areas.
+
+Examples:
+
+* Buttons
+* Icons
+* Menu Items
+* List Tiles
+
+Small clickable regions should be avoided.
+
+---
+
+# Desktop Interaction
+
+Desktop users primarily interact using:
+
+* Mouse
+* Keyboard
+
+Desktop interfaces should therefore support:
+
+* Hover feedback.
+* Keyboard navigation.
+* Focus indicators.
+
+---
+
+# Keyboard Navigation
+
+Desktop users should be able to navigate forms efficiently using:
+
+* Tab
+* Enter
+* Escape
+
+Where appropriate.
+
+Keyboard navigation improves productivity.
+
+---
+
+# Focus Management
+
+Input focus should move naturally.
+
+Examples:
+
+```text id="ux03"
+Field 1
+
+↓
+
+Field 2
+
+↓
+
+Field 3
+
+↓
+
+Submit
+```
+
+Users should not lose focus unexpectedly.
+
+---
+
+# Visual Feedback
+
+Every important action should provide immediate feedback.
+
+Examples:
+
+* Success Messages
+* Error Messages
+* Loading Indicators
+* Confirmation Dialogs
+
+Users should never wonder whether an action succeeded.
+
+---
+
+# Loading Experience
+
+Long-running operations should always display loading feedback.
+
+Examples:
+
+* Authentication
+* Synchronization
+* Report Generation
+* Firestore Requests
+
+The UI should never appear frozen.
+
+---
+
+# Error Recovery
+
+Whenever possible:
+
+Error screens should provide a clear recovery path.
+
+Examples:
+
+* Retry
+* Go Back
+* Contact Support
+
+Users should not become trapped.
+
+---
+
+# Confirmation UX
+
+Critical actions require confirmation.
+
+Examples:
+
+* Delete
+* Logout
+* Remove Customer
+* Remove Expense
+
+Confirmation dialogs reduce accidental data loss.
+
+---
+
+# Financial UX
+
+Financial information receives special emphasis.
+
+Examples:
+
+* Remaining Debt
+* Total Paid
+* Monthly Collection
+* Salary
+
+Values should be:
+
+* Prominent.
+* Clearly formatted.
+* Easy to compare.
+
+---
+
+# Responsive UX
+
+Responsive layouts should preserve usability on:
+
+* Phones
+* Tablets
+* Windows
+* Large Monitors
+
+Features should never become inaccessible because of screen size.
+
+---
+
+# Localization UX
+
+The interface should remain usable in both:
+
+* Arabic (RTL)
+* English (LTR)
+
+Long translations should never break layouts.
+
+---
+
+# Performance UX
+
+User interactions should feel immediate.
+
+Optimizations include:
+
+* Efficient scrolling.
+* Minimal rebuilds.
+* Lightweight animations.
+* Lazy loading where appropriate.
+
+Smooth interaction is prioritized over excessive visual effects.
+
+---
+
+# Notification UX
+
+Notifications should:
+
+* Be concise.
+* Explain what happened.
+* Suggest next actions where necessary.
+
+They should never expose technical implementation details.
+
+---
+
+# Accessibility Checklist
+
+Every feature should verify:
+
+* Dark Mode support.
+* Light Mode support.
+* Responsive layout.
+* RTL compatibility.
+* LTR compatibility.
+* Readable typography.
+* Accessible touch targets.
+* Predictable navigation.
+
+---
+
+# Security UX
+
+Security-related screens should communicate clearly.
+
+Examples:
+
+* Subscription Expired
+* Account Suspended
+* Platform Restricted
+
+Users should understand:
+
+* Why access is blocked.
+* What they should do next.
+
+---
+
+# Business Rules
+
+* Dark Mode and Light Mode are fully supported.
+* Accessibility is considered during feature development.
+* Touch targets should remain comfortable.
+* Desktop supports keyboard navigation.
+* Visual feedback is mandatory.
+* Long-running operations display loading indicators.
+* Destructive actions require confirmation.
+* Financial information receives higher visual emphasis.
+* Localization must not break layouts.
+* User experience should always prioritize clarity over visual complexity.
+
+---
+
+# Architecture
+
+```text id="ux04"
+Theme
+
++
+
+Localization
+
++
+
+Responsive Layout
+
++
+
+Reusable Components
+
+↓
+
+Accessible User Experience
+
+↓
+
+Business Features
+```
+
+---
+
+# End of PART 18 — UI/UX Guidelines
+
+The UI/UX module is now fully documented, covering:
+
+* Design System Overview
+* Color Palette & Theme System
+* Typography, Spacing & Responsive Layout
+* Reusable Components & UI Consistency
+* Dark Mode, Accessibility & UX Best Practices
+
+---
+
+# Next Part
+
+**PART 19 — Landing Page**
+
+This section documents the complete marketing website architecture, including homepage structure, pricing plans, free trial, feature showcase, WhatsApp integration, SEO strategy, responsive behavior, call-to-action flow, and visitor conversion principles.
+# PART 19 — Landing Page
+
+# 19.1 Landing Page Architecture Overview
+
+## Overview
+
+The **Tahsel Landing Page** is the official marketing website for the Tahsel platform.
+
+Its primary purpose is to introduce the product, explain its value, build trust with visitors, and convert potential customers into subscribers.
+
+Unlike the Dashboard and Tahsel applications, the Landing Page is **not** a business management system.
+
+It is a marketing and sales platform.
+
+---
+
+# Objectives
+
+The Landing Page is designed to:
+
+* Introduce Tahsel.
+* Explain the business value.
+* Present available features.
+* Display subscription plans.
+* Generate trial registrations.
+* Increase conversion rates.
+* Provide support channels.
+
+---
+
+# Target Audience
+
+The Landing Page is intended for:
+
+* Café Owners
+* Restaurants
+* Grocery Stores
+* Retail Shops
+* PlayStation Centers
+* Small Businesses
+* Medium Businesses
+
+The content should focus on solving real business problems.
+
+---
+
+# Primary Goals
+
+Every visitor should be able to:
+
+* Understand what Tahsel does.
+* Discover supported business types.
+* Compare subscription plans.
+* Contact support.
+* Start a free trial.
+
+The website should guide visitors naturally toward registration.
+
+---
+
+# Technology
+
+The Landing Page is implemented using:
+
+```text id="landing01"
+Flutter Web
+```
+
+It shares the same design language as the applications.
+
+---
+
+# Design Philosophy
+
+The Landing Page should feel:
+
+* Modern.
+* Professional.
+* Fast.
+* Trustworthy.
+* Business-focused.
+
+Animations should support the message rather than distract from it.
+
+---
+
+# Navigation Structure
+
+Typical page flow:
+
+```text id="landing02"
+Hero Section
+
+↓
+
+Features
+
+↓
+
+Business Types
+
+↓
+
+Pricing
+
+↓
+
+FAQ
+
+↓
+
+Contact
+
+↓
+
+Footer
+```
+
+Navigation remains simple and intuitive.
+
+---
+
+# Call To Action
+
+Every major section should encourage users to continue the registration journey.
+
+Examples:
+
+* Start Free Trial
+* Contact Us
+* View Pricing
+* Learn More
+
+CTA buttons should remain visually prominent.
+
+---
+
+# Responsive Design
+
+The Landing Page supports:
+
+* Desktop
+* Tablet
+* Mobile
+
+Content should remain readable regardless of screen size.
+
+---
+
+# Loading Performance
+
+The Landing Page prioritizes:
+
+* Fast loading.
+* Lightweight assets.
+* Optimized images.
+* Smooth scrolling.
+
+First impressions are critical.
+
+---
+
+# Localization
+
+Supported languages:
+
+```text id="landing03"
+Arabic
+
+English
+```
+
+Users may switch languages dynamically.
+
+RTL and LTR layouts are fully supported.
+
+---
+
+# Branding
+
+Brand identity remains consistent with:
+
+* Tahsel User App
+* Tahsel Dashboard
+
+Shared elements include:
+
+* Colors
+* Typography
+* Icons
+* Buttons
+
+---
+
+# Trust Building
+
+The Landing Page should establish credibility by presenting:
+
+* Clear business benefits.
+* Professional screenshots.
+* Transparent pricing.
+* Frequently asked questions.
+* Contact information.
+
+Trust is prioritized before requesting registration.
+
+---
+
+# SEO Considerations
+
+The Landing Page should be structured for search engine visibility.
+
+Examples:
+
+* Semantic headings.
+* Meaningful page titles.
+* Business-focused content.
+* Optimized metadata.
+
+SEO implementation details are documented later in this part.
+
+---
+
+# Analytics
+
+The Landing Page may later integrate visitor analytics.
+
+Examples:
+
+* Page Views
+* Trial Conversions
+* CTA Clicks
+
+Analytics remain separate from business data.
+
+---
+
+# Performance
+
+Optimizations include:
+
+* Lazy loading.
+* Optimized assets.
+* Efficient rendering.
+* Minimal JavaScript overhead.
+
+The Landing Page should remain responsive even on slower networks.
+
+---
+
+# Security
+
+The Landing Page stores no sensitive business information.
+
+Only public marketing content is displayed.
+
+Authentication occurs only when users proceed to registration or login.
+
+---
+
+# Business Rules
+
+* The Landing Page is a marketing platform, not a business management system.
+* Every section should move users toward registration.
+* Flutter Web is the implementation platform.
+* Responsive design is mandatory.
+* Arabic and English are fully supported.
+* Branding remains consistent with the applications.
+* Performance is prioritized.
+* Trust-building content should appear before pricing.
+* SEO considerations are built into the page structure.
+* Authentication is outside the Landing Page scope.
+
+---
+
+# Architecture
+
+```text id="landing04"
+Visitor
+
+↓
+
+Landing Page
+
+↓
+
+Product Information
+
+↓
+
+Pricing
+
+↓
+
+Free Trial
+
+↓
+
+Registration
+
+↓
+
+Tahsel Platform
+```
+
+---
+
+# End of Section
+
+Next Section:
+
+**19.2 Hero Section & First Impression**
+
+This section documents the Hero section layout, headline strategy, value proposition, primary and secondary call-to-action buttons, screenshots, animations, visitor psychology, and all UX rules governing the first screen users see when visiting Tahsel.
+# PART 19 — Landing Page
+
+# 19.2 Hero Section & First Impression
+
+## Overview
+
+The **Hero Section** is the first screen visitors see when opening the Tahsel Landing Page.
+
+It is the most important section of the website because it determines whether visitors continue exploring or leave.
+
+Within the first few seconds, users should immediately understand:
+
+* What Tahsel is.
+* Who it is for.
+* Why it is valuable.
+* What action they should take next.
+
+---
+
+# Objectives
+
+The Hero Section should:
+
+* Capture attention immediately.
+* Clearly communicate Tahsel's value.
+* Build trust.
+* Encourage visitors to start a free trial.
+* Lead users deeper into the website.
+
+---
+
+# Layout Structure
+
+The Hero Section should follow this hierarchy:
+
+```text id="hero01"
+Navigation Bar
+
+↓
+
+Headline
+
+↓
+
+Short Description
+
+↓
+
+Primary Call-To-Action
+
+↓
+
+Secondary Action
+
+↓
+
+Application Preview
+```
+
+The hierarchy should remain consistent across all screen sizes.
+
+---
+
+# Headline
+
+The headline must answer:
+
+> What does Tahsel do?
+
+It should be:
+
+* Short.
+* Clear.
+* Business-focused.
+* Easy to understand.
+
+Avoid technical terminology.
+
+The headline should communicate value rather than implementation.
+
+---
+
+# Supporting Description
+
+The supporting text should explain:
+
+* The business problem.
+* How Tahsel solves it.
+* Who benefits from using it.
+
+Keep the description concise.
+
+Visitors should not need to read long paragraphs before understanding the product.
+
+---
+
+# Primary Call-To-Action
+
+The primary CTA is the most important button on the page.
+
+Examples:
+
+* Start Free Trial
+* Try Tahsel Now
+* Get Started
+
+The primary CTA should always be visually dominant.
+
+---
+
+# Secondary Call-To-Action
+
+Optional secondary actions include:
+
+* Watch Demo
+* Learn More
+* View Pricing
+
+Secondary actions should never compete visually with the primary CTA.
+
+---
+
+# Application Preview
+
+The Hero Section should display real application visuals.
+
+Examples:
+
+* Dashboard Screenshot
+* Mobile Application Screenshot
+* Windows Application Screenshot
+
+Actual application screenshots are preferred over illustrations.
+
+---
+
+# Visual Hierarchy
+
+Information should appear in this order:
+
+```text id="hero02"
+Headline
+
+↓
+
+Description
+
+↓
+
+CTA
+
+↓
+
+Preview
+```
+
+Users should naturally follow this reading order.
+
+---
+
+# Navigation Bar
+
+The navigation bar should remain simple.
+
+Suggested items:
+
+* Features
+* Pricing
+* FAQ
+* Contact
+* Login
+
+The navigation should not overwhelm first-time visitors.
+
+---
+
+# Responsive Layout
+
+Desktop:
+
+* Text and preview displayed side by side.
+
+Mobile:
+
+* Text displayed above preview.
+
+Content should remain readable without horizontal scrolling.
+
+---
+
+# First Impression
+
+The Hero Section should immediately communicate:
+
+* Professionalism.
+* Simplicity.
+* Speed.
+* Reliability.
+
+Visitors should feel confident within the first few seconds.
+
+---
+
+# Animation
+
+Animations should be subtle.
+
+Examples:
+
+* Fade In
+* Slide In
+* Smooth Button Hover
+* Gentle Image Appearance
+
+Animations should enhance attention without distracting users.
+
+---
+
+# Trust Indicators
+
+The Hero Section may include trust elements such as:
+
+* Multi-platform support.
+* Secure cloud synchronization.
+* Business categories served.
+* Free trial availability.
+
+These indicators reinforce credibility.
+
+---
+
+# Performance
+
+The Hero Section loads first.
+
+Therefore:
+
+* Images should be optimized.
+* Animations should remain lightweight.
+* Large assets should be compressed.
+
+Fast loading is essential for visitor retention.
+
+---
+
+# Accessibility
+
+The Hero Section should provide:
+
+* Readable typography.
+* High color contrast.
+* Keyboard-accessible buttons.
+* Responsive scaling.
+
+Accessibility begins from the first interaction.
+
+---
+
+# Localization
+
+The Hero Section fully supports:
+
+* Arabic (RTL)
+* English (LTR)
+
+Text length differences must not break the layout.
+
+---
+
+# Business Rules
+
+* The headline communicates business value.
+* The description remains concise.
+* The primary CTA is visually dominant.
+* Real application screenshots are preferred.
+* Responsive behavior is mandatory.
+* Animations remain subtle.
+* Trust indicators strengthen credibility.
+* Performance is prioritized.
+* Accessibility begins in the Hero Section.
+* Localization supports both Arabic and English.
+
+---
+
+# Architecture
+
+```text id="hero03"
+Visitor
+
+↓
+
+Hero Section
+
+↓
+
+Understand Product
+
+↓
+
+Trust Product
+
+↓
+
+Primary CTA
+
+↓
+
+Registration
+```
+
+---
+
+# End of Section
+
+Next Section:
+
+**19.3 Features Section**
+
+This section documents how Tahsel's core features are presented on the Landing Page, including feature grouping, screenshots, icons, benefit-focused descriptions, responsive cards, animations, and UX rules that help visitors quickly understand the platform's capabilities.
+# PART 19 — Landing Page
+
+# 19.3 Features Section
+
+## Overview
+
+The **Features Section** is responsible for presenting Tahsel's capabilities in a way that is easy to understand for business owners.
+
+Instead of listing technical specifications, this section explains how Tahsel solves real business problems.
+
+The focus is always on **business value**, not implementation details.
+
+---
+
+# Objectives
+
+The Features Section should:
+
+* Explain what Tahsel can do.
+* Demonstrate business benefits.
+* Build confidence.
+* Encourage visitors to continue exploring.
+* Support conversion to the free trial.
+
+---
+
+# Presentation Philosophy
+
+Each feature should answer:
+
+> **How does this help my business?**
+
+Visitors care more about solving problems than about technical architecture.
+
+---
+
+# Layout Structure
+
+Suggested layout:
+
+```text id="feature01"
+Section Title
+
+↓
+
+Section Description
+
+↓
+
+Feature Cards
+
+↓
+
+Call-To-Action
+```
+
+The layout remains simple and easy to scan.
+
+---
+
+# Feature Cards
+
+Each feature is displayed inside a reusable card.
+
+Every card contains:
+
+* Icon
+* Feature Name
+* Short Description
+* Optional Screenshot
+
+Cards should remain visually consistent.
+
+---
+
+# Number of Features
+
+Only the most important features should appear on the Landing Page.
+
+Recommended highlights include:
+
+* Customer Debt Management
+* Expense Management
+* Employee Management
+* Installments
+* PlayStation Management
+* Reports & Analytics
+* Cloud Synchronization
+* Subscription Management
+
+Additional features can be explored after registration.
+
+---
+
+# Feature Description
+
+Each feature description should be:
+
+* Short.
+* Business-oriented.
+* Easy to understand.
+
+Avoid technical implementation details.
+
+Example:
+
+Instead of:
+
+> Uses Firebase synchronization.
+
+Prefer:
+
+> Your business data is securely available across your devices.
+
+---
+
+# Icons
+
+Each feature should use a meaningful icon.
+
+Examples:
+
+Customer Debts
+
+↓
+
+Wallet / Money Icon
+
+Expenses
+
+↓
+
+Receipt Icon
+
+Employees
+
+↓
+
+People Icon
+
+Reports
+
+↓
+
+Chart Icon
+
+PlayStation
+
+↓
+
+Game Controller Icon
+
+Icons should improve recognition.
+
+---
+
+# Screenshots
+
+Where appropriate, feature cards may include screenshots from the real application.
+
+Examples:
+
+* Dashboard Statistics
+* Customer Debts Screen
+* Expense Reports
+* Employee Attendance
+
+Real screenshots build credibility.
+
+---
+
+# Business Categories
+
+Where appropriate, explain which businesses benefit.
+
+Examples:
+
+Customer Debts
+
+Suitable for:
+
+* Grocery Stores
+* Cafés
+* Retail Shops
+
+PlayStation Module
+
+Suitable for:
+
+* Gaming Centers
+
+This helps visitors identify with the product.
+
+---
+
+# Visual Hierarchy
+
+Visitors should immediately recognize:
+
+* Feature Name
+* Benefit
+* Supporting Visual
+
+Descriptions should never dominate the card.
+
+---
+
+# Animations
+
+Cards may use lightweight animations such as:
+
+* Fade In
+* Scale On Hover (Desktop)
+* Smooth Appearance During Scroll
+
+Animations remain subtle.
+
+---
+
+# Responsive Layout
+
+Desktop:
+
+Multiple cards displayed in rows.
+
+Tablet:
+
+Reduced number of columns.
+
+Mobile:
+
+Single-column layout with vertical scrolling.
+
+No feature should become inaccessible because of screen size.
+
+---
+
+# Performance
+
+Feature assets should be optimized.
+
+Recommendations:
+
+* Compressed screenshots.
+* Optimized SVG icons.
+* Lazy loading for images below the fold.
+
+Fast scrolling is important.
+
+---
+
+# Accessibility
+
+Cards should support:
+
+* Keyboard navigation.
+* Screen readers where applicable.
+* Adequate contrast.
+* Readable typography.
+
+Interactive cards should clearly indicate clickability.
+
+---
+
+# Localization
+
+Every feature supports:
+
+* Arabic
+* English
+
+Descriptions should remain concise in both languages.
+
+Long translations must not break layouts.
+
+---
+
+# Call-To-Action
+
+After presenting the features, encourage the visitor to continue.
+
+Examples:
+
+* View Pricing
+* Start Free Trial
+* Contact Us
+
+The next step should always be obvious.
+
+---
+
+# Business Rules
+
+* Features focus on business value rather than technical implementation.
+* Every feature uses a reusable card design.
+* Icons improve recognition.
+* Real application screenshots are preferred.
+* Responsive layouts are mandatory.
+* Animations remain lightweight.
+* Performance is prioritized.
+* Accessibility is fully supported.
+* Localization covers Arabic and English.
+* Every Features section ends with a clear Call-To-Action.
+
+---
+
+# Architecture
+
+```text id="feature02"
+Visitor
+
+↓
+
+Features Section
+
+↓
+
+Business Benefits
+
+↓
+
+Confidence
+
+↓
+
+Call-To-Action
+
+↓
+
+Next Section
+```
+
+---
+
+# End of Section
+
+Next Section:
+
+**19.4 Business Types & Supported Industries**
+
+This section documents how the Landing Page presents the industries supported by Tahsel (such as cafés, retail shops, PlayStation centers, and others), helping visitors quickly determine whether the platform fits their business.
+# PART 19 — Landing Page
+
+# 19.4 Business Types & Supported Industries
+
+## Overview
+
+The **Business Types & Supported Industries** section helps visitors immediately identify whether Tahsel is suitable for their business.
+
+Many visitors decide within a few seconds whether a product is relevant to them.
+
+Showing supported business types early increases engagement and conversion.
+
+Rather than saying Tahsel works for "everyone," the Landing Page should clearly communicate the industries it currently supports.
+
+---
+
+# Objectives
+
+This section should:
+
+* Help visitors identify with the product.
+* Demonstrate real-world use cases.
+* Reduce uncertainty.
+* Increase trial registrations.
+* Prepare the visitor for the pricing section.
+
+---
+
+# Presentation Philosophy
+
+Instead of describing technical modules, describe business scenarios.
+
+Example:
+
+Instead of:
+
+> Customer Debt Management
+
+Prefer:
+
+> Perfect for grocery stores that sell on credit.
+
+Business-oriented messaging is easier for visitors to understand.
+
+---
+
+# Layout Structure
+
+Suggested layout:
+
+```text id="business01"
+Section Title
+
+↓
+
+Short Description
+
+↓
+
+Business Cards
+
+↓
+
+Future Expansion Note
+```
+
+---
+
+# Business Cards
+
+Each supported business type should appear as a reusable card.
+
+Every card includes:
+
+* Icon
+* Business Name
+* Short Description
+* Supported Features
+
+Cards should share identical styling.
+
+---
+
+# Grocery Stores
+
+Supported Features:
+
+* Customer Debts
+* Installments
+* Monthly Reports
+* Expenses
+* Employee Management
+
+Suitable for stores that regularly sell products on account.
+
+---
+
+# Cafés
+
+Supported Features:
+
+* Customer Debts
+* Daily Sales Tracking
+* Expenses
+* Employee Attendance
+* Monthly Reports
+
+Supports cafés that need simple financial management.
+
+---
+
+# Retail Shops
+
+Supported Features:
+
+* Inventory
+* Customer Debts
+* Installments
+* Expenses
+* Reports
+
+Suitable for small and medium-sized retail businesses.
+
+---
+
+# PlayStation Centers
+
+Supported Features:
+
+* Room Management
+* Session Timer
+* Revenue Reports
+* Device Tracking
+
+Designed specifically for PlayStation gaming centers.
+
+---
+
+# Small Businesses
+
+Tahsel supports many service-oriented businesses.
+
+Examples:
+
+* Repair Shops
+* Mobile Stores
+* Computer Stores
+* Local Service Providers
+
+Business modules can be enabled according to actual needs.
+
+---
+
+# Future Business Support
+
+Future versions may support:
+
+* Pharmacies
+* Restaurants
+* Beauty Salons
+* Medical Clinics
+* Workshops
+* Distribution Companies
+
+The platform is designed for future expansion.
+
+---
+
+# Icons
+
+Every business type should have a recognizable icon.
+
+Examples:
+
+Grocery Store
+
+↓
+
+Shopping Basket
+
+---
+
+Café
+
+↓
+
+Coffee Cup
+
+---
+
+Retail Shop
+
+↓
+
+Storefront
+
+---
+
+PlayStation Center
+
+↓
+
+Game Controller
+
+Icons improve visual scanning.
+
+---
+
+# Screenshots
+
+Where appropriate, each business card may display:
+
+* Relevant dashboard screenshots.
+* Module previews.
+* Business-specific examples.
+
+Real screenshots increase trust.
+
+---
+
+# Responsive Layout
+
+Desktop:
+
+Multiple business cards displayed in a grid.
+
+Tablet:
+
+Reduced number of columns.
+
+Mobile:
+
+Single-column scrolling layout.
+
+The experience remains consistent across platforms.
+
+---
+
+# Accessibility
+
+Cards should provide:
+
+* Readable typography.
+* Clear spacing.
+* Keyboard accessibility (Desktop).
+* Sufficient touch targets (Mobile).
+
+---
+
+# Localization
+
+Business descriptions support:
+
+* Arabic
+* English
+
+Industry names remain familiar to users in both languages.
+
+---
+
+# Visitor Journey
+
+This section prepares visitors for pricing.
+
+Flow:
+
+```text id="business02"
+Business Type
+
+↓
+
+Supported Features
+
+↓
+
+Confidence
+
+↓
+
+Pricing
+
+↓
+
+Free Trial
+```
+
+---
+
+# Performance
+
+Business cards should:
+
+* Use optimized icons.
+* Load lightweight images.
+* Avoid excessive animations.
+
+Performance remains a priority.
+
+---
+
+# Business Rules
+
+* Business types should reflect real supported industries.
+* Cards follow a reusable design.
+* Descriptions explain business value.
+* Icons improve recognition.
+* Screenshots are preferred over illustrations.
+* Responsive layouts are mandatory.
+* Future industries may be added without redesigning the page.
+* Localization supports Arabic and English.
+* Accessibility is fully supported.
+* This section naturally leads into the Pricing section.
+
+---
+
+# Architecture
+
+```text id="business03"
+Visitor
+
+↓
+
+Business Types
+
+↓
+
+Recognizes Own Business
+
+↓
+
+Confidence
+
+↓
+
+Pricing
+
+↓
+
+Trial Registration
+```
+
+---
+
+# End of Section
+
+Next Section:
+
+**19.5 Pricing Plans & Subscription Comparison**
+
+This section documents how Tahsel presents subscription plans, pricing tiers, included features, free trial information, comparison tables, recommended plans, billing explanations, and the conversion strategy that encourages visitors to subscribe.
+# PART 19 — Landing Page
+
+# 19.5 Pricing Plans & Subscription Comparison
+
+## Overview
+
+The **Pricing Plans & Subscription Comparison** section explains how businesses can subscribe to Tahsel.
+
+The goal is not simply to display prices.
+
+The section should help visitors understand:
+
+* Which plan fits their business.
+* What features are included.
+* Why upgrading provides additional value.
+* How to start using Tahsel immediately.
+
+Pricing should feel transparent, simple, and trustworthy.
+
+---
+
+# Objectives
+
+The Pricing Section should:
+
+* Present subscription plans clearly.
+* Explain the value of each plan.
+* Reduce purchasing hesitation.
+* Encourage free trial registration.
+* Increase paid conversions.
+
+---
+
+# Pricing Philosophy
+
+Visitors should never feel confused about pricing.
+
+The pricing page should answer:
+
+* How much does it cost?
+* What do I get?
+* Which businesses is this plan for?
+* Can I upgrade later?
+* Is there a free trial?
+
+---
+
+# Layout Structure
+
+Suggested layout:
+
+```text id="pricing01"
+Section Title
+
+↓
+
+Short Description
+
+↓
+
+Pricing Cards
+
+↓
+
+Comparison Table
+
+↓
+
+Frequently Asked Questions
+
+↓
+
+Call-To-Action
+```
+
+---
+
+# Pricing Cards
+
+Each subscription plan should be displayed inside a reusable pricing card.
+
+Every pricing card contains:
+
+* Plan Name
+* Monthly Price
+* Billing Period
+* Included Features
+* Recommended Badge (if applicable)
+* Subscribe Button
+
+Cards remain visually consistent.
+
+---
+
+# Plan Hierarchy
+
+Pricing cards should appear in logical order.
+
+Example:
+
+```text id="pricing02"
+Basic
+
+↓
+
+Professional
+
+↓
+
+Enterprise
+```
+
+If only one plan exists, the design should still allow future expansion.
+
+---
+
+# Recommended Plan
+
+If multiple plans exist:
+
+One plan may be highlighted as:
+
+```text id="pricing03"
+Most Popular
+```
+
+This visual emphasis should remain subtle.
+
+The recommendation should guide users rather than pressure them.
+
+---
+
+# Feature List
+
+Each pricing plan should clearly display:
+
+Included Features
+
+Examples:
+
+* Customer Debts
+* Expenses
+* Reports
+* Employees
+* Installments
+* Cloud Synchronization
+* Multi-Platform Support
+
+Features should use check icons for readability.
+
+---
+
+# Billing Information
+
+Pricing cards should clearly explain:
+
+* Billing Frequency
+* Subscription Duration
+* Renewal Policy
+
+Users should understand exactly what they are purchasing.
+
+---
+
+# Free Trial
+
+If a free trial is available:
+
+Display prominently.
+
+Example:
+
+```text id="pricing04"
+Start Your Free Trial
+
+No Credit Card Required
+```
+
+The free trial should reduce adoption barriers.
+
+---
+
+# Subscription Flexibility
+
+Visitors should understand:
+
+* They can renew.
+* They can extend subscriptions.
+* Business data remains preserved after renewal.
+
+Subscription flexibility builds confidence.
+
+---
+
+# Comparison Table
+
+If multiple plans exist:
+
+Display a comparison table.
+
+Example rows:
+
+* Customer Debts
+* Reports
+* Employees
+* Installments
+* PlayStation Module
+* Priority Support
+
+The comparison should help visitors choose quickly.
+
+---
+
+# Transparency
+
+Avoid hidden conditions.
+
+Clearly explain:
+
+* Included Features.
+* Trial Duration.
+* Renewal Process.
+
+Pricing transparency improves trust.
+
+---
+
+# Call-To-Action
+
+Every pricing card should contain a prominent CTA.
+
+Examples:
+
+* Start Free Trial
+* Subscribe Now
+* Contact Sales
+
+CTA buttons should always remain visible.
+
+---
+
+# Responsive Layout
+
+Desktop:
+
+Pricing cards displayed side by side.
+
+Tablet:
+
+Two-column layout where appropriate.
+
+Mobile:
+
+Single-column scrolling layout.
+
+Pricing must remain easy to compare on every device.
+
+---
+
+# Accessibility
+
+Pricing cards support:
+
+* Readable typography.
+* Keyboard navigation.
+* High color contrast.
+* Large touch targets.
+
+Accessibility improves conversion.
+
+---
+
+# Localization
+
+Pricing information supports:
+
+* Arabic
+* English
+
+Currency formatting follows the active locale.
+
+Business logic remains independent of display formatting.
+
+---
+
+# Performance
+
+Pricing assets should remain lightweight.
+
+Animations should be minimal.
+
+Pricing information should load immediately.
+
+---
+
+# Business Rules
+
+* Pricing should remain transparent.
+* Every pricing card follows the same reusable design.
+* Included features are clearly listed.
+* Recommended plans receive subtle visual emphasis.
+* Free trials are prominently displayed when available.
+* Comparison tables simplify decision making.
+* Responsive layouts are mandatory.
+* Localization supports Arabic and English.
+* Accessibility is fully supported.
+* Every pricing section ends with a strong Call-To-Action.
+
+---
+
+# Architecture
+
+```text id="pricing05"
+Visitor
+
+↓
+
+Pricing Plans
+
+↓
+
+Plan Comparison
+
+↓
+
+Free Trial
+
+↓
+
+Registration
+
+↓
+
+Subscription
+
+↓
+
+Tahsel Platform
+```
+
+---
+
+# End of Section
+
+Next Section:
+
+**19.6 Free Trial Registration & Lead Conversion**
+
+This section documents the complete free trial flow, visitor registration process, lead collection strategy, trial activation, onboarding experience, conversion optimization, and the business rules that move visitors from prospects to active Tahsel users.
+# PART 19 — Landing Page
+
+# 19.6 Free Trial Registration & Lead Conversion
+
+## Overview
+
+The **Free Trial Registration** process is the primary conversion point of the Tahsel Landing Page.
+
+Its purpose is to transform website visitors into active trial users with the fewest possible steps.
+
+The registration experience should be:
+
+* Fast.
+* Simple.
+* Trustworthy.
+* Mobile-friendly.
+* Desktop-friendly.
+
+The visitor should be able to begin using Tahsel within a few minutes.
+
+---
+
+# Objectives
+
+The trial registration flow should:
+
+* Minimize friction.
+* Collect only necessary information.
+* Increase trial registrations.
+* Reduce abandonment.
+* Encourage eventual subscription.
+
+---
+
+# Registration Philosophy
+
+Ask only for information that is immediately required.
+
+Every additional field increases the probability that the visitor abandons registration.
+
+Keep the first registration simple.
+
+Additional business information can be completed later.
+
+---
+
+# Registration Flow
+
+```text id="trial01"
+Visitor
+
+↓
+
+Click
+
+Start Free Trial
+
+↓
+
+Registration Form
+
+↓
+
+Account Validation
+
+↓
+
+Trial Created
+
+↓
+
+Welcome Screen
+
+↓
+
+Tahsel Dashboard
+
+or
+
+Tahsel Mobile App
+```
+
+The process should feel continuous and effortless.
+
+---
+
+# Registration Form
+
+Recommended fields:
+
+Required:
+
+* Business Name
+* Owner Name
+* Mobile Number
+* Email Address
+* Password
+
+Optional:
+
+* Business Type
+* City
+* Referral Source
+
+Avoid requesting unnecessary information.
+
+---
+
+# Validation
+
+Before creating the account:
+
+Verify:
+
+* Email format.
+* Phone format.
+* Password strength.
+* Required fields.
+
+Errors should be displayed immediately.
+
+---
+
+# Duplicate Account Prevention
+
+Prevent creating duplicate accounts using:
+
+* Email Address.
+* Mobile Number.
+
+Users should receive clear instructions if an account already exists.
+
+---
+
+# Trial Creation
+
+After successful registration:
+
+Automatically create:
+
+* User Account.
+* Subscription.
+* Trial Period.
+* Initial Settings.
+
+The user should not perform additional setup before accessing the application.
+
+---
+
+# Trial Configuration
+
+A trial account automatically receives:
+
+* Active Status.
+* Trial Subscription.
+* Trial Start Date.
+* Trial End Date.
+
+The trial configuration follows the subscription system documented in Part 3.
+
+---
+
+# Welcome Experience
+
+After successful registration:
+
+Display a welcome screen.
+
+The screen should:
+
+* Confirm account creation.
+* Explain the next step.
+* Encourage exploration.
+
+The first impression after registration is important.
+
+---
+
+# Onboarding
+
+Future versions may include guided onboarding.
+
+Examples:
+
+* Add First Customer.
+* Create First Debt.
+* Add First Expense.
+
+Onboarding should help users experience value quickly.
+
+---
+
+# Conversion Strategy
+
+The trial experience should demonstrate the application's value before requesting payment.
+
+Examples:
+
+* Access to core features.
+* Real business workflows.
+* Sample guidance.
+
+Users should understand the benefits before making a purchasing decision.
+
+---
+
+# Subscription Reminder
+
+As the trial approaches expiration:
+
+Display:
+
+* Remaining Trial Days.
+* Upgrade Reminder.
+* Contact Administrator Button (if applicable).
+
+Reminders should remain informative rather than intrusive.
+
+---
+
+# Contact Options
+
+Visitors should always have access to support.
+
+Examples:
+
+* WhatsApp
+* Phone
+* Email
+
+Support information should be easy to find.
+
+---
+
+# Responsive Layout
+
+Registration supports:
+
+* Desktop
+* Tablet
+* Mobile
+
+Forms remain readable and easy to complete on every device.
+
+---
+
+# Accessibility
+
+Registration forms support:
+
+* Keyboard navigation.
+* Proper labels.
+* Error descriptions.
+* Large input areas.
+
+Accessibility improves completion rates.
+
+---
+
+# Localization
+
+Registration fully supports:
+
+* Arabic
+* English
+
+Validation messages are localized.
+
+Placeholders and labels update automatically.
+
+---
+
+# Security
+
+Passwords are never stored in plain text.
+
+Authentication follows the Firebase Authentication architecture documented earlier.
+
+The Landing Page never exposes sensitive implementation details.
+
+---
+
+# Performance
+
+Registration should:
+
+* Validate locally where possible.
+* Minimize unnecessary requests.
+* Provide immediate visual feedback.
+
+Fast registration improves conversion.
+
+---
+
+# Business Rules
+
+* Registration requests only essential information.
+* Validation occurs before account creation.
+* Duplicate accounts are prevented.
+* Trial subscriptions are created automatically.
+* Users can access the application immediately after registration.
+* Future onboarding remains optional.
+* Trial reminders encourage upgrades.
+* Localization supports Arabic and English.
+* Accessibility is fully supported.
+* Registration is optimized for high conversion.
+
+---
+
+# Architecture
+
+```text id="trial02"
+Visitor
+
+↓
+
+Free Trial Registration
+
+↓
+
+Validation
+
+↓
+
+Firebase Authentication
+
+↓
+
+Trial Account Created
+
+↓
+
+Subscription Activated
+
+↓
+
+Welcome Experience
+
+↓
+
+Tahsel Platform
+```
+
+---
+
+# End of Section
+
+Next Section:
+
+**19.7 Contact, Support & Frequently Asked Questions (FAQ)**
+
+This section documents the Contact section, WhatsApp integration, phone support, email support, FAQ organization, customer trust elements, and the support strategy that helps visitors resolve questions before subscribing.
+# PART 19 — Landing Page
+
+# 19.7 Contact, Support & Frequently Asked Questions (FAQ)
+
+## Overview
+
+The **Contact & FAQ** section helps visitors quickly find answers to common questions and reach the Tahsel support team whenever assistance is needed.
+
+Many potential customers hesitate before subscribing because they have unanswered questions.
+
+This section reduces uncertainty, builds confidence, and improves conversion rates.
+
+---
+
+# Objectives
+
+The Contact & FAQ section should:
+
+* Answer common questions.
+* Reduce support requests.
+* Increase visitor confidence.
+* Provide fast communication channels.
+* Encourage trial registration.
+
+---
+
+# Contact Philosophy
+
+Support should always be easy to reach.
+
+Visitors should never spend time searching for contact information.
+
+Support actions should remain visible throughout the Landing Page.
+
+---
+
+# Contact Methods
+
+Tahsel currently supports:
+
+* WhatsApp
+* Phone Call
+* Email
+
+Future channels may include:
+
+* Telegram
+* Facebook Messenger
+* Live Chat
+
+The architecture allows future expansion.
+
+---
+
+# WhatsApp Support
+
+WhatsApp is the primary communication channel.
+
+Visitors should be able to:
+
+* Ask questions.
+* Request demonstrations.
+* Receive subscription assistance.
+* Renew subscriptions.
+
+The WhatsApp button should remain highly visible.
+
+---
+
+# Phone Support
+
+Phone support is intended for:
+
+* Urgent issues.
+* Business inquiries.
+* Enterprise customers.
+
+Phone numbers should originate from configuration rather than hardcoded values.
+
+---
+
+# Email Support
+
+Email is suitable for:
+
+* Detailed questions.
+* Technical support.
+* Business partnerships.
+* Feature requests.
+
+The Landing Page should clearly display the official support email.
+
+---
+
+# Contact Layout
+
+Suggested structure:
+
+```text id="contact01"
+Section Title
+
+↓
+
+Support Description
+
+↓
+
+WhatsApp
+
+Phone
+
+Email
+
+↓
+
+Contact Form (Optional)
+```
+
+The layout remains simple and approachable.
+
+---
+
+# Contact Form (Optional)
+
+If implemented, the form may include:
+
+* Name
+* Email
+* Phone
+* Subject
+* Message
+
+The form should validate required fields before submission.
+
+---
+
+# FAQ Philosophy
+
+Frequently Asked Questions reduce hesitation.
+
+Questions should focus on:
+
+* Subscription.
+* Features.
+* Compatibility.
+* Payments.
+* Data Security.
+
+The goal is to answer concerns before visitors contact support.
+
+---
+
+# FAQ Layout
+
+Each FAQ item contains:
+
+* Question
+* Expandable Answer
+
+Accordion-style expansion is recommended.
+
+Only one answer should expand at a time to reduce scrolling.
+
+---
+
+# Recommended FAQ Topics
+
+Examples:
+
+* What is Tahsel?
+* Which businesses are supported?
+* Is there a free trial?
+* How does subscription renewal work?
+* Does Tahsel support Windows?
+* Does Tahsel support Android?
+* Can I use multiple devices?
+* Is my data secure?
+* Can I cancel anytime?
+* How do I contact support?
+
+Questions should reflect real customer concerns.
+
+---
+
+# Trust Building
+
+The Contact & FAQ section reinforces trust by showing:
+
+* Multiple support channels.
+* Clear communication methods.
+* Transparent answers.
+* Easy access to assistance.
+
+Visitors should feel supported before becoming customers.
+
+---
+
+# Call-To-Action
+
+The section should end with another opportunity to register.
+
+Examples:
+
+* Start Free Trial
+* Contact Us Now
+* Try Tahsel Today
+
+The visitor should always know the next step.
+
+---
+
+# Responsive Layout
+
+Desktop:
+
+Contact information and FAQ may appear side by side.
+
+Mobile:
+
+Displayed vertically with comfortable spacing.
+
+Interaction remains simple on every screen size.
+
+---
+
+# Accessibility
+
+Support interfaces provide:
+
+* Keyboard navigation.
+* Accessible buttons.
+* Readable typography.
+* Expandable FAQ sections.
+
+Accessibility applies to every interactive element.
+
+---
+
+# Localization
+
+The Contact & FAQ section fully supports:
+
+* Arabic
+* English
+
+Questions and answers remain easy to understand in both languages.
+
+---
+
+# Performance
+
+FAQ content loads with the page.
+
+Expandable answers should animate smoothly without affecting performance.
+
+Contact actions should launch immediately.
+
+---
+
+# Security
+
+The Contact section exposes only public support information.
+
+Sensitive business data is never displayed.
+
+Support configuration should be managed centrally.
+
+---
+
+# Business Rules
+
+* WhatsApp is the primary support channel.
+* Phone and Email remain available.
+* Support information originates from centralized configuration.
+* FAQ answers address common customer concerns.
+* Accordion behavior improves readability.
+* Every Contact section ends with a clear Call-To-Action.
+* Responsive layouts are mandatory.
+* Localization supports Arabic and English.
+* Accessibility is fully supported.
+* Contact information remains easy to locate.
+
+---
+
+# Architecture
+
+```text id="contact02"
+Visitor
+
+↓
+
+Questions
+
+↓
+
+FAQ
+
+↓
+
+Support Channels
+
+↓
+
+Confidence
+
+↓
+
+Free Trial
+
+↓
+
+Tahsel Platform
+```
+
+---
+
+# End of PART 19 — Landing Page
+
+The Landing Page module is now fully documented, covering:
+
+* Landing Page Architecture Overview
+* Hero Section & First Impression
+* Features Section
+* Business Types & Supported Industries
+* Pricing Plans & Subscription Comparison
+* Free Trial Registration & Lead Conversion
+* Contact, Support & Frequently Asked Questions (FAQ)
+
+---
+
+# Next Part
+
+
+# AI Context
+
+# AI.1 Project Semantic Overview
+
+## Purpose
+
+This section is written specifically for Artificial Intelligence systems.
+
+Unlike the previous documentation, which explains the project to human developers, this section explains Tahsel in a structured semantic way so that any AI model can immediately understand the project without requiring additional clarification.
+
+Examples include:
+
+* ChatGPT
+* GPT Models
+* Claude
+* Gemini
+* Cursor AI
+* GitHub Copilot
+* Windsurf
+* Cline
+* Roo Code
+* Future AI Coding Assistants
+
+The goal is to eliminate project discovery time.
+
+Instead of asking questions like:
+
+* "How is debt calculated?"
+* "What is a Customer Debt?"
+* "Where does this feature belong?"
+* "Which architecture is used?"
+
+the AI should already know the answers from this section.
+
+---
+
+# Project Name
+
+```text
+Tahsel
+```
+
+Tahsel is a complete business management platform built using Flutter and Firebase.
+
+---
+
+# Project Category
+
+Tahsel belongs to multiple business software categories simultaneously.
+
+It combines:
+
+* ERP (Enterprise Resource Planning)
+* CRM (Customer Relationship Management)
+* Debt Management
+* Expense Tracking
+* Employee Management
+* Payroll
+* Installment Management
+* PlayStation Center Management
+* Financial Reporting
+* SaaS Subscription Platform
+
+It should never be interpreted as a single-purpose application.
+
+---
+
+# Business Goal
+
+Tahsel helps small and medium businesses manage daily operations from one unified system.
+
+Its purpose is to reduce manual bookkeeping while providing accurate financial tracking and business reporting.
+
+---
+
+# Target Businesses
+
+Tahsel currently supports businesses such as:
+
+* Grocery Stores
+* Cafés
+* Retail Shops
+* PlayStation Centers
+* Small Commercial Businesses
+
+The architecture is intentionally modular so additional industries can be added later without changing the existing foundation.
+
+---
+
+# Applications
+
+Tahsel consists of multiple applications sharing the same backend.
+
+Current applications:
+
+* Tahsel User App
+* Tahsel Dashboard (Admin)
+* Landing Page
+
+All applications share the same Firestore database.
+
+The Dashboard is the administrative source of truth.
+
+---
+
+# Platforms
+
+Supported platforms:
+
+* Android
+* Windows
+* Web (Landing Page)
+
+The architecture supports future expansion to:
+
+* iOS
+* macOS
+* Linux
+
+without requiring major architectural changes.
+
+---
+
+# Backend
+
+Backend technology:
+
+```text
+Firebase
+```
+
+Services currently used include:
+
+* Firebase Authentication
+* Cloud Firestore
+* Firebase Storage
+
+The project intentionally avoids paid Firebase services whenever possible.
+
+Cloud Functions are **not** part of the current architecture.
+
+---
+
+# Architecture
+
+The project strictly follows:
+
+```text
+Clean Architecture
+```
+
+Layers:
+
+Presentation
+
+↓
+
+Domain
+
+↓
+
+Data
+
+Business logic must remain inside the Domain layer.
+
+Widgets never contain business rules.
+
+---
+
+# State Management
+
+State management uses:
+
+```text
+Cubit / Bloc
+```
+
+Cubits coordinate application flow.
+
+Business calculations belong inside UseCases.
+
+---
+
+# Source of Truth
+
+The project follows a strict Source of Truth philosophy.
+
+Examples:
+
+Financial calculations:
+
+↓
+
+Transactions
+
+NOT cached values.
+
+Subscription state:
+
+↓
+
+Firestore
+
+NOT local cache.
+
+Reports:
+
+↓
+
+createdAt
+
+NOT syncedAt.
+
+Every important business value is derived from authoritative data.
+
+---
+
+# Financial Philosophy
+
+Tahsel is a financial application.
+
+Financial integrity has higher priority than UI convenience.
+
+Whenever conflicting implementations exist:
+
+The financially correct implementation should always be chosen.
+
+Accuracy is more important than simplicity.
+
+---
+
+# Ledger Philosophy
+
+The project is gradually moving toward a ledger-based financial model.
+
+Business operations should preserve complete historical records whenever possible.
+
+Historical transactions should never be silently lost.
+
+Financial reports should always be reproducible from stored transaction history.
+
+---
+
+# Offline Philosophy
+
+Offline support is a core feature.
+
+Offline-created data must preserve its original business timestamp.
+
+Synchronization uploads data but must never change business meaning.
+
+Technical metadata is separate from business data.
+
+---
+
+# Date Philosophy
+
+Business operations always depend on:
+
+```text
+createdAt
+```
+
+Synchronization timestamps exist only for synchronization tracking.
+
+Reports must never depend on upload time.
+
+---
+
+# Localization
+
+Localization is mandatory.
+
+Supported languages:
+
+* Arabic
+* English
+
+Hardcoded UI text is prohibited.
+
+All visible text originates from ARB files.
+
+---
+
+# Theme
+
+The application fully supports:
+
+* Dark Mode
+* Light Mode
+
+Visual appearance changes.
+
+Business behavior never changes.
+
+---
+
+# Notifications
+
+The notification system supports:
+
+* WhatsApp
+* SMS
+* None
+
+Notification delivery respects the user's selected communication method.
+
+---
+
+# AI Expectations
+
+When modifying Tahsel, an AI should assume:
+
+* Clean Architecture is mandatory.
+* Financial accuracy is mandatory.
+* Localization is mandatory.
+* Responsive UI is mandatory.
+* Dark Mode support is mandatory.
+* Business logic belongs in UseCases.
+* UI must remain thin.
+* Existing architecture should be reused rather than replaced.
+* Existing design system takes precedence over custom widgets.
+* Data integrity is more important than implementation speed.
+
+---
+
+# Primary Development Principle
+
+When uncertain, the AI should optimize for:
+
+1. Financial correctness.
+2. Data integrity.
+3. Clean Architecture.
+4. Maintainability.
+5. Performance.
+6. User Experience.
+
+Never sacrifice business correctness for shorter code.
+
+---
+
+# End of AI Context Introduction
+
+Next Section:
+
+**AI.2 Domain Model & Core Business Concepts**
+
+This section explains every major business entity (User, Customer, Debt, Transaction, Expense, Employee, Installment, Subscription, etc.) in semantic terms so an AI understands not just their structure, but their meaning and relationships within the Tahsel ecosystem.
+# AI Context
+
+# AI.1 Project Semantic Overview
+
+## Purpose
+
+This section is written specifically for Artificial Intelligence systems.
+
+Unlike the previous documentation, which explains the project to human developers, this section explains Tahsel in a structured semantic way so that any AI model can immediately understand the project without requiring additional clarification.
+
+Examples include:
+
+* ChatGPT
+* GPT Models
+* Claude
+* Gemini
+* Cursor AI
+* GitHub Copilot
+* Windsurf
+* Cline
+* Roo Code
+* Future AI Coding Assistants
+
+The goal is to eliminate project discovery time.
+
+Instead of asking questions like:
+
+* "How is debt calculated?"
+* "What is a Customer Debt?"
+* "Where does this feature belong?"
+* "Which architecture is used?"
+
+the AI should already know the answers from this section.
+
+---
+
+# Project Name
+
+```text
+Tahsel
+```
+
+Tahsel is a complete business management platform built using Flutter and Firebase.
+
+---
+
+# Project Category
+
+Tahsel belongs to multiple business software categories simultaneously.
+
+It combines:
+
+* ERP (Enterprise Resource Planning)
+* CRM (Customer Relationship Management)
+* Debt Management
+* Expense Tracking
+* Employee Management
+* Payroll
+* Installment Management
+* PlayStation Center Management
+* Financial Reporting
+* SaaS Subscription Platform
+
+It should never be interpreted as a single-purpose application.
+
+---
+
+# Business Goal
+
+Tahsel helps small and medium businesses manage daily operations from one unified system.
+
+Its purpose is to reduce manual bookkeeping while providing accurate financial tracking and business reporting.
+
+---
+
+# Target Businesses
+
+Tahsel currently supports businesses such as:
+
+* Grocery Stores
+* Cafés
+* Retail Shops
+* PlayStation Centers
+* Small Commercial Businesses
+
+The architecture is intentionally modular so additional industries can be added later without changing the existing foundation.
+
+---
+
+# Applications
+
+Tahsel consists of multiple applications sharing the same backend.
+
+Current applications:
+
+* Tahsel User App
+* Tahsel Dashboard (Admin)
+* Landing Page
+
+All applications share the same Firestore database.
+
+The Dashboard is the administrative source of truth.
+
+---
+
+# Platforms
+
+Supported platforms:
+
+* Android
+* Windows
+* Web (Landing Page)
+
+The architecture supports future expansion to:
+
+* iOS
+* macOS
+* Linux
+
+without requiring major architectural changes.
+
+---
+
+# Backend
+
+Backend technology:
+
+```text
+Firebase
+```
+
+Services currently used include:
+
+* Firebase Authentication
+* Cloud Firestore
+* Firebase Storage
+
+The project intentionally avoids paid Firebase services whenever possible.
+
+Cloud Functions are **not** part of the current architecture.
+
+---
+
+# Architecture
+
+The project strictly follows:
+
+```text
+Clean Architecture
+```
+
+Layers:
+
+Presentation
+
+↓
+
+Domain
+
+↓
+
+Data
+
+Business logic must remain inside the Domain layer.
+
+Widgets never contain business rules.
+
+---
+
+# State Management
+
+State management uses:
+
+```text
+Cubit / Bloc
+```
+
+Cubits coordinate application flow.
+
+Business calculations belong inside UseCases.
+
+---
+
+# Source of Truth
+
+The project follows a strict Source of Truth philosophy.
+
+Examples:
+
+Financial calculations:
+
+↓
+
+Transactions
+
+NOT cached values.
+
+Subscription state:
+
+↓
+
+Firestore
+
+NOT local cache.
+
+Reports:
+
+↓
+
+createdAt
+
+NOT syncedAt.
+
+Every important business value is derived from authoritative data.
+
+---
+
+# Financial Philosophy
+
+Tahsel is a financial application.
+
+Financial integrity has higher priority than UI convenience.
+
+Whenever conflicting implementations exist:
+
+The financially correct implementation should always be chosen.
+
+Accuracy is more important than simplicity.
+
+---
+
+# Ledger Philosophy
+
+The project is gradually moving toward a ledger-based financial model.
+
+Business operations should preserve complete historical records whenever possible.
+
+Historical transactions should never be silently lost.
+
+Financial reports should always be reproducible from stored transaction history.
+
+---
+
+# Offline Philosophy
+
+Offline support is a core feature.
+
+Offline-created data must preserve its original business timestamp.
+
+Synchronization uploads data but must never change business meaning.
+
+Technical metadata is separate from business data.
+
+---
+
+# Date Philosophy
+
+Business operations always depend on:
+
+```text
+createdAt
+```
+
+Synchronization timestamps exist only for synchronization tracking.
+
+Reports must never depend on upload time.
+
+---
+
+# Localization
+
+Localization is mandatory.
+
+Supported languages:
+
+* Arabic
+* English
+
+Hardcoded UI text is prohibited.
+
+All visible text originates from ARB files.
+
+---
+
+# Theme
+
+The application fully supports:
+
+* Dark Mode
+* Light Mode
+
+Visual appearance changes.
+
+Business behavior never changes.
+
+---
+
+# Notifications
+
+The notification system supports:
+
+* WhatsApp
+* SMS
+* None
+
+Notification delivery respects the user's selected communication method.
+
+---
+
+# AI Expectations
+
+When modifying Tahsel, an AI should assume:
+
+* Clean Architecture is mandatory.
+* Financial accuracy is mandatory.
+* Localization is mandatory.
+* Responsive UI is mandatory.
+* Dark Mode support is mandatory.
+* Business logic belongs in UseCases.
+* UI must remain thin.
+* Existing architecture should be reused rather than replaced.
+* Existing design system takes precedence over custom widgets.
+* Data integrity is more important than implementation speed.
+
+---
+
+# Primary Development Principle
+
+When uncertain, the AI should optimize for:
+
+1. Financial correctness.
+2. Data integrity.
+3. Clean Architecture.
+4. Maintainability.
+5. Performance.
+6. User Experience.
+
+Never sacrifice business correctness for shorter code.
+
+---
+
+# End of AI Context Introduction
+
+Next Section:
+
+**AI.2 Domain Model & Core Business Concepts**
+
+This section explains every major business entity (User, Customer, Debt, Transaction, Expense, Employee, Installment, Subscription, etc.) in semantic terms so an AI understands not just their structure, but their meaning and relationships within the Tahsel ecosystem.
+# AI Context
+
+# AI.2 Domain Model & Core Business Concepts
+
+## Purpose
+
+This section defines the **business meaning** of every major entity inside Tahsel.
+
+This is **not** a database schema.
+
+This is **not** a Dart model.
+
+Instead, it explains what each entity represents in the business domain so an AI can reason correctly before generating code.
+
+Whenever an AI encounters one of these entities, it should understand its purpose, relationships, and business rules.
+
+---
+
+# Domain Philosophy
+
+Tahsel models **real business operations**.
+
+Every entity represents something that exists in the real world.
+
+Examples:
+
+Customer
+
+↓
+
+A real person who owes money.
+
+---
+
+Expense
+
+↓
+
+A real business expense.
+
+---
+
+Employee
+
+↓
+
+A real worker.
+
+---
+
+Debt
+
+↓
+
+A financial obligation.
+
+---
+
+Subscription
+
+↓
+
+Permission to use the platform.
+
+Entities are business concepts first and technical models second.
+
+---
+
+# User
+
+A **User** represents the owner of a Tahsel account.
+
+The User is the highest-level business entity.
+
+A User owns:
+
+* Customers
+* Debts
+* Expenses
+* Employees
+* Installments
+* Reports
+* Settings
+
+All business data belongs to exactly one User.
+
+---
+
+# Subscription
+
+A **Subscription** defines whether a User is allowed to use Tahsel.
+
+A Subscription contains business information such as:
+
+* Start Date
+* End Date
+* Grace Period
+* Platform Type
+* Account Status
+
+The Subscription controls access to the application.
+
+It does **not** contain business data.
+
+---
+
+# Customer
+
+A **Customer** represents someone who buys goods or services from the business.
+
+A Customer may:
+
+* Owe money.
+* Pay later.
+* Have multiple debts.
+* Make multiple payments.
+
+A Customer is not an application user.
+
+---
+
+# Debt
+
+A **Debt** represents money owed by a Customer.
+
+A Debt is created when:
+
+A customer receives goods or services without paying the full amount immediately.
+
+A Debt contains:
+
+* Original Amount
+* Transactions
+* Current Balance
+
+The balance should always be derived from transactions.
+
+---
+
+# Transaction
+
+A **Transaction** represents a financial operation affecting a debt.
+
+Examples:
+
+* Debt Creation
+* Partial Payment
+* Full Payment
+* Adjustment
+* Reversal
+
+Transactions are chronological.
+
+They describe what happened.
+
+They should never lose historical meaning.
+
+---
+
+# Payment
+
+A **Payment** is a specialized transaction.
+
+It reduces outstanding debt.
+
+Payments may be:
+
+* Partial
+* Full
+
+Payments contribute to reports and collected amount calculations.
+
+---
+
+# Expense
+
+An **Expense** represents money spent by the business.
+
+Examples:
+
+* Rent
+* Electricity
+* Internet
+* Salaries
+* Supplies
+
+Expenses decrease profitability.
+
+Expenses are completely independent from customer debts.
+
+---
+
+# Employee
+
+An **Employee** represents someone working for the business.
+
+Employees contain information such as:
+
+* Attendance
+* Salary
+* Advances
+* Absence
+
+Employees do not own business data.
+
+---
+
+# Attendance
+
+Attendance records represent employee presence.
+
+Possible states include:
+
+* Present
+* Absent
+* Excused Absence
+
+Attendance directly affects salary calculations.
+
+---
+
+# Salary
+
+Salary represents money paid to an Employee.
+
+Salary calculations are derived from:
+
+* Expected Working Days
+* Attendance
+* Absences
+* Bonuses
+* Advances
+
+Salary is always calculated.
+
+It should never be manually overridden without explicit business rules.
+
+---
+
+# Installment
+
+An **Installment** represents scheduled payments over time.
+
+Unlike Customer Debts:
+
+Installments follow predefined payment schedules.
+
+Installments maintain their own payment history.
+
+---
+
+# PlayStation Session
+
+A **PlayStation Session** represents a customer's usage of a gaming device.
+
+A Session includes:
+
+* Start Time
+* End Time
+* Duration
+* Price
+
+Revenue is calculated from completed sessions.
+
+---
+
+# Report
+
+A **Report** is a calculated view of business data.
+
+Reports never own data.
+
+Reports derive information from:
+
+* Transactions
+* Expenses
+* Attendance
+* Installments
+* Sessions
+
+Reports should always be reproducible.
+
+---
+
+# Notification
+
+A **Notification** represents communication with customers.
+
+Delivery methods include:
+
+* WhatsApp
+* SMS
+* None
+
+Notifications reflect business events.
+
+They never modify business data.
+
+---
+
+# Settings
+
+Settings contain user preferences.
+
+Examples:
+
+* Language
+* Theme
+* Notification Preference
+
+Settings influence presentation.
+
+They do not affect financial calculations.
+
+---
+
+# Relationships
+
+The primary relationships are:
+
+```text id="ai21"
+User
+
+├── Subscription
+
+├── Customers
+
+│     └── Debts
+
+│             └── Transactions
+
+├── Expenses
+
+├── Employees
+
+│     ├── Attendance
+
+│     └── Salaries
+
+├── Installments
+
+├── PlayStation Sessions
+
+└── Reports
+```
+
+Reports derive from all operational entities.
+
+No operational entity derives from reports.
+
+---
+
+# Entity Ownership Rules
+
+Every operational record belongs to exactly one User.
+
+Examples:
+
+Expense
+
+↓
+
+One User
+
+---
+
+Debt
+
+↓
+
+One User
+
+---
+
+Employee
+
+↓
+
+One User
+
+Cross-user ownership is never allowed.
+
+---
+
+# AI Interpretation Rules
+
+When an AI encounters an entity:
+
+It should first determine:
+
+1. What business concept it represents.
+2. Which entity owns it.
+3. Which entities depend on it.
+4. Whether it stores data or derives data.
+5. Whether changes affect financial calculations.
+
+Reason about business semantics before generating implementation.
+
+---
+
+# Business Rules
+
+* User is the root business entity.
+* Subscription controls platform access.
+* Customer represents a real client.
+* Debt represents money owed.
+* Transactions describe financial history.
+* Payments reduce debt.
+* Expenses record business spending.
+* Attendance affects salary.
+* Reports derive from source data.
+* Settings affect presentation only.
+* Every operational record belongs to exactly one User.
+
+---
+
+# AI Mental Model
+
+An AI should think about Tahsel as:
+
+```text id="ai22"
+User
+
+↓
+
+Owns Business
+
+↓
+
+Business Generates Operations
+
+↓
+
+Operations Generate Reports
+
+↓
+
+Reports Support Decisions
+```
+
+Business operations always come before analytics.
+
+Analytics never become the source of truth.
+
+---
+
+# End of Section
+
+Next Section:
+
+**AI.3 Architectural Decision Rules**
+
+This section teaches an AI how architectural decisions should be made inside Tahsel, including what patterns must always be followed, what must never be done, preferred implementation strategies, financial integrity rules, and coding priorities before generating any new feature.
+# AI Context
+
+# AI.3 Architectural Decision Rules
+
+## Purpose
+
+This section teaches an AI **how to think before writing code** for Tahsel.
+
+It is not a coding standard.
+
+It is a decision-making framework.
+
+Whenever an AI receives a new feature request, bug fix, refactoring task, or optimization request, these rules take precedence over implementation preferences.
+
+The AI should reason using Tahsel's architecture rather than generating generic Flutter solutions.
+
+---
+
+# Core Principle
+
+Before writing any code, the AI should answer:
+
+> **Which architectural layer is responsible for this behavior?**
+
+If the answer is unclear, the AI should determine the correct layer before generating code.
+
+---
+
+# Clean Architecture Is Mandatory
+
+Tahsel always follows:
+
+```text id="arch01"
+Presentation
+
+↓
+
+Domain
+
+↓
+
+Data
+```
+
+Every new implementation must respect these boundaries.
+
+---
+
+# Layer Responsibilities
+
+## Presentation Layer
+
+Responsible for:
+
+* UI
+* Screens
+* Widgets
+* Dialogs
+* Cubits
+* Navigation
+
+Presentation should orchestrate behavior.
+
+It must never contain business rules.
+
+---
+
+## Domain Layer
+
+Responsible for:
+
+* Business Rules
+* UseCases
+* Entities
+* Repository Contracts
+
+Every important business decision belongs here.
+
+---
+
+## Data Layer
+
+Responsible for:
+
+* Firestore
+* Firebase Auth
+* Storage
+* Serialization
+* Models
+* Data Sources
+
+The Data layer never decides business behavior.
+
+---
+
+# Cubit Responsibilities
+
+Cubits are coordinators.
+
+They should:
+
+* Receive UI events.
+* Execute UseCases.
+* Emit UI states.
+
+Cubits should not:
+
+* Calculate financial values.
+* Validate business rules.
+* Perform complex transformations.
+
+---
+
+# UseCase Responsibilities
+
+Every business operation belongs inside a UseCase.
+
+Examples:
+
+* Add Debt
+* Renew Subscription
+* Calculate Salary
+* Generate Reports
+* Validate Platform
+* Calculate Remaining Debt
+
+If business logic exists, it belongs here.
+
+---
+
+# Repository Responsibilities
+
+Repositories abstract data access.
+
+They decide:
+
+* Where data comes from.
+* Where data is stored.
+
+Repositories never implement business calculations.
+
+---
+
+# Entity Philosophy
+
+Entities represent business meaning.
+
+Entities should remain:
+
+* Pure
+* Stable
+* Independent
+
+Entities should never depend on Flutter or Firebase.
+
+---
+
+# Model Philosophy
+
+Models exist only for serialization.
+
+Models may:
+
+* Parse JSON.
+* Convert to Entities.
+* Convert from Entities.
+
+Models should never contain business calculations.
+
+---
+
+# Source of Truth
+
+Whenever multiple values exist:
+
+The AI must identify the authoritative source.
+
+Examples:
+
+Remaining Debt
+
+↓
+
+Derived from Transactions
+
+NOT cached balance.
+
+---
+
+Reports
+
+↓
+
+Derived from createdAt
+
+NOT syncedAt.
+
+---
+
+Subscription Status
+
+↓
+
+Firestore
+
+NOT local storage.
+
+Never introduce duplicate sources of truth.
+
+---
+
+# Derived Data
+
+Whenever possible:
+
+Values should be calculated rather than stored.
+
+Examples:
+
+Correct:
+
+* Remaining Debt
+* Total Paid
+* Monthly Collection
+* Salary
+* Remaining Trial Days
+
+Incorrect:
+
+Store every calculated value permanently.
+
+Derived data reduces inconsistency.
+
+---
+
+# Financial Integrity
+
+Whenever a decision affects money:
+
+Choose the implementation that guarantees financial correctness.
+
+Never optimize by sacrificing accuracy.
+
+Financial consistency has the highest priority.
+
+---
+
+# UI Independence
+
+Business rules must work independently of the UI.
+
+Changing the interface should never change business behavior.
+
+The UI is only a presentation layer.
+
+---
+
+# Reusability
+
+Before creating new code:
+
+Search for existing:
+
+* Widget
+* UseCase
+* Repository
+* Helper
+* Extension
+
+Reuse is preferred over duplication.
+
+---
+
+# Localization Rule
+
+Any new visible text requires:
+
+* Arabic translation.
+* English translation.
+* ARB update.
+
+Hardcoded UI text is prohibited.
+
+---
+
+# Theme Rule
+
+All UI must support:
+
+* Light Mode
+* Dark Mode
+
+New widgets should automatically inherit the active theme.
+
+---
+
+# Responsive Rule
+
+Every screen must support:
+
+* Mobile
+* Windows
+
+Layouts should adapt automatically.
+
+Platform-specific implementations should only be introduced when truly necessary.
+
+---
+
+# Offline Rule
+
+Offline functionality is considered a first-class feature.
+
+Whenever data can be created offline:
+
+The original business meaning must be preserved after synchronization.
+
+Never replace business timestamps during sync.
+
+---
+
+# Performance Rule
+
+Before implementing:
+
+Ask:
+
+Can this be achieved with fewer rebuilds?
+
+Can Firestore reads be reduced?
+
+Can the calculation move into a UseCase?
+
+Performance optimizations should never compromise correctness.
+
+---
+
+# Error Handling Rule
+
+Business operations should return meaningful failures.
+
+UI should present friendly messages.
+
+Technical exceptions should never reach the end user.
+
+---
+
+# AI Priority Order
+
+When multiple implementation options exist:
+
+Always optimize in this order:
+
+1. Financial Correctness
+2. Data Integrity
+3. Clean Architecture
+4. Maintainability
+5. Performance
+6. User Experience
+7. Code Brevity
+
+Shorter code is never a valid reason to violate architecture.
+
+---
+
+# Things an AI Must Never Do
+
+Never:
+
+* Put business logic inside Widgets.
+* Calculate financial values inside Cubits.
+* Hardcode user-visible text.
+* Hardcode colors.
+* Duplicate business logic.
+* Store derived financial values unnecessarily.
+* Introduce another source of truth.
+* Break existing architecture for convenience.
+* Ignore offline behavior.
+* Ignore localization.
+
+---
+
+# AI Decision Checklist
+
+Before generating code, verify:
+
+* Correct architectural layer?
+* Existing component reusable?
+* Business logic inside UseCase?
+* Source of truth preserved?
+* Localization updated?
+* Dark Mode supported?
+* Responsive layout maintained?
+* Offline behavior preserved?
+* Financial integrity protected?
+* Existing architecture respected?
+
+If any answer is "No", revise the implementation before producing code.
+
+---
+
+# AI Mental Workflow
+
+```text id="arch02"
+Understand Request
+
+↓
+
+Identify Business Entity
+
+↓
+
+Determine Responsible Layer
+
+↓
+
+Locate Source of Truth
+
+↓
+
+Implement UseCase
+
+↓
+
+Connect Cubit
+
+↓
+
+Update UI
+
+↓
+
+Verify Localization
+
+↓
+
+Verify Theme
+
+↓
+
+Verify Responsiveness
+
+↓
+
+Verify Financial Integrity
+```
+
+An AI should always follow this sequence before producing implementation.
+
+---
+
+# End of Section
+
+Next Section:
+
+**AI.4 Feature Development Workflow**
+
+This section teaches an AI the complete workflow for adding a new feature to Tahsel—from understanding the business requirement, through architecture, implementation, testing, localization, offline support, performance verification, and final validation before considering the feature complete.
+# AI Context
+
+# AI.4 Feature Development Workflow
+
+## Purpose
+
+This section defines the **standard workflow** that every AI should follow when implementing a new feature inside Tahsel.
+
+It describes **how work should be performed**, not simply how code should be written.
+
+Regardless of whether the request is:
+
+* New Feature
+* Bug Fix
+* Refactoring
+* Optimization
+* UI Enhancement
+* Firebase Integration
+
+the same workflow should be followed.
+
+This ensures consistency across the entire project.
+
+---
+
+# Development Philosophy
+
+Every implementation should begin with understanding the **business requirement**, not the requested code.
+
+The AI should first understand:
+
+> **Why does this feature exist?**
+
+Only then should it decide:
+
+> **How should it be implemented?**
+
+Business intent always comes before technical implementation.
+
+---
+
+# Complete Workflow
+
+```text id="workflow01"
+Understand Request
+
+↓
+
+Understand Business Goal
+
+↓
+
+Identify Domain Entity
+
+↓
+
+Determine Business Rules
+
+↓
+
+Locate Existing Architecture
+
+↓
+
+Identify Source of Truth
+
+↓
+
+Design Solution
+
+↓
+
+Implement Domain Layer
+
+↓
+
+Implement Data Layer
+
+↓
+
+Implement Presentation Layer
+
+↓
+
+Localization
+
+↓
+
+Responsive UI
+
+↓
+
+Dark Mode
+
+↓
+
+Offline Support
+
+↓
+
+Performance Review
+
+↓
+
+Testing
+
+↓
+
+Final Validation
+```
+
+Every feature should follow this lifecycle.
+
+---
+
+# Step 1 — Understand the Business Goal
+
+The AI should identify:
+
+* Which business problem is being solved?
+* Which users benefit?
+* Which existing module is affected?
+
+Never begin implementation before understanding the business objective.
+
+---
+
+# Step 2 — Identify the Domain
+
+Determine which business entities are involved.
+
+Examples:
+
+Customer
+
+Debt
+
+Expense
+
+Employee
+
+Subscription
+
+Installment
+
+PlayStation Session
+
+The feature belongs to a domain before it belongs to a screen.
+
+---
+
+# Step 3 — Discover Existing Components
+
+Before creating anything new:
+
+Search for existing:
+
+* Widgets
+* Cubits
+* UseCases
+* Repositories
+* Dialogs
+* Utilities
+* Extensions
+
+Reuse existing code whenever possible.
+
+---
+
+# Step 4 — Determine the Source of Truth
+
+Every feature should identify the authoritative data source.
+
+Examples:
+
+Remaining Debt
+
+↓
+
+Transactions
+
+---
+
+Subscription Status
+
+↓
+
+Firestore
+
+---
+
+Language
+
+↓
+
+Localization System
+
+Never create duplicate state.
+
+---
+
+# Step 5 — Design the Business Logic
+
+Business rules belong inside UseCases.
+
+The AI should define:
+
+Inputs
+
+↓
+
+Business Rules
+
+↓
+
+Outputs
+
+Only after this should coding begin.
+
+---
+
+# Step 6 — Implement the Domain Layer
+
+Domain implementation should include:
+
+* Entity updates (if needed)
+* New UseCases
+* Repository contracts
+
+The Domain layer should remain independent.
+
+---
+
+# Step 7 — Implement the Data Layer
+
+The Data layer includes:
+
+* Repository implementation
+* Firestore integration
+* Model serialization
+* Data Sources
+
+No business calculations belong here.
+
+---
+
+# Step 8 — Implement the Presentation Layer
+
+Presentation includes:
+
+* Cubit
+* States
+* Widgets
+* Screens
+* Navigation
+
+The Presentation layer consumes UseCases.
+
+It never replaces them.
+
+---
+
+# Step 9 — Localization
+
+Every new user-visible string requires:
+
+* Arabic translation
+* English translation
+* ARB update
+
+No exceptions.
+
+---
+
+# Step 10 — Theme Support
+
+Every new screen must support:
+
+* Light Mode
+* Dark Mode
+
+Use:
+
+* AppColors
+* TextStyles
+
+Hardcoded styling is prohibited.
+
+---
+
+# Step 11 — Responsive Verification
+
+Verify behavior on:
+
+* Android
+* Windows
+
+Layouts should scale naturally using the existing responsive architecture.
+
+---
+
+# Step 12 — Offline Verification
+
+Ask:
+
+What happens if the user is offline?
+
+If the feature supports offline work:
+
+* Preserve business timestamps.
+* Preserve user intent.
+* Queue synchronization if necessary.
+
+Offline behavior should never corrupt business data.
+
+---
+
+# Step 13 — Performance Review
+
+Review:
+
+* Widget rebuilds.
+* Firestore reads.
+* Firestore writes.
+* List rendering.
+* Expensive calculations.
+
+Optimize only after correctness is achieved.
+
+---
+
+# Step 14 — Testing
+
+Verify:
+
+Normal Cases
+
+Edge Cases
+
+Failure Cases
+
+Offline Cases
+
+Localization
+
+Theme
+
+Responsive Layout
+
+Performance
+
+A feature is incomplete until all scenarios are considered.
+
+---
+
+# Step 15 — Final Validation
+
+Before considering a feature complete:
+
+Confirm:
+
+* Clean Architecture respected.
+* Business rules preserved.
+* Localization complete.
+* Theme support complete.
+* Responsive layout verified.
+* Offline behavior verified.
+* Financial integrity preserved.
+* Existing features unaffected.
+
+Only then is the feature considered production-ready.
+
+---
+
+# AI Quality Checklist
+
+Every implementation should satisfy:
+
+✓ Business Correctness
+
+✓ Clean Architecture
+
+✓ Source of Truth
+
+✓ Localization
+
+✓ Responsive UI
+
+✓ Dark Mode
+
+✓ Offline Compatibility
+
+✓ Performance
+
+✓ Maintainability
+
+✓ Production Readiness
+
+---
+
+# AI Completion Criteria
+
+An AI should **not** consider a feature complete merely because it compiles.
+
+A feature is complete only when:
+
+* Business requirements are fulfilled.
+* Architecture remains intact.
+* Existing functionality is preserved.
+* User experience is consistent.
+* Documentation assumptions remain valid.
+
+---
+
+# Business Rules
+
+* Understand the business problem before coding.
+* Reuse existing architecture whenever possible.
+* Business logic belongs in UseCases.
+* Presentation remains lightweight.
+* Localization is mandatory.
+* Responsive design is mandatory.
+* Offline behavior must be considered.
+* Performance review is required.
+* Testing includes edge cases.
+* Production readiness is the final objective.
+
+---
+
+# AI Development Mindset
+
+When working on Tahsel, the AI should think:
+
+```text id="workflow02"
+Understand
+
+↓
+
+Design
+
+↓
+
+Integrate
+
+↓
+
+Validate
+
+↓
+
+Optimize
+
+↓
+
+Deliver
+```
+
+Never:
+
+```text id="workflow03"
+Code
+
+↓
+
+Hope It Works
+```
+
+Tahsel values deliberate engineering over rapid code generation.
+
+---
+
+# End of Section
+
+Next Section:
+
+**AI.5 AI Coding Rules & Non-Negotiable Principles**
+
+This final section defines the immutable rules every AI must follow while working on Tahsel, including coding priorities, forbidden practices, architectural invariants, financial safeguards, and the behavioral principles that ensure every generated change remains consistent with the project's long-term vision.
+# AI Context
+
+# AI.5 AI Coding Rules & Non-Negotiable Principles
+
+## Purpose
+
+This is the **most important section** of the entire AI Context.
+
+Everything documented before explains **what Tahsel is**.
+
+This section explains **how every AI must behave** while working on Tahsel.
+
+These rules override generic coding preferences.
+
+Whenever an AI faces multiple implementation choices, these principles take priority.
+
+These rules are considered **non-negotiable**.
+
+---
+
+# Core Principle
+
+An AI should never ask:
+
+> "What is the shortest solution?"
+
+Instead, it should always ask:
+
+> "What is the safest solution for the business?"
+
+Business safety is always more important than implementation speed.
+
+---
+
+# Rule 1 — Never Break Existing Features
+
+Tahsel is a production application.
+
+Every modification must preserve:
+
+* Existing workflows.
+* Existing calculations.
+* Existing navigation.
+* Existing reports.
+* Existing synchronization.
+
+Regression is unacceptable.
+
+---
+
+# Rule 2 — Financial Integrity Comes First
+
+Whenever money is involved:
+
+Correctness is mandatory.
+
+Examples:
+
+* Debt
+* Payment
+* Salary
+* Expense
+* Installment
+* Subscription
+
+The AI must never sacrifice financial correctness for cleaner or shorter code.
+
+---
+
+# Rule 3 — Respect the Source of Truth
+
+Before writing code:
+
+Determine:
+
+What is the authoritative data source?
+
+Never create:
+
+* Duplicate state.
+* Duplicate calculations.
+* Duplicate business logic.
+
+Every business value has exactly one source of truth.
+
+---
+
+# Rule 4 — Business Logic Never Belongs in UI
+
+Widgets should:
+
+* Display.
+* Receive input.
+* Dispatch events.
+
+Widgets should never:
+
+* Calculate.
+* Validate business rules.
+* Mutate financial data.
+
+The UI is only a presentation layer.
+
+---
+
+# Rule 5 — Use Existing Architecture
+
+Do not invent a new architecture.
+
+Use:
+
+Presentation
+
+↓
+
+Cubit
+
+↓
+
+UseCase
+
+↓
+
+Repository
+
+↓
+
+DataSource
+
+Every new feature should integrate into the existing architecture.
+
+---
+
+# Rule 6 — Reuse Before Creating
+
+Before adding:
+
+* Widget
+* Helper
+* UseCase
+* Utility
+* Dialog
+
+Search the existing project.
+
+Reuse existing implementations whenever possible.
+
+Consistency is more valuable than novelty.
+
+---
+
+# Rule 7 — Derived Data Should Stay Derived
+
+Never permanently store values that can be calculated.
+
+Examples:
+
+Correct:
+
+Remaining Debt
+
+↓
+
+Sum of Transactions
+
+Incorrect:
+
+Store Remaining Debt after every operation.
+
+Derived values reduce inconsistencies.
+
+---
+
+# Rule 8 — Offline Safety
+
+Whenever data can be created offline:
+
+Preserve:
+
+* createdAt
+* Business Meaning
+* User Intent
+
+Synchronization should upload data.
+
+It should never rewrite business history.
+
+---
+
+# Rule 9 — Localization Is Mandatory
+
+Every new user-facing string requires:
+
+* Arabic translation.
+* English translation.
+* ARB update.
+
+Hardcoded text is prohibited.
+
+---
+
+# Rule 10 — Theme Independence
+
+Every UI implementation must automatically support:
+
+* Dark Mode
+* Light Mode
+
+No feature should require a separate implementation for themes.
+
+---
+
+# Rule 11 — Responsive Design Is Mandatory
+
+Every screen must work correctly on:
+
+* Android
+* Windows
+
+Future platforms should require minimal adjustments.
+
+---
+
+# Rule 12 — Performance Without Sacrificing Correctness
+
+Optimize only after correctness.
+
+Preferred order:
+
+Correct
+
+↓
+
+Maintainable
+
+↓
+
+Fast
+
+Never reverse this order.
+
+---
+
+# Rule 13 — Protect Business History
+
+Historical business operations should remain reproducible.
+
+Examples:
+
+Transactions
+
+Attendance
+
+Salary History
+
+Expense History
+
+Subscription History
+
+The AI should avoid implementations that permanently erase valuable history unless explicitly required.
+
+---
+
+# Rule 14 — Never Guess Business Rules
+
+If documentation defines a rule:
+
+Follow it exactly.
+
+Do not invent alternative business logic.
+
+Tahsel values consistency over creativity.
+
+---
+
+# Rule 15 — Explain Architectural Decisions
+
+Whenever generating substantial code,
+
+the AI should explain:
+
+* Why this layer was chosen.
+* Why this UseCase exists.
+* Why calculations occur there.
+* How consistency is maintained.
+
+Reasoning is part of the deliverable.
+
+---
+
+# Forbidden Practices
+
+The AI must never:
+
+❌ Put business logic inside Widgets.
+
+❌ Put calculations inside Cubits.
+
+❌ Hardcode visible text.
+
+❌ Hardcode colors.
+
+❌ Hardcode dimensions repeatedly.
+
+❌ Duplicate UseCases.
+
+❌ Duplicate Firestore queries unnecessarily.
+
+❌ Ignore offline behavior.
+
+❌ Ignore localization.
+
+❌ Ignore responsive layouts.
+
+❌ Ignore financial integrity.
+
+❌ Break existing architecture for convenience.
+
+---
+
+# Preferred Practices
+
+The AI should always prefer:
+
+✔ Clean Architecture
+
+✔ Reusable Components
+
+✔ Small UseCases
+
+✔ Derived Calculations
+
+✔ Source of Truth
+
+✔ Responsive UI
+
+✔ Localization
+
+✔ Theme Support
+
+✔ Maintainable Code
+
+✔ Predictable Business Rules
+
+---
+
+# AI Decision Priority
+
+Whenever multiple implementations are possible:
+
+Always prioritize:
+
+1. Business Correctness
+2. Financial Integrity
+3. Existing Architecture
+4. Maintainability
+5. Data Consistency
+6. Offline Safety
+7. Performance
+8. User Experience
+9. Code Simplicity
+
+This priority order should never change.
+
+---
+
+# Expected AI Behavior
+
+An AI working on Tahsel should behave like:
+
+* Senior Flutter Engineer
+* Software Architect
+* Financial Systems Engineer
+* Firebase Engineer
+* UX Engineer
+
+simultaneously.
+
+The AI should think about:
+
+Business
+
+↓
+
+Architecture
+
+↓
+
+Data
+
+↓
+
+Performance
+
+↓
+
+User Experience
+
+before generating implementation.
+
+---
+
+# Project Identity Summary
+
+Tahsel is **not** simply a Flutter application.
+
+Tahsel is:
+
+* A SaaS Platform.
+* A Financial System.
+* A Business Management Platform.
+* A Multi-platform Product.
+* A Long-term Production Application.
+
+Every generated line of code should respect that identity.
+
+---
+
+# AI Mission
+
+Whenever working on Tahsel, the AI's mission is:
+
+> Preserve correctness, protect business data, respect the architecture, and improve the product without introducing inconsistency.
+
+If two implementations produce the same visible result,
+
+the AI should always choose the one that is:
+
+* More maintainable.
+* More scalable.
+* More consistent with this documentation.
+
+---
+
+# Final AI Statement
+
+This documentation serves as the complete semantic specification of the Tahsel platform.
+
+Any AI receiving this document should be capable of:
+
+* Understanding the business.
+* Understanding the architecture.
+* Understanding the financial rules.
+* Understanding the UI philosophy.
+* Understanding the development workflow.
+* Implementing new features.
+* Fixing bugs.
+* Refactoring safely.
+* Extending the system.
+
+without requiring additional project discovery.
+
+---
+# AI Context
+
+# AI.6 Design System & Color Palette
+
+## Purpose
+
+This section defines the official design tokens used throughout Tahsel.
+
+These colors are considered part of the application's design system.
+
+An AI working on Tahsel must always reuse these colors instead of introducing new ones.
+
+---
+
+# Design Philosophy
+
+Tahsel uses a centralized color system through:
+
+```dart
+AppColors
+```
+
+Every screen, widget, dialog, card, and button should obtain colors from `AppColors`.
+
+The AI must never hardcode colors inside UI components.
+
+Examples of prohibited code:
+
+```dart
+Colors.blue
+Colors.red
+Color(0xFF2196F3)
+Color(0xFFFF0000)
+```
+
+unless they already exist inside `AppColors`.
+
+---
+
+# Theme Philosophy
+
+Tahsel fully supports:
+
+* Light Theme
+* Dark Theme
+
+Most colors are dynamic.
+
+Every getter automatically adapts to the current theme.
+
+The AI should never manually check the theme when selecting colors.
+
+Instead, always use:
+
+```dart
+AppColors.primaryColor
+```
+
+instead of:
+
+```dart
+Theme.of(context)
+```
+
+for project-specific colors.
+
+---
+
+# Brand Colors
+
+## Primary Brand Color
+
+Light Theme
+
+```text
+#1E56A0
+```
+
+Dark Theme
+
+```text
+#90CAF9
+```
+
+Usage:
+
+* Primary Buttons
+* Main Actions
+* Branding
+* Important Icons
+* Navigation
+
+---
+
+## Secondary Brand Color
+
+Light Theme
+
+```text
+#005DB7
+```
+
+Dark Theme
+
+```text
+#90CAF9
+```
+
+Used where secondary branding is needed.
+
+---
+
+## Accent Orange
+
+Light Theme
+
+```text
+#834600
+```
+
+Dark Theme
+
+```text
+#FFB74D
+```
+
+Used for:
+
+* Highlights
+* Warning accents
+* Secondary emphasis
+
+---
+
+# Background Colors
+
+## Scaffold Background
+
+Light
+
+```text
+#F8F8F8
+```
+
+Dark
+
+```text
+#121212
+```
+
+Represents the application's primary background.
+
+---
+
+## Surface
+
+Light
+
+```text
+#FFFFFF
+```
+
+Dark
+
+```text
+#1E1E1E
+```
+
+Used for:
+
+* Cards
+* Dialogs
+* Sheets
+* Containers
+
+---
+
+## Surface High
+
+Light
+
+```text
+#E8E8E8
+```
+
+Dark
+
+```text
+#2C2C2C
+```
+
+Used for elevated containers.
+
+---
+
+# Text Colors
+
+Primary Text
+
+Light
+
+```text
+#1E56A0
+```
+
+Dark
+
+```text
+#E1E1E1
+```
+
+---
+
+Secondary Text
+
+Light
+
+```text
+Black54
+```
+
+Dark
+
+```text
+White70
+```
+
+---
+
+# Status Colors
+
+## Success
+
+Light
+
+```text
+#2E7D32
+```
+
+Dark
+
+```text
+#81C784
+```
+
+Used for:
+
+* Success Messages
+* Completed Operations
+
+---
+
+## Warning
+
+Light
+
+```text
+#F57C00
+```
+
+Dark
+
+```text
+#FFB74D
+```
+
+Used for:
+
+* Warnings
+* Pending States
+
+---
+
+## Error
+
+Light
+
+```text
+#D32F2F
+```
+
+Dark
+
+```text
+#E57373
+```
+
+Used for:
+
+* Errors
+* Validation
+* Dangerous Actions
+
+---
+
+## Information
+
+Light
+
+```text
+#1976D2
+```
+
+Dark
+
+```text
+#64B5F6
+```
+
+Used for informational messages.
+
+---
+
+# Debt Module Colors
+
+Tahsel uses dedicated colors for debt operations.
+
+Partial Payment
+
+Light
+
+```text
+#F59E0B
+```
+
+Dark
+
+```text
+#FFB74D
+```
+
+---
+
+Full Payment
+
+Light
+
+```text
+#1E56A0
+```
+
+Dark
+
+```text
+#64B5F6
+```
+
+---
+
+Debt Card
+
+Light
+
+```text
+White
+```
+
+Dark
+
+```text
+#1E1E1E
+```
+
+---
+
+# Common Utility Colors
+
+Additional reusable colors include:
+
+* Divider
+* Disabled
+* Card Backgrounds
+* Shadows
+* Transparent
+* White
+* Black
+
+These should always come from `AppColors`.
+
+---
+
+# AI Rules
+
+When generating UI:
+
+Always:
+
+✔ Use `AppColors`
+
+✔ Reuse existing getters
+
+✔ Respect dynamic themes
+
+✔ Keep visual consistency
+
+Never:
+
+❌ Hardcode Hex colors
+
+❌ Use Flutter Material colors directly
+
+❌ Introduce a new color palette
+
+❌ Create duplicated design tokens
+
+---
+
+# Color Priority
+
+Whenever the AI needs a color:
+
+1. Search `AppColors`.
+
+2. Reuse an existing getter.
+
+3. Only add a new color if no existing semantic color matches the intended purpose.
+
+---
+
+# Design System Summary
+
+Tahsel follows a token-based design system.
+
+Every UI component should derive colors from semantic meanings rather than raw values.
+
+Examples:
+
+```text
+Primary Action
+
+↓
+
+AppColors.primaryColor
+
+----------------------
+
+Success State
+
+↓
+
+AppColors.success
+
+----------------------
+
+Warning
+
+↓
+
+AppColors.warning
+
+----------------------
+
+Background
+
+↓
+
+AppColors.scafoldBackGround
+
+----------------------
+
+Surface
+
+↓
+
+AppColors.surface
+```
+
+The AI should think in terms of **semantic colors**, not hexadecimal values.
+
+---
+
+# End of Section
+
+Next Section:
+
+**AI.7 Typography & Text Styles**
+
+This section defines the official typography system (`TextStyles`), font hierarchy, spacing rules, font weights, responsive text scaling, and the rules the AI must follow when creating any new UI.
+# AI Context
+
+# AI.7 Typography & Text Styles
+
+## Purpose
+
+This section defines the official typography system used throughout Tahsel.
+
+Typography is a core part of the design system.
+
+An AI must always reuse the existing `TextStyles` instead of creating custom text styles.
+
+Visual consistency is considered more important than individual screen preferences.
+
+---
+
+# Typography Philosophy
+
+Tahsel uses a centralized typography system through:
+
+```dart
+TextStyles
+```
+
+Every text displayed in the application should come from `TextStyles`.
+
+The AI should never create ad-hoc `TextStyle(...)` objects inside widgets unless a new reusable style is intentionally being added to the design system.
+
+---
+
+# Design Principle
+
+Typography communicates hierarchy.
+
+Different font sizes should represent different semantic meanings.
+
+The same semantic meaning should always use the same text style across the application.
+
+Example:
+
+Screen Titles
+
+↓
+
+Always use the same title style.
+
+Customer Names
+
+↓
+
+Always use the same body/title style.
+
+Amounts
+
+↓
+
+Always use the same financial amount style.
+
+Consistency improves usability.
+
+---
+
+# Typography Hierarchy
+
+Tahsel follows a predictable hierarchy.
+
+```text
+Large Display
+
+↓
+
+Screen Title
+
+↓
+
+Section Title
+
+↓
+
+Card Title
+
+↓
+
+Body Text
+
+↓
+
+Caption
+
+↓
+
+Small Labels
+```
+
+Each level should have one reusable style.
+
+---
+
+# Semantic Text Styles
+
+Rather than thinking in font sizes,
+
+the AI should think in semantic meanings.
+
+Examples:
+
+* Screen Title
+* Section Header
+* Dialog Title
+* Card Title
+* Primary Button Text
+* Secondary Button Text
+* Form Label
+* Hint Text
+* Caption
+* Financial Amount
+* Error Message
+* Success Message
+
+Every semantic role should map to one reusable style.
+
+---
+
+# Financial Typography
+
+Money is one of the most important visual elements inside Tahsel.
+
+Financial values should:
+
+* Stand out visually.
+* Be easy to scan.
+* Remain readable in both themes.
+
+Amounts should always use the designated financial typography style.
+
+Examples:
+
+* Remaining Debt
+* Total Paid
+* Monthly Collection
+* Salary
+* Expense Amount
+
+Consistency is mandatory.
+
+---
+
+# Button Typography
+
+Buttons should always use a reusable button text style.
+
+Button text should:
+
+* Be readable.
+* Be centered.
+* Maintain consistent font weight.
+
+Different buttons should not randomly change font size.
+
+---
+
+# Form Typography
+
+Forms should distinguish between:
+
+* Label
+* Input Text
+* Hint
+* Validation Error
+
+Each has its own semantic purpose.
+
+---
+
+# Dialog Typography
+
+Dialogs should contain:
+
+Title
+
+↓
+
+Description
+
+↓
+
+Actions
+
+Each element should follow the established typography hierarchy.
+
+---
+
+# Card Typography
+
+Cards generally contain:
+
+Title
+
+↓
+
+Subtitle
+
+↓
+
+Value
+
+↓
+
+Supporting Information
+
+Visual hierarchy should remain consistent throughout the application.
+
+---
+
+# Color Independence
+
+Typography should not hardcode colors.
+
+Instead:
+
+Text styles should receive colors from:
+
+```dart
+AppColors
+```
+
+Examples:
+
+Primary Text
+
+↓
+
+AppColors.textColor
+
+Secondary Text
+
+↓
+
+AppColors.subTitleColor
+
+Error
+
+↓
+
+AppColors.error
+
+Success
+
+↓
+
+AppColors.success
+
+Typography and color systems remain independent but complementary.
+
+---
+
+# Responsive Typography
+
+Typography should scale correctly across:
+
+* Android
+* Windows
+
+The existing responsive scaling system should always be respected.
+
+Avoid fixed pixel values where responsive typography already exists.
+
+---
+
+# Accessibility
+
+Typography should prioritize readability.
+
+Recommendations:
+
+* Sufficient contrast.
+* Comfortable line spacing.
+* Clear font weights.
+* Avoid extremely small text.
+
+Accessibility takes priority over fitting more content.
+
+---
+
+# Localization
+
+Arabic and English text lengths differ.
+
+Typography should accommodate both languages without breaking layouts.
+
+Layouts should expand naturally rather than clipping text.
+
+---
+
+# Text Overflow
+
+Whenever text may become long:
+
+Prefer:
+
+* Wrapping
+* Flexible layouts
+* Ellipsis where appropriate
+
+Avoid layout overflows.
+
+---
+
+# AI Rules
+
+Whenever displaying text:
+
+Always:
+
+✔ Use `TextStyles`
+
+✔ Use semantic typography
+
+✔ Reuse existing styles
+
+✔ Respect localization
+
+✔ Respect responsive scaling
+
+Never:
+
+❌ Create random `TextStyle(...)`
+
+❌ Hardcode font sizes
+
+❌ Hardcode font weights
+
+❌ Hardcode text colors
+
+❌ Duplicate existing typography
+
+---
+
+# Typography Priority
+
+When selecting a text style:
+
+1. Determine the semantic role.
+2. Search `TextStyles`.
+3. Reuse the existing style.
+4. Only introduce a new reusable style if no semantic equivalent exists.
+
+---
+
+# Typography Summary
+
+Tahsel's typography system is semantic rather than size-based.
+
+An AI should think:
+
+```text
+Meaning
+
+↓
+
+Semantic Style
+
+↓
+
+TextStyles
+
+↓
+
+Rendered Text
+```
+
+instead of:
+
+```text
+Looks Good
+
+↓
+
+Random Font Size
+
+↓
+
+Random Font Weight
+```
+
+The design system always takes precedence over personal styling preferences.
+
+---
+
+# End of Section
+
+Next Section:
+
+**AI.8 Component Library & Reusable UI Patterns**
+
+This section documents the reusable widgets, dialogs, cards, buttons, input fields, list items, and UI patterns already available in Tahsel so an AI reuses existing components instead of creating new ones unnecessarily.
+# AI Context
+
+# AI.8 Component Library & Reusable UI Patterns
+
+## Purpose
+
+This section defines the reusable UI components available throughout Tahsel.
+
+Tahsel follows a **component-first** development philosophy.
+
+Before creating any new widget, an AI should first determine whether an equivalent reusable component already exists.
+
+Reusing components ensures:
+
+* Consistent UI
+* Faster development
+* Easier maintenance
+* Better user experience
+
+---
+
+# Component Philosophy
+
+Tahsel is **not** built as isolated screens.
+
+Instead, every screen is assembled from reusable components.
+
+The AI should think:
+
+```text id="component01"
+Screen
+
+↓
+
+Reusable Sections
+
+↓
+
+Reusable Components
+
+↓
+
+Primitive Widgets
+```
+
+rather than:
+
+```text id="component02"
+Screen
+
+↓
+
+Hundreds of Custom Widgets
+```
+
+---
+
+# Reuse Priority
+
+Whenever implementing UI:
+
+Search in this order:
+
+1. Existing reusable widget
+2. Existing dialog
+3. Existing card
+4. Existing form field
+5. Existing button
+6. Existing helper widget
+
+Only if none exists should a new reusable component be created.
+
+---
+
+# Buttons
+
+Buttons should always use the existing reusable button widgets.
+
+Do not create random:
+
+```dart id="btn01"
+ElevatedButton(...)
+```
+
+or
+
+```dart id="btn02"
+FilledButton(...)
+```
+
+inside screens unless wrapped inside the project's design system.
+
+Buttons should automatically inherit:
+
+* AppColors
+* TextStyles
+* Theme
+* Responsive sizing
+
+---
+
+# Text Fields
+
+Forms should always use the project's reusable text field.
+
+This guarantees:
+
+* Validation behavior
+* Theme support
+* Icon spacing
+* Border consistency
+* Error presentation
+
+Never create ad-hoc text fields.
+
+---
+
+# Dialogs
+
+Dialogs should be reusable.
+
+Examples include:
+
+* Confirmation Dialog
+* Delete Dialog
+* Partial Payment Dialog
+* Notification Dialog
+* Error Dialog
+
+When extending functionality,
+
+prefer extending an existing dialog instead of replacing it.
+
+---
+
+# Cards
+
+Cards are one of the most reused UI elements.
+
+Examples:
+
+* Customer Card
+* Debt Card
+* Expense Card
+* Employee Card
+* Subscription Card
+* Statistics Card
+
+Cards should share:
+
+* Border radius
+* Shadows
+* Internal spacing
+* Typography hierarchy
+* Color system
+
+---
+
+# Lists
+
+Lists should remain consistent.
+
+Preferred widgets include:
+
+* ListView.builder
+* Slivers (for large screens)
+* Lazy loading where appropriate
+
+Avoid manually duplicating list layouts.
+
+---
+
+# Empty States
+
+Every feature should support an empty state.
+
+Examples:
+
+* No Customers
+* No Expenses
+* No Reports
+* No Notifications
+
+Empty states should use the project's visual language.
+
+---
+
+# Loading States
+
+Loading indicators should remain consistent.
+
+Preferred behavior:
+
+Loading
+
+↓
+
+Skeleton (if available)
+
+or
+
+Circular Progress Indicator
+
+↓
+
+Loaded Content
+
+Loading implementations should not vary between screens.
+
+---
+
+# Error States
+
+Errors should follow a unified style.
+
+Include:
+
+* Friendly message
+* Retry action (when appropriate)
+* Consistent iconography
+
+Avoid exposing technical details.
+
+---
+
+# Bottom Sheets
+
+Bottom sheets should be preferred for:
+
+* Quick actions
+* Filters
+* Sorting
+* Selection
+
+Full screens should only be used when the workflow is complex.
+
+---
+
+# Slidable Actions
+
+List actions should use the existing slidable pattern.
+
+Examples:
+
+* Edit
+* Delete
+* Partial Payment
+* Paid in Full
+
+Action colors should always come from:
+
+```dart id="slide01"
+AppColors
+```
+
+Never introduce new action colors.
+
+---
+
+# Navigation
+
+Navigation should always use the project's routing system.
+
+Do not introduce:
+
+* Custom navigation frameworks
+* Random Navigator.push implementations
+
+unless consistent with the existing architecture.
+
+---
+
+# Spacing
+
+Spacing should remain visually consistent.
+
+Avoid random values such as:
+
+```dart id="space01"
+SizedBox(height: 13)
+```
+
+Prefer the project's established spacing scale.
+
+Layouts should feel predictable.
+
+---
+
+# Icons
+
+Icons should communicate meaning.
+
+Examples:
+
+Customer
+
+↓
+
+Person
+
+Debt
+
+↓
+
+Wallet
+
+Expense
+
+↓
+
+Receipt
+
+Reports
+
+↓
+
+Chart
+
+Subscriptions
+
+↓
+
+Card
+
+Icons should remain consistent throughout the application.
+
+---
+
+# Animations
+
+Animations should be subtle.
+
+Preferred animations:
+
+* Fade
+* Scale
+* Slide
+* Smooth transitions
+
+Avoid excessive motion.
+
+Performance remains the priority.
+
+---
+
+# Responsive Patterns
+
+The same reusable components should work correctly on:
+
+* Android
+* Windows
+
+Avoid creating separate widgets for different platforms unless behavior truly differs.
+
+---
+
+# Accessibility
+
+Reusable components should already provide:
+
+* Proper touch targets
+* Readable typography
+* Keyboard accessibility (Windows)
+* Theme compatibility
+
+Every new component should follow the same standards.
+
+---
+
+# AI Rules
+
+When generating UI:
+
+Always:
+
+✔ Search existing reusable widgets.
+
+✔ Extend components before replacing them.
+
+✔ Respect AppColors.
+
+✔ Respect TextStyles.
+
+✔ Respect existing spacing.
+
+✔ Respect responsive layouts.
+
+Never:
+
+❌ Duplicate widgets.
+
+❌ Create visually inconsistent components.
+
+❌ Hardcode styles.
+
+❌ Ignore the design system.
+
+---
+
+# Component Priority
+
+Whenever a UI element is needed:
+
+```text id="component03"
+Existing Component
+
+↓
+
+Extend Existing Component
+
+↓
+
+Create New Reusable Component
+
+↓
+
+Use in Screens
+```
+
+Screens should consume components.
+
+They should not define them.
+
+---
+
+# Component Summary
+
+Tahsel is a reusable component ecosystem.
+
+An AI should think:
+
+```text id="component04"
+Problem
+
+↓
+
+Existing Component?
+
+↓
+
+Yes
+
+↓
+
+Reuse
+
+----------------
+
+No
+
+↓
+
+Create Reusable Component
+
+↓
+
+Reuse Everywhere
+```
+
+Never create one-time widgets inside screens if they are likely to be reused elsewhere.
+
+---
+
+# End of Section
+
+Next Section:
+
+**AI.9 Firestore Data Model & Naming Conventions**
+
+This section documents the Firestore collection structure, document relationships, naming conventions, entity ownership rules, serialization philosophy, and the conventions an AI must follow whenever creating or modifying database models and repositories.
+
+# AI Context
+
+# AI.9 Firestore Data Model & Naming Conventions
+
+## Purpose
+
+This section explains how Tahsel stores and organizes data inside Firebase Firestore.
+
+Its purpose is **not** to document every collection or every field.
+
+Instead, it teaches an AI **how Firestore is structured**, **how documents relate to each other**, and **how new collections should be designed**.
+
+Whenever an AI creates a new feature that requires persistence, it must follow these conventions.
+
+---
+
+# Firestore Philosophy
+
+Firestore is the **persistent storage layer** of Tahsel.
+
+It stores business data.
+
+It does **not** contain business logic.
+
+Business rules always belong inside the Domain layer.
+
+Firestore should only represent the current state of the business.
+
+---
+
+# Source of Truth
+
+Firestore is the primary source of truth for:
+
+* Users
+* Customers
+* Debts
+* Transactions
+* Expenses
+* Employees
+* Installments
+* Reports Metadata
+* Subscription Information
+* Settings
+
+Local storage should only cache data.
+
+It must never replace Firestore as the authoritative source.
+
+---
+
+# Collection Philosophy
+
+Collections represent major business entities.
+
+Examples include:
+
+* Users
+* Customers
+* Expenses
+* Employees
+* Installments
+* Transactions
+
+Each collection should represent a real business concept.
+
+Collections should never represent UI state.
+
+---
+
+# Document Philosophy
+
+Each document represents one business object.
+
+Examples:
+
+One Customer
+
+↓
+
+One Document
+
+---
+
+One Expense
+
+↓
+
+One Document
+
+---
+
+One Employee
+
+↓
+
+One Document
+
+Documents should remain independent whenever possible.
+
+---
+
+# Ownership Model
+
+Every operational document belongs to exactly one application user.
+
+Conceptually:
+
+```text id="firestore01"
+User
+
+↓
+
+Owns
+
+↓
+
+Business Documents
+```
+
+No document should belong to multiple users.
+
+User isolation is mandatory.
+
+---
+
+# Relationships
+
+Relationships should remain simple.
+
+Preferred relationship:
+
+```text id="firestore02"
+User
+
+↓
+
+Customer
+
+↓
+
+Debt
+
+↓
+
+Transactions
+```
+
+Rather than deeply nesting unrelated information.
+
+---
+
+# Document IDs
+
+Document IDs should be:
+
+* Stable
+* Unique
+* Immutable
+
+The AI should not generate IDs that depend on:
+
+* Current Date
+* Display Names
+* Sequential Numbers
+
+Prefer UUIDs or Firestore-generated IDs unless business requirements dictate otherwise.
+
+---
+
+# Field Naming
+
+Field names should be:
+
+* English
+* Descriptive
+* camelCase
+
+Examples:
+
+Correct:
+
+```text id="firestore03"
+createdAt
+
+updatedAt
+
+subscriptionEndDate
+
+remainingDebt
+
+employeeId
+```
+
+Avoid abbreviations that reduce readability.
+
+---
+
+# Timestamp Rules
+
+Tahsel distinguishes between:
+
+Business timestamps
+
+and
+
+Technical timestamps.
+
+Business timestamps include:
+
+* createdAt
+* transactionDate
+
+Technical timestamps include:
+
+* syncedAt
+* uploadedAt
+
+Business logic should always depend on business timestamps.
+
+---
+
+# Soft vs Hard Delete
+
+The deletion strategy depends on the entity.
+
+Where historical information is important:
+
+Prefer soft deletion.
+
+Where history is unnecessary:
+
+Hard deletion may be acceptable.
+
+The AI should preserve historical business data whenever possible.
+
+---
+
+# Serialization
+
+Firestore Models are responsible for:
+
+* Reading JSON
+* Writing JSON
+* Converting to Entities
+
+Models should never perform:
+
+* Financial calculations
+* Validation
+* Business decisions
+
+---
+
+# Null Safety
+
+Firestore data should always be treated as potentially incomplete.
+
+Models should:
+
+* Handle missing fields.
+* Use safe defaults where appropriate.
+* Avoid runtime crashes.
+
+Never assume a Firestore field always exists.
+
+---
+
+# Derived Fields
+
+Avoid permanently storing values that can be derived.
+
+Examples:
+
+Avoid storing:
+
+* Remaining Debt
+* Total Paid
+* Monthly Totals
+
+Prefer calculating them from operational data.
+
+Derived fields should only be stored when justified by performance and documented explicitly.
+
+---
+
+# Firestore Writes
+
+Before writing data:
+
+Ask:
+
+Is this a real business change?
+
+Only write documents when business state actually changes.
+
+Avoid unnecessary writes.
+
+---
+
+# Firestore Reads
+
+Optimize reads.
+
+Prefer:
+
+* Loading only required data.
+* Fetching documents when needed.
+* Avoiding duplicate queries.
+
+The AI should always consider Firebase quota usage.
+
+---
+
+# Batch Operations
+
+Whenever multiple documents require updates:
+
+Prefer:
+
+Batch Writes
+
+or
+
+Transactions
+
+where consistency matters.
+
+Avoid partially completed updates.
+
+---
+
+# Offline Synchronization
+
+Firestore offline persistence should preserve:
+
+* Business intent
+* Original timestamps
+* Document identity
+
+Synchronization must never rewrite business meaning.
+
+---
+
+# Security Rules
+
+Firestore Security Rules are considered the first layer of protection.
+
+The client application should never assume unrestricted database access.
+
+Security validation belongs both:
+
+* Server-side (Firestore Rules)
+* Client-side (Business Logic)
+
+---
+
+# Naming Consistency
+
+Whenever introducing a new field:
+
+Match the existing naming style.
+
+Examples:
+
+```text id="firestore04"
+customerId
+
+expenseId
+
+subscriptionStatus
+
+platformType
+
+accountStatus
+```
+
+Do not mix different naming conventions.
+
+---
+
+# AI Rules
+
+Whenever modifying Firestore:
+
+Always:
+
+✔ Preserve document ownership.
+
+✔ Respect existing naming conventions.
+
+✔ Separate business timestamps from technical timestamps.
+
+✔ Keep models responsible only for serialization.
+
+✔ Minimize reads and writes.
+
+✔ Preserve backward compatibility where possible.
+
+Never:
+
+❌ Store UI state.
+
+❌ Store derived financial values unnecessarily.
+
+❌ Introduce inconsistent field names.
+
+❌ Break existing document structures without justification.
+
+---
+
+# Firestore Mental Model
+
+An AI should think:
+
+```text id="firestore05"
+Business Entity
+
+↓
+
+Firestore Document
+
+↓
+
+Model
+
+↓
+
+Entity
+
+↓
+
+UseCase
+
+↓
+
+Cubit
+
+↓
+
+UI
+```
+
+Firestore is a storage mechanism, not the business engine.
+
+---
+
+# End of Section
+
+Next Section:
+
+**AI.10 Project Conventions & Naming Standards**
+
+This section documents the project's coding conventions, folder organization, file naming rules, class naming patterns, method naming philosophy, extension usage, and the standards every AI must follow to keep new code consistent with the existing Tahsel codebase.
+
+# End of AI Context
+
+**This marks the completion of the Tahsel Technical Documentation.**
+
+This documentation is intended to serve as the **single source of truth** for developers, architects, testers, project managers, and AI assistants working on the Tahsel ecosystem.
