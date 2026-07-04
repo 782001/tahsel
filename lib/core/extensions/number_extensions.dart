@@ -18,7 +18,18 @@ extension NumberExtensions on num {
     if (this >= 1000000 || this <= -1000000) {
       return NumberFormat.compact().format(this);
     }
-    return toStringAsFixed(decimalDigits);
+
+    final formatted = toStringAsFixed(decimalDigits);
+
+    // إذا كان الجزء العشري كله أصفار، احذفه
+    if (formatted.contains('.')) {
+      final parts = formatted.split('.');
+      if (int.parse(parts[1]) == 0) {
+        return parts[0];
+      }
+    }
+
+    return formatted;
   }
 
   /// Adds a delay of the given number in seconds.

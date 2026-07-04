@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
@@ -16,6 +16,7 @@ import 'package:tahsel/features/reports/presentation/cubit/reports_cubit/reports
 import 'package:tahsel/features/reports/presentation/widgets/build_report_insight_detail_row.dart';
 import 'package:tahsel/features/reports/presentation/widgets/profit_insight_ui_extension.dart';
 import 'package:tahsel/features/reports/presentation/widgets/reports_dashboard_card.dart';
+import 'package:tahsel/features/reports/presentation/widgets/reports_invoice_summary_card.dart';
 import 'package:tahsel/features/reports/presentation/widgets/reports_net_profit_card.dart';
 import 'package:tahsel/features/reports/presentation/widgets/reports_operational_margin_card.dart';
 import 'package:tahsel/features/reports/presentation/widgets/reports_time_range_selector.dart';
@@ -442,6 +443,33 @@ class _ReportsViewState extends State<ReportsView> {
                                       },
                                     );
 
+                                    final bool isShopUser = context
+                                        .read<MainLayoutCubit>()
+                                        .isShop;
+
+                                    final ReportsInvoiceSummaryCard?
+                                    invoiceSummaryCard = isShopUser
+                                        ? ReportsInvoiceSummaryCard(
+                                            invoiceCount: data.invoiceCount,
+                                            invoiceValue: data.invoiceValue,
+                                            invoiceCollected:
+                                                data.invoiceCollected,
+                                            invoiceRemaining:
+                                                data.invoiceRemaining,
+                                            invoicePaidCount:
+                                                data.invoicePaidCount,
+                                            invoicePartialCount:
+                                                data.invoicePartialCount,
+                                            invoiceUnpaidCount:
+                                                data.invoiceUnpaidCount,
+                                            onTap: () {
+                                              context
+                                                  .read<MainLayoutCubit>()
+                                                  .changeBottomNav(3);
+                                            },
+                                          )
+                                        : null;
+
                                     return Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
@@ -582,12 +610,23 @@ class _ReportsViewState extends State<ReportsView> {
                                               ],
                                             ),
                                           ),
+                                          if (invoiceSummaryCard != null)
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 24,
+                                                    vertical: 8,
+                                                  ),
+                                              child: invoiceSummaryCard,
+                                            ),
                                         ] else ...[
                                           if (showCafeCard) cafeCard!,
                                           if (showPlaystationCard)
                                             playstationCard!,
                                           operationalMarginCard,
                                           unpaidDebtsCard,
+                                          if (invoiceSummaryCard != null)
+                                            invoiceSummaryCard,
                                         ],
 
                                         if (state.insights.length > 1) ...[

@@ -311,6 +311,9 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
       timestampDate = DateTime.parse(payload['date']);
       payload['date'] = Timestamp.fromDate(timestampDate);
     }
+    if (payload['lastUpdatedAt'] is String) {
+      payload['lastUpdatedAt'] = Timestamp.fromDate(DateTime.parse(payload['lastUpdatedAt']));
+    }
 
     payload['syncedAt'] = FieldValue.serverTimestamp();
 

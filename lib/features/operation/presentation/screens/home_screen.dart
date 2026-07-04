@@ -12,6 +12,12 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_state.dart';
+import 'package:tahsel/features/operation/domain/entities/ps_session_entity.dart';
+import 'package:tahsel/features/operation/presentation/cubit/ps_session_cubit.dart';
+import 'package:tahsel/features/operation/presentation/cubit/ps_session_state.dart';
+import 'package:tahsel/features/operation/presentation/utils/operation_validator.dart';
+import 'package:tahsel/features/operation/presentation/widgets/active_sessions_list.dart';
+import 'package:tahsel/features/operation/presentation/widgets/ps_session_form.dart';
 import 'package:tahsel/features/operation/presentation/widgets/quick_add_mode_selector.dart';
 import 'package:tahsel/features/operation/presentation/widgets/quick_add_shop_form.dart';
 import 'package:tahsel/features/operation/presentation/widgets/quick_add_sub_tab_header.dart';
@@ -19,13 +25,9 @@ import 'package:tahsel/features/operation/presentation/widgets/quick_add_summary
 import 'package:tahsel/features/operation/presentation/widgets/quick_add_turn_form.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/buttons/quick_action_button.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
-import 'package:tahsel/features/operation/presentation/widgets/ps_session_form.dart';
-import 'package:tahsel/features/operation/presentation/widgets/active_sessions_list.dart';
-import 'package:tahsel/features/operation/presentation/cubit/ps_session_cubit.dart';
-import 'package:tahsel/features/operation/presentation/cubit/ps_session_state.dart';
-import 'package:tahsel/features/operation/domain/entities/ps_session_entity.dart';
 
 import '../../../customer/presentation/cubit/customer_cubit.dart';
 import '../../../debt/presentation/cubit/debt_cubit.dart';
@@ -34,7 +36,6 @@ import '../../../product/presentation/cubit/product_cubit.dart';
 import '../../domain/entities/operation_entity.dart';
 import '../cubit/operation_cubit.dart';
 import '../cubit/operation_state.dart';
-import '../utils/operation_validator.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -581,19 +582,20 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         20.verticalSpace,
                         // Mode Selection
-                        if (context.read<MainLayoutCubit>().isCafe &&
-                            !context.watch<MainLayoutCubit>().isShop)
-                          QuickAddModeSelector(
-                            selectedMode: _selectedMode,
-                            onModeChanged: (mode) {
-                              setState(() {
-                                _selectedMode = mode;
-                                if (_selectedMode == QuickAddMode.playStation) {
-                                  _psSubMode = PlayStationMode.time;
-                                }
-                              });
-                            },
-                          ),
+                        // if (context.read<MainLayoutCubit>().isCafe &&
+                        //     !context.watch<MainLayoutCubit>().isShop)
+                        QuickAddModeSelector(
+                          isShop: context.watch<MainLayoutCubit>().isShop,
+                          selectedMode: _selectedMode,
+                          onModeChanged: (mode) {
+                            setState(() {
+                              _selectedMode = mode;
+                              if (_selectedMode == QuickAddMode.playStation) {
+                                _psSubMode = PlayStationMode.time;
+                              }
+                            });
+                          },
+                        ),
                         const SizedBox(height: 24),
 
                         // Mode Body
@@ -696,6 +698,16 @@ class _HomeScreenState extends State<HomeScreen> {
                               onSubmitted: (_) => _submitOperation(context),
                             ),
                           ],
+                        ] else if (_selectedMode == QuickAddMode.invoice) ...[
+                          // Invoice Mode – navigate directly to CreateInvoiceScreen
+                          const SizedBox(height: 8),
+                          _InvoiceQuickLaunchCard(
+                            onTap: () async {
+                              await Navigator.of(
+                                context,
+                              ).pushNamed(AppRoutes.createInvoice);
+                            },
+                          ),
                         ] else ...[
                           // Shop Mode Body (Simplified Form)
                           QuickAddShopForm(
@@ -718,9 +730,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ],
 
-                        if (_selectedMode == QuickAddMode.shop ||
-                            (_selectedMode == QuickAddMode.playStation &&
-                                _psSubMode == PlayStationMode.turn)) ...[
+                        if ((_selectedMode == QuickAddMode.shop ||
+                                (_selectedMode == QuickAddMode.playStation &&
+                                    _psSubMode == PlayStationMode.turn)) &&
+                            _selectedMode != QuickAddMode.invoice) ...[
                           const SizedBox(height: 20),
 
                           // Confirm Action Button
@@ -773,6 +786,111 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+// ── Invoice Quick-Launch Card ──────────────────────────────────────────────────
+
+class _InvoiceQuickLaunchCard extends StatelessWidget {
+  final VoidCallback onTap;
+  const _InvoiceQuickLaunchCard({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppColors.primaryColor,
+              AppColors.primaryColor.withValues(alpha: 0.75),
+            ],
+            begin: AlignmentDirectional.topStart,
+            end: AlignmentDirectional.bottomEnd,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primaryColor.withValues(alpha: 0.28),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(
+                    Icons.receipt_long_rounded,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppStrings.invoiceQuickAction.tr(),
+                        style: TextStyles.customStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        AppStrings.invoiceQuickActionDesc.tr(),
+                        style: TextStyles.customStyle(
+                          fontSize: 13,
+                          color: Colors.white.withValues(alpha: 0.85),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.add_rounded, color: Colors.white, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    AppStrings.createInvoice.tr(),
+                    style: TextStyles.customStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

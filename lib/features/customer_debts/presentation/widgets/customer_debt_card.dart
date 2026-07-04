@@ -119,7 +119,12 @@ class CustomerDebtCard extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                customerName,
+                                customerName.isNotEmpty
+                                    ? customerName
+                                    : (description != null &&
+                                          description!.isNotEmpty)
+                                    ? description!
+                                    : "Unknown Customer",
                                 style: TextStyles.customStyle(
                                   color: AppColors.textColor,
                                   fontSize: 16,

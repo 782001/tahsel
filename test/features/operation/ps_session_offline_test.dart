@@ -221,7 +221,7 @@ void main() {
             .where((r) => r.type == 'ps_session_end')
             .toList();
         expect(endingRecords.length, 1);
-        expect(endingRecords.first.id, sessionId);
+        expect(endingRecords.first.id, "${sessionId}_end");
       },
     );
 

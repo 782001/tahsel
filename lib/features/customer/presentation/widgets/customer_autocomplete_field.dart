@@ -6,7 +6,12 @@ import 'package:tahsel/core/utils/styles.dart';
 import '../../domain/entities/customer_entity.dart';
 import '../cubit/customer_cubit.dart';
 
-class CustomerAutocompleteField extends StatelessWidget {
+/// A customer-name autocomplete field backed by [CustomerCubit].
+///
+/// [RawAutocomplete] requires that [textEditingController] and [focusNode] are
+/// either BOTH provided or BOTH null.  Since we always receive a controller
+/// from the parent, we own an internal [FocusNode] when none is supplied.
+class CustomerAutocompleteField extends StatefulWidget {
   final TextEditingController controller;
   final String hint;
   final IconData? icon;
@@ -33,10 +38,30 @@ class CustomerAutocompleteField extends StatelessWidget {
   });
 
   @override
+  State<CustomerAutocompleteField> createState() =>
+      _CustomerAutocompleteFieldState();
+}
+
+class _CustomerAutocompleteFieldState extends State<CustomerAutocompleteField> {
+  // When the caller does not supply a FocusNode we own one ourselves so that
+  // RawAutocomplete's assertion "(focusNode == null) == (controller == null)"
+  // is always satisfied.
+  FocusNode? _ownedFocusNode;
+
+  FocusNode get _effectiveFocusNode =>
+      widget.focusNode ?? (_ownedFocusNode ??= FocusNode());
+
+  @override
+  void dispose() {
+    _ownedFocusNode?.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return RawAutocomplete<CustomerEntity>(
-      textEditingController: controller,
-      focusNode: focusNode,
+      textEditingController: widget.controller,
+      focusNode: _effectiveFocusNode,
       optionsBuilder: (TextEditingValue textEditingValue) {
         return context.read<CustomerCubit>().getSuggestions(
           textEditingValue.text,
@@ -49,26 +74,29 @@ class CustomerAutocompleteField extends StatelessWidget {
               cursorColor: AppColors.primaryColor,
               controller: fieldController,
               focusNode: fieldFocusNode,
-              textInputAction: textInputAction,
-              onSubmitted: onSubmitted,
+              textInputAction: widget.textInputAction,
+              onSubmitted: widget.onSubmitted,
               style: TextStyles.customStyle(
                 fontWeight: FontWeight.w600,
                 color: AppColors.black,
               ),
               decoration: InputDecoration(
-                hintText: hint,
-                errorText: errorText,
+                hintText: widget.hint,
+                errorText: widget.errorText,
                 hintStyle: TextStyles.customStyle(
                   color: AppColors.blackLight.withValues(alpha: 0.5),
                   fontWeight: FontWeight.normal,
                 ),
-                prefixIcon: icon != null
-                    ? Icon(icon, color: AppColors.blackLight)
+                prefixIcon: widget.icon != null
+                    ? Icon(widget.icon, color: AppColors.blackLight)
                     : null,
-                suffixIcon: suffixIcon != null
+                suffixIcon: widget.suffixIcon != null
                     ? IconButton(
-                        icon: Icon(suffixIcon, color: AppColors.primaryColor),
-                        onPressed: onSuffixIconPressed,
+                        icon: Icon(
+                          widget.suffixIcon,
+                          color: AppColors.primaryColor,
+                        ),
+                        onPressed: widget.onSuffixIconPressed,
                       )
                     : null,
                 filled: true,
@@ -125,8 +153,8 @@ class CustomerAutocompleteField extends StatelessWidget {
                             ),
                             onTap: () {
                               onSelected(option);
-                              if (this.onSelected != null) {
-                                this.onSelected!(option);
+                              if (widget.onSelected != null) {
+                                widget.onSelected!(option);
                               }
                             },
                           );

@@ -1,11 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/storage/cashhelper.dart';
 import 'package:tahsel/core/storage/secure_storage_helper.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/expenses/presentation/screens/expenses_screen.dart';
+import 'package:tahsel/features/invoice/presentation/cubit/invoice_cubit.dart';
+import 'package:tahsel/features/invoice/presentation/screens/invoices_screen.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_state.dart';
 import 'package:tahsel/features/my_debts/presentation/screens/unified_debts_screen.dart';
 import 'package:tahsel/features/operation/presentation/screens/home_screen.dart';
@@ -78,7 +81,12 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
     const HomeScreen(),
     const ExpensesScreen(),
     const UnifiedDebtsScreen(),
+    BlocProvider.value(
+      value: sl<InvoiceCubit>(),
+      child: const InvoicesScreen(),
+    ),
     const ReportsScreen(),
+
     const SettingsScreen(),
   ];
 

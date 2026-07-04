@@ -56,6 +56,7 @@ Future<void> initDebt() async {
       updatePaymentUseCase: sl(),
       deletePaymentUseCase: sl(),
       getDebtByIdUseCase: sl(),
+      syncInvoiceFromDebtUseCase: sl(),
     ),
   );
 

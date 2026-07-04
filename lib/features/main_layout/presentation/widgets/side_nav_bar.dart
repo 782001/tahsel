@@ -9,8 +9,9 @@ import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit
 
 class SideNavBar extends StatelessWidget {
   final MainLayoutCubit cubit;
+  final bool isShop;
 
-  const SideNavBar({super.key, required this.cubit});
+  const SideNavBar({super.key, required this.cubit, this.isShop = false});
 
   @override
   Widget build(BuildContext context) {
@@ -121,21 +122,30 @@ class SideNavBar extends StatelessWidget {
                   isSelected: cubit.currentIndex == 2,
                   onTap: () => cubit.changeBottomNav(2),
                 ),
+                if (isShop)
+                  _NavTile(
+                    index: 3,
+                    icon: Icons.receipt_long_rounded,
+                    label: AppStrings.invoices.tr(),
+                    isSelected: cubit.currentIndex == 3,
+                    onTap: () => cubit.changeBottomNav(3),
+                  ),
                 _NavTile(
-                  index: 3,
+                  index: 4,
                   icon: Icons.bar_chart_rounded,
                   label: AppStrings.reports.tr(),
-                  isSelected: cubit.currentIndex == 3,
-                  onTap: () => cubit.changeBottomNav(3),
+                  isSelected: cubit.currentIndex == 4,
+                  onTap: () => cubit.changeBottomNav(4),
                 ),
+
                 const SizedBox(height: 16),
                 _buildSectionHeader(context, AppStrings.other.tr()),
                 _NavTile(
-                  index: 4,
+                  index: 5,
                   icon: Icons.settings_rounded,
                   label: AppStrings.settings.tr(),
-                  isSelected: cubit.currentIndex == 4,
-                  onTap: () => cubit.changeBottomNav(4),
+                  isSelected: cubit.currentIndex == 5,
+                  onTap: () => cubit.changeBottomNav(5),
                 ),
               ],
             ),

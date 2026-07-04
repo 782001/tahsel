@@ -82,7 +82,7 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
                       backgroundColor: AppColors.scafoldBackGround,
                       bottomNavigationBar: ResponsiveLayout.isDesktop(context)
                           ? null
-                          : BottomNavBar(cubit: cubit),
+                          : BottomNavBar(cubit: cubit, isShop: cubit.isShop),
                       body: SafeArea(
                         child: SyncStatusListener(
                           child: OfflineBanner(
@@ -94,7 +94,7 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
                                     mobile: cubit.screens[cubit.currentIndex],
                                     desktop: Row(
                                       children: [
-                                        SideNavBar(cubit: cubit),
+                                        SideNavBar(cubit: cubit, isShop: cubit.isShop),
                                         Expanded(
                                           child:
                                               cubit.screens[cubit.currentIndex],

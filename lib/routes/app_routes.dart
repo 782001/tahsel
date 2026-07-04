@@ -34,6 +34,11 @@ import 'package:tahsel/features/employee/presentation/screens/employee_details_s
 import 'package:tahsel/features/employee/presentation/screens/employee_reports_screen.dart';
 import 'package:tahsel/features/standard_features/security/presentation/screens/access_restricted_screen.dart';
 import 'package:tahsel/features/standard_features/security/presentation/screens/subscription_expired_screen.dart';
+import 'package:tahsel/features/invoice/presentation/cubit/invoice_cubit.dart';
+import 'package:tahsel/features/invoice/presentation/cubit/invoice_history_cubit.dart';
+import 'package:tahsel/features/invoice/presentation/screens/create_invoice_screen.dart';
+import 'package:tahsel/features/invoice/presentation/screens/invoice_detail_screen.dart';
+import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -59,6 +64,9 @@ class AppRoutes {
   static const String employeeList = '/employee-list';
   static const String employeeDetails = '/employee-details';
   static const String employeeReports = '/employee-reports';
+  static const String createInvoice = '/create-invoice';
+  static const String editInvoice = '/edit-invoice';
+  static const String invoiceDetail = '/invoice-detail';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -82,6 +90,44 @@ class AppRoutes {
           builder: (_) => BlocProvider.value(
             value: di.sl<EmployeeCubit>(),
             child: const EmployeeReportsScreen(),
+          ),
+        );
+      case createInvoice:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider.value(
+            value: di.sl<InvoiceCubit>(),
+            child: const CreateInvoiceScreen(),
+          ),
+        );
+      case editInvoice:
+        final invoiceToEdit = settings.arguments as InvoiceEntity;
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider.value(
+            value: di.sl<InvoiceCubit>(),
+            child: CreateInvoiceScreen(invoiceToEdit: invoiceToEdit),
+          ),
+        );
+      case invoiceDetail:
+        final args = settings.arguments;
+        final InvoiceEntity invoice;
+        final bool showPaymentImmediately;
+        if (args is Map<String, dynamic>) {
+          invoice = args['invoice'] as InvoiceEntity;
+          showPaymentImmediately = args['showPaymentImmediately'] as bool? ?? false;
+        } else {
+          invoice = args as InvoiceEntity;
+          showPaymentImmediately = false;
+        }
+        return MaterialPageRoute(
+          builder: (_) => MultiBlocProvider(
+            providers: [
+              BlocProvider.value(value: di.sl<InvoiceCubit>()),
+              BlocProvider(create: (_) => di.sl<InvoiceHistoryCubit>()),
+            ],
+            child: InvoiceDetailScreen(
+              invoice: invoice,
+              showPaymentImmediately: showPaymentImmediately,
+            ),
           ),
         );
       case splash:

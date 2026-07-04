@@ -681,5 +681,84 @@ class AppStrings {
       "delete_account_requires_reauth";
   static const String deleteAccountFailed = "delete_account_failed";
   static const String officialWebsite = "officialWebsite";
-static const String officialWebsiteDesc = "officialWebsiteDesc";
+  static const String officialWebsiteDesc = "officialWebsiteDesc";
+
+  // Invoices
+  static const String invoices = "invoices";
+  static const String createInvoice = "create_invoice";
+  static const String invoiceCustomerSection = "invoice_customer_section";
+  static const String invoiceItemsSection = "invoice_items_section";
+  static const String invoiceNotesSection = "invoice_notes_section";
+  static const String invoiceAddItem = "invoice_add_item";
+  static const String invoiceItem = "invoice_item";
+  static const String invoiceItemDesc = "invoice_item_desc";
+  static const String invoiceItemDescHint = "invoice_item_desc_hint";
+  static const String invoiceItemPrice = "invoice_item_price";
+  static const String invoiceItemQty = "invoice_item_qty";
+  static const String invoiceLineTotal = "invoice_line_total";
+  static const String invoiceGrandTotal = "invoice_grand_total";
+  static const String invoiceNotesHint = "invoice_notes_hint";
+  static const String invoicePhoneHint = "invoice_phone_hint";
+  static const String invoiceLedgerHint = "invoice_ledger_hint";
+  static const String invoiceSubmit = "invoice_submit";
+  static const String invoiceCreateSuccess = "invoice_create_success";
+  static const String invoiceValidationItems = "invoice_validation_items";
+  static const String invoicesEmpty = "invoices_empty";
+  static const String invoicesEmptyDesc = "invoices_empty_desc";
+  static const String invoiceStatusPending = "invoice_status_pending";
+  static const String invoiceStatusPartial = "invoice_status_partial";
+  static const String invoiceStatusPaid = "invoice_status_paid";
+  static const String invoiceStatusVoided = "invoice_status_voided";
+
+  // Invoice detail & payment
+  static const String invoiceDetail = "invoice_detail";
+  static const String invoicePaymentHistory = "invoice_payment_history";
+  static const String invoiceRecordPayment = "invoice_record_payment";
+  static const String invoicePaymentAmount = "invoice_payment_amount";
+  static const String invoicePaymentNote = "invoice_payment_note";
+  static const String invoicePaymentNoteHint = "invoice_payment_note_hint";
+  static const String invoicePaymentSuccess = "invoice_payment_success";
+  static const String invoiceNoPayments = "invoice_no_payments";
+  static const String invoiceRemainingAmount = "invoice_remaining_amount";
+  static const String invoiceTotalPaid = "invoice_total_paid";
+  static const String invoiceItemsSectionDetail = "invoice_items_section_detail";
+  static const String invoicePaymentValidation = "invoice_payment_validation";
+  static const String invoicePaymentExceedsRemaining =
+      "invoice_payment_exceeds_remaining";
+  static const String searchInvoices = "search_invoices";
+  static const String invoiceQuickAction = "invoice_quick_action";
+  static const String invoiceQuickActionDesc = "invoice_quick_action_desc";
+  static const String invoiceTotalValue = "invoice_total_value";
+  static const String invoiceCollected = "invoice_collected";
+  static const String invoicePaidCountKey = "invoice_paid_count";
+  static const String invoicePartialCountKey = "invoice_partial_count";
+  static const String invoiceUnpaidCountKey = "invoice_unpaid_count";
+  static const String totalInvoices = "total_invoices";
+  static const String invoiceSaveAsDebt = "invoice_save_as_debt";
+  static const String invoiceAutoDebtNotice = "invoice_auto_debt_notice";
+  static const String invoiceLinkedToDebt = "invoice_linked_to_debt";
+  static const String invoiceCustomerNameRequired = "invoice_customer_name_required";
+  static const String invoiceEditTitle = "invoice_edit_title";
+  static const String invoiceSaveEdit = "invoice_save_edit";
+  static const String invoiceVoid = "invoice_void";
+  static const String invoiceVoidConfirmTitle = "invoice_void_confirm_title";
+  static const String invoiceVoidConfirmBody = "invoice_void_confirm_body";
+  static const String invoiceUpdateSuccess = "invoice_update_success";
+  static const String invoiceVoidSuccess = "invoice_void_success";
+  static const String invoiceItemDiscount = "invoice_item_discount";
+
+  // Invoice Edit History
+  static const String invoiceHistory = "invoice_history";
+  static const String invoiceHistoryEmpty = "invoice_history_empty";
+  static const String historyItemAdded = "history_item_added";
+  static const String historyItemRemoved = "history_item_removed";
+  static const String historyQtyUpdated = "history_qty_updated";
+  static const String historyPriceUpdated = "history_price_updated";
+  static const String historyCustomerUpdated = "history_customer_updated";
+  static const String historyNotesUpdated = "history_notes_updated";
+  static const String historyDiscountUpdated = "history_discount_updated";
+  static const String historyNotesChanged = "history_notes_changed";
+  static const String historyToday = "history_today";
+  static const String historyYesterday = "history_yesterday";
 }
+

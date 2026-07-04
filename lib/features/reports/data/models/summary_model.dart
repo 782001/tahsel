@@ -15,6 +15,15 @@ class SummaryModel {
   final bool isSynced;
   final DateTime lastUpdatedAt;
 
+  // New: Invoice fields
+  final int invoiceCount;
+  final double invoiceValue;
+  final double invoiceCollected;
+  final double invoiceRemaining;
+  final int invoicePaidCount;
+  final int invoicePartialCount;
+  final int invoiceUnpaidCount;
+
   SummaryModel({
     required this.totalIncome,
     required this.cafeIncome,
@@ -29,6 +38,13 @@ class SummaryModel {
     this.debtCustomersCount = 0,
     this.isSynced = false,
     required this.lastUpdatedAt,
+    this.invoiceCount = 0,
+    this.invoiceValue = 0,
+    this.invoiceCollected = 0,
+    this.invoiceRemaining = 0,
+    this.invoicePaidCount = 0,
+    this.invoicePartialCount = 0,
+    this.invoiceUnpaidCount = 0,
   });
 
   factory SummaryModel.fromJson(Map<String, dynamic> json) {
@@ -47,6 +63,13 @@ class SummaryModel {
       isSynced: json['isSynced'] as bool? ?? false,
       lastUpdatedAt:
           (json['lastUpdatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      invoiceCount: (json['invoiceCount'] ?? 0).toInt(),
+      invoiceValue: (json['invoiceValue'] ?? 0).toDouble(),
+      invoiceCollected: (json['invoiceCollected'] ?? 0).toDouble(),
+      invoiceRemaining: (json['invoiceRemaining'] ?? 0).toDouble(),
+      invoicePaidCount: (json['invoicePaidCount'] ?? 0).toInt(),
+      invoicePartialCount: (json['invoicePartialCount'] ?? 0).toInt(),
+      invoiceUnpaidCount: (json['invoiceUnpaidCount'] ?? 0).toInt(),
     );
   }
 
@@ -65,6 +88,13 @@ class SummaryModel {
       debtCustomersCount: 0,
       isSynced: false,
       lastUpdatedAt: DateTime.now(),
+      invoiceCount: 0,
+      invoiceValue: 0,
+      invoiceCollected: 0,
+      invoiceRemaining: 0,
+      invoicePaidCount: 0,
+      invoicePartialCount: 0,
+      invoiceUnpaidCount: 0,
     );
   }
 
@@ -83,6 +113,13 @@ class SummaryModel {
       'debtCustomersCount': debtCustomersCount,
       'isSynced': isSynced,
       'lastUpdatedAt': FieldValue.serverTimestamp(),
+      'invoiceCount': invoiceCount,
+      'invoiceValue': invoiceValue,
+      'invoiceCollected': invoiceCollected,
+      'invoiceRemaining': invoiceRemaining,
+      'invoicePaidCount': invoicePaidCount,
+      'invoicePartialCount': invoicePartialCount,
+      'invoiceUnpaidCount': invoiceUnpaidCount,
     };
   }
 
@@ -99,6 +136,13 @@ class SummaryModel {
     int? playstationCount,
     bool? isSynced,
     DateTime? lastUpdatedAt,
+    int? invoiceCount,
+    double? invoiceValue,
+    double? invoiceCollected,
+    double? invoiceRemaining,
+    int? invoicePaidCount,
+    int? invoicePartialCount,
+    int? invoiceUnpaidCount,
   }) {
     return SummaryModel(
       totalIncome: totalIncome ?? this.totalIncome,
@@ -114,6 +158,13 @@ class SummaryModel {
       debtCustomersCount: debtCustomersCount,
       isSynced: isSynced ?? this.isSynced,
       lastUpdatedAt: lastUpdatedAt ?? this.lastUpdatedAt,
+      invoiceCount: invoiceCount ?? this.invoiceCount,
+      invoiceValue: invoiceValue ?? this.invoiceValue,
+      invoiceCollected: invoiceCollected ?? this.invoiceCollected,
+      invoiceRemaining: invoiceRemaining ?? this.invoiceRemaining,
+      invoicePaidCount: invoicePaidCount ?? this.invoicePaidCount,
+      invoicePartialCount: invoicePartialCount ?? this.invoicePartialCount,
+      invoiceUnpaidCount: invoiceUnpaidCount ?? this.invoiceUnpaidCount,
     );
   }
 }

@@ -1,0 +1,93 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tahsel/core/services/injection_container.dart';
+import 'package:tahsel/features/invoice/data/datasources/invoice_history_remote_data_source.dart';
+import 'package:tahsel/features/invoice/data/datasources/invoice_remote_data_source.dart';
+import 'package:tahsel/features/invoice/data/repositories/invoice_history_repository_impl.dart';
+import 'package:tahsel/features/invoice/data/repositories/invoice_repository_impl.dart';
+import 'package:tahsel/features/invoice/domain/repositories/invoice_history_repository.dart';
+import 'package:tahsel/features/invoice/domain/repositories/invoice_repository.dart';
+import 'package:tahsel/features/invoice/domain/usecases/invoice_history_usecases.dart';
+import 'package:tahsel/features/invoice/domain/usecases/invoice_usecases.dart';
+import 'package:tahsel/features/invoice/presentation/cubit/invoice_cubit.dart';
+import 'package:tahsel/features/invoice/presentation/cubit/invoice_history_cubit.dart';
+
+Future<void> initInvoice() async {
+  // ── Cubits ─────────────────────────────────────────────────────────────────
+
+  sl.registerLazySingleton(
+    () => InvoiceCubit(
+      createInvoiceUseCase: sl(),
+      getInvoicesUseCase: sl(),
+      getInvoicesPaginatedUseCase: sl(),
+      getPendingInvoicesUseCase: sl(),
+      getInvoiceByIdUseCase: sl(),
+      recordPaymentUseCase: sl(),
+      linkDebtToInvoiceUseCase: sl(),
+      addDebtUseCase: sl(),
+      updateInvoiceUseCase: sl(),
+      voidInvoiceUseCase: sl(),
+      addInvoiceHistoryUseCase: sl(),
+    ),
+  );
+
+  sl.registerFactory(
+    () => InvoiceHistoryCubit(
+      getHistoryUseCase: sl(),
+      addHistoryUseCase: sl(),
+    ),
+  );
+
+  // ── Use Cases ──────────────────────────────────────────────────────────────
+
+  sl.registerLazySingleton(() => CreateInvoiceUseCase(sl()));
+  sl.registerLazySingleton(() => GetInvoicesUseCase(sl()));
+  sl.registerLazySingleton(() => GetInvoicesPaginatedUseCase(sl()));
+  sl.registerLazySingleton(() => GetPendingInvoicesUseCase(sl()));
+  sl.registerLazySingleton(() => GetInvoiceByIdUseCase(sl()));
+  sl.registerLazySingleton(() => RecordPaymentUseCase(sl()));
+  sl.registerLazySingleton(() => LinkDebtToInvoiceUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateInvoiceUseCase(sl()));
+  sl.registerLazySingleton(() => VoidInvoiceUseCase(sl()));
+  sl.registerLazySingleton(() => SyncInvoiceFromDebtUseCase(sl()));
+
+  // History use-cases
+  sl.registerLazySingleton(
+    () => AddInvoiceHistoryUseCase(sl<InvoiceHistoryRepository>()),
+  );
+  sl.registerLazySingleton(
+    () => GetInvoiceHistoryUseCase(sl<InvoiceHistoryRepository>()),
+  );
+
+  // ── Repositories ───────────────────────────────────────────────────────────
+
+  sl.registerLazySingleton<InvoiceRepository>(
+    () => InvoiceRepositoryImpl(
+      remoteDataSource: sl(),
+      offlineSyncRepository: sl(),
+      connectionChecker: sl(),
+    ),
+  );
+
+  sl.registerLazySingleton<InvoiceHistoryRepository>(
+    () => InvoiceHistoryRepositoryImpl(
+      remoteDataSource: sl(),
+      connectionChecker: sl(),
+    ),
+  );
+
+  // ── Data Sources ───────────────────────────────────────────────────────────
+
+  sl.registerLazySingleton<InvoiceRemoteDataSource>(
+    () => InvoiceRemoteDataSourceImpl(firestore: sl()),
+  );
+
+  sl.registerLazySingleton<InvoiceHistoryRemoteDataSource>(
+    () => InvoiceHistoryRemoteDataSourceImpl(firestore: sl()),
+  );
+
+  // ── External ───────────────────────────────────────────────────────────────
+
+  if (!sl.isRegistered<FirebaseFirestore>()) {
+    sl.registerLazySingleton(() => FirebaseFirestore.instance);
+  }
+}

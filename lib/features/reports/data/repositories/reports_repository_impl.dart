@@ -67,6 +67,14 @@ class ReportsRepositoryImpl implements ReportsRepository {
       final int currentPSCount = (currentData['playstationCount'] ?? 0).toInt();
       final double currentProfit = currentIncome - currentExpenses;
 
+      final int currentInvoiceCount = (currentData['invoiceCount'] ?? 0).toInt();
+      final double currentInvoiceValue = (currentData['invoiceValue'] ?? 0).toDouble();
+      final double currentInvoiceCollected = (currentData['invoiceCollected'] ?? 0).toDouble();
+      final double currentInvoiceRemaining = (currentData['invoiceRemaining'] ?? 0).toDouble();
+      final int currentInvoicePaidCount = (currentData['invoicePaidCount'] ?? 0).toInt();
+      final int currentInvoicePartialCount = (currentData['invoicePartialCount'] ?? 0).toInt();
+      final int currentInvoiceUnpaidCount = (currentData['invoiceUnpaidCount'] ?? 0).toInt();
+
       // Previous Data
       final double prevIncome = (prevData['totalIncome'] ?? 0).toDouble();
       final double prevCafeIncome = (prevData['cafeIncome'] ?? 0).toDouble();
@@ -93,6 +101,13 @@ class ReportsRepositoryImpl implements ReportsRepository {
         totalCount: currentTotalCount,
         cafeCount: currentCafeCount,
         playstationCount: currentPSCount,
+        invoiceCount: currentInvoiceCount,
+        invoiceValue: currentInvoiceValue,
+        invoiceCollected: currentInvoiceCollected,
+        invoiceRemaining: currentInvoiceRemaining,
+        invoicePaidCount: currentInvoicePaidCount,
+        invoicePartialCount: currentInvoicePartialCount,
+        invoiceUnpaidCount: currentInvoiceUnpaidCount,
         prevIncome: prevIncome,
         prevExpenses: prevExpenses,
         prevCafeIncome: prevCafeIncome,
@@ -135,6 +150,14 @@ class ReportsRepositoryImpl implements ReportsRepository {
       final int psCount = (data['playstationCount'] ?? 0).toInt();
       final double profit = income - expenses;
 
+      final int invoiceCount = (data['invoiceCount'] ?? 0).toInt();
+      final double invoiceValue = (data['invoiceValue'] ?? 0).toDouble();
+      final double invoiceCollected = (data['invoiceCollected'] ?? 0).toDouble();
+      final double invoiceRemaining = (data['invoiceRemaining'] ?? 0).toDouble();
+      final int invoicePaidCount = (data['invoicePaidCount'] ?? 0).toInt();
+      final int invoicePartialCount = (data['invoicePartialCount'] ?? 0).toInt();
+      final int invoiceUnpaidCount = (data['invoiceUnpaidCount'] ?? 0).toInt();
+
       final reports = ReportsEntity(
         totalIncome: income,
         cafeIncome: cafeIncome,
@@ -147,6 +170,13 @@ class ReportsRepositoryImpl implements ReportsRepository {
         totalCount: totalCount,
         cafeCount: cafeCount,
         playstationCount: psCount,
+        invoiceCount: invoiceCount,
+        invoiceValue: invoiceValue,
+        invoiceCollected: invoiceCollected,
+        invoiceRemaining: invoiceRemaining,
+        invoicePaidCount: invoicePaidCount,
+        invoicePartialCount: invoicePartialCount,
+        invoiceUnpaidCount: invoiceUnpaidCount,
         // No comparison for all-time aggregation
         incomeDiff: 0,
         expenseDiff: 0,

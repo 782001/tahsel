@@ -19,6 +19,15 @@ class ReportsEntity extends Equatable {
   final double cafeIncome;
   final double playstationIncome;
 
+  // New: Breakdowns for Invoices
+  final int invoiceCount;
+  final double invoiceValue;
+  final double invoiceCollected;
+  final double invoiceRemaining;
+  final int invoicePaidCount;
+  final int invoicePartialCount;
+  final int invoiceUnpaidCount;
+
   // Dashboard indicators (Now using Absolute Difference in EGP)
   final double incomeDiff;
   final double expenseDiff;
@@ -54,6 +63,13 @@ class ReportsEntity extends Equatable {
     this.prevPlaystationIncome = 0,
     this.cafeIncome = 0,
     this.playstationIncome = 0,
+    this.invoiceCount = 0,
+    this.invoiceValue = 0,
+    this.invoiceCollected = 0,
+    this.invoiceRemaining = 0,
+    this.invoicePaidCount = 0,
+    this.invoicePartialCount = 0,
+    this.invoiceUnpaidCount = 0,
     this.incomeDiff = 0,
     this.expenseDiff = 0,
     this.profitDiff = 0,
@@ -83,6 +99,13 @@ class ReportsEntity extends Equatable {
     prevPlaystationIncome,
     cafeIncome,
     playstationIncome,
+    invoiceCount,
+    invoiceValue,
+    invoiceCollected,
+    invoiceRemaining,
+    invoicePaidCount,
+    invoicePartialCount,
+    invoiceUnpaidCount,
     incomeDiff,
     expenseDiff,
     profitDiff,
@@ -108,6 +131,13 @@ class ReportsEntity extends Equatable {
     double? prevPlaystationIncome,
     double? cafeIncome,
     double? playstationIncome,
+    int? invoiceCount,
+    double? invoiceValue,
+    double? invoiceCollected,
+    double? invoiceRemaining,
+    int? invoicePaidCount,
+    int? invoicePartialCount,
+    int? invoiceUnpaidCount,
     double? incomeDiff,
     double? expenseDiff,
     double? profitDiff,
@@ -133,6 +163,13 @@ class ReportsEntity extends Equatable {
           prevPlaystationIncome ?? this.prevPlaystationIncome,
       cafeIncome: cafeIncome ?? this.cafeIncome,
       playstationIncome: playstationIncome ?? this.playstationIncome,
+      invoiceCount: invoiceCount ?? this.invoiceCount,
+      invoiceValue: invoiceValue ?? this.invoiceValue,
+      invoiceCollected: invoiceCollected ?? this.invoiceCollected,
+      invoiceRemaining: invoiceRemaining ?? this.invoiceRemaining,
+      invoicePaidCount: invoicePaidCount ?? this.invoicePaidCount,
+      invoicePartialCount: invoicePartialCount ?? this.invoicePartialCount,
+      invoiceUnpaidCount: invoiceUnpaidCount ?? this.invoiceUnpaidCount,
       incomeDiff: incomeDiff ?? this.incomeDiff,
       expenseDiff: expenseDiff ?? this.expenseDiff,
       profitDiff: profitDiff ?? this.profitDiff,
@@ -147,3 +184,4 @@ class ReportsEntity extends Equatable {
     );
   }
 }
+

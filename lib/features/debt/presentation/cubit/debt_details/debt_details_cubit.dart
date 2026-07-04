@@ -14,12 +14,15 @@ import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_cubit.dart';
 import 'package:tahsel/features/debt/presentation/cubit/total_debts/total_debts_cubit.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/features/invoice/domain/usecases/invoice_usecases.dart';
+import 'package:tahsel/features/invoice/presentation/cubit/invoice_cubit.dart';
 
 class DebtDetailsCubit extends Cubit<DebtDetailsState> {
   final GetDebtTransactionsFutureUseCase getDebtTransactionsUseCase;
   final UpdatePaymentUseCase updatePaymentUseCase;
   final DeletePaymentUseCase deletePaymentUseCase;
   final GetDebtByIdUseCase getDebtByIdUseCase;
+  final SyncInvoiceFromDebtUseCase syncInvoiceFromDebtUseCase;
   List<PaymentEntity> _cachedTransactions = [];
 
   DebtDetailsCubit({
@@ -27,6 +30,7 @@ class DebtDetailsCubit extends Cubit<DebtDetailsState> {
     required this.updatePaymentUseCase,
     required this.deletePaymentUseCase,
     required this.getDebtByIdUseCase,
+    required this.syncInvoiceFromDebtUseCase,
   }) : super(DebtDetailsInitial());
 
   Future<void> loadTransactions(
@@ -160,6 +164,12 @@ class DebtDetailsCubit extends Cubit<DebtDetailsState> {
         sl<TotalDebtsCubit>().getTotalDebts(uid, forceRefresh: true);
         sl<DebtCubit>().getDebts(uid, forceRefresh: true);
 
+        // ── Bidirectional Invoice Sync ──────────────────────────────────────
+        // If this debt was created from an invoice (operationId = debt_inv_<id>),
+        // propagate the new payment total back to the invoice document so the
+        // invoice list and detail screens never show stale data.
+        _syncLinkedInvoice(uid, debtId);
+
         // Reload current transactions to get fresh totals
         await loadTransactions(uid, debtId, forceRefresh: true);
 
@@ -202,6 +212,9 @@ class DebtDetailsCubit extends Cubit<DebtDetailsState> {
         sl<TotalDebtsCubit>().getTotalDebts(uid, forceRefresh: true);
         sl<DebtCubit>().getDebts(uid, forceRefresh: true);
 
+        // ── Bidirectional Invoice Sync ──────────────────────────────────────
+        _syncLinkedInvoice(uid, debtId);
+
         // Reload current transactions
         await loadTransactions(uid, debtId, forceRefresh: true);
 
@@ -223,6 +236,22 @@ class DebtDetailsCubit extends Cubit<DebtDetailsState> {
         }
       },
     );
+  }
+
+  // ── Private Helpers ─────────────────────────────────────────────────────────
+
+  /// Fires the invoice sync in the background (fire-and-forget).
+  /// Also refreshes [InvoiceCubit] so the list screen updates immediately.
+  void _syncLinkedInvoice(String uid, String debtId) {
+    if (!debtId.startsWith('debt_inv_')) return;
+    // Run async without blocking the UI
+    syncInvoiceFromDebtUseCase(uid: uid, debtId: debtId).then((_) {
+      // Refresh the InvoiceCubit so the list and detail screens update
+      // without the user needing to reopen them.
+      if (sl.isRegistered<InvoiceCubit>()) {
+        sl<InvoiceCubit>().fetchInvoices(uid, forceRefresh: true);
+      }
+    });
   }
 
   static List<PaymentEntity> _processTransactions(

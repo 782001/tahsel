@@ -94,6 +94,13 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
             'cafeCount': summary.cafeCount.toDouble(),
             'playstationCount': summary.playstationCount.toDouble(),
             'debtCustomersCount': summary.debtCustomersCount.toDouble(),
+            'invoiceCount': summary.invoiceCount,
+            'invoiceValue': summary.invoiceValue,
+            'invoiceCollected': summary.invoiceCollected,
+            'invoiceRemaining': summary.invoiceRemaining,
+            'invoicePaidCount': summary.invoicePaidCount,
+            'invoicePartialCount': summary.invoicePartialCount,
+            'invoiceUnpaidCount': summary.invoiceUnpaidCount,
           };
         }
       }
@@ -175,6 +182,87 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
         }
       }
 
+      // Fetch Invoices
+      final invoicesSnapshot = await firestore
+          .collection('users')
+          .doc(uid)
+          .collection('invoices')
+          .where('createdAt', isGreaterThanOrEqualTo: startTimestamp)
+          .where('createdAt', isLessThan: endTimestamp)
+          .get();
+
+      double invoiceIncome = 0;
+      double invoiceTotalDebts = 0;
+      double invoicePaidDebts = 0;
+      double invoiceUnpaidDebts = 0;
+      int invoiceCount = invoicesSnapshot.docs.length;
+
+      double invoiceValue = 0;
+      double invoiceCollected = 0;
+      double invoiceRemaining = 0;
+      int invoicePaidCount = 0;
+      int invoicePartialCount = 0;
+      int invoiceUnpaidCount = 0;
+
+      for (var doc in invoicesSnapshot.docs) {
+        final data = doc.data();
+        final statusStr = data['status'] as String? ?? 'pending';
+        if (statusStr == 'voided') {
+          invoiceCount--;
+          continue;
+        }
+
+        // Parse payments
+        final payments = data['payments'] as List<dynamic>? ?? [];
+        final double totalPaid = payments.fold<double>(
+          0.0,
+          (acc, p) => acc + (p['amount'] as num? ?? 0).toDouble(),
+        );
+
+        // Parse items to calculate total amount
+        final items = data['items'] as List<dynamic>? ?? [];
+        final double totalAmount = items.fold<double>(
+          0.0,
+          (acc, i) {
+            final double unitPrice = (i['unitPrice'] as num? ?? 0).toDouble();
+            final double quantity = (i['quantity'] as num? ?? 0).toDouble();
+            final double taxRate = (i['taxRate'] as num? ?? 0).toDouble();
+            final double discountRate = (i['discountRate'] as num? ?? 0).toDouble();
+            final double subtotal = unitPrice * quantity;
+            final double discountAmount = subtotal * discountRate;
+            final double taxAmount = (subtotal - discountAmount) * taxRate;
+            return acc + (subtotal - discountAmount + taxAmount);
+          },
+        );
+
+        final double remaining = totalAmount - totalPaid;
+        final double finalRemaining = remaining > 0 ? remaining : 0.0;
+
+        invoiceIncome += totalAmount;
+        invoiceTotalDebts += finalRemaining;
+
+        invoiceValue += totalAmount;
+        invoiceCollected += totalPaid;
+        invoiceRemaining += finalRemaining;
+
+        if (statusStr == 'paid' || finalRemaining == 0) {
+          invoicePaidDebts += totalAmount;
+          invoicePaidCount++;
+        } else if (statusStr == 'partiallyPaid' || (totalPaid > 0 && finalRemaining > 0)) {
+          invoiceUnpaidDebts += finalRemaining;
+          invoicePartialCount++;
+        } else {
+          invoiceUnpaidDebts += finalRemaining;
+          invoiceUnpaidCount++;
+        }
+      }
+
+      totalIncome += invoiceIncome;
+      totalCount += invoiceCount;
+      totalDebts += invoiceTotalDebts;
+      paidDebts += invoicePaidDebts;
+      unpaidDebts += invoiceUnpaidDebts;
+
       final result = {
         'totalIncome': totalIncome,
         'cafeIncome': cafeIncome,
@@ -186,6 +274,13 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
         'totalCount': totalCount.toDouble(),
         'cafeCount': cafeCount.toDouble(),
         'playstationCount': playstationCount.toDouble(),
+        'invoiceCount': invoiceCount,
+        'invoiceValue': invoiceValue,
+        'invoiceCollected': invoiceCollected,
+        'invoiceRemaining': invoiceRemaining,
+        'invoicePaidCount': invoicePaidCount,
+        'invoicePartialCount': invoicePartialCount,
+        'invoiceUnpaidCount': invoiceUnpaidCount,
       };
 
       // 3. AUTO-CACHE: Save the calculated summary to Firestore for future O(1) access
@@ -239,6 +334,13 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
             'totalCount': summary.transactionCount.toDouble(),
             'cafeCount': summary.cafeCount.toDouble(),
             'playstationCount': summary.playstationCount.toDouble(),
+            'invoiceCount': summary.invoiceCount,
+            'invoiceValue': summary.invoiceValue,
+            'invoiceCollected': summary.invoiceCollected,
+            'invoiceRemaining': summary.invoiceRemaining,
+            'invoicePaidCount': summary.invoicePaidCount,
+            'invoicePartialCount': summary.invoicePartialCount,
+            'invoiceUnpaidCount': summary.invoiceUnpaidCount,
           };
         }
       }

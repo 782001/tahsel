@@ -326,12 +326,11 @@ class _ActiveSessionCardState extends State<ActiveSessionCard> {
                             const SizedBox(height: 4),
                             Text(
                               digitalTimerText,
-                              style: TextStyle(
+                              style: TextStyles.customStyle(
                                 color: AppColors.black,
                                 fontWeight: FontWeight.w800,
                                 fontSize: 22,
-                                fontFamily:
-                                    'monospace', // Monospaced digital clock style
+                 
                               ),
                             ),
                             Text(

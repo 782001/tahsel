@@ -4,20 +4,48 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 
-enum QuickAddMode { playStation, shop }
+enum QuickAddMode { playStation, shop, invoice }
 
 class QuickAddModeSelector extends StatelessWidget {
   final QuickAddMode selectedMode;
   final ValueChanged<QuickAddMode> onModeChanged;
+  final bool isShop;
 
   const QuickAddModeSelector({
     super.key,
     required this.selectedMode,
     required this.onModeChanged,
+    this.isShop = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (isShop) {
+      // Shop account: Shop sale + Invoice side by side
+      return Row(
+        children: [
+          Expanded(
+            child: _ModeCard(
+              title: AppStrings.shop.tr(),
+              icon: Icons.storefront,
+              isSelected: selectedMode == QuickAddMode.shop,
+              onTap: () => onModeChanged(QuickAddMode.shop),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: _ModeCard(
+              title: AppStrings.invoiceQuickAction.tr(),
+              icon: Icons.receipt_long_rounded,
+              isSelected: selectedMode == QuickAddMode.invoice,
+              onTap: () => onModeChanged(QuickAddMode.invoice),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Cafe / PS account: Shop + PlayStation row (no invoice entry point)
     return Row(
       children: [
         Expanded(
@@ -90,9 +118,8 @@ class _ModeCard extends StatelessWidget {
                 children: [
                   Icon(
                     icon,
-                    color: isSelected
-                        ? AppColors.whiteColor
-                        : AppColors.stitchBlue,
+                    color:
+                        isSelected ? AppColors.whiteColor : AppColors.stitchBlue,
                     size: 32,
                   ),
                   const SizedBox(height: 12),
@@ -101,9 +128,7 @@ class _ModeCard extends StatelessWidget {
                     style: TextStyles.customStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
-                      color: isSelected
-                          ? AppColors.whiteColor
-                          : AppColors.black,
+                      color: isSelected ? AppColors.whiteColor : AppColors.black,
                     ),
                   ),
                 ],
