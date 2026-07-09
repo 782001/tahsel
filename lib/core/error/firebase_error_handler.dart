@@ -1,7 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
-import '../services/injection_container.dart';
+
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
+import '../services/injection_container.dart';
 import '../utils/app_logger.dart';
 
 class FirebaseErrorHandler {
@@ -51,6 +52,12 @@ class FirebaseErrorHandler {
   static String _getErrorCode(dynamic e) {
     if (e is FirebaseAuthException) return e.code;
     if (e is FirebaseException) return e.code;
+    return e.toString();
+  }
+
+  static String getMessage(dynamic e) {
+    if (e is FirebaseAuthException) return e.message ?? e.code;
+    if (e is FirebaseException) return e.message ?? e.code;
     return e.toString();
   }
 }

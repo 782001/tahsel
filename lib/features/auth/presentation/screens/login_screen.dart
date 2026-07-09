@@ -8,7 +8,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
-import 'package:tahsel/core/services/whatsapp_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/assets.dart';
@@ -341,29 +340,32 @@ class _LoginScreenState extends State<LoginScreen> {
                                             ),
                                             GestureDetector(
                                               onTap: () async {
-                                                final success =
-                                                    await WhatsAppService.sendMessage(
-                                                      phoneNumber: AppStrings
-                                                          .supportPhoneNumber,
-                                                      message:
-                                                          "مرحبا اريد الحصول علي حساب في برنامج تحصيل",
-                                                    );
-                                                if (mounted && !success) {
-                                                  ScaffoldMessenger.of(
-                                                    context,
-                                                  ).showSnackBar(
-                                                    SnackBar(
-                                                      content: Text(
-                                                        AppStrings
-                                                            .whatsappNotInstalled
-                                                            .tr(),
-                                                      ),
-                                                    ),
-                                                  );
-                                                }
+                                                // final success =
+                                                //     await WhatsAppService.sendMessage(
+                                                //       phoneNumber: AppStrings
+                                                //           .supportPhoneNumber,
+                                                //       message:
+                                                //           "مرحبا اريد الحصول علي حساب في برنامج تحصيل",
+                                                //     );
+                                                // if (mounted && !success) {
+                                                //   ScaffoldMessenger.of(
+                                                //     context,
+                                                //   ).showSnackBar(
+                                                //     SnackBar(
+                                                //       content: Text(
+                                                //         AppStrings
+                                                //             .whatsappNotInstalled
+                                                //             .tr(),
+                                                //       ),
+                                                //     ),
+                                                //   );
+                                                // }
+                                                Navigator.of(context).pushNamed(
+                                                  AppRoutes.createAccount,
+                                                );
                                               },
                                               child: Text(
-                                                AppStrings.contactManager.tr(),
+                                                AppStrings.createNewAccount.tr(),
                                                 style:
                                                     TextStyles.customStyle(
                                                       color: AppColors

@@ -19,6 +19,21 @@ class AppStrings {
   static String currentLang = "ar";
   static String userToken = '';
   static String userType = 'cafe';
+  static String userCreatedSuccessfully = 'user_created_successfully';
+  static String failedToCreateUser = 'failed_to_create_user';
+  static const String fullName = "full_name";
+  static const String userTypeTitle = "user_type";
+  static const String userTypeCafe = "user_type_cafe";
+  static const String userTypeShop = "user_type_shop";
+  static const String platformType = "platform_type";
+  static const String platformTypeMobile = "platform_type_mobile";
+  static const String platformTypeDesktop = "platform_type_desktop";
+  static const String platformTypeBoth = "platform_type_both";
+
+  static const String warning = 'warning';
+  static const String platformConflictMsg = 'platform_conflict_msg';
+  static const String platformConflictChosen = 'platform_conflict_chosen';
+  static const String platformConflictConfirm = 'platform_conflict_confirm';
 
   /// Central support phone number — change here to update all WhatsApp links.
   static const String supportPhoneNumber = '+201028341201';
@@ -155,7 +170,7 @@ class AppStrings {
   static const String welcomeBack = "welcome_back";
   static const String emailAddress = "email_address";
   static const String password = "password";
-  static const String contactManager = "contact_manager";
+  static const String createNewAccount = "create_new_account";
   static const String noAccount = "no_account";
   static const String noCustomerDebts = "no_customer_debts";
   static const String validationEmailRequired = "validation_email_required";
@@ -721,7 +736,8 @@ class AppStrings {
   static const String invoiceNoPayments = "invoice_no_payments";
   static const String invoiceRemainingAmount = "invoice_remaining_amount";
   static const String invoiceTotalPaid = "invoice_total_paid";
-  static const String invoiceItemsSectionDetail = "invoice_items_section_detail";
+  static const String invoiceItemsSectionDetail =
+      "invoice_items_section_detail";
   static const String invoicePaymentValidation = "invoice_payment_validation";
   static const String invoicePaymentExceedsRemaining =
       "invoice_payment_exceeds_remaining";
@@ -737,7 +753,8 @@ class AppStrings {
   static const String invoiceSaveAsDebt = "invoice_save_as_debt";
   static const String invoiceAutoDebtNotice = "invoice_auto_debt_notice";
   static const String invoiceLinkedToDebt = "invoice_linked_to_debt";
-  static const String invoiceCustomerNameRequired = "invoice_customer_name_required";
+  static const String invoiceCustomerNameRequired =
+      "invoice_customer_name_required";
   static const String invoiceEditTitle = "invoice_edit_title";
   static const String invoiceSaveEdit = "invoice_save_edit";
   static const String invoiceVoid = "invoice_void";
@@ -761,4 +778,3 @@ class AppStrings {
   static const String historyToday = "history_today";
   static const String historyYesterday = "history_yesterday";
 }
-

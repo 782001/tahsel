@@ -1,44 +1,45 @@
 import 'package:flutter/material.dart';
-import 'package:tahsel/features/customer_debts/data/models/debt_item_model.dart';
-import 'package:tahsel/features/debt/presentation/screens/customer_global_payments_screen.dart';
-import 'package:tahsel/features/debt/presentation/screens/monthly_collected_screen.dart';
-import 'package:tahsel/features/debt/presentation/screens/monthly_collected_transactions_screen.dart';
-import 'package:tahsel/features/debt/domain/entities/monthly_collected_amount.dart';
-import 'package:tahsel/features/reports/presentation/cubit/income_cubit/income_details_cubit.dart';
-import 'package:tahsel/features/reports/presentation/cubit/reports_cubit/reports_cubit.dart';
-import 'package:tahsel/features/standard_features/security/presentation/screens/security_warning_screen.dart';
-import 'package:tahsel/features/splash/splash_screen.dart';
-import 'package:tahsel/features/main_layout/presentation/screens/main_layout_screen.dart';
-import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
-import 'package:tahsel/features/auth/presentation/screens/login_screen.dart';
-import 'package:tahsel/core/services/injection_container.dart' as di;
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tahsel/shared/widgets/fields/text_widget.dart';
-import 'package:tahsel/features/expenses/presentation/screens/add_expense_screen.dart';
-import 'package:tahsel/features/reports/presentation/screens/income_details_screen.dart';
-import 'package:tahsel/features/debt/presentation/screens/debt_details_report_screen.dart';
+import 'package:tahsel/core/services/injection_container.dart' as di;
+import 'package:tahsel/features/create_account/presentation/screens/users/create_account_screen.dart';
+import 'package:tahsel/features/auth/presentation/screens/login_screen.dart';
+import 'package:tahsel/features/customer/presentation/screens/customer_report_details_screen.dart';
+import 'package:tahsel/features/customer/presentation/screens/customers_list_screen.dart';
+import 'package:tahsel/features/customer_debts/data/models/debt_item_model.dart';
+import 'package:tahsel/features/debt/domain/entities/monthly_collected_amount.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_details/debt_details_cubit.dart';
 import 'package:tahsel/features/debt/presentation/cubit/global_payments/global_payments_cubit.dart';
-import 'package:tahsel/features/customer/presentation/screens/customers_list_screen.dart';
-import 'package:tahsel/features/customer/presentation/screens/customer_report_details_screen.dart';
-import 'package:tahsel/features/my_debts/presentation/screens/add_my_debt_screen.dart';
-import 'package:tahsel/features/my_debts/presentation/screens/my_debt_details_screen.dart';
-import 'package:tahsel/features/my_debts/presentation/screens/my_debt_details_report_screen.dart';
-import 'package:tahsel/features/my_debts/domain/entities/my_debt_person_entity.dart';
-import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_cubit.dart';
-import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_report_cubit.dart';
+import 'package:tahsel/features/debt/presentation/screens/customer_global_payments_screen.dart';
+import 'package:tahsel/features/debt/presentation/screens/debt_details_report_screen.dart';
+import 'package:tahsel/features/debt/presentation/screens/monthly_collected_screen.dart';
+import 'package:tahsel/features/debt/presentation/screens/monthly_collected_transactions_screen.dart';
 import 'package:tahsel/features/employee/domain/entities/employee_entity.dart';
 import 'package:tahsel/features/employee/presentation/cubit/employee_cubit.dart';
-import 'package:tahsel/features/employee/presentation/screens/employee_list_screen.dart';
 import 'package:tahsel/features/employee/presentation/screens/employee_details_screen.dart';
+import 'package:tahsel/features/employee/presentation/screens/employee_list_screen.dart';
 import 'package:tahsel/features/employee/presentation/screens/employee_reports_screen.dart';
-import 'package:tahsel/features/standard_features/security/presentation/screens/access_restricted_screen.dart';
-import 'package:tahsel/features/standard_features/security/presentation/screens/subscription_expired_screen.dart';
+import 'package:tahsel/features/expenses/presentation/screens/add_expense_screen.dart';
+import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_cubit.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_history_cubit.dart';
 import 'package:tahsel/features/invoice/presentation/screens/create_invoice_screen.dart';
 import 'package:tahsel/features/invoice/presentation/screens/invoice_detail_screen.dart';
-import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
+import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
+import 'package:tahsel/features/main_layout/presentation/screens/main_layout_screen.dart';
+import 'package:tahsel/features/my_debts/domain/entities/my_debt_person_entity.dart';
+import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_cubit.dart';
+import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_report_cubit.dart';
+import 'package:tahsel/features/my_debts/presentation/screens/add_my_debt_screen.dart';
+import 'package:tahsel/features/my_debts/presentation/screens/my_debt_details_report_screen.dart';
+import 'package:tahsel/features/my_debts/presentation/screens/my_debt_details_screen.dart';
+import 'package:tahsel/features/reports/presentation/cubit/income_cubit/income_details_cubit.dart';
+import 'package:tahsel/features/reports/presentation/cubit/reports_cubit/reports_cubit.dart';
+import 'package:tahsel/features/reports/presentation/screens/income_details_screen.dart';
+import 'package:tahsel/features/splash/splash_screen.dart';
+import 'package:tahsel/features/standard_features/security/presentation/screens/access_restricted_screen.dart';
+import 'package:tahsel/features/standard_features/security/presentation/screens/security_warning_screen.dart';
+import 'package:tahsel/features/standard_features/security/presentation/screens/subscription_expired_screen.dart';
+import 'package:tahsel/shared/widgets/fields/text_widget.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -46,6 +47,7 @@ class AppRoutes {
   static const String splash = '/';
   static const String mainLayout = '/main-layout';
   static const String login = '/login';
+  static const String createAccount = '/create-account';
   static const String securityWarning = '/security-warning';
   static const String accessRestricted = '/access-restricted';
   static const String subscriptionExpired = '/subscription-expired';
@@ -113,7 +115,8 @@ class AppRoutes {
         final bool showPaymentImmediately;
         if (args is Map<String, dynamic>) {
           invoice = args['invoice'] as InvoiceEntity;
-          showPaymentImmediately = args['showPaymentImmediately'] as bool? ?? false;
+          showPaymentImmediately =
+              args['showPaymentImmediately'] as bool? ?? false;
         } else {
           invoice = args as InvoiceEntity;
           showPaymentImmediately = false;
@@ -144,6 +147,8 @@ class AppRoutes {
         );
       case login:
         return MaterialPageRoute(builder: (_) => const LoginScreen());
+      case createAccount:
+        return MaterialPageRoute(builder: (_) => const CreateAccountScreen());
       case securityWarning:
         final args = settings.arguments as Map<String, dynamic>?;
         return MaterialPageRoute(

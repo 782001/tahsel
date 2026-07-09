@@ -29,6 +29,11 @@ class NavigatorService {
     );
   }
 
+  /// Push replacement named
+  Future<T?> pushReplacementNamed<T, TO>(String routeName) {
+    return navigatorKey.currentState!.pushReplacementNamed<T, TO>(routeName);
+  }
+
   /// Push named route
   Future<T?> pushNamed<T>(String routeName) {
     return navigatorKey.currentState!.pushNamed<T>(routeName);

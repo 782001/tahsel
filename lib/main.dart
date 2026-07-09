@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'dart:ui';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:window_manager/window_manager.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:tahsel/core/config/locale/app_localizations_setup.dart';
@@ -15,6 +15,7 @@ import 'package:tahsel/core/services/navigator_service.dart';
 import 'package:tahsel/core/services/security_service.dart';
 import 'package:tahsel/core/utils/app_constants.dart';
 import 'package:tahsel/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:tahsel/features/create_account/presentation/cubit/create_account/create_account_cubit.dart';
 import 'package:tahsel/features/customer/presentation/cubit/customer_cubit.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_cubit.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
@@ -23,14 +24,15 @@ import 'package:tahsel/features/offline_sync/presentation/cubit/offline_sync_cub
 import 'package:tahsel/features/operation/presentation/cubit/operation_cubit.dart';
 import 'package:tahsel/features/operation/presentation/cubit/ps_session_cubit.dart';
 import 'package:tahsel/features/product/presentation/cubit/product_cubit.dart';
-import 'package:tahsel/features/update/presentation/cubit/update_cubit.dart';
 import 'package:tahsel/features/standard_features/error/presentation/screens/error_screen.dart';
 import 'package:tahsel/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/no_internet.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_cubit.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_state.dart';
+import 'package:tahsel/features/update/presentation/cubit/update_cubit.dart';
 import 'package:tahsel/firebase_options.dart';
 import 'package:tahsel/routes/app_routes.dart';
+import 'package:window_manager/window_manager.dart';
 
 class AppScrollBehavior extends MaterialScrollBehavior {
   @override
@@ -94,6 +96,7 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) => di.sl<AuthCubit>()),
+        BlocProvider(create: (_) => sl<CreateAccountCubit>()),
         BlocProvider(create: (context) => di.sl<LocaleCubit>()..getSavedLang()),
         BlocProvider(create: (context) => di.sl<ThemeCubit>()),
         BlocProvider(create: (context) => di.sl<ConnectivityCubit>()),
