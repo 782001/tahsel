@@ -16,6 +16,8 @@ class AppStrings {
   static const String login = "login";
   static const String noData = "no_data";
   static const String tryAgain = "tryAgain";
+  static const String validationFieldRequired = "validation_field_required";
+  static const String projectName = "project_name";
   static String currentLang = "ar";
   static String userToken = '';
   static String userType = 'cafe';
@@ -216,7 +218,6 @@ class AppStrings {
   static const String operationSuccess = "operation_success";
   static const String operationFailed = "operation_failed";
   static const String userNotFound = "user_not_found";
-  static const String validationFieldRequired = "validation_field_required";
   static const String validationInvalidAmount = "validation_invalid_amount";
   static const String validationCustomerNameRequired =
       "validation_customer_name_required";

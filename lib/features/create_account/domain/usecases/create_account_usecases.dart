@@ -17,6 +17,7 @@ class CreateUserParams {
   final String password;
   final String fullName;
   final String? phoneNumber;
+  final String? projectName;
   final int subscriptionDays;
   final String userType;
   final String platformType;
@@ -26,6 +27,7 @@ class CreateUserParams {
     required this.password,
     required this.fullName,
     required this.phoneNumber,
+    required this.projectName,
     this.subscriptionDays = 0,
     this.userType = 'cafe',
     this.platformType = 'mobile',
@@ -36,6 +38,7 @@ class CreateUserParams {
     'password': password,
     'fullName': fullName,
     'phoneNumber': phoneNumber,
+    'projectName': projectName,
     'subscriptionDays': subscriptionDays,
     'userType': userType,
     'platformType': platformType,

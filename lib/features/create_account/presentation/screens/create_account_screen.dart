@@ -25,6 +25,7 @@ class CreateAccountScreen extends StatefulWidget {
 
 class _CreateAccountScreenState extends State<CreateAccountScreen> {
   final _nameController = TextEditingController();
+  final _projectNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -38,6 +39,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _projectNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
@@ -327,6 +329,23 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                       ),
                                       SizedBox(height: isDesktop ? 24 : 24.h),
 
+                                      // Project Name Field
+                                      CustomTextFormField(
+                                        labelText: AppStrings.projectName.tr(),
+                                        controller: _projectNameController,
+                                        keyboardType: TextInputType.text,
+                                        hintText: 'اسم مشروعك',
+                                        prefixIcon: Icons.storefront_outlined,
+                                        validator: (value) {
+                                          if (value == null || value.isEmpty) {
+                                            return AppStrings
+                                                .validationFieldRequired
+                                                .tr();
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                      SizedBox(height: isDesktop ? 24 : 24.h),
                                       // Full Name Field
                                       CustomTextFormField(
                                         labelText: AppStrings.fullName.tr(),
@@ -593,6 +612,10 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                                                   .text,
                                                           fullName:
                                                               _nameController
+                                                                  .text
+                                                                  .trim(),
+                                                          projectName:
+                                                              _projectNameController
                                                                   .text
                                                                   .trim(),
                                                           phoneNumber:
