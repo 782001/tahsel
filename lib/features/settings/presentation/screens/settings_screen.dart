@@ -3,17 +3,18 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/storage/secure_storage_helper.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/delete_account_confirmation_dialog.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:tahsel/features/auth/presentation/cubit/auth_state.dart';
 import 'package:tahsel/features/settings/presentation/widgets/appearance_card.dart';
-import 'package:tahsel/features/settings/presentation/widgets/delete_account_tile.dart';
 import 'package:tahsel/features/settings/presentation/widgets/language_option.dart';
 import 'package:tahsel/features/settings/presentation/widgets/logout_button.dart';
 import 'package:tahsel/features/settings/presentation/widgets/section_header.dart';
@@ -42,6 +43,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       });
     });
     super.initState();
+  }
+
+  void _shareApp() {
+    SharePlus.instance.share(ShareParams(text: AppStrings.shareMessage.tr()));
   }
 
   @override
@@ -282,7 +287,80 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                               // Account Section
                               SectionHeader(title: AppStrings.account.tr()),
-                              const DeleteAccountTile(),
+                              InkWell(
+                                onTap: () async {
+                                  final shouldDelete = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) =>
+                                        const DeleteAccountConfirmationDialog(),
+                                  );
+
+                                  if (shouldDelete ?? false) {
+                                    if (context.mounted) {
+                                      context.read<AuthCubit>().deleteAccount();
+                                    }
+                                  }
+                                },
+                                borderRadius: BorderRadius.circular(12.r),
+                                child: Container(
+                                  padding: EdgeInsets.all(
+                                    isDesktop ? 16 : 14.w,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.whiteColor,
+                                    borderRadius: BorderRadius.circular(12.r),
+                                    border: Border.all(
+                                      color: AppColors.veryLightGrey,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      CircleAvatar(
+                                        backgroundColor: AppColors.error
+                                            .withValues(alpha: 0.1),
+                                        radius: 20.r,
+                                        child: Icon(
+                                          Icons.person_remove_rounded,
+                                          color: AppColors.error,
+                                        ),
+                                      ),
+                                      SizedBox(width: isDesktop ? 16 : 16.w),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              AppStrings.deleteAccount.tr(),
+                                              style: TextStyles.customStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.blackReal,
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              height: isDesktop ? 4 : 4.h,
+                                            ),
+                                            Text(
+                                              AppStrings.deleteAccountWarning
+                                                  .tr(),
+                                              style: TextStyles.customStyle(
+                                                fontSize: 12,
+                                                color: AppColors.error,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.arrow_forward_ios_rounded,
+                                        size: 16,
+                                        color: AppColors.sandText,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                               SizedBox(height: isDesktop ? 32 : 32.h),
 
                               // Official Website Section
@@ -364,6 +442,68 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     ),
                                   ),
                                 ),
+                              SizedBox(height: isDesktop ? 32 : 32.h),
+                              SectionHeader(title: AppStrings.shareApp.tr()),
+                              InkWell(
+                                onTap: _shareApp,
+                                borderRadius: BorderRadius.circular(12.r),
+                                child: Container(
+                                  padding: EdgeInsets.all(
+                                    isDesktop ? 16 : 14.w,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.whiteColor,
+                                    borderRadius: BorderRadius.circular(12.r),
+                                    border: Border.all(
+                                      color: AppColors.veryLightGrey,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      CircleAvatar(
+                                        backgroundColor: AppColors.primaryColor
+                                            .withValues(alpha: 0.1),
+                                        radius: 20.r,
+                                        child: Icon(
+                                          Icons.share_rounded,
+                                          color: AppColors.primaryColor,
+                                        ),
+                                      ),
+                                      SizedBox(width: 16.w),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              AppStrings.shareAppWithFriends
+                                                  .tr(),
+                                              style: TextStyles.customStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.blackReal,
+                                              ),
+                                            ),
+                                            SizedBox(height: 4.h),
+                                            Text(
+                                              AppStrings.shareAppDesc.tr(),
+                                              style: TextStyles.customStyle(
+                                                fontSize: 12,
+                                                color: AppColors.sandText,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.arrow_forward_ios_rounded,
+                                        size: 16,
+                                        color: AppColors.sandText,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                               SizedBox(height: isDesktop ? 32 : 32.h),
 
                               // Logout button

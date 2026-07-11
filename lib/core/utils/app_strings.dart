@@ -698,6 +698,10 @@ class AppStrings {
   static const String deleteAccountFailed = "delete_account_failed";
   static const String officialWebsite = "officialWebsite";
   static const String officialWebsiteDesc = "officialWebsiteDesc";
+  static const String shareApp = "share_app";
+  static const String shareAppDesc = "share_app_desc";
+  static const String shareAppWithFriends = "share_app_with_friends";
+  static const String shareMessage = "share_message";
 
   // Invoices
   static const String invoices = "invoices";
