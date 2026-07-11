@@ -690,7 +690,7 @@
   "history_today": "Today",
   "history_yesterday": "Yesterday",
   "invoice_void_notice": "The invoice has been cancelled, please pay the prepaid amount and its value {0}",
-
+  "invoice_paid_notice": "The total amount due for the invoice has been modified, therefore the outstanding amount must be paid",
   "share_app": "Share App",
   "share_app_desc": "Share Android, iOS & Windows links at once",
   "share_app_with_friends": "Share App with Friends",

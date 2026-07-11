@@ -784,4 +784,5 @@ class AppStrings {
   static const String historyToday = "history_today";
   static const String historyYesterday = "history_yesterday";
   static const String invoiceVoidNotice = "invoice_void_notice";
+  static const String invoicePaidNotice = "invoice_paid_notice";
 }

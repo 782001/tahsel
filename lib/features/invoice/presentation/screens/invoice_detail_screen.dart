@@ -356,6 +356,45 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                           ),
 
                         const SizedBox(height: 20),
+                        if (_invoice.status == InvoiceStatus.paid &&
+                            _invoice.totalPaid > _invoice.totalAmount)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.info.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppColors.info.withValues(alpha: 0.3),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.info_outline_rounded,
+                                    size: 16,
+                                    color: AppColors.info,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      "${AppStrings.invoicePaidNotice.tr()}   ${(_invoice.totalPaid - _invoice.totalAmount).toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
+                                      style: TextStyles.customStyle(
+                                        fontSize: 12,
+                                        color: AppColors.info,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                        const SizedBox(height: 20),
 
                         // ── Edit History Timeline ─────────────────────
                         _SectionTitle(title: AppStrings.invoiceHistory.tr()),
