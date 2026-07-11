@@ -192,7 +192,8 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
     ).pushNamed(AppRoutes.invoiceDetail, arguments: invoice);
     if (!mounted) return;
     _searchController.clear();
-    cubit.fetchInvoices(AppStrings.userToken);
+    // Force a fresh server read so updated/voided status is always visible.
+    cubit.fetchInvoices(AppStrings.userToken, forceRefresh: true);
   }
 }
 

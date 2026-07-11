@@ -202,20 +202,64 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
         .collection('users/${invoice.uid}/invoices')
         .doc(invoice.id);
 
-    // Only overwrite safe fields — payments, status, createdAt are preserved
-    // via merge so they cannot be accidentally cleared.
     final items = invoice.items
         .map((i) => InvoiceItemModel.fromEntity(i).toMap())
         .toList();
 
-    await ref.set({
-      'customerName': invoice.customerName,
-      'customerPhone': invoice.customerPhone,
-      'ledgerNumber': invoice.ledgerNumber,
-      'notes': invoice.notes,
-      'items': items,
-      'lastUpdatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    // Recalculate totalAmount from the updated items so Firestore stays in sync.
+    final newTotalAmount = invoice.totalAmount;
+
+    // Use a transaction so we can also recalculate status from the live payments.
+    await firestore.runTransaction((txn) async {
+      final snapshot = await txn.get(ref);
+      if (!snapshot.exists) return;
+
+      final data = snapshot.data()!;
+      _normalizeDates(data);
+      data['id'] = snapshot.id;
+
+      final existing = InvoiceModel.fromMap(data);
+
+      // Do not touch voided invoices — their status must stay 'voided'.
+      if (existing.status == InvoiceStatus.voided) {
+        txn.update(ref, {
+          'customerName': invoice.customerName,
+          'customerPhone': invoice.customerPhone,
+          'ledgerNumber': invoice.ledgerNumber,
+          'notes': invoice.notes,
+          'items': items,
+          'totalAmount': newTotalAmount,
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        });
+        return;
+      }
+
+      // Recalculate status based on the new totalAmount and existing payments.
+      final totalPaid = existing.payments.fold<double>(
+        0.0,
+        (acc, p) => acc + p.amount,
+      );
+      final remaining = (newTotalAmount - totalPaid).clamp(0.0, double.infinity);
+      final String newStatus;
+      if (remaining <= 0 && newTotalAmount > 0) {
+        newStatus = InvoiceStatus.paid.name;
+      } else if (totalPaid > 0) {
+        newStatus = InvoiceStatus.partial.name;
+      } else {
+        newStatus = InvoiceStatus.pending.name;
+      }
+
+      txn.update(ref, {
+        'customerName': invoice.customerName,
+        'customerPhone': invoice.customerPhone,
+        'ledgerNumber': invoice.ledgerNumber,
+        'notes': invoice.notes,
+        'items': items,
+        'totalAmount': newTotalAmount,
+        'status': newStatus,
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      });
+    });
   }
 
   @override
