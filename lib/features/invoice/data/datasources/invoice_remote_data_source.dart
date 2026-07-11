@@ -202,7 +202,21 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
     // Recalculate totalAmount from the updated items so Firestore stays in sync.
     final newTotalAmount = invoice.totalAmount;
 
-    // Use a transaction so we can also recalculate status from the live payments.
+    // Pre-read the invoice BEFORE the transaction to capture the old total and
+    // linkedDebtId. This avoids needing to read a subcollection inside the
+    // transaction, which causes a platform-thread crash on Windows desktop.
+    String? capturedDebtId;
+    double oldInvoiceTotal = 0;
+
+    final preSnap = await ref.get();
+    if (preSnap.exists) {
+      final preData = preSnap.data()!;
+      capturedDebtId =
+          (preData['linkedDebtId'] as String?) ?? 'debt_inv_${invoice.id}';
+      oldInvoiceTotal = (preData['totalAmount'] as num?)?.toDouble() ?? 0.0;
+    }
+
+    // Use a transaction to atomically update the invoice + linked debt.
     await firestore.runTransaction((txn) async {
       final snapshot = await txn.get(ref);
       if (!snapshot.exists) return;
@@ -256,7 +270,7 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
         newStatus = InvoiceStatus.pending.name;
       }
 
-      // Update the linked baseline Debt entity if it exists in the database.
+      // Update the linked baseline Debt entity if it exists.
       if (debtSnap.exists) {
         txn.update(debtRef, {
           'totalAmount': newTotalAmount,
@@ -282,7 +296,29 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
         'lastUpdatedAt': FieldValue.serverTimestamp(),
       });
     });
+
+    // ── Post-transaction: update _initial payment record ─────────────────────
+    // This MUST be outside the transaction to avoid a Firestore platform-thread
+    // crash on Windows desktop when reading a subcollection inside a transaction.
+    // Only applies when the new total is strictly greater than the old total.
+    if (capturedDebtId != null && newTotalAmount > oldInvoiceTotal) {
+      final initialPayRef = firestore
+          .collection('users/${invoice.uid}/debts')
+          .doc(capturedDebtId)
+          .collection('payments')
+          .doc('${capturedDebtId}_initial');
+
+      final initialSnap = await initialPayRef.get();
+      if (initialSnap.exists) {
+        await initialPayRef.update({
+          'amountPaid': newTotalAmount,
+          'remainingAmount': newTotalAmount,
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+    }
   }
+
 
   @override
   Future<void> voidInvoice(String uid, String invoiceId) async {
