@@ -110,8 +110,11 @@ class InvoiceEntity extends Equatable {
 
   // Future-proof extension fields
   final String? notes;
-  final String? referenceNumber; // External PO / reference
-  final String? linkedDebtId; // If a debt was auto-created from this invoice
+  final String? referenceNumber;
+  final String? linkedDebtId;
+  /// Persisted in Firestore by the debt-sync transaction.
+  /// When present, it takes priority over the computed payments-array total.
+  final double? syncedTotalPaid;
 
   const InvoiceEntity({
     required this.id,
@@ -127,13 +130,16 @@ class InvoiceEntity extends Equatable {
     this.notes,
     this.referenceNumber,
     this.linkedDebtId,
+    this.syncedTotalPaid,
   });
 
   double get totalAmount =>
       items.fold(0.0, (sum, item) => sum + item.total);
 
+  /// If the debt-sync has written a `syncedTotalPaid` value, use it as the
+  /// authoritative paid amount; otherwise fall back to the payments array.
   double get totalPaid =>
-      payments.fold(0.0, (sum, p) => sum + p.amount);
+      syncedTotalPaid ?? payments.fold(0.0, (sum, p) => sum + p.amount);
 
   double get remainingAmount {
     final r = totalAmount - totalPaid;
@@ -156,6 +162,7 @@ class InvoiceEntity extends Equatable {
     String? notes,
     String? referenceNumber,
     String? linkedDebtId,
+    double? syncedTotalPaid,
   }) {
     return InvoiceEntity(
       id: id ?? this.id,
@@ -171,6 +178,7 @@ class InvoiceEntity extends Equatable {
       notes: notes ?? this.notes,
       referenceNumber: referenceNumber ?? this.referenceNumber,
       linkedDebtId: linkedDebtId ?? this.linkedDebtId,
+      syncedTotalPaid: syncedTotalPaid ?? this.syncedTotalPaid,
     );
   }
 
@@ -189,5 +197,6 @@ class InvoiceEntity extends Equatable {
         notes,
         referenceNumber,
         linkedDebtId,
+        syncedTotalPaid,
       ];
 }

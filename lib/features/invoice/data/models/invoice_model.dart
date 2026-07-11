@@ -88,6 +88,7 @@ class InvoiceModel extends InvoiceEntity {
     super.notes,
     super.referenceNumber,
     super.linkedDebtId,
+    super.syncedTotalPaid,
   });
 
   factory InvoiceModel.fromEntity(InvoiceEntity e) => InvoiceModel(
@@ -108,6 +109,7 @@ class InvoiceModel extends InvoiceEntity {
         notes: e.notes,
         referenceNumber: e.referenceNumber,
         linkedDebtId: e.linkedDebtId,
+        syncedTotalPaid: e.syncedTotalPaid,
       );
 
   factory InvoiceModel.fromMap(Map<String, dynamic> map) => InvoiceModel(
@@ -135,6 +137,7 @@ class InvoiceModel extends InvoiceEntity {
         notes: map['notes'] as String?,
         referenceNumber: map['referenceNumber'] as String?,
         linkedDebtId: map['linkedDebtId'] as String?,
+        syncedTotalPaid: (map['syncedTotalPaid'] as num?)?.toDouble(),
       );
 
   /// Converts the model to a plain JSON-safe Map (no Firestore Timestamps).
@@ -156,6 +159,7 @@ class InvoiceModel extends InvoiceEntity {
         'notes': notes,
         'referenceNumber': referenceNumber,
         'linkedDebtId': linkedDebtId,
+        if (syncedTotalPaid != null) 'syncedTotalPaid': syncedTotalPaid,
       };
 
   String toJson() => jsonEncode(toMap());

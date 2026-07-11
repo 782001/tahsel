@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/features/debt/domain/usecases/get_debt_by_id_usecase.dart';
+import 'package:tahsel/features/debt/domain/usecases/get_debt_transactions_future_use_case.dart';
 import 'package:tahsel/features/debt/domain/usecases/pay_item_debt_usecase.dart';
 import 'package:tahsel/features/invoice/data/datasources/invoice_history_remote_data_source.dart';
 import 'package:tahsel/features/invoice/data/datasources/invoice_remote_data_source.dart';
@@ -28,10 +29,10 @@ Future<void> initInvoice() async {
       addDebtUseCase: sl(),
       getDebtByIdUseCase: sl(),
       payItemDebtUseCase: sl(),
-      syncInvoiceFromDebtUseCase: sl(),
       updateInvoiceUseCase: sl(),
       voidInvoiceUseCase: sl(),
       addInvoiceHistoryUseCase: sl(),
+      getDebtTransactionsUseCase: sl(),
     ),
   );
 
@@ -53,13 +54,15 @@ Future<void> initInvoice() async {
   sl.registerLazySingleton(() => LinkDebtToInvoiceUseCase(sl()));
   sl.registerLazySingleton(() => UpdateInvoiceUseCase(sl()));
   sl.registerLazySingleton(() => VoidInvoiceUseCase(sl()));
-  sl.registerLazySingleton(() => SyncInvoiceFromDebtUseCase(sl()));
   // Debt use-cases needed by InvoiceCubit for smart payment routing
   if (!sl.isRegistered<GetDebtByIdUseCase>()) {
     sl.registerLazySingleton(() => GetDebtByIdUseCase(sl()));
   }
   if (!sl.isRegistered<PayItemDebtUseCase>()) {
     sl.registerLazySingleton(() => PayItemDebtUseCase(repository: sl()));
+  }
+  if (!sl.isRegistered<GetDebtTransactionsFutureUseCase>()) {
+    sl.registerLazySingleton(() => GetDebtTransactionsFutureUseCase(sl()));
   }
 
   // History use-cases

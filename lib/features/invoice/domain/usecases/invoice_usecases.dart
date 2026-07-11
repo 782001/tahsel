@@ -129,17 +129,3 @@ class GetInvoicesPaginatedParams {
   });
 }
 
-/// Syncs an invoice's paid/remaining status from its linked Debt record.
-/// Must be called by the Debt module after every payment edit or deletion.
-class SyncInvoiceFromDebtUseCase {
-  final InvoiceRepository repository;
-
-  SyncInvoiceFromDebtUseCase(this.repository);
-
-  Future<Either<Failure, void>> call({
-    required String uid,
-    required String debtId,
-  }) {
-    return repository.syncInvoiceFromDebt(uid: uid, debtId: debtId);
-  }
-}

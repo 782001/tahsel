@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../debt/domain/entities/debt_entity.dart';
 import '../../../debt/domain/usecases/add_debt_usecase.dart';
 import '../../../debt/domain/usecases/get_debt_by_id_usecase.dart';
+import '../../../debt/domain/usecases/get_debt_transactions_future_use_case.dart';
 import '../../../debt/domain/usecases/pay_item_debt_usecase.dart';
 import '../../domain/entities/invoice_entity.dart';
 import '../../domain/usecases/invoice_history_usecases.dart';
@@ -23,10 +24,10 @@ class InvoiceCubit extends Cubit<InvoiceState> {
   final AddDebtUseCase addDebtUseCase;
   final GetDebtByIdUseCase getDebtByIdUseCase;
   final PayItemDebtUseCase payItemDebtUseCase;
-  final SyncInvoiceFromDebtUseCase syncInvoiceFromDebtUseCase;
   final UpdateInvoiceUseCase updateInvoiceUseCase;
   final VoidInvoiceUseCase voidInvoiceUseCase;
   final AddInvoiceHistoryUseCase addInvoiceHistoryUseCase;
+  final GetDebtTransactionsFutureUseCase getDebtTransactionsUseCase;
 
   // ── Search debounce ──────────────────────────────────────────────────────
   Timer? _debounce;
@@ -43,10 +44,10 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     required this.addDebtUseCase,
     required this.getDebtByIdUseCase,
     required this.payItemDebtUseCase,
-    required this.syncInvoiceFromDebtUseCase,
     required this.updateInvoiceUseCase,
     required this.voidInvoiceUseCase,
     required this.addInvoiceHistoryUseCase,
+    required this.getDebtTransactionsUseCase,
   }) : super(InvoiceInitial());
 
   @override
@@ -172,7 +173,23 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     final result = await getInvoiceByIdUseCase(uid, invoiceId);
     result.fold(
       (failure) => emit(InvoiceFailure(failure.message)),
-      (invoice) => emit(InvoiceDetailLoaded(invoice)),
+      (invoice) async {
+        // If the invoice is linked to a debt, fetch the debt's payment
+        // transactions and use them as the authoritative payment history.
+        if (invoice.linkedDebtId != null) {
+          final txResult = await getDebtTransactionsUseCase(
+            GetDebtTransactionsParams(
+              uid: uid,
+              debtId: invoice.linkedDebtId!,
+              forceRefresh: true,
+            ),
+          );
+          final debtTx = txResult.fold((_) => null, (list) => list);
+          emit(InvoiceDetailLoaded(invoice, debtTransactions: debtTx));
+        } else {
+          emit(InvoiceDetailLoaded(invoice));
+        }
+      },
     );
   }
 
@@ -292,15 +309,6 @@ class InvoiceCubit extends Cubit<InvoiceState> {
           }
         }
       }
-
-      // ── After any payment branch: sync invoice status from debt ─────────────
-      // IMPORTANT: Must be awaited so Firestore is updated BEFORE we emit
-      // InvoicePaymentSuccess. Previously this was unawaited, causing the list
-      // screen to still show the old status (e.g. partial) when navigating back.
-      await syncInvoiceFromDebtUseCase(
-        uid: uid,
-        debtId: 'debt_inv_$invoiceId',
-      );
     }
 
     // ── Step 3: notify UI ─────────────────────────────────────────────────────

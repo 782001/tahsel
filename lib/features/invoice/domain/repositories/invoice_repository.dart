@@ -42,11 +42,4 @@ abstract class InvoiceRepository {
 
   /// Irreversibly voids an invoice. Status becomes [InvoiceStatus.voided].
   Future<Either<Failure, void>> voidInvoice(String uid, String invoiceId);
-
-  /// Syncs an invoice's payment status from its linked debt.
-  /// Should be called after any payment mutation in the Debt module.
-  Future<Either<Failure, void>> syncInvoiceFromDebt({
-    required String uid,
-    required String debtId,
-  });
 }

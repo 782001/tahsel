@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
+import '../../../debt/domain/entities/payment_entity.dart';
 import '../../domain/entities/invoice_entity.dart';
 
 abstract class InvoiceState extends Equatable {
@@ -77,11 +78,14 @@ class InvoiceListLoaded extends InvoiceState {
 /// A single invoice was loaded (detail view)
 class InvoiceDetailLoaded extends InvoiceState {
   final InvoiceEntity invoice;
+  /// Payments fetched directly from the linked Debt sub-collection.
+  /// Non-null only when the invoice has a [linkedDebtId].
+  final List<PaymentEntity>? debtTransactions;
 
-  const InvoiceDetailLoaded(this.invoice);
+  const InvoiceDetailLoaded(this.invoice, {this.debtTransactions});
 
   @override
-  List<Object?> get props => [invoice];
+  List<Object?> get props => [invoice, debtTransactions];
 }
 
 /// Payment recorded successfully

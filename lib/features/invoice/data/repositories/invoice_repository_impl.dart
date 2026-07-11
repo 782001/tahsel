@@ -190,16 +190,4 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
     }
   }
 
-  @override
-  Future<Either<Failure, void>> syncInvoiceFromDebt({
-    required String uid,
-    required String debtId,
-  }) async {
-    try {
-      await remoteDataSource.syncInvoiceFromDebt(uid: uid, debtId: debtId);
-      return const Right(null);
-    } catch (e) {
-      return Left(ServerFailure(e.toString()));
-    }
-  }
 }

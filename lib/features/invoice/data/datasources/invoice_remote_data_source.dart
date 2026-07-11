@@ -33,14 +33,6 @@ abstract class InvoiceRemoteDataSource {
 
   /// Marks an invoice as voided. Irreversible.
   Future<void> voidInvoice(String uid, String invoiceId);
-
-  /// Syncs an invoice's paid/remaining totals from its linked debt record.
-  /// Called by the Debt module whenever a payment is edited or deleted.
-  /// The [debtId] must follow the `debt_inv_<invoiceId>` naming convention.
-  Future<void> syncInvoiceFromDebt({
-    required String uid,
-    required String debtId,
-  });
 }
 
 class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
@@ -420,85 +412,6 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
     await batch.commit();
   }
 
-  @override
-  Future<void> syncInvoiceFromDebt({
-    required String uid,
-    required String debtId,
-  }) async {
-    // The debt ID convention used when creating invoice-linked debts is:
-    //   debt_inv_<invoiceId>
-    // Extract the invoiceId from the debtId.
-    const prefix = 'debt_inv_';
-    if (!debtId.startsWith(prefix)) return; // Not an invoice-linked debt
-    final invoiceId = debtId.substring(prefix.length);
-    if (invoiceId.isEmpty) return;
-
-    final debtRef = firestore
-        .collection('users/$uid/debts')
-        .doc(debtId);
-    final invoiceRef = firestore
-        .collection('users/$uid/invoices')
-        .doc(invoiceId);
-
-    await firestore.runTransaction((txn) async {
-      // Read both documents inside the transaction
-      final debtSnap = await txn.get(debtRef);
-      final invoiceSnap = await txn.get(invoiceRef);
-
-      if (!invoiceSnap.exists) return; // Invoice may have been voided/deleted
-
-      final invoiceData = invoiceSnap.data()!;
-      _normalizeDates(invoiceData);
-      invoiceData['id'] = invoiceSnap.id;
-
-      final invoice = InvoiceModel.fromMap(invoiceData);
-
-      // Do not touch voided invoices
-      if (invoice.status == InvoiceStatus.voided) return;
-
-      double totalPaid;
-
-      if (debtSnap.exists) {
-        final debtData = debtSnap.data()!;
-        // ── Single source of truth ──────────────────────────────────────────
-        // debt.paidAmount accumulates ALL payments regardless of origin:
-        //   • Payments recorded via Invoice screen (via payItemDebt)
-        //   • Payments recorded via Debt screen (via payDebt / updatePayment)
-        //
-        // DO NOT add invoice.payments here — every invoice-screen payment is
-        // already reflected in debt.paidAmount, so adding it would double-count.
-        totalPaid = (debtData['paidAmount'] as num?)?.toDouble() ?? 0.0;
-      } else {
-        // Debt was deleted — fall back to the invoice's own payment ledger
-        // as the only remaining source of truth.
-        totalPaid = invoice.payments.fold<double>(
-          0.0,
-          (acc, p) => acc + p.amount,
-        );
-      }
-
-      final totalAmount = invoice.totalAmount;
-      final remaining = (totalAmount - totalPaid).clamp(0.0, double.infinity);
-
-      final String newStatus;
-      if (remaining <= 0) {
-        newStatus = InvoiceStatus.paid.name;
-      } else if (totalPaid > 0) {
-        newStatus = InvoiceStatus.partial.name;
-      } else {
-        newStatus = InvoiceStatus.pending.name;
-      }
-
-      txn.update(invoiceRef, {
-        'status': newStatus,
-        // Persist the canonical totalPaid so the list screen can display the
-        // correct remaining balance without fetching the payments sub-collection.
-        'syncedTotalPaid': totalPaid,
-        'lastUpdatedAt': FieldValue.serverTimestamp(),
-      });
-    });
-  }
-
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -510,6 +423,17 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
     if (data['lastUpdatedAt'] is Timestamp) {
       data['lastUpdatedAt'] =
           (data['lastUpdatedAt'] as Timestamp).toDate().toIso8601String();
+    }
+    // Normalize paidAt inside each payment entry.
+    // Payments added from the Debt module store paidAt as a Firestore Timestamp.
+    if (data['payments'] is List) {
+      final payments = data['payments'] as List<dynamic>;
+      for (final p in payments) {
+        if (p is Map<String, dynamic> && p['paidAt'] is Timestamp) {
+          p['paidAt'] =
+              (p['paidAt'] as Timestamp).toDate().toIso8601String();
+        }
+      }
     }
   }
 }

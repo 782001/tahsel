@@ -437,6 +437,11 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           opSnap = await transaction.get(opRef);
         }
 
+        // Read the linked invoice snapshot (if this is an invoice-linked debt)
+        final invoiceSnap = await _getLinkedInvoiceSnap(
+          transaction, uid, debtRef.id,
+        );
+
         // 2. ALL WRITES SECOND
         final debtData = debtSnap.data() as Map<String, dynamic>;
         final currentPaid = (debtData['paidAmount'] as num).toDouble();
@@ -475,6 +480,16 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           'relatedTo': debtData['customerName'],
           'activityName': debtData['productOrSessionDetails'],
         });
+
+        // ── Invoice Sync (inline, atomic) ──────────────────────────────────
+        _updateLinkedInvoice(
+          transaction,
+          invoiceSnap,
+          newPaidAmount,
+          currentTotal,
+          paymentAmount: payment.amountPaid,
+          debtPaymentId: paymentRef.id,
+        );
 
         // Check if customer became fully paid to decrement customer count
         // If they had only 1 unpaid debt before AND it's now paid
@@ -569,6 +584,16 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           }
         }
 
+        // Read linked invoice snapshots for any invoice-linked debts
+        final Map<String, DocumentSnapshot?> invoiceSnaps = {};
+        for (var doc in snapshot.docs) {
+          final debtId = doc.id;
+          if (invoiceSnaps.containsKey(debtId)) continue;
+          invoiceSnaps[debtId] = await _getLinkedInvoiceSnap(
+            transaction, uid, debtId,
+          );
+        }
+
         // 2. ALL WRITES SECOND
         double remainingToPay = amount;
         final Map<String, Map<String, double>> summaryAccumulator = {};
@@ -637,6 +662,16 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             'relatedTo': debtData['customerName'],
             'activityName': debtData['productOrSessionDetails'],
           });
+
+          // ── Invoice Sync (inline, atomic) ──────────────────────────────
+          _updateLinkedInvoice(
+            transaction,
+            invoiceSnaps[debtRef.id],
+            newPaidAmount,
+            currentTotal,
+            paymentAmount: paymentForThisItem,
+            debtPaymentId: paymentRef.id,
+          );
 
           // Accumulate summary updates:
           // 1. Debt metrics are grouped by debt creation date
@@ -721,6 +756,16 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           }
         }
 
+        // Read linked invoice snapshots for any invoice-linked debts
+        final Map<String, DocumentSnapshot?> invoiceSnaps = {};
+        for (var doc in snapshot.docs) {
+          final debtId = doc.id;
+          if (invoiceSnaps.containsKey(debtId)) continue;
+          invoiceSnaps[debtId] = await _getLinkedInvoiceSnap(
+            transaction, uid, debtId,
+          );
+        }
+
         // 2. ALL WRITES SECOND
         final Map<String, Map<String, double>> summaryAccumulator = {};
 
@@ -772,6 +817,16 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             'relatedTo': debtData['customerName'],
             'activityName': debtData['productOrSessionDetails'],
           });
+
+          // ── Invoice Sync (inline, atomic) ──────────────────────────────
+          _updateLinkedInvoice(
+            transaction,
+            invoiceSnaps[debtRef.id],
+            currentTotal,
+            currentTotal,
+            paymentAmount: amountToPay,
+            debtPaymentId: paymentRef.id,
+          );
 
           // Accumulate summary updates:
           // 1. Debt metrics are grouped by debt creation date
@@ -1285,6 +1340,9 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         final delta = newAmount - targetPayment.amountPaid;
         if (delta == 0) return;
 
+        // Read the linked invoice snapshot DURING reads phase (before any writes)
+        final invoiceSnap = await _getLinkedInvoiceSnap(transaction, uid, debtId);
+
         // Direct Mutation: Update the same item
         transaction.update(paymentRef, {
           'amountPaid': newAmount,
@@ -1408,6 +1466,18 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           }
         }
 
+        // ── Invoice Sync (inline, atomic) ──────────────────────────────────
+        // For payment edits: delta can be positive (increase) or negative (decrease).
+        // Find and update the matching invoice payment entry by debtPaymentId.
+        _updateLinkedInvoice(
+          transaction,
+          invoiceSnap,
+          newPaidAmount,
+          newTotalAmount,
+          debtPaymentIdToEdit: relatedTo == 'payment' ? paymentId : null,
+          editedAmount: relatedTo == 'payment' ? newAmount : null,
+        );
+
         // Write all accumulated summaries
         for (final entry in summaryAccumulator.entries) {
           final summaryRef = firestore
@@ -1494,6 +1564,9 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             throw Exception('delete_not_allowed');
           }
         }
+
+        // Read the linked invoice snapshot DURING the reads phase (before any writes)
+        final invoiceSnap = await _getLinkedInvoiceSnap(transaction, uid, debtId);
 
         // Direct Mutation: Delete the same item
         transaction.delete(paymentRef);
@@ -1604,6 +1677,16 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           }
         }
 
+        // ── Invoice Sync (inline, atomic) ──────────────────────────────────
+        // Deletion: remove the matching invoice payment entry by debtPaymentId.
+        _updateLinkedInvoice(
+          transaction,
+          invoiceSnap,
+          newPaidAmount,
+          newTotalAmount,
+          debtPaymentIdToRemove: relatedTo == 'payment' ? paymentId : null,
+        );
+
         // Write all accumulated summaries
         for (final entry in summaryAccumulator.entries) {
           final summaryRef = firestore
@@ -1644,6 +1727,122 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
       );
     }
   }
+
+  /// Atomically updates the linked Invoice document inside an existing
+  /// Firestore [transaction] whenever the Debt document changes.
+  ///
+  /// IMPORTANT: [invoiceSnap] must be fetched via [transaction.get] BEFORE
+  /// any writes are performed in the transaction (reads-before-writes rule).
+  ///
+  /// - [invoiceSnap]           Pre-fetched invoice snapshot (null if not invoice-linked).
+  /// - [newPaidAmount]         The debt's `paidAmount` AFTER the current operation.
+  /// - [totalAmount]           The debt's `totalAmount` AFTER the current operation.
+  /// - [paymentAmount]         When non-null, a new entry is appended to the invoice's
+  ///                           `payments` array. Pass the debt payment's own [debtPaymentId]
+  ///                           so the entry can be located later for edits/deletes.
+  /// - [debtPaymentId]         The Firestore doc ID of the debt payment.
+  ///                           Required when [paymentAmount] is non-null.
+  /// - [debtPaymentIdToEdit]   When non-null, the existing entry with this debtPaymentId
+  ///                           is updated in-place with [editedAmount].
+  /// - [editedAmount]          The new amount to use when editing an existing entry.
+  /// - [debtPaymentIdToRemove] When non-null, the entry with this debtPaymentId is
+  ///                           removed from the invoice's payments array.
+  void _updateLinkedInvoice(
+    Transaction transaction,
+    DocumentSnapshot? invoiceSnap,
+    double newPaidAmount,
+    double totalAmount, {
+    double? paymentAmount,
+    String? debtPaymentId,
+    String? debtPaymentIdToEdit,
+    double? editedAmount,
+    String? debtPaymentIdToRemove,
+  }) {
+    if (invoiceSnap == null || !invoiceSnap.exists) return;
+
+    final invoiceData = invoiceSnap.data()! as Map<String, dynamic>;
+    final statusStr = invoiceData['status'] as String?;
+    if (statusStr == 'voided') return; // Never mutate a voided invoice
+
+    final remaining = (totalAmount - newPaidAmount).clamp(0.0, double.infinity);
+    final String newStatus;
+    if (remaining <= 0) {
+      newStatus = 'paid';
+    } else if (newPaidAmount > 0) {
+      newStatus = 'partial';
+    } else {
+      newStatus = 'pending';
+    }
+
+    final Map<String, dynamic> updateData = {
+      'status': newStatus,
+      'syncedTotalPaid': newPaidAmount,
+      'lastUpdatedAt': FieldValue.serverTimestamp(),
+    };
+
+    // ── New payment: append a new entry with a stable debtPaymentId link ──
+    if (paymentAmount != null && paymentAmount > 0) {
+      final paymentEntry = {
+        'id': debtPaymentId != null
+            ? 'debt_pmt_$debtPaymentId'
+            : 'debt_pmt_${DateTime.now().millisecondsSinceEpoch}',
+        'debtPaymentId': debtPaymentId,
+        'amount': paymentAmount,
+        'paidAt': Timestamp.now(),
+        'note': null,
+      };
+      updateData['payments'] = FieldValue.arrayUnion([paymentEntry]);
+    }
+
+    // ── Edit: rebuild the payments array with the updated amount ──────────
+    if (debtPaymentIdToEdit != null && editedAmount != null) {
+      final rawPayments = (invoiceData['payments'] as List<dynamic>? ?? []);
+      final rebuilt = rawPayments.map((p) {
+        if (p is Map<String, dynamic> &&
+            p['debtPaymentId'] == debtPaymentIdToEdit) {
+          return {...p, 'amount': editedAmount};
+        }
+        return p;
+      }).toList();
+      updateData['payments'] = rebuilt;
+    }
+
+    // ── Delete: rebuild the payments array without the removed entry ──────
+    if (debtPaymentIdToRemove != null) {
+      final rawPayments = (invoiceData['payments'] as List<dynamic>? ?? []);
+      final rebuilt = rawPayments.where((p) {
+        if (p is Map<String, dynamic>) {
+          return p['debtPaymentId'] != debtPaymentIdToRemove;
+        }
+        return true;
+      }).toList();
+      updateData['payments'] = rebuilt;
+    }
+
+    transaction.update(invoiceSnap.reference, updateData);
+  }
+
+  /// Fetches the linked invoice snapshot for [debtId] within a transaction
+  /// (must be called during the reads phase, before any writes).
+  /// Returns null if [debtId] is not an invoice-linked debt.
+  Future<DocumentSnapshot?> _getLinkedInvoiceSnap(
+    Transaction transaction,
+    String uid,
+    String debtId,
+  ) async {
+    const prefix = 'debt_inv_';
+    if (!debtId.startsWith(prefix)) return null;
+
+    final invoiceId = debtId.substring(prefix.length);
+    if (invoiceId.isEmpty) return null;
+
+    final invoiceRef = firestore
+        .collection('users/$uid/invoices')
+        .doc(invoiceId);
+
+    return transaction.get(invoiceRef);
+  }
+
 
   @override
   Future<PaginatedResult<DebtModel>> getDebtsPaginated(
