@@ -690,6 +690,7 @@
   "history_notes_changed": "تم تغيير محتوى الملاحظات",
   "history_today": "اليوم",
   "history_yesterday": "أمس",
+  "invoice_void_notice": "تم الغاء الفاتوره لذا يرجي سداد المبلغ المدفوع مسبقا وقيمته",
   "share_app": "مشاركة التطبيق",
   "share_app_desc": "شارك روابط أندرويد، آيفون، وويندوز بزر واحد",
   "share_app_with_friends": "أرسل التطبيق لأصدقائك",

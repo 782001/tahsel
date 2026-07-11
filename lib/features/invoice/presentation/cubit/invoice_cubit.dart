@@ -23,6 +23,7 @@ class InvoiceCubit extends Cubit<InvoiceState> {
   final AddDebtUseCase addDebtUseCase;
   final GetDebtByIdUseCase getDebtByIdUseCase;
   final PayItemDebtUseCase payItemDebtUseCase;
+  final SyncInvoiceFromDebtUseCase syncInvoiceFromDebtUseCase;
   final UpdateInvoiceUseCase updateInvoiceUseCase;
   final VoidInvoiceUseCase voidInvoiceUseCase;
   final AddInvoiceHistoryUseCase addInvoiceHistoryUseCase;
@@ -42,6 +43,7 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     required this.addDebtUseCase,
     required this.getDebtByIdUseCase,
     required this.payItemDebtUseCase,
+    required this.syncInvoiceFromDebtUseCase,
     required this.updateInvoiceUseCase,
     required this.voidInvoiceUseCase,
     required this.addInvoiceHistoryUseCase,
@@ -290,6 +292,15 @@ class InvoiceCubit extends Cubit<InvoiceState> {
           }
         }
       }
+
+      // ── After any payment branch: sync invoice status from debt ─────────────
+      // IMPORTANT: Must be awaited so Firestore is updated BEFORE we emit
+      // InvoicePaymentSuccess. Previously this was unawaited, causing the list
+      // screen to still show the old status (e.g. partial) when navigating back.
+      await syncInvoiceFromDebtUseCase(
+        uid: uid,
+        debtId: 'debt_inv_$invoiceId',
+      );
     }
 
     // ── Step 3: notify UI ─────────────────────────────────────────────────────

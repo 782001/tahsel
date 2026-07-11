@@ -28,6 +28,7 @@ Future<void> initInvoice() async {
       addDebtUseCase: sl(),
       getDebtByIdUseCase: sl(),
       payItemDebtUseCase: sl(),
+      syncInvoiceFromDebtUseCase: sl(),
       updateInvoiceUseCase: sl(),
       voidInvoiceUseCase: sl(),
       addInvoiceHistoryUseCase: sl(),

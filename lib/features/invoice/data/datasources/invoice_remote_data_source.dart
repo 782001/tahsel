@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tahsel/core/utils/summary_helper.dart';
 import '../../domain/entities/invoice_entity.dart';
 import '../models/invoice_model.dart';
 
@@ -220,6 +221,12 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
 
       final existing = InvoiceModel.fromMap(data);
 
+      final debtId = existing.linkedDebtId ?? 'debt_inv_${invoice.id}';
+      final debtRef = firestore
+          .collection('users/${invoice.uid}/debts')
+          .doc(debtId);
+      final debtSnap = await txn.get(debtRef);
+
       // Do not touch voided invoices — their status must stay 'voided'.
       if (existing.status == InvoiceStatus.voided) {
         txn.update(ref, {
@@ -235,10 +242,18 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
       }
 
       // Recalculate status based on the new totalAmount and existing payments.
-      final totalPaid = existing.payments.fold<double>(
-        0.0,
-        (acc, p) => acc + p.amount,
-      );
+      // Use debt.paidAmount if the debt exists, as it is the single source of truth.
+      double totalPaid;
+      if (debtSnap.exists) {
+        final debtData = debtSnap.data()!;
+        totalPaid = (debtData['paidAmount'] as num?)?.toDouble() ?? 0.0;
+      } else {
+        totalPaid = existing.payments.fold<double>(
+          0.0,
+          (acc, p) => acc + p.amount,
+        );
+      }
+
       final remaining = (newTotalAmount - totalPaid).clamp(0.0, double.infinity);
       final String newStatus;
       if (remaining <= 0 && newTotalAmount > 0) {
@@ -249,6 +264,20 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
         newStatus = InvoiceStatus.pending.name;
       }
 
+      // Update the linked baseline Debt entity if it exists in the database.
+      if (debtSnap.exists) {
+        txn.update(debtRef, {
+          'totalAmount': newTotalAmount,
+          'remainingAmount': remaining,
+          'isPaid': remaining <= 0,
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+          if (invoice.customerName != null)
+            'customerName': (invoice.customerName ?? '').replaceAll('/', ' ').trim(),
+          if (invoice.customerPhone != null)
+            'phoneNumber': invoice.customerPhone,
+        });
+      }
+
       txn.update(ref, {
         'customerName': invoice.customerName,
         'customerPhone': invoice.customerPhone,
@@ -257,6 +286,7 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
         'items': items,
         'totalAmount': newTotalAmount,
         'status': newStatus,
+        'syncedTotalPaid': totalPaid,
         'lastUpdatedAt': FieldValue.serverTimestamp(),
       });
     });
@@ -264,11 +294,130 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
 
   @override
   Future<void> voidInvoice(String uid, String invoiceId) async {
-    final ref = firestore.collection('users/$uid/invoices').doc(invoiceId);
-    await ref.update({
+    final invoiceRef =
+        firestore.collection('users/$uid/invoices').doc(invoiceId);
+
+    // ── 1. Read the invoice to discover linkedDebtId ──────────────────────────
+    final invoiceDoc = await invoiceRef.get();
+    final linkedDebtId = (invoiceDoc.data()?['linkedDebtId'] as String?) ??
+        'debt_inv_$invoiceId';
+
+    final debtRef =
+        firestore.collection('users/$uid/debts').doc(linkedDebtId);
+    final debtDoc = await debtRef.get();
+
+    final batch = firestore.batch();
+
+    // ── 2. Mark invoice as voided ─────────────────────────────────────────────
+    batch.update(invoiceRef, {
       'status': InvoiceStatus.voided.name,
       'lastUpdatedAt': FieldValue.serverTimestamp(),
     });
+
+    // ── 3. Clean up linked debt (if it exists) ────────────────────────────────
+    if (debtDoc.exists) {
+      final debtData = debtDoc.data()!;
+
+      // 3a. Fetch all payment sub-documents and schedule their deletion
+      final paymentsSnap = await debtRef.collection('payments').get();
+      for (final payDoc in paymentsSnap.docs) {
+        batch.delete(payDoc.reference);
+      }
+
+      // 3b. Delete the linked operation record (if any)
+      final operationId = debtData['operationId'] as String?;
+      if (operationId != null && operationId.isNotEmpty) {
+        batch.delete(
+          firestore.collection('users/$uid/operations').doc(operationId),
+        );
+      }
+
+      // 3c. Delete the debt document itself
+      batch.delete(debtRef);
+
+      // ── 4. Decrement summary metrics ─────────────────────────────────────────
+      final timestamp =
+          (debtData['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+      final remainingAmount =
+          (debtData['remainingAmount'] as num?)?.toDouble() ?? 0.0;
+      final totalAmount =
+          (debtData['totalAmount'] as num?)?.toDouble() ?? 0.0;
+      final isPaid = (debtData['isPaid'] as bool?) ?? false;
+
+      // Check if this was the customer's last unpaid debt so we can decrement
+      // the debtCustomersCount summary field.
+      bool shouldDecrementCustomerCount = false;
+      if (!isPaid) {
+        final otherUnpaid = await firestore
+            .collection('users/$uid/debts')
+            .where('customerName', isEqualTo: debtData['customerName'])
+            .where('isPaid', isEqualTo: false)
+            .limit(2)
+            .get();
+        // <=1 means only the current (soon-to-be-deleted) debt is unpaid.
+        if (otherUnpaid.docs.length <= 1) {
+          shouldDecrementCustomerCount = true;
+        }
+      }
+
+      // Accumulate all summary field increments so we write each doc once.
+      final Map<String, Map<String, double>> summaryAccumulator = {};
+
+      void addIncrement(String key, String field, double value) {
+        summaryAccumulator.putIfAbsent(key, () => {});
+        summaryAccumulator[key]![field] =
+            (summaryAccumulator[key]![field] ?? 0.0) + value;
+      }
+
+      // Revert debt totals (keyed to the debt's original creation timestamp)
+      final debtKeys = SummaryHelper.getSummaryKeys(timestamp);
+      for (final key in debtKeys) {
+        addIncrement(key, 'totalDebts', -remainingAmount);
+        if (!isPaid) {
+          addIncrement(key, 'unpaidDebts', -remainingAmount);
+        } else {
+          addIncrement(key, 'paidDebts', -totalAmount);
+        }
+      }
+
+      // Revert each collected payment (keyed to the payment's own timestamp)
+      for (final payDoc in paymentsSnap.docs) {
+        final pData = payDoc.data();
+        final type = pData['type'] as String?;
+        final amountPaid = (pData['amountPaid'] as num?)?.toDouble() ?? 0.0;
+        final payTimestamp =
+            (pData['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+
+        if (type == 'full' || type == 'partial' || type == 'settlement') {
+          final payKeys = SummaryHelper.getSummaryKeys(payTimestamp);
+          for (final key in payKeys) {
+            addIncrement(key, 'totalCollected', -amountPaid);
+          }
+        }
+      }
+
+      // Revert customer debt count (keyed to now)
+      if (shouldDecrementCustomerCount) {
+        final nowKeys = SummaryHelper.getSummaryKeys(DateTime.now());
+        for (final key in nowKeys) {
+          addIncrement(key, 'debtCustomersCount', -1.0);
+        }
+      }
+
+      // Write all summary increments into the batch
+      summaryAccumulator.forEach((key, fields) {
+        final summaryRef = firestore
+            .collection('users/$uid/summaries')
+            .doc(key);
+        final updateData = <String, dynamic>{
+          for (final e in fields.entries) e.key: FieldValue.increment(e.value),
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        };
+        batch.set(summaryRef, updateData, SetOptions(merge: true));
+      });
+    }
+
+    await batch.commit();
   }
 
   @override
@@ -307,29 +456,25 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
       // Do not touch voided invoices
       if (invoice.status == InvoiceStatus.voided) return;
 
-      double totalPaid = 0.0;
+      double totalPaid;
 
       if (debtSnap.exists) {
         final debtData = debtSnap.data()!;
-        // paidAmount on the debt == how much has been paid via the Debt module
-        // totalAmount on the debt == remaining from the invoice (set at debt creation)
-        // Invoice.totalPaid = sum of all InvoicePayments + payments recorded via debt
+        // ── Single source of truth ──────────────────────────────────────────
+        // debt.paidAmount accumulates ALL payments regardless of origin:
+        //   • Payments recorded via Invoice screen (via payItemDebt)
+        //   • Payments recorded via Debt screen (via payDebt / updatePayment)
         //
-        // Strategy: recalculate from the invoice's own payment ledger (the ground
-        // truth for what was paid at invoice time) plus whatever the debt shows
-        // as paidAmount (paid via the Debt module after the debt was created).
-        final debtPaid = (debtData['paidAmount'] as num?)?.toDouble() ?? 0.0;
-
-        // Payments recorded directly on the invoice (before debt was created)
-        final invoicePaymentTotal = invoice.payments.fold<double>(
+        // DO NOT add invoice.payments here — every invoice-screen payment is
+        // already reflected in debt.paidAmount, so adding it would double-count.
+        totalPaid = (debtData['paidAmount'] as num?)?.toDouble() ?? 0.0;
+      } else {
+        // Debt was deleted — fall back to the invoice's own payment ledger
+        // as the only remaining source of truth.
+        totalPaid = invoice.payments.fold<double>(
           0.0,
           (acc, p) => acc + p.amount,
         );
-
-        totalPaid = invoicePaymentTotal + debtPaid;
-      } else {
-        // Debt was deleted — only count invoice-level payments
-        totalPaid = invoice.payments.fold<double>(0.0, (acc, p) => acc + p.amount);
       }
 
       final totalAmount = invoice.totalAmount;
@@ -346,10 +491,14 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
 
       txn.update(invoiceRef, {
         'status': newStatus,
+        // Persist the canonical totalPaid so the list screen can display the
+        // correct remaining balance without fetching the payments sub-collection.
+        'syncedTotalPaid': totalPaid,
         'lastUpdatedAt': FieldValue.serverTimestamp(),
       });
     });
   }
+
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
