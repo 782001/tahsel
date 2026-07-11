@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../debt/domain/entities/debt_entity.dart';
 import '../../../debt/domain/usecases/add_debt_usecase.dart';
+import '../../../debt/domain/usecases/get_debt_by_id_usecase.dart';
+import '../../../debt/domain/usecases/pay_item_debt_usecase.dart';
 import '../../domain/entities/invoice_entity.dart';
 import '../../domain/usecases/invoice_history_usecases.dart';
 import '../../domain/usecases/invoice_usecases.dart';
@@ -19,6 +21,8 @@ class InvoiceCubit extends Cubit<InvoiceState> {
   final RecordPaymentUseCase recordPaymentUseCase;
   final LinkDebtToInvoiceUseCase linkDebtToInvoiceUseCase;
   final AddDebtUseCase addDebtUseCase;
+  final GetDebtByIdUseCase getDebtByIdUseCase;
+  final PayItemDebtUseCase payItemDebtUseCase;
   final UpdateInvoiceUseCase updateInvoiceUseCase;
   final VoidInvoiceUseCase voidInvoiceUseCase;
   final AddInvoiceHistoryUseCase addInvoiceHistoryUseCase;
@@ -36,6 +40,8 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     required this.recordPaymentUseCase,
     required this.linkDebtToInvoiceUseCase,
     required this.addDebtUseCase,
+    required this.getDebtByIdUseCase,
+    required this.payItemDebtUseCase,
     required this.updateInvoiceUseCase,
     required this.voidInvoiceUseCase,
     required this.addInvoiceHistoryUseCase,
@@ -170,28 +176,25 @@ class InvoiceCubit extends Cubit<InvoiceState> {
 
   // ── Record Payment ─────────────────────────────────────────────────────────
   //
-  // CANONICAL FLOW — mirrors the existing Quick Add / Debt module exactly:
+  // CANONICAL FLOW — two branches based on whether a linked debt already exists:
   //
-  //   Step 1: Persist the payment in the invoice's own payment sub-collection
-  //           (invoices/{id}/payments). This is the invoice ledger.
-  //
-  //   Step 2: Create the linked Debt record using the FULL invoice total.
-  //           • totalAmount  = invoice.totalAmount  (the full bill)
-  //           • paidAmount   = paidNow              (what the customer paid)
-  //           • remainingAmount = totalAmount - paidNow
-  //
-  //           DebtRemoteDataSource.addDebt() already writes TWO Firestore
-  //           documents atomically in one batch:
+  //  FIRST PAYMENT (no linked debt yet):
+  //   Step 1: Persist the payment in the invoice's own payment sub-collection.
+  //   Step 2: Call addDebt with the FULL invoice total + paidNow.
+  //           DebtRemoteDataSource.addDebt() atomically writes:
   //             Transaction A – type: debtAdded   → amountPaid = totalAmount
   //             Transaction B – type: partial/full → amountPaid = paidNow
+  //   Step 3: Link the debt ID back to the invoice document.
   //
-  //           This is IDENTICAL to the Quick Add workflow. Nothing is skipped.
+  //  SUBSEQUENT PAYMENTS (linked debt already exists):
+  //   Step 1: Persist the payment in the invoice's own payment sub-collection.
+  //   Step 2: Call payDebt on the EXISTING debt to accumulate the payment.
+  //           This appends a new payment transaction without overwriting the
+  //           debt document, preserving the full transaction history.
   //
-  //   Step 3: Link the debt ID back to the invoice document (idempotent).
-  //
-  // IMPORTANT: Do NOT pre-subtract paidNow from totalAmount before calling
-  // addDebt. The data source already does the arithmetic — passing a
-  // pre-subtracted value skips Transaction A and breaks the ledger history.
+  // IMPORTANT: Never call addDebt when a linked debt already exists — it does
+  // a batch.set() with a fixed ID which would overwrite the existing document
+  // and reset the accumulated paidAmount to just the latest paidNow value.
 
   Future<void> recordPayment({
     required String uid,
@@ -203,7 +206,6 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     emit(InvoiceLoading());
 
     // ── Step 1: append to the invoice's own payment ledger ───────────────────
-    // (This is the invoice sub-collection; separate from debt/payments.)
     if (paidNow > 0) {
       final payment = InvoicePayment(
         id: 'pmt_${DateTime.now().millisecondsSinceEpoch}',
@@ -224,45 +226,69 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     final remaining =
         (invoice.totalAmount - newTotalPaid).clamp(0.0, double.infinity);
 
-    if (remaining > 0) {
-      // Deterministic debt ID — idempotent (set() overwrites safely).
+    if (remaining > 0 || paidNow > 0) {
       final debtId = 'debt_inv_$invoiceId';
 
-      // Pass the FULL invoice amount and paidNow to addDebt.
-      // addDebt's Firestore batch will produce:
-      //   • debtAdded  transaction: { amountPaid: invoice.totalAmount }
-      //   • payment    transaction: { amountPaid: paidNow, type: partial/full }
-      final debt = DebtEntity(
-        uid: uid,
-        operationId: debtId,
-        totalAmount: invoice.totalAmount, // ← FULL amount, NOT pre-subtracted
-        paidAmount: paidNow,             // ← what was paid right now
-        remainingAmount: remaining,      // ← totalAmount - paidNow
-        customerName:
-            (invoice.customerName ?? '').replaceAll('/', ' ').trim(),
-        productOrSessionDetails: 'فاتورة #$invoiceId',
-        operationType: 'invoice_debt',
-        timestamp: DateTime.now(),
-        isPaid: false,
-        phoneNumber: invoice.customerPhone,
-        ledgerNumber: invoiceId,
+      // Check if the linked debt already exists in Firestore.
+      // Force a fresh server read to avoid stale cache after the first creation.
+      final existingDebtResult = await getDebtByIdUseCase(
+        uid,
+        debtId,
+        forceRefresh: true,
       );
+      final existingDebt = existingDebtResult.fold((_) => null, (d) => d);
 
-      final debtResult = await addDebtUseCase(AddDebtParams(debt: debt));
-      final debtFailure = await debtResult.fold(
-        (f) async => f,
-        (createdDebtId) async {
-          // Link only once (idempotent — calling twice is harmless).
-          if (invoice.linkedDebtId == null) {
-            await linkDebtToInvoiceUseCase(uid, invoiceId, createdDebtId);
+      if (existingDebt == null) {
+        // ── FIRST PAYMENT: create the baseline debt + initial payment atomically
+        if (remaining > 0) {
+          final debt = DebtEntity(
+            uid: uid,
+            operationId: debtId,
+            totalAmount: invoice.totalAmount, // ← FULL amount, NOT pre-subtracted
+            paidAmount: paidNow,             // ← what was paid right now
+            remainingAmount: remaining,       // ← totalAmount - paidNow
+            customerName:
+                (invoice.customerName ?? '').replaceAll('/', ' ').trim(),
+            productOrSessionDetails: 'فاتورة #$invoiceId',
+            operationType: 'invoice_debt',
+            timestamp: DateTime.now(),
+            isPaid: false,
+            phoneNumber: invoice.customerPhone,
+            ledgerNumber: invoiceId,
+          );
+
+          final debtResult = await addDebtUseCase(AddDebtParams(debt: debt));
+          final debtFailure = await debtResult.fold(
+            (f) async => f,
+            (createdDebtId) async {
+              if (invoice.linkedDebtId == null) {
+                await linkDebtToInvoiceUseCase(uid, invoiceId, createdDebtId);
+              }
+              return null;
+            },
+          );
+
+          if (debtFailure != null) {
+            emit(InvoiceFailure(debtFailure.message));
+            return;
           }
-          return null;
-        },
-      );
-
-      if (debtFailure != null) {
-        emit(InvoiceFailure(debtFailure.message));
-        return;
+        }
+      } else {
+        // ── SUBSEQUENT PAYMENT: append to the existing debt record ────────────
+        // Only record if there is an actual cash amount being paid.
+        if (paidNow > 0) {
+          final payResult = await payItemDebtUseCase(
+            PayItemDebtParams(
+              debt: existingDebt,
+              amountToPay: paidNow,
+            ),
+          );
+          final payFailure = payResult.fold((f) => f, (_) => null);
+          if (payFailure != null) {
+            emit(InvoiceFailure(payFailure.message));
+            return;
+          }
+        }
       }
     }
 
