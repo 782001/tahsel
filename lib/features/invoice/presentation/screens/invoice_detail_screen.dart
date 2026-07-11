@@ -46,7 +46,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     if (widget.showPaymentImmediately) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          _showRecordPaymentSheet(context, true);
+          _showRecordPaymentSheet(context, false);
         }
       });
     }
@@ -342,7 +342,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                           _RecordPaymentButton(
                             onTap: isLoading
                                 ? null
-                                : () => _showRecordPaymentSheet(context, false),
+                                : () => _showRecordPaymentSheet(context, true),
                           ),
 
                         const SizedBox(height: 40),
