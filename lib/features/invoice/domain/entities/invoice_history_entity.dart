@@ -9,6 +9,8 @@ enum InvoiceHistoryChangeType {
   customerUpdated,
   notesUpdated,
   discountUpdated,
+  /// Fires when the invoice grand total changes as a result of item edits.
+  totalUpdated,
 }
 
 /// A single, immutable audit log entry for an invoice edit.

@@ -779,6 +779,7 @@ class AppStrings {
   static const String historyCustomerUpdated = "history_customer_updated";
   static const String historyNotesUpdated = "history_notes_updated";
   static const String historyDiscountUpdated = "history_discount_updated";
+  static const String historyTotalUpdated = "history_total_updated";
   static const String historyNotesChanged = "history_notes_changed";
   static const String historyToday = "history_today";
   static const String historyYesterday = "history_yesterday";

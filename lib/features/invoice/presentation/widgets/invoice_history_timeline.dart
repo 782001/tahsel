@@ -312,6 +312,12 @@ class _HistoryCard extends StatelessWidget {
           color: AppColors.warning,
           title: AppStrings.historyDiscountUpdated.tr(),
         );
+      case InvoiceHistoryChangeType.totalUpdated:
+        return _CardConfig(
+          icon: Icons.account_balance_wallet_outlined,
+          color: AppColors.primaryColor,
+          title: AppStrings.historyTotalUpdated.tr(),
+        );
     }
   }
 

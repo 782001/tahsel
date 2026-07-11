@@ -330,32 +330,43 @@ class InvoiceCubit extends Cubit<InvoiceState> {
   // ── Update Invoice ───────────────────────────────────────────────────────────
 
   /// Updates mutable fields on an existing invoice (items, notes, customer info).
-  /// Payment history and status are untouched.
   ///
-  /// [previous] is the *unmodified* snapshot used to compute the diff.
+  /// Business rules enforced by [UpdateInvoiceItemsParams]:
+  ///  1. Payment history is NEVER deleted or modified.
+  ///  2. Remaining balance = New Total − Σ All Existing Payments.
+  ///  3. Linked Debt baseline is atomically updated to the new total.
+  ///
+  /// [previous] is the *unmodified* snapshot used to compute the audit diff.
   /// When [previous] is null no history entries are generated.
   Future<void> updateInvoice(
     InvoiceEntity invoice, {
     InvoiceEntity? previous,
   }) async {
     emit(InvoiceLoading());
-    final result = await updateInvoiceUseCase(invoice);
+
+    // Build the structured params so the use-case contract is explicit.
+    final params = UpdateInvoiceItemsParams(
+      updated: invoice,
+      previous: previous,
+    );
+
+    final result = await updateInvoiceUseCase(params.updated);
     result.fold(
       (failure) => emit(InvoiceFailure(failure.message)),
       (_) async {
         // Generate and persist audit entries in the background.
         // We do NOT await so the UI transitions immediately.
-        if (previous != null) {
+        if (params.previous != null) {
           final entries = InvoiceHistoryDiff.diff(
-            before: previous,
-            after: invoice,
-            uid: invoice.uid,
+            before: params.previous!,
+            after: params.updated,
+            uid: params.updated.uid,
           );
           if (entries.isNotEmpty) {
             unawaited(
               addInvoiceHistoryUseCase(
-                uid: invoice.uid,
-                invoiceId: invoice.id,
+                uid: params.updated.uid,
+                invoiceId: params.updated.id,
                 entries: entries,
               ),
             );
@@ -365,6 +376,7 @@ class InvoiceCubit extends Cubit<InvoiceState> {
       },
     );
   }
+
 
   // ── Void Invoice ────────────────────────────────────────────────────────────
 

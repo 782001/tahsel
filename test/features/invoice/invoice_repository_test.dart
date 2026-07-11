@@ -100,14 +100,6 @@ class FakeInvoiceRemoteDataSource implements InvoiceRemoteDataSource {
       invoices[idx] = existing.copyWith(status: InvoiceStatus.voided);
     }
   }
-
-  @override
-  Future<void> syncInvoiceFromDebt({
-    required String uid,
-    required String debtId,
-  }) async {
-    // No-op in tests — synchronization is tested at the integration level
-  }
 }
 
 class FakeOfflineSyncRepository implements OfflineSyncRepository {

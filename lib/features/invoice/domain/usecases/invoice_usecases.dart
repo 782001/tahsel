@@ -74,7 +74,52 @@ class LinkDebtToInvoiceUseCase {
   }
 }
 
-/// Updates mutable invoice fields (customer info, notes, items).
+// ─────────────────────────────────────────────────────────────────────────────
+// Invoice Items / Price Adjustment Use Case
+//
+// Business Rules (must hold for EVERY invocation):
+//
+//  1. PRESERVE HISTORY
+//     Payment records that already exist MUST NOT be deleted or mutated.
+//     The repository layer reads them atomically inside a Firestore transaction
+//     so callers never need to pass the old payments list.
+//
+//  2. RECALCULATION FORMULA
+//     After items are edited the new remaining balance is computed as:
+//
+//         New Remaining = New Invoice Total − Σ All Existing Payments
+//
+//     The repository layer executes this formula inside the same transaction.
+//
+//  3. DEBT BASELINE UPDATE
+//     If the invoice is linked to a baseline Debt entity (via linkedDebtId),
+//     that debt's `totalAmount` and `remainingAmount` MUST be updated to match
+//     the new invoice total so every screen stays in sync instantly.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Params for [UpdateInvoiceUseCase].
+///
+/// Carry only mutable fields — [updated] contains the new state (items, notes,
+/// customer info). The payment array and created-at are always preserved by
+/// the repository and must never be passed here.
+class UpdateInvoiceItemsParams {
+  /// The invoice snapshot with edited fields already applied.
+  final InvoiceEntity updated;
+
+  /// The original unmodified snapshot before editing. Used by the cubit to
+  /// generate an audit-trail diff. Pass null only when no history is needed.
+  final InvoiceEntity? previous;
+
+  const UpdateInvoiceItemsParams({
+    required this.updated,
+    this.previous,
+  });
+}
+
+/// Updates mutable invoice fields (customer info, notes, items) and
+/// atomically re-syncs the linked Debt entity's baseline.
+///
+/// Enforces all three business rules documented in [UpdateInvoiceItemsParams].
 /// Never overwrites payment history or creation metadata.
 class UpdateInvoiceUseCase {
   final InvoiceRepository repository;

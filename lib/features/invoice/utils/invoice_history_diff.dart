@@ -151,6 +151,24 @@ class InvoiceHistoryDiff {
       }
     }
 
+    // ── 4. Grand total change ─────────────────────────────────────────────────
+    // Record a single monetary summary entry whenever the total changes.
+    // This makes the audit log immediately readable without summing per-item
+    // diffs. (Uses a small tolerance to ignore floating-point noise.)
+    final oldTotal = before.totalAmount;
+    final newTotal = after.totalAmount;
+    if ((oldTotal - newTotal).abs() > 0.001) {
+      entries.add(InvoiceHistoryEntity(
+        id: newId(),
+        invoiceId: after.id,
+        uid: uid,
+        changeType: InvoiceHistoryChangeType.totalUpdated,
+        timestamp: now,
+        oldValue: oldTotal.toStringAsFixed(2),
+        newValue: newTotal.toStringAsFixed(2),
+      ));
+    }
+
     return entries;
   }
 }

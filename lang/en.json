@@ -685,6 +685,7 @@
   "history_customer_updated": "Customer Updated",
   "history_notes_updated": "Notes Updated",
   "history_discount_updated": "Discount Updated",
+  "history_total_updated": "Invoice Total Updated",
   "history_notes_changed": "Notes content changed",
   "history_today": "Today",
   "history_yesterday": "Yesterday",
