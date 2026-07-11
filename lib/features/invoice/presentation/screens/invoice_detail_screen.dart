@@ -6,6 +6,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/debt/domain/entities/payment_entity.dart';
 import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_cubit.dart';
@@ -158,6 +159,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
     return BlocListener<InvoiceCubit, InvoiceState>(
       listener: (context, state) {
         if (state is InvoiceDetailLoaded) {
@@ -227,7 +229,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
             // Edit — only for non-voided invoices
             if (_invoice.status != InvoiceStatus.voided)
               IconButton(
-                icon: Icon(Icons.edit_rounded, color: AppColors.primaryColor),
+                icon: Icon(Icons.edit_square, color: AppColors.primaryColor),
                 tooltip: AppStrings.invoiceEditTitle.tr(),
                 onPressed: () async {
                   final cubit = context.read<InvoiceCubit>();
@@ -243,7 +245,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
             if (_invoice.status == InvoiceStatus.pending ||
                 _invoice.status == InvoiceStatus.partial)
               IconButton(
-                icon: Icon(Icons.cancel_outlined, color: AppColors.error),
+                icon: Icon(Icons.cancel_presentation, color: AppColors.error),
                 tooltip: AppStrings.invoiceVoid.tr(),
                 onPressed: () => _confirmVoid(context),
               ),
@@ -253,212 +255,233 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
           child: BlocBuilder<InvoiceCubit, InvoiceState>(
             builder: (context, state) {
               final isLoading = state is InvoiceLoading;
-              return Stack(
-                children: [
-                  SingleChildScrollView(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 20.w,
-                      vertical: 20.h,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // ── Status Card ────────────────────────────────────
-                        _StatusCard(
-                          invoice: _invoice,
-                          statusColor: _statusColor(_invoice.status),
-                          statusLabel: _statusLabel(_invoice.status),
-                        ),
-                        const SizedBox(height: 20),
-
-                        // ── Customer Info ──────────────────────────────────
-                        if (_invoice.customerName != null ||
-                            _invoice.customerPhone != null ||
-                            _invoice.linkedDebtId != null) ...[
-                          _SectionTitle(
-                            title: AppStrings.invoiceCustomerSection.tr(),
-                          ),
-                          const SizedBox(height: 12),
-                          _InfoCard(
-                            children: [
-                              if (_invoice.customerName != null)
-                                _InfoRow(
-                                  icon: Icons.person_rounded,
-                                  label: _invoice.customerName!,
-                                ),
-                              if (_invoice.customerPhone != null)
-                                _InfoRow(
-                                  icon: Icons.phone_rounded,
-                                  label: _invoice.customerPhone!,
-                                ),
-                              if (_invoice.ledgerNumber != null)
-                                _InfoRow(
-                                  icon: Icons.tag_rounded,
-                                  label: '# ${_invoice.ledgerNumber}',
-                                ),
-                              if (_invoice.linkedDebtId != null)
-                                _InfoRow(
-                                  icon: Icons.link_rounded,
-                                  label:
-                                      '${AppStrings.invoiceLinkedToDebt.tr()}: ${_invoice.linkedDebtId}',
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                        ],
-
-                        // ── Items ──────────────────────────────────────────
-                        _SectionTitle(
-                          title: AppStrings.invoiceItemsSectionDetail.tr(),
-                        ),
-                        const SizedBox(height: 12),
-                        _ItemsCard(items: _invoice.items),
-                        const SizedBox(height: 20),
-
-                        // ── Payment Summary ────────────────────────────────
-                        _PaymentSummaryCard(invoice: _invoice),
-                        const SizedBox(height: 20),
-                        if (_invoice.status == InvoiceStatus.voided)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.info.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: AppColors.info.withValues(alpha: 0.3),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.info_outline_rounded,
-                                    size: 16,
-                                    color: AppColors.info,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      "${AppStrings.invoiceVoidNotice.tr()}   ${_invoice.totalPaid.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
-                                      style: TextStyles.customStyle(
-                                        fontSize: 12,
-                                        color: AppColors.info,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-
-                        const SizedBox(height: 20),
-                        if (_invoice.status == InvoiceStatus.paid &&
-                            _invoice.totalPaid > _invoice.totalAmount)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.info.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: AppColors.info.withValues(alpha: 0.3),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.info_outline_rounded,
-                                    size: 16,
-                                    color: AppColors.info,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      "${AppStrings.invoicePaidNotice.tr()}   ${(_invoice.totalPaid - _invoice.totalAmount).toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
-                                      style: TextStyles.customStyle(
-                                        fontSize: 12,
-                                        color: AppColors.info,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-
-                        const SizedBox(height: 20),
-
-                        // ── Edit History Timeline ─────────────────────
-                        _SectionTitle(title: AppStrings.invoiceHistory.tr()),
-                        const SizedBox(height: 12),
-                        const InvoiceHistoryTimeline(),
-                        const SizedBox(height: 20),
-
-                        // ── Payment History ────────────────────────────────
-                        _SectionTitle(
-                          title: AppStrings.invoicePaymentHistory.tr(),
-                        ),
-                        const SizedBox(height: 12),
-                        // If linked to a debt, use debt transactions as the
-                        // authoritative payment history; otherwise fallback
-                        // to the invoice's own payments array.
-                        if (_debtTransactions != null &&
-                            _debtTransactions!.isNotEmpty)
-                          _DebtPaymentHistoryList(
-                            transactions: _debtTransactions!,
-                          )
-                        else
-                          _PaymentHistoryList(payments: _invoice.payments),
-                        const SizedBox(height: 20),
-
-                        // ── Notes ──────────────────────────────────────────
-                        if (_invoice.notes?.isNotEmpty == true) ...[
-                          _SectionTitle(
-                            title: AppStrings.invoiceNotesSection.tr(),
-                          ),
-                          const SizedBox(height: 8),
-                          _InfoCard(
-                            children: [
-                              _InfoRow(
-                                icon: Icons.notes_rounded,
-                                label: _invoice.notes!,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                        ],
-
-                        // ── Record Payment Button ──────────────────────────
-                        if (_invoice.status != InvoiceStatus.paid &&
-                            _invoice.status != InvoiceStatus.voided)
-                          _RecordPaymentButton(
-                            onTap: isLoading
-                                ? null
-                                : () => _showRecordPaymentSheet(context, true),
-                          ),
-
-                        const SizedBox(height: 40),
-                      ],
-                    ),
+              return Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: isDesktop ? 1000 : double.infinity,
                   ),
-                  if (isLoading)
-                    Container(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primaryColor,
+
+                  child: Stack(
+                    children: [
+                      SingleChildScrollView(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 20.w,
+                          vertical: 20.h,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // ── Status Card ────────────────────────────────────
+                            _StatusCard(
+                              invoice: _invoice,
+                              statusColor: _statusColor(_invoice.status),
+                              statusLabel: _statusLabel(_invoice.status),
+                            ),
+                            const SizedBox(height: 20),
+
+                            // ── Customer Info ──────────────────────────────────
+                            if (_invoice.customerName != null ||
+                                _invoice.customerPhone != null ||
+                                _invoice.linkedDebtId != null) ...[
+                              _SectionTitle(
+                                title: AppStrings.invoiceCustomerSection.tr(),
+                              ),
+                              const SizedBox(height: 12),
+                              _InfoCard(
+                                children: [
+                                  if (_invoice.customerName != null)
+                                    _InfoRow(
+                                      icon: Icons.person_rounded,
+                                      label: _invoice.customerName!,
+                                    ),
+                                  if (_invoice.customerPhone != null)
+                                    _InfoRow(
+                                      icon: Icons.phone_rounded,
+                                      label: _invoice.customerPhone!,
+                                    ),
+                                  if (_invoice.ledgerNumber != null)
+                                    _InfoRow(
+                                      icon: Icons.tag_rounded,
+                                      label: '# ${_invoice.ledgerNumber}',
+                                    ),
+                                  if (_invoice.linkedDebtId != null)
+                                    _InfoRow(
+                                      icon: Icons.link_rounded,
+                                      label:
+                                          '${AppStrings.invoiceLinkedToDebt.tr()}: ${_invoice.linkedDebtId}',
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                            ],
+
+                            // ── Items ──────────────────────────────────────────
+                            _SectionTitle(
+                              title: AppStrings.invoiceItemsSectionDetail.tr(),
+                            ),
+                            const SizedBox(height: 12),
+                            _ItemsCard(items: _invoice.items),
+                            const SizedBox(height: 20),
+
+                            // ── Payment Summary ────────────────────────────────
+                            _PaymentSummaryCard(invoice: _invoice),
+                            const SizedBox(height: 20),
+                            if (_invoice.status == InvoiceStatus.voided)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 16),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.info.withValues(
+                                      alpha: 0.08,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: AppColors.info.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.info_outline_rounded,
+                                        size: 16,
+                                        color: AppColors.info,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          "${AppStrings.invoiceVoidNotice.tr()}   ${_invoice.totalPaid.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
+                                          style: TextStyles.customStyle(
+                                            fontSize: 12,
+                                            color: AppColors.info,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+
+                            const SizedBox(height: 20),
+                            if (_invoice.status == InvoiceStatus.paid &&
+                                _invoice.totalPaid > _invoice.totalAmount)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 16),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.info.withValues(
+                                      alpha: 0.08,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: AppColors.info.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.info_outline_rounded,
+                                        size: 16,
+                                        color: AppColors.info,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          "${AppStrings.invoicePaidNotice.tr()}   ${(_invoice.totalPaid - _invoice.totalAmount).toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
+                                          style: TextStyles.customStyle(
+                                            fontSize: 12,
+                                            color: AppColors.info,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+
+                            const SizedBox(height: 20),
+
+                            // ── Edit History Timeline ─────────────────────
+                            _SectionTitle(
+                              title: AppStrings.invoiceHistory.tr(),
+                            ),
+                            const SizedBox(height: 12),
+                            const InvoiceHistoryTimeline(),
+                            const SizedBox(height: 20),
+
+                            // ── Payment History ────────────────────────────────
+                            _SectionTitle(
+                              title: AppStrings.invoicePaymentHistory.tr(),
+                            ),
+                            const SizedBox(height: 12),
+                            // If linked to a debt, use debt transactions as the
+                            // authoritative payment history; otherwise fallback
+                            // to the invoice's own payments array.
+                            if (_debtTransactions != null &&
+                                _debtTransactions!.isNotEmpty)
+                              _DebtPaymentHistoryList(
+                                transactions: _debtTransactions!,
+                              )
+                            else
+                              _PaymentHistoryList(payments: _invoice.payments),
+                            const SizedBox(height: 20),
+
+                            // ── Notes ──────────────────────────────────────────
+                            if (_invoice.notes?.isNotEmpty == true) ...[
+                              _SectionTitle(
+                                title: AppStrings.invoiceNotesSection.tr(),
+                              ),
+                              const SizedBox(height: 8),
+                              _InfoCard(
+                                children: [
+                                  _InfoRow(
+                                    icon: Icons.notes_rounded,
+                                    label: _invoice.notes!,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                            ],
+
+                            // ── Record Payment Button ──────────────────────────
+                            if (_invoice.status != InvoiceStatus.paid &&
+                                _invoice.status != InvoiceStatus.voided)
+                              _RecordPaymentButton(
+                                onTap: isLoading
+                                    ? null
+                                    : () => _showRecordPaymentSheet(
+                                        context,
+                                        true,
+                                      ),
+                              ),
+
+                            const SizedBox(height: 40),
+                          ],
                         ),
                       ),
-                    ),
-                ],
+                      if (isLoading)
+                        Container(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.primaryColor,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               );
             },
           ),
