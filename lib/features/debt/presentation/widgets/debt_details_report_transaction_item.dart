@@ -70,6 +70,16 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
       }
     }
 
+    // Rule 3: The initial debt record of an invoice-linked debt cannot be
+    // edited or deleted — it is controlled exclusively by the invoice.
+    // Invoice-linked debts always have IDs starting with 'debt_inv_'.
+    if (transaction.type == PaymentType.debtAdded &&
+        debtId.startsWith('debt_inv_')) {
+      canEdit = false;
+      canDelete = false;
+    }
+
+
     final String dateStr = transaction.createdAt != null
         ? DateFormat(
             'yyyy/MM/dd - hh:mm a',
