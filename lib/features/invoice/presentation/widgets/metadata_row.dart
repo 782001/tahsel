@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
-import 'package:tahsel/features/invoice/presentation/widgets/invoice_history_timeline.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/meta_chip.dart';
 
 class MetadataRow extends StatelessWidget {

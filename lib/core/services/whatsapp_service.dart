@@ -1,7 +1,10 @@
 import 'package:flutter/foundation.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import 'receipt_image_service.dart';
 
 class WhatsAppService {
   /// Launches WhatsApp with a specific phone number and message
@@ -70,5 +73,33 @@ class WhatsAppService {
         .replaceAll('{note}', note);
 
     return message;
+  }
+
+  static Future<void> sendReceipt({
+    required String phoneNumber,
+    required String message,
+    required String customerName,
+    required double paid,
+    required double total,
+    required double remaining,
+  }) async {
+    final image = await ReceiptImageService.generateReceipt(
+      customerName: customerName,
+      paid: paid,
+      total: total,
+      remaining: remaining,
+      isArabic: AppStrings.currentLang == "ar" ? true : false,
+    );
+    debugPrint(image.path);
+    debugPrint(await image.exists() ? "exists" : "not exists");
+    debugPrint("${await image.length()}");
+
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(image.path)],
+        text: message,
+        subject: 'Receipt',
+      ),
+    );
   }
 }

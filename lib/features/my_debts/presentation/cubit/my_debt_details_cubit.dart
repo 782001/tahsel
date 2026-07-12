@@ -157,6 +157,9 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
     emit(state.copyWith(clearPayment: true, message: null));
   }
 
+  double lastPaymentAmount = 0.0;
+  double lastPaymentRemaining = 0.0;
+  String lastPaymentNote = "";
   Future<void> payItem({
     required String uid,
     required String debtId,
@@ -185,6 +188,10 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
             lastPaymentNote: note,
           ),
         );
+        lastPaymentAmount = amount;
+        lastPaymentRemaining = state.remainingAmount - amount;
+        lastPaymentNote = note ?? "";
+        emit(state.copyWith(clearPayment: true));
         loadDetails(uid, personName);
       },
     );
@@ -254,6 +261,10 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
             lastPaymentNote: note,
           ),
         );
+        lastPaymentAmount = amount;
+        lastPaymentRemaining = state.remainingAmount - amount;
+        lastPaymentNote = note ?? "";
+        emit(state.copyWith(clearPayment: true));
         loadDetails(uid, personName);
       },
     );

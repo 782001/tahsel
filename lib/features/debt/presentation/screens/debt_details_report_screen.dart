@@ -53,6 +53,7 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
             remainingBalance: state.remainingBalance,
             note: state.note,
             operationType: 'edit',
+            totalDebt: state.totalAmount,
           );
           _hasChanged = true;
           _updatedDebt = state.debt;
@@ -64,6 +65,7 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
             remainingBalance: state.remainingBalance,
             note: AppStrings.deleteSuccess.tr(),
             operationType: 'delete',
+            totalDebt: state.totalAmount,
           );
           _hasChanged = true;
           _updatedDebt = state.debt;

@@ -2,8 +2,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/features/debt/domain/entities/payment_entity.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_item_entity.dart';
-import 'package:tahsel/features/my_debts/domain/usecases/debt/get_my_debt_item_payments_usecase.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/debt/get_my_debt_item_payments_paginated_usecase.dart';
+import 'package:tahsel/features/my_debts/domain/usecases/debt/get_my_debt_item_payments_usecase.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/get_my_debt_by_id_usecase.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/payment/delete_my_debt_payment_usecase.dart';
 import 'package:tahsel/features/my_debts/domain/usecases/payment/update_my_debt_payment_usecase.dart';
@@ -162,7 +162,7 @@ class MyDebtDetailsReportCubit extends Cubit<MyDebtDetailsReportState> {
     required String debtId,
     required String paymentId,
     required double newAmount,
-    required String customerName,
+    required String personName,
     String? note,
   }) async {
     double minAmount = 0;
@@ -212,7 +212,7 @@ class MyDebtDetailsReportCubit extends Cubit<MyDebtDetailsReportState> {
 
         // Trigger details refresh
         if (sl.isRegistered<MyDebtDetailsCubit>()) {
-          sl<MyDebtDetailsCubit>().loadDetails(uid, customerName);
+          sl<MyDebtDetailsCubit>().loadDetails(uid, personName);
         }
 
         // Reload local transactions and debt info
@@ -227,7 +227,7 @@ class MyDebtDetailsReportCubit extends Cubit<MyDebtDetailsReportState> {
               paidAmount: loadedState.paidAmount,
               remainingAmount: loadedState.remainingAmount,
               debt: loadedState.debt,
-              customerName: customerName,
+              personName: personName,
               amountPaid: newAmount, // Pass NEW amount for notification
               remainingBalance: loadedState.remainingAmount,
               note: note ?? '',
@@ -245,7 +245,7 @@ class MyDebtDetailsReportCubit extends Cubit<MyDebtDetailsReportState> {
     required String uid,
     required String debtId,
     required String paymentId,
-    required String customerName,
+    required String personName,
     required double amountBeingDeleted,
   }) async {
     emit(MyDebtDetailsReportLoading());
@@ -267,7 +267,7 @@ class MyDebtDetailsReportCubit extends Cubit<MyDebtDetailsReportState> {
 
         // Trigger details refresh
         if (sl.isRegistered<MyDebtDetailsCubit>()) {
-          sl<MyDebtDetailsCubit>().loadDetails(uid, customerName);
+          sl<MyDebtDetailsCubit>().loadDetails(uid, personName);
         }
 
         // Reload local transactions and debt info
@@ -282,7 +282,7 @@ class MyDebtDetailsReportCubit extends Cubit<MyDebtDetailsReportState> {
               paidAmount: loadedState.paidAmount,
               remainingAmount: loadedState.remainingAmount,
               debt: loadedState.debt,
-              customerName: customerName,
+              personName: personName,
               amountPaid: amountBeingDeleted, // Absolute value for display
               remainingBalance: loadedState.remainingAmount,
               note: '',

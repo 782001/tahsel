@@ -17,13 +17,13 @@ import 'package:tahsel/features/standard_features/no-internet/logic/connectivity
 class MyDebtDetailsTransactionItem extends StatelessWidget {
   final PaymentEntity transaction;
   final String debtId;
-  final String customerName;
+  final String personName;
 
   const MyDebtDetailsTransactionItem({
     super.key,
     required this.transaction,
     required this.debtId,
-    required this.customerName,
+    required this.personName,
   });
 
   @override
@@ -456,7 +456,7 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
                                 debtId: debtId,
                                 paymentId: transaction.id ?? '',
                                 newAmount: newAmount,
-                                customerName: customerName,
+                                personName: personName,
                                 note: noteController.text,
                               );
                               Navigator.pop(dialogContext);
@@ -555,7 +555,7 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
                 uid: AppStrings.userToken,
                 debtId: debtId,
                 paymentId: transaction.id ?? '',
-                customerName: customerName,
+                personName: personName,
                 amountBeingDeleted: transaction.amountPaid,
               );
               if (Navigator.canPop(dialogContext)) {

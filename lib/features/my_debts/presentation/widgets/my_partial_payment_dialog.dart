@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_cubit.dart';
@@ -88,11 +89,12 @@ class _MyPartialPaymentDialogState extends State<MyPartialPaymentDialog> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext kcontext) {
     return BlocListener<MyDebtDetailsCubit, MyDebtDetailsState>(
       listener: (context, state) {
         if (state.status == MyDebtDetailsStatus.loaded) {
-          Navigator.pop(context);
+          AppLogger.printMessage("Dialog Pop");
+          Navigator.pop(kcontext);
         } else if (state.status == MyDebtDetailsStatus.error) {
           setState(() => _errorText = state.message);
         }
@@ -181,42 +183,6 @@ class _MyPartialPaymentDialogState extends State<MyPartialPaymentDialog> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Text(
-                    //   AppStrings.notes.tr(),
-                    //   style: TextStyles.customStyle(
-                    //     color: AppColors.disabledColor,
-                    //     fontSize: 12,
-                    //     fontWeight: FontWeight.bold,
-                    //     letterSpacing: 1.1,
-                    //   ),
-                    // ),
-                    // const SizedBox(height: 8),
-                    // Container(
-                    //   decoration: BoxDecoration(
-                    //     color: AppColors.surfaceContainerHigh,
-                    //     borderRadius: BorderRadius.circular(12),
-                    //   ),
-                    //   child: TextField(
-                    //     controller: _noteController,
-                    //     maxLines: 2,
-                    //     cursorColor: AppColors.primaryColor,
-                    //     style: TextStyles.customStyle(
-                    //       color: AppColors.textColor,
-                    //       fontSize: 16,
-                    //       fontWeight: FontWeight.bold,
-                    //     ),
-                    //     decoration: InputDecoration(
-                    //       hintText: AppStrings.notes.tr(),
-                    //       hintStyle: TextStyles.customStyle(
-                    //         color: AppColors.disabledColor,
-                    //         fontSize: 16,
-                    //         fontWeight: FontWeight.bold,
-                    //       ),
-                    //       border: InputBorder.none,
-                    //       contentPadding: const EdgeInsets.all(16),
-                    //     ),
-                    //   ),
-                    // ),
                     if (_errorText != null) ...[
                       const SizedBox(height: 8),
                       Text(

@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
@@ -40,6 +41,14 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
     _loadData();
   }
 
+  @override
+  void dispose() {
+    AppLogger.printMessage("MyDebtDetailsScreen disposed");
+    debugPrintStack(label: 'Dispose Stack');
+
+    super.dispose();
+  }
+
   void _loadData() {
     final uid = AppStrings.userToken;
     if (uid.isNotEmpty) {
@@ -57,15 +66,20 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
       );
       return;
     }
+
     showDialog(
       context: context,
-      builder: (_) => BlocProvider.value(
-        value: context.read<MyDebtDetailsCubit>(),
-        child: MyPartialPaymentDialog(
-          personName: widget.person.name,
-          totalRemaining: totalRemaining,
-        ),
-      ),
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        final cubit = context.read<MyDebtDetailsCubit>();
+        return BlocProvider.value(
+          value: cubit,
+          child: MyPartialPaymentDialog(
+            personName: widget.person.name,
+            totalRemaining: totalRemaining,
+          ),
+        );
+      },
     ).then((_) => _loadData());
   }
 
@@ -102,14 +116,19 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
     }
     showDialog(
       context: context,
-      builder: (_) => BlocProvider.value(
-        value: context.read<MyDebtDetailsCubit>(),
-        child: MyPartialPaymentDialog(
-          personName: widget.person.name,
-          totalRemaining: item.remainingAmount,
-          debtId: item.id,
-        ),
-      ),
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        final cubit = context.read<MyDebtDetailsCubit>();
+
+        return BlocProvider.value(
+          value: cubit,
+          child: MyPartialPaymentDialog(
+            personName: widget.person.name,
+            totalRemaining: item.remainingAmount,
+            debtId: item.id,
+          ),
+        );
+      },
     ).then((_) => _loadData());
   }
 
@@ -230,7 +249,7 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
     return BlocListener<MyDebtDetailsCubit, MyDebtDetailsState>(
       listener: (context, state) {
         if (state.status == MyDebtDetailsStatus.loaded &&
-            state.lastPaymentAmount != null) {
+            context.read<MyDebtDetailsCubit>().lastPaymentAmount > 0) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               duration: const Duration(milliseconds: 1500),
@@ -241,11 +260,18 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
           MyDebtsNotificationDialog.show(
             context: context,
             personName: widget.person.name,
-            amountPaid: state.lastPaymentAmount!,
-            remainingBalance: state.lastPaymentRemaining ?? 0,
-            note: state.lastPaymentNote,
+            amountPaid: context.read<MyDebtDetailsCubit>().lastPaymentAmount,
+            remainingBalance: context
+                .read<MyDebtDetailsCubit>()
+                .lastPaymentRemaining,
+            totalDebt: widget.person.totalDebtAmount,
+            note: context.read<MyDebtDetailsCubit>().lastPaymentNote,
           );
-
+          setState(() {
+            context.read<MyDebtDetailsCubit>().lastPaymentAmount = 0;
+            context.read<MyDebtDetailsCubit>().lastPaymentRemaining = 0;
+            context.read<MyDebtDetailsCubit>().lastPaymentNote = "";
+          });
           context.read<MyDebtsCubit>().loadPersons(AppStrings.userToken);
           sl<MyDebtsSummaryCubit>().refreshSummary(AppStrings.userToken);
           context.read<MyDebtDetailsCubit>().clearFlags();

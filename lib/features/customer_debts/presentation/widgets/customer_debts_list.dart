@@ -228,6 +228,7 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
             amountPaid: state.amountPaid,
             remainingBalance: state.remainingBalance,
             note: state.note,
+            totalDebt: state.totalAmount,
           );
         }
         if (state is DebtFailure) {

@@ -181,6 +181,7 @@ class DebtCubit extends Cubit<DebtState> {
           amountPaid: amount,
           remainingBalance: totalRemainingBefore - amount,
           note: note,
+          totalAmount: totalRemainingBefore,
         ),
       );
       getDebts(uid, forceRefresh: true);
@@ -206,6 +207,7 @@ class DebtCubit extends Cubit<DebtState> {
           amountPaid: totalAmount,
           remainingBalance: 0,
           note: note,
+          totalAmount: totalAmount,
         ),
       );
       getDebts(uid, forceRefresh: true);
@@ -230,6 +232,7 @@ class DebtCubit extends Cubit<DebtState> {
           amountPaid: amount,
           remainingBalance: totalRemainingBefore - amount,
           note: note,
+          totalAmount: debt.totalAmount,
         ),
       );
       getDebts(debt.uid, forceRefresh: true);
@@ -252,6 +255,7 @@ class DebtCubit extends Cubit<DebtState> {
           amountPaid: amountPaid,
           remainingBalance: totalRemainingBefore - amountPaid,
           note: debt.productOrSessionDetails,
+          totalAmount: debt.totalAmount,
         ),
       );
       getDebts(debt.uid, forceRefresh: true);

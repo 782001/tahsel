@@ -22,12 +22,14 @@ class MyDebtsNotificationDialog extends StatefulWidget {
   final String? note;
   final String mode; // 'whatsapp' or 'sms'
   final String operationType; // 'payment', 'edit', 'delete'
+  final double totalDebt;
 
   const MyDebtsNotificationDialog({
     super.key,
     required this.personName,
     required this.amountPaid,
     required this.remainingBalance,
+    required this.totalDebt,
     required this.mode,
     this.note,
     this.operationType = 'payment',
@@ -40,6 +42,7 @@ class MyDebtsNotificationDialog extends StatefulWidget {
     required String personName,
     required double amountPaid,
     required double remainingBalance,
+    required double totalDebt,
     String? note,
     String operationType = 'payment',
   }) {
@@ -80,6 +83,8 @@ class MyDebtsNotificationDialog extends StatefulWidget {
             amountPaid: amountPaid,
             remainingBalance: remainingBalance,
             note: note,
+            totalDebt: totalDebt,
+
             operationType: operationType,
           ),
         ),
@@ -95,6 +100,7 @@ class MyDebtsNotificationDialog extends StatefulWidget {
             phone: result['phone'] ?? '',
             note: result['note'],
             operationType: operationType,
+            totalDebt: totalDebt,
           );
         }
       });
@@ -131,6 +137,7 @@ class MyDebtsNotificationDialog extends StatefulWidget {
     required double amountPaid,
     required double remainingBalance,
     required String phone,
+    required double totalDebt,
     String? note,
     String operationType = 'payment',
   }) async {
@@ -158,14 +165,26 @@ class MyDebtsNotificationDialog extends StatefulWidget {
             ));
 
       if (mode == 'whatsapp') {
-        final success = await WhatsAppService.sendMessage(
-          phoneNumber: phone,
-          message: message,
-        );
-        if (!success) {
-          messenger.showSnackBar(
-            SnackBar(content: Text(AppStrings.whatsappNotInstalled.tr())),
+        if (operationType == 'payment') {
+          await WhatsAppService.sendReceipt(
+            phoneNumber: phone,
+            message: message,
+            customerName: personName,
+            paid: amountPaid,
+            total: totalDebt,
+            remaining: remainingBalance,
           );
+        } else {
+          final success = await WhatsAppService.sendMessage(
+            phoneNumber: phone,
+            message: message,
+          );
+
+          if (!success) {
+            messenger.showSnackBar(
+              SnackBar(content: Text(AppStrings.whatsappNotInstalled.tr())),
+            );
+          }
         }
       } else {
         final success = await SmsService.sendSms(
@@ -253,12 +272,15 @@ class _MyDebtsNotificationDialogState extends State<MyDebtsNotificationDialog> {
 
   Future<void> _sendNotification() async {
     final phone = _phoneController.text.trim();
-    if (phone.isEmpty) {
-      setState(() => _errorText = AppStrings.requiredField.tr());
-      return;
-    }
+    // if (phone.isEmpty) {
+    //   setState(() => _errorText = AppStrings.requiredField.tr());
+    //   return;
+    // }
 
-    setState(() => _isSaving = true);
+    setState(() {
+      _isSaving = true;
+      _errorText = null;
+    });
     Navigator.pop(context, {'phone': phone, 'note': widget.note ?? ''});
   }
 

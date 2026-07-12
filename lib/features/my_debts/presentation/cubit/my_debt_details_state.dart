@@ -41,6 +41,7 @@ class MyDebtDetailsState extends Equatable {
     double? lastPaymentRemaining,
     String? lastPaymentNote,
     bool clearPayment = false,
+    bool? paymentCompleted,
   }) {
     return MyDebtDetailsState(
       status: status ?? this.status,

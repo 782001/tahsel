@@ -88,7 +88,7 @@ class MyDebtDetailsUpdateSuccess extends MyDebtDetailsReportState {
   final double paidAmount;
   final double remainingAmount;
   final MyDebtItemEntity? debt;
-  final String customerName;
+  final String personName;
   final double amountPaid;
   final double remainingBalance;
   final String note;
@@ -102,7 +102,7 @@ class MyDebtDetailsUpdateSuccess extends MyDebtDetailsReportState {
     required this.paidAmount,
     required this.remainingAmount,
     this.debt,
-    required this.customerName,
+    required this.personName,
     required this.amountPaid,
     required this.remainingBalance,
     required this.note,
@@ -118,7 +118,7 @@ class MyDebtDetailsUpdateSuccess extends MyDebtDetailsReportState {
     paidAmount,
     remainingAmount,
     debt,
-    customerName,
+    personName,
     amountPaid,
     remainingBalance,
     note,
@@ -134,7 +134,7 @@ class MyDebtDetailsDeleteSuccess extends MyDebtDetailsReportState {
   final double paidAmount;
   final double remainingAmount;
   final MyDebtItemEntity? debt;
-  final String customerName;
+  final String personName;
   final double amountPaid;
   final double remainingBalance;
   final String note;
@@ -148,7 +148,7 @@ class MyDebtDetailsDeleteSuccess extends MyDebtDetailsReportState {
     required this.paidAmount,
     required this.remainingAmount,
     this.debt,
-    required this.customerName,
+    required this.personName,
     required this.amountPaid,
     required this.remainingBalance,
     required this.note,
@@ -164,7 +164,7 @@ class MyDebtDetailsDeleteSuccess extends MyDebtDetailsReportState {
     paidAmount,
     remainingAmount,
     debt,
-    customerName,
+    personName,
     amountPaid,
     remainingBalance,
     note,

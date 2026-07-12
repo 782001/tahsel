@@ -62,16 +62,18 @@ class DebtPaymentSuccess extends DebtState {
   final double amountPaid;
   final double remainingBalance;
   final String? note;
+  final double totalAmount;
 
   const DebtPaymentSuccess({
     required this.customerName,
     required this.amountPaid,
     required this.remainingBalance,
     this.note,
+    required this.totalAmount,
   });
 
   @override
-  List<Object?> get props => [customerName, amountPaid, remainingBalance, note];
+  List<Object?> get props => [customerName, amountPaid, remainingBalance, note,totalAmount];
 }
 
 class DebtDeleteSuccess extends DebtState {

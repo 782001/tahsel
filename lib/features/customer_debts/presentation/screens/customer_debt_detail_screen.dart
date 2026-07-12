@@ -183,6 +183,8 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
               amountPaid: state.amountPaid,
               remainingBalance: state.remainingBalance,
               note: state.note,
+              totalDebt: state.totalAmount,
+             
             );
           }
           // Refresh data after success

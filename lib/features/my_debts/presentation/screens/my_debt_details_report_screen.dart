@@ -5,17 +5,17 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
-import 'package:tahsel/features/customer/presentation/widgets/notification_dialog.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_report_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_report_state.dart';
 import 'package:tahsel/features/my_debts/presentation/widgets/build_my_debt_details_summary_card.dart';
 import 'package:tahsel/features/my_debts/presentation/widgets/build_my_debt_details_summary_skeleton.dart';
 import 'package:tahsel/features/my_debts/presentation/widgets/build_my_debt_details_transaction_list.dart';
+import 'package:tahsel/features/my_debts/presentation/widgets/my_notification_dialog.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/shared/widgets/no_internet_view.dart';
 import 'package:tahsel/shared/widgets/shimmer/transaction_skeleton.dart';
-import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 class MyDebtDetailsReportScreen extends StatefulWidget {
   final String debtId;
@@ -68,21 +68,23 @@ class _MyDebtDetailsReportScreenState extends State<MyDebtDetailsReportScreen> {
     return BlocListener<MyDebtDetailsReportCubit, MyDebtDetailsReportState>(
       listener: (context, state) {
         if (state is MyDebtDetailsUpdateSuccess) {
-          NotificationDialog.show(
+          MyDebtsNotificationDialog.show(
             context: context,
-            customerName: state.customerName,
+            personName: state.personName,
             amountPaid: state.amountPaid,
             remainingBalance: state.remainingBalance,
             note: state.note,
             operationType: 'edit',
+            totalDebt: state.totalAmount,
           );
         } else if (state is MyDebtDetailsDeleteSuccess) {
-          NotificationDialog.show(
+          MyDebtsNotificationDialog.show(
             context: context,
-            customerName: state.customerName,
+            personName: state.personName,
             amountPaid: state.amountPaid,
             remainingBalance: state.remainingBalance,
             note: AppStrings.deleteSuccess.tr(),
+            totalDebt: state.totalAmount,
             operationType: 'delete',
           );
         } else if (state is MyDebtDetailsReportNotFound) {

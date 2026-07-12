@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/debt/domain/entities/payment_entity.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_item_entity.dart';
 import 'package:tahsel/features/my_debts/presentation/screens/my_debt_details_report_screen.dart';
 import 'package:tahsel/features/my_debts/presentation/widgets/my_debt_details_transaction_item.dart';
-import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 class BuildMyDebtDetailsTransactionList extends StatelessWidget {
   const BuildMyDebtDetailsTransactionList({
@@ -61,7 +61,7 @@ class BuildMyDebtDetailsTransactionList extends StatelessWidget {
             return MyDebtDetailsTransactionItem(
               transaction: transaction,
               debtId: widget.debtId,
-              customerName: debt?.personName ?? '',
+              personName: debt?.personName ?? '',
             );
           }, childCount: transactions.length + 2),
         ),
@@ -90,7 +90,7 @@ class BuildMyDebtDetailsTransactionList extends StatelessWidget {
           return MyDebtDetailsTransactionItem(
             transaction: transaction,
             debtId: widget.debtId,
-            customerName: debt?.personName ?? '',
+            personName: debt?.personName ?? '',
           );
         }, childCount: transactions.length + 1),
       ),
