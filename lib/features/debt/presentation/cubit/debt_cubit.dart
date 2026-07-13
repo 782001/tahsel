@@ -168,12 +168,18 @@ class DebtCubit extends Cubit<DebtState> {
     required double amount,
     required double totalRemainingBefore,
     String? note,
+    DateTime? paymentDate,
   }) async {
     if (state is DebtLoading) return;
     final sanitizedName = customerName.replaceAll('/', ' ').trim();
     emit(DebtLoading());
     final result = await payDebtUseCase(
-      PayDebtParams(uid: uid, customerName: sanitizedName, amount: amount),
+      PayDebtParams(
+        uid: uid,
+        customerName: sanitizedName,
+        amount: amount,
+        paymentDate: paymentDate,
+      ),
     );
     result.fold((failure) => emit(DebtFailure(message: failure.message)), (_) {
       emit(
@@ -220,11 +226,16 @@ class DebtCubit extends Cubit<DebtState> {
     required double amount,
     required double totalRemainingBefore,
     String? note,
+    DateTime? paymentDate,
   }) async {
     if (state is DebtLoading) return;
     emit(DebtLoading());
     final result = await payItemDebtUseCase(
-      PayItemDebtParams(debt: debt, amountToPay: amount),
+      PayItemDebtParams(
+        debt: debt,
+        amountToPay: amount,
+        paymentDate: paymentDate,
+      ),
     );
     result.fold((failure) => emit(DebtFailure(message: failure.message)), (_) {
       emit(

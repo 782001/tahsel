@@ -45,8 +45,10 @@ class _MyPartialPaymentDialogState extends State<MyPartialPaymentDialog> {
   }
 
   Future<void> _pickDate() async {
-    final DateTime minDate = widget.firstDate ?? DateTime(2000);
-    final DateTime initialDate = _selectedDate ?? DateTime.now();
+final DateTime minDate = widget.firstDate != null
+        ? widget.firstDate!.add(const Duration(days: 1))
+        : DateTime(2000);
+            final DateTime initialDate = _selectedDate ?? DateTime.now();
     final DateTime finalInitialDate = initialDate.isBefore(minDate)
         ? minDate
         : initialDate;

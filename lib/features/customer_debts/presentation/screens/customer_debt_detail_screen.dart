@@ -108,6 +108,15 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
       return;
     }
     final cubit = context.read<DebtCubit>();
+    final DateTime? earliestDate = currentDetail.items.isNotEmpty
+        ? currentDetail.items
+            .map((item) => item.entity.timestamp)
+            .whereType<DateTime>()
+            .fold<DateTime?>(null, (earliest, current) {
+              if (earliest == null) return current;
+              return current.isBefore(earliest) ? current : earliest;
+            })
+        : null;
     showDialog(
       context: context,
       builder: (_) => BlocProvider.value(
@@ -115,6 +124,7 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
         child: PartialPaymentDialog(
           customerName: customerName,
           totalRemaining: totalDebt,
+          firstDate: earliestDate,
         ),
       ),
     ).then((_) => _fetchDebts());
@@ -605,6 +615,7 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                                 customerName: currentDetail.customerName,
                                 totalRemaining: item.remainingDebt,
                                 debt: item.entity,
+                                firstDate: item.entity.timestamp,
                               ),
                             ),
                           );
@@ -638,6 +649,7 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                                 customerName: currentDetail.customerName,
                                 totalRemaining: item.remainingDebt,
                                 debt: item.entity,
+                                firstDate: item.entity.timestamp,
                               ),
                             ),
                           );

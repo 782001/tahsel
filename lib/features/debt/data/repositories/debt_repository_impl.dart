@@ -145,10 +145,16 @@ class DebtRepositoryImpl implements DebtRepository {
   Future<Either<Failure, void>> payTotalDebt(
     String uid,
     String customerName,
-    double amount,
-  ) async {
+    double amount, {
+    DateTime? paymentDate,
+  }) async {
     try {
-      await remoteDataSource.payTotalDebt(uid, customerName, amount);
+      await remoteDataSource.payTotalDebt(
+        uid,
+        customerName,
+        amount,
+        paymentDate: paymentDate,
+      );
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(e.toString()));

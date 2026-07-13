@@ -19,7 +19,12 @@ abstract class DebtRemoteDataSource {
     bool forceRefresh = false,
   });
   Future<void> payDebt(DebtModel debt, PaymentModel payment);
-  Future<void> payTotalDebt(String uid, String customerName, double amount);
+  Future<void> payTotalDebt(
+    String uid,
+    String customerName,
+    double amount, {
+    DateTime? paymentDate,
+  });
   Future<void> markCustomerAsPaid(String uid, String customerName);
   Future<void> deleteCustomerDebts(String uid, String customerName);
   Future<void> deleteDebtItem(String uid, String debtId);
@@ -243,9 +248,23 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           .limit(1)
           .get();
 
+      // Check if firstDate needs to be set/updated on the customer document
+      bool shouldUpdateFirstDate = false;
       if (customerSnapshot.docs.isNotEmpty) {
         final data = customerSnapshot.docs.first.data();
         existingPhone ??= data['phoneNumber'] as String?;
+        final existingFirstDate = data['firstDate'] != null
+            ? (data['firstDate'] as Timestamp).toDate()
+            : null;
+        if (existingFirstDate == null) {
+          shouldUpdateFirstDate = true;
+        } else if (debt.timestamp != null &&
+            debt.timestamp!.isBefore(existingFirstDate)) {
+          shouldUpdateFirstDate = true;
+        }
+      } else {
+        // No customer doc yet — firstDate will be set when creating the document
+        shouldUpdateFirstDate = true;
       }
 
       final debtRef = userRef.collection('debts').doc(debt.operationId);
@@ -344,6 +363,15 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           if (isFirstUnpaid) 'debtCustomersCount': FieldValue.increment(1),
           'lastUpdatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
+      }
+      // 6. Update firstDate on the customer document
+      if (shouldUpdateFirstDate && customerSnapshot.docs.isNotEmpty) {
+        final customerRef = customerSnapshot.docs.first.reference;
+        batch.update(customerRef, {
+          'firstDate': debt.timestamp != null
+              ? Timestamp.fromDate(debt.timestamp!)
+              : FieldValue.serverTimestamp(),
+        });
       }
 
       await batch.commit();
@@ -475,7 +503,9 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           'debtId': debtRef.id,
           'amountPaid': payment.amountPaid,
           'remainingAmount': newRemainingAmount,
-          'createdAt': FieldValue.serverTimestamp(),
+          'createdAt': payment.createdAt != null
+              ? Timestamp.fromDate(payment.createdAt!)
+              : FieldValue.serverTimestamp(),
           'type': isPaid ? PaymentType.full.name : PaymentType.partial.name,
           'relatedTo': debtData['customerName'],
           'activityName': debtData['productOrSessionDetails'],
@@ -521,14 +551,14 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
         // Customer status update is grouped by current timestamp
         if (becameFullyPaid) {
-          final currentKeys = SummaryHelper.getSummaryKeys(DateTime.now());
+          final currentKeys = SummaryHelper.getSummaryKeys(payment.createdAt ?? DateTime.now());
           for (final key in currentKeys) {
             addSummaryIncrement(key, 'debtCustomersCount', -1.0);
           }
         }
 
         // Payment metrics (totalCollected) are grouped by actual payment transaction date (now)
-        final paymentKeys = SummaryHelper.getSummaryKeys(DateTime.now());
+        final paymentKeys = SummaryHelper.getSummaryKeys(payment.createdAt ?? DateTime.now());
         for (final key in paymentKeys) {
           addSummaryIncrement(key, 'totalCollected', payment.amountPaid);
         }
@@ -555,8 +585,9 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
   Future<void> payTotalDebt(
     String uid,
     String customerName,
-    double amount,
-  ) async {
+    double amount, {
+    DateTime? paymentDate,
+  }) async {
     try {
       final snapshot = await firestore
           .collection('users')
@@ -657,7 +688,9 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             'debtId': debtRef.id,
             'amountPaid': paymentForThisItem,
             'remainingAmount': newRemainingAmount,
-            'createdAt': FieldValue.serverTimestamp(),
+            'createdAt': paymentDate != null
+                ? Timestamp.fromDate(paymentDate)
+                : FieldValue.serverTimestamp(),
             'type': isPaid ? PaymentType.full.name : PaymentType.partial.name,
             'relatedTo': debtData['customerName'],
             'activityName': debtData['productOrSessionDetails'],
@@ -687,7 +720,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           }
 
           // 2. Payment metrics (totalCollected) are grouped by actual payment transaction date (now)
-          final paymentKeys = SummaryHelper.getSummaryKeys(DateTime.now());
+          final paymentKeys = SummaryHelper.getSummaryKeys(paymentDate ?? DateTime.now());
           for (final key in paymentKeys) {
             addSummaryIncrement(key, 'totalCollected', paymentForThisItem);
           }
@@ -699,7 +732,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           (sum, d) => sum + (d.data()['remainingAmount'] as num).toDouble(),
         );
         if (amount >= totalUnpaidInSnapshot - 1e-9) {
-          final nowKeys = SummaryHelper.getSummaryKeys(DateTime.now());
+          final nowKeys = SummaryHelper.getSummaryKeys(paymentDate ?? DateTime.now());
           for (final key in nowKeys) {
             addSummaryIncrement(key, 'debtCustomersCount', -1.0);
           }
@@ -740,6 +773,15 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           .get();
 
       if (snapshot.docs.isEmpty) return;
+
+      // Read the customer document to clear firstDate when fully paid
+      final customerSnapshot = await firestore
+          .collection('users')
+          .doc(uid)
+          .collection('customers')
+          .where('name', isEqualTo: customerName)
+          .limit(1)
+          .get();
 
       await firestore.runTransaction((transaction) async {
         // 1. ALL READS FIRST
@@ -852,6 +894,13 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           addSummaryIncrement(key, 'debtCustomersCount', -1.0);
         }
 
+        // Clear firstDate on the customer document since all debts are paid
+        if (customerSnapshot.docs.isNotEmpty) {
+          transaction.update(customerSnapshot.docs.first.reference, {
+            'firstDate': FieldValue.delete(),
+          });
+        }
+
         // Write all accumulated summaries to Firestore
         summaryAccumulator.forEach((key, fields) {
           final summaryRef = firestore
@@ -961,7 +1010,16 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         }
       }
 
-      // 3. Batch commit in chunks of 500
+      // 3. Read the customer document to clear firstDate
+      final customerSnapshot = await firestore
+          .collection('users')
+          .doc(uid)
+          .collection('customers')
+          .where('name', isEqualTo: customerName)
+          .limit(1)
+          .get();
+
+      // 4. Batch commit in chunks of 500
       for (var i = 0; i < allRefs.length; i += 500) {
         final chunk = allRefs.sublist(
           i,
@@ -972,7 +1030,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           batch.delete(ref);
         }
 
-        // Only add summary updates to the FIRST batch
+        // Only add summary updates and customer firstDate clear to the FIRST batch
         if (i == 0) {
           summaryUpdates.forEach((key, fields) {
             final summaryRef = firestore
@@ -989,6 +1047,13 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
             batch.set(summaryRef, updateData, SetOptions(merge: true));
           });
+
+          // Clear firstDate on the customer document
+          if (customerSnapshot.docs.isNotEmpty) {
+            batch.update(customerSnapshot.docs.first.reference, {
+              'firstDate': FieldValue.delete(),
+            });
+          }
         }
 
         await batch.commit();
@@ -1131,6 +1196,48 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
         batch.set(summaryRef, updateData, SetOptions(merge: true));
       });
+
+      // 7. Recalculate or clear firstDate on the customer document
+      final customerName = debtDoc.data()?['customerName'] as String?;
+      if (customerName != null) {
+        final customerSnapshot = await firestore
+            .collection('users')
+            .doc(uid)
+            .collection('customers')
+            .where('name', isEqualTo: customerName)
+            .limit(1)
+            .get();
+
+        if (customerSnapshot.docs.isNotEmpty) {
+          if (shouldDecrementCustomerCount) {
+            // No more unpaid debts — clear firstDate
+            batch.update(customerSnapshot.docs.first.reference, {
+              'firstDate': FieldValue.delete(),
+            });
+          } else {
+            // Recalculate firstDate from remaining debts
+            final remainingDebts = await firestore
+                .collection('users')
+                .doc(uid)
+                .collection('debts')
+                .where('customerName', isEqualTo: customerName)
+                .where('isPaid', isEqualTo: false)
+                .orderBy('timestamp', descending: false)
+                .limit(1)
+                .get();
+
+            if (remainingDebts.docs.isNotEmpty) {
+              final earliestTimestamp =
+                  remainingDebts.docs.first.data()['timestamp'] as Timestamp?;
+              if (earliestTimestamp != null) {
+                batch.update(customerSnapshot.docs.first.reference, {
+                  'firstDate': earliestTimestamp,
+                });
+              }
+            }
+          }
+        }
+      }
 
       await batch.commit();
     } catch (e) {

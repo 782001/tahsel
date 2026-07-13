@@ -4,6 +4,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/date_formatter.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/debt/domain/entities/debt_entity.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_cubit.dart';
@@ -15,12 +16,14 @@ class PartialPaymentDialog extends StatefulWidget {
   final String customerName;
   final double totalRemaining;
   final DebtEntity? debt;
+  final DateTime? firstDate;
 
   const PartialPaymentDialog({
     super.key,
     required this.customerName,
     required this.totalRemaining,
     this.debt,
+    this.firstDate,
   });
 
   @override
@@ -30,11 +33,48 @@ class PartialPaymentDialog extends StatefulWidget {
 class _PartialPaymentDialogState extends State<PartialPaymentDialog> {
   final TextEditingController _amountController = TextEditingController();
   String? _errorText;
+  DateTime? _selectedDate;
 
   @override
   void dispose() {
     _amountController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickDate() async {
+    final DateTime minDate = widget.firstDate != null
+        ? widget.firstDate!.add(const Duration(days: 1))
+        : DateTime(2000);
+    final DateTime initialDate = _selectedDate ?? DateTime.now();
+    final DateTime finalInitialDate = initialDate.isBefore(minDate)
+        ? minDate
+        : initialDate;
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: finalInitialDate,
+      firstDate: minDate,
+      lastDate: DateTime(2101),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: AppColors.isDark
+                ? ColorScheme.dark(primary: AppColors.primaryColor)
+                : ColorScheme.light(
+                    primary: AppColors.primaryColor,
+                    onPrimary: AppColors.white,
+                    onSurface: AppColors.black,
+                  ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
   }
 
   void _submit() {
@@ -67,6 +107,7 @@ class _PartialPaymentDialogState extends State<PartialPaymentDialog> {
           debt: widget.debt!,
           amount: amount,
           totalRemainingBefore: widget.totalRemaining,
+          paymentDate: _selectedDate,
         );
       } else {
         context.read<DebtCubit>().payDebt(
@@ -75,6 +116,7 @@ class _PartialPaymentDialogState extends State<PartialPaymentDialog> {
           amount: amount,
           totalRemainingBefore: widget.totalRemaining,
           note: AppStrings.partialPayment.tr(),
+          paymentDate: _selectedDate,
         );
       }
     }
@@ -105,157 +147,236 @@ class _PartialPaymentDialogState extends State<PartialPaymentDialog> {
               borderRadius: BorderRadius.circular(16),
             ),
             backgroundColor: AppColors.scafoldBackGround,
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppStrings.partialPayment.tr(),
-                    style: TextStyles.customStyle(
-                      color: AppColors.textColor,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppStrings.partialPayment.tr(),
+                      style: TextStyles.customStyle(
+                        color: AppColors.textColor,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    '${AppStrings.amountPaid.tr()} (${AppStrings.remainingDebt.tr()}: ${widget.totalRemaining.toStringAsFixed(1)})',
-                    style: TextStyles.customStyle(
-                      color: AppColors.disabledColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.1,
+                    const SizedBox(height: 24),
+                    Text(
+                      '${AppStrings.amountPaid.tr()} (${AppStrings.remainingDebt.tr()}: ${widget.totalRemaining.toStringAsFixed(1)})',
+                      style: TextStyles.customStyle(
+                        color: AppColors.disabledColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.1,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceContainerHigh,
-                      borderRadius: BorderRadius.circular(12),
-                      border: _errorText != null
-                          ? Border.all(color: AppColors.error)
-                          : null,
-                    ),
-                    child: Row(
-                      children: [
-                        const SizedBox(width: 16),
-                        Text(
-                          AppStrings.currencyEgp.tr(),
-                          style: TextStyles.customStyle(
-                            color: AppColors.disabledColor,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Expanded(
-                          child: TextField(
-                            cursorColor: AppColors.primaryColor,
-                            controller: _amountController,
-                            keyboardType: TextInputType.number,
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceContainerHigh,
+                        borderRadius: BorderRadius.circular(12),
+                        border: _errorText != null
+                            ? Border.all(color: AppColors.error)
+                            : null,
+                      ),
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 16),
+                          Text(
+                            AppStrings.currencyEgp.tr(),
                             style: TextStyles.customStyle(
-                              color: AppColors.textColor,
-                              fontSize: 24,
+                              color: AppColors.disabledColor,
+                              fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
-                            decoration: InputDecoration(
-                              hintText: '0.00',
-                              hintStyle: TextStyles.customStyle(
-                                color: AppColors.disabledColor,
+                          ),
+                          Expanded(
+                            child: TextField(
+                              cursorColor: AppColors.primaryColor,
+                              controller: _amountController,
+                              keyboardType: TextInputType.number,
+                              style: TextStyles.customStyle(
+                                color: AppColors.textColor,
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
                               ),
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 16,
+                              decoration: InputDecoration(
+                                hintText: '0.00',
+                                hintStyle: TextStyles.customStyle(
+                                  color: AppColors.disabledColor,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 16,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (_errorText != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      _errorText!,
-                      style: TextStyles.customStyle(
-                        color: AppColors.error,
-                        fontSize: 12,
+                        ],
                       ),
                     ),
-                  ],
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: BlocBuilder<DebtCubit, DebtState>(
-                      builder: (context, state) {
-                        return ElevatedButton(
-                          onPressed: state is DebtLoading ? null : _submit,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryColor,
-                            foregroundColor: AppColors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
+                    if (_errorText != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        _errorText!,
+                        style: TextStyles.customStyle(
+                          color: AppColors.error,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    Text(
+                      AppStrings.paymentDate.tr(),
+                      style: TextStyles.customStyle(
+                        color: AppColors.disabledColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: _pickDate,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceContainerHigh,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
                               children: [
-                                if (state is DebtLoading) ...[
-                                  SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      color: AppColors.white,
-                                      strokeWidth: 2,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                ],
+                                Icon(
+                                  Icons.calendar_today_outlined,
+                                  color: _selectedDate != null
+                                      ? AppColors.primaryColor
+                                      : AppColors.disabledColor,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 12),
                                 Text(
-                                  AppStrings.confirm.tr(),
+                                  _selectedDate != null
+                                      ? DateFormatter.formatNumericDate(
+                                          _selectedDate!,
+                                        )
+                                      : AppStrings.notSet.tr(),
                                   style: TextStyles.customStyle(
-                                    fontSize: 18,
+                                    color: _selectedDate != null
+                                        ? AppColors.textColor
+                                        : AppColors.disabledColor,
+                                    fontSize: 16,
                                     fontWeight: FontWeight.bold,
-                                    color: AppColors.white,
                                   ),
                                 ),
                               ],
                             ),
+                            if (_selectedDate != null)
+                              IconButton(
+                                icon: Icon(
+                                  Icons.clear,
+                                  color: AppColors.error,
+                                  size: 20,
+                                ),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                onPressed: () {
+                                  setState(() {
+                                    _selectedDate = null;
+                                  });
+                                },
+                              )
+                            else
+                              Icon(
+                                Icons.arrow_forward_ios,
+                                color: AppColors.disabledColor,
+                                size: 14,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: BlocBuilder<DebtCubit, DebtState>(
+                        builder: (context, state) {
+                          return ElevatedButton(
+                            onPressed: state is DebtLoading ? null : _submit,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryColor,
+                              foregroundColor: AppColors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (state is DebtLoading) ...[
+                                    SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        color: AppColors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                  ],
+                                  Text(
+                                    AppStrings.confirm.tr(),
+                                    style: TextStyles.customStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.disabledColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppColors.disabledColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
                         ),
-                      ),
-                      child: Text(
-                        AppStrings.cancel.tr(),
-                        style: TextStyles.customStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.disabledColor,
+                        child: Text(
+                          AppStrings.cancel.tr(),
+                          style: TextStyles.customStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.disabledColor,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

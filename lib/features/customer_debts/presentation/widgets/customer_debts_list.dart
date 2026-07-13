@@ -51,6 +51,7 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
           customerName: customerName,
           totalRemaining: totalRemaining,
           debt: debt,
+          firstDate: debt?.timestamp,
         ),
       ),
     );

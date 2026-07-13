@@ -10,6 +10,7 @@ class CustomerModel extends CustomerEntity {
     required super.lastUsedAt,
     super.totalTransactions = 1,
     super.ledgerNumber,
+    super.firstDate,
   });
 
   factory CustomerModel.fromJson(Map<String, dynamic> json, {String? id}) {
@@ -22,6 +23,11 @@ class CustomerModel extends CustomerEntity {
       lastUsedAt: (json['lastUsedAt'] as Timestamp).toDate(),
       totalTransactions: json['totalTransactions'] as int? ?? 1,
       ledgerNumber: json['ledgerNumber'] as String?,
+      firstDate: json['firstDate'] != null
+          ? (json['firstDate'] is Timestamp
+              ? (json['firstDate'] as Timestamp).toDate()
+              : DateTime.tryParse(json['firstDate'].toString()))
+          : null,
     );
   }
 
@@ -33,6 +39,7 @@ class CustomerModel extends CustomerEntity {
       'lastUsedAt': Timestamp.fromDate(lastUsedAt),
       'totalTransactions': totalTransactions,
       if (ledgerNumber != null) 'ledgerNumber': ledgerNumber,
+      if (firstDate != null) 'firstDate': Timestamp.fromDate(firstDate!),
     };
   }
 
@@ -45,6 +52,7 @@ class CustomerModel extends CustomerEntity {
       lastUsedAt: entity.lastUsedAt,
       totalTransactions: entity.totalTransactions,
       ledgerNumber: entity.ledgerNumber,
+      firstDate: entity.firstDate,
     );
   }
 }

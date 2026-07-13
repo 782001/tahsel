@@ -30,8 +30,9 @@ abstract class DebtRepository {
   Future<Either<Failure, void>> payTotalDebt(
     String uid,
     String customerName,
-    double amount,
-  );
+    double amount, {
+    DateTime? paymentDate,
+  });
   Future<Either<Failure, void>> markCustomerAsPaid(
     String uid,
     String customerName,

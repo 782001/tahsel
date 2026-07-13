@@ -8,8 +8,13 @@ import '../repositories/debt_repository.dart';
 class PayItemDebtParams {
   final DebtEntity debt;
   final double amountToPay;
+  final DateTime? paymentDate;
 
-  PayItemDebtParams({required this.debt, required this.amountToPay});
+  PayItemDebtParams({
+    required this.debt,
+    required this.amountToPay,
+    this.paymentDate,
+  });
 }
 
 class PayItemDebtUseCase implements BaseUseCase<void, PayItemDebtParams> {
@@ -45,7 +50,7 @@ class PayItemDebtUseCase implements BaseUseCase<void, PayItemDebtParams> {
       debtId: params.debt.id!,
       amountPaid: params.amountToPay,
       remainingAmount: newRemainingAmount,
-      createdAt: DateTime.now(),
+      createdAt: params.paymentDate ?? DateTime.now(),
       type: isPaid ? PaymentType.full : PaymentType.partial,
     );
 

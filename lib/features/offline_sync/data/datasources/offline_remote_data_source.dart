@@ -184,12 +184,42 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
     }
 
     final opRef = userRef.collection('operations').doc(operationId);
+
+    // Fetch customer doc to check/update firstDate
+    final customersCollection = userRef.collection('customers');
+    final customerSnapshot = await customersCollection
+        .where('name', isEqualTo: customerName.trim())
+        .limit(1)
+        .get();
+
+    bool shouldUpdateFirstDate = false;
+    DocumentReference? customerRef;
+
+    if (customerSnapshot.docs.isNotEmpty) {
+      customerRef = customerSnapshot.docs.first.reference;
+      final data = customerSnapshot.docs.first.data();
+      final existingFirstDate = data['firstDate'] != null
+          ? (data['firstDate'] as Timestamp).toDate()
+          : null;
+      if (existingFirstDate == null) {
+        shouldUpdateFirstDate = true;
+      } else if (timestampDate.isBefore(existingFirstDate)) {
+        shouldUpdateFirstDate = true;
+      }
+    }
+
     final batch = firestore.batch();
 
     payload['timestamp'] = timestamp;
     payload['lastUpdatedAt'] = FieldValue.serverTimestamp();
     payload['syncedAt'] = FieldValue.serverTimestamp();
     batch.set(debtRef, payload);
+
+    if (shouldUpdateFirstDate && customerRef != null) {
+      batch.update(customerRef, {
+        'firstDate': timestamp,
+      });
+    }
 
     batch.set(opRef, {
       'uid': uid,
