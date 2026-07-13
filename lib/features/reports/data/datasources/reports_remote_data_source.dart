@@ -121,7 +121,7 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
       double totalIncome = 0;
       double cafeIncome = 0;
       double playstationIncome = 0;
-      int totalCount = operationsSnapshot.docs.length;
+      int totalCount = 0;
       int cafeCount = 0;
       int playstationCount = 0;
 
@@ -130,6 +130,13 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
         final double totalAmount = (data['totalAmount'] ?? 0).toDouble();
         final type = (data['type'] ?? '').toString().toLowerCase();
 
+        // Skip invoice-linked debt operations — their financials are already
+        // aggregated from the authoritative `invoices` collection below.
+        // Counting them here would double the reported income and inflate
+        // the transaction count.
+        if (type == 'invoice_debt') continue;
+
+        totalCount++;
         totalIncome += totalAmount;
         if (type == AppStrings.shop.toLowerCase() || type == 'cafe') {
           cafeIncome += totalAmount;
