@@ -12,12 +12,14 @@ class DistributeMyDebtPaymentUseCase {
     required String personName,
     required double amount,
     String? note,
+    DateTime? paymentDate,
   }) async {
     return await repository.distributeMyDebtPayment(
       uid: uid,
       personName: personName,
       amount: amount,
       note: note,
+      paymentDate: paymentDate,
     );
   }
 }

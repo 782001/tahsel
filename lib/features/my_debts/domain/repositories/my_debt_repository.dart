@@ -56,6 +56,7 @@ abstract class MyDebtRepository {
     required String debtId,
     required double amount,
     String? note,
+    DateTime? paymentDate,
   });
   Future<Either<Failure, List<PaymentEntity>>> getMyDebtItemPayments(
     String uid,
@@ -75,6 +76,7 @@ abstract class MyDebtRepository {
     required String personName,
     required double amount,
     String? note,
+    DateTime? paymentDate,
   });
   Future<Either<Failure, void>> updateMyDebtPayment({
     required String uid,

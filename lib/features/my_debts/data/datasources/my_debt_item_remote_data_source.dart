@@ -17,6 +17,7 @@ abstract class MyDebtItemRemoteDataSource {
     String personName,
     double amount, {
     String? note,
+    DateTime? paymentDate,
   });
   Future<void> markPersonAsPaid(String uid, String personName);
   Future<void> payItem({
@@ -24,6 +25,7 @@ abstract class MyDebtItemRemoteDataSource {
     required String debtId,
     required double amount,
     String? note,
+    DateTime? paymentDate,
   });
   Future<void> deleteDebtItem(String uid, String debtId);
   Stream<List<MyDebtItemModel>> getDebtsStream(String uid);
@@ -101,6 +103,21 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           .collection('my_debt_operations')
           .doc(debt.operationId);
 
+      final personRef = userRef
+          .collection('my_debt_persons')
+          .doc(debt.personName);
+
+      // Get person first to check if firstDate needs to be set/updated
+      final personDoc = await personRef.get();
+      final bool firstDateIsNull = !personDoc.exists || personDoc.data()?['firstDate'] == null;
+
+      // Update firstDate if it's null OR if the new debt's date is earlier
+      bool shouldUpdateFirstDate = firstDateIsNull;
+      if (!shouldUpdateFirstDate && debt.timestamp != null && personDoc.exists) {
+        final existingFirstDate = (personDoc.data()!['firstDate'] as Timestamp).toDate();
+        shouldUpdateFirstDate = debt.timestamp!.isBefore(existingFirstDate);
+      }
+
       final batch = firestore.batch();
 
       // 1. Add to debts collection
@@ -150,9 +167,6 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       }
 
       // 5. Update person doc with totals
-      final personRef = userRef
-          .collection('my_debt_persons')
-          .doc(debt.personName);
       final Map<String, dynamic> personUpdate = {
         'name': debt.personName,
         'lastUsedAt': debt.timestamp != null
@@ -165,6 +179,12 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
 
       if (debt.phoneNumber != null && debt.phoneNumber!.isNotEmpty) {
         personUpdate['phoneNumber'] = debt.phoneNumber;
+      }
+
+      if (shouldUpdateFirstDate) {
+        personUpdate['firstDate'] = debt.timestamp != null
+            ? Timestamp.fromDate(debt.timestamp!)
+            : FieldValue.serverTimestamp();
       }
 
       batch.set(personRef, personUpdate, SetOptions(merge: true));
@@ -261,6 +281,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
     String personName,
     double amount, {
     String? note,
+    DateTime? paymentDate,
   }) async {
     try {
       final snapshot = await firestore
@@ -311,7 +332,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           'paidAmount': newPaidAmount,
           'remainingAmount': newRemainingAmount,
           'isPaid': isPaid,
-          'lastUpdatedAt': FieldValue.serverTimestamp(),
+          'lastUpdatedAt': paymentDate != null ? Timestamp.fromDate(paymentDate) : FieldValue.serverTimestamp(),
         });
 
         if (operationId != null && operationId.isNotEmpty) {
@@ -324,7 +345,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
             {
               'paidAmount': newPaidAmount,
               'remainingDebt': newRemainingAmount,
-              'lastUpdatedAt': FieldValue.serverTimestamp(),
+              'lastUpdatedAt': paymentDate != null ? Timestamp.fromDate(paymentDate) : FieldValue.serverTimestamp(),
             },
           );
         }
@@ -334,7 +355,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           'debtId': debtId,
           'amountPaid': paymentForThisItem,
           'remainingAmount': newRemainingAmount,
-          'createdAt': FieldValue.serverTimestamp(),
+          'createdAt': paymentDate != null ? Timestamp.fromDate(paymentDate) : FieldValue.serverTimestamp(),
           'type': isPaid ? 'full' : 'partial',
           'note': note,
         });
@@ -348,7 +369,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           .doc(personName);
       batch.update(personRef, {
         'totalRemainingDebt': FieldValue.increment(-amount),
-        'lastUsedAt': FieldValue.serverTimestamp(),
+        'lastUsedAt': paymentDate != null ? Timestamp.fromDate(paymentDate) : FieldValue.serverTimestamp(),
       });
 
       await batch.commit();
@@ -442,6 +463,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
     required String debtId,
     required double amount,
     String? note,
+    DateTime? paymentDate,
   }) async {
     try {
       final debtRef = firestore
@@ -468,7 +490,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           'paidAmount': newPaidAmount,
           'remainingAmount': newRemainingAmount,
           'isPaid': isPaid,
-          'lastUpdatedAt': FieldValue.serverTimestamp(),
+          'lastUpdatedAt': paymentDate != null ? Timestamp.fromDate(paymentDate) : FieldValue.serverTimestamp(),
         });
 
         // 2. Update operation if exists
@@ -481,7 +503,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           transaction.update(opRef, {
             'paidAmount': newPaidAmount,
             'remainingDebt': newRemainingAmount,
-            'lastUpdatedAt': FieldValue.serverTimestamp(),
+            'lastUpdatedAt': paymentDate != null ? Timestamp.fromDate(paymentDate) : FieldValue.serverTimestamp(),
           });
         }
 
@@ -491,7 +513,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           'debtId': debtId,
           'amountPaid': amount,
           'remainingAmount': newRemainingAmount,
-          'createdAt': FieldValue.serverTimestamp(),
+          'createdAt': paymentDate != null ? Timestamp.fromDate(paymentDate) : FieldValue.serverTimestamp(),
           'type': isPaid ? 'full' : 'partial',
           'note': note,
         });
@@ -505,7 +527,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
             .doc(personName);
         transaction.update(personRef, {
           'totalRemainingDebt': FieldValue.increment(-amount),
-          'lastUsedAt': FieldValue.serverTimestamp(),
+          'lastUsedAt': paymentDate != null ? Timestamp.fromDate(paymentDate) : FieldValue.serverTimestamp(),
         });
       });
     } catch (e) {

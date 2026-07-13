@@ -6,6 +6,7 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_state.dart';
+import 'package:tahsel/core/utils/date_formatter.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/shared/widgets/shimmer/shimmer_loading.dart';
@@ -32,6 +33,41 @@ class _MyAddDebtDialogState extends State<MyAddDebtDialog> {
   final FocusNode _paidAmountFocus = FocusNode();
   final FocusNode _notesFocus = FocusNode();
   String? _errorText;
+  DateTime? _selectedDate;
+
+  Future<void> _pickDate() async {
+    final DateTime minDate = DateTime(2000);
+    final DateTime initialDate = _selectedDate ?? DateTime.now();
+    final DateTime finalInitialDate = initialDate.isBefore(minDate)
+        ? minDate
+        : initialDate;
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: finalInitialDate,
+      firstDate: minDate,
+      lastDate: DateTime(2101),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: AppColors.isDark
+                ? ColorScheme.dark(primary: AppColors.primaryColor)
+                : ColorScheme.light(
+                    primary: AppColors.primaryColor,
+                    onPrimary: AppColors.white,
+                    onSurface: AppColors.black,
+                  ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -86,6 +122,7 @@ class _MyAddDebtDialogState extends State<MyAddDebtDialog> {
             ? _notesController.text.trim()
             : AppStrings.newDebt.tr(),
         phone: widget.phoneNumber,
+        timestamp: _selectedDate,
       );
     }
   }
@@ -200,6 +237,83 @@ class _MyAddDebtDialogState extends State<MyAddDebtDialog> {
                           ),
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.all(16),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      AppStrings.paymentDate.tr(),
+                      style: TextStyles.customStyle(
+                        color: AppColors.disabledColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: _pickDate,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceContainerHigh,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.calendar_today_outlined,
+                                  color: _selectedDate != null
+                                      ? AppColors.primaryColor
+                                      : AppColors.disabledColor,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  _selectedDate != null
+                                      ? DateFormatter.formatNumericDate(
+                                          _selectedDate!,
+                                        )
+                                      : AppStrings.notSet.tr(),
+                                  style: TextStyles.customStyle(
+                                    color: _selectedDate != null
+                                        ? AppColors.textColor
+                                        : AppColors.disabledColor,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (_selectedDate != null)
+                              IconButton(
+                                icon: Icon(
+                                  Icons.clear,
+                                  color: AppColors.error,
+                                  size: 20,
+                                ),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                onPressed: () {
+                                  setState(() {
+                                    _selectedDate = null;
+                                  });
+                                },
+                              )
+                            else
+                              Icon(
+                                Icons.arrow_forward_ios,
+                                color: AppColors.disabledColor,
+                                size: 14,
+                              ),
+                          ],
                         ),
                       ),
                     ),

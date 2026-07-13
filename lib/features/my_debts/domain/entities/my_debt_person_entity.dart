@@ -10,6 +10,7 @@ class MyDebtPersonEntity extends Equatable {
   final String? ledgerNumber;
   final double totalDebtAmount;
   final double totalRemainingDebt;
+  final DateTime? firstDate;
 
   bool get isPending => id == null || id!.isEmpty;
 
@@ -23,6 +24,7 @@ class MyDebtPersonEntity extends Equatable {
     this.ledgerNumber,
     this.totalDebtAmount = 0,
     this.totalRemainingDebt = 0,
+    this.firstDate,
   });
 
   MyDebtPersonEntity copyWith({
@@ -35,6 +37,7 @@ class MyDebtPersonEntity extends Equatable {
     String? ledgerNumber,
     double? totalDebtAmount,
     double? totalRemainingDebt,
+    DateTime? firstDate,
   }) {
     return MyDebtPersonEntity(
       id: id ?? this.id,
@@ -47,6 +50,7 @@ class MyDebtPersonEntity extends Equatable {
       ledgerNumber: ledgerNumber ?? this.ledgerNumber,
       totalDebtAmount: totalDebtAmount ?? this.totalDebtAmount,
       totalRemainingDebt: totalRemainingDebt ?? this.totalRemainingDebt,
+      firstDate: firstDate ?? this.firstDate,
     );
   }
 
@@ -61,5 +65,6 @@ class MyDebtPersonEntity extends Equatable {
     ledgerNumber,
     totalDebtAmount,
     totalRemainingDebt,
+    firstDate,
   ];
 }

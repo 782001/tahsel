@@ -44,7 +44,7 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
   @override
   void dispose() {
     AppLogger.printMessage("MyDebtDetailsScreen disposed");
-    debugPrintStack(label: 'Dispose Stack');
+    // debugPrintStack(label: 'Dispose Stack');
 
     super.dispose();
   }
@@ -77,6 +77,7 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
           child: MyPartialPaymentDialog(
             personName: widget.person.name,
             totalRemaining: totalRemaining,
+            firstDate: cubit.state.firstDate,
           ),
         );
       },
@@ -126,6 +127,7 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
             personName: widget.person.name,
             totalRemaining: item.remainingAmount,
             debtId: item.id,
+            firstDate: item.timestamp,
           ),
         );
       },

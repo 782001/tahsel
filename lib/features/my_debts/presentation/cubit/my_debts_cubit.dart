@@ -254,6 +254,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
     required double paidAmount,
     String? details,
     String? phone,
+    DateTime? timestamp,
   }) async {
     if (state.status == MyDebtsStatus.loading ||
         state.status == MyDebtsStatus.addingDebt ||
@@ -284,7 +285,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
       personName: sanitizedName,
       details: details ?? 'ديون جديدة',
       operationType: 'debt',
-      timestamp: now,
+      timestamp: timestamp ?? now,
       isPaid: (totalAmount - paidAmount) <= 0,
       phoneNumber: phone,
     );

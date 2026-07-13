@@ -135,10 +135,16 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
   ) {
     double totalOwed = 0;
     double totalPaid = 0;
+    DateTime? earliestDate;
 
     for (var item in items) {
       totalOwed += item.totalAmount;
       totalPaid += item.paidAmount;
+      if (item.timestamp != null) {
+        if (earliestDate == null || item.timestamp!.isBefore(earliestDate)) {
+          earliestDate = item.timestamp;
+        }
+      }
     }
 
     emit(
@@ -149,6 +155,7 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
         totalOwed: totalOwed,
         totalPaid: totalPaid,
         remainingAmount: totalOwed - totalPaid,
+        firstDate: earliestDate,
       ),
     );
   }
@@ -166,6 +173,7 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
     required double amount,
     required String personName,
     String? note,
+    DateTime? paymentDate,
   }) async {
     if (state.status == MyDebtDetailsStatus.loading) return;
     emit(state.copyWith(status: MyDebtDetailsStatus.loading));
@@ -174,6 +182,7 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
       debtId: debtId,
       amount: amount,
       note: note,
+      paymentDate: paymentDate,
     );
 
     result.fold(
@@ -204,6 +213,7 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
     double? paidAmount,
     String? description,
     String? phone,
+    DateTime? timestamp,
   }) async {
     if (state.status == MyDebtDetailsStatus.loading) return;
     emit(state.copyWith(status: MyDebtDetailsStatus.loading));
@@ -219,7 +229,7 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
       personName: personName,
       details: description ?? AppStrings.newDebt.tr(),
       operationType: 'debt',
-      timestamp: now,
+      timestamp: timestamp ?? now,
       isPaid: (totalAmount - (paidAmount ?? 0)) <= 0,
       phoneNumber: phone,
     );
@@ -239,6 +249,7 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
     required String personName,
     required double amount,
     String? note,
+    DateTime? paymentDate,
   }) async {
     if (state.status == MyDebtDetailsStatus.loading) return;
     emit(state.copyWith(status: MyDebtDetailsStatus.loading));
@@ -247,6 +258,7 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
       personName: personName,
       amount: amount,
       note: note,
+      paymentDate: paymentDate,
     );
 
     result.fold(

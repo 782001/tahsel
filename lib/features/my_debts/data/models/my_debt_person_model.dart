@@ -12,6 +12,7 @@ class MyDebtPersonModel extends MyDebtPersonEntity {
     super.ledgerNumber,
     super.totalDebtAmount = 0,
     super.totalRemainingDebt = 0,
+    super.firstDate,
   });
 
   factory MyDebtPersonModel.fromJson(Map<String, dynamic> json, {String? id}) {
@@ -26,6 +27,11 @@ class MyDebtPersonModel extends MyDebtPersonEntity {
       ledgerNumber: json['ledgerNumber'] as String?,
       totalDebtAmount: (json['totalDebtAmount'] as num?)?.toDouble() ?? 0,
       totalRemainingDebt: (json['totalRemainingDebt'] as num?)?.toDouble() ?? 0,
+      firstDate: json['firstDate'] != null
+          ? (json['firstDate'] is Timestamp
+              ? (json['firstDate'] as Timestamp).toDate()
+              : DateTime.tryParse(json['firstDate'].toString()))
+          : null,
     );
   }
 
@@ -39,6 +45,7 @@ class MyDebtPersonModel extends MyDebtPersonEntity {
       'totalDebtAmount': totalDebtAmount,
       'totalRemainingDebt': totalRemainingDebt,
       if (ledgerNumber != null) 'ledgerNumber': ledgerNumber,
+      if (firstDate != null) 'firstDate': Timestamp.fromDate(firstDate!),
     };
   }
 
@@ -53,6 +60,7 @@ class MyDebtPersonModel extends MyDebtPersonEntity {
       ledgerNumber: entity.ledgerNumber,
       totalDebtAmount: entity.totalDebtAmount,
       totalRemainingDebt: entity.totalRemainingDebt,
+      firstDate: entity.firstDate,
     );
   }
 }

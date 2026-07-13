@@ -83,6 +83,17 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
     final opRef = userRef.collection('my_debt_operations').doc(operationId);
     final personRef = userRef.collection('my_debt_persons').doc(personName);
 
+    // Get person first to check if firstDate needs to be set/updated
+    final personSnap = await personRef.get();
+    final bool firstDateIsNull = !personSnap.exists || personSnap.data()?['firstDate'] == null;
+
+    // Update firstDate if it's null OR if the new debt's date is earlier
+    bool shouldUpdateFirstDate = firstDateIsNull;
+    if (!shouldUpdateFirstDate && personSnap.exists) {
+      final existingFirstDate = (personSnap.data()!['firstDate'] as Timestamp).toDate();
+      shouldUpdateFirstDate = timestamp.toDate().isBefore(existingFirstDate);
+    }
+
     final batch = firestore.batch();
 
     payload['timestamp'] = timestamp;
@@ -129,13 +140,19 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
       });
     }
 
-    batch.set(personRef, {
+    final Map<String, dynamic> personUpdate = {
       'name': personName,
       'lastUsedAt': timestamp,
       'totalDebtAmount': FieldValue.increment(totalAmount),
       'totalRemainingDebt': FieldValue.increment(remainingAmount),
       'totalTransactions': FieldValue.increment(1),
-    }, SetOptions(merge: true));
+    };
+
+    if (shouldUpdateFirstDate) {
+      personUpdate['firstDate'] = timestamp;
+    }
+
+    batch.set(personRef, personUpdate, SetOptions(merge: true));
 
     await batch.commit();
   }

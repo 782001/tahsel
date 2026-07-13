@@ -13,6 +13,8 @@ import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart'
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_state.dart';
 import 'package:tahsel/shared/widgets/buttons/custom_button.dart';
 import 'package:tahsel/shared/widgets/text_fields/custom_text_form_field.dart';
+import 'package:tahsel/core/utils/date_formatter.dart';
+
 
 class AddMyDebtScreen extends StatefulWidget {
   const AddMyDebtScreen({super.key});
@@ -30,6 +32,42 @@ class _AddMyDebtScreenState extends State<AddMyDebtScreen> {
   final _notesController = TextEditingController();
 
   double _remaining = 0;
+  DateTime? _selectedDate;
+
+  Future<void> _pickDate() async {
+    final DateTime minDate = DateTime(2000);
+    final DateTime initialDate = _selectedDate ?? DateTime.now();
+    final DateTime finalInitialDate = initialDate.isBefore(minDate)
+        ? minDate
+        : initialDate;
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: finalInitialDate,
+      firstDate: minDate,
+      lastDate: DateTime(2101),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: AppColors.isDark
+                ? ColorScheme.dark(primary: AppColors.primaryColor)
+                : ColorScheme.light(
+                    primary: AppColors.primaryColor,
+                    onPrimary: AppColors.white,
+                    onSurface: AppColors.black,
+                  ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
+
 
   @override
   void initState() {
@@ -261,6 +299,86 @@ class _AddMyDebtScreenState extends State<AddMyDebtScreen> {
                           prefixIcon: Icons.note_alt_outlined,
                           maxLines: 3,
                         ),
+                        SizedBox(height: 20.h),
+                        Text(
+                          AppStrings.paymentDate.tr(),
+                          style: TextStyles.customStyle(
+                            color: AppColors.textColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        InkWell(
+                          borderRadius: BorderRadius.circular(12.r),
+                          onTap: _pickDate,
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 16.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceContainerHigh,
+                              borderRadius: BorderRadius.circular(12.r),
+                              border: Border.all(
+                                color: AppColors.disabledColor.withValues(alpha: 0.1),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.calendar_today_outlined,
+                                      color: _selectedDate != null
+                                          ? AppColors.primaryColor
+                                          : AppColors.disabledColor,
+                                      size: 20.r,
+                                    ),
+                                    SizedBox(width: 12.w),
+                                    Text(
+                                      _selectedDate != null
+                                          ? DateFormatter.formatNumericDate(
+                                              _selectedDate!,
+                                            )
+                                          : AppStrings.notSet.tr(),
+                                      style: TextStyles.customStyle(
+                                        color: _selectedDate != null
+                                            ? AppColors.textColor
+                                            : AppColors.disabledColor,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (_selectedDate != null)
+                                  IconButton(
+                                    icon: Icon(
+                                      Icons.clear,
+                                      color: AppColors.error,
+                                      size: 20.r,
+                                    ),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    onPressed: () {
+                                      setState(() {
+                                        _selectedDate = null;
+                                      });
+                                    },
+                                  )
+                                else
+                                  Icon(
+                                    Icons.arrow_forward_ios,
+                                    color: AppColors.disabledColor,
+                                    size: 14.r,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+
                         SizedBox(height: 32.h),
                         BlocBuilder<MyDebtsCubit, MyDebtsState>(
                           builder: (context, state) {
@@ -286,6 +404,7 @@ class _AddMyDebtScreenState extends State<AddMyDebtScreen> {
                                     details: _notesController.text.isEmpty
                                         ? null
                                         : _notesController.text,
+                                    timestamp: _selectedDate,
                                   );
                                   if (!mounted) return;
                                   sl<NavigatorService>().pop();

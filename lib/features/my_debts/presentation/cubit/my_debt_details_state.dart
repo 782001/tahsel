@@ -15,6 +15,7 @@ class MyDebtDetailsState extends Equatable {
   final double? lastPaymentAmount;
   final double? lastPaymentRemaining;
   final String? lastPaymentNote;
+  final DateTime? firstDate;
 
   const MyDebtDetailsState({
     this.status = MyDebtDetailsStatus.initial,
@@ -27,6 +28,7 @@ class MyDebtDetailsState extends Equatable {
     this.lastPaymentAmount,
     this.lastPaymentRemaining,
     this.lastPaymentNote,
+    this.firstDate,
   });
 
   MyDebtDetailsState copyWith({
@@ -42,6 +44,7 @@ class MyDebtDetailsState extends Equatable {
     String? lastPaymentNote,
     bool clearPayment = false,
     bool? paymentCompleted,
+    DateTime? firstDate,
   }) {
     return MyDebtDetailsState(
       status: status ?? this.status,
@@ -60,6 +63,7 @@ class MyDebtDetailsState extends Equatable {
       lastPaymentNote: clearPayment
           ? null
           : (lastPaymentNote ?? this.lastPaymentNote),
+      firstDate: firstDate ?? this.firstDate,
     );
   }
 
@@ -75,5 +79,6 @@ class MyDebtDetailsState extends Equatable {
     lastPaymentAmount,
     lastPaymentRemaining,
     lastPaymentNote,
+    firstDate,
   ];
 }

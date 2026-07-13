@@ -49,12 +49,13 @@ class DebtCubit extends Cubit<DebtState> {
     required String operationType,
     required String? ledgerNumber,
     String? operationId,
+    DateTime? timestamp,
   }) async {
     if (state is DebtLoading) return;
     final sanitizedName = customerName.replaceAll('/', ' ').trim();
     emit(DebtLoading());
 
-    final now = DateTime.now();
+    final now = timestamp ?? DateTime.now();
     final debt = await compute(
       _createCustomerDebtEntity,
       _AddCustomerDebtParams(

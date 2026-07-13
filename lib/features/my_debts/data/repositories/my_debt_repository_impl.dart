@@ -271,6 +271,7 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
     required String debtId,
     required double amount,
     String? note,
+    DateTime? paymentDate,
   }) async {
     try {
       await itemRemoteDataSource.payItem(
@@ -278,6 +279,7 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
         debtId: debtId,
         amount: amount,
         note: note,
+        paymentDate: paymentDate,
       );
       return const Right(null);
     } catch (e) {
@@ -291,6 +293,7 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
     required String personName,
     required double amount,
     String? note,
+    DateTime? paymentDate,
   }) async {
     try {
       await itemRemoteDataSource.distributePayment(
@@ -298,6 +301,7 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
         personName,
         amount,
         note: note,
+        paymentDate: paymentDate,
       );
       return const Right(null);
     } catch (e) {
