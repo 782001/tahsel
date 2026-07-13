@@ -9,6 +9,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/debt/domain/entities/payment_entity.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_details/debt_details_cubit.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_details/debt_details_state.dart';
@@ -79,16 +80,15 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
       canDelete = false;
     }
 
-
     final String dateStr = transaction.createdAt != null
         ? DateFormat(
             'yyyy/MM/dd - hh:mm a',
             AppStrings.currentLang,
           ).format(transaction.createdAt!)
         : '';
-
+    final isDesktop = ResponsiveLayout.isDesktop(context);
     return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
+      margin: EdgeInsets.only(bottom: isDesktop ? 12 : 12.h),
       child: Slidable(
         key: ValueKey(transaction.id),
         startActionPane: canEdit
@@ -102,7 +102,7 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
                     foregroundColor: Colors.white,
                     icon: Icons.edit,
                     label: AppStrings.edit.tr(),
-                    borderRadius: BorderRadius.circular(16.r),
+                    borderRadius: BorderRadius.circular(isDesktop ? 16 : 16.r),
                   ),
                 ],
               )
@@ -118,16 +118,16 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
                     foregroundColor: Colors.white,
                     icon: Icons.delete,
                     label: AppStrings.delete.tr(),
-                    borderRadius: BorderRadius.circular(16.r),
+                    borderRadius: BorderRadius.circular(isDesktop ? 16 : 16.r),
                   ),
                 ],
               )
             : null,
         child: Container(
-          padding: EdgeInsets.all(16.r),
+          padding: EdgeInsets.all(isDesktop ? 16 : 16.r),
           decoration: BoxDecoration(
             color: AppColors.debtCardSurface,
-            borderRadius: BorderRadius.circular(16.r),
+            borderRadius: BorderRadius.circular(isDesktop ? 16 : 16.r),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.02),
@@ -139,23 +139,23 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                width: 48.r,
-                height: 48.r,
+                width: isDesktop ? 48 : 48.r,
+                height: isDesktop ? 48 : 48.r,
                 decoration: BoxDecoration(
                   color:
                       (isDebtAdded ? AppColors.error : AppColors.primaryColor)
                           .withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12.r),
+                  borderRadius: BorderRadius.circular(isDesktop ? 12 : 12.r),
                 ),
                 child: Icon(
                   isDebtAdded
                       ? Icons.add_circle_outline
                       : Icons.account_balance_wallet_outlined,
                   color: isDebtAdded ? AppColors.error : AppColors.primaryColor,
-                  size: 24.r,
+                  size: isDesktop ? 24 : 24.r,
                 ),
               ),
-              SizedBox(width: 16.w),
+              SizedBox(width: isDesktop ? 16 : 16.w),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,7 +170,7 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
                     ),
                     if (transaction.activityName != null &&
                         transaction.activityName!.isNotEmpty) ...[
-                      SizedBox(height: 2.h),
+                      SizedBox(height: isDesktop ? 2 : 2.h),
                       Text(
                         transaction.activityName!,
                         style: TextStyles.customStyle(
@@ -180,14 +180,14 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
                         ),
                       ),
                     ],
-                    SizedBox(height: 4.h),
+                    SizedBox(height: isDesktop ? 4 : 4.h),
                     Text(
                       dateStr,
                       style: TextStyles.customStyle(
                         color: AppColors.disabledColor,
                         fontSize: 10,
                       ),
-                      maxLines: 2,
+                      maxLines: 23,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
@@ -229,6 +229,8 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
   }
 
   void _showEditDialog(BuildContext context) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
+
     final cubit = context.read<DebtDetailsCubit>();
     final TextEditingController amountController = TextEditingController(
       text: transaction.amountPaid.toString(),
@@ -266,7 +268,7 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
                 backgroundColor: AppColors.scafoldBackGround,
                 child: SingleChildScrollView(
                   child: Padding(
-                    padding: EdgeInsets.all(24.r),
+                    padding: EdgeInsets.all(isDesktop ? 24 : 24.r),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -279,7 +281,7 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 24.h),
+                        SizedBox(height: isDesktop ? 16 : 16.h),
                         Text(
                           AppStrings.amountPaid.tr(),
                           style: TextStyles.customStyle(
@@ -289,7 +291,7 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
                             letterSpacing: 1.1,
                           ),
                         ),
-                        SizedBox(height: 8.h),
+                        SizedBox(height: isDesktop ? 8 : 8.h),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           decoration: BoxDecoration(
@@ -338,7 +340,7 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
                           ),
                         ),
                         if (errorText != null) ...[
-                          SizedBox(height: 8.h),
+                          SizedBox(height: isDesktop ? 8 : 8.h),
                           Text(
                             errorText!,
                             style: TextStyles.customStyle(
@@ -348,7 +350,7 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
                             ),
                           ),
                         ],
-                        SizedBox(height: 16.h),
+                        SizedBox(height: isDesktop ? 16 : 16.h),
                         if (minAmount > 0 &&
                             transaction.type == PaymentType.debtAdded)
                           Text(
@@ -359,7 +361,7 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                        SizedBox(height: 16.h),
+                        SizedBox(height: isDesktop ? 16 : 16.h),
                         Text(
                           AppStrings.notes.tr(),
                           style: TextStyles.customStyle(
@@ -369,7 +371,7 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
                             letterSpacing: 1.1,
                           ),
                         ),
-                        SizedBox(height: 8.h),
+                        SizedBox(height: isDesktop ? 8 : 8.h),
                         Container(
                           decoration: BoxDecoration(
                             color: AppColors.surfaceContainerHigh,
@@ -392,14 +394,16 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
                                 fontWeight: FontWeight.bold,
                               ),
                               border: InputBorder.none,
-                              contentPadding: EdgeInsets.all(16.r),
+                              contentPadding: EdgeInsets.all(
+                                isDesktop ? 16 : 16.r,
+                              ),
                             ),
                           ),
                         ),
-                        SizedBox(height: 24.h),
+                        SizedBox(height: isDesktop ? 24 : 24.h),
                         SizedBox(
                           width: double.infinity,
-                          height: 56.h,
+                          height: isDesktop ? 56 : 56.h,
                           child: ElevatedButton(
                             onPressed: () {
                               final double? newAmount = double.tryParse(
@@ -486,10 +490,10 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
                             ),
                           ),
                         ),
-                        SizedBox(height: 12.h),
+                        SizedBox(height: isDesktop ? 12 : 12.h),
                         SizedBox(
                           width: double.infinity,
-                          height: 56.h,
+                          height: isDesktop ? 56 : 56.h,
                           child: TextButton(
                             onPressed: () => Navigator.pop(dialogContext),
                             style: TextButton.styleFrom(
