@@ -361,6 +361,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           if (debt.paidAmount > 0)
             'totalCollected': FieldValue.increment(debt.paidAmount),
           if (isFirstUnpaid) 'debtCustomersCount': FieldValue.increment(1),
+          'isSynced': false, // Invalidate cached summary to force recalculation
           'lastUpdatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
       }

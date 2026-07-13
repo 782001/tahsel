@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
@@ -113,7 +113,7 @@ class _ReportsViewState extends State<ReportsView> {
                                   },
                                   child: Container(
                                     padding: EdgeInsets.all(
-                                      isDesktop ? 20 : 16.w,
+                                      isDesktop ? 16 : 16.w,
                                     ),
                                     decoration: BoxDecoration(
                                       color: AppColors.primaryColor,
@@ -130,7 +130,9 @@ class _ReportsViewState extends State<ReportsView> {
                                     child: Row(
                                       children: [
                                         Container(
-                                          padding: EdgeInsets.all(10.w),
+                                          padding: EdgeInsets.all(
+                                            isDesktop ? 10 : 10.w,
+                                          ),
                                           decoration: BoxDecoration(
                                             color: AppColors.whiteOpacity(0.2),
                                             shape: BoxShape.circle,
@@ -286,12 +288,7 @@ class _ReportsViewState extends State<ReportsView> {
                                                 'startDate': dateRange.start,
                                                 'endDate': dateRange.end,
                                                 'period': _getPeriodString(),
-                                                'type':
-                                                    context
-                                                        .read<MainLayoutCubit>()
-                                                        .isShop
-                                                    ? AppStrings.shop
-                                                    : null,
+                                                'type': null,
                                                 'isShop': context
                                                     .read<MainLayoutCubit>()
                                                     .isShop,
