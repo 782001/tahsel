@@ -2,6 +2,7 @@ import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/skeletons/total_debts_summary_skeleton.dart';
 
 import '../../../../core/extensions/string_extensions.dart';
@@ -94,7 +95,7 @@ class _TotalDebtsSummaryCardState extends State<TotalDebtsSummaryCard> {
                   ),
                   SizedBox(height: 16.h),
                   Text(
-                    '${state.totalAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
+                    '${state.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                     style: TextStyles.customStyle(
                       color: AppColors.error,
                       fontSize: 28,

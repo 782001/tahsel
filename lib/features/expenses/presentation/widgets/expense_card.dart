@@ -142,10 +142,7 @@ class ExpenseCard extends StatelessWidget {
             foregroundColor: AppColors.white,
             icon: Icons.delete_outline,
             label: AppStrings.delete.tr(),
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(16),
-              bottomLeft: Radius.circular(16),
-            ),
+                    borderRadius: BorderRadius.circular(16 ),
           ),
         ],
       ),

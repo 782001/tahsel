@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
@@ -252,130 +251,112 @@ class ExpensesList extends StatelessWidget {
     MonthlyExpenseGroup month,
     bool isDesktop,
   ) {
-    return Slidable(
-      key: ValueKey(month.monthKey),
-      endActionPane: ActionPane(
-        motion: const ScrollMotion(),
-        extentRatio: isDesktop ? 0.15 : 0.25,
-        children: [
-          SlidableAction(
-            onPressed: (context) =>
-                _confirmDeleteMonth(context, month.monthKey, month.monthName),
-            backgroundColor: AppColors.error,
-            foregroundColor: AppColors.white,
-            icon: Icons.delete,
-            label: AppStrings.delete.tr(),
-            padding: EdgeInsets.zero,
-            borderRadius: BorderRadius.circular(16.r),
-          ),
-        ],
-      ),
-      child: InkWell(
-        onTap: () {
-          final expenseCubit = context.read<ExpenseCubit>();
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => BlocProvider.value(
-                value: expenseCubit,
-                child: MonthExpensesScreen(
-                  monthKey: month.monthKey,
-                  monthName: month.monthName,
-                ),
+    return InkWell(
+      onTap: () {
+        final expenseCubit = context.read<ExpenseCubit>();
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => BlocProvider.value(
+              value: expenseCubit,
+              child: MonthExpensesScreen(
+                monthKey: month.monthKey,
+                monthName: month.monthName,
               ),
             ),
-          );
-        },
-        borderRadius: BorderRadius.circular(16.r),
-        child: Container(
-          padding: EdgeInsets.all(isDesktop ? 16 : 16.r),
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(16.r),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.black.withValues(alpha: 0.04),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
           ),
-          child: Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(isDesktop ? 10 : 12.r),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryColor.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.calendar_month_outlined,
-                  color: AppColors.primaryColor,
-                  size: isDesktop ? 24 : 24.r,
-                ),
+        );
+      },
+      borderRadius: BorderRadius.circular(16.r),
+      child: Container(
+        padding: EdgeInsets.all(isDesktop ? 16 : 16.r),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(16.r),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.black.withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(isDesktop ? 10 : 12.r),
+              decoration: BoxDecoration(
+                color: AppColors.primaryColor.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
               ),
-              SizedBox(width: isDesktop ? 16 : 16.w),
-              Expanded(
-                flex: 4,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      month.monthName,
-                      style: TextStyles.customStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.black,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      "${month.transactionCount} ${AppStrings.transactionCount.tr()}",
-                      style: TextStyles.customStyle(
-                        fontSize: 12,
-                        color: AppColors.grey,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
+              child: Icon(
+                Icons.calendar_month_outlined,
+                color: AppColors.primaryColor,
+                size: isDesktop ? 24 : 24.r,
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 5,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "${month.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
-                      style: TextStyles.customStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primaryColor,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+            ),
+            SizedBox(width: isDesktop ? 16 : 16.w),
+            Expanded(
+              flex: 4,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    month.monthName,
+                    style: TextStyles.customStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.black,
                     ),
-                    Icon(
-                      Icons.arrow_forward_ios,
-                      size: isDesktop ? 14 : 14.r,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    "${month.transactionCount} ${AppStrings.transactionCount.tr()}",
+                    style: TextStyles.customStyle(
+                      fontSize: 12,
                       color: AppColors.grey,
                     ),
-                  ],
-                ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              flex: 5,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "${month.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
+                    style: TextStyles.customStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primaryColor,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: isDesktop ? 14 : 14.r,
+                    color: AppColors.grey,
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
+  // ignore: unused_element
   void _confirmDeleteMonth(
     BuildContext context,
     String monthKey,
