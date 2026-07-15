@@ -40,7 +40,6 @@ class InvoiceCubit extends Cubit<InvoiceState> {
 
   // ── Search debounce ──────────────────────────────────────────────────────
   Timer? _debounce;
-  StreamSubscription? _connectivitySubscription;
   List<InvoiceEntity> _allInvoices = [];
 
   InvoiceCubit({
@@ -60,18 +59,11 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     required this.getDebtTransactionsUseCase,
     required this.offlineInvoiceLocalDataSource,
     required this.connectivityCubit,
-  }) : super(InvoiceInitial()) {
-    _connectivitySubscription = connectivityCubit.stream.listen((state) {
-      if (state is ConnectivityConnected) {
-        syncOfflineInvoices();
-      }
-    });
-  }
+  }) : super(InvoiceInitial());
 
   @override
   Future<void> close() {
     _debounce?.cancel();
-    _connectivitySubscription?.cancel();
     return super.close();
   }
 
@@ -103,6 +95,7 @@ class InvoiceCubit extends Cubit<InvoiceState> {
           invoice: invoice,
           paidNow: paymentAmount,
           note: note,
+          skipInvoicePayment: true, // The payment is already inside the invoice JSON!
         );
       }
 
@@ -145,9 +138,32 @@ class InvoiceCubit extends Cubit<InvoiceState> {
 
   // ── List ──────────────────────────────────────────────────────────────────
 
-  /// Loads paginated invoices for the given user from Firestore.
+  /// Loads paginated invoices for the given user from Firestore or Hive if offline.
   Future<void> fetchInvoices(String uid, {bool forceRefresh = false}) async {
     emit(InvoiceLoading());
+    
+    // 1. Load offline pending invoices first
+    final pendingMap = await offlineInvoiceLocalDataSource.getPendingInvoices();
+    final pendingIds = pendingMap.map((p) => p['invoiceId'] as String).toSet();
+    final pendingInvoices = pendingMap.map(
+      (p) => InvoiceModel.fromMap(jsonDecode(p['invoiceJson']) as Map<String, dynamic>)
+    ).toList();
+
+    // 2. If disconnected, ONLY show Hive invoices
+    if (connectivityCubit.state is ConnectivityDisconnected) {
+      _allInvoices = pendingInvoices;
+      emit(
+        InvoiceListLoaded(
+          invoices: _allInvoices,
+          lastDocument: null,
+          hasMore: false, // No pagination offline
+          isPaginationLoading: false,
+          pendingSyncIds: pendingIds,
+        ),
+      );
+      return;
+    }
+
     final result = await getInvoicesPaginatedUseCase(
       GetInvoicesPaginatedParams(
         uid: uid,
@@ -158,14 +174,7 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     result.fold((failure) => emit(InvoiceFailure(failure.message)), (
       paginated,
     ) async {
-      // 1. Load offline pending invoices
-      final pendingMap = await offlineInvoiceLocalDataSource.getPendingInvoices();
-      final pendingIds = pendingMap.map((p) => p['invoiceId'] as String).toSet();
-      final pendingInvoices = pendingMap.map(
-        (p) => InvoiceModel.fromMap(jsonDecode(p['invoiceJson']) as Map<String, dynamic>)
-      ).toList();
-
-      // 2. Remove duplicates if any
+      // Remove duplicates if any
       final filteredRemote = paginated.items.where((i) => !pendingIds.contains(i.id)).toList();
 
       _allInvoices = [...pendingInvoices, ...filteredRemote];
@@ -358,9 +367,10 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     required InvoiceEntity invoice,
     required double paidNow,
     String? note,
+    bool skipInvoicePayment = false,
   }) async {
     // ── Step 1: append to the invoice's own payment ledger ───────────────────
-    if (paidNow > 0) {
+    if (paidNow > 0 && !skipInvoicePayment) {
       final payment = InvoicePayment(
         id: 'pmt_${DateTime.now().millisecondsSinceEpoch}',
         amount: paidNow,
@@ -375,7 +385,7 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     }
 
     // ── Step 2: compute remaining to decide whether a debt is needed ──────────
-    final newTotalPaid = invoice.totalPaid + paidNow;
+    final newTotalPaid = skipInvoicePayment ? invoice.totalPaid : invoice.totalPaid + paidNow;
     final remaining =
         (invoice.totalAmount - newTotalPaid).clamp(0.0, double.infinity);
 

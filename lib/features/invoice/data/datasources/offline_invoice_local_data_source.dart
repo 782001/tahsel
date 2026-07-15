@@ -51,14 +51,23 @@ class OfflineInvoiceLocalDataSourceImpl implements OfflineInvoiceLocalDataSource
       
       // Update the embedded invoiceJson so UI reflects the payment immediately
       final invoiceMap = jsonDecode(data['invoiceJson']) as Map<String, dynamic>;
-      final currentPaid = (invoiceMap['totalPaid'] as num?)?.toDouble() ?? 0.0;
-      final totalAmount = (invoiceMap['totalAmount'] as num?)?.toDouble() ?? 0.0;
       
-      final newPaid = currentPaid + paymentAmount;
+      // Append the payment to the invoice's internal payments list
+      final payments = List<dynamic>.from(invoiceMap['payments'] ?? []);
+      payments.add({
+        'id': 'pmt_offline_${DateTime.now().millisecondsSinceEpoch}',
+        'amount': paymentAmount,
+        'paidAt': DateTime.now().toIso8601String(),
+        'note': paymentNote,
+      });
+      invoiceMap['payments'] = payments;
+      
+      // Calculate dynamic totals to update the status field correctly
+      final totalAmount = (invoiceMap['items'] as List<dynamic>? ?? [])
+          .fold(0.0, (sum, i) => sum + ((i['unitPrice'] as num) * (i['quantity'] as num)));
+          
+      final newPaid = payments.fold(0.0, (sum, p) => sum + (p['amount'] as num));
       final newRemaining = totalAmount - newPaid;
-      
-      invoiceMap['totalPaid'] = newPaid;
-      invoiceMap['remainingAmount'] = newRemaining > 0 ? newRemaining : 0.0;
       
       if (newRemaining <= 0) {
         invoiceMap['status'] = 'paid';
