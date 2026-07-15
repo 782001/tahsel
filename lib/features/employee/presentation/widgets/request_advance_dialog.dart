@@ -206,7 +206,8 @@ class _RequestAdvanceDialogState extends State<RequestAdvanceDialog> {
                 BlocBuilder<EmployeeCubit, EmployeeState>(
                   builder: (context, state) {
                     if (state is EmployeeLoading) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const Center(child: CircularProgressIndicator( color: AppColors.primaryColor,
+              strokeWidth: 2,));
                     }
                     return SizedBox(
                       width: double.infinity,

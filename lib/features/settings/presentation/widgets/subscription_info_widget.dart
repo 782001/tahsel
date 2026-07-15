@@ -80,7 +80,10 @@ final isDesktop = ResponsiveLayout.isDesktop(context);
         elevation: 0,
         child: Padding(
           padding: EdgeInsets.all(isDesktop ? 20 : 20.w),
-          child: const Center(child: CircularProgressIndicator()),
+          child: const Center(child: CircularProgressIndicator(
+             color: AppColors.primaryColor,
+              strokeWidth: 2,
+          )),
         ),
       );
     }
