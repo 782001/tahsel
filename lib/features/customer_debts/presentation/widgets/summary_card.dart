@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -54,7 +55,10 @@ class SummaryCard extends StatelessWidget {
           ),
           SizedBox(height: 8.h),
           Text(
-            amount.toStringAsFixed(1),
+            amount > 0.0
+                ? '${amount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}'
+                : '0.0 ${AppStrings.currencyEgp.tr()}',
+
             style: TextStyles.customStyle(
               color: color,
               fontSize: 20,

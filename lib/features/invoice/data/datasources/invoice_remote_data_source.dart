@@ -269,12 +269,10 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
         );
       }
 
-      final remaining = (newTotalAmount - totalPaid).clamp(
-        0.0,
-        double.infinity,
-      );
+      final double debtRemaining = newTotalAmount - totalPaid;
+      
       final String newStatus;
-      if (remaining <= 0 && newTotalAmount > 0) {
+      if (debtRemaining <= 0 && newTotalAmount > 0) {
         newStatus = InvoiceStatus.paid.name;
       } else if (totalPaid > 0) {
         newStatus = InvoiceStatus.partial.name;
@@ -286,8 +284,8 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
       if (debtSnap.exists) {
         txn.update(debtRef, {
           'totalAmount': newTotalAmount,
-          'remainingAmount': remaining,
-          'isPaid': remaining <= 0,
+          'remainingAmount': debtRemaining,
+          'isPaid': debtRemaining <= 0,
           'lastUpdatedAt': FieldValue.serverTimestamp(),
           if (invoice.customerName != null)
             'customerName': (invoice.customerName ?? '')
@@ -296,6 +294,51 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
           if (invoice.customerPhone != null)
             'phoneNumber': invoice.customerPhone,
         });
+
+        // Update summaries to keep TotalDebtsSummaryCard in sync
+        final debtData = debtSnap.data()!;
+        final currentRemaining = (debtData['remainingAmount'] as num?)?.toDouble() ?? 0.0;
+        
+        if (debtRemaining != currentRemaining || newTotalAmount != oldInvoiceTotal) {
+          final debtTimestamp = (debtData['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+          
+          final currentIsPaid = currentRemaining <= 0;
+          final newIsPaid = debtRemaining <= 0;
+          
+          final totalDebtsDelta = debtRemaining - currentRemaining;
+          final unpaidDelta = (newIsPaid ? 0.0 : debtRemaining) - (currentIsPaid ? 0.0 : currentRemaining);
+          
+          final oldPaidDebtValue = currentIsPaid ? oldInvoiceTotal : 0.0;
+          final newPaidDebtValue = newIsPaid ? newTotalAmount : 0.0;
+          final paidDelta = newPaidDebtValue - oldPaidDebtValue;
+          
+          final Map<String, Map<String, double>> summaryAccumulator = {};
+          void addSummaryIncrement(String key, String field, double value) {
+            if (value == 0) return;
+            summaryAccumulator.putIfAbsent(key, () => {});
+            summaryAccumulator[key]![field] = (summaryAccumulator[key]![field] ?? 0.0) + value;
+          }
+
+          final debtKeys = SummaryHelper.getSummaryKeys(debtTimestamp);
+          for (final key in debtKeys) {
+            addSummaryIncrement(key, 'totalDebts', totalDebtsDelta);
+            addSummaryIncrement(key, 'unpaidDebts', unpaidDelta);
+            addSummaryIncrement(key, 'paidDebts', paidDelta);
+          }
+
+          for (final entry in summaryAccumulator.entries) {
+            final summaryRef = firestore
+                .collection('users/${invoice.uid}/summaries')
+                .doc(entry.key);
+            final Map<String, dynamic> updateData = {};
+            entry.value.forEach((field, val) {
+              updateData[field] = FieldValue.increment(val);
+            });
+            updateData['lastUpdatedAt'] = FieldValue.serverTimestamp();
+
+            txn.set(summaryRef, updateData, SetOptions(merge: true));
+          }
+        }
       }
 
       txn.update(ref, {

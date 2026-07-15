@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/extensions/extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -173,7 +173,9 @@ class CustomerDebtCard extends StatelessWidget {
                             children: [
                               FittedBox(
                                 child: Text(
-                                  '${amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
+                                  amount > 0.0
+                                      ? '${amount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}'
+                                      : '0.0 ${AppStrings.currencyEgp.tr()}',
                                   style: TextStyles.customStyle(
                                     color: statusColor,
                                     fontSize: 18,
@@ -181,6 +183,7 @@ class CustomerDebtCard extends StatelessWidget {
                                   ),
                                 ),
                               ),
+
                               const SizedBox(height: 4),
                               if (ledgerNumber != null &&
                                   ledgerNumber!.isNotEmpty)

@@ -182,7 +182,7 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
         final double total = (data['totalAmount'] ?? 0).toDouble();
 
         totalDebts += remaining;
-        if (remaining == 0) {
+        if (remaining <= 0) {
           paidDebts += total;
         } else {
           unpaidDebts += remaining;

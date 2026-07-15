@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -304,7 +305,9 @@ class _FinancialCell extends StatelessWidget {
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
-              '${amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
+              amount > 0.0
+                  ? '${amount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}'
+                  : '0.0 ${AppStrings.currencyEgp.tr()}',
               style: TextStyles.customStyle(
                 color: color,
                 fontSize: 13,
