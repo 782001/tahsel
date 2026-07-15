@@ -20,6 +20,7 @@ class TransactionDetailCard extends StatelessWidget {
     final bool isPlaystation =
         operation.type.toLowerCase() == AppStrings.playStation.toLowerCase();
     final bool hasDebt = operation.remainingDebt > 0;
+    final bool hasCredit = operation.remainingDebt < 0;
 
     final DateFormat timeFormat = DateFormat('hh:mm a');
     final DateFormat dateFormat = DateFormat('yyyy/MM/dd');
@@ -68,20 +69,42 @@ class TransactionDetailCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(isDesktop ? 20 : 20.r),
         child: Column(
           children: [
-            // Status marker for debt
-            if (hasDebt)
+            // Status marker for debt or credit
+            if (hasDebt || hasCredit)
               Container(
                 width: double.infinity,
                 padding: EdgeInsets.symmetric(vertical: isDesktop ? 4 : 4.h),
-                color: AppColors.error.withValues(alpha: 0.3),
+                color: (hasDebt ? AppColors.error : AppColors.success)
+                    .withValues(alpha: 0.3),
                 child: Center(
-                  child: Text(
-                    AppStrings.remainingDebt.tr(),
-                    style: TextStyles.customStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.error,
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        hasDebt ? AppStrings.remainingDebt.tr() : AppStrings.customerCredit.tr(),
+                        style: TextStyles.customStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: hasDebt ? AppColors.error : AppColors.success,
+                        ),
+                      ),
+                      Text(
+                        " : ",
+                        style: TextStyles.customStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: hasDebt ? AppColors.error : AppColors.success,
+                        ),
+                      ),
+                      Text(
+                        "${operation.remainingDebt.abs().toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
+                        style: TextStyles.customStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: hasDebt ? AppColors.error : AppColors.success,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -224,7 +247,7 @@ class TransactionDetailCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                AppStrings.remainingDebt.tr(),
+                                hasDebt ? AppStrings.remainingDebt.tr() : AppStrings.customerCredit.tr(),
                                 style: TextStyles.customStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w500,
@@ -237,11 +260,11 @@ class TransactionDetailCard extends StatelessWidget {
                               FittedBox(
                                 fit: BoxFit.scaleDown,
                                 child: Text(
-                                  "${operation.remainingDebt.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
+                                  "${hasDebt ? operation.remainingDebt.toSmartAmount() : operation.remainingDebt.abs().toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
                                   style: TextStyles.customStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
-                                    color: AppColors.error,
+                                    color: hasDebt ? AppColors.error : (hasCredit ? AppColors.success : AppColors.error),
                                   ),
                                 ),
                               ),

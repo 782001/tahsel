@@ -298,7 +298,7 @@
   "comparison_no_change": "No change in {label} {period}",
   "transaction_history": "Transaction History",
   "settlement": "Settlement",
-  "customer_credit": "Give Customer",
+  "customer_credit": "Customer Credit",
   "remaining": "Remaining",
   "debt_details": "Debt Details",
   "offlineNoRecentInvoices": "It looks like you're offline and haven't created any invoices recently.\nDon't worry, you can continue creating invoices locally, and they will be synced automatically once your internet connection is restored.",

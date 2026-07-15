@@ -253,6 +253,12 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
           .doc(debtId);
       final debtSnap = await txn.get(debtRef);
 
+      // The operation that represents the initial debt creation also shares the debtId
+      final opRef = firestore
+          .collection('users/${invoice.uid}/operations')
+          .doc(debtId);
+      final opSnap = await txn.get(opRef);
+
       // Do not touch voided invoices — their status must stay 'voided'.
       if (existing.status == InvoiceStatus.voided) {
         txn.update(ref, {
@@ -305,6 +311,18 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
           if (invoice.customerPhone != null)
             'phoneNumber': invoice.customerPhone,
         });
+
+        // Sync the same updates to the Operations log entry
+        if (opSnap.exists) {
+          txn.update(opRef, {
+            'totalAmount': newTotalAmount,
+            'remainingDebt': debtRemaining,
+            if (invoice.customerName != null)
+              'customerName': (invoice.customerName ?? '')
+                  .replaceAll('/', ' ')
+                  .trim(),
+          });
+        }
 
         // Update summaries to keep TotalDebtsSummaryCard in sync
         final debtData = debtSnap.data()!;
