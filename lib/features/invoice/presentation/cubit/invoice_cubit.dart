@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/core/error/failures.dart';
 
 import '../../../debt/domain/entities/debt_entity.dart';
 import '../../../debt/domain/usecases/add_debt_usecase.dart';
@@ -11,7 +12,13 @@ import '../../domain/entities/invoice_entity.dart';
 import '../../domain/usecases/invoice_history_usecases.dart';
 import '../../domain/usecases/invoice_usecases.dart';
 import '../../utils/invoice_history_diff.dart';
-import 'invoice_state.dart';
+import '../cubit/invoice_state.dart';
+import '../../data/datasources/offline_invoice_local_data_source.dart';
+import '../../../standard_features/no-internet/logic/connectivity_cubit.dart';
+import '../../../standard_features/no-internet/logic/connectivity_state.dart';
+import '../../data/models/invoice_model.dart';
+import 'dart:convert';
+import 'package:tahsel/core/utils/app_strings.dart';
 
 class InvoiceCubit extends Cubit<InvoiceState> {
   final CreateInvoiceUseCase createInvoiceUseCase;
@@ -28,9 +35,12 @@ class InvoiceCubit extends Cubit<InvoiceState> {
   final VoidInvoiceUseCase voidInvoiceUseCase;
   final AddInvoiceHistoryUseCase addInvoiceHistoryUseCase;
   final GetDebtTransactionsFutureUseCase getDebtTransactionsUseCase;
+  final OfflineInvoiceLocalDataSource offlineInvoiceLocalDataSource;
+  final ConnectivityCubit connectivityCubit;
 
   // ── Search debounce ──────────────────────────────────────────────────────
   Timer? _debounce;
+  StreamSubscription? _connectivitySubscription;
   List<InvoiceEntity> _allInvoices = [];
 
   InvoiceCubit({
@@ -48,12 +58,63 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     required this.voidInvoiceUseCase,
     required this.addInvoiceHistoryUseCase,
     required this.getDebtTransactionsUseCase,
-  }) : super(InvoiceInitial());
+    required this.offlineInvoiceLocalDataSource,
+    required this.connectivityCubit,
+  }) : super(InvoiceInitial()) {
+    _connectivitySubscription = connectivityCubit.stream.listen((state) {
+      if (state is ConnectivityConnected) {
+        syncOfflineInvoices();
+      }
+    });
+  }
 
   @override
   Future<void> close() {
     _debounce?.cancel();
+    _connectivitySubscription?.cancel();
     return super.close();
+  }
+
+  // ── Offline Sync ──────────────────────────────────────────────────────────
+
+  Future<void> syncOfflineInvoices() async {
+    final pending = await offlineInvoiceLocalDataSource.getPendingInvoices();
+    if (pending.isEmpty) return;
+
+    if (connectivityCubit.state is ConnectivityDisconnected) return;
+
+    for (final p in pending) {
+      final invoiceId = p['invoiceId'] as String;
+      final map = jsonDecode(p['invoiceJson']) as Map<String, dynamic>;
+      final invoice = InvoiceModel.fromMap(map);
+      final paymentAmount = (p['paymentAmount'] as num).toDouble();
+      final note = p['paymentNote'] as String?;
+
+      // 1. Create invoice online
+      final createResult = await createInvoiceUseCase(invoice);
+      final failed = createResult.fold((f) => f, (_) => null);
+      if (failed != null) continue; // Try again next sync
+
+      // 2. Apply payment logic directly (without emitting state)
+      if (paymentAmount > 0) {
+        await _processPaymentInternally(
+          uid: invoice.uid,
+          invoiceId: invoiceId,
+          invoice: invoice,
+          paidNow: paymentAmount,
+          note: note,
+        );
+      }
+
+      // 3. Clean up local storage
+      await offlineInvoiceLocalDataSource.deleteOfflineInvoice(invoiceId);
+    }
+    
+    // Refresh UI if needed
+    final uid = AppStrings.userToken;
+    if (uid.isNotEmpty) {
+      fetchInvoices(uid, forceRefresh: true);
+    }
   }
 
   // ── Create ────────────────────────────────────────────────────────────────
@@ -61,6 +122,20 @@ class InvoiceCubit extends Cubit<InvoiceState> {
   /// Creates a new invoice. Handles offline-first flow internally.
   Future<void> createInvoice(InvoiceEntity invoice) async {
     emit(InvoiceLoading());
+
+    if (connectivityCubit.state is ConnectivityDisconnected) {
+      // Deterministic ID for offline consistency
+      final timeKey = invoice.createdAt.millisecondsSinceEpoch ~/ 1000;
+      final fingerprint = '${invoice.uid}_${invoice.totalAmount}_${invoice.customerName ?? "anon"}_$timeKey';
+      final invoiceId = 'inv_${fingerprint.hashCode.abs()}';
+
+      final invoiceWithId = invoice.copyWith(id: invoiceId);
+      await offlineInvoiceLocalDataSource.saveOfflineInvoice(invoiceWithId);
+      
+      emit(InvoiceCreateSuccess(invoiceId));
+      return;
+    }
+
     final result = await createInvoiceUseCase(invoice);
     result.fold(
       (failure) => emit(InvoiceFailure(failure.message)),
@@ -170,6 +245,20 @@ class InvoiceCubit extends Cubit<InvoiceState> {
 
   Future<void> loadInvoice(String uid, String invoiceId) async {
     emit(InvoiceLoading());
+
+    // Check offline storage first
+    final pendingInvoices = await offlineInvoiceLocalDataSource.getPendingInvoices();
+    final localMatch = pendingInvoices.firstWhere(
+        (i) => i['invoiceId'] == invoiceId, orElse: () => <String, dynamic>{});
+        
+    if (localMatch.isNotEmpty) {
+        final invJson = localMatch['invoiceJson'] as String;
+        final map = jsonDecode(invJson) as Map<String, dynamic>;
+        final inv = InvoiceModel.fromMap(map);
+        emit(InvoiceDetailLoaded(inv));
+        return;
+    }
+
     final result = await getInvoiceByIdUseCase(uid, invoiceId);
     result.fold(
       (failure) => emit(InvoiceFailure(failure.message)),
@@ -222,8 +311,39 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     required double paidNow,
     String? note,
   }) async {
-    emit(InvoiceLoading());
+    // Check if it's pending offline
+    final pendingInvoices = await offlineInvoiceLocalDataSource.getPendingInvoices();
+    final isPendingLocally = pendingInvoices.any((i) => i['invoiceId'] == invoiceId);
+    
+    if (isPendingLocally) {
+       await offlineInvoiceLocalDataSource.updateOfflinePayment(invoiceId, paidNow, note);
+       emit(InvoicePaymentSuccess());
+       return;
+    }
 
+    emit(InvoiceLoading());
+    final failure = await _processPaymentInternally(
+       uid: uid,
+       invoiceId: invoiceId,
+       invoice: invoice,
+       paidNow: paidNow,
+       note: note,
+    );
+    
+    if (failure != null) {
+      emit(InvoiceFailure(failure.message));
+    } else {
+      emit(InvoicePaymentSuccess());
+    }
+  }
+
+  Future<Failure?> _processPaymentInternally({
+    required String uid,
+    required String invoiceId,
+    required InvoiceEntity invoice,
+    required double paidNow,
+    String? note,
+  }) async {
     // ── Step 1: append to the invoice's own payment ledger ───────────────────
     if (paidNow > 0) {
       final payment = InvoicePayment(
@@ -235,8 +355,7 @@ class InvoiceCubit extends Cubit<InvoiceState> {
       final payResult = await recordPaymentUseCase(uid, invoiceId, payment);
       final failed = payResult.fold((f) => f, (_) => null);
       if (failed != null) {
-        emit(InvoiceFailure(failed.message));
-        return;
+        return failed;
       }
     }
 
@@ -288,8 +407,7 @@ class InvoiceCubit extends Cubit<InvoiceState> {
           );
 
           if (debtFailure != null) {
-            emit(InvoiceFailure(debtFailure.message));
-            return;
+            return debtFailure;
           }
         }
       } else {
@@ -304,15 +422,12 @@ class InvoiceCubit extends Cubit<InvoiceState> {
           );
           final payFailure = payResult.fold((f) => f, (_) => null);
           if (payFailure != null) {
-            emit(InvoiceFailure(payFailure.message));
-            return;
+            return payFailure;
           }
         }
       }
     }
-
-    // ── Step 3: notify UI ─────────────────────────────────────────────────────
-    emit(InvoicePaymentSuccess());
+    return null;
   }
 
   /// Legacy helper kept for backward-compat references; delegates to recordPayment.

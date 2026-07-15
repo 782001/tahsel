@@ -178,15 +178,6 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                   label: AppStrings.createInvoice.tr(),
                   icon: Icons.receipt_long_rounded,
                   onPressed: () async {
-                    if (isDisconnected) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(AppStrings.noInternetConnection.tr()),
-                          backgroundColor: AppColors.error,
-                        ),
-                      );
-                      return;
-                    }
                     final cubit = context.read<InvoiceCubit>();
                     await Navigator.of(
                       context,

@@ -13,6 +13,7 @@ import 'package:tahsel/features/invoice/domain/usecases/invoice_history_usecases
 import 'package:tahsel/features/invoice/domain/usecases/invoice_usecases.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_cubit.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_history_cubit.dart';
+import 'package:tahsel/features/invoice/data/datasources/offline_invoice_local_data_source.dart';
 
 Future<void> initInvoice() async {
   // ── Cubits ─────────────────────────────────────────────────────────────────
@@ -33,6 +34,8 @@ Future<void> initInvoice() async {
       voidInvoiceUseCase: sl(),
       addInvoiceHistoryUseCase: sl(),
       getDebtTransactionsUseCase: sl(),
+      offlineInvoiceLocalDataSource: sl(),
+      connectivityCubit: sl(),
     ),
   );
 
@@ -98,6 +101,10 @@ Future<void> initInvoice() async {
 
   sl.registerLazySingleton<InvoiceHistoryRemoteDataSource>(
     () => InvoiceHistoryRemoteDataSourceImpl(firestore: sl()),
+  );
+
+  sl.registerLazySingleton<OfflineInvoiceLocalDataSource>(
+    () => OfflineInvoiceLocalDataSourceImpl(),
   );
 
   // ── External ───────────────────────────────────────────────────────────────

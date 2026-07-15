@@ -21,7 +21,7 @@ class QuickActionButton extends StatelessWidget {
       height: 64,
       child: ElevatedButton.icon(
         onPressed: onPressed,
-        icon: Icon(icon, color: AppColors.whiteColor),
+        icon: Icon(icon, color: AppColors.whiteColor, size: 24),
         label: Text(
           label,
           style: TextStyles.customStyle(
