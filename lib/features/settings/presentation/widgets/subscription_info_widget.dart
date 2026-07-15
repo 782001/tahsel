@@ -70,7 +70,7 @@ class _SubscriptionInfoWidgetState extends State<SubscriptionInfoWidget> {
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-final isDesktop = ResponsiveLayout.isDesktop(context);
+    final isDesktop = ResponsiveLayout.isDesktop(context);
     if (_isLoading) {
       return Card(
         color: AppColors.surface,
@@ -80,10 +80,12 @@ final isDesktop = ResponsiveLayout.isDesktop(context);
         elevation: 0,
         child: Padding(
           padding: EdgeInsets.all(isDesktop ? 20 : 20.w),
-          child: const Center(child: CircularProgressIndicator(
-             color: AppColors.primaryColor,
+          child: Center(
+            child: CircularProgressIndicator(
+              color: AppColors.primaryColor,
               strokeWidth: 2,
-          )),
+            ),
+          ),
         ),
       );
     }
@@ -187,7 +189,6 @@ final isDesktop = ResponsiveLayout.isDesktop(context);
     final df = DateFormat('dd/MM/yyyy');
     String fmtDate(DateTime? d) =>
         d != null ? df.format(d) : AppStrings.notSet.tr();
-
 
     return Card(
       color: isDark ? AppColors.surface : AppColors.whiteColor,
