@@ -95,7 +95,7 @@ class ReportsDashboardCard extends StatelessWidget {
                           child: Text(
                             badgeText!,
                             overflow: TextOverflow.ellipsis,
-                            maxLines: 3,
+                            maxLines: 4,
                             style: TextStyles.customStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
