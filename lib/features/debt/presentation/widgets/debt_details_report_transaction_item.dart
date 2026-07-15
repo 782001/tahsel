@@ -38,12 +38,16 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
     bool canDelete = false;
 
     List<PaymentEntity>? transactions;
+    double? remainingDebt;
     if (state is DebtDetailsLoaded) {
       transactions = state.transactions;
+      remainingDebt = state.remainingDebt;
     } else if (state is DebtDetailsUpdateSuccess) {
       transactions = state.transactions;
+      remainingDebt = state.remainingDebt;
     } else if (state is DebtDetailsDeleteSuccess) {
       transactions = state.transactions;
+      remainingDebt = state.remainingDebt;
     }
 
     if (transactions != null) {
@@ -78,6 +82,15 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
         debtId.startsWith('debt_inv_')) {
       canEdit = false;
       canDelete = false;
+    }
+
+    // Rule 4: Cannot edit or delete if there is credit (remainingDebt < 0)
+    if (remainingDebt != null) {
+      final bool hasCredit = remainingDebt < 0;
+      if (hasCredit) {
+        canEdit = false;
+        canDelete = false;
+      }
     }
 
     final String dateStr = transaction.createdAt != null

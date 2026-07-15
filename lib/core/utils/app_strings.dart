@@ -161,6 +161,7 @@ class AppStrings {
   static const String paymentExceedsRemaining = "payment_exceeds_remaining";
   static const String paymentSuccess = "payment_success";
   static const String fullSettlement = "full_settlement";
+  static const String customerCredit = "customer_credit";
 
   // General Nav
   static const String home = "home";

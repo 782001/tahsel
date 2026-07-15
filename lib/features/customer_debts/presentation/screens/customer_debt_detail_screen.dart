@@ -110,12 +110,12 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
     final cubit = context.read<DebtCubit>();
     final DateTime? earliestDate = currentDetail.items.isNotEmpty
         ? currentDetail.items
-            .map((item) => item.entity.timestamp)
-            .whereType<DateTime>()
-            .fold<DateTime?>(null, (earliest, current) {
-              if (earliest == null) return current;
-              return current.isBefore(earliest) ? current : earliest;
-            })
+              .map((item) => item.entity.timestamp)
+              .whereType<DateTime>()
+              .fold<DateTime?>(null, (earliest, current) {
+                if (earliest == null) return current;
+                return current.isBefore(earliest) ? current : earliest;
+              })
         : null;
     showDialog(
       context: context,
@@ -194,7 +194,6 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
               remainingBalance: state.remainingBalance,
               note: state.note,
               totalDebt: state.totalAmount,
-             
             );
           }
           // Refresh data after success

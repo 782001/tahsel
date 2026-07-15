@@ -355,6 +355,7 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
               transaction: transaction,
               debtId: widget.debtId,
               customerName: debt?.customerName ?? '',
+              
             );
           }, childCount: transactions.length),
         ),

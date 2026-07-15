@@ -298,6 +298,7 @@
   "comparison_no_change": "No change in {label} {period}",
   "transaction_history": "Transaction History",
   "settlement": "Settlement",
+  "customer_credit": "Give Customer",
   "remaining": "Remaining",
   "debt_details": "Debt Details",
   "no_transactions": "No transactions recorded for this debt",

@@ -25,26 +25,49 @@ class BuildDebtDetailsSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isSettled = remainingDebt <= 0;
+    final bool hasCredit = remainingDebt < 0;
+
+    // Three visual states:
+    //   hasCredit → amber/gold  (customer has a refund balance)
+    //   isSettled → green/primary (fully paid, nothing owed)
+    //   default   → red (still has an outstanding debt)
+    final Color cardColor = hasCredit
+        ? const Color(0xFFB45309) // amber-800
+        : isSettled
+            ? AppColors.primaryColor
+            : AppColors.error;
+
+    final List<Color> gradientColors = hasCredit
+        ? [
+            const Color(0xFFF59E0B), // amber-400
+            const Color(0xFFB45309), // amber-800
+          ]
+        : isSettled
+            ? [
+                AppColors.primaryColor,
+                AppColors.primaryColor.withValues(alpha: 0.8),
+              ]
+            : [AppColors.error.withValues(alpha: 0.9), AppColors.error];
+
+    final String statusBadgeLabel = hasCredit
+        ? AppStrings.customerCredit.tr()
+        : isSettled
+            ? AppStrings.fullSettlement.tr()
+            : AppStrings.debtStatusOverdue.tr();
 
     return Container(
       margin: EdgeInsets.all(16.r),
       padding: EdgeInsets.all(20.r),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: isSettled
-              ? [
-                  AppColors.primaryColor,
-                  AppColors.primaryColor.withValues(alpha: 0.8),
-                ]
-              : [AppColors.error.withValues(alpha: 0.9), AppColors.error],
+          colors: gradientColors,
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24.r),
         boxShadow: [
           BoxShadow(
-            color: (isSettled ? AppColors.primaryColor : AppColors.error)
-                .withValues(alpha: 0.3),
+            color: cardColor.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -114,9 +137,7 @@ class BuildDebtDetailsSummaryCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20.r),
                 ),
                 child: Text(
-                  isSettled
-                      ? AppStrings.fullSettlement.tr()
-                      : AppStrings.debtStatusOverdue.tr(),
+                  statusBadgeLabel,
                   style: TextStyles.customStyle(
                     color: Colors.white,
                     fontSize: 10,
@@ -126,6 +147,44 @@ class BuildDebtDetailsSummaryCard extends StatelessWidget {
               ),
             ],
           ),
+
+          // ── Customer Credit banner ───────────────────────────────────────────
+          if (hasCredit) ...[
+            SizedBox(height: 16.h),
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.35),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.account_balance_wallet_rounded,
+                    color: Colors.white,
+                    size: 18.r,
+                  ),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Text(
+                      '${AppStrings.customerCredit.tr()}:  ${remainingDebt.abs().toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                      style: TextStyles.customStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           SizedBox(height: 24.h),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

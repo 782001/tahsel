@@ -300,8 +300,11 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
     // ── Post-transaction: update _initial payment record ─────────────────────
     // This MUST be outside the transaction to avoid a Firestore platform-thread
     // crash on Windows desktop when reading a subcollection inside a transaction.
-    // Only applies when the new total is strictly greater than the old total.
-    if (capturedDebtId != null && newTotalAmount > oldInvoiceTotal) {
+    // Applies whenever the total changes in either direction (increase OR decrease).
+    // When the total decreases below what was already paid, the debt's original
+    // amount is adjusted to match the new invoice total so all calculations remain
+    // based on the actual agreed amount.
+    if (capturedDebtId != null && newTotalAmount != oldInvoiceTotal) {
       final initialPayRef = firestore
           .collection('users/${invoice.uid}/debts')
           .doc(capturedDebtId)
@@ -310,6 +313,8 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
 
       final initialSnap = await initialPayRef.get();
       if (initialSnap.exists) {
+        // remainingAmount on the _initial record always mirrors the new invoice
+        // total — it represents what was originally owed, not how much is left.
         await initialPayRef.update({
           'amountPaid': newTotalAmount,
           'remainingAmount': newTotalAmount,

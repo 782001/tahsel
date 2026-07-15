@@ -1,0 +1,26 @@
+<USER_REQUEST>
+You are a senior Flutter engineer and software architect with deep expertise in Flutter, Firebase, Clean Architecture, and financial/business applications.
+
+I want you to implement the following feature in the Invoice and Debt modules. Follow the existing architecture and coding style. Do not introduce unnecessary complexity, and make sure no existing functionality is broken.
+
+## Scenario
+
+The application has two separate modules:
+
+- Invoice Module
+- Debt Module
+
+When an invoice is edited, its total may decrease because products are returned or removed.
+
+If, after editing the invoice, the **new invoice total becomes less than the amount already paid**, I want the following behavior.
+
+### Task 1
+
+Update the debt's original amount (the initial debt value created when the invoice was first generated—it's probably named something like `initialDebt`, please verify the actual field).
+
+Example:
+
+- Original invoice total = 2,000
+- New invoice total after editing = 1,000
+
+<truncated 2828 bytes>

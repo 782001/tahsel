@@ -62,14 +62,14 @@ class CustomerDebtCard extends StatelessWidget {
                 icon: Icons.check_circle,
                 label: AppStrings.fullPaymentLabel.tr(),
               ),
-            if (amount == 0)
-              SlidableAction(
-                onPressed: (_) => onDelete(),
-                backgroundColor: AppColors.error,
-                foregroundColor: AppColors.whiteColor,
-                icon: Icons.delete_forever_rounded,
-                label: AppStrings.delete.tr(),
-              ),
+            // if (amount == 0)
+            //   SlidableAction(
+            //     onPressed: (_) => onDelete(),
+            //     backgroundColor: AppColors.error,
+            //     foregroundColor: AppColors.whiteColor,
+            //     icon: Icons.delete_forever_rounded,
+            //     label: AppStrings.delete.tr(),
+            //   ),
           ],
         ),
         child: Material(

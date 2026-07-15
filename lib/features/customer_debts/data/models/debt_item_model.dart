@@ -36,7 +36,7 @@ class DebtItem {
     );
   }
 
-  double get totalAmount => amountPaid + remainingDebt;
+  double get totalAmount => entity.totalAmount;
 }
 
 /// Represents a customer with all their debt items.
