@@ -157,14 +157,26 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     );
     result.fold((failure) => emit(InvoiceFailure(failure.message)), (
       paginated,
-    ) {
-      _allInvoices = List.from(paginated.items);
+    ) async {
+      // 1. Load offline pending invoices
+      final pendingMap = await offlineInvoiceLocalDataSource.getPendingInvoices();
+      final pendingIds = pendingMap.map((p) => p['invoiceId'] as String).toSet();
+      final pendingInvoices = pendingMap.map(
+        (p) => InvoiceModel.fromMap(jsonDecode(p['invoiceJson']) as Map<String, dynamic>)
+      ).toList();
+
+      // 2. Remove duplicates if any
+      final filteredRemote = paginated.items.where((i) => !pendingIds.contains(i.id)).toList();
+
+      _allInvoices = [...pendingInvoices, ...filteredRemote];
+      
       emit(
         InvoiceListLoaded(
           invoices: _allInvoices,
           lastDocument: paginated.lastDocument,
           hasMore: paginated.hasMore,
           isPaginationLoading: false,
+          pendingSyncIds: pendingIds,
         ),
       );
     });
@@ -191,7 +203,10 @@ class InvoiceCubit extends Cubit<InvoiceState> {
         emit(currentState.copyWith(isPaginationLoading: false));
       },
       (paginated) {
-        _allInvoices.addAll(paginated.items);
+        final pendingIds = currentState.pendingSyncIds;
+        final filteredRemote = paginated.items.where((i) => !pendingIds.contains(i.id)).toList();
+        
+        _allInvoices.addAll(filteredRemote);
         emit(
           currentState.copyWith(
             invoices: _allInvoices,

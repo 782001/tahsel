@@ -63,15 +63,13 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
   }) async {
     try {
       final hasConnection = await connectionChecker.hasConnection;
-      if (!hasConnection) {
-        return const Left(OfflineFailure("No internet connection"));
-      }
+      final effectiveForceRefresh = hasConnection ? forceRefresh : false;
 
       final result = await remoteDataSource.getInvoicesPaginated(
         uid,
         limit: limit,
         lastDocument: lastDocument,
-        forceRefresh: forceRefresh,
+        forceRefresh: effectiveForceRefresh,
       );
       return Right(result);
     } catch (e) {

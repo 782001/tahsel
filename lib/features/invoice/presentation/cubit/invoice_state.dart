@@ -34,6 +34,7 @@ class InvoiceListLoaded extends InvoiceState {
   final DocumentSnapshot? lastDocument;
   final bool hasMore;
   final bool isPaginationLoading;
+  final Set<String> pendingSyncIds;
 
   const InvoiceListLoaded({
     required this.invoices,
@@ -42,6 +43,7 @@ class InvoiceListLoaded extends InvoiceState {
     this.lastDocument,
     this.hasMore = false,
     this.isPaginationLoading = false,
+    this.pendingSyncIds = const {},
   }) : filtered = filtered ?? invoices;
 
   InvoiceListLoaded copyWith({
@@ -51,6 +53,7 @@ class InvoiceListLoaded extends InvoiceState {
     DocumentSnapshot? lastDocument,
     bool? hasMore,
     bool? isPaginationLoading,
+    Set<String>? pendingSyncIds,
     bool clearLastDocument = false,
   }) {
     return InvoiceListLoaded(
@@ -61,6 +64,7 @@ class InvoiceListLoaded extends InvoiceState {
           clearLastDocument ? null : (lastDocument ?? this.lastDocument),
       hasMore: hasMore ?? this.hasMore,
       isPaginationLoading: isPaginationLoading ?? this.isPaginationLoading,
+      pendingSyncIds: pendingSyncIds ?? this.pendingSyncIds,
     );
   }
 
@@ -72,6 +76,7 @@ class InvoiceListLoaded extends InvoiceState {
         lastDocument,
         hasMore,
         isPaginationLoading,
+        pendingSyncIds,
       ];
 }
 

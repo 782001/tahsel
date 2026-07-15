@@ -41,8 +41,35 @@ class OfflineInvoiceLocalDataSourceImpl implements OfflineInvoiceLocalDataSource
     final jsonStr = box.get(invoiceId);
     if (jsonStr != null) {
       final data = jsonDecode(jsonStr) as Map<String, dynamic>;
-      data['paymentAmount'] = paymentAmount;
+      
+      // We must accumulate the new payment amount with whatever is already there.
+      final oldPaymentAmount = (data['paymentAmount'] as num?)?.toDouble() ?? 0.0;
+      final newPaymentAmount = oldPaymentAmount + paymentAmount;
+      
+      data['paymentAmount'] = newPaymentAmount;
       data['paymentNote'] = paymentNote;
+      
+      // Update the embedded invoiceJson so UI reflects the payment immediately
+      final invoiceMap = jsonDecode(data['invoiceJson']) as Map<String, dynamic>;
+      final currentPaid = (invoiceMap['totalPaid'] as num?)?.toDouble() ?? 0.0;
+      final totalAmount = (invoiceMap['totalAmount'] as num?)?.toDouble() ?? 0.0;
+      
+      final newPaid = currentPaid + paymentAmount;
+      final newRemaining = totalAmount - newPaid;
+      
+      invoiceMap['totalPaid'] = newPaid;
+      invoiceMap['remainingAmount'] = newRemaining > 0 ? newRemaining : 0.0;
+      
+      if (newRemaining <= 0) {
+        invoiceMap['status'] = 'paid';
+      } else if (newPaid > 0) {
+        invoiceMap['status'] = 'partial';
+      } else {
+        invoiceMap['status'] = 'pending';
+      }
+      
+      data['invoiceJson'] = jsonEncode(invoiceMap);
+      
       await box.put(invoiceId, jsonEncode(data));
     }
   }

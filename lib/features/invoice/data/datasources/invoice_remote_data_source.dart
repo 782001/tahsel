@@ -90,13 +90,24 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
         query = query.startAfterDocument(lastDocument);
       }
 
-      final snapshot = await query
-          .limit(limit + 1)
-          .get(
-            GetOptions(
-              source: forceRefresh ? Source.server : Source.serverAndCache,
-            ),
-          );
+      QuerySnapshot<Map<String, dynamic>> snapshot;
+      try {
+        snapshot = await query
+            .limit(limit + 1)
+            .get(
+              GetOptions(
+                source: forceRefresh ? Source.server : Source.serverAndCache,
+              ),
+            );
+      } catch (e) {
+        if (e is FirebaseException && e.code == 'unavailable') {
+          snapshot = await query
+              .limit(limit + 1)
+              .get(const GetOptions(source: Source.cache));
+        } else {
+          rethrow;
+        }
+      }
 
       final hasMore = snapshot.docs.length > limit;
       final docs = hasMore ? snapshot.docs.sublist(0, limit) : snapshot.docs;

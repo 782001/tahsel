@@ -301,6 +301,7 @@
   "customer_credit": "Give Customer",
   "remaining": "Remaining",
   "debt_details": "Debt Details",
+  "offlineNoRecentInvoices": "It looks like you're offline and haven't created any invoices recently.\nDon't worry, you can continue creating invoices locally, and they will be synced automatically once your internet connection is restored.",
   "no_transactions": "No transactions recorded for this debt",
   "transaction_type": "Transaction Type",
   "payment_received": "Payment Received",

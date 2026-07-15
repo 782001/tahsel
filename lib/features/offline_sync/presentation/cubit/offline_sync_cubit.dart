@@ -1,11 +1,14 @@
 import 'dart:async';
 
-import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/core/services/injection_container.dart';
+import 'package:tahsel/features/invoice/data/datasources/offline_invoice_local_data_source.dart';
+import 'package:tahsel/features/invoice/presentation/cubit/invoice_cubit.dart';
 
 import '../../../standard_features/no-internet/logic/connectivity_cubit.dart';
 import '../../../standard_features/no-internet/logic/connectivity_state.dart';
 import '../../domain/usecases/offline_sync_usecases.dart';
+import 'package:equatable/equatable.dart';
 
 part 'offline_sync_state.dart';
 
@@ -40,7 +43,7 @@ class OfflineSyncCubit extends Cubit<OfflineSyncState> {
   Future<void> syncPendingData() async {
     if (_isSyncing) return;
 
-    // 1. First check if there is data. NO DATA -> SILENT EXIT.
+    // 1. First check if there is data.
     final pendingResult = await getPendingItemsUseCase.call(null);
     bool hasData = false;
     pendingResult.fold(
@@ -48,7 +51,12 @@ class OfflineSyncCubit extends Cubit<OfflineSyncState> {
       (records) => hasData = records.isNotEmpty,
     );
 
-    if (!hasData) return;
+    // Also check for pending invoices
+    final invoiceLocal = sl<OfflineInvoiceLocalDataSource>();
+    final pendingInvoices = await invoiceLocal.getPendingInvoices();
+    final hasInvoices = pendingInvoices.isNotEmpty;
+
+    if (!hasData && !hasInvoices) return;
 
     // 2. Second check if we are actually online. NO CONNECTION -> SILENT EXIT.
     // This prevents "Sync Failed" snackbar when just blipping the network or pulling drawer.
@@ -58,11 +66,24 @@ class OfflineSyncCubit extends Cubit<OfflineSyncState> {
     emit(OfflineSyncInProgress());
 
     final result = await syncPendingOperationsUseCase.call(null);
+    
+    // Sync invoices silently in the same transaction context
+    if (hasInvoices) {
+      await sl<InvoiceCubit>().syncOfflineInvoices();
+    }
 
     result.fold(
       (failure) {
-        _isSyncing = false;
-        emit(OfflineSyncFailure(failure.toString()));
+        // If the generic sync fails, we still consider it a failure.
+        // Even if generic sync has no data but invoices failed/succeeded,
+        // we'll just emit success if there's no generic error.
+        if (hasData) {
+          _isSyncing = false;
+          emit(OfflineSyncFailure(failure.toString()));
+        } else {
+          _isSyncing = false;
+          emit(OfflineSyncSuccess());
+        }
       },
       (_) {
         _isSyncing = false;
