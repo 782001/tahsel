@@ -14,18 +14,18 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
-import 'package:tahsel/features/reports/presentation/cubit/reports_cubit/reports_cubit.dart';
 import 'package:tahsel/features/customer/presentation/cubit/customer_cubit.dart';
-import 'package:tahsel/features/product/presentation/cubit/product_cubit.dart';
-import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_cubit.dart';
+import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
 import 'package:tahsel/features/operation/presentation/cubit/operation_cubit.dart';
+import 'package:tahsel/features/product/presentation/cubit/product_cubit.dart';
+import 'package:tahsel/features/reports/presentation/cubit/reports_cubit/reports_cubit.dart';
 import 'package:tahsel/routes/app_routes.dart';
 
+import '../../domain/usecases/delete_account_usecase.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/logout_usecase.dart';
-import '../../domain/usecases/delete_account_usecase.dart';
 import 'auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
@@ -154,6 +154,10 @@ class AuthCubit extends Cubit<AuthState> {
       await secureStorage.saveData(key: 'token', value: user.uid);
       await secureStorage.saveData(key: 'email', value: user.email);
       await secureStorage.saveData(
+        key: 'createdAt',
+        value: user.createdAt.toDate().toIso8601String(),
+      );
+      await secureStorage.saveData(
         key: AppStrings.userTypeKey,
         value: user.userType,
       );
@@ -161,6 +165,7 @@ class AuthCubit extends Cubit<AuthState> {
       // Update global session strings
       AppStrings.userToken = user.uid;
       AppStrings.userType = user.userType;
+      AppStrings.creationDate = user.createdAt.toDate().toIso8601String();
 
       AppLogger.printMessage(
         'User logged in successfully: ${user.uid} (${user.userType})',
@@ -210,7 +215,9 @@ class AuthCubit extends Cubit<AuthState> {
                 : AppStrings.sessionExpired.tr(),
             style: TextStyles.customStyle(color: AppColors.white),
           ),
-          backgroundColor: isDeleteSuccess ? AppColors.success : AppColors.error,
+          backgroundColor: isDeleteSuccess
+              ? AppColors.success
+              : AppColors.error,
         ),
       );
       sl<NavigatorService>().pushNamedAndRemoveUntil(AppRoutes.login);
@@ -221,12 +228,14 @@ class AuthCubit extends Cubit<AuthState> {
     // Clear global session strings
     AppStrings.userToken = '';
     AppStrings.userType = AppStrings.cafe;
+    AppStrings.creationDate = '';
 
     // Clear persistent secure storage
     final secureStorage = sl<SecureStorageHelper>();
     await secureStorage.deleteData(key: 'token');
     await secureStorage.deleteData(key: 'email');
     await secureStorage.deleteData(key: AppStrings.userTypeKey);
+    await secureStorage.deleteData(key: AppStrings.creationDate);
 
     // Clear feature caches
     sl<ReportsCubit>().clearCache();

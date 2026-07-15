@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
 class UserEntity extends Equatable {
@@ -7,6 +8,7 @@ class UserEntity extends Equatable {
   final String userType;
   final String accountStatus;
   final String platformType;
+  final Timestamp createdAt;
 
   const UserEntity({
     required this.uid,
@@ -15,6 +17,7 @@ class UserEntity extends Equatable {
     this.displayName,
     this.accountStatus = 'active',
     this.platformType = 'mobile',
+    required this.createdAt,
   });
 
   @override
@@ -25,5 +28,6 @@ class UserEntity extends Equatable {
     userType,
     accountStatus,
     platformType,
+    createdAt,
   ];
 }

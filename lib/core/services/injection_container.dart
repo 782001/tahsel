@@ -187,10 +187,12 @@ Future<void> initDependencies() async {
     final secureStorage = sl<SecureStorageHelper>();
     final token = await secureStorage.getData(key: 'token');
     final userType = await secureStorage.getData(key: AppStrings.userTypeKey);
+    final createdAt = await secureStorage.getData(key: AppStrings.creationDate);
 
     if (token != null && token.isNotEmpty) {
       AppStrings.userToken = token;
       AppStrings.userType = userType ?? AppStrings.cafe;
+      AppStrings.creationDate = createdAt ?? '';
     }
   } catch (e) {
     // Silent catch: Splash screen will handle invalid sessions

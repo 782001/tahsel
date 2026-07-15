@@ -1,4 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import '../../domain/entities/user_entity.dart';
 
 class UserModel extends UserEntity {
@@ -9,6 +11,7 @@ class UserModel extends UserEntity {
     super.displayName,
     super.accountStatus = 'active',
     super.platformType = 'mobile',
+    required super.createdAt,
   });
 
   factory UserModel.fromFirebaseUser(
@@ -16,6 +19,7 @@ class UserModel extends UserEntity {
     String? userType,
     String? accountStatus,
     String? platformType,
+    required Timestamp createdAt,
   }) {
     return UserModel(
       uid: user.uid,
@@ -24,6 +28,7 @@ class UserModel extends UserEntity {
       userType: userType ?? 'cafe',
       accountStatus: accountStatus ?? 'active',
       platformType: platformType ?? 'mobile',
+      createdAt: createdAt,
     );
   }
 }

@@ -1,11 +1,11 @@
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tahsel/core/usecases/pagination_params.dart';
 import 'package:tahsel/core/utils/summary_helper.dart';
+
 import '../../domain/entities/invoice_entity.dart';
 import '../models/invoice_model.dart';
-
-import 'package:tahsel/core/usecases/pagination_params.dart';
 
 abstract class InvoiceRemoteDataSource {
   Future<void> createInvoice(InvoiceModel invoice);
@@ -21,11 +21,13 @@ abstract class InvoiceRemoteDataSource {
   /// Atomically appends a payment to the invoice document's `payments` array
   /// and recalculates the status.
   Future<void> recordPayment(
-      String uid, String invoiceId, InvoicePaymentModel payment);
+    String uid,
+    String invoiceId,
+    InvoicePaymentModel payment,
+  );
 
   /// Links a debt record to an existing invoice.
-  Future<void> linkDebtToInvoice(
-      String uid, String invoiceId, String debtId);
+  Future<void> linkDebtToInvoice(String uid, String invoiceId, String debtId);
 
   /// Updates mutable invoice fields (customer info, notes, items).
   /// Payments and created-at are never overwritten.
@@ -134,7 +136,10 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
 
   @override
   Future<void> recordPayment(
-      String uid, String invoiceId, InvoicePaymentModel payment) async {
+    String uid,
+    String invoiceId,
+    InvoicePaymentModel payment,
+  ) async {
     final ref = firestore.collection('users/$uid/invoices').doc(invoiceId);
 
     // Use a transaction so the status is recalculated atomically
@@ -150,8 +155,9 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
 
       // Append the new payment (ledger approach — never overwrites)
       final updatedPayments = [
-        ...existing.payments
-            .map((p) => InvoicePaymentModel.fromEntity(p).toMap()),
+        ...existing.payments.map(
+          (p) => InvoicePaymentModel.fromEntity(p).toMap(),
+        ),
         payment.toMap(),
       ];
 
@@ -181,7 +187,10 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
 
   @override
   Future<void> linkDebtToInvoice(
-      String uid, String invoiceId, String debtId) async {
+    String uid,
+    String invoiceId,
+    String debtId,
+  ) async {
     final ref = firestore.collection('users/$uid/invoices').doc(invoiceId);
     await ref.update({
       'linkedDebtId': debtId,
@@ -260,7 +269,10 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
         );
       }
 
-      final remaining = (newTotalAmount - totalPaid).clamp(0.0, double.infinity);
+      final remaining = (newTotalAmount - totalPaid).clamp(
+        0.0,
+        double.infinity,
+      );
       final String newStatus;
       if (remaining <= 0 && newTotalAmount > 0) {
         newStatus = InvoiceStatus.paid.name;
@@ -278,7 +290,9 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
           'isPaid': remaining <= 0,
           'lastUpdatedAt': FieldValue.serverTimestamp(),
           if (invoice.customerName != null)
-            'customerName': (invoice.customerName ?? '').replaceAll('/', ' ').trim(),
+            'customerName': (invoice.customerName ?? '')
+                .replaceAll('/', ' ')
+                .trim(),
           if (invoice.customerPhone != null)
             'phoneNumber': invoice.customerPhone,
         });
@@ -324,19 +338,19 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
     }
   }
 
-
   @override
   Future<void> voidInvoice(String uid, String invoiceId) async {
-    final invoiceRef =
-        firestore.collection('users/$uid/invoices').doc(invoiceId);
+    final invoiceRef = firestore
+        .collection('users/$uid/invoices')
+        .doc(invoiceId);
 
     // ── 1. Read the invoice to discover linkedDebtId ──────────────────────────
     final invoiceDoc = await invoiceRef.get();
-    final linkedDebtId = (invoiceDoc.data()?['linkedDebtId'] as String?) ??
+    final linkedDebtId =
+        (invoiceDoc.data()?['linkedDebtId'] as String?) ??
         'debt_inv_$invoiceId';
 
-    final debtRef =
-        firestore.collection('users/$uid/debts').doc(linkedDebtId);
+    final debtRef = firestore.collection('users/$uid/debts').doc(linkedDebtId);
     final debtDoc = await debtRef.get();
 
     final batch = firestore.batch();
@@ -373,8 +387,7 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
           (debtData['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
       final remainingAmount =
           (debtData['remainingAmount'] as num?)?.toDouble() ?? 0.0;
-      final totalAmount =
-          (debtData['totalAmount'] as num?)?.toDouble() ?? 0.0;
+      final totalAmount = (debtData['totalAmount'] as num?)?.toDouble() ?? 0.0;
       final isPaid = (debtData['isPaid'] as bool?) ?? false;
 
       // Check if this was the customer's last unpaid debt so we can decrement
@@ -453,17 +466,18 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
     await batch.commit();
   }
 
-
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
   void _normalizeDates(Map<String, dynamic> data) {
     if (data['createdAt'] is Timestamp) {
-      data['createdAt'] =
-          (data['createdAt'] as Timestamp).toDate().toIso8601String();
+      data['createdAt'] = (data['createdAt'] as Timestamp)
+          .toDate()
+          .toIso8601String();
     }
     if (data['lastUpdatedAt'] is Timestamp) {
-      data['lastUpdatedAt'] =
-          (data['lastUpdatedAt'] as Timestamp).toDate().toIso8601String();
+      data['lastUpdatedAt'] = (data['lastUpdatedAt'] as Timestamp)
+          .toDate()
+          .toIso8601String();
     }
     // Normalize paidAt inside each payment entry.
     // Payments added from the Debt module store paidAt as a Firestore Timestamp.
@@ -471,8 +485,7 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
       final payments = data['payments'] as List<dynamic>;
       for (final p in payments) {
         if (p is Map<String, dynamic> && p['paidAt'] is Timestamp) {
-          p['paidAt'] =
-              (p['paidAt'] as Timestamp).toDate().toIso8601String();
+          p['paidAt'] = (p['paidAt'] as Timestamp).toDate().toIso8601String();
         }
       }
     }
@@ -488,8 +501,9 @@ Map<String, dynamic> invoicePayloadToFirestoreMap(String payloadJson) {
     map['createdAt'] = Timestamp.fromDate(DateTime.parse(map['createdAt']));
   }
   if (map['lastUpdatedAt'] is String && map['lastUpdatedAt'] != null) {
-    map['lastUpdatedAt'] =
-        Timestamp.fromDate(DateTime.parse(map['lastUpdatedAt'] as String));
+    map['lastUpdatedAt'] = Timestamp.fromDate(
+      DateTime.parse(map['lastUpdatedAt'] as String),
+    );
   }
   map['syncedAt'] = FieldValue.serverTimestamp();
   return map;

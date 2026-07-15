@@ -228,19 +228,17 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
 
         // Parse items to calculate total amount
         final items = data['items'] as List<dynamic>? ?? [];
-        final double totalAmount = items.fold<double>(
-          0.0,
-          (acc, i) {
-            final double unitPrice = (i['unitPrice'] as num? ?? 0).toDouble();
-            final double quantity = (i['quantity'] as num? ?? 0).toDouble();
-            final double taxRate = (i['taxRate'] as num? ?? 0).toDouble();
-            final double discountRate = (i['discountRate'] as num? ?? 0).toDouble();
-            final double subtotal = unitPrice * quantity;
-            final double discountAmount = subtotal * discountRate;
-            final double taxAmount = (subtotal - discountAmount) * taxRate;
-            return acc + (subtotal - discountAmount + taxAmount);
-          },
-        );
+        final double totalAmount = items.fold<double>(0.0, (acc, i) {
+          final double unitPrice = (i['unitPrice'] as num? ?? 0).toDouble();
+          final double quantity = (i['quantity'] as num? ?? 0).toDouble();
+          final double taxRate = (i['taxRate'] as num? ?? 0).toDouble();
+          final double discountRate = (i['discountRate'] as num? ?? 0)
+              .toDouble();
+          final double subtotal = unitPrice * quantity;
+          final double discountAmount = subtotal * discountRate;
+          final double taxAmount = (subtotal - discountAmount) * taxRate;
+          return acc + (subtotal - discountAmount + taxAmount);
+        });
 
         final double remaining = totalAmount - totalPaid;
         final double finalRemaining = remaining > 0 ? remaining : 0.0;
@@ -255,7 +253,8 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
         if (statusStr == 'paid' || finalRemaining == 0) {
           invoicePaidDebts += totalAmount;
           invoicePaidCount++;
-        } else if (statusStr == 'partiallyPaid' || (totalPaid > 0 && finalRemaining > 0)) {
+        } else if (statusStr == 'partiallyPaid' ||
+            (totalPaid > 0 && finalRemaining > 0)) {
           invoiceUnpaidDebts += finalRemaining;
           invoicePartialCount++;
         } else {
@@ -354,7 +353,7 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
 
       // Fallback
       return await getPeriodData(
-        DateTime(2020, 1, 1),
+        DateTime.parse(AppStrings.creationDate),
         DateTime(2100, 1, 1),
         'all_time',
         forceRefresh: forceRefresh,
