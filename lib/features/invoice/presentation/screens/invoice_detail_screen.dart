@@ -14,6 +14,9 @@ import 'package:tahsel/features/invoice/presentation/cubit/invoice_history_cubit
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_state.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/invoice_history_timeline.dart';
 import 'package:tahsel/routes/app_routes.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/shared/widgets/no_internet_view.dart';
 
 class InvoiceDetailScreen extends StatefulWidget {
   final InvoiceEntity invoice;
@@ -104,6 +107,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
   }
 
   Future<void> _confirmVoid(BuildContext context) async {
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) return;
     final cubit = context.read<InvoiceCubit>();
     final confirmed = await showDialog<bool>(
       context: context,
@@ -204,55 +208,89 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
           );
         }
       },
-      child: Scaffold(
-        backgroundColor: AppColors.scafoldBackGround,
-        appBar: AppBar(
-          backgroundColor: AppColors.surface,
-          elevation: 0,
-          title: Text(
-            AppStrings.invoiceDetail.tr(),
-            style: TextStyles.customStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primaryColor,
-            ),
-          ),
-          centerTitle: true,
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: AppColors.primaryColor,
-            ),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          actions: [
-            // Edit — only for non-voided invoices
-            if (_invoice.status != InvoiceStatus.voided)
-              IconButton(
-                icon: Icon(Icons.edit_square, color: AppColors.primaryColor),
-                tooltip: AppStrings.invoiceEditTitle.tr(),
-                onPressed: () async {
-                  final cubit = context.read<InvoiceCubit>();
-                  final updated = await Navigator.of(
-                    context,
-                  ).pushNamed(AppRoutes.editInvoice, arguments: _invoice);
-                  if (updated == true && mounted) {
-                    cubit.loadInvoice(AppStrings.userToken, _invoice.id);
-                  }
-                },
+      child: BlocBuilder<ConnectivityCubit, ConnectivityState>(
+        builder: (context, connectivityState) {
+          final isDisconnected = connectivityState is ConnectivityDisconnected;
+          return Scaffold(
+            backgroundColor: AppColors.scafoldBackGround,
+            appBar: AppBar(
+              backgroundColor: AppColors.surface,
+              elevation: 0,
+              title: Text(
+                AppStrings.invoiceDetail.tr(),
+                style: TextStyles.customStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primaryColor,
+                ),
               ),
-            // Void — only for pending/partial invoices
-            if (_invoice.status == InvoiceStatus.pending ||
-                _invoice.status == InvoiceStatus.partial)
-              IconButton(
-                icon: Icon(Icons.cancel_presentation, color: AppColors.error),
-                tooltip: AppStrings.invoiceVoid.tr(),
-                onPressed: () => _confirmVoid(context),
+              centerTitle: true,
+              leading: IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: AppColors.primaryColor,
+                ),
+                onPressed: () => Navigator.of(context).pop(),
               ),
-          ],
-        ),
-        body: SafeArea(
-          child: BlocBuilder<InvoiceCubit, InvoiceState>(
+              actions: [
+                // Edit — only for non-voided invoices
+                if (_invoice.status != InvoiceStatus.voided)
+                  IconButton(
+                    icon: Icon(
+                      Icons.edit_square,
+                      color: isDisconnected ? AppColors.disabledColor : AppColors.primaryColor,
+                    ),
+                    tooltip: AppStrings.invoiceEditTitle.tr(),
+                    onPressed: () async {
+                      if (isDisconnected) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(AppStrings.noInternetConnection.tr()),
+                            backgroundColor: AppColors.error,
+                          ),
+                        );
+                        return;
+                      }
+                      final cubit = context.read<InvoiceCubit>();
+                      final updated = await Navigator.of(
+                        context,
+                      ).pushNamed(AppRoutes.editInvoice, arguments: _invoice);
+                      if (updated == true && mounted) {
+                        cubit.loadInvoice(AppStrings.userToken, _invoice.id);
+                      }
+                    },
+                  ),
+                // Void — only for pending/partial invoices
+                if (_invoice.status == InvoiceStatus.pending ||
+                    _invoice.status == InvoiceStatus.partial)
+                  IconButton(
+                    icon: Icon(
+                      Icons.cancel_presentation,
+                      color: isDisconnected ? AppColors.disabledColor : AppColors.error,
+                    ),
+                    tooltip: AppStrings.invoiceVoid.tr(),
+                    onPressed: () {
+                      if (isDisconnected) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(AppStrings.noInternetConnection.tr()),
+                            backgroundColor: AppColors.error,
+                          ),
+                        );
+                        return;
+                      }
+                      _confirmVoid(context);
+                    },
+                  ),
+              ],
+            ),
+            body: isDisconnected
+                ? NoInternetView(
+                    onRetry: () =>
+                        context.read<ConnectivityCubit>().checkConnectivity(),
+                  )
+                : SafeArea(
+                    child: BlocBuilder<InvoiceCubit, InvoiceState>(
             builder: (context, state) {
               final isLoading = state is InvoiceLoading;
               return Center(
@@ -486,7 +524,9 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
             },
           ),
         ),
-      ),
+      );
+      },
+    ),
     );
   }
 }

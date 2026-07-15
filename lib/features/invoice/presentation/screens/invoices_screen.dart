@@ -12,6 +12,9 @@ import 'package:tahsel/features/invoice/presentation/cubit/invoice_state.dart';
 import 'package:tahsel/features/offline_sync/presentation/cubit/offline_sync_cubit.dart';
 import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/buttons/quick_action_button.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/shared/widgets/no_internet_view.dart';
 
 class InvoicesScreen extends StatefulWidget {
   const InvoicesScreen({super.key});
@@ -68,8 +71,11 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
         ),
       ],
       child: SafeArea(
-        child: RefreshIndicator(
-          color: AppColors.primaryColor,
+        child: BlocBuilder<ConnectivityCubit, ConnectivityState>(
+          builder: (context, connectivityState) {
+            final isDisconnected = connectivityState is ConnectivityDisconnected;
+            return RefreshIndicator(
+              color: AppColors.primaryColor,
           onRefresh: () async {
             _searchController.clear();
             await context.read<InvoiceCubit>().fetchInvoices(
@@ -90,8 +96,13 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
 
               // ── Body ────────────────────────────────────────────────────
               Expanded(
-                child: BlocBuilder<InvoiceCubit, InvoiceState>(
-                  builder: (context, state) {
+                child: isDisconnected
+                    ? NoInternetView(
+                        onRetry: () =>
+                            context.read<ConnectivityCubit>().checkConnectivity(),
+                      )
+                    : BlocBuilder<InvoiceCubit, InvoiceState>(
+                        builder: (context, state) {
                     if (state is InvoiceLoading) {
                       return Center(
                         child: CircularProgressIndicator(
@@ -167,6 +178,15 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                   label: AppStrings.createInvoice.tr(),
                   icon: Icons.receipt_long_rounded,
                   onPressed: () async {
+                    if (isDisconnected) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(AppStrings.noInternetConnection.tr()),
+                          backgroundColor: AppColors.error,
+                        ),
+                      );
+                      return;
+                    }
                     final cubit = context.read<InvoiceCubit>();
                     await Navigator.of(
                       context,
@@ -180,7 +200,8 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
               ),
             ],
           ),
-        ),
+        );
+      }),
       ),
     );
   }
