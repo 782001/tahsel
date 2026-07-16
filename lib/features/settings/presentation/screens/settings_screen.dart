@@ -443,6 +443,82 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   ),
                                 ),
                               SizedBox(height: isDesktop ? 32 : 32.h),
+
+                              // Facebook Page Section
+                              SectionHeader(
+                                title: AppStrings.facebookPage.tr(),
+                              ),
+                              InkWell(
+                                onTap: () async {
+                                  final uri = Uri.parse(
+                                    "https://www.facebook.com/profile.php?id=61591493902471",
+                                  );
+
+                                  await launchUrl(
+                                    uri,
+                                    mode: LaunchMode.externalApplication,
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(12.r),
+                                child: Container(
+                                  padding: EdgeInsets.all(
+                                    isDesktop ? 16 : 14.w,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.whiteColor,
+                                    borderRadius: BorderRadius.circular(12.r),
+                                    border: Border.all(
+                                      color: AppColors.veryLightGrey,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      CircleAvatar(
+                                        backgroundColor: const Color(0xFF1877F2).withValues(alpha: 0.1),
+                                        radius: 20.r,
+                                        child: Icon(
+                                          Icons.facebook_rounded,
+                                          color: const Color(0xFF1877F2),
+                                        ),
+                                      ),
+                                      SizedBox(width: isDesktop ? 16 : 16.w),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              AppStrings.facebookPage.tr(),
+                                              style: TextStyles.customStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.blackReal,
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              height: isDesktop ? 4 : 4.h,
+                                            ),
+                                            Text(
+                                              AppStrings.facebookPageDesc
+                                                  .tr(),
+                                              style: TextStyles.customStyle(
+                                                fontSize: 12,
+                                                color: AppColors.sandText,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.open_in_new_rounded,
+                                        size: isDesktop ? 18 : 18.sp,
+                                        color: AppColors.sandText,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: isDesktop ? 32 : 32.h),
                               SectionHeader(title: AppStrings.shareApp.tr()),
                               InkWell(
                                 onTap: _shareApp,

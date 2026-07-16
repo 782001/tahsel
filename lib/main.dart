@@ -46,6 +46,12 @@ class AppScrollBehavior extends MaterialScrollBehavior {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Lock portrait mode
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
   // Desktop Window Configuration
   if (!kIsWeb && Platform.isWindows) {
     await windowManager.ensureInitialized();

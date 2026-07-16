@@ -787,4 +787,6 @@ class AppStrings {
   static const String invoiceVoidNotice = "invoice_void_notice";
   static const String invoicePaidNotice = "invoice_paid_notice";
   static const String offlineNoRecentInvoices = "offlineNoRecentInvoices";
+  static const String facebookPage = "facebookPage";
+  static const String facebookPageDesc = "facebookPageDesc";
 }
