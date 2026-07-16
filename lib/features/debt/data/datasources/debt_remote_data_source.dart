@@ -2224,7 +2224,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
           double unpaidTotal = 0.0;
           for (var doc in activeDebts.docs) {
-            unpaidTotal += (doc.data()['remainingAmount'] ?? 0.0).toDouble();
+            double r = (doc.data()['remainingAmount'] ?? 0.0).toDouble();
+            unpaidTotal += r < 0 ? 0 : r;
           }
 
           final summaryData = {

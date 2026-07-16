@@ -83,7 +83,7 @@ class CustomerDebtDetail {
     // Logic for status
     double totalRemaining = items.fold(
       0.0,
-      (sum, item) => sum + item.remainingDebt,
+      (sum, item) => sum + (item.remainingDebt < 0 ? 0 : item.remainingDebt),
     );
 
     String status = AppStrings.debtStatusBalance;
@@ -111,7 +111,7 @@ class CustomerDebtDetail {
   }
 
   double get totalDebt =>
-      items.fold(0, (sum, item) => sum + item.remainingDebt);
+      items.fold(0, (sum, item) => sum + (item.remainingDebt < 0 ? 0 : item.remainingDebt));
 
   double get totalPaid => items.fold(0, (sum, item) => sum + item.amountPaid);
 
