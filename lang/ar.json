@@ -440,7 +440,7 @@
   "payroll_paid_success": "تم صرف الراتب بنجاح",
   "calculate_net_salary": "احسب صافي الراتب",
   "confirm_checkout": "تأكيد تسجيل الانصراف",
-  "payment_date": "تاريخ الصرف",
+  "payment_date": "تاريخ الدفع",
   "add_transaction_notes_placeholder": "أضف ملاحظات الصرف هنا...",
   "add_notes_placeholder": "أضف ملاحظات هنا...",
   "employee_name_placeholder": "أدخل اسم الموظف الكامل",
