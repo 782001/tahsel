@@ -294,12 +294,12 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                 ),
                               ),
 
-                              SizedBox(height: isDesktop ? 40 : 40.h),
+                              SizedBox(height: isDesktop ? 30 : 20.h),
 
                               // Main Card Context
                               Container(
                                 width: double.infinity,
-                                padding: EdgeInsets.all(isDesktop ? 32 : 32.w),
+                                padding: EdgeInsets.all(isDesktop ? 32 : 12.w),
                                 decoration: BoxDecoration(
                                   color: AppColors.scafoldBackGround,
                                   borderRadius: BorderRadius.circular(16.r),
