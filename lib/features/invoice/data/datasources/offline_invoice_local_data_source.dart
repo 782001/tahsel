@@ -63,8 +63,7 @@ class OfflineInvoiceLocalDataSourceImpl implements OfflineInvoiceLocalDataSource
       invoiceMap['payments'] = payments;
       
       // Calculate dynamic totals to update the status field correctly
-      final totalAmount = (invoiceMap['items'] as List<dynamic>? ?? [])
-          .fold(0.0, (sum, i) => sum + ((i['unitPrice'] as num) * (i['quantity'] as num)));
+      final totalAmount = (invoiceMap['totalAmount'] as num?)?.toDouble() ?? 0.0;
           
       final newPaid = payments.fold(0.0, (sum, p) => sum + (p['amount'] as num));
       final newRemaining = totalAmount - newPaid;

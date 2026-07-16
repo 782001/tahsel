@@ -246,6 +246,7 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
       data['id'] = snapshot.id;
 
       final existing = InvoiceModel.fromMap(data);
+      oldInvoiceTotal = existing.totalAmount;
 
       final debtId = existing.linkedDebtId ?? 'debt_inv_${invoice.id}';
       final debtRef = firestore
@@ -490,7 +491,7 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
       // Revert debt totals (keyed to the debt's original creation timestamp)
       final debtKeys = SummaryHelper.getSummaryKeys(timestamp);
       for (final key in debtKeys) {
-        addIncrement(key, 'totalDebts', -remainingAmount);
+        addIncrement(key, 'totalDebts', -totalAmount);
         if (!isPaid) {
           addIncrement(key, 'unpaidDebts', -remainingAmount);
         } else {
