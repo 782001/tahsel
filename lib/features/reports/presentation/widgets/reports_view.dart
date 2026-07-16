@@ -432,7 +432,7 @@ class _ReportsViewState extends State<ReportsView> {
                                       type: BusinessReportType.debts,
                                       badgeText: _selectedTimeRange == 3
                                           ? ""
-                                          : "${AppStrings.debts.tr()}: ${data.totalDebts.toSmartAmount()} ${AppStrings.currencyEgp.tr()}  \n${AppStrings.paid.tr()}: ${data.paidDebts.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
+                                          : "${AppStrings.debts.tr()}: ${data.totalDebts.toSmartAmount()} ${AppStrings.currencyEgp.tr()}  \n${AppStrings.paid.tr()}: ${(data.totalIncome - data.totalDebts).toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
                                       onTap: () {
                                         context
                                             .read<MainLayoutCubit>()
@@ -957,7 +957,7 @@ class _ReportsViewState extends State<ReportsView> {
     // Detailed Breakdown Style
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(isDesktop ? 16 : 16.w),
       decoration: BoxDecoration(
         color: insight.color.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16.r),
