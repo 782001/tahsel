@@ -178,6 +178,12 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
 
       for (var doc in debtsSnapshot.docs) {
         final data = doc.data();
+        final type = (data['operationType'] ?? '').toString().toLowerCase();
+
+        // Skip invoice-linked debts as they are calculated from the invoices collection below.
+        // Otherwise, they will be counted twice.
+        if (type == 'invoice_debt') continue;
+
         final double remaining = (data['remainingAmount'] ?? 0).toDouble();
         final double total = (data['totalAmount'] ?? 0).toDouble();
 
