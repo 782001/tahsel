@@ -36,6 +36,7 @@ abstract class ExpenseRemoteDataSource {
   });
   Future<void> deleteExpense(String uid, String expenseId);
   Future<void> deleteMonthExpenses(String uid, String monthKey);
+  // Future<void> repairMissingSummaries(String uid);
 }
 
 class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
@@ -104,6 +105,11 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
   }) async {
     try {
       final userRef = firestore.collection('users').doc(uid);
+
+      // if (lastDoc == null) {
+      //   // Run repair in background to fix any legacy missing summaries
+      //   repairMissingSummaries(uid);
+      // }
 
       // Query summaries collection for monthly docs
       // Doc IDs are like 'monthly_2026-05'
@@ -352,4 +358,72 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
       throw Exception('Failed to delete month expenses: $e');
     }
   }
+
+  // @override
+  // Future<void> repairMissingSummaries(String uid) async {
+  //   try {
+  //     final userRef = firestore.collection('users').doc(uid);
+  //     final expensesSnapshot = await userRef.collection('expenses').get();
+
+  //     Map<String, Map<String, dynamic>> monthAggregates = {};
+  //     double totalExpenses = 0;
+  //     int totalCount = 0;
+
+  //     for (var doc in expensesSnapshot.docs) {
+  //       final data = doc.data();
+  //       final amount = (data['amount'] ?? 0).toDouble();
+
+  //       // Ensure monthKey format
+  //       String monthKey = data['monthKey'] ?? '';
+  //       if (monthKey.isEmpty) {
+  //         final createdAt = data['createdAt'] as Timestamp?;
+  //         if (createdAt != null) {
+  //           final date = createdAt.toDate();
+  //           // Fallback if DateFormatter is not available here, but we can just format it:
+  //           monthKey = "${date.year}-${date.month.toString().padLeft(2, '0')}";
+  //         }
+  //       }
+  //       monthKey = monthKey.replaceAll('/', '-');
+
+  //       if (monthKey.isNotEmpty) {
+  //         if (!monthAggregates.containsKey(monthKey)) {
+  //           monthAggregates[monthKey] = {'amount': 0.0, 'count': 0};
+  //         }
+  //         monthAggregates[monthKey]!['amount'] += amount;
+  //         monthAggregates[monthKey]!['count'] += 1;
+  //       }
+
+  //       totalExpenses += amount;
+  //       totalCount += 1;
+  //     }
+
+  //     final batch = firestore.batch();
+
+  //     // Update monthly summaries
+  //     monthAggregates.forEach((month, data) {
+  //       final summaryRef = userRef
+  //           .collection('summaries')
+  //           .doc('monthly_$month');
+  //       batch.set(summaryRef, {
+  //         'totalExpenses': data['amount'],
+  //         'transactionCount': data['count'],
+  //         'lastUpdatedAt': FieldValue.serverTimestamp(),
+  //       }, SetOptions(merge: true));
+  //     });
+
+  //     // Update All-time summary
+  //     final allTimeRef = userRef
+  //         .collection('summaries')
+  //         .doc(SummaryHelper.getAllTimeKey());
+  //     batch.set(allTimeRef, {
+  //       'totalExpenses': totalExpenses,
+  //       'transactionCount': totalCount,
+  //       'lastUpdatedAt': FieldValue.serverTimestamp(),
+  //     }, SetOptions(merge: true));
+
+  //     await batch.commit();
+  //   } catch (e) {
+  //     // Silently fail in background
+  //   }
+  // }
 }
