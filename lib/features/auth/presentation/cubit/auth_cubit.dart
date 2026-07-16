@@ -153,10 +153,7 @@ class AuthCubit extends Cubit<AuthState> {
       final secureStorage = sl<SecureStorageHelper>();
       await secureStorage.saveData(key: 'token', value: user.uid);
       await secureStorage.saveData(key: 'email', value: user.email);
-      await secureStorage.saveData(
-        key: 'createdAt',
-        value: user.createdAt.toDate().toIso8601String(),
-      );
+      
       await secureStorage.saveData(
         key: AppStrings.userTypeKey,
         value: user.userType,
@@ -165,7 +162,6 @@ class AuthCubit extends Cubit<AuthState> {
       // Update global session strings
       AppStrings.userToken = user.uid;
       AppStrings.userType = user.userType;
-      AppStrings.creationDate = user.createdAt.toDate().toIso8601String();
 
       AppLogger.printMessage(
         'User logged in successfully: ${user.uid} (${user.userType})',
@@ -228,14 +224,12 @@ class AuthCubit extends Cubit<AuthState> {
     // Clear global session strings
     AppStrings.userToken = '';
     AppStrings.userType = AppStrings.cafe;
-    AppStrings.creationDate = '';
 
     // Clear persistent secure storage
     final secureStorage = sl<SecureStorageHelper>();
     await secureStorage.deleteData(key: 'token');
     await secureStorage.deleteData(key: 'email');
     await secureStorage.deleteData(key: AppStrings.userTypeKey);
-    await secureStorage.deleteData(key: AppStrings.creationDate);
 
     // Clear feature caches
     sl<ReportsCubit>().clearCache();

@@ -353,7 +353,7 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
 
       // Fallback
       return await getPeriodData(
-        DateTime.parse(AppStrings.creationDate),
+        DateTime(2000, 1, 1),
         DateTime(2100, 1, 1),
         'all_time',
         forceRefresh: forceRefresh,

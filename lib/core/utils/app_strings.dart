@@ -14,7 +14,6 @@ class AppStrings {
 
   // Auth Screen
   static const String login = "login";
-  static String creationDate = "creation_date";
   static const String noData = "no_data";
   static const String tryAgain = "tryAgain";
   static const String validationFieldRequired = "validation_field_required";

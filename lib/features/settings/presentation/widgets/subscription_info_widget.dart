@@ -108,7 +108,7 @@ class _SubscriptionInfoWidgetState extends State<SubscriptionInfoWidget> {
               ),
               SizedBox(height: isDesktop ? 12 : 12.h),
               Text(
-                'Could not load subscription details'.tr(),
+                'could_not_load_subscription'.tr(),
                 style: TextStyles.customStyle(
                   fontSize: isDesktop ? 14 : 14,
                   color: AppColors.error,
@@ -120,7 +120,7 @@ class _SubscriptionInfoWidgetState extends State<SubscriptionInfoWidget> {
               TextButton.icon(
                 onPressed: _fetchSubscriptionData,
                 icon: const Icon(Icons.refresh_rounded),
-                label: Text('Retry'.tr()),
+                label: Text('retry'.tr()),
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.primaryColor,
                 ),

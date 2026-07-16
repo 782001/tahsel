@@ -91,16 +91,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSourceBase {
         final userType = data.containsKey('userType')
             ? data['userType'] as String
             : 'cafe';
-            final createdAt = data.containsKey('createdAt')
-            ? data['createdAt'] as Timestamp
-            : Timestamp.now();
 
         return UserModel.fromFirebaseUser(
           userCredential.user!,
           userType: userType,
           accountStatus: accountStatus,
           platformType: platformType,
-          createdAt: createdAt,
         );
       } else {
         throw Exception('User not found');
