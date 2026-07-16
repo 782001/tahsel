@@ -45,14 +45,14 @@ class ReportsDashboardCard extends StatelessWidget {
     return Padding(
       padding: isDesktop
           ? EdgeInsets.zero
-          : EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
+          : EdgeInsets.symmetric(horizontal:isDesktop? 0: 24.w, vertical: 8.h),
       child: GestureDetector(
         onTap: onTap,
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24.r),
           child: Container(
             width: double.infinity,
-            padding: EdgeInsets.all(20.r),
+            padding: EdgeInsets.all(isDesktop ? 20 : 20.r),
             decoration: BoxDecoration(
               color: cardColor,
               boxShadow: isAccentCard

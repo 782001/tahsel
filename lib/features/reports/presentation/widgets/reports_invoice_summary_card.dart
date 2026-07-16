@@ -53,7 +53,7 @@ class ReportsInvoiceSummaryCard extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(24.r),
           child: Padding(
-            padding: EdgeInsets.all(20.r),
+            padding: EdgeInsets.all(isDesktop ? 20 : 20.r),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -66,7 +66,9 @@ class ReportsInvoiceSummaryCard extends StatelessWidget {
                         Container(
                           padding: EdgeInsets.all(8.r),
                           decoration: BoxDecoration(
-                            color: AppColors.primaryColor.withValues(alpha: 0.1),
+                            color: AppColors.primaryColor.withValues(
+                              alpha: 0.1,
+                            ),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -165,7 +167,9 @@ class ReportsInvoiceSummaryCard extends StatelessWidget {
                               style: TextStyles.customStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.blackLight.withValues(alpha: 0.6),
+                                color: AppColors.blackLight.withValues(
+                                  alpha: 0.6,
+                                ),
                               ),
                             ),
                             SizedBox(height: 4.h),
@@ -200,7 +204,9 @@ class ReportsInvoiceSummaryCard extends StatelessWidget {
                               style: TextStyles.customStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.blackLight.withValues(alpha: 0.6),
+                                color: AppColors.blackLight.withValues(
+                                  alpha: 0.6,
+                                ),
                               ),
                             ),
                             SizedBox(height: 4.h),
@@ -265,10 +271,7 @@ class ReportsInvoiceSummaryCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(8.r),
-          border: Border.all(
-            color: color.withValues(alpha: 0.15),
-            width: 1,
-          ),
+          border: Border.all(color: color.withValues(alpha: 0.15), width: 1),
         ),
         child: Column(
           children: [
