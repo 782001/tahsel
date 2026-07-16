@@ -474,11 +474,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   child: Row(
                                     children: [
                                       CircleAvatar(
-                                        backgroundColor: const Color(0xFF1877F2).withValues(alpha: 0.1),
+                                        backgroundColor: const Color(
+                                          0xFF1877F2,
+                                        ).withValues(alpha: 0.1),
                                         radius: 20.r,
-                                        child: Icon(
+                                        child: const Icon(
                                           Icons.facebook_rounded,
-                                          color: const Color(0xFF1877F2),
+                                          color: Color(0xFF1877F2),
                                         ),
                                       ),
                                       SizedBox(width: isDesktop ? 16 : 16.w),
@@ -499,8 +501,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                               height: isDesktop ? 4 : 4.h,
                                             ),
                                             Text(
-                                              AppStrings.facebookPageDesc
-                                                  .tr(),
+                                              AppStrings.facebookPageDesc.tr(),
                                               style: TextStyles.customStyle(
                                                 fontSize: 12,
                                                 color: AppColors.sandText,
