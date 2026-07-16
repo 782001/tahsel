@@ -53,13 +53,13 @@ class InvoiceItem extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        description,
-        unitPrice,
-        quantity,
-        taxRate,
-        discountRate,
-      ];
+    id,
+    description,
+    unitPrice,
+    quantity,
+    taxRate,
+    discountRate,
+  ];
 }
 
 /// A payment event applied against an invoice.
@@ -112,6 +112,7 @@ class InvoiceEntity extends Equatable {
   final String? notes;
   final String? referenceNumber;
   final String? linkedDebtId;
+
   /// Persisted in Firestore by the debt-sync transaction.
   /// When present, it takes priority over the computed payments-array total.
   final double? syncedTotalPaid;
@@ -133,8 +134,7 @@ class InvoiceEntity extends Equatable {
     this.syncedTotalPaid,
   });
 
-  double get totalAmount =>
-      items.fold(0.0, (sum, item) => sum + item.total);
+  double get totalAmount => items.fold(0.0, (sum, item) => sum + item.total);
 
   /// If the debt-sync has written a `syncedTotalPaid` value, use it as the
   /// authoritative paid amount; otherwise fall back to the payments array.
@@ -184,19 +184,19 @@ class InvoiceEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        uid,
-        customerName,
-        customerPhone,
-        ledgerNumber,
-        items,
-        payments,
-        status,
-        createdAt,
-        lastUpdatedAt,
-        notes,
-        referenceNumber,
-        linkedDebtId,
-        syncedTotalPaid,
-      ];
+    id,
+    uid,
+    customerName,
+    customerPhone,
+    ledgerNumber,
+    items,
+    payments,
+    status,
+    createdAt,
+    lastUpdatedAt,
+    notes,
+    referenceNumber,
+    linkedDebtId,
+    syncedTotalPaid,
+  ];
 }
