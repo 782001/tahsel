@@ -9,6 +9,7 @@ import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/storage/secure_storage_helper.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/assets.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/delete_account_confirmation_dialog.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
@@ -502,6 +503,84 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                             ),
                                             Text(
                                               AppStrings.facebookPageDesc.tr(),
+                                              style: TextStyles.customStyle(
+                                                fontSize: 12,
+                                                color: AppColors.sandText,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.open_in_new_rounded,
+                                        size: isDesktop ? 18 : 18.sp,
+                                        color: AppColors.sandText,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: isDesktop ? 32 : 32.h),
+
+                              // WhatsApp Group Section
+                              SectionHeader(
+                                title: AppStrings.whatsappGroup.tr(),
+                              ),
+                              InkWell(
+                                onTap: () async {
+                                  final uri = Uri.parse(
+                                    "https://chat.whatsapp.com/IjVqDWB2MSJ60nottOAVba?s=cl&p=a&mlu=0&ilr=0&amv=0",
+                                  );
+
+                                  await launchUrl(
+                                    uri,
+                                    mode: LaunchMode.externalApplication,
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(12.r),
+                                child: Container(
+                                  padding: EdgeInsets.all(
+                                    isDesktop ? 16 : 14.w,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.whiteColor,
+                                    borderRadius: BorderRadius.circular(12.r),
+                                    border: Border.all(
+                                      color: AppColors.veryLightGrey,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      CircleAvatar(
+                                        backgroundColor: const Color(
+                                          0xFF25D366,
+                                        ).withValues(alpha: 0.1),
+                                        radius: 20.r,
+                                        child: Image.asset(
+                                          Assets.imagesWhatsapp,
+                                          width: isDesktop ? 22 : 22.w,
+                                          height: isDesktop ? 22 : 22.w,
+                                        ),
+                                      ),
+                                      SizedBox(width: isDesktop ? 16 : 16.w),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              AppStrings.whatsappGroup.tr(),
+                                              style: TextStyles.customStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.blackReal,
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              height: isDesktop ? 4 : 4.h,
+                                            ),
+                                            Text(
+                                              AppStrings.whatsappGroupDesc.tr(),
                                               style: TextStyles.customStyle(
                                                 fontSize: 12,
                                                 color: AppColors.sandText,

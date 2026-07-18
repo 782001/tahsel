@@ -789,4 +789,6 @@ class AppStrings {
   static const String offlineNoRecentInvoices = "offlineNoRecentInvoices";
   static const String facebookPage = "facebookPage";
   static const String facebookPageDesc = "facebookPageDesc";
+  static const String whatsappGroup = "whatsappGroup";
+  static const String whatsappGroupDesc = "whatsappGroupDesc";
 }

@@ -700,5 +700,7 @@
   "share_app_with_friends": "أرسل التطبيق لأصدقائك",
   "share_message": "🚀 جرّب تطبيق \"تحصيل\" الآن!\nالحل الأسهل والأسرع لإدارة أعمالك وتحصيلاتك بكل ذكاء ومن أي جهاز.\n\nحمل التطبيق الآن عبر منصتك المفضلة:\n🤖 لأجهزة أندرويد (Google Play):\nhttps://play.google.com/store/apps/details?id=com.awadi.tahsel\n\n🍏 لأجهزة آيفون وآيباد (App Store):\nhttps://apps.apple.com/us/app/%D8%AA%D8%AD%D8%B5%D9%8A%D9%84-tahsel/id6782921961\n\n💻 لأجهزة ويندوز (Windows Desktop):\nhttps://github.com/782001/tahsel_updates/releases/download/Tahsel/tahsel-windows.exe\n\n✨ شارك التطبيق مع أصدقائك لتسهيل أعمالهم!\n",
   "facebookPage": "صفحة فيسبوك",
-  "facebookPageDesc": "تابعنا علي فيسبوك لكل جديد"
+  "facebookPageDesc": "تابعنا علي فيسبوك لكل جديد",
+  "whatsappGroup": "جروب الواتساب",
+  "whatsappGroupDesc": "انضم لجروب الواتساب لمعرفة كل جديد"
 }
