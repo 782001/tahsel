@@ -208,6 +208,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
 
                         if (result is Map<String, dynamic> &&
                             result.containsKey('invoice')) {
+                          // ignore: use_build_context_synchronously
                           await Navigator.of(context).pushNamed(
                             AppRoutes.invoiceDetail,
                             arguments: result,

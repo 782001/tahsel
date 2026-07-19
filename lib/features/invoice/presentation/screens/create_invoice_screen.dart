@@ -14,7 +14,6 @@ import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_cubit.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_state.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/invoice_item_row.dart';
-import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/buttons/quick_action_button.dart';
 
 class _ItemControllers {
