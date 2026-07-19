@@ -127,6 +127,14 @@ class RecordPaymentSheetState extends State<RecordPaymentSheet> {
             hint: '0.00',
             isNumber: true,
             suffix: AppStrings.currencyEgp.tr(),
+            actionLabel: AppStrings.paidFull.tr(),
+            onAction: () {
+              if (remaining == remaining.truncateToDouble()) {
+                _amountController.text = remaining.toInt().toString();
+              } else {
+                _amountController.text = remaining.toString();
+              }
+            },
           ),
           const SizedBox(height: 12),
 

@@ -8,6 +8,8 @@ class SheetField extends StatelessWidget {
   final String hint;
   final bool isNumber;
   final String? suffix;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   const SheetField({
     required this.controller,
@@ -16,6 +18,8 @@ class SheetField extends StatelessWidget {
     super.key,
     this.isNumber = false,
     this.suffix,
+    this.actionLabel,
+    this.onAction,
   });
 
   @override
@@ -23,13 +27,30 @@ class SheetField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyles.customStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppColors.blackLight,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: TextStyles.customStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.blackLight,
+              ),
+            ),
+            if (actionLabel != null && onAction != null)
+              GestureDetector(
+                onTap: onAction,
+                child: Text(
+                  actionLabel!,
+                  style: TextStyles.customStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primaryColor,
+                  ),
+                ),
+              ),
+          ],
         ),
         const SizedBox(height: 6),
         TextField(
