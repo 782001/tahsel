@@ -74,7 +74,12 @@ class ExpenseCubit extends Cubit<ExpenseState> {
 
     result.fold(
       (failure) {
-        if (pendingRecords.isNotEmpty) {
+        final errorMsg = failure.message.toLowerCase();
+        final isOfflineError = errorMsg.contains('unavailable') || 
+                               errorMsg.contains('network') || 
+                               errorMsg.contains('resolve host');
+
+        if (pendingRecords.isNotEmpty || isOfflineError) {
           emit(
             ExpenseFetchSuccess(
               months: const [],
@@ -301,8 +306,13 @@ class ExpenseCubit extends Cubit<ExpenseState> {
 
     result.fold(
       (failure) async {
+        final errorMsg = failure.message.toLowerCase();
+        final isOfflineError = errorMsg.contains('unavailable') || 
+                               errorMsg.contains('network') || 
+                               errorMsg.contains('resolve host');
+
         // If it's a connection failure but we HAVE pending items for this month, show them!
-        if (filteredPending.isNotEmpty) {
+        if (filteredPending.isNotEmpty || isOfflineError) {
           final grouped = await groupExpensesByDayUseCase(filteredPending);
           emit(
             ExpenseMonthDetailsSuccess(
