@@ -88,14 +88,15 @@ class InvoiceCubit extends Cubit<InvoiceState> {
       if (failed != null) continue; // Try again next sync
 
       // 2. Apply payment logic directly (without emitting state)
-      if (paymentAmount > 0) {
+      // Even if paymentAmount == 0, we need to create the baseline debt if totalAmount > 0
+      if (paymentAmount > 0 || invoice.totalAmount > 0) {
         await _processPaymentInternally(
           uid: invoice.uid,
           invoiceId: invoiceId,
           invoice: invoice,
           paidNow: paymentAmount,
           note: note,
-          skipInvoicePayment: true, // The payment is already inside the invoice JSON!
+          skipInvoicePayment: paymentAmount > 0, // If > 0, it's already in the invoice JSON
         );
       }
 
@@ -130,10 +131,23 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     }
 
     final result = await createInvoiceUseCase(invoice);
-    result.fold(
-      (failure) => emit(InvoiceFailure(failure.message)),
-      (invoiceId) => emit(InvoiceCreateSuccess(invoiceId)),
-    );
+    final failure = result.fold((f) => f, (_) => null);
+    final invoiceId = result.fold((_) => null, (id) => id);
+
+    if (failure != null) {
+      emit(InvoiceFailure(failure.message));
+    } else if (invoiceId != null) {
+      // Automatically create baseline debt if amount > 0
+      if (invoice.totalAmount > 0) {
+         await _processPaymentInternally(
+           uid: invoice.uid,
+           invoiceId: invoiceId,
+           invoice: invoice.copyWith(id: invoiceId),
+           paidNow: 0, // Just create the debt baseline
+         );
+      }
+      emit(InvoiceCreateSuccess(invoiceId));
+    }
   }
 
   // ── List ──────────────────────────────────────────────────────────────────
