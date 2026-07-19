@@ -87,9 +87,12 @@ class MyDebtItemCard extends StatelessWidget {
                   },
             child: Padding(
               padding: EdgeInsets.all(16.r),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -275,6 +278,7 @@ class MyDebtItemCard extends StatelessWidget {
                   ],
                 ],
               ),
+            ),
             ),
           ),
         ),

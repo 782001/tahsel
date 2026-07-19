@@ -69,17 +69,20 @@ class DebtItemCard extends StatelessWidget {
         ),
         child: Padding(
           padding: EdgeInsets.all(isDesktop ? 16 : 16.r),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+          child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
               // --- Row 1: index badge + item desc + date ---
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Transaction number badge
                   Container(
-                    width: isDesktop ? 28 : 28.r,
-                    height: isDesktop ? 28 : 28.r,
+                    width: isDesktop ? 28 : 28.h,
+                    height: isDesktop ? 28 : 28.h,
                     decoration: BoxDecoration(
                       color: AppColors.primaryColor.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
@@ -267,6 +270,7 @@ class DebtItemCard extends StatelessWidget {
                 ),
               ],
             ],
+            ),
           ),
         ),
       ),
