@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -12,13 +13,10 @@ import '../utils/assets.dart';
 
 class ReceiptImageService {
   static const double _width = 1080;
-  static const double _height = 1500;
+  static const double _height = 1600;
 
   static const Color _primary = Color(0xFF1E56A0);
-  static const Color _primaryDark = Color(0xFF005DB7);
-  static const Color _success = Color(0xFF2E7D32);
-  static const Color _warning = Color(0xFFF59E0B);
-  static const Color _danger = Color(0xFFD32F2F);
+  static const Color _primaryDark = Color(0xFF061A35);
 
   // دالة رئيسية لإنشاء وحفظ الصورة (يمكنك استدعاؤها من الخارج)
   static Future<File> generateReceipt({
@@ -31,10 +29,10 @@ class ReceiptImageService {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder, const Rect.fromLTWH(0, 0, _width, _height));
 
-    // 1. رسم الخلفية المندمجة
+    // 1. رسم الخلفية العميقة بلون التطبيق الأساسي مع تأثيرات
     _drawBackground(canvas);
 
-    // 2. تحميل اللوجو ورسم الهيدر
+    // 2. تحميل اللوجو
     ui.Image? logo;
     try {
       logo = await _loadLogo();
@@ -42,12 +40,16 @@ class ReceiptImageService {
       // إذا فشل تحميل اللوجو لا تتوقف العملية
     }
 
-    _drawHeader(canvas, logo, isArabic);
-
-    // 3. رسم الكارت الرئيسي المنبثق (بظل ناعم)
+    // 3. رسم الكارت الرئيسي الزجاجي (Glassmorphism)
     _drawMainCard(canvas);
 
-    // 4. رسم بيانات العميل والمبالغ الماليّة بالاتجاه الصحيح
+    // 4. رسم الهيدر
+    _drawHeader(canvas, isArabic);
+
+    // 5. رسم اللوجو أعلى الكارت
+    _drawLogo(canvas, logo);
+
+    // 6. رسم بيانات العميل والمبالغ الماليّة
     _drawCustomerData(
       canvas,
       customerName: customerName,
@@ -75,87 +77,131 @@ class ReceiptImageService {
     final data = await rootBundle.load(Assets.imagesAppLogo);
     final codec = await ui.instantiateImageCodec(
       data.buffer.asUint8List(),
-      targetWidth: 140, // حجم مناسب ومتناسق داخل الدائرة
+      targetWidth: 140,
     );
     final frame = await codec.getNextFrame();
     return frame.image;
   }
 
   static void _drawBackground(Canvas canvas) {
+    // Rich Tahsel Blue Gradient
     final paint = Paint()
       ..shader = ui.Gradient.linear(
         const Offset(0, 0),
-        const Offset(0, _height),
-        const [Color(0xffFDFDFD), Color(0xffF2F6FA)],
+        const Offset(_width, _height),
+        [_primary, _primaryDark],
       );
     canvas.drawRect(const Rect.fromLTWH(0, 0, _width, _height), paint);
-  }
 
-  static void _drawHeader(Canvas canvas, ui.Image? logo, bool isArabic) {
-    final headerRect = RRect.fromRectAndRadius(
-      const Rect.fromLTWH(60, 60, _width - 120, 280),
-      const Radius.elliptical(32, 32),
-    );
-
-    final paint = Paint()
-      ..shader = ui.Gradient.linear(
-        const Offset(60, 60),
-        const Offset(_width - 60, 340),
-        const [_primary, _primaryDark],
-      );
-
-    canvas.drawRRect(headerRect, paint);
-
-    // دوائر ديكورية خلفية خفيفة جداً
+    // Decorative Texture 1: Glowing orbs
     canvas.drawCircle(
-      const Offset(980, 40),
-      160,
-      Paint()..color = Colors.white.withValues(alpha: .06),
+      const Offset(100, 200),
+      400,
+      Paint()
+        ..shader = ui.Gradient.radial(const Offset(100, 200), 400, [
+          const Color(0xFF3B82F6).withValues(alpha: 0.15),
+          Colors.transparent,
+        ]),
     );
-
     canvas.drawCircle(
-      const Offset(100, 300),
-      120,
-      Paint()..color = Colors.white.withValues(alpha: .04),
+      const Offset(980, 1300),
+      500,
+      Paint()
+        ..shader = ui.Gradient.radial(const Offset(980, 1300), 500, [
+          const Color(0xFF0EA5E9).withValues(alpha: 0.12),
+          Colors.transparent,
+        ]),
     );
 
-    // رسم اللوجو إذا توفر بشكل احترافي ومحاذاته بالمنتصف
-    if (logo != null) {
-      final double avatarCenterX = _width / 2;
-      final double avatarCenterY = 135;
-      final double radius = 55;
-
-      canvas.drawCircle(
-        Offset(avatarCenterX, avatarCenterY),
-        radius,
-        Paint()..color = Colors.white,
-      );
-
-      final dstRect = Rect.fromCircle(
-        center: Offset(avatarCenterX, avatarCenterY),
-        radius: radius - 8,
-      );
-      final srcRect = Rect.fromLTWH(
-        0,
-        0,
-        logo.width.toDouble(),
-        logo.height.toDouble(),
-      );
-      canvas.drawImageRect(logo, srcRect, dstRect, Paint());
+    // Decorative Texture 2: Grid Lines (Blueprint feel)
+    final gridPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.03)
+      ..strokeWidth = 1.0;
+    for (double i = 0; i < _width; i += 60) {
+      canvas.drawLine(Offset(i, 0), Offset(i, _height), gridPaint);
+    }
+    for (double i = 0; i < _height; i += 60) {
+      canvas.drawLine(Offset(0, i), Offset(_width, i), gridPaint);
     }
 
-    // عنوان الإيصال الرئيسي
+    // Decorative Texture 3: Abstract top wave
+    final wavePath = Path();
+    wavePath.moveTo(0, 0);
+    wavePath.lineTo(_width, 0);
+    wavePath.lineTo(_width, 300);
+    wavePath.quadraticBezierTo(_width * 0.75, 400, _width * 0.5, 250);
+    wavePath.quadraticBezierTo(_width * 0.25, 100, 0, 200);
+    wavePath.close();
+
+    canvas.drawPath(
+      wavePath,
+      Paint()
+        ..shader = ui.Gradient.linear(
+          const Offset(0, 0),
+          const Offset(0, 400),
+          [Colors.white.withValues(alpha: 0.06), Colors.transparent],
+        ),
+    );
+  }
+
+  static void _drawMainCard(Canvas canvas) {
+    final cardRect = RRect.fromRectAndRadius(
+      const Rect.fromLTWH(60, 180, _width - 120, 1300),
+      const Radius.circular(40),
+    );
+
+    // Dark shadow for depth
+    canvas.drawShadow(
+      Path()..addRRect(cardRect),
+      Colors.black.withValues(alpha: 0.4),
+      40,
+      true,
+    );
+
+    // Glass background
+    canvas.drawRRect(
+      cardRect,
+      Paint()
+        ..shader = ui.Gradient.linear(
+          const Offset(60, 180),
+          const Offset(60, 1480),
+          [
+            Colors.white.withValues(alpha: 0.12),
+            Colors.white.withValues(alpha: 0.03),
+          ],
+        ),
+    );
+
+    // Glass Border
+    canvas.drawRRect(
+      cardRect,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5
+        ..shader = ui.Gradient.linear(
+          const Offset(60, 180),
+          const Offset(_width - 60, 1480),
+          [
+            Colors.white.withValues(alpha: 0.3),
+            Colors.white.withValues(alpha: 0.05),
+          ],
+        ),
+    );
+  }
+
+  static void _drawHeader(Canvas canvas, bool isArabic) {
+    // Receipt Title
     _drawCenteredText(
       canvas,
       text: isArabic ? "إيصال تحصيل نقدية" : "Payment Receipt",
-      y: 220,
-      size: 44,
+      y: 290,
+      size: 42,
       color: Colors.white,
       weight: FontWeight.bold,
       isArabic: isArabic,
     );
 
-    // التاريخ والوقت الحالي
+    // Date
     final dateStr = DateFormat(
       isArabic ? "dd MMMM yyyy - hh:mm a" : "MMM dd, yyyy - hh:mm a",
       isArabic ? "ar" : "en",
@@ -164,29 +210,61 @@ class ReceiptImageService {
     _drawCenteredText(
       canvas,
       text: dateStr,
-      y: 280,
-      size: 24,
-      color: Colors.white70,
-      weight: FontWeight.normal,
+      y: 350,
+      size: 22,
+      color: Colors.white.withValues(alpha: 0.7),
+      weight: FontWeight.w500,
       isArabic: isArabic,
     );
   }
 
-  static void _drawMainCard(Canvas canvas) {
-    final card = RRect.fromRectAndRadius(
-      const Rect.fromLTWH(60, 340, _width - 120, 1100),
-      const Radius.elliptical(32, 32),
-    );
+  static void _drawLogo(Canvas canvas, ui.Image? logo) {
+    final double centerX = _width / 2;
+    final double centerY = 180; // Exactly on the top edge of the card
+    final double radius = 75;
 
-    // ظل ناعم واحترافي للكارت السفلي
+    // Glowing shadow for logo
     canvas.drawShadow(
-      Path()..addRRect(card),
-      Colors.blueGrey.withValues(alpha: .12),
+      Path()..addOval(
+        Rect.fromCircle(center: Offset(centerX, centerY), radius: radius),
+      ),
+      const Color(0xFFF59E0B),
       20,
       true,
     );
 
-    canvas.drawRRect(card, Paint()..color = Colors.white);
+    // Golden ring border
+    canvas.drawCircle(
+      Offset(centerX, centerY),
+      radius + 4,
+      Paint()..color = const Color(0xFFF59E0B),
+    );
+
+    // White circle background for logo
+    canvas.drawCircle(
+      Offset(centerX, centerY),
+      radius,
+      Paint()..color = Colors.white,
+    );
+
+    if (logo != null) {
+      final dstRect = Rect.fromCircle(
+        center: Offset(centerX, centerY),
+        radius: radius - 10,
+      );
+      final srcRect = Rect.fromLTWH(
+        0,
+        0,
+        logo.width.toDouble(),
+        logo.height.toDouble(),
+      );
+      canvas.drawImageRect(
+        logo,
+        srcRect,
+        dstRect,
+        Paint()..filterQuality = FilterQuality.high,
+      );
+    }
   }
 
   static void _drawCustomerData(
@@ -197,89 +275,103 @@ class ReceiptImageService {
     required double remaining,
     required bool isArabic,
   }) {
-    // اسم العميل
+    // "Customer Name" Label
+    _drawCenteredText(
+      canvas,
+      text: isArabic ? "اسم العميل" : "Customer Name",
+      y: 440,
+      size: 22,
+      color: Colors.white.withValues(alpha: 0.6),
+      weight: FontWeight.w500,
+      isArabic: isArabic,
+      letterSpacing: 1.5,
+    );
+
+    // Customer Name Value
     _drawCenteredText(
       canvas,
       text: customerName,
-      y: 410,
+      y: 480,
       size: 46,
-      color: const Color(0xFF263238),
+      color: Colors.white,
       weight: FontWeight.bold,
       isArabic: isArabic,
     );
 
-    // تسمية نوع الكارت (عميل)
-    _drawCenteredText(
+    // Dashed divider
+    _drawDashedLine(
       canvas,
-      text: isArabic ? "اسم العميل" : "Customer Name",
-      y: 475,
-      size: 24,
-      color: Colors.grey.shade500,
-      weight: FontWeight.w500,
-      isArabic: isArabic,
+      p1: const Offset(120, 590),
+      p2: const Offset(_width - 120, 590),
+      color: Colors.white.withValues(alpha: 0.2),
+      dashWidth: 10,
+      dashSpace: 8,
     );
 
-    // خط فاصل أنيق
-    final dividerPaint = Paint()
-      ..color = Colors.grey.withValues(alpha: .12)
-      ..strokeWidth = 2;
-    canvas.drawLine(
-      const Offset(140, 540),
-      const Offset(940, 540),
-      dividerPaint,
-    );
-
-    // كروت المبالغ المالية (تدعم الـ RTL والـ LTR بشكل ديناميكي)
+    // Financial Rows
     _drawFinancialRow(
       canvas,
-      y: 590,
+      y: 650,
       title: isArabic ? "المبلغ المدفوع" : "Paid Amount",
       value: paid,
-      color: _primary,
+      gradientColors: const [
+        Color(0xFF60A5FA),
+        Color(0xFF2563EB),
+      ], // Vibrant Blue
       icon: Icons.payments_rounded,
       isArabic: isArabic,
     );
 
     _drawFinancialRow(
       canvas,
-      y: 780,
+      y: 810,
       title: isArabic ? "إجمالي الحساب" : "Total Debt",
       value: total,
-      color: _warning,
+      gradientColors: const [
+        Color(0xFFFBBF24),
+        Color(0xFFD97706),
+      ], // Vibrant Amber
       icon: Icons.account_balance_wallet_rounded,
       isArabic: isArabic,
     );
 
+    final isPaidFull = remaining <= 0.01;
     _drawFinancialRow(
       canvas,
       y: 970,
       title: isArabic ? "المتبقي" : "Remaining Amount",
       value: remaining,
-      color: remaining <= 0 ? _success : _danger,
-      icon: remaining <= 0
+      gradientColors: isPaidFull
+          ? const [Color(0xFF34D399), Color(0xFF059669)] // Vibrant Emerald
+          : const [Color(0xFFF87171), Color(0xFFDC2626)], // Vibrant Red
+      icon: isPaidFull
           ? Icons.check_circle_rounded
           : Icons.pending_actions_rounded,
       isArabic: isArabic,
     );
-    _drawCenteredText(
+
+    // Add a PAID stamp if remaining is 0
+    if (isPaidFull) {
+      _drawStamp(canvas, text: isArabic ? "خالص" : "PAID", isArabic: isArabic);
+    }
+
+    // Footer lines
+    _drawDashedLine(
       canvas,
-      text: isArabic ? "شكراً لثقتكم بنا ❤️" : "Thank you for your trust ❤️",
-      y: 1185,
-      size: 28,
-      color: _primaryDark,
-      weight: FontWeight.bold,
-      isArabic: isArabic,
+      p1: const Offset(120, 1150),
+      p2: const Offset(_width - 120, 1150),
+      color: Colors.white.withValues(alpha: 0.2),
+      dashWidth: 10,
+      dashSpace: 8,
     );
 
     _drawCenteredText(
       canvas,
-      text: isArabic
-          ? "تم إنشاء هذا الإيصال بواسطة تطبيق تحصيل"
-          : "Generated by Tahsel App",
-      y: 1235,
-      size: 22,
-      color: Colors.grey.shade700,
-      weight: FontWeight.w600,
+      text: isArabic ? "شكراً لثقتكم بنا ❤️" : "Thank you for your trust ❤️",
+      y: 1220,
+      size: 30,
+      color: Colors.white,
+      weight: FontWeight.bold,
       isArabic: isArabic,
     );
 
@@ -288,10 +380,23 @@ class ReceiptImageService {
       text: isArabic
           ? "إدارة العملاء • متابعة الديون • إدارة الموظفين"
           : "Customers • Debts • Employee Management",
-      y: 1275,
+      y: 1280,
       size: 20,
-      color: Colors.grey.shade500,
-      weight: FontWeight.normal,
+      color: Colors.white.withValues(alpha: 0.6),
+      weight: FontWeight.w500,
+      isArabic: isArabic,
+    );
+
+    // Outside the card
+    _drawCenteredText(
+      canvas,
+      text: isArabic
+          ? "تم إنشاء هذا الإيصال بواسطة تطبيق تحصيل"
+          : "Generated by Tahsel App",
+      y: 1520,
+      size: 22,
+      color: Colors.white.withValues(alpha: 0.5),
+      weight: FontWeight.w600,
       isArabic: isArabic,
     );
   }
@@ -301,65 +406,85 @@ class ReceiptImageService {
     required double y,
     required String title,
     required double value,
-    required Color color,
+    required List<Color> gradientColors,
     required IconData icon,
     required bool isArabic,
   }) {
-    const double leftMargin = 120;
-    const double cardWidth = 840;
-    const double cardHeight = 150;
+    const double leftMargin = 100;
+    const double cardWidth = 880;
+    const double cardHeight = 130;
 
     final rect = RRect.fromRectAndRadius(
-      const Rect.fromLTWH(
-        leftMargin,
-        0,
-        cardWidth,
-        cardHeight,
-      ).shift(Offset(0, y)),
-      const Radius.circular(20),
+      Rect.fromLTWH(leftMargin, y, cardWidth, cardHeight),
+      const Radius.circular(24),
     );
 
-    // خلفية الكارت الشفافة باللون المخصص
-    canvas.drawRRect(rect, Paint()..color = color.withValues(alpha: .06));
-
-    // حواف الكارت الناعمة
+    // Dark semi-transparent background for contrast
+    canvas.drawRRect(
+      rect,
+      Paint()..color = Colors.black.withValues(alpha: 0.15),
+    );
+    // Colored subtle border
     canvas.drawRRect(
       rect,
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.5
-        ..color = color.withValues(alpha: .15),
+        ..color = gradientColors.first.withValues(alpha: 0.5),
     );
 
-    // شريط ملون جانبي جمالي (يتحرك حسب لغة الإيصال يمين/يسار)
-    final double stripX = isArabic ? (leftMargin + cardWidth - 12) : leftMargin;
+    // Colored gradient strip on the edge
+    final double stripX = isArabic ? (leftMargin + cardWidth - 8) : leftMargin;
+    final stripRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(stripX, y, 8, cardHeight),
+      const Radius.circular(24),
+    );
     canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(stripX, y, 12, cardHeight),
-        const Radius.circular(12),
-      ),
-      Paint()..color = color,
+      stripRect,
+      Paint()
+        ..shader = ui.Gradient.linear(
+          Offset(stripX, y),
+          Offset(stripX, y + cardHeight),
+          gradientColors,
+        ),
     );
 
-    // حساب أماكن الأيقونات والنصوص بناءً على اتجاه اللغة (RTL / LTR)
-    final double iconX = isArabic
-        ? (leftMargin + cardWidth - 85)
-        : (leftMargin + 40);
-    final double textX = isArabic
-        ? (leftMargin + cardWidth - 110)
-        : (leftMargin + 115);
-    final double priceX = isArabic
-        ? (leftMargin + 40)
-        : (leftMargin + cardWidth - 40);
+    // Icon in a gradient circle with glow
+    final double iconCenterX = isArabic
+        ? (leftMargin + cardWidth - 65)
+        : (leftMargin + 65);
+    final double iconCenterY = y + cardHeight / 2;
 
-    // رسم الأيقونة
+    // Glow
+    canvas.drawCircle(
+      Offset(iconCenterX, iconCenterY),
+      32,
+      Paint()
+        ..shader = ui.Gradient.radial(Offset(iconCenterX, iconCenterY), 32, [
+          gradientColors.first.withValues(alpha: 0.6),
+          Colors.transparent,
+        ]),
+    );
+
+    canvas.drawCircle(
+      Offset(iconCenterX, iconCenterY),
+      28,
+      Paint()
+        ..shader = ui.Gradient.linear(
+          Offset(iconCenterX - 28, iconCenterY - 28),
+          Offset(iconCenterX + 28, iconCenterY + 28),
+          gradientColors,
+        ),
+    );
+
+    // Icon (White)
     final iconPainter = TextPainter(
       textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
       text: TextSpan(
         text: String.fromCharCode(icon.codePoint),
         style: TextStyle(
-          fontSize: 38,
-          color: color,
+          fontSize: 26,
+          color: Colors.white,
           fontFamily: icon.fontFamily,
           package: icon.fontPackage,
         ),
@@ -367,28 +492,38 @@ class ReceiptImageService {
     )..layout();
     iconPainter.paint(
       canvas,
-      Offset(iconX, y + (cardHeight - iconPainter.height) / 2),
+      Offset(
+        iconCenterX - iconPainter.width / 2,
+        iconCenterY - iconPainter.height / 2,
+      ),
     );
 
-    // رسم عنوان الحقل (مثال: المبلغ المدفوع)
+    // Title
+    final double textX = isArabic
+        ? (leftMargin + cardWidth - 115)
+        : (leftMargin + 115);
+
     final titlePainter = TextPainter(
       textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
       text: TextSpan(
         text: title,
         style: TextStyle(
-          color: Colors.grey.shade700,
+          color: Colors.white.withValues(alpha: 0.8),
           fontWeight: FontWeight.w600,
-          fontSize: 28,
+          fontSize: 26,
           fontFamily: AppConstants.fontFamily,
         ),
       ),
-    )..layout(maxWidth: 400);
+    )..layout(maxWidth: 300);
     titlePainter.paint(
       canvas,
-      Offset(isArabic ? textX - titlePainter.width : textX, y + 30),
+      Offset(
+        isArabic ? textX - titlePainter.width : textX,
+        y + (cardHeight - titlePainter.height) / 2,
+      ),
     );
 
-    // رسم القيمة المالية بجانب العنوان أو بالجهة المقابلة
+    // Currency and Value
     final currency = isArabic ? "ج.م" : "EGP";
     final valuePainter = TextPainter(
       textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
@@ -396,16 +531,99 @@ class ReceiptImageService {
         text: "${value.toSmartAmount()} $currency",
         style: const TextStyle(
           fontSize: 34,
-          color: Color(0xFF1A1A1A),
-          fontWeight: FontWeight.bold,
+          color: Colors.white,
+          fontWeight: FontWeight.w800,
           fontFamily: AppConstants.fontFamily,
         ),
       ),
-    )..layout(maxWidth: 350);
+    )..layout(maxWidth: 400);
+
+    final double priceX = isArabic
+        ? (leftMargin + 40)
+        : (leftMargin + cardWidth - 40);
+
     valuePainter.paint(
       canvas,
-      Offset(isArabic ? priceX : priceX - valuePainter.width, y + 78),
+      Offset(
+        isArabic ? priceX : priceX - valuePainter.width,
+        y + (cardHeight - valuePainter.height) / 2,
+      ),
     );
+  }
+
+  static void _drawDashedLine(
+    Canvas canvas, {
+    required Offset p1,
+    required Offset p2,
+    required Color color,
+    required double dashWidth,
+    required double dashSpace,
+  }) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+
+    final distance = (p2 - p1).distance;
+    final direction = (p2 - p1) / distance;
+
+    double drawnLength = 0.0;
+    while (drawnLength < distance) {
+      final currentP1 = p1 + direction * drawnLength;
+      final currentP2 =
+          p1 + direction * math.min(drawnLength + dashWidth, distance);
+      canvas.drawLine(currentP1, currentP2, paint);
+      drawnLength += dashWidth + dashSpace;
+    }
+  }
+
+  static void _drawStamp(
+    Canvas canvas, {
+    required String text,
+    required bool isArabic,
+  }) {
+    canvas.save();
+
+    // Position of the stamp
+    final double stampX = isArabic ? 240 : _width - 240;
+    final double stampY = 600;
+
+    // Rotate canvas slightly for a realistic stamp effect
+    canvas.translate(stampX, stampY);
+    canvas.rotate(-0.15); // slight tilt
+
+    final paint = Paint()
+      ..color =
+          const Color(0xFF34D399) // Brighter Emerald for dark bg
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6;
+
+    final rect = RRect.fromRectAndRadius(
+      const Rect.fromLTWH(-85, -40, 170, 80),
+      const Radius.circular(16),
+    );
+    canvas.drawRRect(rect, paint);
+
+    final textPainter = TextPainter(
+      textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+      text: TextSpan(
+        text: text,
+        style: const TextStyle(
+          color: Color(0xFF34D399),
+          fontSize: 38,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 6.0,
+          fontFamily: AppConstants.fontFamily,
+        ),
+      ),
+    )..layout();
+
+    textPainter.paint(
+      canvas,
+      Offset(-textPainter.width / 2, -textPainter.height / 2),
+    );
+
+    canvas.restore();
   }
 
   static void _drawCenteredText(
@@ -416,6 +634,7 @@ class ReceiptImageService {
     required Color color,
     required FontWeight weight,
     required bool isArabic,
+    double? letterSpacing,
   }) {
     final painter = TextPainter(
       textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
@@ -426,6 +645,7 @@ class ReceiptImageService {
           color: color,
           fontSize: size,
           fontWeight: weight,
+          letterSpacing: letterSpacing,
           fontFamily: AppConstants.fontFamily,
         ),
       ),
