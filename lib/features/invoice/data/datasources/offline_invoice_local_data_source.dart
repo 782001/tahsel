@@ -63,12 +63,13 @@ class OfflineInvoiceLocalDataSourceImpl implements OfflineInvoiceLocalDataSource
       invoiceMap['payments'] = payments;
       
       // Calculate dynamic totals to update the status field correctly
-      final totalAmount = (invoiceMap['totalAmount'] as num?)?.toDouble() ?? 0.0;
+      final model = InvoiceModel.fromMap(invoiceMap);
+      final totalAmount = model.totalAmount;
           
       final newPaid = payments.fold(0.0, (sum, p) => sum + (p['amount'] as num));
       final newRemaining = totalAmount - newPaid;
       
-      if (newRemaining <= 0) {
+      if (newRemaining <= 1e-9) {
         invoiceMap['status'] = 'paid';
       } else if (newPaid > 0) {
         invoiceMap['status'] = 'partial';
