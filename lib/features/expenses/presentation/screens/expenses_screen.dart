@@ -5,6 +5,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_state.dart';
 import 'package:tahsel/features/expenses/presentation/widgets/expenses_app_bar.dart';
@@ -30,6 +31,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
     return MultiBlocListener(
       listeners: [
         BlocListener<ExpenseCubit, ExpenseState>(
@@ -75,6 +77,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 onRefresh: () async {
                   context.read<ExpenseCubit>().fetchMonths(
                     AppStrings.userToken,
+                    forceRefresh: true,
                   );
                 },
                 child: Column(
@@ -85,7 +88,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                           parent: AlwaysScrollableScrollPhysics(),
                         ),
                         child: Padding(
-                          padding: EdgeInsets.only(bottom: 20.h),
+                          padding: EdgeInsets.only(
+                            bottom: isDesktop ? 20 : 20.h,
+                          ),
                           child: const Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [ExpensesBalance(), ExpensesList()],
@@ -95,8 +100,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     ),
                     Padding(
                       padding: EdgeInsets.symmetric(
-                        horizontal: 24.w,
-                        vertical: 20.h,
+                        horizontal: isDesktop ? 24 : 24.w,
+                        vertical: isDesktop ? 20 : 20.h,
                       ),
                       child: QuickActionButton(
                         label: AppStrings.addExpense.tr(),
