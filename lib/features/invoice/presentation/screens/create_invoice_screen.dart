@@ -265,15 +265,12 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
             ),
           );
           if (_pendingInvoice != null) {
-            Navigator.of(context).pushReplacementNamed(
-              AppRoutes.invoiceDetail,
-              arguments: {
-                'invoice': _pendingInvoice!.copyWith(id: state.invoiceId),
-                'showPaymentImmediately': true,
-              },
-            );
+            Navigator.of(context).pop({
+              'invoice': _pendingInvoice!.copyWith(id: state.invoiceId),
+              'showPaymentImmediately': true,
+            });
           } else {
-            Navigator.of(context).pop();
+            Navigator.of(context).pop(true);
           }
         } else if (state is InvoiceUpdateSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(

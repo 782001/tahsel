@@ -703,9 +703,19 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(height: 8),
                           _InvoiceQuickLaunchCard(
                             onTap: () async {
-                              await Navigator.of(
+                              final result = await Navigator.of(
                                 context,
                               ).pushNamed(AppRoutes.createInvoice);
+
+                              if (!context.mounted) return;
+
+                              if (result is Map<String, dynamic> &&
+                                  result.containsKey('invoice')) {
+                                await Navigator.of(context).pushNamed(
+                                  AppRoutes.invoiceDetail,
+                                  arguments: result,
+                                );
+                              }
                             },
                           ),
                         ] else ...[

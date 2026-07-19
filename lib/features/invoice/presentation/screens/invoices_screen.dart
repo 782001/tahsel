@@ -200,13 +200,27 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                       icon: Icons.receipt_long_rounded,
                       onPressed: () async {
                         final cubit = context.read<InvoiceCubit>();
-                        await Navigator.of(
+                        final result = await Navigator.of(
                           context,
                         ).pushNamed(AppRoutes.createInvoice);
-                        // Refresh list after returning from create screen
+
+                        if (!mounted) return;
+
+                        if (result is Map<String, dynamic> &&
+                            result.containsKey('invoice')) {
+                          await Navigator.of(context).pushNamed(
+                            AppRoutes.invoiceDetail,
+                            arguments: result,
+                          );
+                        }
+
+                        // Refresh list after returning from create or detail screen
                         if (!mounted) return;
                         _searchController.clear();
-                        cubit.fetchInvoices(AppStrings.userToken);
+                        cubit.fetchInvoices(
+                          AppStrings.userToken,
+                          forceRefresh: true,
+                        );
                       },
                     ),
                   ),
