@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -183,7 +184,23 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
 
     for (final record in pendingRecords) {
       final String name = record.customerName.trim(); // Trim for robustness
-      final double amount = record.amount;
+      
+      double debtAmount = 0.0;
+      double remainingAmount = 0.0;
+      
+      if (record.type == 'my_debt_add') {
+         try {
+           final payload = jsonDecode(record.payloadJson);
+           debtAmount = (payload['totalAmount'] ?? 0).toDouble();
+           remainingAmount = (payload['remainingAmount'] ?? 0).toDouble();
+         } catch (e) {
+           debtAmount = record.amount;
+           remainingAmount = record.amount;
+         }
+      } else {
+         debtAmount = record.amount;
+         remainingAmount = record.amount;
+      }
 
       // Use case-insensitive and trimmed comparison to avoid duplication
       final existingIndex = merged.indexWhere(
@@ -193,8 +210,8 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
       if (existingIndex != -1) {
         final existing = merged[existingIndex];
         merged[existingIndex] = existing.copyWith(
-          totalDebtAmount: existing.totalDebtAmount + amount,
-          totalRemainingDebt: existing.totalRemainingDebt + amount,
+          totalDebtAmount: existing.totalDebtAmount + debtAmount,
+          totalRemainingDebt: existing.totalRemainingDebt + remainingAmount,
           totalTransactions: existing.totalTransactions + 1,
           lastUsedAt: record.date.isAfter(existing.lastUsedAt)
               ? record.date
@@ -204,8 +221,8 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
         merged.add(
           MyDebtPersonEntity(
             name: name,
-            totalDebtAmount: amount,
-            totalRemainingDebt: amount,
+            totalDebtAmount: debtAmount,
+            totalRemainingDebt: remainingAmount,
             lastUsedAt: record.date,
             totalTransactions: 1,
           ),

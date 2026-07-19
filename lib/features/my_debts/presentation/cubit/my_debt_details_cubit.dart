@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/base_usecase/base_usecase.dart';
@@ -90,19 +91,38 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
     final filteredPending = pendingRecords
         .where((r) => r.customerName == personName)
         .map(
-          (r) => MyDebtItemEntity(
-            id: r.id,
-            uid: uid,
-            operationId: 'pending_${r.id}',
-            totalAmount: r.amount,
-            paidAmount: 0,
-            remainingAmount: r.amount,
-            personName: personName,
-            details: AppStrings.syncing.tr(), // Syncing indicator for logic
-            operationType: 'debt',
-            timestamp: r.date,
-            isPaid: false,
-          ),
+          (r) {
+            double totalAmount = r.amount;
+            double paidAmount = 0;
+            double remainingAmount = r.amount;
+            String details = AppStrings.syncing.tr();
+
+            if (r.type == 'my_debt_add') {
+              try {
+                final payload = jsonDecode(r.payloadJson);
+                totalAmount = (payload['totalAmount'] ?? 0).toDouble();
+                paidAmount = (payload['paidAmount'] ?? 0).toDouble();
+                remainingAmount = (payload['remainingAmount'] ?? 0).toDouble();
+                details = payload['details'] ?? AppStrings.syncing.tr();
+              } catch (e) {
+                // Ignore parsing errors, keep defaults
+              }
+            }
+            
+            return MyDebtItemEntity(
+              id: r.id,
+              uid: uid,
+              operationId: 'pending_${r.id}',
+              totalAmount: totalAmount,
+              paidAmount: paidAmount,
+              remainingAmount: remainingAmount,
+              personName: personName,
+              details: details,
+              operationType: 'debt',
+              timestamp: r.date,
+              isPaid: remainingAmount <= 0,
+            );
+          }
         )
         .toList();
 
