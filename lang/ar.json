@@ -619,7 +619,6 @@
   "delete_account_failed": "فشل حذف الحساب. يرجى المحاولة مرة أخرى.",
   "officialWebsite": "الموقع الرسمي لتحصيل",
   "officialWebsiteDesc": "زيارة الموقع الرسمي لتطبيق تحصيل ومعرفة المميزات وأحدث التحديثات",
-
   "invoices": "الفواتير",
   "create_invoice": "إنشاء فاتورة",
   "invoice_customer_section": "بيانات العميل",
@@ -645,7 +644,6 @@
   "invoice_status_partial": "مدفوع جزئياً",
   "invoice_status_paid": "مدفوع",
   "invoice_status_voided": "ملغى",
-
   "invoice_detail": "تفاصيل الفاتورة",
   "invoice_payment_history": "سجل المدفوعات",
   "invoice_record_payment": "تسجيل دفعة",
@@ -680,7 +678,6 @@
   "invoice_update_success": "تم تعديل الفاتورة بنجاح",
   "invoice_void_success": "تم إلغاء الفاتورة بنجاح",
   "invoice_item_discount": "الخصم",
-
   "invoice_history": "سجل التعديلات",
   "invoice_history_empty": "لا توجد تعديلات مسجلة على هذه الفاتورة",
   "history_item_added": "تم إضافة بند",
@@ -702,5 +699,6 @@
   "facebookPage": "صفحة فيسبوك",
   "facebookPageDesc": "تابعنا علي فيسبوك لكل جديد",
   "whatsappGroup": "جروب الواتساب",
-  "whatsappGroupDesc": "انضم لجروب الواتساب لمعرفة كل جديد"
+  "whatsappGroupDesc": "انضم لجروب الواتساب لمعرفة كل جديد",
+  "invoice_share_pdf": "مشاركة كملف PDF"
 }

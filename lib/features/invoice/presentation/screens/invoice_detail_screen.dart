@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/invoice_pdf_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -245,6 +246,32 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                 onPressed: () => Navigator.of(context).pop(),
               ),
               actions: [
+                // Share as PDF
+                IconButton(
+                  icon: Icon(
+                    Icons.picture_as_pdf_rounded,
+                    color: AppColors.primaryColor,
+                  ),
+                  tooltip: AppStrings.invoiceSharePdf.tr(),
+                  onPressed: () async {
+                    try {
+                      final isArabic = AppStrings.currentLang == 'ar';
+                      await InvoicePdfService.generateAndShareInvoice(
+                        _invoice,
+                        isArabic: isArabic,
+                      );
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(e.toString()),
+                            backgroundColor: AppColors.error,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                ),
                 // Edit — only for non-voided invoices
                 if (_invoice.status != InvoiceStatus.voided)
                   IconButton(

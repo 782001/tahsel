@@ -616,7 +616,6 @@
   "delete_account_failed": "Failed to delete account. Please try again.",
   "officialWebsite": "Tahsel Official Website",
   "officialWebsiteDesc": "Visit Tahsel's official website to learn about features and the latest updates",
-
   "invoices": "Invoices",
   "create_invoice": "Create Invoice",
   "invoice_customer_section": "Customer Info",
@@ -642,7 +641,6 @@
   "invoice_status_partial": "Partial",
   "invoice_status_paid": "Paid",
   "invoice_status_voided": "Voided",
-
   "invoice_detail": "Invoice Detail",
   "invoice_payment_history": "Payment History",
   "invoice_record_payment": "Record Payment",
@@ -677,7 +675,6 @@
   "invoice_update_success": "Invoice updated successfully",
   "invoice_void_success": "Invoice voided successfully",
   "invoice_item_discount": "Discount",
-
   "invoice_history": "Edit History",
   "invoice_history_empty": "No edits recorded for this invoice",
   "history_item_added": "Added Item",
@@ -700,5 +697,6 @@
   "facebookPage": "Facebook Page",
   "facebookPageDesc": "Follow us on Facebook for new updates",
   "whatsappGroup": "WhatsApp Group",
-  "whatsappGroupDesc": "Join our WhatsApp group for the latest updates"
+  "whatsappGroupDesc": "Join our WhatsApp group for the latest updates",
+  "invoice_share_pdf": "Share as PDF"
 }

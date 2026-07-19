@@ -733,6 +733,7 @@ class AppStrings {
 
   // Invoice detail & payment
   static const String invoiceDetail = "invoice_detail";
+  static const String invoiceSharePdf = "invoice_share_pdf";
   static const String invoicePaymentHistory = "invoice_payment_history";
   static const String invoiceRecordPayment = "invoice_record_payment";
   static const String invoicePaymentAmount = "invoice_payment_amount";
