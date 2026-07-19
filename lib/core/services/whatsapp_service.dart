@@ -82,6 +82,7 @@ class WhatsAppService {
     required double paid,
     required double total,
     required double remaining,
+    bool isCustomerReceipt = true,
   }) async {
     final image = await ReceiptImageService.generateReceipt(
       customerName: customerName,
@@ -89,6 +90,7 @@ class WhatsAppService {
       total: total,
       remaining: remaining,
       isArabic: AppStrings.currentLang == "ar" ? true : false,
+      isCustomerReceipt: isCustomerReceipt,
     );
     debugPrint(image.path);
     debugPrint(await image.exists() ? "exists" : "not exists");

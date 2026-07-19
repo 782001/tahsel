@@ -25,6 +25,7 @@ class ReceiptImageService {
     required double total,
     required double remaining,
     required bool isArabic,
+    bool isCustomerReceipt = true,
   }) async {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder, const Rect.fromLTWH(0, 0, _width, _height));
@@ -44,7 +45,7 @@ class ReceiptImageService {
     _drawMainCard(canvas);
 
     // 4. رسم الهيدر
-    _drawHeader(canvas, isArabic);
+    _drawHeader(canvas, isArabic, isCustomerReceipt);
 
     // 5. رسم اللوجو أعلى الكارت
     _drawLogo(canvas, logo);
@@ -57,6 +58,7 @@ class ReceiptImageService {
       total: total,
       remaining: remaining,
       isArabic: isArabic,
+      isCustomerReceipt: isCustomerReceipt,
     );
 
     final picture = recorder.endRecording();
@@ -189,11 +191,13 @@ class ReceiptImageService {
     );
   }
 
-  static void _drawHeader(Canvas canvas, bool isArabic) {
+  static void _drawHeader(Canvas canvas, bool isArabic, bool isCustomerReceipt) {
     // Receipt Title
     _drawCenteredText(
       canvas,
-      text: isArabic ? "إيصال تحصيل نقدية" : "Payment Receipt",
+      text: isArabic
+          ? (isCustomerReceipt ? "إيصال تحصيل نقدية" : "إيصال سداد نقدية")
+          : (isCustomerReceipt ? "Collection Receipt" : "Payment Receipt"),
       y: 290,
       size: 42,
       color: Colors.white,
@@ -274,11 +278,14 @@ class ReceiptImageService {
     required double total,
     required double remaining,
     required bool isArabic,
+    required bool isCustomerReceipt,
   }) {
     // "Customer Name" Label
     _drawCenteredText(
       canvas,
-      text: isArabic ? "اسم العميل" : "Customer Name",
+      text: isArabic 
+          ? (isCustomerReceipt ? "اسم العميل" : "اسم المورد / الدائن") 
+          : (isCustomerReceipt ? "Customer Name" : "Supplier Name"),
       y: 440,
       size: 22,
       color: Colors.white.withValues(alpha: 0.6),

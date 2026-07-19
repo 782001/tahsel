@@ -176,6 +176,7 @@ class NotificationDialog extends StatefulWidget {
             paid: amountPaid,
             total: totalDebt,
             remaining: remainingBalance,
+            isCustomerReceipt: true,
           );
         } else {
           final success = await WhatsAppService.sendMessage(
