@@ -45,6 +45,20 @@ extension StringExtensions on String {
     if (isEmpty) return this;
     return split(' ').map((word) => word.capitalize()).join(' ');
   }
+
+  /// Formats the phone number for WhatsApp by removing non-digits
+  /// and ensuring it starts with the country code (20 for Egypt) without leading zeroes.
+  String toWhatsAppFormat() {
+    String formattedPhone = replaceAll(RegExp(r'\D'), '');
+    if (formattedPhone.startsWith('0020')) {
+      formattedPhone = formattedPhone.substring(2);
+    } else if (formattedPhone.startsWith('0')) {
+      formattedPhone = '20${formattedPhone.substring(1)}';
+    } else if (!formattedPhone.startsWith('20')) {
+      formattedPhone = '20$formattedPhone';
+    }
+    return formattedPhone;
+  }
 }
 
 extension NullableStringExtensions on String? {

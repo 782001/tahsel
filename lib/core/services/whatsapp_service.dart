@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:whatsapp_share2/whatsapp_share2.dart';
@@ -17,10 +18,7 @@ class WhatsAppService {
   }) async {
     // Format phone number: remove non-digits and ensure it starts with country code
     // For Egypt (EGP currency used in app), default to +20 if no country code
-    String formattedPhone = phoneNumber.replaceAll(RegExp(r'\D'), '');
-    if (!formattedPhone.startsWith('20') && !formattedPhone.startsWith('+')) {
-      formattedPhone = '20$formattedPhone';
-    }
+    String formattedPhone = phoneNumber.toWhatsAppFormat();
 
     final Uri whatsappUri = Uri.parse(
       'https://wa.me/$formattedPhone?text=${Uri.encodeComponent(message)}',
@@ -95,21 +93,17 @@ class WhatsAppService {
       isArabic: AppStrings.currentLang == "ar" ? true : false,
       isCustomerReceipt: isCustomerReceipt,
     );
-    debugPrint(image.path);
-    debugPrint(await image.exists() ? "exists" : "not exists");
-    debugPrint("${await image.length()}");
+    AppLogger.printMessage(image.path);
+    AppLogger.printMessage(await image.exists() ? "exists" : "not exists");
+    AppLogger.printMessage("${await image.length()}");
 
     if (!kIsWeb && Platform.isAndroid) {
-      String formattedPhone = phoneNumber.replaceAll(RegExp(r'\D'), '');
-      if (!formattedPhone.startsWith('20') && !formattedPhone.startsWith('+')) {
-        formattedPhone = '20$formattedPhone';
-      }
+      String formattedPhone = phoneNumber.toWhatsAppFormat();
 
       await WhatsappShare.shareFile(
         phone: formattedPhone,
         filePath: [image.path],
         text: message,
-        
       );
     } else {
       await SharePlus.instance.share(

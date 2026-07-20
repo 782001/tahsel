@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/extensions/string_extensions.dart';
@@ -70,7 +71,7 @@ class SmsService {
         return false;
       }
     } catch (e) {
-      debugPrint('SMS Launch Error: $e');
+      AppLogger.printMessage('SMS Launch Error: $e');
       return false;
     }
   }

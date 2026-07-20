@@ -10,6 +10,7 @@ import 'package:tahsel/core/services/contact_service.dart';
 import 'package:tahsel/core/services/sms_service.dart';
 import 'package:tahsel/core/services/whatsapp_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/assets.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -161,6 +162,17 @@ class NotificationDialog extends StatefulWidget {
     final uid = AppStrings.userToken;
 
     try {
+      showDialog(
+        // ignore: use_build_context_synchronously
+        context: context,
+        barrierDismissible: false,
+        builder: (context) =>  Center(
+          child: CircularProgressIndicator(color: AppColors.primaryColor
+          ,strokeWidth: 4,
+          ),
+        ),
+      );
+
       cubit.updateCustomerPhone(uid, customerName, phone);
 
       final templateKey = _getTemplateKey(operationType, mode);
@@ -222,8 +234,15 @@ class NotificationDialog extends StatefulWidget {
           );
         }
       }
+      
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
     } catch (e) {
-      debugPrint(e.toString());
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+      AppLogger.printMessage(e.toString());
       messenger.showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }

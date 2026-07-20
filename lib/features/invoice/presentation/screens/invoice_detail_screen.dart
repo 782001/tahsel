@@ -1,13 +1,19 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/injection_container.dart' as di;
 import 'package:tahsel/core/services/invoice_pdf_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/features/customer/presentation/cubit/customer_cubit.dart';
 import 'package:tahsel/features/debt/domain/entities/payment_entity.dart';
 import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_cubit.dart';
@@ -22,6 +28,7 @@ import 'package:tahsel/features/invoice/presentation/widgets/invoice_payment_his
 import 'package:tahsel/features/invoice/presentation/widgets/invoice_section_title.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/invoice_status_card.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/payment_summary_card.dart';
+import 'package:tahsel/features/invoice/presentation/widgets/phone_input_sheet.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/record_payment_button.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/record_payment_sheet.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
@@ -256,14 +263,71 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                   ),
                   tooltip: AppStrings.invoiceSharePdf.tr(),
                   onPressed: () async {
+                    if (isDisconnected) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(AppStrings.noInternetConnection.tr()),
+                          backgroundColor: AppColors.error,
+                        ),
+                      );
+                      return;
+                    }
+
+                    String? phone = _invoice.customerPhone;
+                    if (!kIsWeb && Platform.isAndroid) {
+                      if (phone == null || phone.isEmpty) {
+                        final result = await PhoneInputSheet.show(context);
+                        if (result == null) return;
+                        phone = result;
+
+                        if (_invoice.customerName != null) {
+                          try {
+                            di.sl<CustomerCubit>().updateCustomerPhone(
+                              AppStrings.userToken,
+                              _invoice.customerName!,
+                              phone,
+                            );
+                          } catch (e) {
+                            AppLogger.printMessage(
+                              'Failed to update customer phone: $e',
+                            );
+                          }
+                        }
+
+                        // Save the phone number to the invoice document
+                        // ignore: use_build_context_synchronously
+                        context.read<InvoiceCubit>().updateInvoice(
+                          _invoice.copyWith(customerPhone: phone),
+                          previous: _invoice,
+                        );
+                      }
+                    }
+
                     try {
+                      // showDialog(
+                      //   // ignore: use_build_context_synchronously
+                      //   context: context,
+                      //   barrierDismissible: false,
+                      //   builder: (context) =>  Center(
+                      //     child: CircularProgressIndicator(color: AppColors.primaryColor,
+                      //     strokeWidth: 4,
+                      //     ),
+                      //   ),
+                      // );
+
                       final isArabic = AppStrings.currentLang == 'ar';
                       await InvoicePdfService.generateAndShareInvoice(
                         _invoice,
                         isArabic: isArabic,
+                        phoneNumber: phone,
                       );
+
+                      if (context.mounted) {
+                        Navigator.of(context).pop();
+                      }
                     } catch (e) {
                       if (context.mounted) {
+                        Navigator.of(context).pop();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(e.toString()),
@@ -464,7 +528,6 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                           ),
                                         ),
 
-                                      
                                       if (_invoice.status ==
                                               InvoiceStatus.paid &&
                                           _invoice.totalPaid >
@@ -585,6 +648,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                     child: Center(
                                       child: CircularProgressIndicator(
                                         color: AppColors.primaryColor,
+                                        strokeWidth: 4,
                                       ),
                                     ),
                                   ),

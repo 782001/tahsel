@@ -144,6 +144,17 @@ class MyDebtsNotificationDialog extends StatefulWidget {
     final messenger = ScaffoldMessenger.of(context);
 
     try {
+      showDialog(
+        // ignore: use_build_context_synchronously
+        context: context,
+        barrierDismissible: false,
+        builder: (context) =>  Center(
+          child: CircularProgressIndicator(color: AppColors.primaryColor
+          ,strokeWidth: 4,
+          ),
+        ),
+      );
+
       final template = _getTemplate(operationType, mode);
 
       final message = await (mode == 'whatsapp'
@@ -198,7 +209,14 @@ class MyDebtsNotificationDialog extends StatefulWidget {
           );
         }
       }
+      
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
     } catch (e) {
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
       messenger.showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }

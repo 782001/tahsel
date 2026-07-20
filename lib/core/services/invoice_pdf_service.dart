@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
@@ -8,6 +9,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 import 'package:tahsel/core/extensions/extensions.dart';
 import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
+import 'package:whatsapp_share2/whatsapp_share2.dart';
 
 import '../utils/assets.dart';
 
@@ -22,21 +24,36 @@ class InvoicePdfService {
   static Future<void> generateAndShareInvoice(
     InvoiceEntity invoice, {
     required bool isArabic,
+    String? phoneNumber,
   }) async {
     final pdfBytes = await _buildPdf(invoice, isArabic);
-    final filename = 'invoice_${invoice.id.substring(0, 8)}.pdf';
+    final filename = 'فاتوره_رقم_${invoice.id.substring(0, 8)}.pdf';
 
     final dir = await getTemporaryDirectory();
     final file = File('${dir.path}/$filename');
     await file.writeAsBytes(pdfBytes);
+    
+    final subject = isArabic
+        ? 'فاتورة رقم ${invoice.id.substring(0, 8)}'
+        : 'Invoice #${invoice.id.substring(0, 8)}';
 
-    // ignore: deprecated_member_use
-    await Share.shareXFiles(
-      [XFile(file.path, mimeType: 'application/pdf')],
-      subject: isArabic
-          ? 'فاتورة رقم ${invoice.id.substring(0, 8)}'
-          : 'Invoice #${invoice.id.substring(0, 8)}',
-    );
+    if (!kIsWeb && Platform.isAndroid && phoneNumber != null && phoneNumber.isNotEmpty) {
+      String formattedPhone = phoneNumber.toWhatsAppFormat();
+
+      await WhatsappShare.shareFile(
+        phone: formattedPhone,
+        filePath: [file.path],
+        text: subject,
+      );
+    } else {
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path, mimeType: 'application/pdf')],
+          text: subject,
+          subject: subject,
+        ),
+      );
+    }
   }
 
   static Future<File> generateInvoicePdf({
