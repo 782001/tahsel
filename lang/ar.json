@@ -703,5 +703,13 @@
   "invoice_share_pdf": "مشاركة كملف PDF",
   "copiedSuccessfully": "تم النسخ بنجاح",
   "show_more": "عرض المزيد",
-  "show_less": "عرض أقل"
+  "show_less": "عرض أقل",
+  "invoice_features_title": "لماذا تستخدم نظام الفواتير؟",
+  "invoice_features_item1_title": "احترافية وموثوقية",
+  "invoice_features_item1_subtitle": "أضف طابعاً رسمياً واحترافياً لعملك يعزز ثقة عملائك.",
+  "invoice_features_item2_title": "مشاركة فورية",
+  "invoice_features_item2_subtitle": "شارك الفاتورة كملف PDF عبر الواتساب أو البريد الإلكتروني بضغطة زر.",
+  "invoice_features_item3_title": "متابعة مالية دقيقة",
+  "invoice_features_item3_subtitle": "راقب المبالغ المدفوعة والمتبقية لكل فاتورة بكل سهولة لتنظيم حساباتك.",
+  "invoice_features_manage_btn": "عرض وإدارة الفواتير السابقة"
 }

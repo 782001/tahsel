@@ -17,6 +17,8 @@ import 'package:tahsel/features/operation/presentation/cubit/ps_session_cubit.da
 import 'package:tahsel/features/operation/presentation/cubit/ps_session_state.dart';
 import 'package:tahsel/features/operation/presentation/utils/operation_validator.dart';
 import 'package:tahsel/features/operation/presentation/widgets/active_sessions_list.dart';
+import 'package:tahsel/features/operation/presentation/widgets/invoice_features_section.dart';
+import 'package:tahsel/features/operation/presentation/widgets/invoice_quick_launch_card.dart';
 import 'package:tahsel/features/operation/presentation/widgets/ps_session_form.dart';
 import 'package:tahsel/features/operation/presentation/widgets/quick_add_mode_selector.dart';
 import 'package:tahsel/features/operation/presentation/widgets/quick_add_shop_form.dart';
@@ -557,7 +559,8 @@ class _HomeScreenState extends State<HomeScreen> {
       child: BlocBuilder<OperationCubit, OperationState>(
         builder: (context, state) {
           final isDesktop = ResponsiveLayout.isDesktop(context);
-          return Center(
+          return Align(
+            alignment: Alignment.topCenter,
             child: ConstrainedBox(
               constraints: BoxConstraints(
                 maxWidth: isDesktop ? 800 : double.infinity,
@@ -701,7 +704,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ] else if (_selectedMode == QuickAddMode.invoice) ...[
                           // Invoice Mode – navigate directly to CreateInvoiceScreen
                           const SizedBox(height: 8),
-                          _InvoiceQuickLaunchCard(
+                          InvoiceQuickLaunchCard(
                             onTap: () async {
                               final result = await Navigator.of(
                                 context,
@@ -718,6 +721,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               }
                             },
                           ),
+                          const SizedBox(height: 32),
+                          const InvoiceFeaturesSection(),
                         ] else ...[
                           // Shop Mode Body (Simplified Form)
                           QuickAddShopForm(
@@ -796,111 +801,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
         },
-      ),
-    );
-  }
-}
-
-// ── Invoice Quick-Launch Card ──────────────────────────────────────────────────
-
-class _InvoiceQuickLaunchCard extends StatelessWidget {
-  final VoidCallback onTap;
-  const _InvoiceQuickLaunchCard({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppColors.primaryColor,
-              AppColors.primaryColor.withValues(alpha: 0.75),
-            ],
-            begin: AlignmentDirectional.topStart,
-            end: AlignmentDirectional.bottomEnd,
-          ),
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primaryColor.withValues(alpha: 0.28),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Icon(
-                    Icons.receipt_long_rounded,
-                    color: Colors.white,
-                    size: 28,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        AppStrings.invoiceQuickAction.tr(),
-                        style: TextStyles.customStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        AppStrings.invoiceQuickActionDesc.tr(),
-                        style: TextStyles.customStyle(
-                          fontSize: 13,
-                          color: Colors.white.withValues(alpha: 0.85),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.add_rounded, color: Colors.white, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    AppStrings.createInvoice.tr(),
-                    style: TextStyles.customStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

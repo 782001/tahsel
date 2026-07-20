@@ -795,4 +795,14 @@ class AppStrings {
   static const String copiedSuccessfully = "copiedSuccessfully";
   static const String showMore = "show_more";
   static const String showLess = "show_less";
+
+  // Invoice Features Section
+  static const String invoiceFeaturesTitle = "invoice_features_title";
+  static const String invoiceFeaturesItem1Title = "invoice_features_item1_title";
+  static const String invoiceFeaturesItem1Subtitle = "invoice_features_item1_subtitle";
+  static const String invoiceFeaturesItem2Title = "invoice_features_item2_title";
+  static const String invoiceFeaturesItem2Subtitle = "invoice_features_item2_subtitle";
+  static const String invoiceFeaturesItem3Title = "invoice_features_item3_title";
+  static const String invoiceFeaturesItem3Subtitle = "invoice_features_item3_subtitle";
+  static const String invoiceFeaturesManageBtn = "invoice_features_manage_btn";
 }

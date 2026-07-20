@@ -291,6 +291,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
       child: Scaffold(
         backgroundColor: AppColors.scafoldBackGround,
         appBar: AppBar(
+          scrolledUnderElevation: 0,
           backgroundColor: AppColors.surface,
           elevation: 0,
           title: Text(
@@ -343,8 +344,10 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                               onContactTap: _pickContact,
                               onSelected: (customer) {
                                 setState(() {
-                                  _phoneController.text = customer.phoneNumber ?? '';
-                                  _ledgerController.text = customer.ledgerNumber ?? '';
+                                  _phoneController.text =
+                                      customer.phoneNumber ?? '';
+                                  _ledgerController.text =
+                                      customer.ledgerNumber ?? '';
                                 });
                               },
                             ),
