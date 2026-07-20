@@ -21,6 +21,8 @@ class NotificationDialog extends StatefulWidget {
   final String mode; // 'whatsapp' or 'sms'
   final String operationType; // 'payment', 'edit', 'delete'
   final double totalDebt;
+  final DateTime? targetDate;
+
   const NotificationDialog({
     super.key,
     required this.customerName,
@@ -30,6 +32,7 @@ class NotificationDialog extends StatefulWidget {
     this.note,
     this.operationType = 'payment',
     required this.totalDebt,
+    this.targetDate,
   });
 
   static bool _isShowing = false;
@@ -43,6 +46,7 @@ class NotificationDialog extends StatefulWidget {
     required double totalDebt,
     String? note,
     String operationType = 'payment',
+    DateTime? targetDate,
   }) {
     if (_isShowing) return;
 
@@ -55,7 +59,10 @@ class NotificationDialog extends StatefulWidget {
       preference = customer?.notificationPreference ?? 'none';
     }
 
-    if (preference == 'none') return;
+    if (preference == 'none' && operationType != 'reminder') return;
+    if (preference == 'none' && operationType == 'reminder') {
+      preference = 'whatsapp';
+    }
 
     _isShowing = true;
 
@@ -83,6 +90,7 @@ class NotificationDialog extends StatefulWidget {
             note: note,
             operationType: operationType,
             totalDebt: totalDebt,
+            targetDate: targetDate,
           ),
         ),
       ).then((result) {
@@ -98,6 +106,7 @@ class NotificationDialog extends StatefulWidget {
             note: result['note'],
             operationType: operationType,
             totalDebt: totalDebt,
+            targetDate: targetDate,
           );
         }
       });
@@ -113,6 +122,8 @@ class NotificationDialog extends StatefulWidget {
           return AppStrings.whatsappEditMsgTemplate;
         case 'delete':
           return AppStrings.whatsappDeleteMsgTemplate;
+        case 'reminder':
+          return AppStrings.whatsappReminderMsgTemplate;
         default:
           return AppStrings.whatsappMsgTemplate;
       }
@@ -122,6 +133,8 @@ class NotificationDialog extends StatefulWidget {
           return AppStrings.smsEditMsgTemplate;
         case 'delete':
           return AppStrings.smsDeleteMsgTemplate;
+        case 'reminder':
+          return AppStrings.smsReminderMsgTemplate;
         default:
           return AppStrings.smsMsgTemplate;
       }
@@ -138,6 +151,7 @@ class NotificationDialog extends StatefulWidget {
     required double totalDebt,
     String? note,
     String operationType = 'payment',
+    DateTime? targetDate,
   }) async {
     final messenger = ScaffoldMessenger.of(context);
     final cubit = context.read<CustomerCubit>();
@@ -149,12 +163,16 @@ class NotificationDialog extends StatefulWidget {
       final templateKey = _getTemplateKey(operationType, mode);
       final template = templateKey.tr();
 
+      final dateString = targetDate != null 
+          ? DateFormat('yyyy-MM-dd').format(targetDate)
+          : DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now());
+
       final message = await (mode == 'whatsapp'
           ? WhatsAppService.prepareMessage(
               name: customerName,
               amount: amountPaid,
               remaining: remainingBalance,
-              date: DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now()),
+              date: dateString,
               note: (note ?? '').tr(),
               template: template,
             )
@@ -162,7 +180,7 @@ class NotificationDialog extends StatefulWidget {
               name: customerName,
               amount: amountPaid,
               remaining: remainingBalance,
-              date: DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now()),
+              date: dateString,
               note: (note ?? '').tr(),
               template: template,
             ));

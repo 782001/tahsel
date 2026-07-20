@@ -805,4 +805,10 @@ class AppStrings {
   static const String invoiceFeaturesItem3Title = "invoice_features_item3_title";
   static const String invoiceFeaturesItem3Subtitle = "invoice_features_item3_subtitle";
   static const String invoiceFeaturesManageBtn = "invoice_features_manage_btn";
+
+  // Payment Reminder
+  static const String paymentReminder = "payment_reminder";
+  static const String sendReminder = "send_reminder";
+  static const String whatsappReminderMsgTemplate = "whatsapp_reminder_msg_template";
+  static const String smsReminderMsgTemplate = "sms_reminder_msg_template";
 }

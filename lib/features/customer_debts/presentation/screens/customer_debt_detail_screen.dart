@@ -14,6 +14,7 @@ import 'package:tahsel/features/customer_debts/presentation/widgets/debt_item_ca
 import 'package:tahsel/features/customer_debts/presentation/widgets/header_banner.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/notification_preference_toggle.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/partial_payment_dialog.dart';
+import 'package:tahsel/features/customer_debts/presentation/widgets/payment_reminder_dialog.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/skeletons/customer_debt_skeleton.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/summary_row.dart';
 import 'package:tahsel/features/debt/domain/entities/debt_entity.dart';
@@ -515,6 +516,62 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                                 );
                               },
                             ),
+                          if (currentDetail.totalDebt != 0) ...[
+                            SizedBox(height: isDesktop ? 12 : 12.h),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: () async {
+                                  if (context.read<ConnectivityCubit>().state
+                                      is ConnectivityDisconnected) {
+                                    showfailureToast(
+                                      AppStrings.noInternetConnection.tr(),
+                                    );
+                                    return;
+                                  }
+                                  final result =
+                                      await showDialog<Map<String, dynamic>>(
+                                        context: context,
+                                        builder: (_) => PaymentReminderDialog(
+                                          customerName:
+                                              currentDetail.customerName,
+                                          totalRemaining:
+                                              currentDetail.totalDebt,
+                                        ),
+                                      );
+                                  if (result != null && context.mounted) {
+                                    NotificationDialog.show(
+                                      context: context,
+                                      customerName: currentDetail.customerName,
+                                      amountPaid: result['amount'],
+                                      remainingBalance: currentDetail.totalDebt,
+                                      totalDebt: currentDetail.totalDebt,
+                                      note: result['note'],
+                                      operationType: 'reminder',
+                                      targetDate: result['targetDate'],
+                                    );
+                                  }
+                                },
+                                icon: const Icon(
+                                  Icons.notifications_active_rounded,
+                                  size: 18,
+                                ),
+                                label: Text(AppStrings.paymentReminder.tr()),
+                                style: OutlinedButton.styleFrom(
+                                  side: BorderSide(
+                                    color: AppColors.primaryColor,
+                                  ),
+                                  foregroundColor: AppColors.primaryColor,
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: isDesktop ? 12 : 12.h,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12.r),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -522,7 +579,9 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                 ),
               ),
 
-              SliverToBoxAdapter(child: SizedBox(height: 20.h)),
+              SliverToBoxAdapter(
+                child: SizedBox(height: isDesktop ? 20 : 20.h),
+              ),
 
               // ── Section header ──────────────────────────────────────────────
               SliverToBoxAdapter(
@@ -538,14 +597,14 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                       child: Row(
                         children: [
                           Container(
-                            width: 4.w,
-                            height: 18.h,
+                            width: isDesktop ? 4 : 4.w,
+                            height: isDesktop ? 18 : 18.h,
                             decoration: BoxDecoration(
                               color: AppColors.primaryColor,
                               borderRadius: BorderRadius.circular(4.r),
                             ),
                           ),
-                          SizedBox(width: 10.w),
+                          SizedBox(width: isDesktop ? 10 : 10.w),
                           Text(
                             AppStrings.activityDetails.tr(),
                             style: TextStyles.customStyle(
@@ -557,8 +616,8 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                           const Spacer(),
                           Container(
                             padding: EdgeInsets.symmetric(
-                              horizontal: 10.w,
-                              vertical: 4.h,
+                              horizontal: isDesktop ? 10 : 10.w,
+                              vertical: isDesktop ? 4 : 4.h,
                             ),
                             decoration: BoxDecoration(
                               color: AppColors.primaryColor.withValues(
@@ -581,7 +640,11 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                   ),
                 ),
               ),
-              SliverToBoxAdapter(child: SizedBox(height: 12.h)),
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: isDesktop ? 12 : 12.h,
+                ),
+              ),
 
               // ── Debt Items List ─────────────────────────────────────────────
               if (isDesktop)
@@ -634,7 +697,8 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                 SliverList(
                   delegate: SliverChildBuilderDelegate((context, index) {
                     return Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 24.w),
+                      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 :
+                       24.w),
                       child: DebtItemCard(
                         item: currentDetail.items[index],
                         index: index + 1,
@@ -665,7 +729,7 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                   }, childCount: currentDetail.items.length),
                 ),
 
-              SliverToBoxAdapter(child: SizedBox(height: 120.h)),
+              SliverToBoxAdapter(child: SizedBox(height:isDesktop ? 120 : 120.h)),
             ],
           ),
         );

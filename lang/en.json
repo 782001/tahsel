@@ -710,5 +710,9 @@
   "invoice_features_item2_subtitle": "Share the invoice as a PDF file via WhatsApp or email with one click.",
   "invoice_features_item3_title": "Accurate Financial Tracking",
   "invoice_features_item3_subtitle": "Easily monitor paid and remaining amounts for each invoice to organize your accounts.",
-  "invoice_features_manage_btn": "View and Manage Past Invoices"
+  "invoice_features_manage_btn": "View and Manage Past Invoices",
+  "payment_reminder": "Payment Reminder",
+  "send_reminder": "Send Reminder",
+  "whatsapp_reminder_msg_template": "Dear {name},\nWe would like to remind you of the upcoming payment.\nRequired Amount: *{amount} EGP*\nDue Date: {date}.\nDebt Name: *{note}*\nPlease settle as soon as possible.\nThank you for doing business with us.",
+  "sms_reminder_msg_template": "Dear {name},\nWe would like to remind you of the upcoming payment.\nRequired Amount: {amount} EGP\nDue Date: {date}.\nDebt Name: {note}\nThank you."
 }
