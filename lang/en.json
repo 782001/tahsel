@@ -699,5 +699,7 @@
   "whatsappGroup": "WhatsApp Group",
   "whatsappGroupDesc": "Join our WhatsApp group for the latest updates",
   "invoice_share_pdf": "Share as PDF",
-  "copiedSuccessfully": "Copied successfully"
+  "copiedSuccessfully": "Copied successfully",
+  "show_more": "Show More",
+  "show_less": "Show Less"
 }

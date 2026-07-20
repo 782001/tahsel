@@ -226,7 +226,9 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
           final isDisconnected = connectivityState is ConnectivityDisconnected;
           return Scaffold(
             backgroundColor: AppColors.scafoldBackGround,
+
             appBar: AppBar(
+              scrolledUnderElevation: 0,
               backgroundColor: AppColors.surface,
               elevation: 0,
               title: Text(
@@ -462,7 +464,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                           ),
                                         ),
 
-                                      const SizedBox(height: 20),
+                                      
                                       if (_invoice.status ==
                                               InvoiceStatus.paid &&
                                           _invoice.totalPaid >

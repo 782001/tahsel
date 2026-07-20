@@ -701,5 +701,7 @@
   "whatsappGroup": "جروب الواتساب",
   "whatsappGroupDesc": "انضم لجروب الواتساب لمعرفة كل جديد",
   "invoice_share_pdf": "مشاركة كملف PDF",
-  "copiedSuccessfully": "تم النسخ بنجاح"
+  "copiedSuccessfully": "تم النسخ بنجاح",
+  "show_more": "عرض المزيد",
+  "show_less": "عرض أقل"
 }

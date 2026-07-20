@@ -63,6 +63,7 @@ class _EmployeeReportsScreenState extends State<EmployeeReportsScreen> {
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
       appBar: AppBar(
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,

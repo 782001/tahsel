@@ -14,8 +14,15 @@ import 'package:tahsel/features/invoice/presentation/widgets/history_card.dart';
 /// Consumes [InvoiceHistoryCubit] which must be provided above this widget.
 /// This widget only triggers a rebuild of itself — it never causes the main
 /// InvoiceDetailScreen to re-render.
-class InvoiceHistoryTimeline extends StatelessWidget {
+class InvoiceHistoryTimeline extends StatefulWidget {
   const InvoiceHistoryTimeline({super.key});
+
+  @override
+  State<InvoiceHistoryTimeline> createState() => _InvoiceHistoryTimelineState();
+}
+
+class _InvoiceHistoryTimelineState extends State<InvoiceHistoryTimeline> {
+  bool _isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -99,39 +106,97 @@ class InvoiceHistoryTimeline extends StatelessWidget {
     BuildContext context,
     List<InvoiceHistoryEntity> entries,
   ) {
+    final bool hasMoreItems = entries.length > 3;
+    final displayedEntries = (!_isExpanded && hasMoreItems)
+        ? entries.take(3).toList()
+        : entries;
+
     // Group by calendar day label (Today / Yesterday / date)
-    final groups = _groupByDay(entries);
+    final groups = _groupByDay(displayedEntries);
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (final group in groups) ...[
-          // Day header
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10, top: 4),
-            child: Text(
-              group.dayLabel,
-              style: TextStyles.customStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppColors.disabledColor,
+        AnimatedSize(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          alignment: Alignment.topCenter,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final group in groups) ...[
+                // Day header
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10, top: 4),
+                  child: Text(
+                    group.dayLabel,
+                    style: TextStyles.customStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.disabledColor,
+                    ),
+                  ),
+                ),
+                // Cards for this day
+                for (int i = 0; i < group.entries.length; i++) ...[
+                  HistoryCard(entry: group.entries[i]),
+                  if (i < group.entries.length - 1)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 18),
+                      child: Container(
+                        width: 2,
+                        height: 14,
+                        color: AppColors.dividerColor,
+                      ),
+                    ),
+                ],
+                const SizedBox(height: 8),
+              ],
+            ],
+          ),
+        ),
+        if (hasMoreItems) ...[
+          const SizedBox(height: 8),
+          InkWell(
+            onTap: () {
+              setState(() {
+                _isExpanded = !_isExpanded;
+              });
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.dividerColor),
+                boxShadow: const [AppColors.shadow],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    _isExpanded
+                        ? AppStrings.showLess.tr()
+                        : '${AppStrings.showMore.tr()} (${entries.length - 3})',
+                    style: TextStyles.customStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primaryColor,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Icon(
+                    _isExpanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    color: AppColors.primaryColor,
+                    size: 18,
+                  ),
+                ],
               ),
             ),
           ),
-          // Cards for this day
-          for (int i = 0; i < group.entries.length; i++) ...[
-            HistoryCard(entry: group.entries[i]),
-            if (i < group.entries.length - 1)
-              Padding(
-                padding: const EdgeInsets.only(left: 18),
-                child: Container(
-                  width: 2,
-                  height: 14,
-                  color: AppColors.dividerColor,
-                ),
-              ),
-          ],
-          const SizedBox(height: 8),
         ],
       ],
     );

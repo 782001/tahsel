@@ -48,7 +48,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
-      appBar: AppBar(
+      appBar: AppBar(scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,

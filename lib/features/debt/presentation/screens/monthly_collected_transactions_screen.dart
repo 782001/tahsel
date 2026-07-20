@@ -152,6 +152,7 @@ class _MonthlyCollectedTransactionsScreenState
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
       appBar: AppBar(
+        scrolledUnderElevation: 0,
         title: Text(
           "$monthName ${widget.monthlyData.year}",
           style: TextStyles.customStyle(

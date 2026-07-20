@@ -32,6 +32,7 @@ class MonthlyCollectedScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: AppColors.scafoldBackGround,
         appBar: AppBar(
+          scrolledUnderElevation: 0,
           title: Text(
             AppStrings.collectedAmount.tr(),
             style: TextStyles.customStyle(
