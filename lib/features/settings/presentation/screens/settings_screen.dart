@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:share_plus/share_plus.dart';
@@ -199,18 +200,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   }
                                 },
                               ),
-
-                              if (!Platform.isIOS)
-                                SizedBox(height: isDesktop ? 32 : 32.h),
-
-                              // Subscription Section
-                              if (!Platform.isIOS)
-                                SectionHeader(
-                                  title: AppStrings.subscriptionSection.tr(),
-                                ),
-                              if (!Platform.isIOS)
-                                const SubscriptionInfoWidget(),
-
                               SizedBox(height: isDesktop ? 32 : 32.h),
 
                               // Employee Management Section
@@ -224,30 +213,52 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     AppRoutes.employeeList,
                                   );
                                 },
-                                borderRadius: BorderRadius.circular(12.r),
+                                borderRadius: BorderRadius.circular(16.r),
                                 child: Container(
                                   padding: EdgeInsets.all(
-                                    isDesktop ? 16 : 14.w,
+                                    isDesktop ? 20 : 18.w,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.whiteColor,
-                                    borderRadius: BorderRadius.circular(12.r),
-                                    border: Border.all(
-                                      color: AppColors.veryLightGrey,
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        AppColors.primaryColor,
+                                        AppColors.primaryColor.withValues(
+                                          alpha: 0.8,
+                                        ),
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
                                     ),
+                                    borderRadius: BorderRadius.circular(16.r),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppColors.primaryColor
+                                            .withValues(alpha: 0.3),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 6),
+                                      ),
+                                    ],
                                   ),
                                   child: Row(
                                     children: [
-                                      CircleAvatar(
-                                        backgroundColor: AppColors.primaryColor
-                                            .withValues(alpha: 0.1),
-                                        radius: 20.r,
+                                      Container(
+                                        padding: EdgeInsets.all(
+                                          isDesktop ? 12 : 12.w,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.whiteColor
+                                              .withValues(alpha: 0.2),
+                                          borderRadius: BorderRadius.circular(
+                                            isDesktop ? 12 : 12.r,
+                                          ),
+                                        ),
                                         child: Icon(
-                                          Icons.people_rounded,
-                                          color: AppColors.primaryColor,
+                                          Icons.groups_rounded,
+                                          color: AppColors.whiteColor,
+                                          size: 28,
                                         ),
                                       ),
-                                      SizedBox(width: 16.w),
+                                      SizedBox(width: isDesktop ? 16 : 16.w),
                                       Expanded(
                                         child: Column(
                                           crossAxisAlignment:
@@ -257,32 +268,72 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                               AppStrings.employeeManagement
                                                   .tr(),
                                               style: TextStyles.customStyle(
-                                                fontSize: 15,
+                                                fontSize: 18,
                                                 fontWeight: FontWeight.bold,
-                                                color: AppColors.blackReal,
+                                                color: AppColors.whiteColor,
                                               ),
                                             ),
-                                            SizedBox(height: 4.h),
+                                            SizedBox(
+                                              height: isDesktop ? 6 : 6.h,
+                                            ),
                                             Text(
                                               AppStrings.employeeManagementDesc
                                                   .tr(),
                                               style: TextStyles.customStyle(
-                                                fontSize: 12,
-                                                color: AppColors.sandText,
+                                                fontSize: 13,
+                                                color: AppColors.whiteColor
+                                                    .withValues(alpha: 0.9),
                                               ),
                                             ),
                                           ],
                                         ),
                                       ),
-                                      Icon(
-                                        Icons.arrow_forward_ios_rounded,
-                                        size: 16,
-                                        color: AppColors.sandText,
+                                      Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: isDesktop ? 12 : 12.w,
+                                          vertical: isDesktop ? 8 : 8.h,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.whiteColor
+                                              .withValues(alpha: 0.2),
+                                          borderRadius: BorderRadius.circular(
+                                            isDesktop ? 20 : 20.r,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.star_rounded,
+                                              size: 16,
+                                              color: AppColors.whiteColor,
+                                            ),
+                                            SizedBox(
+                                              width: isDesktop ? 4 : 4.w,
+                                            ),
+                                            Icon(
+                                              Icons.arrow_forward_ios_rounded,
+                                              size: 14,
+                                              color: AppColors.whiteColor,
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ],
                                   ),
                                 ),
                               ),
+
+                              if (!Platform.isIOS)
+                                SizedBox(height: isDesktop ? 32 : 32.h),
+
+                              // Subscription Section
+                              if (!Platform.isIOS)
+                                SectionHeader(
+                                  title: AppStrings.subscriptionSection.tr(),
+                                ),
+                              if (!Platform.isIOS)
+                                const SubscriptionInfoWidget(),
 
                               SizedBox(height: isDesktop ? 32 : 32.h),
 
@@ -669,12 +720,66 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                               // Display email
                               Center(
-                                child: Text(
-                                  userEmail,
-                                  style: TextStyles.customStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w400,
-                                    color: AppColors.sandText,
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(20.r),
+                                    onTap: () {
+                                      Clipboard.setData(
+                                        ClipboardData(text: userEmail),
+                                      );
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            AppStrings.copiedSuccessfully.tr(),
+                                            style: TextStyles.customStyle(
+                                              fontSize: 14,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          backgroundColor: AppColors.success,
+                                          duration: const Duration(seconds: 2),
+                                        ),
+                                      );
+                                    },
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: isDesktop ? 16 : 16.w,
+                                        vertical: isDesktop ? 8 : 8.h,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primaryColor
+                                            .withValues(alpha: 0.05),
+                                        borderRadius: BorderRadius.circular(
+                                          20.r,
+                                        ),
+                                        border: Border.all(
+                                          color: AppColors.primaryColor
+                                              .withValues(alpha: 0.1),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.copy_rounded,
+                                            size: isDesktop ? 14 : 14.sp,
+                                            color: AppColors.primaryColor,
+                                          ),
+                                          SizedBox(width: isDesktop ? 6 : 6.w),
+                                          Text(
+                                            userEmail,
+                                            style: TextStyles.customStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.primaryColor,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),

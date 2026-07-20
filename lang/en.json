@@ -698,5 +698,6 @@
   "facebookPageDesc": "Follow us on Facebook for new updates",
   "whatsappGroup": "WhatsApp Group",
   "whatsappGroupDesc": "Join our WhatsApp group for the latest updates",
-  "invoice_share_pdf": "Share as PDF"
+  "invoice_share_pdf": "Share as PDF",
+  "copiedSuccessfully": "Copied successfully"
 }

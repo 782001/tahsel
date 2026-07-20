@@ -792,4 +792,5 @@ class AppStrings {
   static const String facebookPageDesc = "facebookPageDesc";
   static const String whatsappGroup = "whatsappGroup";
   static const String whatsappGroupDesc = "whatsappGroupDesc";
+  static const String copiedSuccessfully = "copiedSuccessfully";
 }

@@ -337,49 +337,89 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
       padding: EdgeInsets.symmetric(
-        horizontal: isDesktop ? 24 : 16.w,
-        vertical: 10.h,
+        horizontal: isDesktop ? 16 : 16.w,
+        vertical: isDesktop ? 10 : 10.h,
       ),
       child: Row(
         children: filters.map((f) {
           final isSelected = _selectedStatusFilter == f;
           return Padding(
-            padding: EdgeInsets.only(right: 8.w),
-            child: ChoiceChip(
-              color: WidgetStateProperty.all(
-                isSelected ? AppColors.primaryColor : Colors.transparent,
-              ),
-              checkmarkColor: isSelected
-                  ? (AppColors.isDark ? Colors.black87 : Colors.white)
-                  : AppColors.blackLight,
-              label: Text(
-                _getFilterTranslation(f),
-                style: TextStyles.customStyle(
-                  fontSize: 13,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected
-                      ? (AppColors.isDark ? Colors.black87 : Colors.white)
-                      : AppColors.blackLight,
-                ),
-              ),
-              selected: isSelected,
-              selectedColor: AppColors.primaryColor,
-              backgroundColor: AppColors.veryLightGrey,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.r),
-              ),
-              side: BorderSide(
-                color: isSelected
-                    ? AppColors.primaryColor
-                    : AppColors.veryLightGrey,
-              ),
-              onSelected: (val) {
-                if (val) {
+            padding: EdgeInsets.only(right: isDesktop ? 8 : 8.w),
+            child: InkWell(
+              onTap: () {
+                if (!isSelected) {
                   setState(() {
                     _selectedStatusFilter = f;
                   });
                 }
               },
+              borderRadius: BorderRadius.circular(isDesktop ? 24 : 24.r),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                padding: EdgeInsets.symmetric(
+                  horizontal: isDesktop ? 16 : 16.w,
+                  vertical: isDesktop ? 8 : 8.h,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppColors.primaryColor
+                      : (AppColors.isDark ? Colors.grey[850] : Colors.white),
+                  borderRadius: BorderRadius.circular(24.r),
+                  border: Border.all(
+                    color: isSelected
+                        ? AppColors.primaryColor
+                        : (AppColors.isDark
+                              ? Colors.grey[700]!
+                              : AppColors.veryLightGrey),
+                    width: 1.5,
+                  ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: AppColors.primaryColor.withValues(
+                              alpha: 0.3,
+                            ),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.03),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isSelected) ...[
+                      Icon(
+                        Icons.check_circle_rounded,
+                        size: isDesktop ? 16 : 16.sp,
+                        color: AppColors.isDark ? Colors.black87 : Colors.white,
+                      ),
+                      SizedBox(width: isDesktop ? 6 : 6.w),
+                    ],
+                    Text(
+                      _getFilterTranslation(f),
+                      style: TextStyles.customStyle(
+                        fontSize: 13,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.w600,
+                        color: isSelected
+                            ? (AppColors.isDark ? Colors.black87 : Colors.white)
+                            : (AppColors.isDark
+                                  ? Colors.white70
+                                  : AppColors.blackLight),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           );
         }).toList(),
