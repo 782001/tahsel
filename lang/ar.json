@@ -657,7 +657,7 @@
   "invoice_items_section_detail": "بنود الفاتورة",
   "invoice_payment_validation": "يرجى إدخال مبلغ دفع صحيح",
   "invoice_payment_exceeds_remaining": "المبلغ يتجاوز الرصيد المتبقي",
-  "search_invoices": "البحث في الفواتير...",
+  "search_invoices": "ابحث باسم الفاتورة، اسم الزبون، أو رقم الدفتر...",
   "invoice_quick_action": "فاتورة",
   "invoice_quick_action_desc": "إنشاء فاتورة احترافية للعميل",
   "invoice_total_value": "قيمة الفواتير",

@@ -654,7 +654,7 @@
   "invoice_items_section_detail": "Invoice Items",
   "invoice_payment_validation": "Please enter a valid payment amount",
   "invoice_payment_exceeds_remaining": "Amount exceeds remaining balance",
-  "search_invoices": "Search invoices...",
+  "search_invoices": "Search by invoice name, customer, or ledger...",
   "invoice_quick_action": "Invoice",
   "invoice_quick_action_desc": "Create a professional invoice for your customer",
   "invoice_total_value": "Invoice Value",

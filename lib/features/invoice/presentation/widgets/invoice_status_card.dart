@@ -74,6 +74,13 @@ class InvoiceStatusCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
+            '# ${invoice.id}',
+            style: TextStyles.customStyle(
+              fontSize: 12,
+              color: Colors.white.withValues(alpha: 0.8),
+            ),
+          ),
+          Text(
             '${invoice.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
             style: TextStyles.customStyle(
               fontSize: 28,

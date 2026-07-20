@@ -263,17 +263,12 @@ class InvoiceCubit extends Cubit<InvoiceState> {
       }
       final filtered = _allInvoices.where((inv) {
         final name = inv.customerName?.toLowerCase() ?? '';
-        final phone = inv.customerPhone?.toLowerCase() ?? '';
         final ledger = inv.ledgerNumber?.toLowerCase() ?? '';
         final id = inv.id.toLowerCase();
-        final itemDescs = inv.items
-            .map((i) => i.description.toLowerCase())
-            .join(' ');
+            
         return name.contains(q) ||
-            phone.contains(q) ||
             ledger.contains(q) ||
-            id.contains(q) ||
-            itemDescs.contains(q);
+            id.contains(q);
       }).toList();
       emit(currentState.copyWith(filtered: filtered, searchQuery: query));
     });

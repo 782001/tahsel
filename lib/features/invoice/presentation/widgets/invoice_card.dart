@@ -78,10 +78,10 @@ class InvoiceCard extends StatelessWidget {
                             color: AppColors.black,
                           ),
                         ),
-                        if (invoice.ledgerNumber != null) ...[
+                        ...[
                           const SizedBox(height: 2),
                           Text(
-                            '# ${invoice.ledgerNumber}',
+                            '# ${invoice.id}',
                             style: TextStyles.customStyle(
                               fontSize: 12,
                               color: AppColors.blackLight,
