@@ -229,7 +229,7 @@ class InvoiceCubit extends Cubit<InvoiceState> {
         final pendingIds = currentState.pendingSyncIds;
         final filteredRemote = paginated.items.where((i) => !pendingIds.contains(i.id)).toList();
         
-        _allInvoices.addAll(filteredRemote);
+        _allInvoices = List.from(_allInvoices)..addAll(filteredRemote);
         emit(
           currentState.copyWith(
             invoices: _allInvoices,
