@@ -53,8 +53,6 @@
 		<string>LaunchScreen</string>
 		<key>UIMainStoryboardFile</key>
 		<string>Main</string>
-		<key>NSContactsUsageDescription</key>
-		<string>Reason we need access to the contact list</string>
 		<key>UISupportedInterfaceOrientations</key>
 		<array>
 			<string>UIInterfaceOrientationPortrait</string>
@@ -67,5 +65,5 @@
 		<false/>
 	<key>NSContactsUsageDescription</key>
 	<string>يحتاج التطبيق للوصول إلى جهات الاتصال لتسهيل تحديد أرقام الهواتف.</string>
-	</dict>
+		</dict>
 </plist>

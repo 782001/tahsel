@@ -1,8 +1,11 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:whatsapp_share2/whatsapp_share2.dart';
 
 import 'receipt_image_service.dart';
 
@@ -96,12 +99,26 @@ class WhatsAppService {
     debugPrint(await image.exists() ? "exists" : "not exists");
     debugPrint("${await image.length()}");
 
-    await SharePlus.instance.share(
-      ShareParams(
-        files: [XFile(image.path)],
+    if (!kIsWeb && Platform.isAndroid) {
+      String formattedPhone = phoneNumber.replaceAll(RegExp(r'\D'), '');
+      if (!formattedPhone.startsWith('20') && !formattedPhone.startsWith('+')) {
+        formattedPhone = '20$formattedPhone';
+      }
+
+      await WhatsappShare.shareFile(
+        phone: formattedPhone,
+        filePath: [image.path],
         text: message,
-        subject: 'Receipt',
-      ),
-    );
+        
+      );
+    } else {
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(image.path)],
+          text: message,
+          subject: 'Receipt',
+        ),
+      );
+    }
   }
 }

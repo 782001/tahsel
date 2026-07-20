@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -163,7 +166,7 @@ class NotificationDialog extends StatefulWidget {
       final templateKey = _getTemplateKey(operationType, mode);
       final template = templateKey.tr();
 
-      final dateString = targetDate != null 
+      final dateString = targetDate != null
           ? DateFormat('yyyy-MM-dd').format(targetDate)
           : DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now());
 
@@ -220,6 +223,7 @@ class NotificationDialog extends StatefulWidget {
         }
       }
     } catch (e) {
+      debugPrint(e.toString());
       messenger.showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
@@ -271,10 +275,10 @@ class _NotificationDialogState extends State<NotificationDialog> {
 
   Future<void> _sendNotification() async {
     final phone = _phoneController.text.trim();
-    // if (phone.isEmpty) {
-    //   setState(() => _errorText = AppStrings.requiredField.tr());
-    //   return;
-    // }
+    if (phone.isEmpty && !kIsWeb && Platform.isAndroid) {
+      setState(() => _errorText = AppStrings.requiredField.tr());
+      return;
+    }
     setState(() {
       _isSaving = true;
       _errorText = null;
