@@ -51,6 +51,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
     SharePlus.instance.share(ShareParams(text: AppStrings.shareMessage.tr()));
   }
 
+  void _showVipNoticeDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.scafoldBackGround,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        title: Row(
+          children: [
+            const Icon(
+              Icons.workspace_premium_rounded,
+              color: Colors.amber,
+              size: 28,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              AppStrings.vipAccount.tr(),
+              style: TextStyles.customStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.blackReal,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          AppStrings.vipOnlyNotice.tr(),
+          style: TextStyles.customStyle(
+            fontSize: 14,
+            color: AppColors.sandText,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              'حسناً',
+              style: TextStyles.customStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
@@ -200,268 +250,307 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   }
                                 },
                               ),
+                              if (!Platform.isIOS || AppStrings.isVip)
+                                SizedBox(height: isDesktop ? 16 : 16.h),
                               // Inventory Management (VIP) Section
-                              SectionHeader(
-                                title: AppStrings.inventoryManagementVIP.tr(),
-                              ),
-                              InkWell(
-                                onTap: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.inventoryMain,
-                                  );
-                                },
-                                borderRadius: BorderRadius.circular(20.r),
-                                child: Container(
-                                  clipBehavior: Clip.antiAlias,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(20.r),
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        Color(0xFF0F2027),
-                                        Color(0xFF203A43),
-                                        Color(0xFF2C5364),
+                              if (!Platform.isIOS || AppStrings.isVip)
+                                SectionHeader(
+                                  title: AppStrings.inventoryManagementVIP.tr(),
+                                ),
+                              if (!Platform.isIOS || AppStrings.isVip)
+                                InkWell(
+                                  onTap: () {
+                                    if (!AppStrings.isVip) {
+                                      _showVipNoticeDialog(context);
+                                      return;
+                                    }
+                                    Navigator.pushNamed(
+                                      context,
+                                      AppRoutes.inventoryMain,
+                                    );
+                                  },
+                                  borderRadius: BorderRadius.circular(20.r),
+                                  child: Container(
+                                    clipBehavior: Clip.antiAlias,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(20.r),
+                                      gradient: const LinearGradient(
+                                        colors: [
+                                          Color(0xFF0F2027),
+                                          Color(0xFF203A43),
+                                          Color(0xFF2C5364),
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(
+                                            0xFF0F2027,
+                                          ).withValues(alpha: 0.35),
+                                          blurRadius: 16,
+                                          offset: const Offset(0, 8),
+                                        ),
                                       ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
                                     ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0xFF0F2027)
-                                            .withValues(alpha: 0.35),
-                                        blurRadius: 16,
-                                        offset: const Offset(0, 8),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Stack(
-                                    children: [
-                                      // Decorative Background Glow Circles
-                                      Positioned(
-                                        right: -30,
-                                        top: -30,
-                                        child: Container(
-                                          width: 130.w,
-                                          height: 130.h,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: const Color(0xFFFFD700)
-                                                .withValues(alpha: 0.08),
+                                    child: Stack(
+                                      children: [
+                                        // Decorative Background Glow Circles
+                                        Positioned(
+                                          right: -30,
+                                          top: -30,
+                                          child: Container(
+                                            width: 130.w,
+                                            height: 130.h,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: const Color(
+                                                0xFFFFD700,
+                                              ).withValues(alpha: 0.08),
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      Positioned(
-                                        left: -20,
-                                        bottom: -20,
-                                        child: Container(
-                                          width: 100.w,
-                                          height: 100.h,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: const Color(0xFF00E676)
-                                                .withValues(alpha: 0.06),
+                                        Positioned(
+                                          left: -20,
+                                          bottom: -20,
+                                          child: Container(
+                                            width: 100.w,
+                                            height: 100.h,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: const Color(
+                                                0xFF00E676,
+                                              ).withValues(alpha: 0.06),
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      Padding(
-                                        padding: EdgeInsets.all(
-                                          isDesktop ? 22 : 18.w,
-                                        ),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              children: [
-                                                // Icon with Golden Ring Effect
-                                                Container(
-                                                  padding: EdgeInsets.all(
-                                                    isDesktop ? 14 : 12.w,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    gradient:
-                                                        LinearGradient(
-                                                      colors: [
-                                                        AppColors.whiteColor
-                                                            .withValues(
-                                                                alpha: 0.25),
-                                                        AppColors.whiteColor
-                                                            .withValues(
-                                                                alpha: 0.1),
-                                                      ],
+                                        Padding(
+                                          padding: EdgeInsets.all(
+                                            isDesktop ? 22 : 18.w,
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  // Icon with Golden Ring Effect
+                                                  Container(
+                                                    padding: EdgeInsets.all(
+                                                      isDesktop ? 14 : 12.w,
                                                     ),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                      isDesktop ? 16 : 14.r,
-                                                    ),
-                                                    border: Border.all(
-                                                      color: AppColors.whiteColor
-                                                          .withValues(
-                                                              alpha: 0.3),
-                                                      width: 1,
-                                                    ),
-                                                  ),
-                                                  child: const Icon(
-                                                    Icons.inventory_2_rounded,
-                                                    color: Color(0xFFFFD700),
-                                                    size: 28,
-                                                  ),
-                                                ),
-                                                SizedBox(
-                                                  width: isDesktop ? 16 : 14.w,
-                                                ),
-                                                Expanded(
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Text(
-                                                        AppStrings
-                                                            .inventoryManagementVIP
-                                                            .tr(),
-                                                        style: TextStyles
-                                                            .customStyle(
-                                                          fontSize: 18,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          color: AppColors
-                                                              .whiteColor,
-                                                        ),
-                                                      ),
-                                                      SizedBox(
-                                                        height:
-                                                            isDesktop ? 4 : 4.h,
-                                                      ),
-                                                      Text(
-                                                        AppStrings
-                                                            .inventoryManagementVIPDesc
-                                                            .tr(),
-                                                        style: TextStyles
-                                                            .customStyle(
-                                                          fontSize: 12,
-                                                          color: AppColors
-                                                              .whiteColor
+                                                    decoration: BoxDecoration(
+                                                      gradient: LinearGradient(
+                                                        colors: [
+                                                          AppColors.whiteColor
                                                               .withValues(
-                                                                  alpha: 0.85),
-                                                        ),
+                                                                alpha: 0.25,
+                                                              ),
+                                                          AppColors.whiteColor
+                                                              .withValues(
+                                                                alpha: 0.1,
+                                                              ),
+                                                        ],
                                                       ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                // VIP Golden Metallic Badge
-                                                Container(
-                                                  padding:
-                                                      EdgeInsets.symmetric(
-                                                    horizontal:
-                                                        isDesktop ? 12 : 10.w,
-                                                    vertical:
-                                                        isDesktop ? 6 : 5.h,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    gradient:
-                                                        const LinearGradient(
-                                                      colors: [
-                                                        Color(0xFFFFD700),
-                                                        Color(0xFFFFA500),
-                                                      ],
-                                                      begin: Alignment.topLeft,
-                                                      end:
-                                                          Alignment.bottomRight,
-                                                    ),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                      isDesktop ? 20 : 20.r,
-                                                    ),
-                                                    boxShadow: [
-                                                      BoxShadow(
-                                                        color: const Color(
-                                                                0xFFFFD700)
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            isDesktop
+                                                                ? 16
+                                                                : 14.r,
+                                                          ),
+                                                      border: Border.all(
+                                                        color: AppColors
+                                                            .whiteColor
                                                             .withValues(
-                                                                alpha: 0.4),
-                                                        blurRadius: 8,
-                                                        offset:
-                                                            const Offset(0, 2),
+                                                              alpha: 0.3,
+                                                            ),
+                                                        width: 1,
                                                       ),
-                                                    ],
+                                                    ),
+                                                    child: const Icon(
+                                                      Icons.inventory_2_rounded,
+                                                      color: Color(0xFFFFD700),
+                                                      size: 28,
+                                                    ),
                                                   ),
-                                                  child: Row(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    children: [
-                                                      const Icon(
-                                                        Icons
-                                                            .workspace_premium_rounded,
-                                                        size: 16,
-                                                        color: Colors.black87,
-                                                      ),
-                                                      SizedBox(
-                                                        width:
-                                                            isDesktop ? 4 : 4.w,
-                                                      ),
-                                                      Text(
-                                                        'VIP',
-                                                        style: TextStyles
-                                                            .customStyle(
-                                                          fontSize: 12,
-                                                          fontWeight:
-                                                              FontWeight.w900,
+                                                  SizedBox(
+                                                    width: isDesktop
+                                                        ? 16
+                                                        : 14.w,
+                                                  ),
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Text(
+                                                          AppStrings
+                                                              .inventoryManagementVIP
+                                                              .tr(),
+                                                          style:
+                                                              TextStyles.customStyle(
+                                                                fontSize: 18,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                color: AppColors
+                                                                    .whiteColor,
+                                                              ),
+                                                        ),
+                                                        SizedBox(
+                                                          height: isDesktop
+                                                              ? 4
+                                                              : 4.h,
+                                                        ),
+                                                        Text(
+                                                          AppStrings
+                                                              .inventoryManagementVIPDesc
+                                                              .tr(),
+                                                          style:
+                                                              TextStyles.customStyle(
+                                                                fontSize: 12,
+                                                                color: AppColors
+                                                                    .whiteColor
+                                                                    .withValues(
+                                                                      alpha:
+                                                                          0.85,
+                                                                    ),
+                                                              ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  // VIP Golden Metallic Badge
+                                                  Container(
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                          horizontal: isDesktop
+                                                              ? 12
+                                                              : 10.w,
+                                                          vertical: isDesktop
+                                                              ? 6
+                                                              : 5.h,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      gradient:
+                                                          const LinearGradient(
+                                                            colors: [
+                                                              Color(0xFFFFD700),
+                                                              Color(0xFFFFA500),
+                                                            ],
+                                                            begin: Alignment
+                                                                .topLeft,
+                                                            end: Alignment
+                                                                .bottomRight,
+                                                          ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            isDesktop
+                                                                ? 20
+                                                                : 20.r,
+                                                          ),
+                                                      boxShadow: [
+                                                        BoxShadow(
+                                                          color:
+                                                              const Color(
+                                                                0xFFFFD700,
+                                                              ).withValues(
+                                                                alpha: 0.4,
+                                                              ),
+                                                          blurRadius: 8,
+                                                          offset: const Offset(
+                                                            0,
+                                                            2,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        const Icon(
+                                                          Icons
+                                                              .workspace_premium_rounded,
+                                                          size: 16,
                                                           color: Colors.black87,
                                                         ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            SizedBox(
-                                              height: isDesktop ? 14 : 12.h,
-                                            ),
-                                            // Sub-features Quick Chips
-                                            SingleChildScrollView(
-                                              scrollDirection: Axis.horizontal,
-                                              child: Row(
-                                                children: [
-                                                  _buildVipFeatureChip(
-                                                    context,
-                                                    label: AppStrings
-                                                        .inventoryProducts
-                                                        .tr(),
-                                                    icon: Icons
-                                                        .shopping_bag_outlined,
-                                                  ),
-                                                  SizedBox(
-                                                    width: isDesktop ? 8 : 6.w,
-                                                  ),
-                                                  _buildVipFeatureChip(
-                                                    context,
-                                                    label: AppStrings
-                                                        .inventorySuppliers
-                                                        .tr(),
-                                                    icon: Icons
-                                                        .local_shipping_outlined,
-                                                  ),
-                                                  SizedBox(
-                                                    width: isDesktop ? 8 : 6.w,
-                                                  ),
-                                                  _buildVipFeatureChip(
-                                                    context,
-                                                    label: AppStrings
-                                                        .inventoryPurchases
-                                                        .tr(),
-                                                    icon: Icons
-                                                        .receipt_outlined,
+                                                        SizedBox(
+                                                          width: isDesktop
+                                                              ? 4
+                                                              : 4.w,
+                                                        ),
+                                                        Text(
+                                                          'VIP',
+                                                          style:
+                                                              TextStyles.customStyle(
+                                                                fontSize: 12,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w900,
+                                                                color: Colors
+                                                                    .black87,
+                                                              ),
+                                                        ),
+                                                      ],
+                                                    ),
                                                   ),
                                                 ],
                                               ),
-                                            ),
-                                          ],
+                                              SizedBox(
+                                                height: isDesktop ? 14 : 12.h,
+                                              ),
+                                              // Sub-features Quick Chips
+                                              SingleChildScrollView(
+                                                scrollDirection:
+                                                    Axis.horizontal,
+                                                child: Row(
+                                                  children: [
+                                                    _buildVipFeatureChip(
+                                                      context,
+                                                      label: AppStrings
+                                                          .inventoryProducts
+                                                          .tr(),
+                                                      icon: Icons
+                                                          .shopping_bag_outlined,
+                                                    ),
+                                                    SizedBox(
+                                                      width: isDesktop
+                                                          ? 8
+                                                          : 6.w,
+                                                    ),
+                                                    _buildVipFeatureChip(
+                                                      context,
+                                                      label: AppStrings
+                                                          .inventorySuppliers
+                                                          .tr(),
+                                                      icon: Icons
+                                                          .local_shipping_outlined,
+                                                    ),
+                                                    SizedBox(
+                                                      width: isDesktop
+                                                          ? 8
+                                                          : 6.w,
+                                                    ),
+                                                    _buildVipFeatureChip(
+                                                      context,
+                                                      label: AppStrings
+                                                          .inventoryPurchases
+                                                          .tr(),
+                                                      icon: Icons
+                                                          .receipt_outlined,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
                               SizedBox(height: isDesktop ? 32 : 32.h),
 
                               // Employee Management Section
@@ -1073,9 +1162,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       decoration: BoxDecoration(
         color: AppColors.whiteColor.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(10.r),
-        border: Border.all(
-          color: AppColors.whiteColor.withValues(alpha: 0.18),
-        ),
+        border: Border.all(color: AppColors.whiteColor.withValues(alpha: 0.18)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

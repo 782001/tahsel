@@ -70,11 +70,15 @@ class _SplashScreenState extends State<SplashScreen>
       final String? userType = await secureStorage.getData(
         key: AppStrings.userTypeKey,
       );
+      final String? isVipStr = await secureStorage.getData(
+        key: AppStrings.isVipKey,
+      );
 
       if (token != null && token.isNotEmpty) {
         // SUCCESS: Local session found
         AppStrings.userToken = token;
         AppStrings.userType = userType ?? AppStrings.cafe;
+        AppStrings.isVip = isVipStr == 'true';
 
         // 4. Navigate IMMEDIATELY to Main Layout (Offline-first)
         nav().pushNamedAndRemoveUntil(AppRoutes.mainLayout);
@@ -123,6 +127,15 @@ class _SplashScreenState extends State<SplashScreen>
         nav().pushNamedAndRemoveUntil(AppRoutes.login);
         return;
       }
+
+      // Sync VIP status locally
+      final bool isVip = (data['isVip'] as bool?) ?? false;
+      AppStrings.isVip = isVip;
+      final secureStorage = sl<SecureStorageHelper>();
+      await secureStorage.saveData(
+        key: AppStrings.isVipKey,
+        value: isVip.toString(),
+      );
 
       // ── 1. Account status gate ────────────────────────────────────────
       final accountStatus = (data['accountStatus'] as String?) ?? 'active';
@@ -218,10 +231,10 @@ class _SplashScreenState extends State<SplashScreen>
     // Reset global strings
     AppStrings.userToken = '';
     AppStrings.userType = AppStrings.cafe;
+    AppStrings.isVip = false;
 
-    // If user is already in the app, the AuthCubit listener will handle
-    // the redirection if it's set up, otherwise we can force a redirect here
-    // but typically AuthCubit.userChanges handles this.
+    final secureStorage = sl<SecureStorageHelper>();
+    await secureStorage.deleteData(key: AppStrings.isVipKey);
   }
 
   @override

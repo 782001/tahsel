@@ -52,6 +52,7 @@ class CreateAccountRemoteDataSourceImpl implements CreateAccountRemoteDataSource
       'subscriptionStart': now,
       'userType': data['userType'] ?? 'cafe',
       'platformType': data['platformType'] ?? "mobile",
+      'isVip': data['isVip'] ?? false,
       'subscriptionEnd': endDate,
       'gracePeriodEnd': Timestamp.fromDate(graceEndDate),
       'loginAllowed': true,

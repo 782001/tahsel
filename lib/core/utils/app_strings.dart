@@ -21,6 +21,10 @@ class AppStrings {
   static String currentLang = "ar";
   static String userToken = '';
   static String userType = 'cafe';
+  static bool isVip = false;
+  static const String isVipKey = 'is_vip';
+  static const String vipAccount = 'vip_account';
+  static const String vipOnlyNotice = 'vip_only_notice';
   static String userCreatedSuccessfully = 'user_created_successfully';
   static String failedToCreateUser = 'failed_to_create_user';
   static const String fullName = "full_name";

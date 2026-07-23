@@ -34,6 +34,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   final int _days = 5;
   String _userType = 'cafe';
   String _platformType = 'mobile';
+  bool _isVip = false;
   bool _isLoading = false;
 
   @override
@@ -572,6 +573,68 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                       ),
                                       SizedBox(height: isDesktop ? 24 : 24.h),
 
+                                      // VIP Account Switch Tile
+                                      Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 16.w,
+                                          vertical: 8.h,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: _isVip
+                                              ? Colors.amber.withValues(alpha: 0.1)
+                                              : AppColors.scafoldBackGround,
+                                          borderRadius: BorderRadius.circular(12.r),
+                                          border: Border.all(
+                                            color: _isVip
+                                                ? Colors.amber
+                                                : AppColors.primaryColor.withValues(alpha: 0.3),
+                                            width: _isVip ? 1.5 : 1,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.workspace_premium_rounded,
+                                              color: _isVip ? Colors.amber : AppColors.sandText,
+                                              size: 24,
+                                            ),
+                                            SizedBox(width: 12.w),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    AppStrings.vipAccount.tr(),
+                                                    style: TextStyles.customStyle(
+                                                      fontSize: 14,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: AppColors.textColor,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    _isVip ? 'مفعل (☑ Enabled)' : 'غير مفعل (☐ Disabled)',
+                                                    style: TextStyles.customStyle(
+                                                      fontSize: 11,
+                                                      color: _isVip ? Colors.amber.shade800 : AppColors.sandText,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            Switch(
+                                              value: _isVip,
+                                              activeThumbColor: Colors.amber,
+                                              onChanged: (val) {
+                                                setState(() {
+                                                  _isVip = val;
+                                                });
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      SizedBox(height: isDesktop ? 24 : 24.h),
+
                                       // Create Account / Submit Action Button
                                       _isLoading
                                           ? Center(
@@ -632,6 +695,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                                           userType: _userType,
                                                           platformType:
                                                               _platformType,
+                                                          isVip: _isVip,
                                                         ),
                                                       );
 

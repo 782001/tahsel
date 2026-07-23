@@ -10,6 +10,7 @@ class UserModel extends UserEntity {
     super.displayName,
     super.accountStatus = 'active',
     super.platformType = 'mobile',
+    super.isVip = false,
   });
 
   factory UserModel.fromFirebaseUser(
@@ -17,6 +18,7 @@ class UserModel extends UserEntity {
     String? userType,
     String? accountStatus,
     String? platformType,
+    bool? isVip,
   }) {
     return UserModel(
       uid: user.uid,
@@ -25,6 +27,7 @@ class UserModel extends UserEntity {
       userType: userType ?? 'cafe',
       accountStatus: accountStatus ?? 'active',
       platformType: platformType ?? 'mobile',
+      isVip: isVip ?? false,
     );
   }
 }

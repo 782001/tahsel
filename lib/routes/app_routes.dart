@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart' as di;
+import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/auth/presentation/screens/login_screen.dart';
 import 'package:tahsel/features/create_account/presentation/screens/create_account_screen.dart';
 import 'package:tahsel/features/customer/presentation/screens/customer_report_details_screen.dart';
@@ -93,6 +97,7 @@ class AppRoutes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case inventoryMain:
+        if (!AppStrings.isVip) return _vipRestrictedRoute();
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
             create: (_) => di.sl<InventoryDashboardCubit>(),
@@ -100,6 +105,7 @@ class AppRoutes {
           ),
         );
       case inventoryProducts:
+        if (!AppStrings.isVip) return _vipRestrictedRoute();
         return MaterialPageRoute(
           builder: (_) => MultiBlocProvider(
             providers: [
@@ -112,6 +118,7 @@ class AppRoutes {
           ),
         );
       case inventoryCategories:
+        if (!AppStrings.isVip) return _vipRestrictedRoute();
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
             create: (_) => di.sl<InventoryCategoriesCubit>(),
@@ -119,6 +126,7 @@ class AppRoutes {
           ),
         );
       case inventorySuppliers:
+        if (!AppStrings.isVip) return _vipRestrictedRoute();
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
             create: (_) => di.sl<InventorySuppliersCubit>(),
@@ -126,6 +134,7 @@ class AppRoutes {
           ),
         );
       case inventoryPurchases:
+        if (!AppStrings.isVip) return _vipRestrictedRoute();
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
             create: (_) => di.sl<InventoryPurchasesCubit>(),
@@ -133,6 +142,7 @@ class AppRoutes {
           ),
         );
       case inventoryStockMovements:
+        if (!AppStrings.isVip) return _vipRestrictedRoute();
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
             create: (_) => di.sl<InventoryStockMovementsCubit>(),
@@ -359,5 +369,89 @@ class AppRoutes {
       },
       addExpense: (_) => const AddExpenseScreen(),
     };
+  }
+
+  static Route<dynamic> _vipRestrictedRoute() {
+    return MaterialPageRoute(
+      builder: (context) => Scaffold(
+        backgroundColor: AppColors.scafoldBackGround,
+        appBar: AppBar(
+          backgroundColor: AppColors.scafoldBackGround,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.primaryColor),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          title: Text(
+            AppStrings.inventoryManagementVIP.tr(),
+            style: TextStyles.customStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primaryColor,
+            ),
+          ),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.workspace_premium_rounded,
+                    color: Colors.amber,
+                    size: 64,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  AppStrings.vipAccount.tr(),
+                  style: TextStyles.customStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.blackReal,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  AppStrings.vipOnlyNotice.tr(),
+                  textAlign: TextAlign.center,
+                  style: TextStyles.customStyle(
+                    fontSize: 14,
+                    color: AppColors.sandText,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryColor,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  label: Text(
+                    AppStrings.errorScreenGoBackButton.tr(),
+                    style: TextStyles.customStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

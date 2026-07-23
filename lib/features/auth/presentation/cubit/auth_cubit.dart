@@ -158,13 +158,18 @@ class AuthCubit extends Cubit<AuthState> {
         key: AppStrings.userTypeKey,
         value: user.userType,
       );
+      await secureStorage.saveData(
+        key: AppStrings.isVipKey,
+        value: user.isVip.toString(),
+      );
 
       // Update global session strings
       AppStrings.userToken = user.uid;
       AppStrings.userType = user.userType;
+      AppStrings.isVip = user.isVip;
 
       AppLogger.printMessage(
-        'User logged in successfully: ${user.uid} (${user.userType})',
+        'User logged in successfully: ${user.uid} (${user.userType}, isVip: ${user.isVip})',
       );
 
       emit(AuthSuccess(user));
@@ -224,12 +229,14 @@ class AuthCubit extends Cubit<AuthState> {
     // Clear global session strings
     AppStrings.userToken = '';
     AppStrings.userType = AppStrings.cafe;
+    AppStrings.isVip = false;
 
     // Clear persistent secure storage
     final secureStorage = sl<SecureStorageHelper>();
     await secureStorage.deleteData(key: 'token');
     await secureStorage.deleteData(key: 'email');
     await secureStorage.deleteData(key: AppStrings.userTypeKey);
+    await secureStorage.deleteData(key: AppStrings.isVipKey);
 
     // Clear feature caches
     sl<ReportsCubit>().clearCache();

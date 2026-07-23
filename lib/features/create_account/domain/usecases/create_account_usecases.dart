@@ -21,6 +21,7 @@ class CreateUserParams {
   final int subscriptionDays;
   final String userType;
   final String platformType;
+  final bool isVip;
 
   CreateUserParams({
     required this.email,
@@ -31,6 +32,7 @@ class CreateUserParams {
     this.subscriptionDays = 0,
     this.userType = 'cafe',
     this.platformType = 'mobile',
+    this.isVip = false,
   });
 
   Map<String, dynamic> toMap() => {
@@ -42,5 +44,6 @@ class CreateUserParams {
     'subscriptionDays': subscriptionDays,
     'userType': userType,
     'platformType': platformType,
+    'isVip': isVip,
   };
 }

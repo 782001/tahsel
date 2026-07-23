@@ -7,6 +7,7 @@ class UserEntity extends Equatable {
   final String userType;
   final String accountStatus;
   final String platformType;
+  final bool isVip;
 
   const UserEntity({
     required this.uid,
@@ -15,6 +16,7 @@ class UserEntity extends Equatable {
     this.displayName,
     this.accountStatus = 'active',
     this.platformType = 'mobile',
+    this.isVip = false,
   });
 
   @override
@@ -25,5 +27,6 @@ class UserEntity extends Equatable {
     userType,
     accountStatus,
     platformType,
+    isVip,
   ];
 }
