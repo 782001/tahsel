@@ -182,7 +182,7 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
                                         ),
                                         SizedBox(height: isDesktop ? 4 : 4.h),
                                         Text(
-                                          '${_getMovementTitle(m.type)}  |  من ${m.previousQuantity} إلى ${m.newQuantity}',
+                                          '${_getMovementTitle(m.type)}  |  ${AppStrings.from.tr()} ${m.previousQuantity} ${AppStrings.to.tr()} ${m.newQuantity}',
                                           style: TextStyles.customStyle(
                                             fontSize: 13,
                                             color: AppColors.sandText,

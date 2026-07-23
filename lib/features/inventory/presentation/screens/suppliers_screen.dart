@@ -217,7 +217,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
                                                 Text(
                                                   sup.phone.isNotEmpty
                                                       ? sup.phone
-                                                      : 'لا يوجد هاتف',
+                                                      : AppStrings.noPhone.tr(),
                                                   style: TextStyles.customStyle(
                                                     fontSize: 13,
                                                     color: AppColors.sandText,

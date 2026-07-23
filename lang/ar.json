@@ -791,5 +791,17 @@
   "no_movements_found": "لا توجد حركات مخزون مسجلة",
   "vip_account": "حساب VIP المميز",
   "vip_only_notice": "هذه الميزة مخصصة لحسابات VIP فقط. يرجى التواصل مع إدارة النظام أو ترقية اشتراكك للوصول إلى إدارة المخزون والميزات المتقدمة.",
-  "no_results": "لا توجد نتائج"
+  "no_results": "لا توجد نتائج",
+  "save": "حفظ",
+  "update": "تحديث",
+  "from": "من",
+  "to": "إلى",
+ 
+  "piece": "قطعة",
+  "no_phone": "لا يوجد هاتف",
+  "initial_stock": "رصيد أولي",
+  "email_label": "إيميل",
+  "address_label": "العنوان",
+  "phone_label": "هاتف",
+  "purchase_invoice_num": "فاتورة شراء"
 }

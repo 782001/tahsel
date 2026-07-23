@@ -32,15 +32,36 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
     return firestore.collection('users').doc(uid).collection(subCol);
   }
 
+  // Helper for batch chunking (Firestore limit is 500)
+  Future<void> _commitChunked<T>(
+    CollectionReference col,
+    List<T> items,
+    String Function(T) getId,
+    Map<String, dynamic> Function(T) toMap,
+  ) async {
+    const chunkSize = 400;
+    for (var i = 0; i < items.length; i += chunkSize) {
+      final end = (i + chunkSize < items.length) ? i + chunkSize : items.length;
+      final chunk = items.sublist(i, end);
+      final batch = firestore.batch();
+      for (final item in chunk) {
+        batch.set(col.doc(getId(item)), toMap(item), SetOptions(merge: true));
+      }
+      await batch.commit();
+    }
+  }
+
   // --- PRODUCTS ---
   @override
   Future<void> syncProducts(String uid, List<InventoryProductModel> products) async {
-    final batch = firestore.batch();
+    if (products.isEmpty) return;
     final col = _getCol(uid, 'inventory_products');
-    for (final p in products) {
-      batch.set(col.doc(p.id), p.toRemoteMap(), SetOptions(merge: true));
-    }
-    await batch.commit();
+    await _commitChunked<InventoryProductModel>(
+      col,
+      products,
+      (p) => p.id,
+      (p) => p.toRemoteMap(),
+    );
   }
 
   @override
@@ -56,12 +77,14 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
   // --- CATEGORIES ---
   @override
   Future<void> syncCategories(String uid, List<InventoryCategoryModel> categories) async {
-    final batch = firestore.batch();
+    if (categories.isEmpty) return;
     final col = _getCol(uid, 'inventory_categories');
-    for (final c in categories) {
-      batch.set(col.doc(c.id), c.toRemoteMap(), SetOptions(merge: true));
-    }
-    await batch.commit();
+    await _commitChunked<InventoryCategoryModel>(
+      col,
+      categories,
+      (c) => c.id,
+      (c) => c.toRemoteMap(),
+    );
   }
 
   @override
@@ -77,12 +100,14 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
   // --- SUPPLIERS ---
   @override
   Future<void> syncSuppliers(String uid, List<InventorySupplierModel> suppliers) async {
-    final batch = firestore.batch();
+    if (suppliers.isEmpty) return;
     final col = _getCol(uid, 'inventory_suppliers');
-    for (final s in suppliers) {
-      batch.set(col.doc(s.id), s.toRemoteMap(), SetOptions(merge: true));
-    }
-    await batch.commit();
+    await _commitChunked<InventorySupplierModel>(
+      col,
+      suppliers,
+      (s) => s.id,
+      (s) => s.toRemoteMap(),
+    );
   }
 
   @override
@@ -98,12 +123,14 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
   // --- PURCHASES ---
   @override
   Future<void> syncPurchases(String uid, List<InventoryPurchaseModel> purchases) async {
-    final batch = firestore.batch();
+    if (purchases.isEmpty) return;
     final col = _getCol(uid, 'inventory_purchases');
-    for (final p in purchases) {
-      batch.set(col.doc(p.id), p.toRemoteMap(), SetOptions(merge: true));
-    }
-    await batch.commit();
+    await _commitChunked<InventoryPurchaseModel>(
+      col,
+      purchases,
+      (p) => p.id,
+      (p) => p.toRemoteMap(),
+    );
   }
 
   @override
@@ -119,12 +146,14 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
   // --- STOCK MOVEMENTS ---
   @override
   Future<void> syncStockMovements(String uid, List<StockMovementModel> movements) async {
-    final batch = firestore.batch();
+    if (movements.isEmpty) return;
     final col = _getCol(uid, 'inventory_stock_movements');
-    for (final m in movements) {
-      batch.set(col.doc(m.id), m.toRemoteMap(), SetOptions(merge: true));
-    }
-    await batch.commit();
+    await _commitChunked<StockMovementModel>(
+      col,
+      movements,
+      (m) => m.id,
+      (m) => m.toRemoteMap(),
+    );
   }
 
   @override

@@ -128,6 +128,24 @@ class InventoryRepositoryImpl implements InventoryRepository {
       );
 
       await localDataSource.saveProduct(model);
+
+      // If new product created with initial stock > 0, log an initial stock movement
+      if (existing == null && finalQuantity > 0) {
+        final initialMovement = StockMovementModel(
+          id: 'sm_init_${DateTime.now().microsecondsSinceEpoch}_${product.id}',
+          productId: product.id,
+          productName: product.name,
+          type: StockMovementType.manualAdjustment,
+          quantity: finalQuantity,
+          previousQuantity: 0.0,
+          newQuantity: finalQuantity,
+          notes: 'رصيد أولي (Initial Stock)',
+          createdAt: DateTime.now(),
+          isSynced: false,
+        );
+        await localDataSource.saveStockMovement(initialMovement);
+      }
+
       _triggerBackgroundSync();
       return const Right(null);
     } catch (e) {
@@ -319,7 +337,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
       await localDataSource.savePurchase(purchaseModel);
 
       // 2. For each item: Increase product quantity & record StockMovement
-      for (final item in purchase.items) {
+      for (var i = 0; i < purchase.items.length; i++) {
+        final item = purchase.items[i];
         final product = await localDataSource.getProductById(item.productId);
         if (product != null) {
           final prevQty = product.currentQuantity;
@@ -336,9 +355,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
           );
           await localDataSource.saveProduct(updatedProduct);
 
-          // Create Movement
+          // Create Movement with collision-free ID
           final movement = StockMovementModel(
-            id: 'sm_pur_${DateTime.now().millisecondsSinceEpoch}_${item.productId}',
+            id: 'sm_pur_${DateTime.now().microsecondsSinceEpoch}_${i}_${item.productId}',
             productId: item.productId,
             productName: item.productName,
             type: StockMovementType.purchase,
@@ -420,9 +439,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
       );
       await localDataSource.saveProduct(updatedProduct);
 
-      // Save Stock Movement
+      // Save Stock Movement with collision-free ID
       final movement = StockMovementModel(
-        id: 'sm_adj_${DateTime.now().millisecondsSinceEpoch}',
+        id: 'sm_adj_${DateTime.now().microsecondsSinceEpoch}_$productId',
         productId: product.id,
         productName: product.name,
         type: StockMovementType.manualAdjustment,
@@ -451,7 +470,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
     try {
       final allProducts = await localDataSource.getProducts();
 
-      for (final item in items) {
+      for (var i = 0; i < items.length; i++) {
+        final item = items[i];
         final itemId = item['id'] as String? ?? '';
         final itemName =
             (item['description'] as String? ?? item['name'] as String? ?? '')
@@ -492,9 +512,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
           );
           await localDataSource.saveProduct(updated);
 
-          // Record Movement
+          // Record Movement with collision-free ID
           final movement = StockMovementModel(
-            id: 'sm_inv_${DateTime.now().millisecondsSinceEpoch}_${matchingProduct.id}',
+            id: 'sm_inv_${DateTime.now().microsecondsSinceEpoch}_${i}_${matchingProduct.id}',
             productId: matchingProduct.id,
             productName: matchingProduct.name,
             type: type,

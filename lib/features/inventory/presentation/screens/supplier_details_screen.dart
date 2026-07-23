@@ -89,13 +89,13 @@ class _SupplierDetailsScreenState extends State<SupplierDetailsScreen> {
                             ),
                             SizedBox(height: isDesktop ? 4 : 4.h),
                             Text(
-                              'هاتف: ${s.phone}  |  العنوان: ${s.address}',
+                              '${AppStrings.phoneLabel.tr()}: ${s.phone}  |  ${AppStrings.addressLabel.tr()}: ${s.address}',
                               style: TextStyles.customStyle(fontSize: 13, color: AppColors.sandText),
                             ),
                             if (s.email != null && s.email!.isNotEmpty) ...[
                               SizedBox(height: isDesktop ? 2 : 2.h),
                               Text(
-                                'إيميل: ${s.email}',
+                                '${AppStrings.emailLabel.tr()}: ${s.email}',
                                 style: TextStyles.customStyle(fontSize: 12, color: AppColors.sandText),
                               ),
                             ],
@@ -163,7 +163,7 @@ class _SupplierDetailsScreenState extends State<SupplierDetailsScreen> {
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
-                                          'فاتورة شراء #${pur.id.substring(pur.id.length > 8 ? pur.id.length - 8 : 0)}',
+                                          '${AppStrings.purchaseInvoiceNum.tr()} #${pur.id.substring(pur.id.length > 8 ? pur.id.length - 8 : 0)}',
                                           style: TextStyles.customStyle(
                                             fontSize: 15,
                                             fontWeight: FontWeight.bold,
@@ -171,7 +171,7 @@ class _SupplierDetailsScreenState extends State<SupplierDetailsScreen> {
                                           ),
                                         ),
                                         Text(
-                                          '${pur.totalAmount.toStringAsFixed(2)} ج.م',
+                                          '${pur.totalAmount.toStringAsFixed(2)} ${AppStrings.egp.tr()}',
                                           style: TextStyles.customStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
@@ -198,7 +198,7 @@ class _SupplierDetailsScreenState extends State<SupplierDetailsScreen> {
                                                       style: TextStyles.customStyle(fontSize: 13, color: AppColors.blackReal),
                                                     ),
                                                     Text(
-                                                      '${item.quantity.toStringAsFixed(0)} × ${item.purchasePrice.toStringAsFixed(2)} ج.م',
+                                                      '${item.quantity.toStringAsFixed(0)} × ${item.purchasePrice.toStringAsFixed(2)} ${AppStrings.egp.tr()}',
                                                       style: TextStyles.customStyle(fontSize: 13, color: AppColors.sandText),
                                                     ),
                                                   ],
@@ -250,13 +250,13 @@ class _SupplierDetailsScreenState extends State<SupplierDetailsScreen> {
                                         ),
                                         SizedBox(height: isDesktop ? 2 : 2.h),
                                         Text(
-                                          'سعر الشراء: ${prod.purchasePrice.toStringAsFixed(2)} ج.م',
+                                          '${AppStrings.purchasePrice.tr()}: ${prod.purchasePrice.toStringAsFixed(2)} ${AppStrings.egp.tr()}',
                                           style: TextStyles.customStyle(fontSize: 12, color: AppColors.sandText),
                                         ),
                                       ],
                                     ),
                                     Text(
-                                      'الكمية: ${prod.currentQuantity.toStringAsFixed(0)} ${prod.unit}',
+                                      '${AppStrings.quantity.tr()}: ${prod.currentQuantity.toStringAsFixed(0)} ${prod.unit}',
                                       style: TextStyles.customStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,

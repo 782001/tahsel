@@ -161,7 +161,7 @@ class _AddEditSupplierDialogState extends State<AddEditSupplierDialog> {
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
                     child: Text(
-                      'إلغاء',
+                      AppStrings.cancel.tr(),
                       style: TextStyles.customStyle(color: AppColors.blackLight),
                     ),
                   ),
@@ -174,7 +174,7 @@ class _AddEditSupplierDialogState extends State<AddEditSupplierDialog> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isDesktop ? 10 : 10.r)),
                     ),
                     child: Text(
-                      isEdit ? 'تعديل' : 'حفظ',
+                      isEdit ? AppStrings.edit.tr() : AppStrings.save.tr(),
                       style: TextStyles.customStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,

@@ -115,7 +115,7 @@ class _AddEditCategoryDialogState extends State<AddEditCategoryDialog> {
                     ),
                     onPressed: _submit,
                     child: Text(
-                      isEdit ? 'تحديث' : 'حفظ',
+                      isEdit ? AppStrings.update.tr() : AppStrings.save.tr(),
                       style: TextStyles.customStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ),

@@ -69,7 +69,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
     _minQtyController = TextEditingController(
       text: p != null ? p.minQuantity.toStringAsFixed(0) : '5',
     );
-    _unitController = TextEditingController(text: p?.unit ?? 'قطعة');
+    _unitController = TextEditingController(text: p?.unit ?? AppStrings.piece.tr());
     _notesController = TextEditingController(text: p?.notes ?? '');
 
     _selectedCategoryId = p?.categoryId ?? (widget.categories.isNotEmpty ? widget.categories.first.id : null);
@@ -335,7 +335,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
                     child: Text(
-                      'إلغاء',
+                      AppStrings.cancel.tr(),
                       style: TextStyles.customStyle(color: AppColors.blackLight),
                     ),
                   ),
@@ -348,7 +348,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isDesktop ? 10 : 10.r)),
                     ),
                     child: Text(
-                      isEdit ? 'تعديل' : 'حفظ',
+                      isEdit ? AppStrings.edit.tr() : AppStrings.save.tr(),
                       style: TextStyles.customStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,

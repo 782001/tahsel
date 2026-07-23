@@ -898,4 +898,15 @@ class AppStrings {
   static const String noPurchasesFound = "no_purchases_found";
   static const String noMovementsFound = "no_movements_found";
   static const String noResults = "no_results";
+  static const String save = "save";
+  static const String update = "update";
+  static const String from = "from";
+  static const String to = "to";
+  static const String piece = "piece";
+  static const String noPhone = "no_phone";
+  static const String initialStock = "initial_stock";
+  static const String emailLabel = "email_label";
+  static const String addressLabel = "address_label";
+  static const String phoneLabel = "phone_label";
+  static const String purchaseInvoiceNum = "purchase_invoice_num";
 }

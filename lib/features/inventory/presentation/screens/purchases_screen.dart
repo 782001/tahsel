@@ -180,7 +180,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            'مورد: ${pur.supplierName}',
+                                            '${AppStrings.supplier.tr()}: ${pur.supplierName}',
                                             style: TextStyles.customStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
@@ -200,7 +200,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                     ],
                                   ),
                                   Text(
-                                    '${pur.totalAmount.toStringAsFixed(2)} ج.م',
+                                    '${pur.totalAmount.toStringAsFixed(2)} ${AppStrings.egp.tr()}',
                                     style: TextStyles.customStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
@@ -231,7 +231,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                               ),
                                             ),
                                             Text(
-                                              '${item.quantity.toStringAsFixed(0)} وحدة × ${item.purchasePrice.toStringAsFixed(2)} = ${item.subtotal.toStringAsFixed(2)} ج.م',
+                                              '${item.quantity.toStringAsFixed(0)} ${AppStrings.unit.tr()} × ${item.purchasePrice.toStringAsFixed(2)} = ${item.subtotal.toStringAsFixed(2)} ${AppStrings.egp.tr()}',
                                               style: TextStyles.customStyle(
                                                 fontSize: 13,
                                                 color: AppColors.sandText,
