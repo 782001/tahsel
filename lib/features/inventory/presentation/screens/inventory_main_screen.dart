@@ -1,3 +1,4 @@
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -56,26 +57,39 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
               vertical: isDesktop ? 10 : 10.h,
             ),
             padding: EdgeInsets.symmetric(
-              horizontal: isDesktop ? 12 : 12.w,
-              vertical: isDesktop ? 4 : 4.h,
+              horizontal: isDesktop ? 12 : 10.w,
+              vertical: isDesktop ? 6 : 5.h,
             ),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [AppColors.vipGoldStart, AppColors.vipGoldEnd],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(isDesktop ? 20 : 20.r),
+              borderRadius: BorderRadius.circular(20.r),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.vipGoldStart.withValues(alpha: 0.35),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.star_rounded, size: 16, color: Colors.black),
+                const Icon(
+                  Icons.workspace_premium_rounded,
+                  size: 16,
+                  color: Colors.black87,
+                ),
                 SizedBox(width: isDesktop ? 4 : 4.w),
                 Text(
                   'VIP',
                   style: TextStyles.customStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black87,
                   ),
                 ),
               ],
@@ -87,7 +101,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
         child: Center(
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              maxWidth: isDesktop ? 900 : double.infinity,
+              maxWidth: isDesktop ? 950 : double.infinity,
             ),
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
@@ -98,7 +112,15 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // KPI Overview Cards
+                  // Tahsel Primary Theme Hero Card
+                  FadeInDown(
+                    duration: const Duration(milliseconds: 350),
+                    child: _buildTahselHeroCard(context, isDesktop: isDesktop),
+                  ),
+
+                  SizedBox(height: isDesktop ? 24 : 20.h),
+
+                  // KPI Summary Cards with Tahsel Theme AppColors
                   BlocBuilder<InventoryDashboardCubit, InventoryDashboardState>(
                     builder: (context, state) {
                       int totalProducts = 0;
@@ -111,41 +133,44 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                         totalValue = state.totalInventoryValue;
                       }
 
-                      return Row(
-                        children: [
-                          Expanded(
-                            child: _buildKpiCard(
-                              title: AppStrings.totalProductsCount.tr(),
-                              value: '$totalProducts',
-                              icon: Icons.inventory_2_rounded,
-                              color: AppColors.primaryColor,
-                              isDesktop: isDesktop,
+                      return FadeInUp(
+                        duration: const Duration(milliseconds: 400),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: _buildTahselKpiCard(
+                                title: AppStrings.totalProductsCount.tr(),
+                                value: '$totalProducts',
+                                icon: Icons.inventory_2_rounded,
+                                color: AppColors.primaryColor,
+                                isDesktop: isDesktop,
+                              ),
                             ),
-                          ),
-                          SizedBox(width: isDesktop ? 16 : 10.w),
-                          Expanded(
-                            child: _buildKpiCard(
-                              title: AppStrings.lowStockCount.tr(),
-                              value: '$lowStockCount',
-                              icon: Icons.warning_amber_rounded,
-                              color: lowStockCount > 0
-                                  ? AppColors.warning
-                                  : AppColors.success,
-                              isDesktop: isDesktop,
+                            SizedBox(width: isDesktop ? 14 : 10.w),
+                            Expanded(
+                              child: _buildTahselKpiCard(
+                                title: AppStrings.lowStockCount.tr(),
+                                value: '$lowStockCount',
+                                icon: Icons.warning_amber_rounded,
+                                color: lowStockCount > 0
+                                    ? AppColors.warning
+                                    : AppColors.success,
+                                isDesktop: isDesktop,
+                              ),
                             ),
-                          ),
-                          SizedBox(width: isDesktop ? 16 : 10.w),
-                          Expanded(
-                            child: _buildKpiCard(
-                              title: AppStrings.totalInventoryValue.tr(),
-                              value: totalValue.toStringAsFixed(0),
-                              subtitle: AppStrings.egp.tr(),
-                              icon: Icons.account_balance_wallet_rounded,
-                              color: AppColors.success,
-                              isDesktop: isDesktop,
+                            SizedBox(width: isDesktop ? 14 : 10.w),
+                            Expanded(
+                              child: _buildTahselKpiCard(
+                                title: AppStrings.totalInventoryValue.tr(),
+                                value: totalValue.toStringAsFixed(0),
+                                subtitle: AppStrings.egp.tr(),
+                                icon: Icons.account_balance_wallet_rounded,
+                                color: AppColors.success,
+                                isDesktop: isDesktop,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       );
                     },
                   ),
@@ -162,56 +187,64 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                   ),
                   SizedBox(height: isDesktop ? 16 : 16.h),
 
-                  // Sub-modules Navigation Grid/List
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: isDesktop ? 3 : 2,
-                    mainAxisSpacing: isDesktop ? 16 : 12.h,
-                    crossAxisSpacing: isDesktop ? 16 : 12.w,
-                    childAspectRatio: isDesktop ? 1.4 : 1.1,
-                    children: [
-                      _buildModuleTile(
-                        context,
-                        title: AppStrings.inventoryProducts.tr(),
-                        subtitle: AppStrings.inventoryManagementVIPDesc.tr(),
-                        icon: Icons.shopping_bag_rounded,
-                        color: AppColors.primaryColor,
-                        route: AppRoutes.inventoryProducts,
-                      ),
-                      _buildModuleTile(
-                        context,
-                        title: AppStrings.inventoryCategories.tr(),
-                        subtitle: AppStrings.categoryDescription.tr(),
-                        icon: Icons.category_rounded,
-                        color: AppColors.inventoryCategoryBrown,
-                        route: AppRoutes.inventoryCategories,
-                      ),
-                      _buildModuleTile(
-                        context,
-                        title: AppStrings.inventorySuppliers.tr(),
-                        subtitle: AppStrings.supplierDetails.tr(),
-                        icon: Icons.local_shipping_rounded,
-                        color: AppColors.inventorySupplierTeal,
-                        route: AppRoutes.inventorySuppliers,
-                      ),
-                      _buildModuleTile(
-                        context,
-                        title: AppStrings.inventoryPurchases.tr(),
-                        subtitle: AppStrings.purchaseHistory.tr(),
-                        icon: Icons.receipt_long_rounded,
-                        color: AppColors.inventoryPurchasePurple,
-                        route: AppRoutes.inventoryPurchases,
-                      ),
-                      _buildModuleTile(
-                        context,
-                        title: AppStrings.inventoryStockMovements.tr(),
-                        subtitle: AppStrings.stockMovementsHistory.tr(),
-                        icon: Icons.history_rounded,
-                        color: AppColors.error,
-                        route: AppRoutes.inventoryStockMovements,
-                      ),
-                    ],
+                  // Sub-modules Navigation Grid/List with Tahsel AppColors
+                  FadeInUp(
+                    duration: const Duration(milliseconds: 450),
+                    child: GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: isDesktop ? 3 : 2,
+                      mainAxisSpacing: isDesktop ? 16 : 12.h,
+                      crossAxisSpacing: isDesktop ? 16 : 12.w,
+                      childAspectRatio: isDesktop ? 1.35 : 1.1,
+                      children: [
+                        _buildTahselModuleTile(
+                          context,
+                          title: AppStrings.inventoryProducts.tr(),
+                          subtitle: AppStrings.inventoryManagementVIPDesc.tr(),
+                          icon: Icons.shopping_bag_rounded,
+                          color: AppColors.primaryColor,
+                          route: AppRoutes.inventoryProducts,
+                          isDesktop: isDesktop,
+                        ),
+                        _buildTahselModuleTile(
+                          context,
+                          title: AppStrings.inventoryCategories.tr(),
+                          subtitle: AppStrings.categoryDescription.tr(),
+                          icon: Icons.category_rounded,
+                          color: AppColors.inventoryCategoryBrown,
+                          route: AppRoutes.inventoryCategories,
+                          isDesktop: isDesktop,
+                        ),
+                        _buildTahselModuleTile(
+                          context,
+                          title: AppStrings.inventorySuppliers.tr(),
+                          subtitle: AppStrings.supplierDetails.tr(),
+                          icon: Icons.local_shipping_rounded,
+                          color: AppColors.inventorySupplierTeal,
+                          route: AppRoutes.inventorySuppliers,
+                          isDesktop: isDesktop,
+                        ),
+                        _buildTahselModuleTile(
+                          context,
+                          title: AppStrings.inventoryPurchases.tr(),
+                          subtitle: AppStrings.purchaseHistory.tr(),
+                          icon: Icons.receipt_long_rounded,
+                          color: AppColors.inventoryPurchasePurple,
+                          route: AppRoutes.inventoryPurchases,
+                          isDesktop: isDesktop,
+                        ),
+                        _buildTahselModuleTile(
+                          context,
+                          title: AppStrings.inventoryStockMovements.tr(),
+                          subtitle: AppStrings.stockMovementsHistory.tr(),
+                          icon: Icons.history_rounded,
+                          color: AppColors.error,
+                          route: AppRoutes.inventoryStockMovements,
+                          isDesktop: isDesktop,
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -222,7 +255,150 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
     );
   }
 
-  Widget _buildKpiCard({
+  Widget _buildTahselHeroCard(BuildContext context, {required bool isDesktop}) {
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20.r),
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primaryColor,
+            AppColors.primaryColor.withValues(alpha: 0.82),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryColor.withValues(alpha: 0.3),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Decorative Background Glow Circles
+          Positioned(
+            right: -30,
+            top: -30,
+            child: Container(
+              width: 130.w,
+              height: 130.h,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.vipGoldStart.withValues(alpha: 0.12),
+              ),
+            ),
+          ),
+          Positioned(
+            left: -20,
+            bottom: -20,
+            child: Container(
+              width: 100.w,
+              height: 100.h,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.08),
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(isDesktop ? 22 : 18.w),
+            child: Row(
+              children: [
+                // Icon Frame
+                Container(
+                  padding: EdgeInsets.all(isDesktop ? 14 : 12.w),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(isDesktop ? 16 : 14.r),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.inventory_2_rounded,
+                    color: AppColors.vipGoldStart,
+                    size: 28,
+                  ),
+                ),
+                SizedBox(width: isDesktop ? 16 : 14.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppStrings.inventoryManagementVIP.tr(),
+                        style: TextStyles.customStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: isDesktop ? 4 : 4.h),
+                      Text(
+                        AppStrings.inventoryManagementVIPDesc.tr(),
+                        style: TextStyles.customStyle(
+                          fontSize: 12,
+                          color: Colors.white.withValues(alpha: 0.88),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: isDesktop ? 12 : 8.w),
+                // VIP Golden Metallic Badge
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isDesktop ? 12 : 10.w,
+                    vertical: isDesktop ? 6 : 5.h,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [AppColors.vipGoldStart, AppColors.vipGoldEnd],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.vipGoldStart.withValues(alpha: 0.4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.workspace_premium_rounded,
+                        size: 16,
+                        color: Colors.black87,
+                      ),
+                      SizedBox(width: isDesktop ? 4 : 4.w),
+                      Text(
+                        'VIP',
+                        style: TextStyles.customStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTahselKpiCard({
     required String title,
     required String value,
     String? subtitle,
@@ -231,18 +407,17 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
     required bool isDesktop,
   }) {
     return Container(
-      padding: EdgeInsets.all(isDesktop ? 18 : 12.w),
+      padding: EdgeInsets.all(isDesktop ? 16 : 12.w),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(18.r),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: 0.1),
-            blurRadius: 10,
+            color: color.withValues(alpha: 0.12),
+            blurRadius: 14,
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(color: AppColors.dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,10 +430,10 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
           SizedBox(height: 10.h),
           Text(
             title,
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyles.customStyle(
-              fontSize: isDesktop ? 13 : 11,
+              fontSize: isDesktop ? 14 : 12,
               color: AppColors.sandText,
             ),
           ),
@@ -292,31 +467,30 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
     );
   }
 
-  Widget _buildModuleTile(
+  Widget _buildTahselModuleTile(
     BuildContext context, {
     required String title,
     required String subtitle,
     required IconData icon,
     required Color color,
     required String route,
+    required bool isDesktop,
   }) {
-    final isDesktop = ResponsiveLayout.isDesktop(context);
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: () => Navigator.pushNamed(context, route),
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(18.r),
         child: Container(
           padding: EdgeInsets.all(isDesktop ? 16 : 12.w),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16.r),
-            border: Border.all(color: AppColors.dividerColor),
+            borderRadius: BorderRadius.circular(18.r),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
+                color: color.withValues(alpha: 0.1),
+                blurRadius: 14,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
@@ -328,7 +502,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   CircleAvatar(
-                    backgroundColor: color.withValues(alpha: 0.12),
+                    backgroundColor: color.withValues(alpha: 0.15),
                     radius: isDesktop ? 20.r : 18.r,
                     child: Icon(icon, color: color, size: isDesktop ? 20 : 18),
                   ),
@@ -350,7 +524,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyles.customStyle(
-                        fontSize: isDesktop ? 15 : 13,
+                        fontSize: isDesktop ? 15 : 14,
                         fontWeight: FontWeight.bold,
                         color: AppColors.blackReal,
                       ),
@@ -358,10 +532,10 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                     SizedBox(height: 2.h),
                     Text(
                       subtitle,
-                      maxLines: 2,
+                      maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyles.customStyle(
-                        fontSize: isDesktop ? 12 : 10,
+                        fontSize: isDesktop ? 11 : 11,
                         color: AppColors.sandText,
                       ),
                     ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
@@ -65,7 +66,6 @@ class _SupplierDetailsScreenState extends State<SupplierDetailsScreen> {
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(isDesktop ? 16 : 16.r),
-                    border: Border.all(color: AppColors.dividerColor),
                   ),
                   child: Row(
                     children: [
@@ -88,9 +88,31 @@ class _SupplierDetailsScreenState extends State<SupplierDetailsScreen> {
                               ),
                             ),
                             SizedBox(height: isDesktop ? 4 : 4.h),
-                            Text(
-                              '${AppStrings.phoneLabel.tr()}: ${s.phone}  |  ${AppStrings.addressLabel.tr()}: ${s.address}',
-                              style: TextStyles.customStyle(fontSize: 13, color: AppColors.sandText),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    '${AppStrings.phoneLabel.tr()}: ${s.phone.isNotEmpty ? s.phone : AppStrings.noPhone.tr()}  |  ${AppStrings.addressLabel.tr()}: ${s.address}',
+                                    style: TextStyles.customStyle(fontSize: 13, color: AppColors.sandText),
+                                  ),
+                                ),
+                                if (s.phone.isNotEmpty)
+                                  IconButton(
+                                    icon: const Icon(Icons.copy_rounded, size: 18),
+                                    color: AppColors.primaryColor,
+                                    tooltip: AppStrings.phoneCopiedToClipboard.tr(),
+                                    onPressed: () {
+                                      Clipboard.setData(ClipboardData(text: s.phone));
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(AppStrings.phoneCopiedToClipboard.tr()),
+                                          backgroundColor: AppColors.success,
+                                          duration: const Duration(seconds: 2),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                              ],
                             ),
                             if (s.email != null && s.email!.isNotEmpty) ...[
                               SizedBox(height: isDesktop ? 2 : 2.h),
@@ -154,7 +176,6 @@ class _SupplierDetailsScreenState extends State<SupplierDetailsScreen> {
                                 decoration: BoxDecoration(
                                   color: AppColors.surface,
                                   borderRadius: BorderRadius.circular(isDesktop ? 12 : 12.r),
-                                  border: Border.all(color: AppColors.dividerColor),
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,7 +253,6 @@ class _SupplierDetailsScreenState extends State<SupplierDetailsScreen> {
                                 decoration: BoxDecoration(
                                   color: AppColors.surface,
                                   borderRadius: BorderRadius.circular(isDesktop ? 12 : 12.r),
-                                  border: Border.all(color: AppColors.dividerColor),
                                 ),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,

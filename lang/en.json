@@ -817,5 +817,6 @@
   "empty_products_desc": "Add a new product to manage inventory, set prices, and view available quantities.",
   "empty_categories_desc": "Add categories to organize products and simplify searching.",
   "inventory_submodules_title": "Inventory Management Modules",
-  "please_add_at_least_one_item": "Please add at least one item"
+  "please_add_at_least_one_item": "Please add at least one item",
+  "phone_copied_to_clipboard": "Phone number copied to clipboard"
 }

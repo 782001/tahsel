@@ -142,7 +142,6 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                             borderRadius: BorderRadius.circular(
                               isDesktop ? 14 : 14.r,
                             ),
-                            border: Border.all(color: AppColors.dividerColor),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,

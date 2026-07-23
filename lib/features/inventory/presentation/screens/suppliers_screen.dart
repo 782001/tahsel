@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
-import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+
 import '../../domain/entities/inventory_supplier_entity.dart';
 import '../cubits/inventory_suppliers_cubit.dart';
 import '../widgets/add_edit_supplier_dialog.dart';
@@ -137,7 +138,8 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (_) => BlocProvider(
-                                        create: (_) => sl<InventorySuppliersCubit>(),
+                                        create: (_) =>
+                                            sl<InventorySuppliersCubit>(),
                                         child: SupplierDetailsScreen(
                                           supplier: sup,
                                         ),
@@ -156,9 +158,6 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
                                     color: AppColors.surface,
                                     borderRadius: BorderRadius.circular(
                                       isDesktop ? 14 : 14.r,
-                                    ),
-                                    border: Border.all(
-                                      color: AppColors.dividerColor,
                                     ),
                                   ),
                                   child: Row(

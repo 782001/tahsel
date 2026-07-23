@@ -928,4 +928,5 @@ class AppStrings {
   static const String emptyCategoriesDesc = "empty_categories_desc";
   static const String inventorySubmodulesTitle = "inventory_submodules_title";
   static const String pleaseAddAtLeastOneItem = "please_add_at_least_one_item";
+  static const String phoneCopiedToClipboard = "phone_copied_to_clipboard";
 }

@@ -5,6 +5,7 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+
 import '../../domain/entities/inventory_product_entity.dart';
 
 class ProductDetailsDialog extends StatelessWidget {
@@ -28,17 +29,20 @@ class ProductDetailsDialog extends StatelessWidget {
     final statusColor = isOut
         ? AppColors.error
         : isLow
-            ? AppColors.warning
-            : AppColors.success;
+        ? AppColors.warning
+        : AppColors.success;
 
     final statusText = isOut
         ? AppStrings.outOfStock.tr()
         : isLow
-            ? AppStrings.lowStockCount.tr()
-            : AppStrings.stableStock.tr();
+        ? AppStrings.lowStockCount.tr()
+        : AppStrings.stableStock.tr();
 
     final profitMargin = product.purchasePrice > 0
-        ? (((product.sellingPrice - product.purchasePrice) / product.purchasePrice) * 100).toStringAsFixed(1)
+        ? (((product.sellingPrice - product.purchasePrice) /
+                      product.purchasePrice) *
+                  100)
+              .toStringAsFixed(1)
         : '0';
 
     return Dialog(
@@ -121,8 +125,12 @@ class ProductDetailsDialog extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: statusColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(isDesktop ? 14 : 14.r),
-                          border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+                          borderRadius: BorderRadius.circular(
+                            isDesktop ? 14 : 14.r,
+                          ),
+                          border: Border.all(
+                            color: statusColor.withValues(alpha: 0.3),
+                          ),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -133,8 +141,8 @@ class ProductDetailsDialog extends StatelessWidget {
                                   isOut
                                       ? Icons.remove_shopping_cart_rounded
                                       : isLow
-                                          ? Icons.warning_amber_rounded
-                                          : Icons.check_circle_rounded,
+                                      ? Icons.warning_amber_rounded
+                                      : Icons.check_circle_rounded,
                                   color: statusColor,
                                   size: 22,
                                 ),
@@ -168,7 +176,8 @@ class ProductDetailsDialog extends StatelessWidget {
                           Expanded(
                             child: _buildMetricTile(
                               label: AppStrings.purchasePrice.tr(),
-                              value: '${product.purchasePrice.toStringAsFixed(2)} ${AppStrings.egp.tr()}',
+                              value:
+                                  '${product.purchasePrice.toStringAsFixed(2)} ${AppStrings.egp.tr()}',
                               icon: Icons.shopping_bag_outlined,
                               color: AppColors.primaryColor,
                               isDesktop: isDesktop,
@@ -178,7 +187,8 @@ class ProductDetailsDialog extends StatelessWidget {
                           Expanded(
                             child: _buildMetricTile(
                               label: AppStrings.sellingPrice.tr(),
-                              value: '${product.sellingPrice.toStringAsFixed(2)} ${AppStrings.egp.tr()}',
+                              value:
+                                  '${product.sellingPrice.toStringAsFixed(2)} ${AppStrings.egp.tr()}',
                               icon: Icons.sell_outlined,
                               color: AppColors.success,
                               isDesktop: isDesktop,
@@ -192,7 +202,8 @@ class ProductDetailsDialog extends StatelessWidget {
                           Expanded(
                             child: _buildMetricTile(
                               label: AppStrings.minQuantity.tr(),
-                              value: '${product.minQuantity.toStringAsFixed(0)} ${product.unit}',
+                              value:
+                                  '${product.minQuantity.toStringAsFixed(0)} ${product.unit}',
                               icon: Icons.compress_rounded,
                               color: AppColors.sandText,
                               isDesktop: isDesktop,
@@ -217,7 +228,9 @@ class ProductDetailsDialog extends StatelessWidget {
                         padding: EdgeInsets.all(isDesktop ? 14 : 14.w),
                         decoration: BoxDecoration(
                           color: AppColors.scafoldBackGround,
-                          borderRadius: BorderRadius.circular(isDesktop ? 14 : 14.r),
+                          borderRadius: BorderRadius.circular(
+                            isDesktop ? 14 : 14.r,
+                          ),
                           border: Border.all(color: AppColors.dividerColor),
                         ),
                         child: Column(
@@ -225,17 +238,22 @@ class ProductDetailsDialog extends StatelessWidget {
                             _buildInfoRow(
                               icon: Icons.category_outlined,
                               label: AppStrings.category.tr(),
-                              value: product.categoryName.isNotEmpty ? product.categoryName : AppStrings.noCategory.tr(),
+                              value: product.categoryName.isNotEmpty
+                                  ? product.categoryName
+                                  : AppStrings.noCategory.tr(),
                               isDesktop: isDesktop,
                             ),
                             const Divider(height: 16),
                             _buildInfoRow(
                               icon: Icons.local_shipping_outlined,
                               label: AppStrings.supplier.tr(),
-                              value: product.supplierName.isNotEmpty ? product.supplierName : AppStrings.noSupplier.tr(),
+                              value: product.supplierName.isNotEmpty
+                                  ? product.supplierName
+                                  : AppStrings.noSupplier.tr(),
                               isDesktop: isDesktop,
                             ),
-                            if (product.barcode != null && product.barcode!.isNotEmpty) ...[
+                            if (product.barcode != null &&
+                                product.barcode!.isNotEmpty) ...[
                               const Divider(height: 16),
                               _buildInfoRow(
                                 icon: Icons.qr_code_rounded,
@@ -248,14 +266,17 @@ class ProductDetailsDialog extends StatelessWidget {
                         ),
                       ),
 
-                      if (product.notes != null && product.notes!.isNotEmpty) ...[
+                      if (product.notes != null &&
+                          product.notes!.isNotEmpty) ...[
                         SizedBox(height: isDesktop ? 12 : 12.h),
                         Container(
                           width: double.infinity,
                           padding: EdgeInsets.all(isDesktop ? 12 : 12.w),
                           decoration: BoxDecoration(
                             color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(isDesktop ? 10 : 10.r),
+                            borderRadius: BorderRadius.circular(
+                              isDesktop ? 10 : 10.r,
+                            ),
                             border: Border.all(color: AppColors.dividerColor),
                           ),
                           child: Column(
@@ -294,17 +315,25 @@ class ProductDetailsDialog extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: isDesktop ? 12 : 12.h),
+                        padding: EdgeInsets.symmetric(
+                          vertical: isDesktop ? 12 : 12.h,
+                        ),
                         side: BorderSide(color: AppColors.primaryColor),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(isDesktop ? 10 : 10.r),
+                          borderRadius: BorderRadius.circular(
+                            isDesktop ? 10 : 10.r,
+                          ),
                         ),
                       ),
                       onPressed: () {
                         Navigator.of(context).pop();
                         onAdjustStock();
                       },
-                      icon: Icon(Icons.tune_rounded, color: AppColors.primaryColor, size: 18),
+                      icon: Icon(
+                        Icons.tune_rounded,
+                        color: AppColors.primaryColor,
+                        size: 18,
+                      ),
                       label: Text(
                         AppStrings.manualStockAdjustment.tr(),
                         style: TextStyles.customStyle(
@@ -324,14 +353,20 @@ class ProductDetailsDialog extends StatelessWidget {
                         vertical: isDesktop ? 12 : 12.h,
                       ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(isDesktop ? 10 : 10.r),
+                        borderRadius: BorderRadius.circular(
+                          isDesktop ? 10 : 10.r,
+                        ),
                       ),
                     ),
                     onPressed: () {
                       Navigator.of(context).pop();
                       onEdit();
                     },
-                    icon: const Icon(Icons.edit_rounded, color: Colors.white, size: 18),
+                    icon: const Icon(
+                      Icons.edit_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                     label: Text(
                       AppStrings.edit.tr(),
                       style: TextStyles.customStyle(

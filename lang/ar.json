@@ -822,5 +822,6 @@
   "empty_products_desc": "قم بإضافة منتج جديد لإدارته في المخزون وتحديد الأسعار والكميات المتاحة.",
   "empty_categories_desc": "قم بإضافة أقسام لتنظيم المنتجات وتسهيل البحث والمتابعة.",
   "inventory_submodules_title": "أقسام إدارة المخزون",
-  "please_add_at_least_one_item": "الرجاء إضافة منتج واحد على الأقل"
+  "please_add_at_least_one_item": "الرجاء إضافة منتج واحد على الأقل",
+  "phone_copied_to_clipboard": "تم نسخ رقم الهاتف بنجاح"
 }

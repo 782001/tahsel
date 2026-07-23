@@ -304,7 +304,6 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                         borderRadius: BorderRadius.circular(
                           isDesktop ? 16 : 16.r,
                         ),
-                        border: Border.all(color: AppColors.dividerColor),
                       ),
                       child: Column(
                         children: [

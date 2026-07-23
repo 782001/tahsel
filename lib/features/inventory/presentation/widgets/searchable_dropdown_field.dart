@@ -30,10 +30,12 @@ class SearchableDropdownField<T> extends StatefulWidget {
   });
 
   @override
-  State<SearchableDropdownField<T>> createState() => _SearchableDropdownFieldState<T>();
+  State<SearchableDropdownField<T>> createState() =>
+      _SearchableDropdownFieldState<T>();
 }
 
-class _SearchableDropdownFieldState<T> extends State<SearchableDropdownField<T>> {
+class _SearchableDropdownFieldState<T>
+    extends State<SearchableDropdownField<T>> {
   final TextEditingController _searchController = TextEditingController();
   bool _isExpanded = false;
   String _query = '';
@@ -47,13 +49,17 @@ class _SearchableDropdownFieldState<T> extends State<SearchableDropdownField<T>>
   List<T> get _filteredItems {
     if (_query.isEmpty) return widget.items;
     final lower = _query.toLowerCase();
-    return widget.items.where((item) => widget.getName(item).toLowerCase().contains(lower)).toList();
+    return widget.items
+        .where((item) => widget.getName(item).toLowerCase().contains(lower))
+        .toList();
   }
 
   String? get _selectedName {
     if (widget.selectedId == null) return null;
     try {
-      final item = widget.items.firstWhere((i) => widget.getId(i) == widget.selectedId);
+      final item = widget.items.firstWhere(
+        (i) => widget.getId(i) == widget.selectedId,
+      );
       return widget.getName(item);
     } catch (_) {
       return null;
@@ -100,7 +106,9 @@ class _SearchableDropdownFieldState<T> extends State<SearchableDropdownField<T>>
                     _selectedName ?? widget.label,
                     style: TextStyles.customStyle(
                       fontSize: 14,
-                      color: _selectedName != null ? AppColors.blackReal : AppColors.disabledColor,
+                      color: _selectedName != null
+                          ? AppColors.blackReal
+                          : AppColors.disabledColor,
                     ),
                   ),
                 ),
@@ -113,11 +121,17 @@ class _SearchableDropdownFieldState<T> extends State<SearchableDropdownField<T>>
                         _query = '';
                       });
                     },
-                    child: Icon(Icons.close, size: 18, color: AppColors.sandText),
+                    child: Icon(
+                      Icons.close,
+                      size: 18,
+                      color: AppColors.sandText,
+                    ),
                   ),
                 SizedBox(width: isDesktop ? 4 : 4.w),
                 Icon(
-                  _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                  _isExpanded
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down,
                   color: AppColors.sandText,
                 ),
               ],
@@ -169,6 +183,9 @@ class _SearchableDropdownFieldState<T> extends State<SearchableDropdownField<T>>
                       final isSelected = id == widget.selectedId;
 
                       return InkWell(
+                        borderRadius: BorderRadius.circular(
+                          isDesktop ? 12 : 12.r,
+                        ),
                         onTap: () {
                           widget.onSelected(item);
                           setState(() {
@@ -198,7 +215,9 @@ class _SearchableDropdownFieldState<T> extends State<SearchableDropdownField<T>>
                             children: [
                               if (isSelected)
                                 Padding(
-                                  padding: EdgeInsets.only(left: isDesktop ? 8 : 8.w),
+                                  padding: EdgeInsets.only(
+                                    left: isDesktop ? 8 : 8.w,
+                                  ),
                                   child: Icon(
                                     Icons.check_circle_rounded,
                                     size: 16,
@@ -210,8 +229,12 @@ class _SearchableDropdownFieldState<T> extends State<SearchableDropdownField<T>>
                                   name,
                                   style: TextStyles.customStyle(
                                     fontSize: 14,
-                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                    color: isSelected ? AppColors.primaryColor : AppColors.blackReal,
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                    color: isSelected
+                                        ? AppColors.primaryColor
+                                        : AppColors.blackReal,
                                   ),
                                 ),
                               ),
