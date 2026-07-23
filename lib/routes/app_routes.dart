@@ -39,6 +39,18 @@ import 'package:tahsel/features/splash/splash_screen.dart';
 import 'package:tahsel/features/standard_features/security/presentation/screens/access_restricted_screen.dart';
 import 'package:tahsel/features/standard_features/security/presentation/screens/security_warning_screen.dart';
 import 'package:tahsel/features/standard_features/security/presentation/screens/subscription_expired_screen.dart';
+import 'package:tahsel/features/inventory/presentation/cubits/inventory_categories_cubit.dart';
+import 'package:tahsel/features/inventory/presentation/cubits/inventory_dashboard_cubit.dart';
+import 'package:tahsel/features/inventory/presentation/cubits/inventory_products_cubit.dart';
+import 'package:tahsel/features/inventory/presentation/cubits/inventory_purchases_cubit.dart';
+import 'package:tahsel/features/inventory/presentation/cubits/inventory_stock_movements_cubit.dart';
+import 'package:tahsel/features/inventory/presentation/cubits/inventory_suppliers_cubit.dart';
+import 'package:tahsel/features/inventory/presentation/screens/categories_screen.dart';
+import 'package:tahsel/features/inventory/presentation/screens/inventory_main_screen.dart';
+import 'package:tahsel/features/inventory/presentation/screens/products_screen.dart';
+import 'package:tahsel/features/inventory/presentation/screens/purchases_screen.dart';
+import 'package:tahsel/features/inventory/presentation/screens/stock_movements_screen.dart';
+import 'package:tahsel/features/inventory/presentation/screens/suppliers_screen.dart';
 import 'package:tahsel/shared/widgets/fields/text_widget.dart';
 
 class AppRoutes {
@@ -70,8 +82,63 @@ class AppRoutes {
   static const String editInvoice = '/edit-invoice';
   static const String invoiceDetail = '/invoice-detail';
 
+  // Inventory Routes
+  static const String inventoryMain = '/inventory-main';
+  static const String inventoryProducts = '/inventory-products';
+  static const String inventoryCategories = '/inventory-categories';
+  static const String inventorySuppliers = '/inventory-suppliers';
+  static const String inventoryPurchases = '/inventory-purchases';
+  static const String inventoryStockMovements = '/inventory-stock-movements';
+
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
+      case inventoryMain:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (_) => di.sl<InventoryDashboardCubit>(),
+            child: const InventoryMainScreen(),
+          ),
+        );
+      case inventoryProducts:
+        return MaterialPageRoute(
+          builder: (_) => MultiBlocProvider(
+            providers: [
+              BlocProvider(create: (_) => di.sl<InventoryProductsCubit>()),
+              BlocProvider(create: (_) => di.sl<InventoryCategoriesCubit>()),
+              BlocProvider(create: (_) => di.sl<InventorySuppliersCubit>()),
+              BlocProvider(create: (_) => di.sl<InventoryStockMovementsCubit>()),
+            ],
+            child: const ProductsScreen(),
+          ),
+        );
+      case inventoryCategories:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (_) => di.sl<InventoryCategoriesCubit>(),
+            child: const CategoriesScreen(),
+          ),
+        );
+      case inventorySuppliers:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (_) => di.sl<InventorySuppliersCubit>(),
+            child: const SuppliersScreen(),
+          ),
+        );
+      case inventoryPurchases:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (_) => di.sl<InventoryPurchasesCubit>(),
+            child: const PurchasesScreen(),
+          ),
+        );
+      case inventoryStockMovements:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (_) => di.sl<InventoryStockMovementsCubit>(),
+            child: const StockMovementsScreen(),
+          ),
+        );
       case employeeList:
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(

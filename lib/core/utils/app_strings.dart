@@ -798,17 +798,99 @@ class AppStrings {
 
   // Invoice Features Section
   static const String invoiceFeaturesTitle = "invoice_features_title";
-  static const String invoiceFeaturesItem1Title = "invoice_features_item1_title";
-  static const String invoiceFeaturesItem1Subtitle = "invoice_features_item1_subtitle";
-  static const String invoiceFeaturesItem2Title = "invoice_features_item2_title";
-  static const String invoiceFeaturesItem2Subtitle = "invoice_features_item2_subtitle";
-  static const String invoiceFeaturesItem3Title = "invoice_features_item3_title";
-  static const String invoiceFeaturesItem3Subtitle = "invoice_features_item3_subtitle";
+  static const String invoiceFeaturesItem1Title =
+      "invoice_features_item1_title";
+  static const String invoiceFeaturesItem1Subtitle =
+      "invoice_features_item1_subtitle";
+  static const String invoiceFeaturesItem2Title =
+      "invoice_features_item2_title";
+  static const String invoiceFeaturesItem2Subtitle =
+      "invoice_features_item2_subtitle";
+  static const String invoiceFeaturesItem3Title =
+      "invoice_features_item3_title";
+  static const String invoiceFeaturesItem3Subtitle =
+      "invoice_features_item3_subtitle";
   static const String invoiceFeaturesManageBtn = "invoice_features_manage_btn";
 
   // Payment Reminder
   static const String paymentReminder = "payment_reminder";
   static const String sendReminder = "send_reminder";
-  static const String whatsappReminderMsgTemplate = "whatsapp_reminder_msg_template";
+  static const String whatsappReminderMsgTemplate =
+      "whatsapp_reminder_msg_template";
   static const String smsReminderMsgTemplate = "sms_reminder_msg_template";
+
+  // Inventory Management (VIP)
+  static const String inventoryManagementVIP = "inventory_management_vip";
+  static const String inventoryManagementVIPDesc =
+      "inventory_management_vip_desc";
+  static const String inventoryProducts = "inventory_products";
+  static const String inventoryCategories = "inventory_categories";
+  static const String inventorySuppliers = "inventory_suppliers";
+  static const String inventoryPurchases = "inventory_purchases";
+  static const String inventoryStockMovements = "inventory_stock_movements";
+  static const String addProduct = "add_product";
+  static const String editProduct = "edit_product";
+  static const String sku = "sku";
+  static const String barcode = "barcode";
+  static const String category = "category";
+  static const String selectCategory = "select_category";
+  static const String supplier = "supplier";
+  static const String selectSupplier = "select_supplier";
+  static const String purchasePrice = "purchase_price";
+  static const String sellingPrice = "selling_price";
+  static const String currentQuantity = "current_quantity";
+  static const String minQuantity = "min_quantity";
+  static const String unit = "unit";
+  static const String isAvailable = "is_available";
+  static const String lowStockAlert = "low_stock_alert";
+  static const String lowStockWarning = "low_stock_warning";
+  static const String addCategory = "add_category";
+  static const String editCategory = "edit_category";
+  static const String categoryName = "category_name";
+  static const String categoryDescription = "category_description";
+  static const String addSupplier = "add_supplier";
+  static const String editSupplier = "edit_supplier";
+  static const String supplierName = "supplier_name";
+  static const String supplierPhone = "supplier_phone";
+  static const String supplierAddress = "supplier_address";
+  static const String supplierEmail = "supplier_email";
+  static const String supplierDetails = "supplier_details";
+  static const String purchaseHistory = "purchase_history";
+  static const String stockSupplied = "stock_supplied";
+  static const String newPurchase = "new_purchase";
+  static const String purchaseDetails = "purchase_details";
+  static const String totalAmount = "total_amount";
+  static const String quantity = "quantity";
+  static const String savePurchase = "save_purchase";
+  static const String movementType = "movement_type";
+  static const String movementPurchase = "movement_purchase";
+  static const String movementInvoiceSale = "movement_invoice_sale";
+  static const String movementInvoiceReturn = "movement_invoice_return";
+  static const String movementManualAdjustment = "movement_manual_adjustment";
+  static const String movementPurchaseReturn = "movement_purchase_return";
+  static const String manualStockAdjustment = "manual_stock_adjustment";
+  static const String adjustmentReason = "adjustment_reason";
+  static const String stockMovementsHistory = "stock_movements_history";
+  static const String searchInventory = "search_inventory";
+  static const String filterByCategory = "filter_by_category";
+  static const String filterBySupplier = "filter_by_supplier";
+  static const String totalProductsCount = "total_products_count";
+  static const String lowStockCount = "low_stock_count";
+  static const String totalInventoryValue = "total_inventory_value";
+  static const String confirmDeleteProduct = "confirm_delete_product";
+  static const String confirmDeleteCategory = "confirm_delete_category";
+  static const String confirmDeleteSupplier = "confirm_delete_supplier";
+  static const String productSavedSuccess = "product_saved_success";
+  static const String categorySavedSuccess = "category_saved_success";
+  static const String supplierSavedSuccess = "supplier_saved_success";
+  static const String purchaseSavedSuccess = "purchase_saved_success";
+  static const String stockAdjustedSuccess = "stock_adjusted_success";
+  static const String deletedSuccessfully = "deleted_successfully";
+  static const String selectProduct = "select_product";
+  static const String addPurchaseItem = "add_purchase_item";
+  static const String noProductsFound = "no_products_found";
+  static const String noCategoriesFound = "no_categories_found";
+  static const String noSuppliersFound = "no_suppliers_found";
+  static const String noPurchasesFound = "no_purchases_found";
+  static const String noMovementsFound = "no_movements_found";
 }
