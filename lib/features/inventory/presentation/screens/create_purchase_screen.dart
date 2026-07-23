@@ -271,13 +271,71 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                             SizedBox(
                                               height: isDesktop ? 4 : 4.h,
                                             ),
-                                            Text(
-                                              '${item.quantity} x ${item.purchasePrice}  = ${item.totalPrice}',
-                                              style: TextStyles.customStyle(
-                                                fontSize: 13,
-                                                color: AppColors.sandText,
-                                              ),
-                                            ),
+                                             Wrap(
+                                               spacing: 6,
+                                               runSpacing: 4,
+                                               crossAxisAlignment:
+                                                   WrapCrossAlignment.center,
+                                               children: [
+                                                 Container(
+                                                   padding: EdgeInsets.symmetric(
+                                                     horizontal:
+                                                         isDesktop ? 6 : 6.w,
+                                                     vertical:
+                                                         isDesktop ? 2 : 2.h,
+                                                   ),
+                                                   decoration: BoxDecoration(
+                                                     color: AppColors.primaryColor
+                                                         .withValues(
+                                                           alpha: 0.1,
+                                                         ),
+                                                     borderRadius:
+                                                         BorderRadius.circular(
+                                                           4.r,
+                                                         ),
+                                                   ),
+                                                   child: Text(
+                                                     '${AppStrings.quantity.tr()}: ${item.quantity.toSmartAmount()}',
+                                                     style: TextStyles.customStyle(
+                                                       fontSize: 12,
+                                                       fontWeight:
+                                                           FontWeight.bold,
+                                                       color: AppColors.primaryColor,
+                                                     ),
+                                                   ),
+                                                 ),
+                                                 Text(
+                                                   '×',
+                                                   style: TextStyles.customStyle(
+                                                     fontSize: 13,
+                                                     color: AppColors.sandText,
+                                                   ),
+                                                 ),
+                                                 Text(
+                                                   '${item.purchasePrice.toSmartAmount()} ${AppStrings.egp.tr()}',
+                                                   style: TextStyles.customStyle(
+                                                     fontSize: 13,
+                                                     color: AppColors.sandText,
+                                                   ),
+                                                 ),
+                                                 Text(
+                                                   '=',
+                                                   style: TextStyles.customStyle(
+                                                     fontSize: 13,
+                                                     fontWeight: FontWeight.bold,
+                                                     color: AppColors.blackReal,
+                                                   ),
+                                                 ),
+                                                 Text(
+                                                   '${item.totalPrice.toSmartAmount()} ${AppStrings.egp.tr()}',
+                                                   style: TextStyles.customStyle(
+                                                     fontSize: 14,
+                                                     fontWeight: FontWeight.bold,
+                                                     color: AppColors.success,
+                                                   ),
+                                                 ),
+                                               ],
+                                             ),
                                           ],
                                         ),
                                       ),

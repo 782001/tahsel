@@ -9,11 +9,11 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
-import '../widgets/inventory_empty_state.dart';
 
 import '../cubits/inventory_products_cubit.dart';
 import '../cubits/inventory_purchases_cubit.dart';
 import '../cubits/inventory_suppliers_cubit.dart';
+import '../widgets/inventory_empty_state.dart';
 import 'create_purchase_screen.dart';
 
 class PurchasesScreen extends StatefulWidget {
@@ -37,16 +37,12 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
       MaterialPageRoute(
         builder: (_) => MultiBlocProvider(
           providers: [
-            BlocProvider.value(
-              value: purchasesCubit,
+            BlocProvider.value(value: purchasesCubit),
+            BlocProvider(
+              create: (_) => sl<InventorySuppliersCubit>()..fetchSuppliers(),
             ),
             BlocProvider(
-              create: (_) =>
-                  sl<InventorySuppliersCubit>()..fetchSuppliers(),
-            ),
-            BlocProvider(
-              create: (_) =>
-                  sl<InventoryProductsCubit>()..fetchProducts(),
+              create: (_) => sl<InventoryProductsCubit>()..fetchProducts(),
             ),
           ],
           child: const CreatePurchaseScreen(),
@@ -151,47 +147,56 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Row(
-                                    children: [
-                                      CircleAvatar(
-                                        backgroundColor: AppColors
-                                            .inventoryPurchasePurple
-                                            .withValues(alpha: 0.12),
-                                        radius: isDesktop ? 20 : 20.r,
-                                        child: Icon(
-                                          Icons.receipt_rounded,
-                                          color:
-                                              AppColors.inventoryPurchasePurple,
-                                          size: 20,
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        CircleAvatar(
+                                          backgroundColor: AppColors
+                                              .inventoryPurchasePurple
+                                              .withValues(alpha: 0.12),
+                                          radius: isDesktop ? 20 : 20.r,
+                                          child: Icon(
+                                            Icons.receipt_rounded,
+                                            color: AppColors
+                                                .inventoryPurchasePurple,
+                                            size: 20,
+                                          ),
                                         ),
-                                      ),
-                                      SizedBox(width: isDesktop ? 12 : 12.w),
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            '${AppStrings.supplier.tr()}: ${pur.supplierName}',
-                                            style: TextStyles.customStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColors.blackReal,
-                                            ),
+                                        SizedBox(width: isDesktop ? 12 : 12.w),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                '${AppStrings.supplier.tr()}: ${pur.supplierName}',
+                                                maxLines: 3,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyles.customStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: AppColors.blackReal,
+                                                ),
+                                              ),
+                                              SizedBox(
+                                                height: isDesktop ? 2 : 2.h,
+                                              ),
+                                              Text(
+                                                dateStr,
+                                                style: TextStyles.customStyle(
+                                                  fontSize: 12,
+                                                  color: AppColors.sandText,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                          SizedBox(height: isDesktop ? 2 : 2.h),
-                                          Text(
-                                            dateStr,
-                                            style: TextStyles.customStyle(
-                                              fontSize: 12,
-                                              color: AppColors.sandText,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
+                                  SizedBox(width: isDesktop ? 8 : 8.w),
                                   Text(
-                                    '${pur.totalAmount.toStringAsFixed(2)} ${AppStrings.egp.tr()}',
+                                    '${pur.totalAmount.toSmartAmount()} ${AppStrings.egp.tr()}',
                                     style: TextStyles.customStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
@@ -205,31 +210,82 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                               Column(
                                 children: pur.items
                                     .map(
-                                      (item) => Padding(
+                                      (item) => Container(
                                         padding: EdgeInsets.symmetric(
-                                          vertical: isDesktop ? 4 : 4.h,
+                                          horizontal: isDesktop ? 10 : 10.w,
+                                          vertical: isDesktop ? 6 : 6.h,
+                                        ),
+                                        margin: EdgeInsets.symmetric(
+                                          vertical: isDesktop ? 3 : 3.h,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.scafoldBackGround
+                                              .withValues(alpha: 0.6),
+                                          borderRadius: BorderRadius.circular(
+                                            8.r,
+                                          ),
+                                          border: Border.all(
+                                            color: AppColors.dividerColor
+                                                .withValues(alpha: 0.5),
+                                          ),
                                         ),
                                         child: Row(
                                           children: [
+                                            Container(
+                                              width: isDesktop ? 6 : 6.w,
+                                              height: isDesktop ? 6 : 6.h,
+                                              decoration: BoxDecoration(
+                                                color: AppColors
+                                                    .inventoryPurchasePurple,
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              width: isDesktop ? 8 : 8.w,
+                                            ),
                                             Expanded(
                                               child: Text(
                                                 item.productName,
-                                                maxLines: 1,
+                                                maxLines: 3,
                                                 overflow: TextOverflow.ellipsis,
                                                 style: TextStyles.customStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.bold,
                                                   color: AppColors.blackReal,
                                                 ),
                                               ),
                                             ),
-                                            SizedBox(width: isDesktop ? 8 : 8.w),
+                                            SizedBox(
+                                              width: isDesktop ? 8 : 8.w,
+                                            ),
                                             Text(
-                                              '${item.quantity.toSmartAmount()} ${AppStrings.unit.tr()} × ${item.purchasePrice.toSmartAmount()} = ${item.subtotal.toSmartAmount()} ${AppStrings.egp.tr()}',
+                                              '${item.quantity.toSmartAmount()} ${AppStrings.unit.tr()} × ${item.purchasePrice.toSmartAmount()}',
                                               style: TextStyles.customStyle(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w500,
+                                                fontSize: 12,
                                                 color: AppColors.sandText,
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              width: isDesktop ? 8 : 8.w,
+                                            ),
+                                            Container(
+                                              padding: EdgeInsets.symmetric(
+                                                horizontal: isDesktop ? 6 : 6.w,
+                                                vertical: isDesktop ? 2 : 2.h,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: AppColors.success
+                                                    .withValues(alpha: 0.1),
+                                                borderRadius:
+                                                    BorderRadius.circular(4.r),
+                                              ),
+                                              child: Text(
+                                                '${item.subtotal.toSmartAmount()} ${AppStrings.egp.tr()}',
+                                                style: TextStyles.customStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: AppColors.success,
+                                                ),
                                               ),
                                             ),
                                           ],
