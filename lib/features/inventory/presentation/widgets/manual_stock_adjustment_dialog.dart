@@ -5,7 +5,9 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 import '../../domain/entities/inventory_product_entity.dart';
+import 'inventory_tab_selector.dart';
 
 class ManualStockAdjustmentDialog extends StatefulWidget {
   final InventoryProductEntity product;
@@ -22,9 +24,11 @@ class ManualStockAdjustmentDialog extends StatefulWidget {
 }
 
 class _ManualStockAdjustmentDialogState extends State<ManualStockAdjustmentDialog> {
-  bool _isAddition = true;
+  int _selectedTab = 0; // 0 = addition, 1 = subtraction
   final TextEditingController _qtyController = TextEditingController(text: '1');
   final TextEditingController _reasonController = TextEditingController();
+
+  bool get _isAddition => _selectedTab == 0;
 
   @override
   void dispose() {
@@ -62,7 +66,7 @@ class _ManualStockAdjustmentDialogState extends State<ManualStockAdjustmentDialo
 
     return Dialog(
       backgroundColor: AppColors.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isDesktop ? 16 : 16.r)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
         child: Padding(
@@ -88,69 +92,44 @@ class _ManualStockAdjustmentDialogState extends State<ManualStockAdjustmentDialo
                   ),
                 ],
               ),
-              SizedBox(height: 6.h),
+              SizedBox(height: isDesktop ? 6 : 6.h),
               Text(
                 'المنتج: ${widget.product.name} (${widget.product.currentQuantity} ${widget.product.unit})',
                 style: TextStyles.customStyle(fontSize: 13, color: AppColors.sandText),
               ),
-              SizedBox(height: 16.h),
+              SizedBox(height: isDesktop ? 16 : 16.h),
 
-              // Type Selector
-              Row(
-                children: [
-                  Expanded(
-                    child: ChoiceChip(
-                      label: const Center(child: Text('زيادة مخزون (+)')),
-                      selected: _isAddition,
-                      selectedColor: Colors.green.withValues(alpha: 0.2),
-                      onSelected: (val) => setState(() => _isAddition = true),
-                    ),
-                  ),
-                  SizedBox(width: 10.w),
-                  Expanded(
-                    child: ChoiceChip(
-                      label: const Center(child: Text('خصم مخزون (-)')),
-                      selected: !_isAddition,
-                      selectedColor: Colors.red.withValues(alpha: 0.2),
-                      onSelected: (val) => setState(() => _isAddition = false),
-                    ),
-                  ),
-                ],
+              // Type Selector — DebtsTabSelector style
+              InventoryTabSelector(
+                tabs: const ['زيادة مخزون (+)', 'خصم مخزون (-)'],
+                selectedIndex: _selectedTab,
+                onTabChanged: (index) => setState(() => _selectedTab = index),
               ),
-              SizedBox(height: 14.h),
+              SizedBox(height: isDesktop ? 14 : 14.h),
 
-              TextFormField(
+              QuickAddTextField(
                 controller: _qtyController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: AppStrings.quantity.tr(),
-                  filled: true,
-                  fillColor: AppColors.surface,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
-                ),
+                isNumber: true,
+                labelText: AppStrings.quantity.tr(),
+                hint: AppStrings.quantity.tr(),
               ),
-              SizedBox(height: 12.h),
+              SizedBox(height: isDesktop ? 12 : 12.h),
 
-              TextFormField(
+              QuickAddTextField(
                 controller: _reasonController,
                 maxLines: 2,
-                decoration: InputDecoration(
-                  labelText: AppStrings.adjustmentReason.tr(),
-                  hintText: 'مثال: تلف، جرد سنوي، تسوية',
-                  filled: true,
-                  fillColor: AppColors.surface,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
-                ),
+                labelText: AppStrings.adjustmentReason.tr(),
+                hint: 'مثال: تلف، جرد سنوي، تسوية',
               ),
-              SizedBox(height: 20.h),
+              SizedBox(height: isDesktop ? 20 : 20.h),
 
               SizedBox(
                 width: double.infinity,
-                height: 46.h,
+                height: isDesktop ? 46 : 46.h,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _isAddition ? Colors.green[700] : Colors.red[700],
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                    backgroundColor: _isAddition ? AppColors.stockAdditionGreen : AppColors.stockSubtractionRed,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isDesktop ? 12 : 12.r)),
                   ),
                   onPressed: _submit,
                   child: Text(

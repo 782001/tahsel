@@ -7,6 +7,10 @@ import 'package:tahsel/core/utils/styles.dart';
 import '../../domain/entities/inventory_category_entity.dart';
 import '../../domain/entities/inventory_product_entity.dart';
 import '../../domain/entities/inventory_supplier_entity.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'searchable_dropdown_field.dart';
+
+import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 
 class AddEditProductDialog extends StatefulWidget {
   final InventoryProductEntity? product;
@@ -54,10 +58,10 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
     );
     _barcodeController = TextEditingController(text: p?.barcode ?? '');
     _purchasePriceController = TextEditingController(
-      text: p != null ? p.purchasePrice.toStringAsFixed(2) : '0.00',
+      text: p != null ? p.purchasePrice.toStringAsFixed(2) : '0',
     );
     _sellingPriceController = TextEditingController(
-      text: p != null ? p.sellingPrice.toStringAsFixed(2) : '0.00',
+      text: p != null ? p.sellingPrice.toStringAsFixed(2) : '0',
     );
     _initialQtyController = TextEditingController(
       text: p != null ? p.currentQuantity.toStringAsFixed(0) : '0',
@@ -125,14 +129,15 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.product != null;
+    final isDesktop = ResponsiveLayout.isDesktop(context);
 
     return Dialog(
       backgroundColor: AppColors.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isDesktop ? 16 : 16.r)),
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: 550, maxHeight: MediaQuery.of(context).size.height * 0.85),
         child: Padding(
-          padding: EdgeInsets.all(20.w),
+          padding: EdgeInsets.all(isDesktop ? 20 : 20.w),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -155,7 +160,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                 ],
               ),
               const Divider(),
-              SizedBox(height: 12.h),
+              SizedBox(height: isDesktop ? 12 : 12.h),
 
               // Form fields
               Expanded(
@@ -174,7 +179,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                               ? AppStrings.validationFieldRequired.tr()
                               : null,
                         ),
-                        SizedBox(height: 12.h),
+                        SizedBox(height: isDesktop ? 12 : 12.h),
 
                         // SKU & Barcode
                         Row(
@@ -185,7 +190,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                                 label: AppStrings.sku.tr(),
                               ),
                             ),
-                            SizedBox(width: 12.w),
+                            SizedBox(width: isDesktop ? 12 : 12.w),
                             Expanded(
                               child: _buildTextField(
                                 controller: _barcodeController,
@@ -194,84 +199,51 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                             ),
                           ],
                         ),
-                        SizedBox(height: 12.h),
+                        SizedBox(height: isDesktop ? 12 : 12.h),
 
-                        // Category Dropdown
-                        Text(
-                          AppStrings.category.tr(),
-                          style: TextStyles.customStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.blackReal,
-                          ),
-                        ),
-                        SizedBox(height: 6.h),
-                        DropdownButtonFormField<String>(
-                          initialValue: _selectedCategoryId,
-                          dropdownColor: AppColors.surface,
-                          decoration: _inputDecoration(),
-                          items: widget.categories
-                              .map((c) => DropdownMenuItem(
-                                    value: c.id,
-                                    child: Text(
-                                      c.name,
-                                      style: TextStyles.customStyle(color: AppColors.blackReal),
-                                    ),
-                                  ))
-                              .toList(),
-                          onChanged: (val) {
+                        // Category Dropdown (Searchable)
+                        SearchableDropdownField<InventoryCategoryEntity>(
+                          label: AppStrings.category.tr(),
+                          items: widget.categories,
+                          selectedId: _selectedCategoryId,
+                          getName: (c) => c.name,
+                          getId: (c) => c.id,
+                          onSelected: (c) {
                             setState(() {
-                              _selectedCategoryId = val;
-                              _selectedCategoryName = widget.categories
-                                  .firstWhere((c) => c.id == val,
-                                      orElse: () => InventoryCategoryEntity(
-                                          id: '', name: '', createdAt: DateTime.now(), updatedAt: DateTime.now()))
-                                  .name;
+                              _selectedCategoryId = c.id;
+                              _selectedCategoryName = c.name;
+                            });
+                          },
+                          onCleared: () {
+                            setState(() {
+                              _selectedCategoryId = null;
+                              _selectedCategoryName = '';
                             });
                           },
                         ),
-                        SizedBox(height: 12.h),
+                        SizedBox(height: isDesktop ? 12 : 12.h),
 
-                        // Supplier Dropdown
-                        Text(
-                          AppStrings.supplier.tr(),
-                          style: TextStyles.customStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.blackReal,
-                          ),
-                        ),
-                        SizedBox(height: 6.h),
-                        DropdownButtonFormField<String>(
-                          initialValue: _selectedSupplierId,
-                          dropdownColor: AppColors.surface,
-                          decoration: _inputDecoration(),
-                          items: widget.suppliers
-                              .map((s) => DropdownMenuItem(
-                                    value: s.id,
-                                    child: Text(
-                                      s.name,
-                                      style: TextStyles.customStyle(color: AppColors.blackReal),
-                                    ),
-                                  ))
-                              .toList(),
-                          onChanged: (val) {
+                        // Supplier Dropdown (Searchable)
+                        SearchableDropdownField<InventorySupplierEntity>(
+                          label: AppStrings.supplier.tr(),
+                          items: widget.suppliers,
+                          selectedId: _selectedSupplierId,
+                          getName: (s) => s.name,
+                          getId: (s) => s.id,
+                          onSelected: (s) {
                             setState(() {
-                              _selectedSupplierId = val;
-                              _selectedSupplierName = widget.suppliers
-                                  .firstWhere((s) => s.id == val,
-                                      orElse: () => InventorySupplierEntity(
-                                          id: '',
-                                          name: '',
-                                          phone: '',
-                                          address: '',
-                                          createdAt: DateTime.now(),
-                                          updatedAt: DateTime.now()))
-                                  .name;
+                              _selectedSupplierId = s.id;
+                              _selectedSupplierName = s.name;
+                            });
+                          },
+                          onCleared: () {
+                            setState(() {
+                              _selectedSupplierId = null;
+                              _selectedSupplierName = '';
                             });
                           },
                         ),
-                        SizedBox(height: 12.h),
+                        SizedBox(height: isDesktop ? 12 : 12.h),
 
                         // Purchase Price & Selling Price
                         Row(
@@ -283,7 +255,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                               ),
                             ),
-                            SizedBox(width: 12.w),
+                            SizedBox(width: isDesktop ? 12 : 12.w),
                             Expanded(
                               child: _buildTextField(
                                 controller: _sellingPriceController,
@@ -293,7 +265,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                             ),
                           ],
                         ),
-                        SizedBox(height: 12.h),
+                        SizedBox(height: isDesktop ? 12 : 12.h),
 
                         // Initial Quantity & Minimum Quantity
                         Row(
@@ -306,7 +278,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                               ),
                             ),
-                            SizedBox(width: 12.w),
+                            SizedBox(width: isDesktop ? 12 : 12.w),
                             Expanded(
                               child: _buildTextField(
                                 controller: _minQtyController,
@@ -316,14 +288,14 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                             ),
                           ],
                         ),
-                        SizedBox(height: 12.h),
+                        SizedBox(height: isDesktop ? 12 : 12.h),
 
                         // Unit
                         _buildTextField(
                           controller: _unitController,
                           label: AppStrings.unit.tr(),
                         ),
-                        SizedBox(height: 12.h),
+                        SizedBox(height: isDesktop ? 12 : 12.h),
 
                         // Notes
                         _buildTextField(
@@ -331,7 +303,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                           label: AppStrings.notes.tr(),
                           maxLines: 2,
                         ),
-                        SizedBox(height: 12.h),
+                        SizedBox(height: isDesktop ? 12 : 12.h),
 
                         // Availability Toggle
                         SwitchListTile(
@@ -354,7 +326,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                 ),
               ),
 
-              SizedBox(height: 16.h),
+              SizedBox(height: isDesktop ? 16 : 16.h),
 
               // Action Buttons
               Row(
@@ -367,13 +339,13 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                       style: TextStyles.customStyle(color: AppColors.blackLight),
                     ),
                   ),
-                  SizedBox(width: 12.w),
+                  SizedBox(width: isDesktop ? 12 : 12.w),
                   ElevatedButton(
                     onPressed: _submit,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryColor,
-                      padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+                      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 : 24.w, vertical: isDesktop ? 12 : 12.h),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isDesktop ? 10 : 10.r)),
                     ),
                     child: Text(
                       isEdit ? 'تعديل' : 'حفظ',
@@ -401,6 +373,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
     int maxLines = 1,
     String? Function(String?)? validator,
   }) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -412,37 +385,16 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
             color: AppColors.blackReal,
           ),
         ),
-        SizedBox(height: 6.h),
-        TextFormField(
+        SizedBox(height: isDesktop ? 6 : 6.h),
+        QuickAddTextField(
           controller: controller,
           enabled: enabled,
           keyboardType: keyboardType,
           maxLines: maxLines,
           validator: validator,
-          style: TextStyles.customStyle(color: AppColors.blackReal),
-          decoration: _inputDecoration(),
+          hint: label,
         ),
       ],
-    );
-  }
-
-  InputDecoration _inputDecoration() {
-    return InputDecoration(
-      filled: true,
-      fillColor: AppColors.veryLightGrey,
-      contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10.r),
-        borderSide: BorderSide(color: AppColors.dividerColor),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10.r),
-        borderSide: BorderSide(color: AppColors.dividerColor),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10.r),
-        borderSide: BorderSide(color: AppColors.primaryColor, width: 1.5),
-      ),
     );
   }
 }

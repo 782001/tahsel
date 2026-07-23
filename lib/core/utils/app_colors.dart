@@ -139,4 +139,66 @@ class AppColors {
   static Color whiteOpacity(double opacity) {
     return Colors.white.withValues(alpha: opacity);
   }
+
+  // --- Inventory Feature Colors ---
+
+  /// Teal used for supplier icons and tiles
+  static Color get inventorySupplierTeal =>
+      isDark ? const Color(0xFF4DB6AC) : const Color(0xFF00796B);
+
+  /// Purple used for purchase icons and tiles
+  static Color get inventoryPurchasePurple =>
+      isDark ? const Color(0xFFCE93D8) : const Color(0xFF6B11B0);
+
+  /// Category brown/orange (same as stitchOrange)
+  static Color get inventoryCategoryBrown =>
+      isDark ? const Color(0xFFFFB74D) : const Color(0xFF834600);
+
+  /// Gold gradient start for VIP badge
+  static const Color vipGoldStart = Color(0xFFFFD700);
+
+  /// Gold gradient end for VIP badge
+  static const Color vipGoldEnd = Color(0xFFFFA500);
+
+  // --- Stock Movement Colors ---
+
+  /// Green for purchase movement
+  static Color get movementPurchase =>
+      isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32);
+
+  /// Red for invoice sale movement
+  static Color get movementInvoiceSale =>
+      isDark ? const Color(0xFFEF9A9A) : const Color(0xFFC62828);
+
+  /// Blue for invoice return movement
+  static Color get movementInvoiceReturn =>
+      isDark ? const Color(0xFF64B5F6) : const Color(0xFF1565C0);
+
+  /// Orange for manual adjustment movement
+  static Color get movementManualAdjustment =>
+      isDark ? const Color(0xFFFFB74D) : const Color(0xFFEF6C00);
+
+  /// Purple for purchase return movement
+  static Color get movementPurchaseReturn =>
+      isDark ? const Color(0xFFCE93D8) : const Color(0xFF6A1B9A);
+
+  /// Delete action red
+  static Color get deleteRed =>
+      isDark ? const Color(0xFFEF5350) : Colors.red;
+
+  /// Low stock badge orange
+  static Color get lowStockOrange =>
+      isDark ? const Color(0xFFFFB74D) : Colors.orange;
+
+  /// Low stock text deep orange
+  static Color get lowStockDeepOrange =>
+      isDark ? const Color(0xFFFF8A65) : Colors.deepOrange;
+
+  /// Stock addition button green
+  static Color get stockAdditionGreen =>
+      isDark ? const Color(0xFF66BB6A) : Colors.green.shade700;
+
+  /// Stock subtraction button red
+  static Color get stockSubtractionRed =>
+      isDark ? const Color(0xFFEF5350) : Colors.red.shade700;
 }

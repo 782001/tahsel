@@ -7,6 +7,8 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import '../../domain/entities/inventory_supplier_entity.dart';
 
+import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
+
 class AddEditSupplierDialog extends StatefulWidget {
   final InventorySupplierEntity? supplier;
   final Function(InventorySupplierEntity supplier) onSave;
@@ -77,7 +79,7 @@ class _AddEditSupplierDialogState extends State<AddEditSupplierDialog> {
 
     return Dialog(
       backgroundColor: AppColors.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isDesktop ? 16 : 16.r)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 500),
         child: Padding(
@@ -103,7 +105,7 @@ class _AddEditSupplierDialogState extends State<AddEditSupplierDialog> {
                 ],
               ),
               const Divider(),
-              SizedBox(height: 12.h),
+              SizedBox(height: isDesktop ? 12 : 12.h),
 
               Form(
                 key: _formKey,
@@ -117,7 +119,7 @@ class _AddEditSupplierDialogState extends State<AddEditSupplierDialog> {
                           ? AppStrings.validationFieldRequired.tr()
                           : null,
                     ),
-                    SizedBox(height: 12.h),
+                    SizedBox(height: isDesktop ? 12 : 12.h),
                     Row(
                       children: [
                         Expanded(
@@ -127,7 +129,7 @@ class _AddEditSupplierDialogState extends State<AddEditSupplierDialog> {
                             keyboardType: TextInputType.phone,
                           ),
                         ),
-                        SizedBox(width: 12.w),
+                        SizedBox(width: isDesktop ? 12 : 12.w),
                         Expanded(
                           child: _buildField(
                             controller: _emailController,
@@ -137,12 +139,12 @@ class _AddEditSupplierDialogState extends State<AddEditSupplierDialog> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 12.h),
+                    SizedBox(height: isDesktop ? 12 : 12.h),
                     _buildField(
                       controller: _addressController,
                       label: AppStrings.supplierAddress.tr(),
                     ),
-                    SizedBox(height: 12.h),
+                    SizedBox(height: isDesktop ? 12 : 12.h),
                     _buildField(
                       controller: _notesController,
                       label: AppStrings.notes.tr(),
@@ -151,7 +153,7 @@ class _AddEditSupplierDialogState extends State<AddEditSupplierDialog> {
                   ],
                 ),
               ),
-              SizedBox(height: 20.h),
+              SizedBox(height: isDesktop ? 20 : 20.h),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -163,13 +165,13 @@ class _AddEditSupplierDialogState extends State<AddEditSupplierDialog> {
                       style: TextStyles.customStyle(color: AppColors.blackLight),
                     ),
                   ),
-                  SizedBox(width: 12.w),
+                  SizedBox(width: isDesktop ? 12 : 12.w),
                   ElevatedButton(
                     onPressed: _submit,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryColor,
-                      padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+                      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 : 24.w, vertical: isDesktop ? 12 : 12.h),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isDesktop ? 10 : 10.r)),
                     ),
                     child: Text(
                       isEdit ? 'تعديل' : 'حفظ',
@@ -208,21 +210,12 @@ class _AddEditSupplierDialogState extends State<AddEditSupplierDialog> {
           ),
         ),
         SizedBox(height: 6.h),
-        TextFormField(
+        QuickAddTextField(
           controller: controller,
           keyboardType: keyboardType,
           maxLines: maxLines,
           validator: validator,
-          style: TextStyles.customStyle(color: AppColors.blackReal),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: AppColors.veryLightGrey,
-            contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10.r),
-              borderSide: BorderSide(color: AppColors.dividerColor),
-            ),
-          ),
+          hint: label,
         ),
       ],
     );

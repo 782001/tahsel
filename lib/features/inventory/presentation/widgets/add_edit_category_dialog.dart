@@ -6,6 +6,7 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import '../../domain/entities/inventory_category_entity.dart';
+import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 
 class AddEditCategoryDialog extends StatefulWidget {
   final InventoryCategoryEntity? category;
@@ -61,7 +62,7 @@ class _AddEditCategoryDialogState extends State<AddEditCategoryDialog> {
 
     return Dialog(
       backgroundColor: AppColors.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isDesktop ? 16 : 16.r)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
         child: Padding(
@@ -89,36 +90,28 @@ class _AddEditCategoryDialogState extends State<AddEditCategoryDialog> {
                     ),
                   ],
                 ),
-                SizedBox(height: 16.h),
-                TextFormField(
+                SizedBox(height: isDesktop ? 16 : 16.h),
+                QuickAddTextField(
                   controller: _nameController,
-                  decoration: InputDecoration(
-                    labelText: AppStrings.categoryName.tr(),
-                    filled: true,
-                    fillColor: AppColors.surface,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
-                  ),
+                  labelText: AppStrings.categoryName.tr(),
+                  hint: AppStrings.categoryName.tr(),
                   validator: (v) => v == null || v.trim().isEmpty ? 'الرجاء إدخال اسم القسم' : null,
                 ),
-                SizedBox(height: 12.h),
-                TextFormField(
+                SizedBox(height: isDesktop ? 12 : 12.h),
+                QuickAddTextField(
                   controller: _descController,
+                  labelText: AppStrings.categoryDescription.tr(),
+                  hint: AppStrings.categoryDescription.tr(),
                   maxLines: 2,
-                  decoration: InputDecoration(
-                    labelText: AppStrings.categoryDescription.tr(),
-                    filled: true,
-                    fillColor: AppColors.surface,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
-                  ),
                 ),
-                SizedBox(height: 20.h),
+                SizedBox(height: isDesktop ? 20 : 20.h),
                 SizedBox(
                   width: double.infinity,
-                  height: 46.h,
+                  height: isDesktop ? 46 : 46.h,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryColor,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isDesktop ? 12 : 12.r)),
                     ),
                     onPressed: _submit,
                     child: Text(

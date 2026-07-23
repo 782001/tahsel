@@ -7,6 +7,7 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/routes/app_routes.dart';
+
 import '../cubits/inventory_dashboard_cubit.dart';
 
 class InventoryMainScreen extends StatefulWidget {
@@ -33,9 +34,13 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
         backgroundColor: AppColors.scafoldBackGround,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.primaryColor),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.primaryColor,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        centerTitle: true,
         title: Text(
           AppStrings.inventoryManagementVIP.tr(),
           style: TextStyles.customStyle(
@@ -46,19 +51,25 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
         ),
         actions: [
           Container(
-            margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+            margin: EdgeInsets.symmetric(
+              horizontal: isDesktop ? 16 : 16.w,
+              vertical: isDesktop ? 10 : 10.h,
+            ),
+            padding: EdgeInsets.symmetric(
+              horizontal: isDesktop ? 12 : 12.w,
+              vertical: isDesktop ? 4 : 4.h,
+            ),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                colors: [AppColors.vipGoldStart, AppColors.vipGoldEnd],
               ),
-              borderRadius: BorderRadius.circular(20.r),
+              borderRadius: BorderRadius.circular(isDesktop ? 20 : 20.r),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(Icons.star_rounded, size: 16, color: Colors.black),
-                SizedBox(width: 4.w),
+                SizedBox(width: isDesktop ? 4 : 4.w),
                 Text(
                   'VIP',
                   style: TextStyles.customStyle(
@@ -82,7 +93,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
               physics: const BouncingScrollPhysics(),
               padding: EdgeInsets.symmetric(
                 horizontal: isDesktop ? 24 : 16.w,
-                vertical: 16.h,
+                vertical: isDesktop ? 16 : 16.h,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,7 +128,9 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                               title: AppStrings.lowStockCount.tr(),
                               value: '$lowStockCount',
                               icon: Icons.warning_amber_rounded,
-                              color: lowStockCount > 0 ? AppColors.warning : AppColors.success,
+                              color: lowStockCount > 0
+                                  ? AppColors.warning
+                                  : AppColors.success,
                               isDesktop: isDesktop,
                             ),
                           ),
@@ -147,7 +160,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                       color: AppColors.primaryColor,
                     ),
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: isDesktop ? 16 : 16.h),
 
                   // Sub-modules Navigation Grid/List
                   GridView.count(
@@ -163,7 +176,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                         title: AppStrings.inventoryProducts.tr(),
                         subtitle: AppStrings.inventoryManagementVIPDesc.tr(),
                         icon: Icons.shopping_bag_rounded,
-                        color: const Color(0xFF1E56A0),
+                        color: AppColors.primaryColor,
                         route: AppRoutes.inventoryProducts,
                       ),
                       _buildModuleTile(
@@ -171,7 +184,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                         title: AppStrings.inventoryCategories.tr(),
                         subtitle: AppStrings.categoryDescription.tr(),
                         icon: Icons.category_rounded,
-                        color: const Color(0xFF834600),
+                        color: AppColors.inventoryCategoryBrown,
                         route: AppRoutes.inventoryCategories,
                       ),
                       _buildModuleTile(
@@ -179,7 +192,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                         title: AppStrings.inventorySuppliers.tr(),
                         subtitle: AppStrings.supplierDetails.tr(),
                         icon: Icons.local_shipping_rounded,
-                        color: const Color(0xFF00796B),
+                        color: AppColors.inventorySupplierTeal,
                         route: AppRoutes.inventorySuppliers,
                       ),
                       _buildModuleTile(
@@ -187,7 +200,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                         title: AppStrings.inventoryPurchases.tr(),
                         subtitle: AppStrings.purchaseHistory.tr(),
                         icon: Icons.receipt_long_rounded,
-                        color: const Color(0xFF6B11B0),
+                        color: AppColors.inventoryPurchasePurple,
                         route: AppRoutes.inventoryPurchases,
                       ),
                       _buildModuleTile(
@@ -195,7 +208,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                         title: AppStrings.inventoryStockMovements.tr(),
                         subtitle: AppStrings.stockMovementsHistory.tr(),
                         icon: Icons.history_rounded,
-                        color: const Color(0xFFD32F2F),
+                        color: AppColors.error,
                         route: AppRoutes.inventoryStockMovements,
                       ),
                     ],
@@ -319,7 +332,11 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                     radius: isDesktop ? 20.r : 18.r,
                     child: Icon(icon, color: color, size: isDesktop ? 20 : 18),
                   ),
-                  Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.sandText),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 14,
+                    color: AppColors.sandText,
+                  ),
                 ],
               ),
               SizedBox(height: 6.h),

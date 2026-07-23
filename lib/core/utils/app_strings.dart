@@ -897,4 +897,5 @@ class AppStrings {
   static const String noSuppliersFound = "no_suppliers_found";
   static const String noPurchasesFound = "no_purchases_found";
   static const String noMovementsFound = "no_movements_found";
+  static const String noResults = "no_results";
 }

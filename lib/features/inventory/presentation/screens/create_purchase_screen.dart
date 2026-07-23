@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
+
 import '../../domain/entities/inventory_product_entity.dart';
 import '../../domain/entities/inventory_purchase_entity.dart';
 import '../../domain/entities/inventory_supplier_entity.dart';
 import '../cubits/inventory_products_cubit.dart';
 import '../cubits/inventory_purchases_cubit.dart';
 import '../cubits/inventory_suppliers_cubit.dart';
+import '../widgets/searchable_dropdown_field.dart';
 
 class CreatePurchaseScreen extends StatefulWidget {
   const CreatePurchaseScreen({super.key});
@@ -70,9 +74,9 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
 
   void _savePurchase() {
     if (_selectedSupplier == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppStrings.selectSupplier.tr())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(AppStrings.selectSupplier.tr())));
       return;
     }
     if (_selectedItems.isEmpty) {
@@ -88,12 +92,16 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
       supplierName: _selectedSupplier!.name,
       items: _selectedItems,
       totalAmount: _totalAmount,
-      notes: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
+      notes: _notesController.text.trim().isNotEmpty
+          ? _notesController.text.trim()
+          : null,
       createdAt: DateTime.now(),
       isSynced: false,
     );
 
-    context.read<InventoryPurchasesCubit>().createPurchase(purchase).then((success) {
+    context.read<InventoryPurchasesCubit>().createPurchase(purchase).then((
+      success,
+    ) {
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -138,7 +146,10 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
           backgroundColor: AppColors.scafoldBackGround,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.primaryColor),
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: AppColors.primaryColor,
+            ),
             onPressed: () => Navigator.of(context).pop(),
           ),
           title: Text(
@@ -153,45 +164,25 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
         body: SafeArea(
           child: Center(
             child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: isDesktop ? 950 : double.infinity),
+              constraints: BoxConstraints(
+                maxWidth: isDesktop ? 950 : double.infinity,
+              ),
               child: Padding(
                 padding: EdgeInsets.all(isDesktop ? 24 : 16.w),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Step 1: Select Supplier
-                    Text(
-                      AppStrings.supplier.tr(),
-                      style: TextStyles.customStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.blackReal,
-                      ),
+                    // Step 1: Select Supplier (Searchable)
+                    SearchableDropdownField<InventorySupplierEntity>(
+                      label: AppStrings.supplier.tr(),
+                      items: _suppliers,
+                      selectedId: _selectedSupplier?.id,
+                      getName: (s) => s.name,
+                      getId: (s) => s.id,
+                      onSelected: (s) => setState(() => _selectedSupplier = s),
+                      onCleared: () => setState(() => _selectedSupplier = null),
                     ),
-                    SizedBox(height: 6.h),
-                    DropdownButtonFormField<InventorySupplierEntity>(
-                      initialValue: _selectedSupplier,
-                      dropdownColor: AppColors.surface,
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: AppColors.surface,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                          borderSide: BorderSide(color: AppColors.dividerColor),
-                        ),
-                      ),
-                      items: _suppliers
-                          .map(
-                            (s) => DropdownMenuItem(
-                              value: s,
-                              child: Text(s.name),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (val) => setState(() => _selectedSupplier = val),
-                    ),
-                    SizedBox(height: 20.h),
+                    SizedBox(height: isDesktop ? 20 : 20.h),
 
                     // Step 2: Add Items
                     Row(
@@ -208,18 +199,29 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                         ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryColor,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                isDesktop ? 10 : 10.r,
+                              ),
+                            ),
                           ),
                           onPressed: _showAddItemDialog,
-                          icon: const Icon(Icons.add, color: Colors.white, size: 18),
+                          icon: const Icon(
+                            Icons.add,
+                            color: Colors.white,
+                            size: 18,
+                          ),
                           label: Text(
                             AppStrings.addPurchaseItem.tr(),
-                            style: TextStyles.customStyle(fontSize: 13, color: Colors.white),
+                            style: TextStyles.customStyle(
+                              fontSize: 13,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 10.h),
+                    SizedBox(height: isDesktop ? 10 : 10.h),
 
                     // Items List
                     Expanded(
@@ -227,26 +229,36 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                           ? Center(
                               child: Text(
                                 AppStrings.noProductsFound.tr(),
-                                style: TextStyles.customStyle(color: AppColors.sandText),
+                                style: TextStyles.customStyle(
+                                  color: AppColors.disabledColor,
+                                ),
                               ),
                             )
                           : ListView.separated(
                               itemCount: _selectedItems.length,
-                              separatorBuilder: (_, __) => SizedBox(height: 8.h),
+                              separatorBuilder: (_, __) =>
+                                  SizedBox(height: isDesktop ? 8 : 8.h),
                               itemBuilder: (context, index) {
                                 final item = _selectedItems[index];
                                 return Container(
-                                  padding: EdgeInsets.all(12.w),
+                                  padding: EdgeInsets.all(
+                                    isDesktop ? 12 : 12.w,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: AppColors.surface,
-                                    borderRadius: BorderRadius.circular(12.r),
-                                    border: Border.all(color: AppColors.dividerColor),
+                                    borderRadius: BorderRadius.circular(
+                                      isDesktop ? 12 : 12.r,
+                                    ),
+                                    border: Border.all(
+                                      color: AppColors.dividerColor,
+                                    ),
                                   ),
                                   child: Row(
                                     children: [
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               item.productName,
@@ -256,7 +268,9 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                                 color: AppColors.blackReal,
                                               ),
                                             ),
-                                            SizedBox(height: 4.h),
+                                            SizedBox(
+                                              height: isDesktop ? 4 : 4.h,
+                                            ),
                                             Text(
                                               '${item.quantity} x ${item.purchasePrice}  = ${item.totalPrice}',
                                               style: TextStyles.customStyle(
@@ -268,7 +282,10 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                         ),
                                       ),
                                       IconButton(
-                                        icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                        icon: Icon(
+                                          Icons.delete_outline,
+                                          color: AppColors.deleteRed,
+                                        ),
                                         onPressed: () => _removeItem(index),
                                       ),
                                     ],
@@ -277,14 +294,16 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                               },
                             ),
                     ),
-                    SizedBox(height: 16.h),
+                    SizedBox(height: isDesktop ? 16 : 16.h),
 
                     // Total & Save Button
                     Container(
-                      padding: EdgeInsets.all(16.w),
+                      padding: EdgeInsets.all(isDesktop ? 16 : 16.w),
                       decoration: BoxDecoration(
                         color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(16.r),
+                        borderRadius: BorderRadius.circular(
+                          isDesktop ? 16 : 16.r,
+                        ),
                         border: Border.all(color: AppColors.dividerColor),
                       ),
                       child: Column(
@@ -301,7 +320,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                 ),
                               ),
                               Text(
-                                '$_totalAmount',
+                                _totalAmount.toSmartAmount(),
                                 style: TextStyles.customStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
@@ -310,14 +329,18 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                               ),
                             ],
                           ),
-                          SizedBox(height: 14.h),
+                          SizedBox(height: isDesktop ? 14 : 14.h),
                           SizedBox(
                             width: double.infinity,
-                            height: 48.h,
+                            height: isDesktop ? 48 : 48.h,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primaryColor,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    isDesktop ? 12 : 12.r,
+                                  ),
+                                ),
                               ),
                               onPressed: _savePurchase,
                               child: Text(
@@ -345,76 +368,171 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
 
   void _showAddItemDialog() {
     if (_allProducts.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppStrings.noProductsFound.tr())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(AppStrings.noProductsFound.tr())));
       return;
     }
 
+    final isDesktop = ResponsiveLayout.isDesktop(context);
     InventoryProductEntity selectedProd = _allProducts.first;
     final qtyController = TextEditingController(text: '1');
-    final priceController = TextEditingController(text: selectedProd.purchasePrice.toString());
+    final priceController = TextEditingController(
+      text: selectedProd.purchasePrice.toStringAsFixed(2),
+    );
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => Dialog(
         backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-        title: Text(
-          AppStrings.addPurchaseItem.tr(),
-          style: TextStyles.customStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(isDesktop ? 16 : 16.r),
         ),
-        content: StatefulBuilder(
-          builder: (context, setDialogState) {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                DropdownButtonFormField<InventoryProductEntity>(
-                  initialValue: selectedProd,
-                  dropdownColor: AppColors.surface,
-                  items: _allProducts
-                      .map((p) => DropdownMenuItem(value: p, child: Text(p.name)))
-                      .toList(),
-                  onChanged: (val) {
-                    if (val != null) {
-                      setDialogState(() {
-                        selectedProd = val;
-                        priceController.text = val.purchasePrice.toString();
-                      });
-                    }
-                  },
-                ),
-                SizedBox(height: 10.h),
-                TextField(
-                  controller: qtyController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(labelText: AppStrings.quantity.tr()),
-                ),
-                SizedBox(height: 10.h),
-                TextField(
-                  controller: priceController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(labelText: AppStrings.purchasePrice.tr()),
-                ),
-              ],
-            );
-          },
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 480,
+            maxHeight: MediaQuery.of(context).size.height * 0.8,
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(isDesktop ? 20 : 20.w),
+            child: StatefulBuilder(
+              builder: (context, setDialogState) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          AppStrings.addPurchaseItem.tr(),
+                          style: TextStyles.customStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryColor,
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.close, color: AppColors.blackLight),
+                          onPressed: () => Navigator.of(ctx).pop(),
+                        ),
+                      ],
+                    ),
+                    const Divider(),
+                    SizedBox(height: isDesktop ? 12 : 12.h),
+
+                    // Content Body
+                    Flexible(
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SearchableDropdownField<InventoryProductEntity>(
+                              label: AppStrings.selectProduct.tr(),
+                              items: _allProducts,
+                              selectedId: selectedProd.id,
+                              getName: (p) => p.name,
+                              getId: (p) => p.id,
+                              onSelected: (p) {
+                                setDialogState(() {
+                                  selectedProd = p;
+                                  priceController.text = p.purchasePrice
+                                      .toStringAsFixed(2);
+                                });
+                              },
+                              onCleared: () {},
+                            ),
+                            SizedBox(height: isDesktop ? 12 : 12.h),
+                            Text(
+                              AppStrings.quantity.tr(),
+                              style: TextStyles.customStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.blackReal,
+                              ),
+                            ),
+                            SizedBox(height: isDesktop ? 6 : 6.h),
+                            QuickAddTextField(
+                              controller: qtyController,
+                              isNumber: true,
+                              hint: AppStrings.quantity.tr(),
+                            ),
+                            SizedBox(height: isDesktop ? 12 : 12.h),
+                            Text(
+                              AppStrings.purchasePrice.tr(),
+                              style: TextStyles.customStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.blackReal,
+                              ),
+                            ),
+                            SizedBox(height: isDesktop ? 6 : 6.h),
+                            QuickAddTextField(
+                              controller: priceController,
+                              isNumber: true,
+                              hint: AppStrings.purchasePrice.tr(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: isDesktop ? 16 : 16.h),
+
+                    // Actions
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          child: Text(
+                            AppStrings.cancel.tr(),
+                            style: TextStyles.customStyle(
+                              color: AppColors.blackLight,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: isDesktop ? 12 : 12.w),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryColor,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isDesktop ? 24 : 24.w,
+                              vertical: isDesktop ? 12 : 12.h,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                isDesktop ? 10 : 10.r,
+                              ),
+                            ),
+                          ),
+                          onPressed: () {
+                            final qty =
+                                double.tryParse(qtyController.text.trim()) ?? 1;
+                            final price =
+                                double.tryParse(priceController.text.trim()) ??
+                                selectedProd.purchasePrice;
+                            _addItem(selectedProd, qty, price);
+                            Navigator.of(ctx).pop();
+                          },
+                          child: Text(
+                            AppStrings.invoiceAddItem.tr(),
+                            style: TextStyles.customStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final qty = double.tryParse(qtyController.text.trim()) ?? 1;
-              final price = double.tryParse(priceController.text.trim()) ?? selectedProd.purchasePrice;
-              _addItem(selectedProd, qty, price);
-              Navigator.of(ctx).pop();
-            },
-            child: const Text('إضافة'),
-          ),
-        ],
       ),
     );
   }

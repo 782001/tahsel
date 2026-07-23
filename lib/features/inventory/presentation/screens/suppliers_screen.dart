@@ -6,6 +6,7 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+
 import '../../domain/entities/inventory_supplier_entity.dart';
 import '../cubits/inventory_suppliers_cubit.dart';
 import '../widgets/add_edit_supplier_dialog.dart';
@@ -31,16 +32,19 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
       builder: (ctx) => AddEditSupplierDialog(
         supplier: supplier,
         onSave: (savedSupplier) {
-          context.read<InventorySuppliersCubit>().saveSupplier(savedSupplier).then((success) {
-            if (success && mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(AppStrings.supplierSavedSuccess.tr()),
-                  backgroundColor: AppColors.success,
-                ),
-              );
-            }
-          });
+          context
+              .read<InventorySuppliersCubit>()
+              .saveSupplier(savedSupplier)
+              .then((success) {
+                if (success && mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(AppStrings.supplierSavedSuccess.tr()),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                }
+              });
         },
       ),
     );
@@ -56,9 +60,13 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
         backgroundColor: AppColors.scafoldBackGround,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.primaryColor),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.primaryColor,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        centerTitle: true,
         title: Text(
           AppStrings.inventorySuppliers.tr(),
           style: TextStyles.customStyle(
@@ -84,118 +92,175 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: isDesktop ? 850 : double.infinity),
+            constraints: BoxConstraints(
+              maxWidth: isDesktop ? 850 : double.infinity,
+            ),
             child: Padding(
               padding: EdgeInsets.all(isDesktop ? 24 : 16.w),
-              child: BlocBuilder<InventorySuppliersCubit, InventorySuppliersState>(
-                builder: (context, state) {
-                  if (state is InventorySuppliersLoading) {
-                    return Center(child: CircularProgressIndicator(color: AppColors.primaryColor));
-                  }
-                  if (state is InventorySuppliersLoaded) {
-                    final suppliers = state.suppliers;
+              child:
+                  BlocBuilder<InventorySuppliersCubit, InventorySuppliersState>(
+                    builder: (context, state) {
+                      if (state is InventorySuppliersLoading) {
+                        return Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.primaryColor,
+                            strokeWidth: 4,
+                          ),
+                        );
+                      }
+                      if (state is InventorySuppliersLoaded) {
+                        final suppliers = state.suppliers;
 
-                    if (suppliers.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.local_shipping_outlined, size: 64, color: AppColors.sandText),
-                            SizedBox(height: 12.h),
-                            Text(
-                              AppStrings.noSuppliersFound.tr(),
-                              style: TextStyles.customStyle(fontSize: 16, color: AppColors.sandText),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-
-                    return ListView.separated(
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: suppliers.length,
-                      separatorBuilder: (_, __) => SizedBox(height: 12.h),
-                      itemBuilder: (context, index) {
-                        final sup = suppliers[index];
-                        return Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => BlocProvider.value(
-                                    value: context.read<InventorySuppliersCubit>(),
-                                    child: SupplierDetailsScreen(supplier: sup),
+                        if (suppliers.isEmpty) {
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.local_shipping_outlined,
+                                  size: 64,
+                                  color: AppColors.sandText,
+                                ),
+                                SizedBox(height: isDesktop ? 12 : 12.h),
+                                Text(
+                                  AppStrings.noSuppliersFound.tr(),
+                                  style: TextStyles.customStyle(
+                                    fontSize: 16,
+                                    color: AppColors.sandText,
                                   ),
                                 ),
-                              );
-                            },
-                            borderRadius: BorderRadius.circular(14.r),
-                            child: Container(
-                              padding: EdgeInsets.all(16.w),
-                              decoration: BoxDecoration(
-                                color: AppColors.surface,
-                                borderRadius: BorderRadius.circular(14.r),
-                                border: Border.all(color: AppColors.dividerColor),
-                              ),
-                              child: Row(
-                                children: [
-                                  CircleAvatar(
-                                    backgroundColor: const Color(0xFF00796B).withValues(alpha: 0.12),
-                                    radius: 22.r,
-                                    child: const Icon(Icons.local_shipping_rounded, color: Color(0xFF00796B)),
-                                  ),
-                                  SizedBox(width: 16.w),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          sup.name,
-                                          style: TextStyles.customStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.blackReal,
-                                          ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        return ListView.separated(
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: suppliers.length,
+                          separatorBuilder: (_, __) =>
+                              SizedBox(height: isDesktop ? 12 : 12.h),
+                          itemBuilder: (context, index) {
+                            final sup = suppliers[index];
+                            return Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => BlocProvider.value(
+                                        value: context
+                                            .read<InventorySuppliersCubit>(),
+                                        child: SupplierDetailsScreen(
+                                          supplier: sup,
                                         ),
-                                        SizedBox(height: 4.h),
-                                        Row(
+                                      ),
+                                    ),
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(
+                                  isDesktop ? 14 : 14.r,
+                                ),
+                                child: Container(
+                                  padding: EdgeInsets.all(
+                                    isDesktop ? 16 : 16.w,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surface,
+                                    borderRadius: BorderRadius.circular(
+                                      isDesktop ? 14 : 14.r,
+                                    ),
+                                    border: Border.all(
+                                      color: AppColors.dividerColor,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      CircleAvatar(
+                                        backgroundColor: AppColors
+                                            .inventorySupplierTeal
+                                            .withValues(alpha: 0.12),
+                                        radius: isDesktop ? 22 : 22.r,
+                                        child: Icon(
+                                          Icons.local_shipping_rounded,
+                                          color:
+                                              AppColors.inventorySupplierTeal,
+                                        ),
+                                      ),
+                                      SizedBox(width: isDesktop ? 16 : 16.w),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
-                                            Icon(Icons.phone, size: 14, color: AppColors.sandText),
-                                            SizedBox(width: 4.w),
                                             Text(
-                                              sup.phone.isNotEmpty ? sup.phone : 'لا يوجد هاتف',
+                                              sup.name,
                                               style: TextStyles.customStyle(
-                                                fontSize: 13,
-                                                color: AppColors.sandText,
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.blackReal,
                                               ),
+                                            ),
+                                            SizedBox(
+                                              height: isDesktop ? 4 : 4.h,
+                                            ),
+                                            Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.phone,
+                                                  size: 14,
+                                                  color: AppColors.sandText,
+                                                ),
+                                                SizedBox(
+                                                  width: isDesktop ? 4 : 4.w,
+                                                ),
+                                                Text(
+                                                  sup.phone.isNotEmpty
+                                                      ? sup.phone
+                                                      : 'لا يوجد هاتف',
+                                                  style: TextStyles.customStyle(
+                                                    fontSize: 13,
+                                                    color: AppColors.sandText,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ],
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                      IconButton(
+                                        icon: Icon(
+                                          Icons.edit_rounded,
+                                          color: AppColors.primaryColor,
+                                        ),
+                                        onPressed: () =>
+                                            _openAddEditSupplierDialog(sup),
+                                      ),
+                                      IconButton(
+                                        icon: Icon(
+                                          Icons.delete_outline_rounded,
+                                          color: AppColors.deleteRed,
+                                        ),
+                                        onPressed: () => context
+                                            .read<InventorySuppliersCubit>()
+                                            .deleteSupplier(sup.id),
+                                      ),
+                                      Icon(
+                                        Icons.arrow_forward_ios_rounded,
+                                        size: 16,
+                                        color: AppColors.sandText,
+                                      ),
+                                    ],
                                   ),
-                                  IconButton(
-                                    icon: Icon(Icons.edit_rounded, color: AppColors.primaryColor),
-                                    onPressed: () => _openAddEditSupplierDialog(sup),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
-                                    onPressed: () => context.read<InventorySuppliersCubit>().deleteSupplier(sup.id),
-                                  ),
-                                  Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppColors.sandText),
-                                ],
+                                ),
                               ),
-                            ),
-                          ),
+                            );
+                          },
                         );
-                      },
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
-              ),
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
             ),
           ),
         ),

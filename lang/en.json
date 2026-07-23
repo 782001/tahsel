@@ -786,5 +786,6 @@
   "no_purchases_found": "No purchase records found",
   "no_movements_found": "No stock movements recorded",
   "vip_account": "VIP Account",
-  "vip_only_notice": "This feature is restricted to VIP accounts. Please contact system management or upgrade your subscription to access Inventory Management and premium features."
+  "vip_only_notice": "This feature is restricted to VIP accounts. Please contact system management or upgrade your subscription to access Inventory Management and premium features.",
+  "no_results": "No results found"
 }

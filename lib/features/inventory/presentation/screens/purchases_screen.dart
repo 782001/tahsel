@@ -8,6 +8,7 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+
 import '../cubits/inventory_products_cubit.dart';
 import '../cubits/inventory_purchases_cubit.dart';
 import '../cubits/inventory_suppliers_cubit.dart';
@@ -37,9 +38,13 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
         backgroundColor: AppColors.scafoldBackGround,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.primaryColor),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.primaryColor,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        centerTitle: true,
         title: Text(
           AppStrings.inventoryPurchases.tr(),
           style: TextStyles.customStyle(
@@ -57,9 +62,17 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
             MaterialPageRoute(
               builder: (_) => MultiBlocProvider(
                 providers: [
-                  BlocProvider.value(value: context.read<InventoryPurchasesCubit>()),
-                  BlocProvider(create: (_) => sl<InventorySuppliersCubit>()..fetchSuppliers()),
-                  BlocProvider(create: (_) => sl<InventoryProductsCubit>()..fetchProducts()),
+                  BlocProvider.value(
+                    value: context.read<InventoryPurchasesCubit>(),
+                  ),
+                  BlocProvider(
+                    create: (_) =>
+                        sl<InventorySuppliersCubit>()..fetchSuppliers(),
+                  ),
+                  BlocProvider(
+                    create: (_) =>
+                        sl<InventoryProductsCubit>()..fetchProducts(),
+                  ),
                 ],
                 child: const CreatePurchaseScreen(),
               ),
@@ -79,13 +92,20 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: isDesktop ? 900 : double.infinity),
+            constraints: BoxConstraints(
+              maxWidth: isDesktop ? 900 : double.infinity,
+            ),
             child: Padding(
               padding: EdgeInsets.all(isDesktop ? 24 : 16.w),
               child: BlocBuilder<InventoryPurchasesCubit, InventoryPurchasesState>(
                 builder: (context, state) {
                   if (state is InventoryPurchasesLoading) {
-                    return Center(child: CircularProgressIndicator(color: AppColors.primaryColor));
+                    return Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primaryColor,
+                        strokeWidth: 4,
+                      ),
+                    );
                   }
                   if (state is InventoryPurchasesLoaded) {
                     final purchases = state.purchases;
@@ -95,11 +115,18 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.receipt_long_outlined, size: 64, color: AppColors.sandText),
-                            SizedBox(height: 12.h),
+                            Icon(
+                              Icons.receipt_long_outlined,
+                              size: 64,
+                              color: AppColors.disabledColor,
+                            ),
+                            SizedBox(height: isDesktop ? 12 : 12.h),
                             Text(
                               AppStrings.noPurchasesFound.tr(),
-                              style: TextStyles.customStyle(fontSize: 16, color: AppColors.sandText),
+                              style: TextStyles.customStyle(
+                                fontSize: 16,
+                                color: AppColors.disabledColor,
+                              ),
                             ),
                           ],
                         ),
@@ -109,34 +136,48 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                     return ListView.separated(
                       physics: const BouncingScrollPhysics(),
                       itemCount: purchases.length,
-                      separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                      separatorBuilder: (_, __) =>
+                          SizedBox(height: isDesktop ? 12 : 12.h),
                       itemBuilder: (context, index) {
                         final pur = purchases[index];
-                        final dateStr = DateFormat('yyyy/MM/dd - hh:mm a').format(pur.createdAt);
+                        final dateStr = DateFormat(
+                          'yyyy/MM/dd - hh:mm a',
+                        ).format(pur.createdAt);
 
                         return Container(
-                          padding: EdgeInsets.all(16.w),
+                          padding: EdgeInsets.all(isDesktop ? 16 : 16.w),
                           decoration: BoxDecoration(
                             color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(14.r),
+                            borderRadius: BorderRadius.circular(
+                              isDesktop ? 14 : 14.r,
+                            ),
                             border: Border.all(color: AppColors.dividerColor),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Row(
                                     children: [
                                       CircleAvatar(
-                                        backgroundColor: const Color(0xFF6B11B0).withValues(alpha: 0.12),
-                                        radius: 20.r,
-                                        child: const Icon(Icons.receipt_rounded, color: Color(0xFF6B11B0), size: 20),
+                                        backgroundColor: AppColors
+                                            .inventoryPurchasePurple
+                                            .withValues(alpha: 0.12),
+                                        radius: isDesktop ? 20 : 20.r,
+                                        child: Icon(
+                                          Icons.receipt_rounded,
+                                          color:
+                                              AppColors.inventoryPurchasePurple,
+                                          size: 20,
+                                        ),
                                       ),
-                                      SizedBox(width: 12.w),
+                                      SizedBox(width: isDesktop ? 12 : 12.w),
                                       Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             'مورد: ${pur.supplierName}',
@@ -146,10 +187,13 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                               color: AppColors.blackReal,
                                             ),
                                           ),
-                                          SizedBox(height: 2.h),
+                                          SizedBox(height: isDesktop ? 2 : 2.h),
                                           Text(
                                             dateStr,
-                                            style: TextStyles.customStyle(fontSize: 12, color: AppColors.sandText),
+                                            style: TextStyles.customStyle(
+                                              fontSize: 12,
+                                              color: AppColors.sandText,
+                                            ),
                                           ),
                                         ],
                                       ),
@@ -165,30 +209,38 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                   ),
                                 ],
                               ),
-                              SizedBox(height: 10.h),
+                              SizedBox(height: isDesktop ? 10 : 10.h),
                               const Divider(),
                               Column(
                                 children: pur.items
-                                    .map((item) => Padding(
-                                          padding: EdgeInsets.symmetric(vertical: 4.h),
-                                          child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text(
-                                                item.productName,
-                                                style: TextStyles.customStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: AppColors.blackReal,
-                                                ),
+                                    .map(
+                                      (item) => Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: isDesktop ? 4 : 4.h,
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              item.productName,
+                                              style: TextStyles.customStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                                color: AppColors.blackReal,
                                               ),
-                                              Text(
-                                                '${item.quantity.toStringAsFixed(0)} وحدة × ${item.purchasePrice.toStringAsFixed(2)} = ${item.subtotal.toStringAsFixed(2)} ج.م',
-                                                style: TextStyles.customStyle(fontSize: 13, color: AppColors.sandText),
+                                            ),
+                                            Text(
+                                              '${item.quantity.toStringAsFixed(0)} وحدة × ${item.purchasePrice.toStringAsFixed(2)} = ${item.subtotal.toStringAsFixed(2)} ج.م',
+                                              style: TextStyles.customStyle(
+                                                fontSize: 13,
+                                                color: AppColors.sandText,
                                               ),
-                                            ],
-                                          ),
-                                        ))
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    )
                                     .toList(),
                               ),
                             ],

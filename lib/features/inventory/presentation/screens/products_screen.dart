@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
+
 import '../../domain/entities/inventory_category_entity.dart';
 import '../../domain/entities/inventory_product_entity.dart';
 import '../../domain/entities/inventory_supplier_entity.dart';
@@ -52,16 +55,18 @@ class _ProductsScreenState extends State<ProductsScreen> {
         categories: _categories,
         suppliers: _suppliers,
         onSave: (savedProduct) {
-          context.read<InventoryProductsCubit>().saveProduct(savedProduct).then((success) {
-            if (success && mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(AppStrings.productSavedSuccess.tr()),
-                  backgroundColor: AppColors.success,
-                ),
-              );
-            }
-          });
+          context.read<InventoryProductsCubit>().saveProduct(savedProduct).then(
+            (success) {
+              if (success && mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(AppStrings.productSavedSuccess.tr()),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              }
+            },
+          );
         },
       ),
     );
@@ -81,20 +86,20 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 reason: reason,
               )
               .then((success) {
-            if (success && mounted) {
-              context.read<InventoryProductsCubit>().fetchProducts(
+                if (success && mounted) {
+                  context.read<InventoryProductsCubit>().fetchProducts(
                     query: _searchController.text,
                     categoryId: _selectedCategory,
                     supplierId: _selectedSupplier,
                   );
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(AppStrings.stockAdjustedSuccess.tr()),
-                  backgroundColor: AppColors.success,
-                ),
-              );
-            }
-          });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(AppStrings.stockAdjustedSuccess.tr()),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                }
+              });
         },
       ),
     );
@@ -127,9 +132,13 @@ class _ProductsScreenState extends State<ProductsScreen> {
           backgroundColor: AppColors.scafoldBackGround,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.primaryColor),
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: AppColors.primaryColor,
+            ),
             onPressed: () => Navigator.of(context).pop(),
           ),
+          centerTitle: true,
           title: Text(
             AppStrings.inventoryProducts.tr(),
             style: TextStyles.customStyle(
@@ -155,40 +164,39 @@ class _ProductsScreenState extends State<ProductsScreen> {
         body: SafeArea(
           child: Center(
             child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: isDesktop ? 1000 : double.infinity),
+              constraints: BoxConstraints(
+                maxWidth: isDesktop ? 1000 : double.infinity,
+              ),
               child: Padding(
                 padding: EdgeInsets.all(isDesktop ? 24 : 16.w),
                 child: Column(
                   children: [
                     // Search & Filters Row
-                    TextField(
+                    QuickAddTextField(
                       controller: _searchController,
+                      hint: AppStrings.searchInventory.tr(),
+                      icon: Icons.search,
                       onChanged: (val) {
                         context.read<InventoryProductsCubit>().fetchProducts(
-                              query: val,
-                              categoryId: _selectedCategory,
-                              supplierId: _selectedSupplier,
-                            );
+                          query: val,
+                          categoryId: _selectedCategory,
+                          supplierId: _selectedSupplier,
+                        );
                       },
-                      decoration: InputDecoration(
-                        hintText: AppStrings.searchInventory.tr(),
-                        prefixIcon: const Icon(Icons.search),
-                        filled: true,
-                        fillColor: AppColors.surface,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                          borderSide: BorderSide(color: AppColors.dividerColor),
-                        ),
-                      ),
                     ),
-                    SizedBox(height: 16.h),
+                    SizedBox(height: isDesktop ? 16 : 16.h),
 
                     // Products List
                     Expanded(
                       child: BlocBuilder<InventoryProductsCubit, InventoryProductsState>(
                         builder: (context, state) {
                           if (state is InventoryProductsLoading) {
-                            return Center(child: CircularProgressIndicator(color: AppColors.primaryColor));
+                            return Center(
+                              child: CircularProgressIndicator(
+                                color: AppColors.primaryColor,
+                                strokeWidth: 4,
+                              ),
+                            );
                           }
                           if (state is InventoryProductsLoaded) {
                             final products = state.products;
@@ -197,7 +205,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
                               return Center(
                                 child: Text(
                                   AppStrings.noProductsFound.tr(),
-                                  style: TextStyles.customStyle(color: AppColors.sandText),
+                                  style: TextStyles.customStyle(
+                                    color: AppColors.disabledColor,
+                                  ),
                                 ),
                               );
                             }
@@ -205,62 +215,97 @@ class _ProductsScreenState extends State<ProductsScreen> {
                             return ListView.separated(
                               physics: const BouncingScrollPhysics(),
                               itemCount: products.length,
-                              separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                              separatorBuilder: (_, __) =>
+                                  SizedBox(height: isDesktop ? 12 : 12.h),
                               itemBuilder: (context, index) {
                                 final p = products[index];
                                 return Container(
-                                  padding: EdgeInsets.all(14.w),
+                                  padding: EdgeInsets.all(
+                                    isDesktop ? 14 : 14.w,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: AppColors.surface,
-                                    borderRadius: BorderRadius.circular(14.r),
+                                    borderRadius: BorderRadius.circular(
+                                      isDesktop ? 14 : 14.r,
+                                    ),
                                     border: Border.all(
-                                      color: p.isLowStock ? Colors.orange : AppColors.dividerColor,
+                                      color: p.isLowStock
+                                          ? AppColors.lowStockOrange
+                                          : AppColors.dividerColor,
                                       width: p.isLowStock ? 1.5 : 1,
                                     ),
                                   ),
                                   child: Row(
                                     children: [
                                       CircleAvatar(
-                                        backgroundColor: AppColors.primaryColor.withValues(alpha: 0.1),
-                                        radius: 24.r,
-                                        child: Icon(Icons.inventory_2_rounded, color: AppColors.primaryColor),
+                                        backgroundColor: AppColors.primaryColor
+                                            .withValues(alpha: 0.1),
+                                        radius: isDesktop ? 24 : 24.r,
+                                        child: Icon(
+                                          Icons.inventory_2_rounded,
+                                          color: AppColors.primaryColor,
+                                        ),
                                       ),
-                                      SizedBox(width: 14.w),
+                                      SizedBox(width: isDesktop ? 14 : 14.w),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Row(
                                               children: [
                                                 Expanded(
                                                   child: Text(
                                                     p.name,
-                                                    style: TextStyles.customStyle(
-                                                      fontSize: 16,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: AppColors.blackReal,
-                                                    ),
+                                                    style:
+                                                        TextStyles.customStyle(
+                                                          fontSize: 16,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: AppColors
+                                                              .blackReal,
+                                                        ),
                                                   ),
                                                 ),
                                                 if (p.isLowStock)
                                                   Container(
-                                                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                          horizontal: isDesktop
+                                                              ? 8
+                                                              : 8.w,
+                                                          vertical: isDesktop
+                                                              ? 2
+                                                              : 2.h,
+                                                        ),
                                                     decoration: BoxDecoration(
-                                                      color: Colors.orange.withValues(alpha: 0.15),
-                                                      borderRadius: BorderRadius.circular(6.r),
+                                                      color: AppColors
+                                                          .lowStockOrange
+                                                          .withValues(
+                                                            alpha: 0.15,
+                                                          ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            isDesktop ? 6 : 6.r,
+                                                          ),
                                                     ),
                                                     child: Text(
-                                                      AppStrings.lowStockAlert.tr(),
+                                                      AppStrings.lowStockAlert
+                                                          .tr(),
                                                       style: TextStyles.customStyle(
                                                         fontSize: 11,
-                                                        color: Colors.deepOrange,
-                                                        fontWeight: FontWeight.bold,
+                                                        color: AppColors
+                                                            .lowStockDeepOrange,
+                                                        fontWeight:
+                                                            FontWeight.bold,
                                                       ),
                                                     ),
                                                   ),
                                               ],
                                             ),
-                                            SizedBox(height: 4.h),
+                                            SizedBox(
+                                              height: isDesktop ? 4 : 4.h,
+                                            ),
                                             Text(
                                               'SKU: ${p.sku}  |  الفئة: ${p.categoryName}',
                                               style: TextStyles.customStyle(
@@ -268,9 +313,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                                 color: AppColors.sandText,
                                               ),
                                             ),
-                                            SizedBox(height: 4.h),
+                                            SizedBox(
+                                              height: isDesktop ? 4 : 4.h,
+                                            ),
                                             Text(
-                                              'الكمية: ${p.currentQuantity} ${p.unit}  |  سعر البيع: ${p.sellingPrice}',
+                                              'الكمية: ${p.currentQuantity.toSmartAmount()} ${p.unit}  |  سعر البيع: ${p.sellingPrice.toSmartAmount()}',
                                               style: TextStyles.customStyle(
                                                 fontSize: 13,
                                                 fontWeight: FontWeight.w600,
@@ -281,12 +328,20 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                         ),
                                       ),
                                       IconButton(
-                                        icon: const Icon(Icons.tune_rounded, color: Colors.orange),
-                                        onPressed: () => _openManualAdjustmentDialog(p),
+                                        icon: Icon(
+                                          Icons.tune_rounded,
+                                          color: AppColors.lowStockOrange,
+                                        ),
+                                        onPressed: () =>
+                                            _openManualAdjustmentDialog(p),
                                       ),
                                       IconButton(
-                                        icon: Icon(Icons.edit_rounded, color: AppColors.primaryColor),
-                                        onPressed: () => _openAddEditProductDialog(p),
+                                        icon: Icon(
+                                          Icons.edit_rounded,
+                                          color: AppColors.primaryColor,
+                                        ),
+                                        onPressed: () =>
+                                            _openAddEditProductDialog(p),
                                       ),
                                     ],
                                   ),

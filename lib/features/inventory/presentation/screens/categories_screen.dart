@@ -6,6 +6,7 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+
 import '../../domain/entities/inventory_category_entity.dart';
 import '../cubits/inventory_categories_cubit.dart';
 import '../widgets/add_edit_category_dialog.dart';
@@ -30,16 +31,19 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       builder: (ctx) => AddEditCategoryDialog(
         category: category,
         onSave: (savedCategory) {
-          context.read<InventoryCategoriesCubit>().saveCategory(savedCategory).then((success) {
-            if (success && mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(AppStrings.categorySavedSuccess.tr()),
-                  backgroundColor: AppColors.success,
-                ),
-              );
-            }
-          });
+          context
+              .read<InventoryCategoriesCubit>()
+              .saveCategory(savedCategory)
+              .then((success) {
+                if (success && mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(AppStrings.categorySavedSuccess.tr()),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                }
+              });
         },
       ),
     );
@@ -55,9 +59,13 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         backgroundColor: AppColors.scafoldBackGround,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.primaryColor),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.primaryColor,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        centerTitle: true,
         title: Text(
           AppStrings.inventoryCategories.tr(),
           style: TextStyles.customStyle(
@@ -83,91 +91,125 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: isDesktop ? 800 : double.infinity),
+            constraints: BoxConstraints(
+              maxWidth: isDesktop ? 800 : double.infinity,
+            ),
             child: Padding(
               padding: EdgeInsets.all(isDesktop ? 24 : 16.w),
-              child: BlocBuilder<InventoryCategoriesCubit, InventoryCategoriesState>(
-                builder: (context, state) {
-                  if (state is InventoryCategoriesLoading) {
-                    return Center(child: CircularProgressIndicator(color: AppColors.primaryColor));
-                  }
-                  if (state is InventoryCategoriesLoaded) {
-                    final categories = state.categories;
-
-                    if (categories.isEmpty) {
-                      return Center(
-                        child: Text(
-                          AppStrings.noCategoriesFound.tr(),
-                          style: TextStyles.customStyle(color: AppColors.sandText),
-                        ),
-                      );
-                    }
-
-                    return ListView.separated(
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: categories.length,
-                      separatorBuilder: (_, __) => SizedBox(height: 12.h),
-                      itemBuilder: (context, index) {
-                        final cat = categories[index];
-                        return Container(
-                          padding: EdgeInsets.all(16.w),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(14.r),
-                            border: Border.all(color: AppColors.dividerColor),
-                          ),
-                          child: Row(
-                            children: [
-                              CircleAvatar(
-                                backgroundColor: const Color(0xFF834600).withValues(alpha: 0.12),
-                                radius: 22.r,
-                                child: const Icon(Icons.category_rounded, color: Color(0xFF834600)),
-                              ),
-                              SizedBox(width: 16.w),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      cat.name,
-                                      style: TextStyles.customStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.blackReal,
-                                      ),
-                                    ),
-                                    if (cat.description != null && cat.description!.isNotEmpty) ...[
-                                      SizedBox(height: 4.h),
-                                      Text(
-                                        cat.description!,
-                                        style: TextStyles.customStyle(
-                                          fontSize: 13,
-                                          color: AppColors.sandText,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                              IconButton(
-                                icon: Icon(Icons.edit_rounded, color: AppColors.primaryColor),
-                                onPressed: () => _openAddEditCategoryDialog(cat),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline, color: Colors.red),
-                                onPressed: () {
-                                  context.read<InventoryCategoriesCubit>().deleteCategory(cat.id);
-                                },
-                              ),
-                            ],
+              child:
+                  BlocBuilder<
+                    InventoryCategoriesCubit,
+                    InventoryCategoriesState
+                  >(
+                    builder: (context, state) {
+                      if (state is InventoryCategoriesLoading) {
+                        return Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.primaryColor,
+                            strokeWidth: 4,
                           ),
                         );
-                      },
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
-              ),
+                      }
+                      if (state is InventoryCategoriesLoaded) {
+                        final categories = state.categories;
+
+                        if (categories.isEmpty) {
+                          return Center(
+                            child: Text(
+                              AppStrings.noCategoriesFound.tr(),
+                              style: TextStyles.customStyle(
+                                color: AppColors.disabledColor,
+                              ),
+                            ),
+                          );
+                        }
+
+                        return ListView.separated(
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: categories.length,
+                          separatorBuilder: (_, __) =>
+                              SizedBox(height: isDesktop ? 12 : 12.h),
+                          itemBuilder: (context, index) {
+                            final cat = categories[index];
+                            return Container(
+                              padding: EdgeInsets.all(isDesktop ? 16 : 16.w),
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                borderRadius: BorderRadius.circular(
+                                  isDesktop ? 14 : 14.r,
+                                ),
+                                border: Border.all(
+                                  color: AppColors.dividerColor,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                    backgroundColor: AppColors
+                                        .inventoryCategoryBrown
+                                        .withValues(alpha: 0.12),
+                                    radius: isDesktop ? 22 : 22.r,
+                                    child: Icon(
+                                      Icons.category_rounded,
+                                      color: AppColors.inventoryCategoryBrown,
+                                    ),
+                                  ),
+                                  SizedBox(width: isDesktop ? 16 : 16.w),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          cat.name,
+                                          style: TextStyles.customStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.blackReal,
+                                          ),
+                                        ),
+                                        if (cat.description != null &&
+                                            cat.description!.isNotEmpty) ...[
+                                          SizedBox(height: isDesktop ? 4 : 4.h),
+                                          Text(
+                                            cat.description!,
+                                            style: TextStyles.customStyle(
+                                              fontSize: 13,
+                                              color: AppColors.sandText,
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(
+                                      Icons.edit_rounded,
+                                      color: AppColors.primaryColor,
+                                    ),
+                                    onPressed: () =>
+                                        _openAddEditCategoryDialog(cat),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(
+                                      Icons.delete_outline,
+                                      color: AppColors.deleteRed,
+                                    ),
+                                    onPressed: () {
+                                      context
+                                          .read<InventoryCategoriesCubit>()
+                                          .deleteCategory(cat.id);
+                                    },
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
             ),
           ),
         ),
