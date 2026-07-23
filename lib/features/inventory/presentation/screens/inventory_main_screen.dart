@@ -45,7 +45,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
         title: Text(
           AppStrings.inventoryManagementVIP.tr(),
           style: TextStyles.customStyle(
-            fontSize: 22,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
             color: AppColors.primaryColor,
           ),
@@ -430,7 +430,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
           SizedBox(height: 10.h),
           Text(
             title,
-            maxLines: 2,
+            maxLines: 3,
             overflow: TextOverflow.ellipsis,
             style: TextStyles.customStyle(
               fontSize: isDesktop ? 14 : 12,
@@ -438,29 +438,33 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
             ),
           ),
           SizedBox(height: 4.h),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                value,
-                style: TextStyles.customStyle(
-                  fontSize: isDesktop ? 20 : 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.blackReal,
-                ),
-              ),
-              if (subtitle != null) ...[
-                SizedBox(width: 4.w),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: AlignmentDirectional.centerStart,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
                 Text(
-                  subtitle,
+                  value,
                   style: TextStyles.customStyle(
-                    fontSize: 11,
-                    color: AppColors.sandText,
+                    fontSize: isDesktop ? 20 : 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.blackReal,
                   ),
                 ),
+                if (subtitle != null) ...[
+                  SizedBox(width: 4.w),
+                  Text(
+                    subtitle,
+                    style: TextStyles.customStyle(
+                      fontSize: 11,
+                      color: AppColors.sandText,
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ],
       ),
@@ -521,7 +525,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                   children: [
                     Text(
                       title,
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyles.customStyle(
                         fontSize: isDesktop ? 15 : 14,

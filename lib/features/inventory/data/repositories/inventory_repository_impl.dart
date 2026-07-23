@@ -221,6 +221,21 @@ class InventoryRepositoryImpl implements InventoryRepository {
         category.copyWith(updatedAt: DateTime.now(), isSynced: false),
       );
       await localDataSource.saveCategory(model);
+
+      // Cascade update categoryName in all products belonging to this categoryId
+      final allProducts = await localDataSource.getProducts();
+      final affectedProducts = allProducts.where((p) => p.categoryId == category.id).toList();
+      for (final p in affectedProducts) {
+        if (p.categoryName != category.name) {
+          final updated = p.copyWith(
+            categoryName: category.name,
+            updatedAt: DateTime.now(),
+            isSynced: false,
+          );
+          await localDataSource.saveProduct(InventoryProductModel.fromEntity(updated));
+        }
+      }
+
       _triggerBackgroundSync();
       return const Right(null);
     } catch (e) {
@@ -295,6 +310,34 @@ class InventoryRepositoryImpl implements InventoryRepository {
         supplier.copyWith(updatedAt: DateTime.now(), isSynced: false),
       );
       await localDataSource.saveSupplier(model);
+
+      // Cascade update supplierName in all products belonging to this supplierId
+      final allProducts = await localDataSource.getProducts();
+      final affectedProducts = allProducts.where((p) => p.supplierId == supplier.id).toList();
+      for (final p in affectedProducts) {
+        if (p.supplierName != supplier.name) {
+          final updated = p.copyWith(
+            supplierName: supplier.name,
+            updatedAt: DateTime.now(),
+            isSynced: false,
+          );
+          await localDataSource.saveProduct(InventoryProductModel.fromEntity(updated));
+        }
+      }
+
+      // Cascade update supplierName in all purchase invoices belonging to this supplierId
+      final allPurchases = await localDataSource.getPurchases();
+      final affectedPurchases = allPurchases.where((pur) => pur.supplierId == supplier.id).toList();
+      for (final pur in affectedPurchases) {
+        if (pur.supplierName != supplier.name) {
+          final updated = pur.copyWith(
+            supplierName: supplier.name,
+            isSynced: false,
+          );
+          await localDataSource.savePurchase(InventoryPurchaseModel.fromEntity(updated));
+        }
+      }
+
       _triggerBackgroundSync();
       return const Right(null);
     } catch (e) {

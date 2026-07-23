@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -177,17 +178,93 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
                                           ],
                                         ),
                                         SizedBox(height: isDesktop ? 4 : 4.h),
-                                        Text(
-                                          '${_getMovementTitle(m.type)}  |  ${AppStrings.from.tr()} ${m.previousQuantity} ${AppStrings.to.tr()} ${m.newQuantity}',
-                                          style: TextStyles.customStyle(
-                                            fontSize: 13,
-                                            color: AppColors.sandText,
-                                          ),
+                                        Wrap(
+                                          spacing: 6,
+                                          runSpacing: 4,
+                                          crossAxisAlignment:
+                                              WrapCrossAlignment.center,
+                                          children: [
+                                            Container(
+                                              padding: EdgeInsets.symmetric(
+                                                horizontal: isDesktop ? 6 : 6.w,
+                                                vertical: isDesktop ? 2 : 2.h,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: color.withValues(
+                                                  alpha: 0.1,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(4.r),
+                                              ),
+                                              child: Text(
+                                                _getMovementTitle(m.type),
+                                                style: TextStyles.customStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: color,
+                                                ),
+                                              ),
+                                            ),
+                                            Container(
+                                              padding: EdgeInsets.symmetric(
+                                                horizontal: isDesktop ? 6 : 6.w,
+                                                vertical: isDesktop ? 2 : 2.h,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    AppColors.scafoldBackGround,
+                                                borderRadius:
+                                                    BorderRadius.circular(4.r),
+                                                border: Border.all(
+                                                  color: AppColors.dividerColor,
+                                                ),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Text(
+                                                    '${AppStrings.from.tr()} ${m.previousQuantity.toSmartAmount()}',
+                                                    style:
+                                                        TextStyles.customStyle(
+                                                          fontSize: 11,
+                                                          color: AppColors
+                                                              .sandText,
+                                                        ),
+                                                  ),
+                                                  Padding(
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                          horizontal: 4.w,
+                                                        ),
+                                                    child: Icon(
+                                                      AppStrings.currentLang ==
+                                                              "ar"
+                                                          ? Icons.west_rounded
+                                                          : Icons.east_rounded,
+                                                      size: 11,
+                                                      color: AppColors.sandText,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    '${AppStrings.to.tr()} ${m.newQuantity.toSmartAmount()}',
+                                                    style:
+                                                        TextStyles.customStyle(
+                                                          fontSize: 11,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: AppColors
+                                                              .blackReal,
+                                                        ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                        SizedBox(height: isDesktop ? 2 : 2.h),
+                                        SizedBox(height: isDesktop ? 4 : 4.h),
                                         Text(
                                           DateFormat(
-                                            'yyyy/MM/dd HH:mm',
+                                            'yyyy/MM/dd - hh:mm a',
                                           ).format(m.createdAt),
                                           style: TextStyles.customStyle(
                                             fontSize: 11,
