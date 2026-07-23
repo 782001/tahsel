@@ -52,8 +52,12 @@ class _SubscriptionInfoWidgetState extends State<SubscriptionInfoWidget> {
       }
 
       if (mounted) {
+        final data = doc.data();
+        if (data != null) {
+          AppStrings.isVip = (data['isVip'] as bool?) ?? false;
+        }
         setState(() {
-          _userData = doc.data();
+          _userData = data;
           _isLoading = false;
         });
       }
@@ -134,6 +138,7 @@ class _SubscriptionInfoWidgetState extends State<SubscriptionInfoWidget> {
     final data = _userData!;
 
     // Extract raw fields
+    final isVip = (data['isVip'] as bool?) ?? false;
     final accountStatus = (data['accountStatus'] as String?) ?? 'active';
     final userType = (data['userType'] as String?) ?? 'cafe';
     final platformType = (data['platformType'] as String?) ?? 'mobile';
@@ -220,6 +225,42 @@ class _SubscriptionInfoWidgetState extends State<SubscriptionInfoWidget> {
                   ),
                 ),
                 const Spacer(),
+                // VIP Badge Chip
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isDesktop ? 10 : 8.w,
+                    vertical: isDesktop ? 6 : 4.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isVip
+                        ? AppColors.vipGoldStart.withValues(alpha: 0.15)
+                        : AppColors.dividerColor.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(20.r),
+                    border: isVip
+                        ? Border.all(color: AppColors.vipGoldStart.withValues(alpha: 0.5))
+                        : null,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isVip ? Icons.stars_rounded : Icons.star_border_rounded,
+                        size: 14.sp,
+                        color: isVip ? AppColors.vipGoldStart : AppColors.sandText,
+                      ),
+                      SizedBox(width: 4.w),
+                      Text(
+                        isVip ? 'VIP' : 'Standard',
+                        style: TextStyles.customStyle(
+                          fontSize: isDesktop ? 13 : 12,
+                          fontWeight: FontWeight.bold,
+                          color: isVip ? AppColors.vipGoldStart : AppColors.sandText,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: isDesktop ? 8 : 6.w),
                 // Status Badge
                 Container(
                   padding: EdgeInsets.symmetric(
@@ -244,6 +285,14 @@ class _SubscriptionInfoWidgetState extends State<SubscriptionInfoWidget> {
             SizedBox(height: isDesktop ? 32 : 20.h),
 
             // Rows
+            _buildDetailRow(
+              icon: Icons.stars_rounded,
+              label: AppStrings.vipAccount.tr(),
+              value: isVip ? 'VIP ✨' : 'Standard',
+              valueColor: isVip ? AppColors.vipGoldStart : AppColors.sandText,
+              isDesktop: isDesktop,
+            ),
+            _buildDivider(),
             _buildDetailRow(
               icon: Icons.shield_outlined,
               label: AppStrings.accountStatus.tr(),
