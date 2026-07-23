@@ -274,20 +274,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     clipBehavior: Clip.antiAlias,
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(20.r),
-                                      gradient: const LinearGradient(
+                                      gradient: LinearGradient(
                                         colors: [
-                                          Color(0xFF0F2027),
-                                          Color(0xFF203A43),
-                                          Color(0xFF2C5364),
+                                          AppColors.primaryColor,
+                                          AppColors.primaryColor.withValues(alpha: 0.82),
                                         ],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       ),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: const Color(
-                                            0xFF0F2027,
-                                          ).withValues(alpha: 0.35),
+                                          color: AppColors.primaryColor.withValues(alpha: 0.3),
                                           blurRadius: 16,
                                           offset: const Offset(0, 8),
                                         ),
@@ -304,9 +301,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                             height: 130.h,
                                             decoration: BoxDecoration(
                                               shape: BoxShape.circle,
-                                              color: const Color(
-                                                0xFFFFD700,
-                                              ).withValues(alpha: 0.08),
+                                              color: AppColors.vipGoldStart.withValues(alpha: 0.12),
                                             ),
                                           ),
                                         ),
@@ -318,9 +313,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                             height: 100.h,
                                             decoration: BoxDecoration(
                                               shape: BoxShape.circle,
-                                              color: const Color(
-                                                0xFF00E676,
-                                              ).withValues(alpha: 0.06),
+                                              color: Colors.white.withValues(alpha: 0.08),
                                             ),
                                           ),
                                         ),
@@ -369,7 +362,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                                     ),
                                                     child: const Icon(
                                                       Icons.inventory_2_rounded,
-                                                      color: Color(0xFFFFD700),
+                                                      color: AppColors.vipGoldStart,
                                                       size: 28,
                                                     ),
                                                   ),
