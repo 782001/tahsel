@@ -6,14 +6,17 @@ import '../models/inventory_supplier_model.dart';
 import '../models/stock_movement_model.dart';
 
 abstract class InventoryRemoteDataSource {
-  Future<void> syncProducts(String uid, List<InventoryProductModel> products);
-  Future<List<InventoryProductModel>> fetchProductsFromRemote(String uid);
-
   Future<void> syncCategories(String uid, List<InventoryCategoryModel> categories);
   Future<List<InventoryCategoryModel>> fetchCategoriesFromRemote(String uid);
+  Future<void> deleteCategoryFromRemote(String uid, String categoryId);
 
   Future<void> syncSuppliers(String uid, List<InventorySupplierModel> suppliers);
   Future<List<InventorySupplierModel>> fetchSuppliersFromRemote(String uid);
+  Future<void> deleteSupplierFromRemote(String uid, String supplierId);
+
+  Future<void> syncProducts(String uid, List<InventoryProductModel> products);
+  Future<List<InventoryProductModel>> fetchProductsFromRemote(String uid);
+  Future<void> deleteProductFromRemote(String uid, String productId);
 
   Future<void> syncPurchases(String uid, List<InventoryPurchaseModel> purchases);
   Future<List<InventoryPurchaseModel>> fetchPurchasesFromRemote(String uid);
@@ -164,5 +167,20 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
       map['id'] = doc.id;
       return StockMovementModel.fromMap(map);
     }).toList();
+  }
+
+  @override
+  Future<void> deleteCategoryFromRemote(String uid, String categoryId) async {
+    await _getCol(uid, 'inventory_categories').doc(categoryId).delete();
+  }
+
+  @override
+  Future<void> deleteSupplierFromRemote(String uid, String supplierId) async {
+    await _getCol(uid, 'inventory_suppliers').doc(supplierId).delete();
+  }
+
+  @override
+  Future<void> deleteProductFromRemote(String uid, String productId) async {
+    await _getCol(uid, 'inventory_products').doc(productId).delete();
   }
 }

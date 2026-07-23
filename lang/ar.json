@@ -823,5 +823,9 @@
   "empty_categories_desc": "قم بإضافة أقسام لتنظيم المنتجات وتسهيل البحث والمتابعة.",
   "inventory_submodules_title": "أقسام إدارة المخزون",
   "please_add_at_least_one_item": "الرجاء إضافة منتج واحد على الأقل",
-  "phone_copied_to_clipboard": "تم نسخ رقم الهاتف بنجاح"
+  "phone_copied_to_clipboard": "تم نسخ رقم الهاتف بنجاح",
+  "confirm_delete": "تأكيد الحذف",
+  "are_you_sure_delete": "هل أنت تأكد من إتمام عملية الحذف؟",
+  "delete_category_warning": "هل أنت متاكد من حذف هذا القسم؟ المنتجات المرتبطة به ستتحول تلقائياً إلى (بدون قسم).",
+  "delete_supplier_warning": "هل أنت متاكد من حذف هذا المورد؟ المنتجات المرتبطة به ستتحول تلقائياً إلى (بدون مورد)."
 }

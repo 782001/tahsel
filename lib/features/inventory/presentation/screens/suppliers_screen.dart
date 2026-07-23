@@ -52,6 +52,83 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
     );
   }
 
+  void _confirmDeleteSupplier(
+    BuildContext context,
+    InventorySupplierEntity sup,
+  ) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        title: Text(
+          AppStrings.confirmDelete.tr(),
+          style: TextStyles.customStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppColors.blackReal,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${AppStrings.delete.tr()} "${sup.name}"؟',
+              style: TextStyles.customStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: AppColors.blackReal,
+              ),
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              AppStrings.deleteSupplierWarning.tr(),
+              style: TextStyles.customStyle(
+                fontSize: 13,
+                color: AppColors.warning,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: Text(
+              AppStrings.cancel.tr(),
+              style: TextStyles.customStyle(
+                fontSize: 14,
+                color: AppColors.sandText,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.deleteRed,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+            ),
+            onPressed: () {
+              Navigator.of(dialogCtx).pop();
+              context.read<InventorySuppliersCubit>().deleteSupplier(sup.id);
+            },
+            child: Text(
+              AppStrings.delete.tr(),
+              style: TextStyles.customStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
@@ -227,9 +304,10 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
                                           Icons.delete_outline_rounded,
                                           color: AppColors.deleteRed,
                                         ),
-                                        onPressed: () => context
-                                            .read<InventorySuppliersCubit>()
-                                            .deleteSupplier(sup.id),
+                                        onPressed: () => _confirmDeleteSupplier(
+                                          context,
+                                          sup,
+                                        ),
                                       ),
                                       Icon(
                                         Icons.arrow_forward_ios_rounded,

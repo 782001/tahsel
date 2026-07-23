@@ -50,6 +50,83 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     );
   }
 
+  void _confirmDeleteCategory(
+    BuildContext context,
+    InventoryCategoryEntity cat,
+  ) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        title: Text(
+          AppStrings.confirmDelete.tr(),
+          style: TextStyles.customStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppColors.blackReal,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${AppStrings.delete.tr()} "${cat.name}"؟',
+              style: TextStyles.customStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: AppColors.blackReal,
+              ),
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              AppStrings.deleteCategoryWarning.tr(),
+              style: TextStyles.customStyle(
+                fontSize: 13,
+                color: AppColors.warning,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: Text(
+              AppStrings.cancel.tr(),
+              style: TextStyles.customStyle(
+                fontSize: 14,
+                color: AppColors.sandText,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.deleteRed,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+            ),
+            onPressed: () {
+              Navigator.of(dialogCtx).pop();
+              context.read<InventoryCategoriesCubit>().deleteCategory(cat.id);
+            },
+            child: Text(
+              AppStrings.delete.tr(),
+              style: TextStyles.customStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
@@ -192,11 +269,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                       Icons.delete_outline,
                                       color: AppColors.deleteRed,
                                     ),
-                                    onPressed: () {
-                                      context
-                                          .read<InventoryCategoriesCubit>()
-                                          .deleteCategory(cat.id);
-                                    },
+                                    onPressed: () =>
+                                        _confirmDeleteCategory(context, cat),
                                   ),
                                 ],
                               ),

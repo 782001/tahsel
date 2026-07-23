@@ -157,6 +157,11 @@ class InventoryRepositoryImpl implements InventoryRepository {
   Future<Either<Failure, void>> deleteProduct(String id) async {
     try {
       await localDataSource.deleteProduct(id);
+      if (await connectionChecker.hasConnection && _currentUid != null) {
+        try {
+          await remoteDataSource.deleteProductFromRemote(_currentUid!, id);
+        } catch (_) {}
+      }
       return const Right(null);
     } catch (e) {
       return Left(CacheFailure(e.toString()));
@@ -227,6 +232,26 @@ class InventoryRepositoryImpl implements InventoryRepository {
   Future<Either<Failure, void>> deleteCategory(String id) async {
     try {
       await localDataSource.deleteCategory(id);
+      if (await connectionChecker.hasConnection && _currentUid != null) {
+        try {
+          await remoteDataSource.deleteCategoryFromRemote(_currentUid!, id);
+        } catch (_) {}
+      }
+
+      // Cascade update affected products: reset categoryId and categoryName to empty
+      final allProducts = await localDataSource.getProducts();
+      final affectedProducts = allProducts.where((p) => p.categoryId == id).toList();
+      for (final p in affectedProducts) {
+        final updated = p.copyWith(
+          categoryId: '',
+          categoryName: '',
+          updatedAt: DateTime.now(),
+          isSynced: false,
+        );
+        await localDataSource.saveProduct(InventoryProductModel.fromEntity(updated));
+      }
+      _triggerBackgroundSync();
+
       return const Right(null);
     } catch (e) {
       return Left(CacheFailure(e.toString()));
@@ -281,6 +306,26 @@ class InventoryRepositoryImpl implements InventoryRepository {
   Future<Either<Failure, void>> deleteSupplier(String id) async {
     try {
       await localDataSource.deleteSupplier(id);
+      if (await connectionChecker.hasConnection && _currentUid != null) {
+        try {
+          await remoteDataSource.deleteSupplierFromRemote(_currentUid!, id);
+        } catch (_) {}
+      }
+
+      // Cascade update affected products: reset supplierId and supplierName to empty
+      final allProducts = await localDataSource.getProducts();
+      final affectedProducts = allProducts.where((p) => p.supplierId == id).toList();
+      for (final p in affectedProducts) {
+        final updated = p.copyWith(
+          supplierId: '',
+          supplierName: '',
+          updatedAt: DateTime.now(),
+          isSynced: false,
+        );
+        await localDataSource.saveProduct(InventoryProductModel.fromEntity(updated));
+      }
+      _triggerBackgroundSync();
+
       return const Right(null);
     } catch (e) {
       return Left(CacheFailure(e.toString()));

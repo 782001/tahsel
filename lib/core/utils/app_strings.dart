@@ -929,4 +929,8 @@ class AppStrings {
   static const String inventorySubmodulesTitle = "inventory_submodules_title";
   static const String pleaseAddAtLeastOneItem = "please_add_at_least_one_item";
   static const String phoneCopiedToClipboard = "phone_copied_to_clipboard";
+  static const String confirmDelete = "confirm_delete";
+  static const String areYouSureDelete = "are_you_sure_delete";
+  static const String deleteCategoryWarning = "delete_category_warning";
+  static const String deleteSupplierWarning = "delete_supplier_warning";
 }

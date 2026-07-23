@@ -87,40 +87,141 @@ class _SupplierDetailsScreenState extends State<SupplierDetailsScreen> {
                                 color: AppColors.blackReal,
                               ),
                             ),
-                            SizedBox(height: isDesktop ? 4 : 4.h),
-                            Row(
+                            SizedBox(height: isDesktop ? 6 : 6.h),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
-                                Expanded(
-                                  child: Text(
-                                    '${AppStrings.phoneLabel.tr()}: ${s.phone.isNotEmpty ? s.phone : AppStrings.noPhone.tr()}  |  ${AppStrings.addressLabel.tr()}: ${s.address}',
-                                    style: TextStyles.customStyle(fontSize: 13, color: AppColors.sandText),
+                                // Phone Pill Chip with tap-to-copy
+                                Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: s.phone.isNotEmpty
+                                        ? () {
+                                            Clipboard.setData(ClipboardData(text: s.phone));
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Text(AppStrings.phoneCopiedToClipboard.tr()),
+                                                backgroundColor: AppColors.success,
+                                                duration: const Duration(seconds: 2),
+                                              ),
+                                            );
+                                          }
+                                        : null,
+                                    borderRadius: BorderRadius.circular(6.r),
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: isDesktop ? 8 : 8.w,
+                                        vertical: isDesktop ? 4 : 4.h,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.inventorySupplierTeal.withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(6.r),
+                                        border: Border.all(
+                                          color: AppColors.inventorySupplierTeal.withValues(alpha: 0.3),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.phone_rounded,
+                                            size: 13,
+                                            color: AppColors.inventorySupplierTeal,
+                                          ),
+                                          SizedBox(width: 4.w),
+                                          Text(
+                                            s.phone.isNotEmpty ? s.phone : AppStrings.noPhone.tr(),
+                                            style: TextStyles.customStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.inventorySupplierTeal,
+                                            ),
+                                          ),
+                                          if (s.phone.isNotEmpty) ...[
+                                            SizedBox(width: 6.w),
+                                            Icon(
+                                              Icons.content_copy_rounded,
+                                              size: 12,
+                                              color: AppColors.inventorySupplierTeal,
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
                                   ),
                                 ),
-                                if (s.phone.isNotEmpty)
-                                  IconButton(
-                                    icon: const Icon(Icons.copy_rounded, size: 18),
-                                    color: AppColors.primaryColor,
-                                    tooltip: AppStrings.phoneCopiedToClipboard.tr(),
-                                    onPressed: () {
-                                      Clipboard.setData(ClipboardData(text: s.phone));
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text(AppStrings.phoneCopiedToClipboard.tr()),
-                                          backgroundColor: AppColors.success,
-                                          duration: const Duration(seconds: 2),
+
+                                // Address Pill Chip
+                                if (s.address.isNotEmpty)
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: isDesktop ? 8 : 8.w,
+                                      vertical: isDesktop ? 4 : 4.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.scafoldBackGround,
+                                      borderRadius: BorderRadius.circular(6.r),
+                                      border: Border.all(color: AppColors.dividerColor),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.location_on_rounded,
+                                          size: 13,
+                                          color: AppColors.sandText,
                                         ),
-                                      );
-                                    },
+                                        SizedBox(width: 4.w),
+                                        Text(
+                                          s.address,
+                                          style: TextStyles.customStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.sandText,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                // Email Pill Chip
+                                if (s.email != null && s.email!.isNotEmpty)
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: isDesktop ? 8 : 8.w,
+                                      vertical: isDesktop ? 4 : 4.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primaryColor.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(6.r),
+                                      border: Border.all(
+                                        color: AppColors.primaryColor.withValues(alpha: 0.3),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.email_rounded,
+                                          size: 13,
+                                          color: AppColors.primaryColor,
+                                        ),
+                                        SizedBox(width: 4.w),
+                                        Text(
+                                          s.email!,
+                                          style: TextStyles.customStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.primaryColor,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                               ],
                             ),
-                            if (s.email != null && s.email!.isNotEmpty) ...[
-                              SizedBox(height: isDesktop ? 2 : 2.h),
-                              Text(
-                                '${AppStrings.emailLabel.tr()}: ${s.email}',
-                                style: TextStyles.customStyle(fontSize: 12, color: AppColors.sandText),
-                              ),
-                            ],
                           ],
                         ),
                       ),
