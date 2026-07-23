@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
@@ -209,21 +210,25 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                           vertical: isDesktop ? 4 : 4.h,
                                         ),
                                         child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Text(
-                                              item.productName,
-                                              style: TextStyles.customStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w600,
-                                                color: AppColors.blackReal,
+                                            Expanded(
+                                              child: Text(
+                                                item.productName,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyles.customStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: AppColors.blackReal,
+                                                ),
                                               ),
                                             ),
+                                            SizedBox(width: isDesktop ? 8 : 8.w),
                                             Text(
-                                              '${item.quantity.toStringAsFixed(0)} ${AppStrings.unit.tr()} × ${item.purchasePrice.toStringAsFixed(2)} = ${item.subtotal.toStringAsFixed(2)} ${AppStrings.egp.tr()}',
+                                              '${item.quantity.toSmartAmount()} ${AppStrings.unit.tr()} × ${item.purchasePrice.toSmartAmount()} = ${item.subtotal.toSmartAmount()} ${AppStrings.egp.tr()}',
                                               style: TextStyles.customStyle(
                                                 fontSize: 13,
+                                                fontWeight: FontWeight.w500,
                                                 color: AppColors.sandText,
                                               ),
                                             ),

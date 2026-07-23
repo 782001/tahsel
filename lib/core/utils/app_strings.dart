@@ -933,4 +933,5 @@ class AppStrings {
   static const String areYouSureDelete = "are_you_sure_delete";
   static const String deleteCategoryWarning = "delete_category_warning";
   static const String deleteSupplierWarning = "delete_supplier_warning";
+  static const String emailCopiedToClipboard = "email_copied_to_clipboard";
 }

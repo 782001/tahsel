@@ -183,8 +183,7 @@ class AppColors {
       isDark ? const Color(0xFFCE93D8) : const Color(0xFF6A1B9A);
 
   /// Delete action red
-  static Color get deleteRed =>
-      isDark ? const Color(0xFFEF5350) : Colors.red;
+  static Color get deleteRed => isDark ? const Color(0xFFEF5350) : Colors.red;
 
   /// Low stock badge orange
   static Color get lowStockOrange =>

@@ -377,7 +377,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
     InventoryProductEntity selectedProd = _allProducts.first;
     final qtyController = TextEditingController(text: '1');
     final priceController = TextEditingController(
-      text: selectedProd.purchasePrice.toStringAsFixed(2),
+      text: selectedProd.purchasePrice.toSmartAmount(),
     );
 
     showDialog(
@@ -438,7 +438,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                 setDialogState(() {
                                   selectedProd = p;
                                   priceController.text = p.purchasePrice
-                                      .toStringAsFixed(2);
+                                      .toSmartAmount();
                                 });
                               },
                               onCleared: () {},

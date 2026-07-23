@@ -111,7 +111,8 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
                           return InventoryEmptyState(
                             icon: Icons.history_toggle_off_rounded,
                             title: AppStrings.noMovementsFound.tr(),
-                            description: AppStrings.emptyStockMovementsDesc.tr(),
+                            description: AppStrings.emptyStockMovementsDesc
+                                .tr(),
                           );
                         }
 
@@ -131,9 +132,6 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
                                 color: AppColors.surface,
                                 borderRadius: BorderRadius.circular(
                                   isDesktop ? 14 : 14.r,
-                                ),
-                                border: Border.all(
-                                  color: AppColors.dividerColor,
                                 ),
                               ),
                               child: Row(

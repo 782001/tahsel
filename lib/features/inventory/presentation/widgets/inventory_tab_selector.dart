@@ -46,7 +46,7 @@ class InventoryTabSelector extends StatelessWidget {
                   width: tabWidth,
                   height: double.infinity,
                   decoration: BoxDecoration(
-                    color: AppColors.whiteColor,
+                    color: AppColors.stitchSurfaceHigh.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(isDesktop ? 20 : 20.r),
                     boxShadow: [
                       BoxShadow(

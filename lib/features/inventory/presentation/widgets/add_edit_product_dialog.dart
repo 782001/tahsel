@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/extensions/extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
+
 import '../../domain/entities/inventory_category_entity.dart';
 import '../../domain/entities/inventory_product_entity.dart';
 import '../../domain/entities/inventory_supplier_entity.dart';
-import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'searchable_dropdown_field.dart';
-
-import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 
 class AddEditProductDialog extends StatefulWidget {
   final InventoryProductEntity? product;
@@ -54,29 +54,41 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
     final p = widget.product;
     _nameController = TextEditingController(text: p?.name ?? '');
     _skuController = TextEditingController(
-      text: p?.sku ?? 'SKU-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
+      text:
+          p?.sku ??
+          'SKU-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
     );
     _barcodeController = TextEditingController(text: p?.barcode ?? '');
     _purchasePriceController = TextEditingController(
-      text: p != null ? p.purchasePrice.toStringAsFixed(2) : '0',
+      text: p != null ? p.purchasePrice.toSmartAmount() : '0',
     );
     _sellingPriceController = TextEditingController(
-      text: p != null ? p.sellingPrice.toStringAsFixed(2) : '0',
+      text: p != null ? p.sellingPrice.toSmartAmount() : '0',
     );
     _initialQtyController = TextEditingController(
-      text: p != null ? p.currentQuantity.toStringAsFixed(0) : '0',
+      text: p != null ? p.currentQuantity.toSmartAmount() : '0',
     );
     _minQtyController = TextEditingController(
-      text: p != null ? p.minQuantity.toStringAsFixed(0) : '5',
+      text: p != null ? p.minQuantity.toSmartAmount() : '5',
     );
-    _unitController = TextEditingController(text: p?.unit ?? AppStrings.piece.tr());
+    _unitController = TextEditingController(
+      text: p?.unit ?? AppStrings.piece.tr(),
+    );
     _notesController = TextEditingController(text: p?.notes ?? '');
 
-    _selectedCategoryId = p?.categoryId ?? (widget.categories.isNotEmpty ? widget.categories.first.id : null);
-    _selectedCategoryName = p?.categoryName ?? (widget.categories.isNotEmpty ? widget.categories.first.name : '');
+    _selectedCategoryId =
+        p?.categoryId ??
+        (widget.categories.isNotEmpty ? widget.categories.first.id : null);
+    _selectedCategoryName =
+        p?.categoryName ??
+        (widget.categories.isNotEmpty ? widget.categories.first.name : '');
 
-    _selectedSupplierId = p?.supplierId ?? (widget.suppliers.isNotEmpty ? widget.suppliers.first.id : null);
-    _selectedSupplierName = p?.supplierName ?? (widget.suppliers.isNotEmpty ? widget.suppliers.first.name : '');
+    _selectedSupplierId =
+        p?.supplierId ??
+        (widget.suppliers.isNotEmpty ? widget.suppliers.first.id : null);
+    _selectedSupplierName =
+        p?.supplierName ??
+        (widget.suppliers.isNotEmpty ? widget.suppliers.first.name : '');
 
     _isAvailable = p?.isAvailable ?? true;
   }
@@ -99,9 +111,13 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
     if (_formKey.currentState!.validate()) {
       final isEdit = widget.product != null;
       final newProduct = InventoryProductEntity(
-        id: isEdit ? widget.product!.id : 'prod_${DateTime.now().millisecondsSinceEpoch}',
+        id: isEdit
+            ? widget.product!.id
+            : 'prod_${DateTime.now().millisecondsSinceEpoch}',
         sku: _skuController.text.trim(),
-        barcode: _barcodeController.text.trim().isNotEmpty ? _barcodeController.text.trim() : null,
+        barcode: _barcodeController.text.trim().isNotEmpty
+            ? _barcodeController.text.trim()
+            : null,
         name: _nameController.text.trim(),
         categoryId: _selectedCategoryId ?? '',
         categoryName: _selectedCategoryName,
@@ -114,7 +130,9 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
             : (double.tryParse(_initialQtyController.text) ?? 0.0),
         minQuantity: double.tryParse(_minQtyController.text) ?? 0.0,
         unit: _unitController.text.trim(),
-        notes: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
+        notes: _notesController.text.trim().isNotEmpty
+            ? _notesController.text.trim()
+            : null,
         isAvailable: _isAvailable,
         createdAt: isEdit ? widget.product!.createdAt : DateTime.now(),
         updatedAt: DateTime.now(),
@@ -133,9 +151,14 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
 
     return Dialog(
       backgroundColor: AppColors.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isDesktop ? 16 : 16.r)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(isDesktop ? 16 : 16.r),
+      ),
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: 550, maxHeight: MediaQuery.of(context).size.height * 0.85),
+        constraints: BoxConstraints(
+          maxWidth: 550,
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
+        ),
         child: Padding(
           padding: EdgeInsets.all(isDesktop ? 20 : 20.w),
           child: Column(
@@ -146,7 +169,9 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    isEdit ? AppStrings.editProduct.tr() : AppStrings.addProduct.tr(),
+                    isEdit
+                        ? AppStrings.editProduct.tr()
+                        : AppStrings.addProduct.tr(),
                     style: TextStyles.customStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -252,7 +277,10 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                               child: _buildTextField(
                                 controller: _purchasePriceController,
                                 label: AppStrings.purchasePrice.tr(),
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
                               ),
                             ),
                             SizedBox(width: isDesktop ? 12 : 12.w),
@@ -260,7 +288,10 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                               child: _buildTextField(
                                 controller: _sellingPriceController,
                                 label: AppStrings.sellingPrice.tr(),
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
                               ),
                             ),
                           ],
@@ -274,8 +305,12 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                               child: _buildTextField(
                                 controller: _initialQtyController,
                                 label: AppStrings.currentQuantity.tr(),
-                                enabled: !isEdit, // Quantity locked on edit (changes via movements)
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                enabled:
+                                    !isEdit, // Quantity locked on edit (changes via movements)
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
                               ),
                             ),
                             SizedBox(width: isDesktop ? 12 : 12.w),
@@ -283,7 +318,10 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                               child: _buildTextField(
                                 controller: _minQtyController,
                                 label: AppStrings.minQuantity.tr(),
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
                               ),
                             ),
                           ],
@@ -318,7 +356,9 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                           ),
                           value: _isAvailable,
                           activeTrackColor: AppColors.primaryColor,
-                          onChanged: (val) => setState(() => _isAvailable = val),
+                          activeThumbColor: AppColors.white,
+                          onChanged: (val) =>
+                              setState(() => _isAvailable = val),
                         ),
                       ],
                     ),
@@ -336,7 +376,9 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                     onPressed: () => Navigator.of(context).pop(),
                     child: Text(
                       AppStrings.cancel.tr(),
-                      style: TextStyles.customStyle(color: AppColors.blackLight),
+                      style: TextStyles.customStyle(
+                        color: AppColors.blackLight,
+                      ),
                     ),
                   ),
                   SizedBox(width: isDesktop ? 12 : 12.w),
@@ -344,8 +386,15 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                     onPressed: _submit,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryColor,
-                      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 : 24.w, vertical: isDesktop ? 12 : 12.h),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isDesktop ? 10 : 10.r)),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isDesktop ? 24 : 24.w,
+                        vertical: isDesktop ? 12 : 12.h,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          isDesktop ? 10 : 10.r,
+                        ),
+                      ),
                     ),
                     child: Text(
                       isEdit ? AppStrings.edit.tr() : AppStrings.save.tr(),
