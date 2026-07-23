@@ -139,7 +139,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                             child: _buildKpiCard(
                               title: AppStrings.totalInventoryValue.tr(),
                               value: totalValue.toStringAsFixed(0),
-                              subtitle: 'ج.م',
+                              subtitle: AppStrings.egp.tr(),
                               icon: Icons.account_balance_wallet_rounded,
                               color: AppColors.success,
                               isDesktop: isDesktop,
@@ -153,7 +153,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                   SizedBox(height: isDesktop ? 32 : 24.h),
 
                   Text(
-                    'أقسام إدارة المخزون',
+                    AppStrings.inventorySubmodulesTitle.tr(),
                     style: TextStyles.customStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,

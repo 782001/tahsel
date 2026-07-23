@@ -81,7 +81,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
     }
     if (_selectedItems.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('الرجاء إضافة منتج واحد على الأقل')),
+        SnackBar(content: Text(AppStrings.pleaseAddAtLeastOneItem.tr())),
       );
       return;
     }

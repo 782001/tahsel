@@ -10,6 +10,7 @@ import 'package:tahsel/core/widgets/responsive_layout.dart';
 import '../../domain/entities/inventory_category_entity.dart';
 import '../cubits/inventory_categories_cubit.dart';
 import '../widgets/add_edit_category_dialog.dart';
+import '../widgets/inventory_empty_state.dart';
 
 class CategoriesScreen extends StatefulWidget {
   const CategoriesScreen({super.key});
@@ -114,13 +115,12 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                         final categories = state.categories;
 
                         if (categories.isEmpty) {
-                          return Center(
-                            child: Text(
-                              AppStrings.noCategoriesFound.tr(),
-                              style: TextStyles.customStyle(
-                                color: AppColors.disabledColor,
-                              ),
-                            ),
+                          return InventoryEmptyState(
+                            icon: Icons.category_outlined,
+                            title: AppStrings.noCategoriesFound.tr(),
+                            description: AppStrings.emptyCategoriesDesc.tr(),
+                            actionLabel: AppStrings.addCategory.tr(),
+                            onAction: () => _openAddEditCategoryDialog(),
                           );
                         }
 

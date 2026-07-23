@@ -5,11 +5,12 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
-
 import '../../domain/entities/inventory_supplier_entity.dart';
 import '../cubits/inventory_suppliers_cubit.dart';
 import '../widgets/add_edit_supplier_dialog.dart';
+import '../widgets/inventory_empty_state.dart';
 import 'supplier_details_screen.dart';
 
 class SuppliersScreen extends StatefulWidget {
@@ -112,25 +113,12 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
                         final suppliers = state.suppliers;
 
                         if (suppliers.isEmpty) {
-                          return Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.local_shipping_outlined,
-                                  size: 64,
-                                  color: AppColors.sandText,
-                                ),
-                                SizedBox(height: isDesktop ? 12 : 12.h),
-                                Text(
-                                  AppStrings.noSuppliersFound.tr(),
-                                  style: TextStyles.customStyle(
-                                    fontSize: 16,
-                                    color: AppColors.sandText,
-                                  ),
-                                ),
-                              ],
-                            ),
+                          return InventoryEmptyState(
+                            icon: Icons.local_shipping_outlined,
+                            title: AppStrings.noSuppliersFound.tr(),
+                            description: AppStrings.emptySuppliersDesc.tr(),
+                            actionLabel: AppStrings.addSupplier.tr(),
+                            onAction: () => _openAddEditSupplierDialog(),
                           );
                         }
 
@@ -148,9 +136,8 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => BlocProvider.value(
-                                        value: context
-                                            .read<InventorySuppliersCubit>(),
+                                      builder: (_) => BlocProvider(
+                                        create: (_) => sl<InventorySuppliersCubit>(),
                                         child: SupplierDetailsScreen(
                                           supplier: sup,
                                         ),

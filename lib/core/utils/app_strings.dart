@@ -909,4 +909,23 @@ class AppStrings {
   static const String addressLabel = "address_label";
   static const String phoneLabel = "phone_label";
   static const String purchaseInvoiceNum = "purchase_invoice_num";
+  static const String outOfStock = "out_of_stock";
+  static const String stableStock = "stable_stock";
+  static const String profitMargin = "profit_margin";
+  static const String noCategory = "no_category";
+  static const String noSupplier = "no_supplier";
+  static const String pleaseEnterQtyGreaterThanZero = "please_enter_qty_greater_than_zero";
+  static const String pleaseEnterAdjustmentReason = "please_enter_adjustment_reason";
+  static const String increaseStock = "increase_stock";
+  static const String decreaseStock = "decrease_stock";
+  static const String adjustmentReasonHint = "adjustment_reason_hint";
+  static const String confirmManualAdjustment = "confirm_manual_adjustment";
+  static const String pleaseEnterCategoryName = "please_enter_category_name";
+  static const String emptySuppliersDesc = "empty_suppliers_desc";
+  static const String emptyStockMovementsDesc = "empty_stock_movements_desc";
+  static const String emptyPurchasesDesc = "empty_purchases_desc";
+  static const String emptyProductsDesc = "empty_products_desc";
+  static const String emptyCategoriesDesc = "empty_categories_desc";
+  static const String inventorySubmodulesTitle = "inventory_submodules_title";
+  static const String pleaseAddAtLeastOneItem = "please_add_at_least_one_item";
 }

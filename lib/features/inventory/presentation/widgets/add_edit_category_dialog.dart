@@ -95,7 +95,7 @@ class _AddEditCategoryDialogState extends State<AddEditCategoryDialog> {
                   controller: _nameController,
                   labelText: AppStrings.categoryName.tr(),
                   hint: AppStrings.categoryName.tr(),
-                  validator: (v) => v == null || v.trim().isEmpty ? 'الرجاء إدخال اسم القسم' : null,
+                  validator: (v) => v == null || v.trim().isEmpty ? AppStrings.pleaseEnterCategoryName.tr() : null,
                 ),
                 SizedBox(height: isDesktop ? 12 : 12.h),
                 QuickAddTextField(

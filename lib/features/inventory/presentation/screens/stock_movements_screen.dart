@@ -10,6 +10,7 @@ import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 import '../../domain/entities/stock_movement_entity.dart';
 import '../cubits/inventory_stock_movements_cubit.dart';
+import '../widgets/inventory_empty_state.dart';
 
 class StockMovementsScreen extends StatefulWidget {
   const StockMovementsScreen({super.key});
@@ -107,13 +108,10 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
                         final movements = state.movements;
 
                         if (movements.isEmpty) {
-                          return Center(
-                            child: Text(
-                              AppStrings.noMovementsFound.tr(),
-                              style: TextStyles.customStyle(
-                                color: AppColors.disabledColor,
-                              ),
-                            ),
+                          return InventoryEmptyState(
+                            icon: Icons.history_toggle_off_rounded,
+                            title: AppStrings.noMovementsFound.tr(),
+                            description: AppStrings.emptyStockMovementsDesc.tr(),
                           );
                         }
 

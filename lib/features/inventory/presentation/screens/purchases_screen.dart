@@ -8,6 +8,7 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import '../widgets/inventory_empty_state.dart';
 
 import '../cubits/inventory_products_cubit.dart';
 import '../cubits/inventory_purchases_cubit.dart';
@@ -26,6 +27,31 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
   void initState() {
     super.initState();
     context.read<InventoryPurchasesCubit>().fetchPurchases();
+  }
+
+  void _navigateToCreatePurchase() {
+    final purchasesCubit = context.read<InventoryPurchasesCubit>();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MultiBlocProvider(
+          providers: [
+            BlocProvider.value(
+              value: purchasesCubit,
+            ),
+            BlocProvider(
+              create: (_) =>
+                  sl<InventorySuppliersCubit>()..fetchSuppliers(),
+            ),
+            BlocProvider(
+              create: (_) =>
+                  sl<InventoryProductsCubit>()..fetchProducts(),
+            ),
+          ],
+          child: const CreatePurchaseScreen(),
+        ),
+      ),
+    );
   }
 
   @override
@@ -56,29 +82,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppColors.primaryColor,
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => MultiBlocProvider(
-                providers: [
-                  BlocProvider.value(
-                    value: context.read<InventoryPurchasesCubit>(),
-                  ),
-                  BlocProvider(
-                    create: (_) =>
-                        sl<InventorySuppliersCubit>()..fetchSuppliers(),
-                  ),
-                  BlocProvider(
-                    create: (_) =>
-                        sl<InventoryProductsCubit>()..fetchProducts(),
-                  ),
-                ],
-                child: const CreatePurchaseScreen(),
-              ),
-            ),
-          );
-        },
+        onPressed: _navigateToCreatePurchase,
         icon: const Icon(Icons.add_shopping_cart_rounded, color: Colors.white),
         label: Text(
           AppStrings.newPurchase.tr(),
@@ -111,25 +115,12 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                     final purchases = state.purchases;
 
                     if (purchases.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.receipt_long_outlined,
-                              size: 64,
-                              color: AppColors.disabledColor,
-                            ),
-                            SizedBox(height: isDesktop ? 12 : 12.h),
-                            Text(
-                              AppStrings.noPurchasesFound.tr(),
-                              style: TextStyles.customStyle(
-                                fontSize: 16,
-                                color: AppColors.disabledColor,
-                              ),
-                            ),
-                          ],
-                        ),
+                      return InventoryEmptyState(
+                        icon: Icons.receipt_long_outlined,
+                        title: AppStrings.noPurchasesFound.tr(),
+                        description: AppStrings.emptyPurchasesDesc.tr(),
+                        actionLabel: AppStrings.newPurchase.tr(),
+                        onAction: () => _navigateToCreatePurchase(),
                       );
                     }
 

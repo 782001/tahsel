@@ -43,14 +43,14 @@ class _ManualStockAdjustmentDialogState extends State<ManualStockAdjustmentDialo
 
     if (qty <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('الرجاء إدخال كمية أكبر من صفر')),
+        SnackBar(content: Text(AppStrings.pleaseEnterQtyGreaterThanZero.tr())),
       );
       return;
     }
 
     if (reason.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('الرجاء كتابة سبب التعديل')),
+        SnackBar(content: Text(AppStrings.pleaseEnterAdjustmentReason.tr())),
       );
       return;
     }
@@ -94,14 +94,14 @@ class _ManualStockAdjustmentDialogState extends State<ManualStockAdjustmentDialo
               ),
               SizedBox(height: isDesktop ? 6 : 6.h),
               Text(
-                'المنتج: ${widget.product.name} (${widget.product.currentQuantity} ${widget.product.unit})',
+                '${AppStrings.inventoryProducts.tr()}: ${widget.product.name} (${widget.product.currentQuantity} ${widget.product.unit})',
                 style: TextStyles.customStyle(fontSize: 13, color: AppColors.sandText),
               ),
               SizedBox(height: isDesktop ? 16 : 16.h),
 
               // Type Selector — DebtsTabSelector style
               InventoryTabSelector(
-                tabs: const ['زيادة مخزون (+)', 'خصم مخزون (-)'],
+                tabs: [AppStrings.increaseStock.tr(), AppStrings.decreaseStock.tr()],
                 selectedIndex: _selectedTab,
                 onTabChanged: (index) => setState(() => _selectedTab = index),
               ),
@@ -119,7 +119,7 @@ class _ManualStockAdjustmentDialogState extends State<ManualStockAdjustmentDialo
                 controller: _reasonController,
                 maxLines: 2,
                 labelText: AppStrings.adjustmentReason.tr(),
-                hint: 'مثال: تلف، جرد سنوي، تسوية',
+                hint: AppStrings.adjustmentReasonHint.tr(),
               ),
               SizedBox(height: isDesktop ? 20 : 20.h),
 
@@ -133,7 +133,7 @@ class _ManualStockAdjustmentDialogState extends State<ManualStockAdjustmentDialo
                   ),
                   onPressed: _submit,
                   child: Text(
-                    'تأكيد التعديل اليدوي',
+                    AppStrings.confirmManualAdjustment.tr(),
                     style: TextStyles.customStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                 ),
