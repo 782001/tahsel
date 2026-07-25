@@ -255,6 +255,46 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                 onPressed: () => Navigator.of(context).pop(),
               ),
               actions: [
+                // Save PDF to Device
+                IconButton(
+                  icon: Icon(
+                    Icons.file_download_rounded,
+                    color: AppColors.primaryColor,
+                  ),
+                  tooltip: AppStrings.savePdfToDevice.tr(),
+                  onPressed: () async {
+                    try {
+                      final isArabic = AppStrings.currentLang == 'ar';
+                      final file =
+                          await InvoicePdfService.saveInvoicePdfToStorage(
+                            invoice: _invoice,
+                            isArabic: isArabic,
+                          );
+
+                      if (file != null && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              '${AppStrings.invoiceSavedSuccessfully.tr()}\n${file.path}',
+                            ),
+                            backgroundColor: AppColors.success,
+                            duration: const Duration(seconds: 4),
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        AppLogger.printMessage(e);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(e.toString()),
+                            backgroundColor: AppColors.error,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                ),
                 // Share as PDF
                 IconButton(
                   icon: Icon(
@@ -304,30 +344,14 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                     }
 
                     try {
-                      // showDialog(
-                      //   // ignore: use_build_context_synchronously
-                      //   context: context,
-                      //   barrierDismissible: false,
-                      //   builder: (context) =>  Center(
-                      //     child: CircularProgressIndicator(color: AppColors.primaryColor,
-                      //     strokeWidth: 4,
-                      //     ),
-                      //   ),
-                      // );
-
                       final isArabic = AppStrings.currentLang == 'ar';
                       await InvoicePdfService.generateAndShareInvoice(
                         _invoice,
                         isArabic: isArabic,
                         phoneNumber: phone,
                       );
-
-                      if (context.mounted) {
-                        Navigator.of(context).pop();
-                      }
                     } catch (e) {
                       if (context.mounted) {
-                        Navigator.of(context).pop();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(e.toString()),
