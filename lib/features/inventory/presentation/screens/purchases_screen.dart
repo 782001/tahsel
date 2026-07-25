@@ -1,10 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:intl/intl.dart';
-import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/invoice_pdf_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
@@ -17,6 +13,8 @@ import '../cubits/inventory_products_cubit.dart';
 import '../cubits/inventory_purchases_cubit.dart';
 import '../cubits/inventory_suppliers_cubit.dart';
 import '../widgets/inventory_empty_state.dart';
+import '../widgets/purchase_card_item.dart';
+import '../widgets/purchase_search_bar.dart';
 import 'create_purchase_screen.dart';
 
 class PurchasesScreen extends StatefulWidget {
@@ -206,16 +204,14 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
   }
 
   Future<void> _pickDateRange(BuildContext context) async {
-    final now = DateTime.now();
     final picked = await showDateRangePicker(
       context: context,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(now.year + 5),
-      initialDateRange:
-          _selectedDateRange ??
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      initialDateRange: _selectedDateRange ??
           DateTimeRange(
-            start: now.subtract(const Duration(days: 30)),
-            end: now,
+            start: DateTime.now().subtract(const Duration(days: 30)),
+            end: DateTime.now(),
           ),
       builder: (context, child) {
         return Theme(
@@ -252,304 +248,124 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
-      appBar: AppBar(
-        scrolledUnderElevation: 0,
-        backgroundColor: AppColors.scafoldBackGround,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: AppColors.primaryColor,
-          ),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        centerTitle: true,
-        title: Text(
-          AppStrings.inventoryPurchases.tr(),
-          style: TextStyles.customStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: AppColors.primaryColor,
-          ),
-        ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primaryColor,
-        onPressed: _navigateToCreatePurchase,
-        icon: const Icon(Icons.add_shopping_cart_rounded, color: Colors.white),
-        label: Text(
-          AppStrings.newPurchase.tr(),
-          style: TextStyles.customStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-      ),
       body: SafeArea(
-        child: Center(
+        child: Align(
+          alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              maxWidth: isDesktop ? 900 : double.infinity,
+              maxWidth: isDesktop ? 1000 : double.infinity,
             ),
             child: Padding(
-              padding: EdgeInsets.all(isDesktop ? 24 : 16.w),
-              child: BlocBuilder<InventoryPurchasesCubit, InventoryPurchasesState>(
+              padding: EdgeInsets.symmetric(
+                horizontal: isDesktop ? 24 : 16.w,
+                vertical: isDesktop ? 20 : 16.h,
+              ),
+              child: BlocBuilder<InventoryPurchasesCubit,
+                  InventoryPurchasesState>(
                 builder: (context, state) {
                   if (state is InventoryPurchasesLoading) {
-                    return Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primaryColor,
-                        strokeWidth: 4,
-                      ),
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (state is InventoryPurchasesError) {
+                    return InventoryEmptyState(
+                      icon: Icons.error_outline_rounded,
+                      title: AppStrings.noResults.tr(),
+                      description: state.message,
+                      actionLabel: AppStrings.clearFilter.tr(),
+                      onAction: () => context
+                          .read<InventoryPurchasesCubit>()
+                          .fetchPurchases(),
                     );
                   }
-                  if (state is InventoryPurchasesLoaded) {
-                    final purchases = state.purchases;
 
-                    if (purchases.isEmpty) {
+                  if (state is InventoryPurchasesLoaded) {
+                    if (state.purchases.isEmpty) {
                       return InventoryEmptyState(
-                        icon: Icons.receipt_long_outlined,
+                        icon: Icons.shopping_bag_outlined,
                         title: AppStrings.noPurchasesFound.tr(),
                         description: AppStrings.emptyPurchasesDesc.tr(),
                         actionLabel: AppStrings.newPurchase.tr(),
-                        onAction: () => _navigateToCreatePurchase(),
+                        onAction: _navigateToCreatePurchase,
                       );
                     }
 
-                    // Apply Search Query & Date Filter
+                    // Apply Search & Date Filters
                     final query = _searchController.text.trim().toLowerCase();
-                    final filteredPurchases = purchases.where((pur) {
-                      final matchesQuery =
-                          query.isEmpty ||
-                          pur.id.toLowerCase().contains(query) ||
-                          pur.supplierName.toLowerCase().contains(query) ||
-                          pur.items.any(
-                            (item) =>
-                                item.productName.toLowerCase().contains(query),
+                    final filteredPurchases = state.purchases.where((p) {
+                      final matchesSearch = query.isEmpty ||
+                          p.supplierName.toLowerCase().contains(query) ||
+                          p.id.toLowerCase().contains(query) ||
+                          p.items.any(
+                            (i) => i.productName.toLowerCase().contains(query),
                           );
 
-                      bool matchesDateRange = true;
-                      if (_selectedDateRange != null) {
-                        final start = DateTime(
-                          _selectedDateRange!.start.year,
-                          _selectedDateRange!.start.month,
-                          _selectedDateRange!.start.day,
-                          0,
-                          0,
-                          0,
-                        );
-                        final end = DateTime(
-                          _selectedDateRange!.end.year,
-                          _selectedDateRange!.end.month,
-                          _selectedDateRange!.end.day,
-                          23,
-                          59,
-                          59,
-                        );
-                        matchesDateRange =
-                            pur.createdAt.isAfter(
-                              start.subtract(const Duration(seconds: 1)),
-                            ) &&
-                            pur.createdAt.isBefore(
-                              end.add(const Duration(seconds: 1)),
-                            );
-                      }
+                      final matchesDate = _selectedDateRange == null ||
+                          (p.createdAt.isAfter(
+                                _selectedDateRange!.start
+                                    .subtract(const Duration(seconds: 1)),
+                              ) &&
+                              p.createdAt.isBefore(
+                                _selectedDateRange!.end
+                                    .add(const Duration(days: 1)),
+                              ));
 
-                      return matchesQuery && matchesDateRange;
+                      return matchesSearch && matchesDate;
                     }).toList();
 
                     return Column(
                       children: [
-                        // Search & Date Range Filter Header
-                        Container(
-                          margin: EdgeInsets.only(
-                            bottom: isDesktop ? 16 : 14.h,
-                          ),
-                          child: Column(
-                            children: [
-                              // Search TextField
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: AppColors.surface,
-                                  borderRadius: BorderRadius.circular(12.r),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.blackLight.withValues(
-                                        alpha: 0.05,
-                                      ),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
+                        // Header bar with Add Purchase button
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              AppStrings.inventoryPurchases.tr(),
+                              style: TextStyles.customStyle(
+                                fontSize: isDesktop ? 22 : 18.sp,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primaryColor,
+                              ),
+                            ),
+                            ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    AppColors.inventoryPurchasePurple,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isDesktop ? 18 : 14.w,
+                                  vertical: isDesktop ? 12 : 10.h,
                                 ),
-                                child: TextField(
-                                  controller: _searchController,
-                                  cursorColor: AppColors.primaryColor,
-                                  style: TextStyles.customStyle(
-                                    fontSize: 14,
-                                    color: AppColors.blackReal,
-                                  ),
-                                  decoration: InputDecoration(
-                                    hintText: AppStrings.searchInvoiceHint.tr(),
-                                    hintStyle: TextStyles.customStyle(
-                                      fontSize: 13,
-                                      color: AppColors.sandText,
-                                    ),
-                                    prefixIcon: Icon(
-                                      Icons.search_rounded,
-                                      color: AppColors.primaryColor,
-                                    ),
-                                    suffixIcon:
-                                        _searchController.text.isNotEmpty
-                                        ? IconButton(
-                                            icon: const Icon(
-                                              Icons.clear_rounded,
-                                              size: 18,
-                                            ),
-                                            onPressed: () =>
-                                                _searchController.clear(),
-                                          )
-                                        : null,
-                                    border: InputBorder.none,
-                                    contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 16.w,
-                                      vertical: 14.h,
-                                    ),
-                                  ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
                                 ),
                               ),
-                              SizedBox(height: 10.h),
-                              // Date Filter Button Row
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: InkWell(
-                                      onTap: () => _pickDateRange(context),
-                                      borderRadius: BorderRadius.circular(10.r),
-                                      child: Container(
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: 12.w,
-                                          vertical: 10.h,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: _selectedDateRange != null
-                                              ? AppColors
-                                                    .inventoryPurchasePurple
-                                                    .withValues(alpha: 0.12)
-                                              : AppColors.surface,
-                                          borderRadius: BorderRadius.circular(
-                                            10.r,
-                                          ),
-                                          border: Border.all(
-                                            color: _selectedDateRange != null
-                                                ? AppColors
-                                                      .inventoryPurchasePurple
-                                                : AppColors.dividerColor,
-                                          ),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              Icons.date_range_rounded,
-                                              size: 18,
-                                              color: _selectedDateRange != null
-                                                  ? AppColors
-                                                        .inventoryPurchasePurple
-                                                  : AppColors.primaryColor,
-                                            ),
-                                            SizedBox(width: 8.w),
-                                            Expanded(
-                                              child: Text(
-                                                _selectedDateRange != null
-                                                    ? '${DateFormat('yyyy/MM/dd').format(_selectedDateRange!.start)} - ${DateFormat('yyyy/MM/dd').format(_selectedDateRange!.end)}'
-                                                    : AppStrings
-                                                          .selectDatePeriod
-                                                          .tr(),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: TextStyles.customStyle(
-                                                  fontSize: 13,
-                                                  fontWeight:
-                                                      _selectedDateRange != null
-                                                      ? FontWeight.bold
-                                                      : FontWeight.normal,
-                                                  color:
-                                                      _selectedDateRange != null
-                                                      ? AppColors
-                                                            .inventoryPurchasePurple
-                                                      : AppColors.sandText,
-                                                ),
-                                              ),
-                                            ),
-                                            if (_selectedDateRange != null)
-                                              GestureDetector(
-                                                onTap: () => setState(
-                                                  () =>
-                                                      _selectedDateRange = null,
-                                                ),
-                                                child: Icon(
-                                                  Icons.cancel_rounded,
-                                                  size: 16,
-                                                  color: AppColors
-                                                      .inventoryPurchasePurple,
-                                                ),
-                                              ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  if (_searchController.text.isNotEmpty ||
-                                      _selectedDateRange != null) ...[
-                                    SizedBox(width: 8.w),
-                                    InkWell(
-                                      onTap: _clearFilters,
-                                      borderRadius: BorderRadius.circular(10.r),
-                                      child: Container(
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: 12.w,
-                                          vertical: 10.h,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.error.withValues(
-                                            alpha: 0.1,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            10.r,
-                                          ),
-                                          border: Border.all(
-                                            color: AppColors.error.withValues(
-                                              alpha: 0.3,
-                                            ),
-                                          ),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              Icons.refresh_rounded,
-                                              size: 16,
-                                              color: AppColors.error,
-                                            ),
-                                            SizedBox(width: 4.w),
-                                            Text(
-                                              AppStrings.clearFilter.tr(),
-                                              style: TextStyles.customStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppColors.error,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
+                              onPressed: _navigateToCreatePurchase,
+                              icon: const Icon(
+                                Icons.add_rounded,
+                                color: Colors.white,
+                                size: 20,
                               ),
-                            ],
-                          ),
+                              label: Text(
+                                AppStrings.newPurchase.tr(),
+                                style: TextStyles.customStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
+                        SizedBox(height: 14.h),
+
+                        // Search and Date Filter Bar Component
+                        PurchaseSearchBar(
+                          searchController: _searchController,
+                          selectedDateRange: _selectedDateRange,
+                          onSelectDateRange: () => _pickDateRange(context),
+                          onClearFilters: _clearFilters,
+                        ),
+                        SizedBox(height: 14.h),
 
                         // Filtered Invoices List
                         Expanded(
@@ -568,444 +384,14 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                       SizedBox(height: isDesktop ? 12 : 12.h),
                                   itemBuilder: (context, index) {
                                     final pur = filteredPurchases[index];
-                                    final dateStr = DateFormat(
-                                      'yyyy/MM/dd - hh:mm a',
-                                    ).format(pur.createdAt);
-
-                                    return Container(
-                                      padding: EdgeInsets.all(
-                                        isDesktop ? 16 : 16.w,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.surface,
-                                        borderRadius: BorderRadius.circular(
-                                          isDesktop ? 14 : 14.r,
-                                        ),
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Container(
-                                                padding: EdgeInsets.symmetric(
-                                                  horizontal: 6.w,
-                                                  vertical: 2.h,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: AppColors
-                                                      .inventoryPurchasePurple
-                                                      .withValues(alpha: 0.1),
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                        6.r,
-                                                      ),
-                                                  border: Border.all(
-                                                    color: AppColors
-                                                        .inventoryPurchasePurple
-                                                        .withValues(alpha: 0.3),
-                                                  ),
-                                                ),
-                                                child: Text(
-                                                  '#${pur.id.replaceAll('pur_', '')}',
-                                                  style: TextStyles.customStyle(
-                                                    fontSize: 11,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: AppColors
-                                                        .inventoryPurchasePurple,
-                                                  ),
-                                                ),
-                                              ),
-                                              const Spacer(),
-                                              Text(
-                                                dateStr,
-                                                style: TextStyles.customStyle(
-                                                  fontSize: 12,
-                                                  color: AppColors.sandText,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Expanded(
-                                                child: Row(
-                                                  children: [
-                                                    CircleAvatar(
-                                                      backgroundColor: AppColors
-                                                          .inventoryPurchasePurple
-                                                          .withValues(
-                                                            alpha: 0.12,
-                                                          ),
-                                                      radius: isDesktop
-                                                          ? 18
-                                                          : 18.r,
-                                                      child: Icon(
-                                                        Icons.receipt_rounded,
-                                                        color: AppColors
-                                                            .inventoryPurchasePurple,
-                                                        size: 18,
-                                                      ),
-                                                    ),
-                                                    SizedBox(
-                                                      width: isDesktop
-                                                          ? 8
-                                                          : 8.w,
-                                                    ),
-                                                    Expanded(
-                                                      child: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          SizedBox(
-                                                            height: isDesktop
-                                                                ? 6
-                                                                : 6.h,
-                                                          ),
-                                                          Row(
-                                                            children: [
-                                                              Expanded(
-                                                                child: Text(
-                                                                  '${AppStrings.supplier.tr()}: ${pur.supplierName}',
-                                                                  maxLines: 2,
-                                                                  overflow:
-                                                                      TextOverflow
-                                                                          .ellipsis,
-                                                                  style: TextStyles.customStyle(
-                                                                    fontSize:
-                                                                        15,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold,
-                                                                    color: AppColors
-                                                                        .blackReal,
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                          SizedBox(
-                                                            height: isDesktop
-                                                                ? 4
-                                                                : 4.h,
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                width: isDesktop ? 8 : 8.w,
-                                              ),
-                                              Row(
-                                                children: [
-                                                  Text(
-                                                    '${pur.totalAmount.toSmartAmount()} ${AppStrings.egp.tr()}',
-                                                    style:
-                                                        TextStyles.customStyle(
-                                                          fontSize: 18,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          color: AppColors
-                                                              .primaryColor,
-                                                        ),
-                                                  ),
-                                                  PopupMenuButton<String>(
-                                                    icon: Icon(
-                                                      Icons.more_vert_rounded,
-                                                      color:
-                                                          AppColors.blackLight,
-                                                      size: 20,
-                                                    ),
-                                                    onSelected: (val) {
-                                                      if (val == 'share') {
-                                                        _sharePurchasePdf(pur);
-                                                      } else if (val ==
-                                                          'download') {
-                                                        _downloadPurchasePdf(
-                                                          pur,
-                                                        );
-                                                      } else if (val ==
-                                                          'edit') {
-                                                        _editPurchase(pur);
-                                                      } else if (val ==
-                                                          'delete') {
-                                                        _confirmDeletePurchase(
-                                                          pur,
-                                                        );
-                                                      }
-                                                    },
-                                                    itemBuilder: (ctx) => [
-                                                      if (!Platform.isWindows)
-                                                        PopupMenuItem(
-                                                          value: 'share',
-                                                          child: Row(
-                                                            children: [
-                                                              Icon(
-                                                                Icons
-                                                                    .picture_as_pdf_rounded,
-                                                                color: AppColors
-                                                                    .inventoryPurchasePurple,
-                                                                size: 18,
-                                                              ),
-                                                              SizedBox(
-                                                                width: 8.w,
-                                                              ),
-                                                              Text(
-                                                                AppStrings
-                                                                    .invoiceSharePdf
-                                                                    .tr(),
-                                                                style:
-                                                                    TextStyles.customStyle(
-                                                                      fontSize:
-                                                                          13,
-                                                                    ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                      PopupMenuItem(
-                                                        value: 'download',
-                                                        child: Row(
-                                                          children: [
-                                                            Icon(
-                                                              Icons
-                                                                  .download_rounded,
-                                                              color: AppColors
-                                                                  .primaryColor,
-                                                              size: 18,
-                                                            ),
-                                                            SizedBox(
-                                                              width: 8.w,
-                                                            ),
-                                                            Text(
-                                                              AppStrings
-                                                                  .savePdfToDevice
-                                                                  .tr(),
-                                                              style:
-                                                                  TextStyles.customStyle(
-                                                                    fontSize:
-                                                                        13,
-                                                                  ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                      const PopupMenuDivider(),
-                                                      PopupMenuItem(
-                                                        value: 'edit',
-                                                        child: Row(
-                                                          children: [
-                                                            Icon(
-                                                              Icons.edit_note,
-                                                              color: AppColors
-                                                                  .primaryColor,
-                                                              size: 18,
-                                                            ),
-                                                            SizedBox(
-                                                              width: 8.w,
-                                                            ),
-                                                            Text(
-                                                              AppStrings.edit
-                                                                  .tr(),
-                                                              style:
-                                                                  TextStyles.customStyle(
-                                                                    fontSize:
-                                                                        13,
-                                                                  ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                      PopupMenuItem(
-                                                        value: 'delete',
-                                                        child: Row(
-                                                          children: [
-                                                            Icon(
-                                                              Icons
-                                                                  .delete_outline_rounded,
-                                                              color: AppColors
-                                                                  .error,
-                                                              size: 18,
-                                                            ),
-                                                            SizedBox(
-                                                              width: 8.w,
-                                                            ),
-                                                            Text(
-                                                              AppStrings
-                                                                  .confirmDelete
-                                                                  .tr(),
-                                                              style: TextStyles.customStyle(
-                                                                fontSize: 13,
-                                                                color: AppColors
-                                                                    .error,
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                          SizedBox(
-                                            height: isDesktop ? 10 : 10.h,
-                                          ),
-                                          Divider(
-                                            color: AppColors.disabledColor
-                                                .withValues(alpha: 0.1),
-                                          ),
-                                          Column(
-                                            children: pur.items
-                                                .map(
-                                                  (item) => Container(
-                                                    padding:
-                                                        EdgeInsets.symmetric(
-                                                          horizontal: isDesktop
-                                                              ? 10
-                                                              : 10.w,
-                                                          vertical: isDesktop
-                                                              ? 6
-                                                              : 6.h,
-                                                        ),
-                                                    margin:
-                                                        EdgeInsets.symmetric(
-                                                          vertical: isDesktop
-                                                              ? 3
-                                                              : 3.h,
-                                                        ),
-                                                    decoration: BoxDecoration(
-                                                      color: AppColors
-                                                          .scafoldBackGround
-                                                          .withValues(
-                                                            alpha: 0.8,
-                                                          ),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            8.r,
-                                                          ),
-                                                    ),
-                                                    child: Row(
-                                                      children: [
-                                                        Container(
-                                                          width: isDesktop
-                                                              ? 6
-                                                              : 6.w,
-                                                          height: isDesktop
-                                                              ? 6
-                                                              : 6.h,
-                                                          decoration: BoxDecoration(
-                                                            color: AppColors
-                                                                .inventoryPurchasePurple,
-                                                            shape:
-                                                                BoxShape.circle,
-                                                          ),
-                                                        ),
-                                                        SizedBox(
-                                                          width: isDesktop
-                                                              ? 8
-                                                              : 8.w,
-                                                        ),
-                                                        Column(
-                                                          mainAxisSize:
-                                                              MainAxisSize.min,
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .start,
-                                                          children: [
-                                                            Text(
-                                                              item.productName,
-                                                              maxLines: 3,
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
-                                                              style: TextStyles.customStyle(
-                                                                fontSize: 13,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                                color: AppColors
-                                                                    .blackReal,
-                                                              ),
-                                                            ),
-                                                            SizedBox(
-                                                              height: isDesktop
-                                                                  ? 1
-                                                                  : 1.h,
-                                                            ),
-                                                            Row(
-                                                              children: [
-                                                                Text(
-                                                                  '${item.quantity.toSmartAmount()} ${AppStrings.unit.tr()} × ${item.purchasePrice.toSmartAmount()}',
-                                                                  style: TextStyles.customStyle(
-                                                                    fontSize:
-                                                                        12,
-                                                                    color: AppColors
-                                                                        .sandText,
-                                                                  ),
-                                                                ),
-                                                                SizedBox(
-                                                                  width:
-                                                                      isDesktop
-                                                                      ? 8
-                                                                      : 8.w,
-                                                                ),
-                                                                Container(
-                                                                  padding: EdgeInsets.symmetric(
-                                                                    horizontal:
-                                                                        isDesktop
-                                                                        ? 6
-                                                                        : 6.w,
-                                                                    vertical:
-                                                                        isDesktop
-                                                                        ? 2
-                                                                        : 2.h,
-                                                                  ),
-                                                                  decoration: BoxDecoration(
-                                                                    color: AppColors
-                                                                        .success
-                                                                        .withValues(
-                                                                          alpha:
-                                                                              0.1,
-                                                                        ),
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                          4.r,
-                                                                        ),
-                                                                  ),
-                                                                  child: Text(
-                                                                    '${item.subtotal.toSmartAmount()} ${AppStrings.egp.tr()}',
-                                                                    style: TextStyles.customStyle(
-                                                                      fontSize:
-                                                                          12,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold,
-                                                                      color: AppColors
-                                                                          .success,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                )
-                                                .toList(),
-                                          ),
-                                        ],
-                                      ),
+                                    return PurchaseCardItem(
+                                      purchase: pur,
+                                      onSharePdf: () => _sharePurchasePdf(pur),
+                                      onDownloadPdf: () =>
+                                          _downloadPurchasePdf(pur),
+                                      onEdit: () => _editPurchase(pur),
+                                      onDelete: () =>
+                                          _confirmDeletePurchase(pur),
                                     );
                                   },
                                 ),
