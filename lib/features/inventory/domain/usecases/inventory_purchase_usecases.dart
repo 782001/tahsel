@@ -20,3 +20,27 @@ class CreateInventoryPurchaseUseCase {
     return repository.createPurchase(purchase);
   }
 }
+
+class UpdateInventoryPurchaseUseCase {
+  final InventoryRepository repository;
+  UpdateInventoryPurchaseUseCase(this.repository);
+
+  Future<Either<Failure, void>> call({
+    required InventoryPurchaseEntity oldPurchase,
+    required InventoryPurchaseEntity newPurchase,
+  }) {
+    return repository.updatePurchase(
+      oldPurchase: oldPurchase,
+      newPurchase: newPurchase,
+    );
+  }
+}
+
+class DeleteInventoryPurchaseUseCase {
+  final InventoryRepository repository;
+  DeleteInventoryPurchaseUseCase(this.repository);
+
+  Future<Either<Failure, void>> call(InventoryPurchaseEntity purchase) {
+    return repository.deletePurchase(purchase);
+  }
+}

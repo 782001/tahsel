@@ -30,10 +30,14 @@ class InventoryPurchasesError extends InventoryPurchasesState {
 class InventoryPurchasesCubit extends Cubit<InventoryPurchasesState> {
   final GetInventoryPurchasesUseCase getPurchasesUseCase;
   final CreateInventoryPurchaseUseCase createPurchaseUseCase;
+  final UpdateInventoryPurchaseUseCase updatePurchaseUseCase;
+  final DeleteInventoryPurchaseUseCase deletePurchaseUseCase;
 
   InventoryPurchasesCubit({
     required this.getPurchasesUseCase,
     required this.createPurchaseUseCase,
+    required this.updatePurchaseUseCase,
+    required this.deletePurchaseUseCase,
   }) : super(InventoryPurchasesInitial());
 
   Future<void> fetchPurchases({String? supplierId}) async {
@@ -47,6 +51,40 @@ class InventoryPurchasesCubit extends Cubit<InventoryPurchasesState> {
 
   Future<bool> createPurchase(InventoryPurchaseEntity purchase) async {
     final result = await createPurchaseUseCase(purchase);
+    return result.fold(
+      (failure) {
+        emit(InventoryPurchasesError(failure.message));
+        return false;
+      },
+      (_) {
+        fetchPurchases();
+        return true;
+      },
+    );
+  }
+
+  Future<bool> updatePurchase({
+    required InventoryPurchaseEntity oldPurchase,
+    required InventoryPurchaseEntity newPurchase,
+  }) async {
+    final result = await updatePurchaseUseCase(
+      oldPurchase: oldPurchase,
+      newPurchase: newPurchase,
+    );
+    return result.fold(
+      (failure) {
+        emit(InventoryPurchasesError(failure.message));
+        return false;
+      },
+      (_) {
+        fetchPurchases();
+        return true;
+      },
+    );
+  }
+
+  Future<bool> deletePurchase(InventoryPurchaseEntity purchase) async {
+    final result = await deletePurchaseUseCase(purchase);
     return result.fold(
       (failure) {
         emit(InventoryPurchasesError(failure.message));

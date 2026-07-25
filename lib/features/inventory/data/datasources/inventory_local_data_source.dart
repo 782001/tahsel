@@ -29,6 +29,7 @@ abstract class InventoryLocalDataSource {
   // Purchases
   Future<List<InventoryPurchaseModel>> getPurchases();
   Future<void> savePurchase(InventoryPurchaseModel purchase);
+  Future<void> deletePurchase(String id);
   Future<List<InventoryPurchaseModel>> getUnsyncedPurchases();
 
   // Stock Movements
@@ -175,6 +176,12 @@ class InventoryLocalDataSourceImpl implements InventoryLocalDataSource {
   Future<void> savePurchase(InventoryPurchaseModel purchase) async {
     final box = await _getBox(purchasesBoxName);
     await box.put(purchase.id, jsonEncode(purchase.toMap()));
+  }
+
+  @override
+  Future<void> deletePurchase(String id) async {
+    final box = await _getBox(purchasesBoxName);
+    await box.delete(id);
   }
 
   @override

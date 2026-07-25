@@ -18,7 +18,8 @@ import '../cubits/inventory_suppliers_cubit.dart';
 import '../widgets/searchable_dropdown_field.dart';
 
 class CreatePurchaseScreen extends StatefulWidget {
-  const CreatePurchaseScreen({super.key});
+  final InventoryPurchaseEntity? initialPurchase;
+  const CreatePurchaseScreen({super.key, this.initialPurchase});
 
   @override
   State<CreatePurchaseScreen> createState() => _CreatePurchaseScreenState();
@@ -35,6 +36,10 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialPurchase != null) {
+      _selectedItems.addAll(widget.initialPurchase!.items);
+      _notesController.text = widget.initialPurchase!.notes ?? '';
+    }
     context.read<InventorySuppliersCubit>().fetchSuppliers();
     context.read<InventoryProductsCubit>().fetchProducts();
   }
@@ -100,21 +105,40 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
       }
     }
 
-    // 2. Create the purchase invoice
-    final purchase = InventoryPurchaseEntity(
-      id: 'pur_${DateTime.now().millisecondsSinceEpoch}',
-      supplierId: _selectedSupplier!.id,
-      supplierName: _selectedSupplier!.name,
-      items: _selectedItems,
-      totalAmount: _totalAmount,
-      notes: _notesController.text.trim().isNotEmpty
-          ? _notesController.text.trim()
-          : null,
-      createdAt: DateTime.now(),
-      isSynced: false,
-    );
+    // 2. Create or Update the purchase invoice
+    final bool isEdit = widget.initialPurchase != null;
+    bool success = false;
 
-    final success = await purchasesCubit.createPurchase(purchase);
+    if (isEdit) {
+      final updatedPurchase = widget.initialPurchase!.copyWith(
+        supplierId: _selectedSupplier!.id,
+        supplierName: _selectedSupplier!.name,
+        items: List.from(_selectedItems),
+        totalAmount: _totalAmount,
+        notes: _notesController.text.trim().isNotEmpty
+            ? _notesController.text.trim()
+            : null,
+        isSynced: false,
+      );
+      success = await purchasesCubit.updatePurchase(
+        oldPurchase: widget.initialPurchase!,
+        newPurchase: updatedPurchase,
+      );
+    } else {
+      final newPurchase = InventoryPurchaseEntity(
+        id: 'pur_${DateTime.now().millisecondsSinceEpoch}',
+        supplierId: _selectedSupplier!.id,
+        supplierName: _selectedSupplier!.name,
+        items: List.from(_selectedItems),
+        totalAmount: _totalAmount,
+        notes: _notesController.text.trim().isNotEmpty
+            ? _notesController.text.trim()
+            : null,
+        createdAt: DateTime.now(),
+        isSynced: false,
+      );
+      success = await purchasesCubit.createPurchase(newPurchase);
+    }
 
     if (success && mounted) {
       // 3. Refresh products data so all quantities & new products are re-fetched cleanly
@@ -142,7 +166,14 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
               setState(() {
                 _suppliers = state.suppliers;
                 if (_suppliers.isNotEmpty && _selectedSupplier == null) {
-                  _selectedSupplier = _suppliers.first;
+                  if (widget.initialPurchase != null) {
+                    _selectedSupplier = _suppliers.firstWhere(
+                      (s) => s.id == widget.initialPurchase!.supplierId,
+                      orElse: () => _suppliers.first,
+                    );
+                  } else {
+                    _selectedSupplier = _suppliers.first;
+                  }
                 }
               });
             }
@@ -169,7 +200,9 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
             onPressed: () => Navigator.of(context).pop(),
           ),
           title: Text(
-            AppStrings.newPurchase.tr(),
+            widget.initialPurchase != null
+                ? '${AppStrings.edit.tr()} ${AppStrings.purchaseInvoiceNum.tr()} #${widget.initialPurchase!.id.replaceAll("pur_", "")}'
+                : AppStrings.newPurchase.tr(),
             style: TextStyles.customStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,

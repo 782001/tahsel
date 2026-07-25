@@ -20,6 +20,7 @@ abstract class InventoryRemoteDataSource {
 
   Future<void> syncPurchases(String uid, List<InventoryPurchaseModel> purchases);
   Future<List<InventoryPurchaseModel>> fetchPurchasesFromRemote(String uid);
+  Future<void> deletePurchaseFromRemote(String uid, String purchaseId);
 
   Future<void> syncStockMovements(String uid, List<StockMovementModel> movements);
   Future<List<StockMovementModel>> fetchStockMovementsFromRemote(String uid);
@@ -182,5 +183,10 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
   @override
   Future<void> deleteProductFromRemote(String uid, String productId) async {
     await _getCol(uid, 'inventory_products').doc(productId).delete();
+  }
+
+  @override
+  Future<void> deletePurchaseFromRemote(String uid, String purchaseId) async {
+    await _getCol(uid, 'inventory_purchases').doc(purchaseId).delete();
   }
 }

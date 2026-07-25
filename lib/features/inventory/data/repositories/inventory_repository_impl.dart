@@ -468,6 +468,136 @@ class InventoryRepositoryImpl implements InventoryRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, void>> deletePurchase(
+    InventoryPurchaseEntity purchase,
+  ) async {
+    try {
+      // 1. Delete purchase record locally
+      await localDataSource.deletePurchase(purchase.id);
+
+      // Remote delete if connected
+      if (await connectionChecker.hasConnection && _currentUid != null) {
+        try {
+          await remoteDataSource.deletePurchaseFromRemote(
+            _currentUid!,
+            purchase.id,
+          );
+        } catch (_) {}
+      }
+
+      // 2. Revert stock quantity for each item in the purchase
+      for (final item in purchase.items) {
+        final product = await localDataSource.getProductById(item.productId);
+        if (product != null) {
+          final prevQty = product.currentQuantity;
+          final newQty = (prevQty - item.quantity).clamp(0.0, double.infinity);
+
+          final updatedProduct = InventoryProductModel.fromEntity(
+            product.copyWith(
+              currentQuantity: newQty,
+              updatedAt: DateTime.now(),
+              isSynced: false,
+            ),
+          );
+          await localDataSource.saveProduct(updatedProduct);
+
+          // Save cancellation stock movement
+          final movement = StockMovementModel(
+            id: 'sm_cancel_pur_${DateTime.now().microsecondsSinceEpoch}_${item.productId}',
+            productId: item.productId,
+            productName: item.productName,
+            type: StockMovementType.manualAdjustment,
+            quantity: item.quantity,
+            previousQuantity: prevQty,
+            newQuantity: newQty,
+            notes: 'إلغاء فاتورة شراء رقم #${purchase.id.replaceAll("pur_", "")}',
+            createdAt: DateTime.now(),
+            isSynced: false,
+          );
+          await localDataSource.saveStockMovement(movement);
+        }
+      }
+
+      _triggerBackgroundSync();
+      return const Right(null);
+    } catch (e) {
+      return Left(CacheFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updatePurchase({
+    required InventoryPurchaseEntity oldPurchase,
+    required InventoryPurchaseEntity newPurchase,
+  }) async {
+    try {
+      // 1. Save updated purchase model
+      final model = InventoryPurchaseModel.fromEntity(
+        newPurchase.copyWith(isSynced: false),
+      );
+      await localDataSource.savePurchase(model);
+
+      // 2. Revert quantities of old items, add quantities of new items
+      final Map<String, double> deltaQtyMap = {};
+      final Map<String, double> latestPricesMap = {};
+
+      for (final oldItem in oldPurchase.items) {
+        deltaQtyMap[oldItem.productId] =
+            (deltaQtyMap[oldItem.productId] ?? 0.0) - oldItem.quantity;
+      }
+
+      for (final newItem in newPurchase.items) {
+        deltaQtyMap[newItem.productId] =
+            (deltaQtyMap[newItem.productId] ?? 0.0) + newItem.quantity;
+        latestPricesMap[newItem.productId] = newItem.purchasePrice;
+      }
+
+      for (final entry in deltaQtyMap.entries) {
+        final productId = entry.key;
+        final deltaQty = entry.value;
+
+        final product = await localDataSource.getProductById(productId);
+        if (product != null) {
+          final prevQty = product.currentQuantity;
+          final newQty = (prevQty + deltaQty).clamp(0.0, double.infinity);
+          final newPrice = latestPricesMap[productId] ?? product.purchasePrice;
+
+          final updatedProduct = InventoryProductModel.fromEntity(
+            product.copyWith(
+              currentQuantity: newQty,
+              purchasePrice: newPrice,
+              updatedAt: DateTime.now(),
+              isSynced: false,
+            ),
+          );
+          await localDataSource.saveProduct(updatedProduct);
+
+          if (deltaQty != 0) {
+            final movement = StockMovementModel(
+              id: 'sm_edit_pur_${DateTime.now().microsecondsSinceEpoch}_$productId',
+              productId: productId,
+              productName: product.name,
+              type: StockMovementType.manualAdjustment,
+              quantity: deltaQty.abs(),
+              previousQuantity: prevQty,
+              newQuantity: newQty,
+              notes: 'تعديل فاتورة شراء رقم #${newPurchase.id.replaceAll("pur_", "")}',
+              createdAt: DateTime.now(),
+              isSynced: false,
+            );
+            await localDataSource.saveStockMovement(movement);
+          }
+        }
+      }
+
+      _triggerBackgroundSync();
+      return const Right(null);
+    } catch (e) {
+      return Left(CacheFailure(e.toString()));
+    }
+  }
+
   // --- STOCK MOVEMENTS ---
   @override
   Future<Either<Failure, List<StockMovementEntity>>> getStockMovements({

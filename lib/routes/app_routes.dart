@@ -136,8 +136,12 @@ class AppRoutes {
       case inventoryPurchases:
         if (!AppStrings.isVip) return _vipRestrictedRoute();
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => di.sl<InventoryPurchasesCubit>(),
+          builder: (_) => MultiBlocProvider(
+            providers: [
+              BlocProvider(create: (_) => di.sl<InventoryPurchasesCubit>()),
+              BlocProvider(create: (_) => di.sl<InventoryProductsCubit>()),
+              BlocProvider(create: (_) => di.sl<InventorySuppliersCubit>()),
+            ],
             child: const PurchasesScreen(),
           ),
         );

@@ -31,6 +31,11 @@ abstract class InventoryRepository {
   // Purchases
   Future<Either<Failure, List<InventoryPurchaseEntity>>> getPurchases({String? supplierId});
   Future<Either<Failure, void>> createPurchase(InventoryPurchaseEntity purchase);
+  Future<Either<Failure, void>> updatePurchase({
+    required InventoryPurchaseEntity oldPurchase,
+    required InventoryPurchaseEntity newPurchase,
+  });
+  Future<Either<Failure, void>> deletePurchase(InventoryPurchaseEntity purchase);
 
   // Stock Movements & Adjustments
   Future<Either<Failure, List<StockMovementEntity>>> getStockMovements({String? productId});

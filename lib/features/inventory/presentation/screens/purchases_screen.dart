@@ -4,11 +4,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
-import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/features/inventory/domain/entities/inventory_purchase_entity.dart';
 
 import '../cubits/inventory_products_cubit.dart';
 import '../cubits/inventory_purchases_cubit.dart';
@@ -43,6 +43,116 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _editPurchase(InventoryPurchaseEntity pur) async {
+    final purchasesCubit = context.read<InventoryPurchasesCubit>();
+    final productsCubit = context.read<InventoryProductsCubit>();
+    final suppliersCubit = context.read<InventorySuppliersCubit>();
+
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: purchasesCubit),
+            BlocProvider.value(value: productsCubit),
+            BlocProvider.value(value: suppliersCubit),
+          ],
+          child: CreatePurchaseScreen(initialPurchase: pur),
+        ),
+      ),
+    );
+    if (mounted) {
+      purchasesCubit.fetchPurchases();
+      productsCubit.fetchProducts();
+    }
+  }
+
+  void _navigateToCreatePurchase() {
+    final purchasesCubit = context.read<InventoryPurchasesCubit>();
+    final productsCubit = context.read<InventoryProductsCubit>();
+    final suppliersCubit = context.read<InventorySuppliersCubit>();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: purchasesCubit),
+            BlocProvider.value(value: productsCubit),
+            BlocProvider.value(value: suppliersCubit),
+          ],
+          child: const CreatePurchaseScreen(),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDeletePurchase(InventoryPurchaseEntity pur) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        title: Text(
+          AppStrings.confirmDelete.tr(),
+          style: TextStyles.customStyle(
+            fontWeight: FontWeight.bold,
+            color: AppColors.error,
+          ),
+        ),
+        content: Text(
+          'هل أنت متاكد من إلغاء فاتورة الشراء رقم #${pur.id.replaceAll("pur_", "")}؟ سيتسبب ذلك في تسوية خصم الكميات المضافة بواسطة هذه الفاتورة من المخزون.',
+          style: TextStyles.customStyle(
+            fontSize: 14,
+            color: AppColors.blackReal,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(
+              AppStrings.cancel.tr(),
+              style: TextStyles.customStyle(color: AppColors.blackLight),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(
+              AppStrings.confirmDelete.tr(),
+              style: TextStyles.customStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && mounted) {
+      final purchasesCubit = context.read<InventoryPurchasesCubit>();
+      final productsCubit = context.read<InventoryProductsCubit>();
+      final messenger = ScaffoldMessenger.of(context);
+
+      final success = await purchasesCubit.deletePurchase(pur);
+      if (success && mounted) {
+        await productsCubit.fetchProducts();
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(AppStrings.deletedSuccessfully.tr()),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _pickDateRange(BuildContext context) async {
@@ -85,27 +195,6 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
       _searchController.clear();
       _selectedDateRange = null;
     });
-  }
-
-  void _navigateToCreatePurchase() {
-    final purchasesCubit = context.read<InventoryPurchasesCubit>();
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => MultiBlocProvider(
-          providers: [
-            BlocProvider.value(value: purchasesCubit),
-            BlocProvider(
-              create: (_) => sl<InventorySuppliersCubit>()..fetchSuppliers(),
-            ),
-            BlocProvider(
-              create: (_) => sl<InventoryProductsCubit>()..fetchProducts(),
-            ),
-          ],
-          child: const CreatePurchaseScreen(),
-        ),
-      ),
-    );
   }
 
   @override
@@ -570,13 +659,72 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                               SizedBox(
                                                 width: isDesktop ? 8 : 8.w,
                                               ),
-                                              Text(
-                                                '${pur.totalAmount.toSmartAmount()} ${AppStrings.egp.tr()}',
-                                                style: TextStyles.customStyle(
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: AppColors.primaryColor,
-                                                ),
+                                              Row(
+                                                children: [
+                                                  Text(
+                                                    '${pur.totalAmount.toSmartAmount()} ${AppStrings.egp.tr()}',
+                                                    style: TextStyles.customStyle(
+                                                      fontSize: 18,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: AppColors.primaryColor,
+                                                    ),
+                                                  ),
+                                                  PopupMenuButton<String>(
+                                                    icon: Icon(
+                                                      Icons.more_vert_rounded,
+                                                      color: AppColors.blackLight,
+                                                      size: 20,
+                                                    ),
+                                                    onSelected: (val) {
+                                                      if (val == 'edit') {
+                                                        _editPurchase(pur);
+                                                      } else if (val == 'delete') {
+                                                        _confirmDeletePurchase(pur);
+                                                      }
+                                                    },
+                                                    itemBuilder: (ctx) => [
+                                                      PopupMenuItem(
+                                                        value: 'edit',
+                                                        child: Row(
+                                                          children: [
+                                                            Icon(
+                                                              Icons.edit_note,
+                                                              color: AppColors.primaryColor,
+                                                              size: 18,
+                                                            ),
+                                                            SizedBox(width: 8.w),
+                                                            Text(
+                                                              AppStrings.edit.tr(),
+                                                              style: TextStyles.customStyle(
+                                                                fontSize: 13,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                      PopupMenuItem(
+                                                        value: 'delete',
+                                                        child: Row(
+                                                          children: [
+                                                            Icon(
+                                                              Icons.delete_outline_rounded,
+                                                              color: AppColors.error,
+                                                              size: 18,
+                                                            ),
+                                                            SizedBox(width: 8.w),
+                                                            Text(
+                                                              AppStrings.confirmDelete.tr(),
+                                                              style: TextStyles.customStyle(
+                                                                fontSize: 13,
+                                                                color: AppColors.error,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
                                               ),
                                             ],
                                           ),

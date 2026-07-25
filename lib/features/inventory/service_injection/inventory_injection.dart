@@ -90,6 +90,12 @@ class InventoryInjection {
     sl.registerLazySingleton(
       () => CreateInventoryPurchaseUseCase(sl<InventoryRepository>()),
     );
+    sl.registerLazySingleton(
+      () => UpdateInventoryPurchaseUseCase(sl<InventoryRepository>()),
+    );
+    sl.registerLazySingleton(
+      () => DeleteInventoryPurchaseUseCase(sl<InventoryRepository>()),
+    );
 
     // Use cases - Movements & Sync
     sl.registerLazySingleton(
@@ -143,6 +149,8 @@ class InventoryInjection {
       () => InventoryPurchasesCubit(
         getPurchasesUseCase: sl<GetInventoryPurchasesUseCase>(),
         createPurchaseUseCase: sl<CreateInventoryPurchaseUseCase>(),
+        updatePurchaseUseCase: sl<UpdateInventoryPurchaseUseCase>(),
+        deletePurchaseUseCase: sl<DeleteInventoryPurchaseUseCase>(),
       ),
     );
 
