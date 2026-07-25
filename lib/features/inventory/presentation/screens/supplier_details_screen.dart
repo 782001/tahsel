@@ -475,27 +475,53 @@ class _SupplierDetailsScreenState extends State<SupplierDetailsScreen> {
                                           .map(
                                             (item) => Padding(
                                               padding: EdgeInsets.symmetric(
-                                                vertical: isDesktop ? 2 : 2.h,
+                                                vertical: isDesktop ? 4 : 4.h,
                                               ),
                                               child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.center,
                                                 children: [
-                                                  Text(
-                                                    item.productName,
-                                                    style:
-                                                        TextStyles.customStyle(
-                                                          fontSize: 13,
-                                                          color: AppColors
-                                                              .blackReal,
-                                                        ),
+                                                  Container(
+                                                    width: 6,
+                                                    height: 6,
+                                                    decoration: BoxDecoration(
+                                                      color: AppColors
+                                                          .inventoryPurchasePurple
+                                                          .withValues(
+                                                            alpha: 0.7,
+                                                          ),
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    width: isDesktop ? 8 : 8.w,
+                                                  ),
+                                                  Expanded(
+                                                    child: Text(
+                                                      item.productName,
+                                                      maxLines: 2,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style:
+                                                          TextStyles.customStyle(
+                                                            fontSize: 13,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            color: AppColors
+                                                                .blackReal,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    width: isDesktop ? 8 : 8.w,
                                                   ),
                                                   Text(
-                                                    '${item.quantity.toStringAsFixed(0)} × ${item.purchasePrice.toStringAsFixed(2)} ${AppStrings.egp.tr()}',
+                                                    '${item.quantity.toSmartAmount()} × ${item.purchasePrice.toSmartAmount()} ${AppStrings.egp.tr()}',
                                                     style:
                                                         TextStyles.customStyle(
-                                                          fontSize: 13,
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.w500,
                                                           color: AppColors
                                                               .sandText,
                                                         ),

@@ -220,14 +220,14 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                         ),
                                         decoration: BoxDecoration(
                                           color: AppColors.scafoldBackGround
-                                              .withValues(alpha: 0.6),
+                                              .withValues(alpha: 0.8),
                                           borderRadius: BorderRadius.circular(
                                             8.r,
                                           ),
-                                          border: Border.all(
-                                            color: AppColors.dividerColor
-                                                .withValues(alpha: 0.5),
-                                          ),
+                                          // border: Border.all(
+                                          //   color: AppColors.dividerColor
+                                          //       .withValues(alpha: 0.5),
+                                          // ),
                                         ),
                                         child: Row(
                                           children: [
