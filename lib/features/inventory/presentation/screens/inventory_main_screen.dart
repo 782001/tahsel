@@ -32,6 +32,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
       appBar: AppBar(
+        scrolledUnderElevation: 0,
         backgroundColor: AppColors.scafoldBackGround,
         elevation: 0,
         leading: IconButton(

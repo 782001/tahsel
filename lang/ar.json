@@ -829,5 +829,12 @@
   "are_you_sure_delete": "هل أنت تأكد من إتمام عملية الحذف؟",
   "delete_category_warning": "هل أنت متاكد من حذف هذا القسم؟ المنتجات المرتبطة به ستتحول تلقائياً إلى (بدون قسم).",
   "delete_supplier_warning": "هل أنت متاكد من حذف هذا المورد؟ المنتجات المرتبطة به ستتحول تلقائياً إلى (بدون مورد).",
-  "email_copied_to_clipboard": "تم نسخ البريد الإلكتروني بنجاح"
+  "email_copied_to_clipboard": "تم نسخ البريد الإلكتروني بنجاح",
+  "reason_periodic_inventory": "جرد دوري",
+  "reason_surplus_goods": "بضائع زائدة",
+  "reason_unregistered_purchases": "مشتريات غير مسجلة",
+  "reason_error_correction": "تعديل خطأ",
+  "reason_damaged_scrap": "تالف / هالك",
+  "reason_sample_demo": "عينة تجريبية",
+  "reason_manual_deduction": "خصم يدوي"
 }

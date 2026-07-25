@@ -935,4 +935,11 @@ class AppStrings {
   static const String deleteCategoryWarning = "delete_category_warning";
   static const String deleteSupplierWarning = "delete_supplier_warning";
   static const String emailCopiedToClipboard = "email_copied_to_clipboard";
+  static const String reasonPeriodicInventory = "reason_periodic_inventory";
+  static const String reasonSurplusGoods = "reason_surplus_goods";
+  static const String reasonUnregisteredPurchases = "reason_unregistered_purchases";
+  static const String reasonErrorCorrection = "reason_error_correction";
+  static const String reasonDamagedScrap = "reason_damaged_scrap";
+  static const String reasonSampleDemo = "reason_sample_demo";
+  static const String reasonManualDeduction = "reason_manual_deduction";
 }

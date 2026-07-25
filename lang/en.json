@@ -824,5 +824,12 @@
   "are_you_sure_delete": "Are you sure you want to delete this item?",
   "delete_category_warning": "Are you sure you want to delete this category? Linked products will automatically be set to (No Category).",
   "delete_supplier_warning": "Are you sure you want to delete this supplier? Linked products will automatically be set to (No Supplier).",
-  "email_copied_to_clipboard": "Email copied to clipboard"
+  "email_copied_to_clipboard": "Email copied to clipboard",
+  "reason_periodic_inventory": "Periodic Inventory",
+  "reason_surplus_goods": "Surplus Goods",
+  "reason_unregistered_purchases": "Unregistered Purchases",
+  "reason_error_correction": "Correction",
+  "reason_damaged_scrap": "Damaged / Scrap",
+  "reason_sample_demo": "Sample / Demo",
+  "reason_manual_deduction": "Manual Deduction"
 }
