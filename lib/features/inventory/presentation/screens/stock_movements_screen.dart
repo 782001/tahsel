@@ -64,6 +64,7 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
       appBar: AppBar(
+        scrolledUnderElevation: 0,
         backgroundColor: AppColors.scafoldBackGround,
         elevation: 0,
         leading: IconButton(
@@ -141,15 +142,16 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
                                     backgroundColor: color.withValues(
                                       alpha: 0.12,
                                     ),
-                                    radius: isDesktop ? 22 : 22.r,
+                                    radius: isDesktop ? 18 : 18.r,
                                     child: Icon(
                                       isPositive
                                           ? Icons.add_circle_outline
                                           : Icons.remove_circle_outline,
                                       color: color,
+                                      size: isDesktop ? 18 : 18.r,
                                     ),
                                   ),
-                                  SizedBox(width: isDesktop ? 14 : 14.w),
+                                  SizedBox(width: isDesktop ? 10 : 10.w),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment:
@@ -168,7 +170,7 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
                                               ),
                                             ),
                                             Text(
-                                              '${isPositive ? '+' : ''}${m.quantity}',
+                                              '${isPositive ? '+' : ''}${m.quantity.toSmartAmount()}',
                                               style: TextStyles.customStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.bold,
