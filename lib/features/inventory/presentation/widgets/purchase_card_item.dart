@@ -11,7 +11,7 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/inventory/domain/entities/inventory_purchase_entity.dart';
 
-class PurchaseCardItem extends StatelessWidget {
+class PurchaseCardItem extends StatefulWidget {
   final InventoryPurchaseEntity purchase;
   final VoidCallback onSharePdf;
   final VoidCallback onDownloadPdf;
@@ -28,11 +28,24 @@ class PurchaseCardItem extends StatelessWidget {
   });
 
   @override
+  State<PurchaseCardItem> createState() => _PurchaseCardItemState();
+}
+
+class _PurchaseCardItemState extends State<PurchaseCardItem> {
+  bool _isExpanded = false;
+
+  @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
     final dateStr = DateFormat(
       'yyyy/MM/dd - hh:mm a',
-    ).format(purchase.createdAt);
+    ).format(widget.purchase.createdAt);
+
+    final itemsToDisplay = (_isExpanded || widget.purchase.items.length <= 3)
+        ? widget.purchase.items
+        : widget.purchase.items.take(3).toList();
+
+    final hasMoreItems = widget.purchase.items.length > 3;
 
     return Container(
       padding: EdgeInsets.all(isDesktop ? 16 : 16.w),
@@ -59,7 +72,7 @@ class PurchaseCardItem extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  '#${purchase.id.replaceAll('pur_', '')}',
+                  '#${widget.purchase.id.replaceAll('pur_', '')}',
                   style: TextStyles.customStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -103,7 +116,7 @@ class PurchaseCardItem extends StatelessWidget {
                             children: [
                               Expanded(
                                 child: Text(
-                                  '${AppStrings.supplier.tr()}: ${purchase.supplierName}',
+                                  '${AppStrings.supplier.tr()}: ${widget.purchase.supplierName}',
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyles.customStyle(
@@ -126,7 +139,7 @@ class PurchaseCardItem extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    '${purchase.totalAmount.toSmartAmount()} ${AppStrings.egp.tr()}',
+                    '${widget.purchase.totalAmount.toSmartAmount()} ${AppStrings.egp.tr()}',
                     style: TextStyles.customStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -141,13 +154,13 @@ class PurchaseCardItem extends StatelessWidget {
                     ),
                     onSelected: (val) {
                       if (val == 'share') {
-                        onSharePdf();
+                        widget.onSharePdf();
                       } else if (val == 'download') {
-                        onDownloadPdf();
+                        widget.onDownloadPdf();
                       } else if (val == 'edit') {
-                        onEdit();
+                        widget.onEdit();
                       } else if (val == 'delete') {
-                        onDelete();
+                        widget.onDelete();
                       }
                     },
                     itemBuilder: (ctx) => [
@@ -233,9 +246,56 @@ class PurchaseCardItem extends StatelessWidget {
           SizedBox(height: isDesktop ? 10 : 10.h),
           Divider(color: AppColors.disabledColor.withValues(alpha: 0.1)),
           Column(
-            children: purchase.items
-                .map((item) => _buildItemRow(item, isDesktop))
-                .toList(),
+            children: [
+              ...itemsToDisplay
+                  .map((item) => _buildItemRow(item, isDesktop)),
+              if (hasMoreItems) ...[
+                SizedBox(height: isDesktop ? 6 : 6.h),
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      _isExpanded = !_isExpanded;
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(6.r),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isDesktop ? 10 : 10.w,
+                      vertical: isDesktop ? 6 : 6.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.inventoryPurchasePurple.withValues(
+                        alpha: 0.08,
+                      ),
+                      borderRadius: BorderRadius.circular(6.r),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          _isExpanded
+                              ? AppStrings.showLess.tr()
+                              : '${AppStrings.showMore.tr()} (+${widget.purchase.items.length - 3})',
+                          style: TextStyles.customStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.inventoryPurchasePurple,
+                          ),
+                        ),
+                        SizedBox(width: 4.w),
+                        Icon(
+                          _isExpanded
+                              ? Icons.keyboard_arrow_up_rounded
+                              : Icons.keyboard_arrow_down_rounded,
+                          size: 18,
+                          color: AppColors.inventoryPurchasePurple,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ],
       ),
