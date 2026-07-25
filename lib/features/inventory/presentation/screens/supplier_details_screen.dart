@@ -44,6 +44,7 @@ class _SupplierDetailsScreenState extends State<SupplierDetailsScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.scafoldBackGround,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios_new_rounded,
@@ -289,6 +290,77 @@ class _SupplierDetailsScreenState extends State<SupplierDetailsScreen> {
                                           ],
                                         ),
                                       ),
+                                    ),
+                                  ),
+                                // Company Name Pill Chip
+                                if (s.companyName != null &&
+                                    s.companyName!.isNotEmpty)
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: isDesktop ? 8 : 8.w,
+                                      vertical: isDesktop ? 4 : 4.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.scafoldBackGround,
+                                      borderRadius: BorderRadius.circular(6.r),
+                                      border: Border.all(
+                                        color: AppColors.dividerColor,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.business_rounded,
+                                          size: 13,
+                                          color: AppColors.sandText,
+                                        ),
+                                        SizedBox(width: 4.w),
+                                        Text(
+                                          s.companyName!,
+                                          style: TextStyles.customStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.sandText,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                // Tax Number Pill Chip
+                                if (s.taxNumber != null &&
+                                    s.taxNumber!.isNotEmpty)
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: isDesktop ? 8 : 8.w,
+                                      vertical: isDesktop ? 4 : 4.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.scafoldBackGround,
+                                      borderRadius: BorderRadius.circular(6.r),
+                                      border: Border.all(
+                                        color: AppColors.dividerColor,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.receipt_long_rounded,
+                                          size: 13,
+                                          color: AppColors.sandText,
+                                        ),
+                                        SizedBox(width: 4.w),
+                                        Text(
+                                          '${AppStrings.taxNumber.tr()}: ${s.taxNumber}',
+                                          style: TextStyles.customStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.sandText,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                               ],

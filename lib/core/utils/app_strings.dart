@@ -942,4 +942,6 @@ class AppStrings {
   static const String reasonDamagedScrap = "reason_damaged_scrap";
   static const String reasonSampleDemo = "reason_sample_demo";
   static const String reasonManualDeduction = "reason_manual_deduction";
+  static const String companyName = "company_name";
+  static const String taxNumber = "tax_number";
 }

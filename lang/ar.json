@@ -836,5 +836,7 @@
   "reason_error_correction": "تعديل خطأ",
   "reason_damaged_scrap": "تالف / هالك",
   "reason_sample_demo": "عينة تجريبية",
-  "reason_manual_deduction": "خصم يدوي"
+  "reason_manual_deduction": "خصم يدوي",
+  "company_name": "اسم الشركة",
+  "tax_number": "الرقم الضريبي"
 }

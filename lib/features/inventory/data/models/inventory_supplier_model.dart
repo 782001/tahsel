@@ -4,6 +4,8 @@ class InventorySupplierModel extends InventorySupplierEntity {
   const InventorySupplierModel({
     required super.id,
     required super.name,
+    super.companyName,
+    super.taxNumber,
     required super.phone,
     required super.address,
     super.email,
@@ -17,6 +19,8 @@ class InventorySupplierModel extends InventorySupplierEntity {
     return InventorySupplierModel(
       id: entity.id,
       name: entity.name,
+      companyName: entity.companyName,
+      taxNumber: entity.taxNumber,
       phone: entity.phone,
       address: entity.address,
       email: entity.email,
@@ -31,6 +35,8 @@ class InventorySupplierModel extends InventorySupplierEntity {
     return InventorySupplierModel(
       id: map['id'] as String? ?? '',
       name: map['name'] as String? ?? '',
+      companyName: map['companyName'] as String?,
+      taxNumber: map['taxNumber'] as String?,
       phone: map['phone'] as String? ?? '',
       address: map['address'] as String? ?? '',
       email: map['email'] as String?,
@@ -49,6 +55,8 @@ class InventorySupplierModel extends InventorySupplierEntity {
     return {
       'id': id,
       'name': name,
+      'companyName': companyName,
+      'taxNumber': taxNumber,
       'phone': phone,
       'address': address,
       'email': email,

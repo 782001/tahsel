@@ -3,6 +3,8 @@ import 'package:equatable/equatable.dart';
 class InventorySupplierEntity extends Equatable {
   final String id;
   final String name;
+  final String? companyName;
+  final String? taxNumber;
   final String phone;
   final String address;
   final String? email;
@@ -14,6 +16,8 @@ class InventorySupplierEntity extends Equatable {
   const InventorySupplierEntity({
     required this.id,
     required this.name,
+    this.companyName,
+    this.taxNumber,
     required this.phone,
     required this.address,
     this.email,
@@ -26,6 +30,8 @@ class InventorySupplierEntity extends Equatable {
   InventorySupplierEntity copyWith({
     String? id,
     String? name,
+    String? companyName,
+    String? taxNumber,
     String? phone,
     String? address,
     String? email,
@@ -37,6 +43,8 @@ class InventorySupplierEntity extends Equatable {
     return InventorySupplierEntity(
       id: id ?? this.id,
       name: name ?? this.name,
+      companyName: companyName ?? this.companyName,
+      taxNumber: taxNumber ?? this.taxNumber,
       phone: phone ?? this.phone,
       address: address ?? this.address,
       email: email ?? this.email,
@@ -51,6 +59,8 @@ class InventorySupplierEntity extends Equatable {
   List<Object?> get props => [
         id,
         name,
+        companyName,
+        taxNumber,
         phone,
         address,
         email,

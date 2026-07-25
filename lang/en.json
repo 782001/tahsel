@@ -831,5 +831,7 @@
   "reason_error_correction": "Correction",
   "reason_damaged_scrap": "Damaged / Scrap",
   "reason_sample_demo": "Sample / Demo",
-  "reason_manual_deduction": "Manual Deduction"
+  "reason_manual_deduction": "Manual Deduction",
+  "company_name": "Company Name",
+  "tax_number": "Tax Number"
 }
