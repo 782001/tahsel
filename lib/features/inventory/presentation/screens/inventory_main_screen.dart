@@ -104,150 +104,165 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
             constraints: BoxConstraints(
               maxWidth: isDesktop ? 950 : double.infinity,
             ),
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: EdgeInsets.symmetric(
-                horizontal: isDesktop ? 24 : 16.w,
-                vertical: isDesktop ? 16 : 16.h,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Tahsel Primary Theme Hero Card
-                  FadeInDown(
-                    duration: const Duration(milliseconds: 350),
-                    child: _buildTahselHeroCard(context, isDesktop: isDesktop),
-                  ),
-
-                  SizedBox(height: isDesktop ? 24 : 20.h),
-
-                  // KPI Summary Cards with Tahsel Theme AppColors
-                  BlocBuilder<InventoryDashboardCubit, InventoryDashboardState>(
-                    builder: (context, state) {
-                      int totalProducts = 0;
-                      int lowStockCount = 0;
-                      double totalValue = 0.0;
-
-                      if (state is InventoryDashboardLoaded) {
-                        totalProducts = state.totalProductsCount;
-                        lowStockCount = state.lowStockCount;
-                        totalValue = state.totalInventoryValue;
-                      }
-
-                      return FadeInUp(
-                        duration: const Duration(milliseconds: 400),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: _buildTahselKpiCard(
-                                title: AppStrings.totalProductsCount.tr(),
-                                value: '$totalProducts',
-                                icon: Icons.inventory_2_rounded,
-                                color: AppColors.primaryColor,
-                                isDesktop: isDesktop,
-                              ),
-                            ),
-                            SizedBox(width: isDesktop ? 14 : 10.w),
-                            Expanded(
-                              child: _buildTahselKpiCard(
-                                title: AppStrings.lowStockCount.tr(),
-                                value: '$lowStockCount',
-                                icon: Icons.warning_amber_rounded,
-                                color: lowStockCount > 0
-                                    ? AppColors.warning
-                                    : AppColors.success,
-                                isDesktop: isDesktop,
-                              ),
-                            ),
-                            SizedBox(width: isDesktop ? 14 : 10.w),
-                            Expanded(
-                              child: _buildTahselKpiCard(
-                                title: AppStrings.totalInventoryValue.tr(),
-                                value: totalValue.toStringAsFixed(0),
-                                subtitle: AppStrings.egp.tr(),
-                                icon: Icons.account_balance_wallet_rounded,
-                                color: AppColors.success,
-                                isDesktop: isDesktop,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-
-                  SizedBox(height: isDesktop ? 32 : 24.h),
-
-                  Text(
-                    AppStrings.inventorySubmodulesTitle.tr(),
-                    style: TextStyles.customStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primaryColor,
+            child: RefreshIndicator(
+              color: AppColors.primaryColor,
+              backgroundColor: AppColors.surface,
+              onRefresh: () =>
+                  context.read<InventoryDashboardCubit>().loadDashboard(),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isDesktop ? 24 : 16.w,
+                  vertical: isDesktop ? 16 : 16.h,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Tahsel Primary Theme Hero Card
+                    FadeInDown(
+                      duration: const Duration(milliseconds: 350),
+                      child: _buildTahselHeroCard(
+                        context,
+                        isDesktop: isDesktop,
+                      ),
                     ),
-                  ),
-                  SizedBox(height: isDesktop ? 16 : 16.h),
 
-                  // Sub-modules Navigation Grid/List with Tahsel AppColors
-                  FadeInUp(
-                    duration: const Duration(milliseconds: 450),
-                    child: GridView.count(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: isDesktop ? 3 : 2,
-                      mainAxisSpacing: isDesktop ? 16 : 12.h,
-                      crossAxisSpacing: isDesktop ? 16 : 12.w,
-                      childAspectRatio: isDesktop ? 1.35 : 1.1,
-                      children: [
-                        _buildTahselModuleTile(
-                          context,
-                          title: AppStrings.inventoryProducts.tr(),
-                          subtitle: AppStrings.inventoryManagementVIPDesc.tr(),
-                          icon: Icons.shopping_bag_rounded,
-                          color: AppColors.primaryColor,
-                          route: AppRoutes.inventoryProducts,
-                          isDesktop: isDesktop,
-                        ),
-                        _buildTahselModuleTile(
-                          context,
-                          title: AppStrings.inventoryCategories.tr(),
-                          subtitle: AppStrings.categoryDescription.tr(),
-                          icon: Icons.category_rounded,
-                          color: AppColors.inventoryCategoryBrown,
-                          route: AppRoutes.inventoryCategories,
-                          isDesktop: isDesktop,
-                        ),
-                        _buildTahselModuleTile(
-                          context,
-                          title: AppStrings.inventorySuppliers.tr(),
-                          subtitle: AppStrings.supplierDetails.tr(),
-                          icon: Icons.local_shipping_rounded,
-                          color: AppColors.inventorySupplierTeal,
-                          route: AppRoutes.inventorySuppliers,
-                          isDesktop: isDesktop,
-                        ),
-                        _buildTahselModuleTile(
-                          context,
-                          title: AppStrings.inventoryPurchases.tr(),
-                          subtitle: AppStrings.purchaseHistory.tr(),
-                          icon: Icons.receipt_long_rounded,
-                          color: AppColors.inventoryPurchasePurple,
-                          route: AppRoutes.inventoryPurchases,
-                          isDesktop: isDesktop,
-                        ),
-                        _buildTahselModuleTile(
-                          context,
-                          title: AppStrings.inventoryStockMovements.tr(),
-                          subtitle: AppStrings.stockMovementsHistory.tr(),
-                          icon: Icons.history_rounded,
-                          color: AppColors.error,
-                          route: AppRoutes.inventoryStockMovements,
-                          isDesktop: isDesktop,
-                        ),
-                      ],
+                    SizedBox(height: isDesktop ? 24 : 20.h),
+
+                    // KPI Summary Cards with Tahsel Theme AppColors
+                    BlocBuilder<
+                      InventoryDashboardCubit,
+                      InventoryDashboardState
+                    >(
+                      builder: (context, state) {
+                        int totalProducts = 0;
+                        int lowStockCount = 0;
+                        double totalValue = 0.0;
+
+                        if (state is InventoryDashboardLoaded) {
+                          totalProducts = state.totalProductsCount;
+                          lowStockCount = state.lowStockCount;
+                          totalValue = state.totalInventoryValue;
+                        }
+
+                        return FadeInUp(
+                          duration: const Duration(milliseconds: 400),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _buildTahselKpiCard(
+                                  title: AppStrings.totalProductsCount.tr(),
+                                  value: '$totalProducts',
+                                  icon: Icons.inventory_2_rounded,
+                                  color: AppColors.primaryColor,
+                                  isDesktop: isDesktop,
+                                ),
+                              ),
+                              SizedBox(width: isDesktop ? 14 : 10.w),
+                              Expanded(
+                                child: _buildTahselKpiCard(
+                                  title: AppStrings.lowStockCount.tr(),
+                                  value: '$lowStockCount',
+                                  icon: Icons.warning_amber_rounded,
+                                  color: lowStockCount > 0
+                                      ? AppColors.warning
+                                      : AppColors.success,
+                                  isDesktop: isDesktop,
+                                ),
+                              ),
+                              SizedBox(width: isDesktop ? 14 : 10.w),
+                              Expanded(
+                                child: _buildTahselKpiCard(
+                                  title: AppStrings.totalInventoryValue.tr(),
+                                  value: totalValue.toStringAsFixed(0),
+                                  subtitle: AppStrings.egp.tr(),
+                                  icon: Icons.account_balance_wallet_rounded,
+                                  color: AppColors.success,
+                                  isDesktop: isDesktop,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
-                  ),
-                ],
+
+                    SizedBox(height: isDesktop ? 32 : 24.h),
+
+                    Text(
+                      AppStrings.inventorySubmodulesTitle.tr(),
+                      style: TextStyles.customStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primaryColor,
+                      ),
+                    ),
+                    SizedBox(height: isDesktop ? 16 : 16.h),
+
+                    // Sub-modules Navigation Grid/List with Tahsel AppColors
+                    FadeInUp(
+                      duration: const Duration(milliseconds: 450),
+                      child: GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount: isDesktop ? 3 : 2,
+                        mainAxisSpacing: isDesktop ? 16 : 12.h,
+                        crossAxisSpacing: isDesktop ? 16 : 12.w,
+                        childAspectRatio: isDesktop ? 1.35 : 1.1,
+                        children: [
+                          _buildTahselModuleTile(
+                            context,
+                            title: AppStrings.inventoryProducts.tr(),
+                            subtitle: AppStrings.inventoryManagementVIPDesc
+                                .tr(),
+                            icon: Icons.shopping_bag_rounded,
+                            color: AppColors.primaryColor,
+                            route: AppRoutes.inventoryProducts,
+                            isDesktop: isDesktop,
+                          ),
+                          _buildTahselModuleTile(
+                            context,
+                            title: AppStrings.inventoryCategories.tr(),
+                            subtitle: AppStrings.categoryDescription.tr(),
+                            icon: Icons.category_rounded,
+                            color: AppColors.inventoryCategoryBrown,
+                            route: AppRoutes.inventoryCategories,
+                            isDesktop: isDesktop,
+                          ),
+                          _buildTahselModuleTile(
+                            context,
+                            title: AppStrings.inventorySuppliers.tr(),
+                            subtitle: AppStrings.supplierDetails.tr(),
+                            icon: Icons.local_shipping_rounded,
+                            color: AppColors.inventorySupplierTeal,
+                            route: AppRoutes.inventorySuppliers,
+                            isDesktop: isDesktop,
+                          ),
+                          _buildTahselModuleTile(
+                            context,
+                            title: AppStrings.inventoryPurchases.tr(),
+                            subtitle: AppStrings.purchaseHistory.tr(),
+                            icon: Icons.receipt_long_rounded,
+                            color: AppColors.inventoryPurchasePurple,
+                            route: AppRoutes.inventoryPurchases,
+                            isDesktop: isDesktop,
+                          ),
+                          _buildTahselModuleTile(
+                            context,
+                            title: AppStrings.inventoryStockMovements.tr(),
+                            subtitle: AppStrings.stockMovementsHistory.tr(),
+                            icon: Icons.history_rounded,
+                            color: AppColors.error,
+                            route: AppRoutes.inventoryStockMovements,
+                            isDesktop: isDesktop,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
