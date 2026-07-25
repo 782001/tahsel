@@ -839,5 +839,10 @@
   "clear_filter": "Clear Filter",
   "invoice_num": "Invoice #",
   "invoice_saved_successfully": "Invoice saved successfully to device:",
-  "save_pdf_to_device": "Save PDF to Device"
+  "save_pdf_to_device": "Save PDF to Device",
+  "available_product": "Available Product",
+  "new_product": "New Product",
+  "sku_code_optional": "Code / SKU (Optional)",
+  "unit_placeholder": "Unit (e.g. Piece)",
+  "please_enter_product_name": "Please enter product name"
 }

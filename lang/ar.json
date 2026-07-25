@@ -844,5 +844,10 @@
   "clear_filter": "مسح الفلتر",
   "invoice_num": "رقم الفاتورة",
   "invoice_saved_successfully": "تم حفظ الفاتورة بنجاح في الجهاز:",
-  "save_pdf_to_device": "حفظ الفاتورة في الجهاز"
+  "save_pdf_to_device": "حفظ الفاتورة في الجهاز",
+  "available_product": "منتج متاح",
+  "new_product": "منتج جديد",
+  "sku_code_optional": "كود / SKU (اختياري)",
+  "unit_placeholder": "الوحدة (مثال: قطعة)",
+  "please_enter_product_name": "برجاء إدخال اسم المنتج"
 }

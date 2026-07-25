@@ -950,4 +950,9 @@ class AppStrings {
   static const String invoiceNum = "invoice_num";
   static const String invoiceSavedSuccessfully = "invoice_saved_successfully";
   static const String savePdfToDevice = "save_pdf_to_device";
+  static const String availableProduct = "available_product";
+  static const String newProduct = "new_product";
+  static const String skuCodeOptional = "sku_code_optional";
+  static const String unitPlaceholder = "unit_placeholder";
+  static const String pleaseEnterProductName = "please_enter_product_name";
 }
