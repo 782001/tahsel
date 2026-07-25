@@ -213,6 +213,7 @@ class AppStrings {
   static const String confirmOperation = "confirm_operation";
   static const String productName = "product_name";
   static const String remainingDebt = "remaining_debt";
+  static const String debt = "debt";
   static const String pricePerHour = "price_per_hour";
   static const String pricePerTurn = "price_per_turn";
   static const String turnCount = "turn_count";

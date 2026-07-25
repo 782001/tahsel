@@ -248,6 +248,7 @@
   "add_new_debt": "إضافة دين جديد",
   "add_my_debt": "إضافة دين عليا",
   "new_debt": "دين جديد",
+  "debt": "دين",
   "debt_amount": "قيمة الدين",
   "add_debt_success": "تم إضافة الدين بنجاح",
   "add_debt_failed": "فشل إضافة الدين",

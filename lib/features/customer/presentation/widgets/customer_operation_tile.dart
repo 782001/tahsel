@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' as intl;
+import 'package:tahsel/core/extensions/number_extensions.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/customer/domain/entities/customer_operation.dart';
@@ -22,7 +25,7 @@ class CustomerOperationTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.blackLight.withAlpha(20)),
+        // border: Border.all(color: AppColors.blackLight.withAlpha(20)),
       ),
       child: Row(
         children: [
@@ -40,9 +43,9 @@ class CustomerOperationTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  operation.details ?? "",
+                  operation.type.name.tr() ?? "",
                   style: TextStyles.customStyle(
-                    color: AppColors.black,
+                    color: AppColors.primaryColor,
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
                   ),
@@ -60,7 +63,7 @@ class CustomerOperationTile extends StatelessWidget {
             ),
           ),
           Text(
-            '${operation.type == CustomerOperationType.payment ? "-" : "+"}${operation.amount.toStringAsFixed(2)}',
+            '${operation.type == CustomerOperationType.payment ? "-" : "+"}${operation.amount.toSmartAmount()} ${AppStrings.egp.tr()}',
             style: TextStyles.customStyle(
               color: color,
               fontWeight: FontWeight.bold,

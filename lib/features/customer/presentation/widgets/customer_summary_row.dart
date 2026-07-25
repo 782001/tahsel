@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -31,7 +32,7 @@ class CustomerSummaryRow extends StatelessWidget {
           ),
         ),
         Text(
-          '${value.toStringAsFixed(2)} ${AppStrings.egp.tr()}',
+          '${value.toSmartAmount()} ${AppStrings.egp.tr()}',
           style: TextStyles.customStyle(
             color: isWhite ? Colors.white : AppColors.black,
             fontSize: 16,
