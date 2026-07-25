@@ -5,6 +5,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 class PurchaseSearchBar extends StatelessWidget {
   final TextEditingController searchController;
@@ -22,8 +23,9 @@ class PurchaseSearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
     return Container(
-      padding: EdgeInsets.all(12.w),
+      padding: EdgeInsets.all(isDesktop ? 12 : 12.w),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12.r),
@@ -34,6 +36,10 @@ class PurchaseSearchBar extends StatelessWidget {
             controller: searchController,
             decoration: InputDecoration(
               hintText: AppStrings.searchInvoiceHint.tr(),
+              hintStyle: TextStyles.customStyle(
+                fontSize: 12,
+                color: AppColors.blackLight,
+              ),
               prefixIcon: Icon(
                 Icons.search_rounded,
                 color: AppColors.blackLight,
@@ -49,8 +55,8 @@ class PurchaseSearchBar extends StatelessWidget {
               filled: true,
               fillColor: AppColors.scafoldBackGround,
               contentPadding: EdgeInsets.symmetric(
-                horizontal: 16.w,
-                vertical: 12.h,
+                horizontal: isDesktop ? 16 : 16.w,
+                vertical: isDesktop ? 12 : 12.h,
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10.r),
@@ -58,7 +64,7 @@ class PurchaseSearchBar extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(height: 10.h),
+          SizedBox(height: isDesktop ? 10 : 10.h),
           Row(
             children: [
               Expanded(
@@ -67,8 +73,8 @@ class PurchaseSearchBar extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10.r),
                   child: Container(
                     padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 10.h,
+                      horizontal: isDesktop ? 12 : 12.w,
+                      vertical: isDesktop ? 10 : 10.h,
                     ),
                     decoration: BoxDecoration(
                       color: selectedDateRange != null
@@ -92,7 +98,7 @@ class PurchaseSearchBar extends StatelessWidget {
                               ? AppColors.primaryColor
                               : AppColors.blackLight,
                         ),
-                        SizedBox(width: 8.w),
+                        SizedBox(width: isDesktop ? 8 : 8.w),
                         Expanded(
                           child: Text(
                             selectedDateRange != null
@@ -116,14 +122,14 @@ class PurchaseSearchBar extends StatelessWidget {
               ),
               if (searchController.text.isNotEmpty ||
                   selectedDateRange != null) ...[
-                SizedBox(width: 8.w),
+                SizedBox(width: isDesktop ? 8 : 8.w),
                 InkWell(
                   onTap: onClearFilters,
                   borderRadius: BorderRadius.circular(10.r),
                   child: Container(
                     padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 10.h,
+                      horizontal: isDesktop ? 12 : 12.w,
+                      vertical: isDesktop ? 10 : 10.h,
                     ),
                     decoration: BoxDecoration(
                       color: AppColors.error.withValues(alpha: 0.1),
