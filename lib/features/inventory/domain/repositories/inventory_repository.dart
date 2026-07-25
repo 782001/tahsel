@@ -29,7 +29,10 @@ abstract class InventoryRepository {
   Future<Either<Failure, void>> deleteSupplier(String id);
 
   // Purchases
-  Future<Either<Failure, List<InventoryPurchaseEntity>>> getPurchases({String? supplierId});
+  Future<Either<Failure, List<InventoryPurchaseEntity>>> getPurchases({
+    String? supplierId,
+    int limit = 15,
+  });
   Future<Either<Failure, void>> createPurchase(InventoryPurchaseEntity purchase);
   Future<Either<Failure, void>> updatePurchase({
     required InventoryPurchaseEntity oldPurchase,

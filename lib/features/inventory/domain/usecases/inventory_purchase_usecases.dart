@@ -7,8 +7,11 @@ class GetInventoryPurchasesUseCase {
   final InventoryRepository repository;
   GetInventoryPurchasesUseCase(this.repository);
 
-  Future<Either<Failure, List<InventoryPurchaseEntity>>> call({String? supplierId}) {
-    return repository.getPurchases(supplierId: supplierId);
+  Future<Either<Failure, List<InventoryPurchaseEntity>>> call({
+    String? supplierId,
+    int limit = 15,
+  }) {
+    return repository.getPurchases(supplierId: supplierId, limit: limit);
   }
 }
 

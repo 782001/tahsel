@@ -26,6 +26,7 @@ class PurchasesScreen extends StatefulWidget {
 
 class _PurchasesScreenState extends State<PurchasesScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   DateTimeRange? _selectedDateRange;
 
   @override
@@ -33,16 +34,25 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
     super.initState();
     context.read<InventoryPurchasesCubit>().fetchPurchases();
     _searchController.addListener(_onSearchChanged);
+    _scrollController.addListener(_onScroll);
   }
 
   void _onSearchChanged() {
     if (mounted) setState(() {});
   }
 
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      context.read<InventoryPurchasesCubit>().fetchMorePurchases();
+    }
+  }
+
   @override
   void dispose() {
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -208,7 +218,8 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
       context: context,
       firstDate: DateTime(2020),
       lastDate: DateTime.now().add(const Duration(days: 365)),
-      initialDateRange: _selectedDateRange ??
+      initialDateRange:
+          _selectedDateRange ??
           DateTimeRange(
             start: DateTime.now().subtract(const Duration(days: 30)),
             end: DateTime.now(),
@@ -260,8 +271,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                 horizontal: isDesktop ? 24 : 16.w,
                 vertical: isDesktop ? 20 : 16.h,
               ),
-              child: BlocBuilder<InventoryPurchasesCubit,
-                  InventoryPurchasesState>(
+              child: BlocBuilder<InventoryPurchasesCubit, InventoryPurchasesState>(
                 builder: (context, state) {
                   if (state is InventoryPurchasesLoading) {
                     return const Center(child: CircularProgressIndicator());
@@ -293,21 +303,25 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                     // Apply Search & Date Filters
                     final query = _searchController.text.trim().toLowerCase();
                     final filteredPurchases = state.purchases.where((p) {
-                      final matchesSearch = query.isEmpty ||
+                      final matchesSearch =
+                          query.isEmpty ||
                           p.supplierName.toLowerCase().contains(query) ||
                           p.id.toLowerCase().contains(query) ||
                           p.items.any(
                             (i) => i.productName.toLowerCase().contains(query),
                           );
 
-                      final matchesDate = _selectedDateRange == null ||
+                      final matchesDate =
+                          _selectedDateRange == null ||
                           (p.createdAt.isAfter(
-                                _selectedDateRange!.start
-                                    .subtract(const Duration(seconds: 1)),
+                                _selectedDateRange!.start.subtract(
+                                  const Duration(seconds: 1),
+                                ),
                               ) &&
                               p.createdAt.isBefore(
-                                _selectedDateRange!.end
-                                    .add(const Duration(days: 1)),
+                                _selectedDateRange!.end.add(
+                                  const Duration(days: 1),
+                                ),
                               ));
 
                       return matchesSearch && matchesDate;
@@ -367,7 +381,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                         ),
                         SizedBox(height: 14.h),
 
-                        // Filtered Invoices List
+                        // Filtered Invoices List with Infinite Scroll Pagination
                         Expanded(
                           child: filteredPurchases.isEmpty
                               ? InventoryEmptyState(
@@ -377,21 +391,41 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                   actionLabel: AppStrings.clearFilter.tr(),
                                   onAction: _clearFilters,
                                 )
-                              : ListView.separated(
+                              : ListView.builder(
+                                  controller: _scrollController,
                                   physics: const BouncingScrollPhysics(),
-                                  itemCount: filteredPurchases.length,
-                                  separatorBuilder: (_, __) =>
-                                      SizedBox(height: isDesktop ? 12 : 12.h),
+                                  itemCount:
+                                      filteredPurchases.length +
+                                      (state.isPaginationLoading ? 1 : 0),
                                   itemBuilder: (context, index) {
+                                    if (index == filteredPurchases.length) {
+                                      return Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: isDesktop ? 16 : 16.h,
+                                        ),
+                                        child:  Center(
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 4,
+                                            color: AppColors.primaryColor,
+                                          ),
+                                        ),
+                                      );
+                                    }
                                     final pur = filteredPurchases[index];
-                                    return PurchaseCardItem(
-                                      purchase: pur,
-                                      onSharePdf: () => _sharePurchasePdf(pur),
-                                      onDownloadPdf: () =>
-                                          _downloadPurchasePdf(pur),
-                                      onEdit: () => _editPurchase(pur),
-                                      onDelete: () =>
-                                          _confirmDeletePurchase(pur),
+                                    return Padding(
+                                      padding: EdgeInsets.only(
+                                        bottom: isDesktop ? 12 : 12.h,
+                                      ),
+                                      child: PurchaseCardItem(
+                                        purchase: pur,
+                                        onSharePdf: () =>
+                                            _sharePurchasePdf(pur),
+                                        onDownloadPdf: () =>
+                                            _downloadPurchasePdf(pur),
+                                        onEdit: () => _editPurchase(pur),
+                                        onDelete: () =>
+                                            _confirmDeletePurchase(pur),
+                                      ),
                                     );
                                   },
                                 ),

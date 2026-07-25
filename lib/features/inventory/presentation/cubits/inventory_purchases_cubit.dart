@@ -15,9 +15,29 @@ class InventoryPurchasesLoading extends InventoryPurchasesState {}
 
 class InventoryPurchasesLoaded extends InventoryPurchasesState {
   final List<InventoryPurchaseEntity> purchases;
-  const InventoryPurchasesLoaded(this.purchases);
+  final bool hasMore;
+  final bool isPaginationLoading;
+
+  const InventoryPurchasesLoaded(
+    this.purchases, {
+    this.hasMore = true,
+    this.isPaginationLoading = false,
+  });
+
+  InventoryPurchasesLoaded copyWith({
+    List<InventoryPurchaseEntity>? purchases,
+    bool? hasMore,
+    bool? isPaginationLoading,
+  }) {
+    return InventoryPurchasesLoaded(
+      purchases ?? this.purchases,
+      hasMore: hasMore ?? this.hasMore,
+      isPaginationLoading: isPaginationLoading ?? this.isPaginationLoading,
+    );
+  }
+
   @override
-  List<Object?> get props => [purchases];
+  List<Object?> get props => [purchases, hasMore, isPaginationLoading];
 }
 
 class InventoryPurchasesError extends InventoryPurchasesState {
@@ -33,6 +53,10 @@ class InventoryPurchasesCubit extends Cubit<InventoryPurchasesState> {
   final UpdateInventoryPurchaseUseCase updatePurchaseUseCase;
   final DeleteInventoryPurchaseUseCase deletePurchaseUseCase;
 
+  int _currentLimit = 15;
+  bool _hasMore = true;
+  bool _isFetchingMore = false;
+
   InventoryPurchasesCubit({
     required this.getPurchasesUseCase,
     required this.createPurchaseUseCase,
@@ -41,11 +65,59 @@ class InventoryPurchasesCubit extends Cubit<InventoryPurchasesState> {
   }) : super(InventoryPurchasesInitial());
 
   Future<void> fetchPurchases({String? supplierId}) async {
+    _currentLimit = 15;
+    _hasMore = true;
+    _isFetchingMore = false;
     emit(InventoryPurchasesLoading());
-    final result = await getPurchasesUseCase(supplierId: supplierId);
+    final result = await getPurchasesUseCase(
+      supplierId: supplierId,
+      limit: _currentLimit,
+    );
     result.fold(
       (failure) => emit(InventoryPurchasesError(failure.message)),
-      (purchases) => emit(InventoryPurchasesLoaded(purchases)),
+      (purchases) {
+        _hasMore = purchases.length >= _currentLimit;
+        emit(
+          InventoryPurchasesLoaded(
+            purchases,
+            hasMore: _hasMore,
+            isPaginationLoading: false,
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> fetchMorePurchases({String? supplierId}) async {
+    final currentState = state;
+    if (currentState is! InventoryPurchasesLoaded) return;
+    if (_isFetchingMore || !_hasMore) return;
+
+    _isFetchingMore = true;
+    emit(currentState.copyWith(isPaginationLoading: true));
+
+    _currentLimit += 15;
+    final result = await getPurchasesUseCase(
+      supplierId: supplierId,
+      limit: _currentLimit,
+    );
+
+    result.fold(
+      (failure) {
+        _isFetchingMore = false;
+        emit(currentState.copyWith(isPaginationLoading: false));
+      },
+      (purchases) {
+        _isFetchingMore = false;
+        _hasMore = purchases.length >= _currentLimit;
+        emit(
+          InventoryPurchasesLoaded(
+            purchases,
+            hasMore: _hasMore,
+            isPaginationLoading: false,
+          ),
+        );
+      },
     );
   }
 

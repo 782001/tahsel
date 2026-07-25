@@ -379,20 +379,21 @@ class InventoryRepositoryImpl implements InventoryRepository {
   @override
   Future<Either<Failure, List<InventoryPurchaseEntity>>> getPurchases({
     String? supplierId,
+    int limit = 15,
   }) async {
     try {
       List<InventoryPurchaseModel> purchases = await localDataSource
           .getPurchases();
-      if (purchases.isEmpty &&
-          await connectionChecker.hasConnection &&
-          _currentUid != null) {
+      if (await connectionChecker.hasConnection && _currentUid != null) {
         try {
           final remotePurchases = await remoteDataSource
-              .fetchPurchasesFromRemote(_currentUid!);
+              .fetchPurchasesFromRemote(_currentUid!, limit: limit);
           for (final p in remotePurchases) {
             await localDataSource.savePurchase(p);
           }
-          purchases = remotePurchases;
+          if (purchases.isEmpty) {
+            purchases = remotePurchases;
+          }
         } catch (_) {}
       }
 
