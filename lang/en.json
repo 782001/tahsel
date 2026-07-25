@@ -844,5 +844,9 @@
   "new_product": "New Product",
   "sku_code_optional": "Code / SKU (Optional)",
   "unit_placeholder": "Unit (e.g. Piece)",
-  "please_enter_product_name": "Please enter product name"
+  "please_enter_product_name": "Please enter product name",
+  "invoice_share_pdf": "Share Invoice (PDF)",
+  "confirm_delete_purchase_warning": "Are you sure you want to cancel this purchase invoice? Product stock quantities will be adjusted accordingly.",
+  "error_sharing_invoice": "An error occurred while sharing the invoice",
+  "error_saving_invoice": "An error occurred while saving the invoice"
 }

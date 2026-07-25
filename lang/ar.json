@@ -849,5 +849,9 @@
   "new_product": "منتج جديد",
   "sku_code_optional": "كود / SKU (اختياري)",
   "unit_placeholder": "الوحدة (مثال: قطعة)",
-  "please_enter_product_name": "برجاء إدخال اسم المنتج"
+  "please_enter_product_name": "برجاء إدخال اسم المنتج",
+  "invoice_share_pdf": "مشاركة الفاتورة (PDF)",
+  "confirm_delete_purchase_warning": "هل أنت متاكد من إلغاء فاتورة الشراء؟ سيتسبب ذلك في تسوية خصم الكميات المضافة بواسطة هذه الفاتورة من المخزون.",
+  "error_sharing_invoice": "حدث خطأ أثناء مشاركة الفاتورة",
+  "error_saving_invoice": "حدث خطأ أثناء حفظ الفاتورة"
 }

@@ -955,4 +955,7 @@ class AppStrings {
   static const String skuCodeOptional = "sku_code_optional";
   static const String unitPlaceholder = "unit_placeholder";
   static const String pleaseEnterProductName = "please_enter_product_name";
+  static const String confirmDeletePurchaseWarning = "confirm_delete_purchase_warning";
+  static const String errorSharingInvoice = "error_sharing_invoice";
+  static const String errorSavingInvoice = "error_saving_invoice";
 }

@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/invoice_pdf_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -43,6 +46,53 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _sharePurchasePdf(InventoryPurchaseEntity pur) async {
+    final isArabic = AppStrings.currentLang == 'ar';
+    try {
+      await InvoicePdfService.sharePurchaseInvoicePdf(pur, isArabic: isArabic);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${AppStrings.errorSharingInvoice.tr()}: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _downloadPurchasePdf(InventoryPurchaseEntity pur) async {
+    final isArabic = AppStrings.currentLang == 'ar';
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final file = await InvoicePdfService.savePurchasePdfToStorage(
+        purchase: pur,
+        isArabic: isArabic,
+      );
+      if (file != null && mounted) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              '${AppStrings.invoiceSavedSuccessfully.tr()}\n${file.path}',
+            ),
+            backgroundColor: AppColors.success,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('${AppStrings.errorSavingInvoice.tr()}: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _editPurchase(InventoryPurchaseEntity pur) async {
@@ -103,7 +153,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
           ),
         ),
         content: Text(
-          'هل أنت متاكد من إلغاء فاتورة الشراء رقم #${pur.id.replaceAll("pur_", "")}؟ سيتسبب ذلك في تسوية خصم الكميات المضافة بواسطة هذه الفاتورة من المخزون.',
+          AppStrings.confirmDeletePurchaseWarning.tr(),
           style: TextStyles.customStyle(
             fontSize: 14,
             color: AppColors.blackReal,
@@ -175,7 +225,6 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
               onPrimary: Colors.white,
               surface: AppColors.surface,
               onSurface: AppColors.blackReal,
-            
             ),
           ),
           child: child!,
@@ -538,6 +587,48 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Row(
+                                            children: [
+                                              Container(
+                                                padding: EdgeInsets.symmetric(
+                                                  horizontal: 6.w,
+                                                  vertical: 2.h,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: AppColors
+                                                      .inventoryPurchasePurple
+                                                      .withValues(alpha: 0.1),
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        6.r,
+                                                      ),
+                                                  border: Border.all(
+                                                    color: AppColors
+                                                        .inventoryPurchasePurple
+                                                        .withValues(alpha: 0.3),
+                                                  ),
+                                                ),
+                                                child: Text(
+                                                  '#${pur.id.replaceAll('pur_', '')}',
+                                                  style: TextStyles.customStyle(
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: AppColors
+                                                        .inventoryPurchasePurple,
+                                                  ),
+                                                ),
+                                              ),
+                                              const Spacer(),
+                                              Text(
+                                                dateStr,
+                                                style: TextStyles.customStyle(
+                                                  fontSize: 12,
+                                                  color: AppColors.sandText,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+
+                                          Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.spaceBetween,
                                             children: [
@@ -551,19 +642,19 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                                             alpha: 0.12,
                                                           ),
                                                       radius: isDesktop
-                                                          ? 20
-                                                          : 20.r,
+                                                          ? 18
+                                                          : 18.r,
                                                       child: Icon(
                                                         Icons.receipt_rounded,
                                                         color: AppColors
                                                             .inventoryPurchasePurple,
-                                                        size: 20,
+                                                        size: 18,
                                                       ),
                                                     ),
                                                     SizedBox(
                                                       width: isDesktop
-                                                          ? 12
-                                                          : 12.w,
+                                                          ? 8
+                                                          : 8.w,
                                                     ),
                                                     Expanded(
                                                       child: Column(
@@ -571,44 +662,6 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                                             CrossAxisAlignment
                                                                 .start,
                                                         children: [
-                                                          Container(
-                                                            padding:
-                                                                EdgeInsets.symmetric(
-                                                                  horizontal:
-                                                                      6.w,
-                                                                  vertical: 2.h,
-                                                                ),
-                                                            decoration: BoxDecoration(
-                                                              color: AppColors
-                                                                  .inventoryPurchasePurple
-                                                                  .withValues(
-                                                                    alpha: 0.1,
-                                                                  ),
-                                                              borderRadius:
-                                                                  BorderRadius.circular(
-                                                                    6.r,
-                                                                  ),
-                                                              border: Border.all(
-                                                                color: AppColors
-                                                                    .inventoryPurchasePurple
-                                                                    .withValues(
-                                                                      alpha:
-                                                                          0.3,
-                                                                    ),
-                                                              ),
-                                                            ),
-                                                            child: Text(
-                                                              '#${pur.id.replaceAll('pur_', '')}',
-                                                              style: TextStyles.customStyle(
-                                                                fontSize: 11,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                                color: AppColors
-                                                                    .inventoryPurchasePurple,
-                                                              ),
-                                                            ),
-                                                          ),
                                                           SizedBox(
                                                             height: isDesktop
                                                                 ? 6
@@ -641,15 +694,6 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                                                 ? 4
                                                                 : 4.h,
                                                           ),
-                                                          Text(
-                                                            dateStr,
-                                                            style:
-                                                                TextStyles.customStyle(
-                                                                  fontSize: 12,
-                                                                  color: AppColors
-                                                                      .sandText,
-                                                                ),
-                                                          ),
                                                         ],
                                                       ),
                                                     ),
@@ -663,41 +707,118 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                                 children: [
                                                   Text(
                                                     '${pur.totalAmount.toSmartAmount()} ${AppStrings.egp.tr()}',
-                                                    style: TextStyles.customStyle(
-                                                      fontSize: 18,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: AppColors.primaryColor,
-                                                    ),
+                                                    style:
+                                                        TextStyles.customStyle(
+                                                          fontSize: 18,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: AppColors
+                                                              .primaryColor,
+                                                        ),
                                                   ),
                                                   PopupMenuButton<String>(
                                                     icon: Icon(
                                                       Icons.more_vert_rounded,
-                                                      color: AppColors.blackLight,
+                                                      color:
+                                                          AppColors.blackLight,
                                                       size: 20,
                                                     ),
                                                     onSelected: (val) {
-                                                      if (val == 'edit') {
+                                                      if (val == 'share') {
+                                                        _sharePurchasePdf(pur);
+                                                      } else if (val ==
+                                                          'download') {
+                                                        _downloadPurchasePdf(
+                                                          pur,
+                                                        );
+                                                      } else if (val ==
+                                                          'edit') {
                                                         _editPurchase(pur);
-                                                      } else if (val == 'delete') {
-                                                        _confirmDeletePurchase(pur);
+                                                      } else if (val ==
+                                                          'delete') {
+                                                        _confirmDeletePurchase(
+                                                          pur,
+                                                        );
                                                       }
                                                     },
                                                     itemBuilder: (ctx) => [
+                                                      if (!Platform.isWindows)
+                                                        PopupMenuItem(
+                                                          value: 'share',
+                                                          child: Row(
+                                                            children: [
+                                                              Icon(
+                                                                Icons
+                                                                    .picture_as_pdf_rounded,
+                                                                color: AppColors
+                                                                    .inventoryPurchasePurple,
+                                                                size: 18,
+                                                              ),
+                                                              SizedBox(
+                                                                width: 8.w,
+                                                              ),
+                                                              Text(
+                                                                AppStrings
+                                                                    .invoiceSharePdf
+                                                                    .tr(),
+                                                                style:
+                                                                    TextStyles.customStyle(
+                                                                      fontSize:
+                                                                          13,
+                                                                    ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      PopupMenuItem(
+                                                        value: 'download',
+                                                        child: Row(
+                                                          children: [
+                                                            Icon(
+                                                              Icons
+                                                                  .download_rounded,
+                                                              color: AppColors
+                                                                  .primaryColor,
+                                                              size: 18,
+                                                            ),
+                                                            SizedBox(
+                                                              width: 8.w,
+                                                            ),
+                                                            Text(
+                                                              AppStrings
+                                                                  .savePdfToDevice
+                                                                  .tr(),
+                                                              style:
+                                                                  TextStyles.customStyle(
+                                                                    fontSize:
+                                                                        13,
+                                                                  ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                      const PopupMenuDivider(),
                                                       PopupMenuItem(
                                                         value: 'edit',
                                                         child: Row(
                                                           children: [
                                                             Icon(
                                                               Icons.edit_note,
-                                                              color: AppColors.primaryColor,
+                                                              color: AppColors
+                                                                  .primaryColor,
                                                               size: 18,
                                                             ),
-                                                            SizedBox(width: 8.w),
+                                                            SizedBox(
+                                                              width: 8.w,
+                                                            ),
                                                             Text(
-                                                              AppStrings.edit.tr(),
-                                                              style: TextStyles.customStyle(
-                                                                fontSize: 13,
-                                                              ),
+                                                              AppStrings.edit
+                                                                  .tr(),
+                                                              style:
+                                                                  TextStyles.customStyle(
+                                                                    fontSize:
+                                                                        13,
+                                                                  ),
                                                             ),
                                                           ],
                                                         ),
@@ -707,16 +828,23 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                                         child: Row(
                                                           children: [
                                                             Icon(
-                                                              Icons.delete_outline_rounded,
-                                                              color: AppColors.error,
+                                                              Icons
+                                                                  .delete_outline_rounded,
+                                                              color: AppColors
+                                                                  .error,
                                                               size: 18,
                                                             ),
-                                                            SizedBox(width: 8.w),
+                                                            SizedBox(
+                                                              width: 8.w,
+                                                            ),
                                                             Text(
-                                                              AppStrings.confirmDelete.tr(),
+                                                              AppStrings
+                                                                  .confirmDelete
+                                                                  .tr(),
                                                               style: TextStyles.customStyle(
                                                                 fontSize: 13,
-                                                                color: AppColors.error,
+                                                                color: AppColors
+                                                                    .error,
                                                               ),
                                                             ),
                                                           ],
@@ -786,77 +914,89 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                                               ? 8
                                                               : 8.w,
                                                         ),
-                                                        Expanded(
-                                                          child: Text(
-                                                            item.productName,
-                                                            maxLines: 3,
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                            style: TextStyles.customStyle(
-                                                              fontSize: 13,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold,
-                                                              color: AppColors
-                                                                  .blackReal,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        SizedBox(
-                                                          width: isDesktop
-                                                              ? 8
-                                                              : 8.w,
-                                                        ),
-                                                        Text(
-                                                          '${item.quantity.toSmartAmount()} ${AppStrings.unit.tr()} × ${item.purchasePrice.toSmartAmount()}',
-                                                          style:
-                                                              TextStyles.customStyle(
-                                                                fontSize: 12,
+                                                        Column(
+                                                          mainAxisSize:
+                                                              MainAxisSize.min,
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            Text(
+                                                              item.productName,
+                                                              maxLines: 3,
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                              style: TextStyles.customStyle(
+                                                                fontSize: 13,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
                                                                 color: AppColors
-                                                                    .sandText,
+                                                                    .blackReal,
                                                               ),
-                                                        ),
-                                                        SizedBox(
-                                                          width: isDesktop
-                                                              ? 8
-                                                              : 8.w,
-                                                        ),
-                                                        Container(
-                                                          padding:
-                                                              EdgeInsets.symmetric(
-                                                                horizontal:
-                                                                    isDesktop
-                                                                    ? 6
-                                                                    : 6.w,
-                                                                vertical:
-                                                                    isDesktop
-                                                                    ? 2
-                                                                    : 2.h,
-                                                              ),
-                                                          decoration: BoxDecoration(
-                                                            color: AppColors
-                                                                .success
-                                                                .withValues(
-                                                                  alpha: 0.1,
+                                                            ),
+                                                            SizedBox(
+                                                              height: isDesktop
+                                                                  ? 1
+                                                                  : 1.h,
+                                                            ),
+                                                            Row(
+                                                              children: [
+                                                                Text(
+                                                                  '${item.quantity.toSmartAmount()} ${AppStrings.unit.tr()} × ${item.purchasePrice.toSmartAmount()}',
+                                                                  style: TextStyles.customStyle(
+                                                                    fontSize:
+                                                                        12,
+                                                                    color: AppColors
+                                                                        .sandText,
+                                                                  ),
                                                                 ),
-                                                            borderRadius:
-                                                                BorderRadius.circular(
-                                                                  4.r,
+                                                                SizedBox(
+                                                                  width:
+                                                                      isDesktop
+                                                                      ? 8
+                                                                      : 8.w,
                                                                 ),
-                                                          ),
-                                                          child: Text(
-                                                            '${item.subtotal.toSmartAmount()} ${AppStrings.egp.tr()}',
-                                                            style:
-                                                                TextStyles.customStyle(
-                                                                  fontSize: 12,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  color: AppColors
-                                                                      .success,
+                                                                Container(
+                                                                  padding: EdgeInsets.symmetric(
+                                                                    horizontal:
+                                                                        isDesktop
+                                                                        ? 6
+                                                                        : 6.w,
+                                                                    vertical:
+                                                                        isDesktop
+                                                                        ? 2
+                                                                        : 2.h,
+                                                                  ),
+                                                                  decoration: BoxDecoration(
+                                                                    color: AppColors
+                                                                        .success
+                                                                        .withValues(
+                                                                          alpha:
+                                                                              0.1,
+                                                                        ),
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                          4.r,
+                                                                        ),
+                                                                  ),
+                                                                  child: Text(
+                                                                    '${item.subtotal.toSmartAmount()} ${AppStrings.egp.tr()}',
+                                                                    style: TextStyles.customStyle(
+                                                                      fontSize:
+                                                                          12,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold,
+                                                                      color: AppColors
+                                                                          .success,
+                                                                    ),
+                                                                  ),
                                                                 ),
-                                                          ),
+                                                              ],
+                                                            ),
+                                                          ],
                                                         ),
                                                       ],
                                                     ),

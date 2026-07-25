@@ -8,6 +8,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 import 'package:tahsel/core/extensions/extensions.dart';
+import 'package:tahsel/features/inventory/domain/entities/inventory_purchase_entity.dart';
 import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
 import 'package:whatsapp_share2/whatsapp_share2.dart';
 
@@ -20,6 +21,10 @@ class InvoicePdfService {
   static const PdfColor _success = PdfColor.fromInt(0xFF388E3C);
   static const PdfColor _warning = PdfColor.fromInt(0xFFFBC02D);
   static const PdfColor _error = PdfColor.fromInt(0xFFD32F2F);
+
+  static const PdfColor _purchasePrimary = PdfColor.fromInt(0xFF673AB7);
+  static const PdfColor _purchasePrimaryDark = PdfColor.fromInt(0xFF512DA8);
+  static const PdfColor _purchaseBgLight = PdfColor.fromInt(0xFFEDE7F6);
 
   /// Get the public visible directory on Android, iOS, and Windows
   static Future<Directory> _getPublicStorageDirectory() async {
@@ -546,6 +551,300 @@ class InvoicePdfService {
               style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey500),
             ),
           ],
+        ),
+      ],
+    );
+  }
+
+  /// Save Purchase PDF to device storage
+  static Future<File?> savePurchasePdfToStorage({
+    required InventoryPurchaseEntity purchase,
+    required bool isArabic,
+  }) async {
+    final pdfBytes = await _buildPurchasePdf(purchase, isArabic);
+    final cleanId = purchase.id.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+    final filename = 'Purchase_Fatoora_$cleanId.pdf';
+
+    final storageDir = await _getPublicStorageDirectory();
+    final savedFile = File('${storageDir.path}/$filename');
+    await savedFile.writeAsBytes(pdfBytes);
+    return savedFile;
+  }
+
+  /// Generate & Share Purchase PDF
+  static Future<File> sharePurchaseInvoicePdf(
+    InventoryPurchaseEntity purchase, {
+    required bool isArabic,
+  }) async {
+    final pdfBytes = await _buildPurchasePdf(purchase, isArabic);
+    final cleanId = purchase.id.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+    final filename = 'Purchase_Fatoora_$cleanId.pdf';
+
+    final dir = await getTemporaryDirectory();
+    final shareFile = File('${dir.path}/$filename');
+    await shareFile.writeAsBytes(pdfBytes);
+
+    final idShort = purchase.id.replaceAll('pur_', '');
+    final subject =
+        isArabic ? 'فاتورة شراء رقم #$idShort' : 'Purchase Invoice #$idShort';
+
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(shareFile.path, mimeType: 'application/pdf')],
+        text: subject,
+        subject: subject,
+      ),
+    );
+
+    return shareFile;
+  }
+
+  static Future<Uint8List> _buildPurchasePdf(
+    InventoryPurchaseEntity purchase,
+    bool isArabic,
+  ) async {
+    final pdf = pw.Document();
+
+    final regularFontData = await rootBundle.load(
+      'assets/fonts/DGAgnadeen-Regular.ttf',
+    );
+    final boldFontData = await rootBundle.load(
+      'assets/fonts/DGAgnadeen-Bold.ttf',
+    );
+    final ttfRegular = pw.Font.ttf(regularFontData);
+    final ttfBold = pw.Font.ttf(boldFontData);
+
+    pw.MemoryImage? logoImage;
+    try {
+      final logoData = await rootBundle.load(Assets.imagesAppLogo);
+      logoImage = pw.MemoryImage(logoData.buffer.asUint8List());
+    } catch (_) {}
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageTheme: pw.PageTheme(
+          pageFormat: PdfPageFormat.a4,
+          theme: pw.ThemeData.withFont(base: ttfRegular, bold: ttfBold),
+          textDirection:
+              isArabic ? pw.TextDirection.rtl : pw.TextDirection.ltr,
+          buildBackground: (context) => pw.Container(color: PdfColors.white),
+          margin: const pw.EdgeInsets.all(32),
+        ),
+        header: (context) =>
+            _buildPurchaseHeader(purchase, logoImage, isArabic),
+        footer: (context) =>
+            _buildFooter(isArabic, context.pageNumber, context.pagesCount),
+        build: (context) => [
+          pw.SizedBox(height: 20),
+          _buildSupplierInfo(purchase, isArabic),
+          pw.SizedBox(height: 25),
+          _buildPurchaseItemsTable(purchase, isArabic),
+          pw.SizedBox(height: 25),
+          _buildPurchaseSummary(purchase, isArabic),
+          if (purchase.notes != null && purchase.notes!.isNotEmpty) ...[
+            pw.SizedBox(height: 25),
+            _buildNotes(purchase.notes!, isArabic),
+          ],
+        ],
+      ),
+    );
+
+    return pdf.save();
+  }
+
+  static pw.Widget _buildPurchaseHeader(
+    InventoryPurchaseEntity purchase,
+    pw.MemoryImage? logoImage,
+    bool isArabic,
+  ) {
+    final dateStr = DateFormat(
+      isArabic ? "dd MMMM yyyy - hh:mm a" : "MMM dd, yyyy - hh:mm a",
+      isArabic ? "ar" : "en",
+    ).format(purchase.createdAt);
+
+    return pw.Column(
+      children: [
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  isArabic ? "فاتورة شراء مخزون" : "PURCHASE INVOICE",
+                  style: pw.TextStyle(
+                    fontSize: 30,
+                    fontWeight: pw.FontWeight.bold,
+                    color: _purchasePrimary,
+                  ),
+                ),
+                pw.SizedBox(height: 8),
+                pw.Container(
+                  padding: const pw.EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: pw.BoxDecoration(
+                    color: _purchaseBgLight,
+                    borderRadius: pw.BorderRadius.circular(6),
+                  ),
+                  child: pw.Text(
+                    '# ${purchase.id.replaceAll("pur_", "")}',
+                    style: pw.TextStyle(
+                      fontSize: 14,
+                      fontWeight: pw.FontWeight.bold,
+                      color: _purchasePrimaryDark,
+                    ),
+                  ),
+                ),
+                pw.SizedBox(height: 6),
+                pw.Text(
+                  dateStr,
+                  style: const pw.TextStyle(
+                    fontSize: 12,
+                    color: PdfColors.grey700,
+                  ),
+                ),
+              ],
+            ),
+            if (logoImage != null)
+              pw.Container(
+                height: 65,
+                width: 65,
+                child: pw.Image(logoImage),
+              ),
+          ],
+        ),
+        pw.SizedBox(height: 15),
+        pw.Divider(color: _purchaseBgLight, thickness: 2),
+      ],
+    );
+  }
+
+  static pw.Widget _buildSupplierInfo(
+    InventoryPurchaseEntity purchase,
+    bool isArabic,
+  ) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(16),
+      decoration: pw.BoxDecoration(
+        color: _purchaseBgLight,
+        borderRadius: pw.BorderRadius.circular(10),
+      ),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(
+                isArabic ? "بيانات المورد:" : "Supplier Details:",
+                style: pw.TextStyle(
+                  fontSize: 12,
+                  color: PdfColors.grey700,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+              pw.SizedBox(height: 4),
+              pw.Text(
+                purchase.supplierName,
+                style: pw.TextStyle(
+                  fontSize: 16,
+                  fontWeight: pw.FontWeight.bold,
+                  color: _purchasePrimaryDark,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  static pw.Widget _buildPurchaseItemsTable(
+    InventoryPurchaseEntity purchase,
+    bool isArabic,
+  ) {
+    final headers = isArabic
+        ? ['#', 'المنتج', 'الكمية', 'سعر الشراء', 'الإجمالي']
+        : ['#', 'Product', 'Quantity', 'Unit Price', 'Total'];
+
+    final data = purchase.items.asMap().entries.map((entry) {
+      final idx = entry.key + 1;
+      final item = entry.value;
+      return [
+        '$idx',
+        item.productName,
+        item.quantity.toSmartAmount(),
+        '${item.purchasePrice.toSmartAmount()} ${isArabic ? "ج.م" : "EGP"}',
+        '${item.totalPrice.toSmartAmount()} ${isArabic ? "ج.م" : "EGP"}',
+      ];
+    }).toList();
+
+    return pw.TableHelper.fromTextArray(
+      headers: headers,
+      data: data,
+      border: null,
+      headerStyle: pw.TextStyle(
+        color: PdfColors.white,
+        fontWeight: pw.FontWeight.bold,
+        fontSize: 12,
+      ),
+      headerDecoration: pw.BoxDecoration(
+        color: _purchasePrimary,
+        borderRadius: pw.BorderRadius.circular(6),
+      ),
+      cellStyle: const pw.TextStyle(fontSize: 11),
+      cellAlignment: pw.Alignment.center,
+      headerAlignment: pw.Alignment.center,
+      cellPadding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      rowDecoration: const pw.BoxDecoration(
+        border: pw.Border(
+          bottom: pw.BorderSide(color: PdfColors.grey200, width: 0.8),
+        ),
+      ),
+    );
+  }
+
+  static pw.Widget _buildPurchaseSummary(
+    InventoryPurchaseEntity purchase,
+    bool isArabic,
+  ) {
+    final currency = isArabic ? "ج.م" : "EGP";
+
+    return pw.Row(
+      mainAxisAlignment: pw.MainAxisAlignment.end,
+      children: [
+        pw.Container(
+          width: 240,
+          padding: const pw.EdgeInsets.all(14),
+          decoration: pw.BoxDecoration(
+            color: _purchaseBgLight,
+            borderRadius: pw.BorderRadius.circular(10),
+            border: pw.Border.all(color: _purchasePrimary, width: 1.5),
+          ),
+          child: pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Text(
+                isArabic ? "إجمالي الفاتورة:" : "Total Amount:",
+                style: pw.TextStyle(
+                  fontSize: 14,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.grey900,
+                ),
+              ),
+              pw.Text(
+                '${purchase.totalAmount.toSmartAmount()} $currency',
+                style: pw.TextStyle(
+                  fontSize: 16,
+                  fontWeight: pw.FontWeight.bold,
+                  color: _purchasePrimaryDark,
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );

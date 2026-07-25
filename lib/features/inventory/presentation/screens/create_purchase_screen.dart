@@ -204,7 +204,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                 ? '${AppStrings.edit.tr()} ${AppStrings.purchaseInvoiceNum.tr()} #${widget.initialPurchase!.id.replaceAll("pur_", "")}'
                 : AppStrings.newPurchase.tr(),
             style: TextStyles.customStyle(
-              fontSize: 22,
+              fontSize: widget.initialPurchase != null ? 15 : 22,
               fontWeight: FontWeight.bold,
               color: AppColors.primaryColor,
             ),
@@ -823,7 +823,8 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                             ),
                                             QuickAddTextField(
                                               controller: newUnitController,
-                                              hint: AppStrings.unitPlaceholder.tr(),
+                                              hint: AppStrings.unitPlaceholder
+                                                  .tr(),
                                             ),
                                           ],
                                         ),
@@ -888,7 +889,9 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                 if (name.isEmpty) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text(AppStrings.pleaseEnterProductName.tr()),
+                                      content: Text(
+                                        AppStrings.pleaseEnterProductName.tr(),
+                                      ),
                                     ),
                                   );
                                   return;
@@ -924,7 +927,9 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                       : purchasePrice,
                                   currentQuantity: 0.0,
                                   minQuantity: 5.0,
-                                  unit: unit.isNotEmpty ? unit : AppStrings.piece.tr(),
+                                  unit: unit.isNotEmpty
+                                      ? unit
+                                      : AppStrings.piece.tr(),
                                   createdAt: DateTime.now(),
                                   updatedAt: DateTime.now(),
                                   isSynced: false,

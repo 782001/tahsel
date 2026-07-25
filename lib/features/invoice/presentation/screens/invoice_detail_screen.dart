@@ -296,72 +296,73 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                   },
                 ),
                 // Share as PDF
-                IconButton(
-                  icon: Icon(
-                    Icons.picture_as_pdf_rounded,
-                    color: AppColors.primaryColor,
-                  ),
-                  tooltip: AppStrings.invoiceSharePdf.tr(),
-                  onPressed: () async {
-                    if (isDisconnected) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(AppStrings.noInternetConnection.tr()),
-                          backgroundColor: AppColors.error,
-                        ),
-                      );
-                      return;
-                    }
-
-                    String? phone = _invoice.customerPhone;
-                    if (!kIsWeb && Platform.isAndroid) {
-                      if (phone == null || phone.isEmpty) {
-                        final result = await PhoneInputSheet.show(context);
-                        if (result == null) return;
-                        phone = result;
-
-                        if (_invoice.customerName != null) {
-                          try {
-                            di.sl<CustomerCubit>().updateCustomerPhone(
-                              AppStrings.userToken,
-                              _invoice.customerName!,
-                              phone,
-                            );
-                          } catch (e) {
-                            AppLogger.printMessage(
-                              'Failed to update customer phone: $e',
-                            );
-                          }
-                        }
-
-                        // Save the phone number to the invoice document
-                        // ignore: use_build_context_synchronously
-                        context.read<InvoiceCubit>().updateInvoice(
-                          _invoice.copyWith(customerPhone: phone),
-                          previous: _invoice,
-                        );
-                      }
-                    }
-
-                    try {
-                      final isArabic = AppStrings.currentLang == 'ar';
-                      await InvoicePdfService.generateAndShareInvoice(
-                        _invoice,
-                        isArabic: isArabic,
-                        phoneNumber: phone,
-                      );
-                    } catch (e) {
-                      if (context.mounted) {
+                if (!Platform.isWindows)
+                  IconButton(
+                    icon: Icon(
+                      Icons.picture_as_pdf_rounded,
+                      color: AppColors.primaryColor,
+                    ),
+                    tooltip: AppStrings.invoiceSharePdf.tr(),
+                    onPressed: () async {
+                      if (isDisconnected) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(e.toString()),
+                            content: Text(AppStrings.noInternetConnection.tr()),
                             backgroundColor: AppColors.error,
                           ),
                         );
+                        return;
                       }
-                    }
-                  },
-                ),
+
+                      String? phone = _invoice.customerPhone;
+                      if (!kIsWeb && Platform.isAndroid) {
+                        if (phone == null || phone.isEmpty) {
+                          final result = await PhoneInputSheet.show(context);
+                          if (result == null) return;
+                          phone = result;
+
+                          if (_invoice.customerName != null) {
+                            try {
+                              di.sl<CustomerCubit>().updateCustomerPhone(
+                                AppStrings.userToken,
+                                _invoice.customerName!,
+                                phone,
+                              );
+                            } catch (e) {
+                              AppLogger.printMessage(
+                                'Failed to update customer phone: $e',
+                              );
+                            }
+                          }
+
+                          // Save the phone number to the invoice document
+                          // ignore: use_build_context_synchronously
+                          context.read<InvoiceCubit>().updateInvoice(
+                            _invoice.copyWith(customerPhone: phone),
+                            previous: _invoice,
+                          );
+                        }
+                      }
+
+                      try {
+                        final isArabic = AppStrings.currentLang == 'ar';
+                        await InvoicePdfService.generateAndShareInvoice(
+                          _invoice,
+                          isArabic: isArabic,
+                          phoneNumber: phone,
+                        );
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(e.toString()),
+                              backgroundColor: AppColors.error,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  ),
                 // Edit — only for non-voided invoices
                 if (_invoice.status != InvoiceStatus.voided)
                   IconButton(
