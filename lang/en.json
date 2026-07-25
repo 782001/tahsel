@@ -700,7 +700,6 @@
   "facebookPageDesc": "Follow us on Facebook for new updates",
   "whatsappGroup": "WhatsApp Group",
   "whatsappGroupDesc": "Join our WhatsApp group for the latest updates",
-  "invoice_share_pdf": "Share as PDF",
   "copiedSuccessfully": "Copied successfully",
   "show_more": "Show More",
   "show_less": "Show Less",
@@ -848,5 +847,9 @@
   "invoice_share_pdf": "Share Invoice (PDF)",
   "confirm_delete_purchase_warning": "Are you sure you want to cancel this purchase invoice? Product stock quantities will be adjusted accordingly.",
   "error_sharing_invoice": "An error occurred while sharing the invoice",
-  "error_saving_invoice": "An error occurred while saving the invoice"
+  "error_saving_invoice": "An error occurred while saving the invoice",
+  "payment_method": "Payment Method",
+  "payment_cash": "Cash",
+  "payment_card": "Card",
+  "payment_debt": "Deferred (Debt Owed)"
 }

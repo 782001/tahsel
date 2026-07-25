@@ -50,6 +50,8 @@ class InventoryPurchaseModel extends InventoryPurchaseEntity {
     super.notes,
     required super.createdAt,
     super.isSynced,
+    super.paymentMethod = 'cash',
+    super.paidAmount = 0.0,
   });
 
   factory InventoryPurchaseModel.fromEntity(InventoryPurchaseEntity entity) {
@@ -62,6 +64,8 @@ class InventoryPurchaseModel extends InventoryPurchaseEntity {
       notes: entity.notes,
       createdAt: entity.createdAt,
       isSynced: entity.isSynced,
+      paymentMethod: entity.paymentMethod,
+      paidAmount: entity.paidAmount,
     );
   }
 
@@ -71,6 +75,17 @@ class InventoryPurchaseModel extends InventoryPurchaseEntity {
             .toList() ??
         [];
 
+    DateTime parsedDate = DateTime.now();
+    if (map['createdAt'] != null) {
+      if (map['createdAt'] is int) {
+        parsedDate = DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int);
+      } else {
+        try {
+          parsedDate = DateTime.parse(map['createdAt'].toString());
+        } catch (_) {}
+      }
+    }
+
     return InventoryPurchaseModel(
       id: map['id'] as String? ?? '',
       supplierId: map['supplierId'] as String? ?? '',
@@ -78,10 +93,10 @@ class InventoryPurchaseModel extends InventoryPurchaseEntity {
       items: itemsList,
       totalAmount: (map['totalAmount'] as num?)?.toDouble() ?? 0.0,
       notes: map['notes'] as String?,
-      createdAt: map['createdAt'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int)
-          : DateTime.now(),
+      createdAt: parsedDate,
       isSynced: map['isSynced'] as bool? ?? false,
+      paymentMethod: map['paymentMethod'] as String? ?? 'cash',
+      paidAmount: (map['paidAmount'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
@@ -95,6 +110,8 @@ class InventoryPurchaseModel extends InventoryPurchaseEntity {
       'notes': notes,
       'createdAt': createdAt.millisecondsSinceEpoch,
       'isSynced': isSynced,
+      'paymentMethod': paymentMethod,
+      'paidAmount': paidAmount,
     };
   }
 

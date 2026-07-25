@@ -30,6 +30,8 @@ class InventoryPurchaseEntity extends Equatable {
   final String? notes;
   final DateTime createdAt;
   final bool isSynced;
+  final String paymentMethod; // 'cash', 'card', 'debt'
+  final double paidAmount;
 
   const InventoryPurchaseEntity({
     required this.id,
@@ -40,7 +42,12 @@ class InventoryPurchaseEntity extends Equatable {
     this.notes,
     required this.createdAt,
     this.isSynced = false,
+    this.paymentMethod = 'cash',
+    this.paidAmount = 0.0,
   });
+
+  double get remainingDebt =>
+      paymentMethod == 'debt' ? (totalAmount - paidAmount).clamp(0.0, double.infinity) : 0.0;
 
   InventoryPurchaseEntity copyWith({
     String? id,
@@ -51,6 +58,8 @@ class InventoryPurchaseEntity extends Equatable {
     String? notes,
     DateTime? createdAt,
     bool? isSynced,
+    String? paymentMethod,
+    double? paidAmount,
   }) {
     return InventoryPurchaseEntity(
       id: id ?? this.id,
@@ -61,6 +70,8 @@ class InventoryPurchaseEntity extends Equatable {
       notes: notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,
       isSynced: isSynced ?? this.isSynced,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+      paidAmount: paidAmount ?? this.paidAmount,
     );
   }
 
@@ -74,5 +85,7 @@ class InventoryPurchaseEntity extends Equatable {
         notes,
         createdAt,
         isSynced,
+        paymentMethod,
+        paidAmount,
       ];
 }

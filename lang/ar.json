@@ -702,7 +702,6 @@
   "facebookPageDesc": "تابعنا علي فيسبوك لكل جديد",
   "whatsappGroup": "جروب الواتساب",
   "whatsappGroupDesc": "انضم لجروب الواتساب لمعرفة كل جديد",
-  "invoice_share_pdf": "مشاركة كملف PDF",
   "copiedSuccessfully": "تم النسخ بنجاح",
   "show_more": "عرض المزيد",
   "show_less": "عرض أقل",
@@ -853,5 +852,9 @@
   "invoice_share_pdf": "مشاركة الفاتورة (PDF)",
   "confirm_delete_purchase_warning": "هل أنت متاكد من إلغاء فاتورة الشراء؟ سيتسبب ذلك في تسوية خصم الكميات المضافة بواسطة هذه الفاتورة من المخزون.",
   "error_sharing_invoice": "حدث خطأ أثناء مشاركة الفاتورة",
-  "error_saving_invoice": "حدث خطأ أثناء حفظ الفاتورة"
+  "error_saving_invoice": "حدث خطأ أثناء حفظ الفاتورة",
+  "payment_method": "طريقة الدفع",
+  "payment_cash": "نقداً (كاش)",
+  "payment_card": "بطاقة (كارت)",
+  "payment_debt": "آجل (دَين عليا)"
 }

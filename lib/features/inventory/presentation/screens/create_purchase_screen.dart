@@ -29,6 +29,8 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
   InventorySupplierEntity? _selectedSupplier;
   final List<InventoryPurchaseItemEntity> _selectedItems = [];
   final TextEditingController _notesController = TextEditingController();
+  final TextEditingController _paidAmountController = TextEditingController();
+  String _selectedPaymentMethod = 'cash';
   List<InventorySupplierEntity> _suppliers = [];
   List<InventoryProductEntity> _allProducts = [];
   final List<InventoryProductEntity> _newProductsToCreate = [];
@@ -39,6 +41,11 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
     if (widget.initialPurchase != null) {
       _selectedItems.addAll(widget.initialPurchase!.items);
       _notesController.text = widget.initialPurchase!.notes ?? '';
+      _selectedPaymentMethod = widget.initialPurchase!.paymentMethod;
+      _paidAmountController.text = widget.initialPurchase!.paidAmount
+          .toSmartAmount();
+    } else {
+      _paidAmountController.text = '0';
     }
     context.read<InventorySuppliersCubit>().fetchSuppliers();
     context.read<InventoryProductsCubit>().fetchProducts();
@@ -47,6 +54,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
   @override
   void dispose() {
     _notesController.dispose();
+    _paidAmountController.dispose();
     super.dispose();
   }
 
@@ -105,6 +113,13 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
       }
     }
 
+    // Parse paid amount for debt payments
+    final double parsedPaid =
+        double.tryParse(_paidAmountController.text.trim()) ?? 0.0;
+    final double actualPaidAmount = _selectedPaymentMethod == 'debt'
+        ? parsedPaid.clamp(0.0, _totalAmount)
+        : _totalAmount;
+
     // 2. Create or Update the purchase invoice
     final bool isEdit = widget.initialPurchase != null;
     bool success = false;
@@ -118,6 +133,8 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
         notes: _notesController.text.trim().isNotEmpty
             ? _notesController.text.trim()
             : null,
+        paymentMethod: _selectedPaymentMethod,
+        paidAmount: actualPaidAmount,
         isSynced: false,
       );
       success = await purchasesCubit.updatePurchase(
@@ -136,6 +153,8 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
             : null,
         createdAt: DateTime.now(),
         isSynced: false,
+        paymentMethod: _selectedPaymentMethod,
+        paidAmount: actualPaidAmount,
       );
       success = await purchasesCubit.createPurchase(newPurchase);
     }
@@ -416,6 +435,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                         ),
                       ),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -429,7 +449,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                 ),
                               ),
                               Text(
-                                _totalAmount.toSmartAmount(),
+                                '${_totalAmount.toSmartAmount()} ${AppStrings.egp.tr()}',
                                 style: TextStyles.customStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
@@ -439,6 +459,10 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                             ],
                           ),
                           SizedBox(height: isDesktop ? 14 : 14.h),
+                          const Divider(),
+                          SizedBox(height: isDesktop ? 10 : 10.h),
+                          _buildPaymentMethodSection(isDesktop),
+                          SizedBox(height: isDesktop ? 16 : 16.h),
                           SizedBox(
                             width: double.infinity,
                             height: isDesktop ? 48 : 48.h,
@@ -973,6 +997,177 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildPaymentMethodSection(bool isDesktop) {
+    final double parsedPaid =
+        double.tryParse(_paidAmountController.text.trim()) ?? 0.0;
+    final double remainingDebt = (_totalAmount - parsedPaid).clamp(
+      0.0,
+      double.infinity,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          AppStrings.paymentMethod.tr(),
+          style: TextStyles.customStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: AppColors.blackReal,
+          ),
+        ),
+        SizedBox(height: isDesktop ? 8 : 8.h),
+        Row(
+          children: [
+            Expanded(
+              child: ChoiceChip(
+                label: Center(
+                  child: Text(
+                    AppStrings.paymentCash.tr(),
+                    style: TextStyles.customStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: _selectedPaymentMethod == 'cash'
+                          ? Colors.white
+                          : AppColors.blackReal,
+                    ),
+                  ),
+                ),
+                selected: _selectedPaymentMethod == 'cash',
+                selectedColor: AppColors.success,
+                backgroundColor: AppColors.scafoldBackGround,
+                onSelected: (selected) {
+                  if (selected) {
+                    setState(() {
+                      _selectedPaymentMethod = 'cash';
+                    });
+                  }
+                },
+              ),
+            ),
+            SizedBox(width: isDesktop ? 8 : 8.w),
+            Expanded(
+              child: ChoiceChip(
+                label: Center(
+                  child: Text(
+                    AppStrings.paymentCard.tr(),
+                    style: TextStyles.customStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: _selectedPaymentMethod == 'card'
+                          ? Colors.white
+                          : AppColors.blackReal,
+                    ),
+                  ),
+                ),
+                selected: _selectedPaymentMethod == 'card',
+                selectedColor: AppColors.primaryColor,
+                backgroundColor: AppColors.scafoldBackGround,
+                onSelected: (selected) {
+                  if (selected) {
+                    setState(() {
+                      _selectedPaymentMethod = 'card';
+                    });
+                  }
+                },
+              ),
+            ),
+            SizedBox(width: isDesktop ? 8 : 8.w),
+            Expanded(
+              child: ChoiceChip(
+                label: Center(
+                  child: Text(
+                    AppStrings.paymentDebt.tr(),
+                    style: TextStyles.customStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: _selectedPaymentMethod == 'debt'
+                          ? Colors.white
+                          : AppColors.blackReal,
+                    ),
+                  ),
+                ),
+                selected: _selectedPaymentMethod == 'debt',
+                selectedColor: AppColors.warning,
+                backgroundColor: AppColors.scafoldBackGround,
+                onSelected: (selected) {
+                  if (selected) {
+                    setState(() {
+                      _selectedPaymentMethod = 'debt';
+                    });
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
+        if (_selectedPaymentMethod == 'debt') ...[
+          SizedBox(height: isDesktop ? 12 : 12.h),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppStrings.paidAmount.tr(),
+                      style: TextStyles.customStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.blackReal,
+                      ),
+                    ),
+                    SizedBox(height: isDesktop ? 6 : 6.h),
+                    QuickAddTextField(
+                      controller: _paidAmountController,
+                      isNumber: true,
+                      hint: AppStrings.paidAmount.tr(),
+                      onChanged: (_) => setState(() {}),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(width: isDesktop ? 12 : 12.w),
+              Expanded(
+                child: Container(
+                  padding: EdgeInsets.all(isDesktop ? 12 : 12.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.warning.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8.r),
+                    border: Border.all(
+                      color: AppColors.warning.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppStrings.remainingDebt.tr(),
+                        style: TextStyles.customStyle(
+                          fontSize: 12,
+                          color: AppColors.sandText,
+                        ),
+                      ),
+                      SizedBox(height: isDesktop ? 2 : 2.h),
+                      Text(
+                        '${remainingDebt.toSmartAmount()} ${AppStrings.egp.tr()}',
+                        style: TextStyles.customStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.warning,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
     );
   }
 }

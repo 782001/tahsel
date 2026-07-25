@@ -47,6 +47,21 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
 
     final hasMoreItems = widget.purchase.items.length > 3;
 
+    final method = widget.purchase.paymentMethod;
+    final Color methodColor = method == 'debt'
+        ? AppColors.warning
+        : (method == 'card' ? AppColors.primaryColor : AppColors.success);
+    final String methodText = method == 'debt'
+        ? AppStrings.paymentDebt.tr()
+        : (method == 'card'
+              ? AppStrings.paymentCard.tr()
+              : AppStrings.paymentCash.tr());
+    final IconData methodIcon = method == 'debt'
+        ? Icons.assignment_outlined
+        : (method == 'card'
+              ? Icons.credit_card_rounded
+              : Icons.payments_rounded);
+
     return Container(
       padding: EdgeInsets.all(isDesktop ? 16 : 16.w),
       decoration: BoxDecoration(
@@ -81,11 +96,27 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
                 ),
               ),
               const Spacer(),
-              Text(
-                dateStr,
-                style: TextStyles.customStyle(
-                  fontSize: 12,
-                  color: AppColors.sandText,
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                decoration: BoxDecoration(
+                  color: methodColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6.r),
+                  border: Border.all(color: methodColor.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(methodIcon, color: methodColor, size: 12),
+                    SizedBox(width: 4.w),
+                    Text(
+                      methodText,
+                      style: TextStyles.customStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: methodColor,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -129,6 +160,13 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
                             ],
                           ),
                           SizedBox(height: isDesktop ? 4 : 4.h),
+                          Text(
+                            dateStr,
+                            style: TextStyles.customStyle(
+                              fontSize: 12,
+                              color: AppColors.sandText,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -247,8 +285,7 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
           Divider(color: AppColors.disabledColor.withValues(alpha: 0.1)),
           Column(
             children: [
-              ...itemsToDisplay
-                  .map((item) => _buildItemRow(item, isDesktop)),
+              ...itemsToDisplay.map((item) => _buildItemRow(item, isDesktop)),
               if (hasMoreItems) ...[
                 SizedBox(height: isDesktop ? 6 : 6.h),
                 InkWell(
@@ -308,9 +345,7 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
         horizontal: isDesktop ? 10 : 10.w,
         vertical: isDesktop ? 6 : 6.h,
       ),
-      margin: EdgeInsets.symmetric(
-        vertical: isDesktop ? 3 : 3.h,
-      ),
+      margin: EdgeInsets.symmetric(vertical: isDesktop ? 3 : 3.h),
       decoration: BoxDecoration(
         color: AppColors.scafoldBackGround.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(8.r),

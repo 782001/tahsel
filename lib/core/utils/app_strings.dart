@@ -958,4 +958,8 @@ class AppStrings {
   static const String confirmDeletePurchaseWarning = "confirm_delete_purchase_warning";
   static const String errorSharingInvoice = "error_sharing_invoice";
   static const String errorSavingInvoice = "error_saving_invoice";
+  static const String paymentMethod = "payment_method";
+  static const String paymentCash = "payment_cash";
+  static const String paymentCard = "payment_card";
+  static const String paymentDebt = "payment_debt";
 }

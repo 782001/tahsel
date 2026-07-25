@@ -8,6 +8,8 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/date_formatter.dart';
 import 'package:tahsel/features/expenses/domain/entities/expense_entity.dart';
 import 'package:tahsel/features/expenses/domain/repositories/expense_repository.dart';
+import 'package:tahsel/features/my_debts/domain/entities/my_debt_item_entity.dart';
+import 'package:tahsel/features/my_debts/domain/repositories/my_debt_repository.dart';
 
 import '../../domain/entities/inventory_category_entity.dart';
 import '../../domain/entities/inventory_product_entity.dart';
@@ -28,12 +30,14 @@ class InventoryRepositoryImpl implements InventoryRepository {
   final InventoryRemoteDataSource remoteDataSource;
   final InternetConnectionChecker connectionChecker;
   final ExpenseRepository? expenseRepository;
+  final MyDebtRepository? myDebtRepository;
 
   InventoryRepositoryImpl({
     required this.localDataSource,
     required this.remoteDataSource,
     required this.connectionChecker,
     this.expenseRepository,
+    this.myDebtRepository,
   });
 
   String? get _currentUid => FirebaseAuth.instance.currentUser?.uid;
@@ -486,6 +490,77 @@ class InventoryRepositoryImpl implements InventoryRepository {
     } catch (_) {}
   }
 
+  Future<void> _syncPurchaseToMyDebts(InventoryPurchaseEntity purchase) async {
+    try {
+      final repo = myDebtRepository ??
+          (GetIt.I.isRegistered<MyDebtRepository>()
+              ? GetIt.I<MyDebtRepository>()
+              : null);
+      if (repo == null) return;
+
+      final uid = _currentUid ?? AppStrings.userToken;
+      if (uid.isEmpty) return;
+
+      final cleanId = purchase.id.replaceAll('pur_', '');
+      final debtId = 'debt_pur_$cleanId';
+
+      if (purchase.paymentMethod == 'debt') {
+        final remainingAmount =
+            (purchase.totalAmount - purchase.paidAmount).clamp(0.0, double.infinity);
+
+        final debtItem = MyDebtItemEntity(
+          id: debtId,
+          uid: uid,
+          operationId: purchase.id,
+          personName: purchase.supplierName,
+          totalAmount: purchase.totalAmount,
+          paidAmount: purchase.paidAmount,
+          remainingAmount: remainingAmount,
+          details: '${AppStrings.purchaseInvoiceNum.tr()} #$cleanId',
+          operationType: AppStrings.inventoryPurchases.tr().isNotEmpty
+              ? AppStrings.inventoryPurchases.tr()
+              : 'مشتريات مخزون',
+          timestamp: purchase.createdAt,
+          lastUpdatedAt: DateTime.now(),
+          isPaid: remainingAmount <= 0,
+        );
+
+        await repo.addMyDebtItem(debtItem);
+      } else {
+        await repo.deleteMyDebtItem(uid, debtId);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _removePurchaseFromMyDebts(
+    InventoryPurchaseEntity purchase,
+  ) async {
+    try {
+      final repo = myDebtRepository ??
+          (GetIt.I.isRegistered<MyDebtRepository>()
+              ? GetIt.I<MyDebtRepository>()
+              : null);
+      if (repo == null) return;
+
+      final uid = _currentUid ?? AppStrings.userToken;
+      if (uid.isEmpty) return;
+
+      final cleanId = purchase.id.replaceAll('pur_', '');
+      final debtId = 'debt_pur_$cleanId';
+      await repo.deleteMyDebtItem(uid, debtId);
+    } catch (_) {}
+  }
+
+  Future<void> _updatePurchaseInMyDebts({
+    required InventoryPurchaseEntity oldPurchase,
+    required InventoryPurchaseEntity newPurchase,
+  }) async {
+    try {
+      await _removePurchaseFromMyDebts(oldPurchase);
+      await _syncPurchaseToMyDebts(newPurchase);
+    } catch (_) {}
+  }
+
   @override
   Future<Either<Failure, void>> createPurchase(
     InventoryPurchaseEntity purchase,
@@ -508,8 +583,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
         } catch (_) {}
       }
 
-      // 2. Sync to Expenses List
+      // 2. Sync to Expenses & My Debts
       await _syncPurchaseToExpenses(purchase);
+      await _syncPurchaseToMyDebts(purchase);
 
       // 3. For each item: Increase product quantity & record StockMovement
       for (var i = 0; i < purchase.items.length; i++) {
@@ -563,8 +639,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
       // 1. Delete purchase record locally
       await localDataSource.deletePurchase(purchase.id);
 
-      // 2. Remove expense record from Expenses
+      // 2. Remove expense & My Debt records
       await _removePurchaseFromExpenses(purchase);
+      await _removePurchaseFromMyDebts(purchase);
 
       // Remote delete if connected
       if (await connectionChecker.hasConnection && _currentUid != null) {
@@ -639,8 +716,12 @@ class InventoryRepositoryImpl implements InventoryRepository {
         } catch (_) {}
       }
 
-      // 2. Update expense record in Expenses List
+      // 2. Update expense & My Debt records
       await _updatePurchaseInExpenses(
+        oldPurchase: oldPurchase,
+        newPurchase: newPurchase,
+      );
+      await _updatePurchaseInMyDebts(
         oldPurchase: oldPurchase,
         newPurchase: newPurchase,
       );
