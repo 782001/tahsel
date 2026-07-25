@@ -833,5 +833,9 @@
   "reason_sample_demo": "Sample / Demo",
   "reason_manual_deduction": "Manual Deduction",
   "company_name": "Company Name",
-  "tax_number": "Tax Number"
+  "tax_number": "Tax Number",
+  "search_invoice_hint": "Search by invoice #, supplier, or product...",
+  "select_date_period": "Select Date Range",
+  "clear_filter": "Clear Filter",
+  "invoice_num": "Invoice #"
 }

@@ -944,4 +944,8 @@ class AppStrings {
   static const String reasonManualDeduction = "reason_manual_deduction";
   static const String companyName = "company_name";
   static const String taxNumber = "tax_number";
+  static const String searchInvoiceHint = "search_invoice_hint";
+  static const String selectDatePeriod = "select_date_period";
+  static const String clearFilter = "clear_filter";
+  static const String invoiceNum = "invoice_num";
 }
