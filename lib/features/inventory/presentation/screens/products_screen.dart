@@ -286,36 +286,107 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                             width: isOut || isLow ? 1.5 : 1,
                                           ),
                                         ),
-                                        child: Row(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
-                                            CircleAvatar(
-                                              backgroundColor: statusColor
-                                                  .withValues(alpha: 0.12),
-                                              radius: isDesktop ? 22 : 22.r,
-                                              child: Icon(
-                                                Icons.inventory_2_rounded,
-                                                color: statusColor,
-                                                size: isDesktop ? 22 : 20,
-                                              ),
+                                            Row(
+                                              children: [
+                                                Container(
+                                                  padding: EdgeInsets.symmetric(
+                                                    horizontal: isDesktop
+                                                        ? 8
+                                                        : 8.w,
+                                                    vertical: isDesktop
+                                                        ? 3
+                                                        : 3.h,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: statusColor
+                                                        .withValues(
+                                                          alpha: 0.12,
+                                                        ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          12.r,
+                                                        ),
+                                                    border: Border.all(
+                                                      color: statusColor
+                                                          .withValues(
+                                                            alpha: 0.4,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                  child: Text(
+                                                    statusLabel,
+                                                    style:
+                                                        TextStyles.customStyle(
+                                                          fontSize: 11,
+                                                          color: statusColor,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                  ),
+                                                ),
+                                                const Spacer(),
+                                                IconButton(
+                                                  icon: Icon(
+                                                    Icons.tune_rounded,
+                                                    color: AppColors
+                                                        .lowStockOrange,
+                                                  ),
+                                                  onPressed: () =>
+                                                      _openManualAdjustmentDialog(
+                                                        p,
+                                                      ),
+                                                ),
+                                                IconButton(
+                                                  icon: Icon(
+                                                    Icons.edit_note,
+                                                    color:
+                                                        AppColors.primaryColor,
+                                                  ),
+                                                  onPressed: () =>
+                                                      _openAddEditProductDialog(
+                                                        p,
+                                                      ),
+                                                ),
+                                              ],
                                             ),
                                             SizedBox(
-                                              width: isDesktop ? 14 : 12.w,
+                                              height: isDesktop ? 8 : 8.h,
                                             ),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Row(
+                                            Row(
+                                              children: [
+                                                CircleAvatar(
+                                                  backgroundColor: statusColor
+                                                      .withValues(alpha: 0.12),
+                                                  radius: isDesktop ? 22 : 22.r,
+                                                  child: Icon(
+                                                    Icons.inventory_2_rounded,
+                                                    color: statusColor,
+                                                    size: isDesktop ? 22 : 20,
+                                                  ),
+                                                ),
+                                                SizedBox(
+                                                  width: isDesktop ? 14 : 12.w,
+                                                ),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
                                                     children: [
-                                                      Expanded(
-                                                        child: Text(
-                                                          p.name,
-                                                          maxLines: 2,
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
-                                                          style:
-                                                              TextStyles.customStyle(
+                                                      Row(
+                                                        children: [
+                                                          Expanded(
+                                                            child: Text(
+                                                              p.name,
+                                                              maxLines: 2,
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                              style: TextStyles.customStyle(
                                                                 fontSize: 16,
                                                                 fontWeight:
                                                                     FontWeight
@@ -323,320 +394,271 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                                                 color: AppColors
                                                                     .blackReal,
                                                               ),
-                                                        ),
-                                                      ),
-                                                      Container(
-                                                        padding:
-                                                            EdgeInsets.symmetric(
-                                                              horizontal:
-                                                                  isDesktop
-                                                                  ? 8
-                                                                  : 8.w,
-                                                              vertical:
-                                                                  isDesktop
-                                                                  ? 3
-                                                                  : 3.h,
-                                                            ),
-                                                        decoration: BoxDecoration(
-                                                          color: statusColor
-                                                              .withValues(
-                                                                alpha: 0.12,
-                                                              ),
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                12.r,
-                                                              ),
-                                                          border: Border.all(
-                                                            color: statusColor
-                                                                .withValues(
-                                                                  alpha: 0.4,
-                                                                ),
-                                                          ),
-                                                        ),
-                                                        child: Text(
-                                                          statusLabel,
-                                                          style:
-                                                              TextStyles.customStyle(
-                                                                fontSize: 11,
-                                                                color:
-                                                                    statusColor,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                              ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  SizedBox(
-                                                    height: isDesktop ? 6 : 6.h,
-                                                  ),
-                                                  Wrap(
-                                                    spacing: 6,
-                                                    runSpacing: 4,
-                                                    crossAxisAlignment:
-                                                        WrapCrossAlignment
-                                                            .center,
-                                                    children: [
-                                                      if (p.sku.isNotEmpty)
-                                                        Container(
-                                                          padding:
-                                                              EdgeInsets.symmetric(
-                                                                horizontal:
-                                                                    isDesktop
-                                                                    ? 8
-                                                                    : 6.w,
-                                                                vertical:
-                                                                    isDesktop
-                                                                    ? 2
-                                                                    : 2.h,
-                                                              ),
-                                                          decoration: BoxDecoration(
-                                                            color: AppColors
-                                                                .scafoldBackGround,
-                                                            borderRadius:
-                                                                BorderRadius.circular(
-                                                                  6.r,
-                                                                ),
-                                                            border: Border.all(
-                                                              color: AppColors
-                                                                  .dividerColor,
                                                             ),
                                                           ),
-                                                          child: Row(
-                                                            mainAxisSize:
-                                                                MainAxisSize
-                                                                    .min,
-                                                            children: [
-                                                              Icon(
-                                                                Icons
-                                                                    .qr_code_2_rounded,
-                                                                size: 12,
+                                                        ],
+                                                      ),
+                                                      SizedBox(
+                                                        height: isDesktop
+                                                            ? 6
+                                                            : 6.h,
+                                                      ),
+                                                      Wrap(
+                                                        spacing: 6,
+                                                        runSpacing: 4,
+                                                        crossAxisAlignment:
+                                                            WrapCrossAlignment
+                                                                .center,
+                                                        children: [
+                                                          if (p.sku.isNotEmpty)
+                                                            Container(
+                                                              padding:
+                                                                  EdgeInsets.symmetric(
+                                                                    horizontal:
+                                                                        isDesktop
+                                                                        ? 8
+                                                                        : 6.w,
+                                                                    vertical:
+                                                                        isDesktop
+                                                                        ? 2
+                                                                        : 2.h,
+                                                                  ),
+                                                              decoration: BoxDecoration(
                                                                 color: AppColors
-                                                                    .sandText,
-                                                              ),
-                                                              SizedBox(
-                                                                width: 4.w,
-                                                              ),
-                                                              Text(
-                                                                'SKU: ${p.sku}',
-                                                                style: TextStyles.customStyle(
-                                                                  fontSize: 11,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w600,
+                                                                    .scafoldBackGround,
+                                                                borderRadius:
+                                                                    BorderRadius.circular(
+                                                                      6.r,
+                                                                    ),
+                                                                border: Border.all(
                                                                   color: AppColors
-                                                                      .sandText,
+                                                                      .dividerColor,
                                                                 ),
                                                               ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                      Container(
-                                                        padding:
-                                                            EdgeInsets.symmetric(
-                                                              horizontal:
-                                                                  isDesktop
-                                                                  ? 8
-                                                                  : 6.w,
-                                                              vertical:
-                                                                  isDesktop
-                                                                  ? 2
-                                                                  : 2.h,
+                                                              child: Row(
+                                                                mainAxisSize:
+                                                                    MainAxisSize
+                                                                        .min,
+                                                                children: [
+                                                                  Icon(
+                                                                    Icons
+                                                                        .qr_code_2_rounded,
+                                                                    size: 12,
+                                                                    color: AppColors
+                                                                        .sandText,
+                                                                  ),
+                                                                  SizedBox(
+                                                                    width: 4.w,
+                                                                  ),
+                                                                  Text(
+                                                                    p.sku,
+                                                                    style: TextStyles.customStyle(
+                                                                      fontSize:
+                                                                          11,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w600,
+                                                                      color: AppColors
+                                                                          .sandText,
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
                                                             ),
-                                                        decoration: BoxDecoration(
-                                                          color: AppColors
-                                                              .inventoryCategoryBrown
-                                                              .withValues(
-                                                                alpha: 0.1,
-                                                              ),
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                6.r,
-                                                              ),
-                                                        ),
-                                                        child: Row(
-                                                          mainAxisSize:
-                                                              MainAxisSize.min,
-                                                          children: [
-                                                            Icon(
-                                                              Icons
-                                                                  .category_outlined,
-                                                              size: 12,
+                                                          Container(
+                                                            padding:
+                                                                EdgeInsets.symmetric(
+                                                                  horizontal:
+                                                                      isDesktop
+                                                                      ? 8
+                                                                      : 6.w,
+                                                                  vertical:
+                                                                      isDesktop
+                                                                      ? 2
+                                                                      : 2.h,
+                                                                ),
+                                                            decoration: BoxDecoration(
                                                               color: AppColors
-                                                                  .inventoryCategoryBrown,
-                                                            ),
-                                                            SizedBox(
-                                                              width: 4.w,
-                                                            ),
-                                                            Text(
-                                                              p
-                                                                      .categoryName
-                                                                      .isNotEmpty
-                                                                  ? p.categoryName
-                                                                  : AppStrings
-                                                                        .noCategory
-                                                                        .tr(),
-                                                              style: TextStyles.customStyle(
-                                                                fontSize: 11,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600,
+                                                                  .scafoldBackGround,
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    6.r,
+                                                                  ),
+                                                              border: Border.all(
                                                                 color: AppColors
-                                                                    .inventoryCategoryBrown,
+                                                                    .dividerColor,
                                                               ),
                                                             ),
-                                                          ],
-                                                        ),
+                                                            child: Row(
+                                                              mainAxisSize:
+                                                                  MainAxisSize
+                                                                      .min,
+                                                              children: [
+                                                                Icon(
+                                                                  Icons
+                                                                      .category_outlined,
+                                                                  size: 12,
+                                                                  color: AppColors
+                                                                      .inventoryCategoryBrown,
+                                                                ),
+                                                                SizedBox(
+                                                                  width: 4.w,
+                                                                ),
+                                                                Text(
+                                                                  '${AppStrings.category.tr()}: ${p.categoryName.isNotEmpty ? p.categoryName : "-"}',
+                                                                  style: TextStyles.customStyle(
+                                                                    fontSize:
+                                                                        11,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w600,
+                                                                    color: AppColors
+                                                                        .inventoryCategoryBrown,
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      SizedBox(
+                                                        height: isDesktop
+                                                            ? 6
+                                                            : 6.h,
+                                                      ),
+                                                      Wrap(
+                                                        spacing: 6,
+                                                        runSpacing: 4,
+                                                        crossAxisAlignment:
+                                                            WrapCrossAlignment
+                                                                .center,
+                                                        children: [
+                                                          Container(
+                                                            padding:
+                                                                EdgeInsets.symmetric(
+                                                                  horizontal:
+                                                                      isDesktop
+                                                                      ? 8
+                                                                      : 6.w,
+                                                                  vertical:
+                                                                      isDesktop
+                                                                      ? 3
+                                                                      : 3.h,
+                                                                ),
+                                                            decoration: BoxDecoration(
+                                                              color: statusColor
+                                                                  .withValues(
+                                                                    alpha: 0.1,
+                                                                  ),
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    6.r,
+                                                                  ),
+                                                              border: Border.all(
+                                                                color: statusColor
+                                                                    .withValues(
+                                                                      alpha:
+                                                                          0.3,
+                                                                    ),
+                                                              ),
+                                                            ),
+                                                            child: Row(
+                                                              mainAxisSize:
+                                                                  MainAxisSize
+                                                                      .min,
+                                                              children: [
+                                                                Icon(
+                                                                  Icons
+                                                                      .inventory_2_outlined,
+                                                                  size: 12,
+                                                                  color:
+                                                                      statusColor,
+                                                                ),
+                                                                SizedBox(
+                                                                  width: 4.w,
+                                                                ),
+                                                                Text(
+                                                                  '${AppStrings.quantity.tr()}: ${p.currentQuantity.toSmartAmount()} ${p.unit}',
+                                                                  style: TextStyles.customStyle(
+                                                                    fontSize:
+                                                                        11,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold,
+                                                                    color:
+                                                                        statusColor,
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                          Container(
+                                                            padding:
+                                                                EdgeInsets.symmetric(
+                                                                  horizontal:
+                                                                      isDesktop
+                                                                      ? 8
+                                                                      : 6.w,
+                                                                  vertical:
+                                                                      isDesktop
+                                                                      ? 3
+                                                                      : 3.h,
+                                                                ),
+                                                            decoration: BoxDecoration(
+                                                              color: AppColors
+                                                                  .success
+                                                                  .withValues(
+                                                                    alpha: 0.1,
+                                                                  ),
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    6.r,
+                                                                  ),
+                                                              border: Border.all(
+                                                                color: AppColors
+                                                                    .success
+                                                                    .withValues(
+                                                                      alpha:
+                                                                          0.3,
+                                                                    ),
+                                                              ),
+                                                            ),
+                                                            child: Row(
+                                                              mainAxisSize:
+                                                                  MainAxisSize
+                                                                      .min,
+                                                              children: [
+                                                                Icon(
+                                                                  Icons
+                                                                      .sell_outlined,
+                                                                  size: 12,
+                                                                  color: AppColors
+                                                                      .success,
+                                                                ),
+                                                                SizedBox(
+                                                                  width: 4.w,
+                                                                ),
+                                                                Text(
+                                                                  '${AppStrings.sellingPrice.tr()}: ${p.sellingPrice.toSmartAmount()} ${AppStrings.egp.tr()}',
+                                                                  style: TextStyles.customStyle(
+                                                                    fontSize:
+                                                                        11,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold,
+                                                                    color: AppColors
+                                                                        .success,
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ],
                                                       ),
                                                     ],
                                                   ),
-                                                  SizedBox(
-                                                    height: isDesktop ? 6 : 6.h,
-                                                  ),
-                                                  Wrap(
-                                                    spacing: 6,
-                                                    runSpacing: 4,
-                                                    crossAxisAlignment:
-                                                        WrapCrossAlignment
-                                                            .center,
-                                                    children: [
-                                                      Container(
-                                                        padding:
-                                                            EdgeInsets.symmetric(
-                                                              horizontal:
-                                                                  isDesktop
-                                                                  ? 8
-                                                                  : 6.w,
-                                                              vertical:
-                                                                  isDesktop
-                                                                  ? 3
-                                                                  : 3.h,
-                                                            ),
-                                                        decoration: BoxDecoration(
-                                                          color: statusColor
-                                                              .withValues(
-                                                                alpha: 0.1,
-                                                              ),
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                6.r,
-                                                              ),
-                                                          border: Border.all(
-                                                            color: statusColor
-                                                                .withValues(
-                                                                  alpha: 0.3,
-                                                                ),
-                                                          ),
-                                                        ),
-                                                        child: Row(
-                                                          mainAxisSize:
-                                                              MainAxisSize.min,
-                                                          children: [
-                                                            Icon(
-                                                              Icons
-                                                                  .inventory_2_outlined,
-                                                              size: 12,
-                                                              color:
-                                                                  statusColor,
-                                                            ),
-                                                            SizedBox(
-                                                              width: 4.w,
-                                                            ),
-                                                            Text(
-                                                              '${AppStrings.quantity.tr()}: ${p.currentQuantity.toSmartAmount()} ${p.unit}',
-                                                              style: TextStyles.customStyle(
-                                                                fontSize: 11,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                                color:
-                                                                    statusColor,
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                      Container(
-                                                        padding:
-                                                            EdgeInsets.symmetric(
-                                                              horizontal:
-                                                                  isDesktop
-                                                                  ? 8
-                                                                  : 6.w,
-                                                              vertical:
-                                                                  isDesktop
-                                                                  ? 3
-                                                                  : 3.h,
-                                                            ),
-                                                        decoration: BoxDecoration(
-                                                          color: AppColors
-                                                              .success
-                                                              .withValues(
-                                                                alpha: 0.1,
-                                                              ),
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                6.r,
-                                                              ),
-                                                          border: Border.all(
-                                                            color: AppColors
-                                                                .success
-                                                                .withValues(
-                                                                  alpha: 0.3,
-                                                                ),
-                                                          ),
-                                                        ),
-                                                        child: Row(
-                                                          mainAxisSize:
-                                                              MainAxisSize.min,
-                                                          children: [
-                                                            Icon(
-                                                              Icons
-                                                                  .sell_outlined,
-                                                              size: 12,
-                                                              color: AppColors
-                                                                  .success,
-                                                            ),
-                                                            SizedBox(
-                                                              width: 4.w,
-                                                            ),
-                                                            Text(
-                                                              '${AppStrings.sellingPrice.tr()}: ${p.sellingPrice.toSmartAmount()} ${AppStrings.egp.tr()}',
-                                                              style: TextStyles.customStyle(
-                                                                fontSize: 11,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                                color: AppColors
-                                                                    .success,
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            IconButton(
-                                              icon: Icon(
-                                                Icons.tune_rounded,
-                                                color: AppColors.lowStockOrange,
-                                              ),
-                                              onPressed: () =>
-                                                  _openManualAdjustmentDialog(
-                                                    p,
-                                                  ),
-                                            ),
-                                            IconButton(
-                                              icon: Icon(
-                                                Icons.edit_note,
-                                                color: AppColors.primaryColor,
-                                              ),
-                                              onPressed: () =>
-                                                  _openAddEditProductDialog(p),
+                                                ),
+                                              ],
                                             ),
                                           ],
                                         ),

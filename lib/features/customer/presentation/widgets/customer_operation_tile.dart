@@ -43,7 +43,7 @@ class CustomerOperationTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  operation.type.name.tr() ?? "",
+                  operation.type.name.tr(),
                   style: TextStyles.customStyle(
                     color: AppColors.primaryColor,
                     fontWeight: FontWeight.w600,
