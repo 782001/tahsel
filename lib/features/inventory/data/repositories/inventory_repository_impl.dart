@@ -1,7 +1,13 @@
 import 'package:dartz/dartz.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:get_it/get_it.dart';
 import 'package:tahsel/core/error/failures.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/date_formatter.dart';
+import 'package:tahsel/features/expenses/domain/entities/expense_entity.dart';
+import 'package:tahsel/features/expenses/domain/repositories/expense_repository.dart';
 
 import '../../domain/entities/inventory_category_entity.dart';
 import '../../domain/entities/inventory_product_entity.dart';
@@ -21,11 +27,13 @@ class InventoryRepositoryImpl implements InventoryRepository {
   final InventoryLocalDataSource localDataSource;
   final InventoryRemoteDataSource remoteDataSource;
   final InternetConnectionChecker connectionChecker;
+  final ExpenseRepository? expenseRepository;
 
   InventoryRepositoryImpl({
     required this.localDataSource,
     required this.remoteDataSource,
     required this.connectionChecker,
+    this.expenseRepository,
   });
 
   String? get _currentUid => FirebaseAuth.instance.currentUser?.uid;
@@ -382,18 +390,21 @@ class InventoryRepositoryImpl implements InventoryRepository {
     int limit = 15,
   }) async {
     try {
-      List<InventoryPurchaseModel> purchases = await localDataSource
-          .getPurchases();
+      List<InventoryPurchaseModel> purchases =
+          await localDataSource.getPurchases();
       if (await connectionChecker.hasConnection && _currentUid != null) {
         try {
           final remotePurchases = await remoteDataSource
               .fetchPurchasesFromRemote(_currentUid!, limit: limit);
           for (final p in remotePurchases) {
-            await localDataSource.savePurchase(p);
+            final matches = purchases.where((x) => x.id == p.id);
+            final localItem = matches.isNotEmpty ? matches.first : null;
+            // Only update local from remote if local item does not exist or local item is synced
+            if (localItem == null || localItem.isSynced) {
+              await localDataSource.savePurchase(p);
+            }
           }
-          if (purchases.isEmpty) {
-            purchases = remotePurchases;
-          }
+          purchases = await localDataSource.getPurchases();
         } catch (_) {}
       }
 
@@ -414,18 +425,93 @@ class InventoryRepositoryImpl implements InventoryRepository {
     }
   }
 
+  Future<void> _syncPurchaseToExpenses(InventoryPurchaseEntity purchase) async {
+    try {
+      final repo = expenseRepository ??
+          (GetIt.I.isRegistered<ExpenseRepository>()
+              ? GetIt.I<ExpenseRepository>()
+              : null);
+      if (repo == null) return;
+
+      final uid = _currentUid ?? AppStrings.userToken;
+      if (uid.isEmpty) return;
+
+      final cleanId = purchase.id.replaceAll('pur_', '');
+      final expenseId = 'exp_pur_$cleanId';
+      final monthKey = DateFormatter.formatNumericMonth(purchase.createdAt);
+      final categoryName = AppStrings.inventoryPurchases.tr();
+      final description =
+          '${AppStrings.purchaseInvoiceNum.tr()} #$cleanId - ${purchase.supplierName}';
+
+      final expense = ExpenseEntity(
+        id: expenseId,
+        uid: uid,
+        amount: purchase.totalAmount,
+        category: categoryName.isNotEmpty ? categoryName : 'مشتريات مخزون',
+        description: description,
+        createdAt: purchase.createdAt,
+        monthKey: monthKey,
+      );
+
+      await repo.addExpense(expense);
+    } catch (_) {}
+  }
+
+  Future<void> _removePurchaseFromExpenses(
+    InventoryPurchaseEntity purchase,
+  ) async {
+    try {
+      final repo = expenseRepository ??
+          (GetIt.I.isRegistered<ExpenseRepository>()
+              ? GetIt.I<ExpenseRepository>()
+              : null);
+      if (repo == null) return;
+
+      final uid = _currentUid ?? AppStrings.userToken;
+      if (uid.isEmpty) return;
+
+      final cleanId = purchase.id.replaceAll('pur_', '');
+      final expenseId = 'exp_pur_$cleanId';
+      await repo.deleteExpense(uid, expenseId);
+    } catch (_) {}
+  }
+
+  Future<void> _updatePurchaseInExpenses({
+    required InventoryPurchaseEntity oldPurchase,
+    required InventoryPurchaseEntity newPurchase,
+  }) async {
+    try {
+      await _removePurchaseFromExpenses(oldPurchase);
+      await _syncPurchaseToExpenses(newPurchase);
+    } catch (_) {}
+  }
+
   @override
   Future<Either<Failure, void>> createPurchase(
     InventoryPurchaseEntity purchase,
   ) async {
     try {
-      // 1. Save Purchase Record
+      // 1. Save Purchase Record locally
       final purchaseModel = InventoryPurchaseModel.fromEntity(
         purchase.copyWith(isSynced: false),
       );
       await localDataSource.savePurchase(purchaseModel);
 
-      // 2. For each item: Increase product quantity & record StockMovement
+      // Immediate remote sync if connected
+      if (await connectionChecker.hasConnection && _currentUid != null) {
+        try {
+          final syncedModel = InventoryPurchaseModel.fromEntity(
+            purchase.copyWith(isSynced: true),
+          );
+          await remoteDataSource.syncPurchases(_currentUid!, [syncedModel]);
+          await localDataSource.savePurchase(syncedModel);
+        } catch (_) {}
+      }
+
+      // 2. Sync to Expenses List
+      await _syncPurchaseToExpenses(purchase);
+
+      // 3. For each item: Increase product quantity & record StockMovement
       for (var i = 0; i < purchase.items.length; i++) {
         final item = purchase.items[i];
         final product = await localDataSource.getProductById(item.productId);
@@ -477,6 +563,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
       // 1. Delete purchase record locally
       await localDataSource.deletePurchase(purchase.id);
 
+      // 2. Remove expense record from Expenses
+      await _removePurchaseFromExpenses(purchase);
+
       // Remote delete if connected
       if (await connectionChecker.hasConnection && _currentUid != null) {
         try {
@@ -487,7 +576,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
         } catch (_) {}
       }
 
-      // 2. Revert stock quantity for each item in the purchase
+      // 3. Revert stock quantity for each item in the purchase
       for (final item in purchase.items) {
         final product = await localDataSource.getProductById(item.productId);
         if (product != null) {
@@ -533,13 +622,30 @@ class InventoryRepositoryImpl implements InventoryRepository {
     required InventoryPurchaseEntity newPurchase,
   }) async {
     try {
-      // 1. Save updated purchase model
+      // 1. Save updated purchase model locally
       final model = InventoryPurchaseModel.fromEntity(
         newPurchase.copyWith(isSynced: false),
       );
       await localDataSource.savePurchase(model);
 
-      // 2. Revert quantities of old items, add quantities of new items
+      // Immediate remote sync if connected
+      if (await connectionChecker.hasConnection && _currentUid != null) {
+        try {
+          final syncedModel = InventoryPurchaseModel.fromEntity(
+            newPurchase.copyWith(isSynced: true),
+          );
+          await remoteDataSource.syncPurchases(_currentUid!, [syncedModel]);
+          await localDataSource.savePurchase(syncedModel);
+        } catch (_) {}
+      }
+
+      // 2. Update expense record in Expenses List
+      await _updatePurchaseInExpenses(
+        oldPurchase: oldPurchase,
+        newPurchase: newPurchase,
+      );
+
+      // 3. Revert quantities of old items, add quantities of new items
       final Map<String, double> deltaQtyMap = {};
       final Map<String, double> latestPricesMap = {};
 

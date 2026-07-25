@@ -259,6 +259,40 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
+      appBar: AppBar(
+        scrolledUnderElevation: 0,
+        backgroundColor: AppColors.scafoldBackGround,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.primaryColor,
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        centerTitle: true,
+        title: Text(
+          AppStrings.inventoryPurchases.tr(),
+          style: TextStyles.customStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: AppColors.primaryColor,
+          ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: AppColors.primaryColor,
+        onPressed: _navigateToCreatePurchase,
+        icon: const Icon(Icons.add_shopping_cart_rounded, color: Colors.white),
+        label: Text(
+          AppStrings.newPurchase.tr(),
+          style: TextStyles.customStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+      ),
       body: SafeArea(
         child: Align(
           alignment: Alignment.topCenter,
@@ -403,7 +437,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                         padding: EdgeInsets.symmetric(
                                           vertical: isDesktop ? 16 : 16.h,
                                         ),
-                                        child:  Center(
+                                        child: Center(
                                           child: CircularProgressIndicator(
                                             strokeWidth: 4,
                                             color: AppColors.primaryColor,

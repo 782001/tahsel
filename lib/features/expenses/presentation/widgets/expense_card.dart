@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/extensions/extensions.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 
@@ -142,7 +142,7 @@ class ExpenseCard extends StatelessWidget {
             foregroundColor: AppColors.white,
             icon: Icons.delete_outline,
             label: AppStrings.delete.tr(),
-                    borderRadius: BorderRadius.circular(16 ),
+            borderRadius: BorderRadius.circular(16),
           ),
         ],
       ),
@@ -208,7 +208,7 @@ class ExpenseCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         subtitle,
-                        maxLines: 1,
+                        maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyles.customStyle(
                           color: AppColors.blackLight,
@@ -230,7 +230,7 @@ class ExpenseCard extends StatelessWidget {
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerRight,
                         child: Text(
-                          '-${amount.toStringAsFixed(1)}',
+                          '-${amount.toSmartAmount()}',
                           textDirection: TextDirection.ltr,
                           style: TextStyles.customStyle(
                             color: AppColors.error,

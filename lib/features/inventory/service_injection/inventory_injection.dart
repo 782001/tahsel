@@ -1,5 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:tahsel/features/expenses/domain/repositories/expense_repository.dart';
+
 import '../data/datasources/inventory_local_data_source.dart';
 import '../data/datasources/inventory_remote_data_source.dart';
 import '../data/repositories/inventory_repository_impl.dart';
@@ -43,6 +45,9 @@ class InventoryInjection {
           localDataSource: sl<InventoryLocalDataSource>(),
           remoteDataSource: sl<InventoryRemoteDataSource>(),
           connectionChecker: sl<InternetConnectionChecker>(),
+          expenseRepository: sl.isRegistered<ExpenseRepository>()
+              ? sl<ExpenseRepository>()
+              : null,
         ),
       );
     }

@@ -31,37 +31,48 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
     try {
       final model = ExpenseModel.fromEntity(expense);
 
-      // 1. GENERATE DETERMINISTIC ID (Idempotency Key)
-      // Rounded to nearest second to prevent race conditions from double-clicks
+      // 1. GENERATE OR USE EXPLICIT ID
       final timeKey = model.createdAt.millisecondsSinceEpoch ~/ 1000;
       final fingerprint =
           '${model.uid}_${model.amount}_${model.category}_${model.description}_$timeKey';
       final deterministicId = 'exp_${fingerprint.hashCode.toString()}';
 
-      // 2. ALWAYS handle as an offline record first for 100% data consistency.
-      final localId = deterministicId;
+      final localId = (expense.id != null && expense.id!.isNotEmpty)
+          ? expense.id!
+          : deterministicId;
 
-      // We manually construct the Hive payload to avoid jsonEncode failing on Firestore Timestamps.
+      final modelWithId = ExpenseModel(
+        id: localId,
+        uid: model.uid,
+        amount: model.amount,
+        category: model.category,
+        description: model.description,
+        createdAt: model.createdAt,
+        monthKey: model.monthKey,
+      );
+
+      // 2. ALWAYS handle as an offline record first for 100% data consistency.
       final Map<String, dynamic> hivePayload = {
-        'uid': model.uid,
-        'amount': model.amount,
-        'category': model.category,
-        'description': model.description,
-        'createdAt': model.createdAt.toIso8601String(), // Safe for JSON/Hive
-        'monthKey': model.monthKey,
+        'id': localId,
+        'uid': modelWithId.uid,
+        'amount': modelWithId.amount,
+        'category': modelWithId.category,
+        'description': modelWithId.description,
+        'createdAt': modelWithId.createdAt.toIso8601String(), // Safe for JSON/Hive
+        'monthKey': modelWithId.monthKey,
       };
 
       final payloadJson = jsonEncode(hivePayload);
 
       final offlineRecord = OfflineRecord(
         id: localId,
-        amount: model.amount,
-        date: model.createdAt,
-        customerName: model.category,
+        amount: modelWithId.amount,
+        date: modelWithId.createdAt,
+        customerName: modelWithId.category,
         type: 'expense',
         isSynced: false,
         payloadJson: payloadJson,
-        collectionName: 'users/${model.uid}/expenses',
+        collectionName: 'users/${modelWithId.uid}/expenses',
       );
 
       // Save to local cache first
@@ -73,7 +84,6 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
         // 2. CHECK CONNECTION: If online, trigger IMMEDIATE prioritized sync
         final hasConnection = await connectionChecker.hasConnection;
         if (hasConnection) {
-          // This sync call converts 'createdAt' String back to Timestamp and adds 'syncedAt'
           await offlineSyncRepository.syncSingleRecord(offlineRecord);
         }
 
@@ -164,7 +174,9 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
     String expenseId,
   ) async {
     try {
-      await remoteDataSource.deleteExpense(uid, expenseId);
+      if (await connectionChecker.hasConnection) {
+        await remoteDataSource.deleteExpense(uid, expenseId);
+      }
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
