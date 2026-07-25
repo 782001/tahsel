@@ -948,4 +948,6 @@ class AppStrings {
   static const String selectDatePeriod = "select_date_period";
   static const String clearFilter = "clear_filter";
   static const String invoiceNum = "invoice_num";
+  static const String invoiceSavedSuccessfully = "invoice_saved_successfully";
+  static const String savePdfToDevice = "save_pdf_to_device";
 }

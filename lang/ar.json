@@ -842,5 +842,7 @@
   "search_invoice_hint": "بحث برقم الفاتورة، اسم المورد، أو المنتج...",
   "select_date_period": "تحديد فترة زمنية",
   "clear_filter": "مسح الفلتر",
-  "invoice_num": "رقم الفاتورة"
+  "invoice_num": "رقم الفاتورة",
+  "invoice_saved_successfully": "تم حفظ الفاتورة بنجاح في الجهاز:",
+  "save_pdf_to_device": "حفظ الفاتورة في الجهاز"
 }

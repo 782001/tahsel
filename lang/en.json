@@ -837,5 +837,7 @@
   "search_invoice_hint": "Search by invoice #, supplier, or product...",
   "select_date_period": "Select Date Range",
   "clear_filter": "Clear Filter",
-  "invoice_num": "Invoice #"
+  "invoice_num": "Invoice #",
+  "invoice_saved_successfully": "Invoice saved successfully to device:",
+  "save_pdf_to_device": "Save PDF to Device"
 }

@@ -21,39 +21,94 @@ class InvoicePdfService {
   static const PdfColor _warning = PdfColor.fromInt(0xFFFBC02D);
   static const PdfColor _error = PdfColor.fromInt(0xFFD32F2F);
 
-  static Future<void> generateAndShareInvoice(
+  /// Get the public visible directory on Android, iOS, and Windows
+  static Future<Directory> _getPublicStorageDirectory() async {
+    Directory? targetDir;
+
+    if (!kIsWeb) {
+      if (Platform.isWindows) {
+        try {
+          targetDir = await getDownloadsDirectory();
+        } catch (_) {}
+        targetDir ??= await getApplicationDocumentsDirectory();
+      } else if (Platform.isAndroid) {
+        try {
+          final downloadDir = Directory('/storage/emulated/0/Download');
+          if (await downloadDir.exists()) {
+            targetDir = downloadDir;
+          }
+        } catch (_) {}
+        targetDir ??= await getDownloadsDirectory();
+        targetDir ??= await getApplicationDocumentsDirectory();
+      } else if (Platform.isIOS) {
+        targetDir = await getApplicationDocumentsDirectory();
+      }
+    }
+
+    targetDir ??= await getApplicationDocumentsDirectory();
+
+    final tahselDir = Directory('${targetDir.path}/Tahsel_Invoices');
+    if (!await tahselDir.exists()) {
+      await tahselDir.create(recursive: true);
+    }
+    return tahselDir;
+  }
+
+  /// Save PDF to device storage (opens Windows Folder Picker on Windows)
+  static Future<File?> saveInvoicePdfToStorage({
+    required InvoiceEntity invoice,
+    required bool isArabic,
+  }) async {
+    final pdfBytes = await _buildPdf(invoice, isArabic);
+    final cleanId = invoice.id.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+    final filename = 'Fatoora_$cleanId.pdf';
+
+    final storageDir = await _getPublicStorageDirectory();
+    final savedFile = File('${storageDir.path}/$filename');
+    await savedFile.writeAsBytes(pdfBytes);
+    return savedFile;
+  }
+
+  static Future<File> generateAndShareInvoice(
     InvoiceEntity invoice, {
     required bool isArabic,
     String? phoneNumber,
   }) async {
     final pdfBytes = await _buildPdf(invoice, isArabic);
-    final filename = 'فاتوره_رقم_${invoice.id.substring(0, 8)}.pdf';
+    final cleanId = invoice.id.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+    final filename = 'Fatoora_$cleanId.pdf';
 
     final dir = await getTemporaryDirectory();
-    final file = File('${dir.path}/$filename');
-    await file.writeAsBytes(pdfBytes);
-    
-    final subject = isArabic
-        ? 'فاتورة رقم ${invoice.id.substring(0, 8)}'
-        : 'Invoice #${invoice.id.substring(0, 8)}';
+    final shareFile = File('${dir.path}/$filename');
+    await shareFile.writeAsBytes(pdfBytes);
 
-    if (!kIsWeb && Platform.isAndroid && phoneNumber != null && phoneNumber.isNotEmpty) {
+    final idShort = invoice.id.length > 8
+        ? invoice.id.substring(0, 8)
+        : invoice.id;
+    final subject = isArabic ? 'فاتورة رقم $idShort' : 'Invoice #$idShort';
+
+    if (!kIsWeb &&
+        Platform.isAndroid &&
+        phoneNumber != null &&
+        phoneNumber.isNotEmpty) {
       String formattedPhone = phoneNumber.toWhatsAppFormat();
 
       await WhatsappShare.shareFile(
         phone: formattedPhone,
-        filePath: [file.path],
+        filePath: [shareFile.path],
         text: subject,
       );
     } else {
       await SharePlus.instance.share(
         ShareParams(
-          files: [XFile(file.path, mimeType: 'application/pdf')],
+          files: [XFile(shareFile.path, mimeType: 'application/pdf')],
           text: subject,
           subject: subject,
         ),
       );
     }
+
+    return shareFile;
   }
 
   static Future<File> generateInvoicePdf({
@@ -61,10 +116,8 @@ class InvoicePdfService {
     required bool isArabic,
   }) async {
     final pdfBytes = await _buildPdf(invoice, isArabic);
-    final directory = await getTemporaryDirectory();
-    final file = File(
-      '${directory.path}/invoice_${invoice.id}_${DateTime.now().millisecondsSinceEpoch}.pdf',
-    );
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/invoice_${invoice.id}.pdf');
     await file.writeAsBytes(pdfBytes);
     return file;
   }
