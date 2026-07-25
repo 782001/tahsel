@@ -98,7 +98,9 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
     try {
       final userRef = firestore.collection('users').doc(debt.uid);
 
-      final debtRef = userRef.collection('my_debt_items').doc();
+      final debtRef = (debt.id != null && debt.id!.isNotEmpty)
+          ? userRef.collection('my_debt_items').doc(debt.id)
+          : userRef.collection('my_debt_items').doc();
       final opRef = userRef
           .collection('my_debt_operations')
           .doc(debt.operationId);
@@ -106,6 +108,10 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       final personRef = userRef
           .collection('my_debt_persons')
           .doc(debt.personName);
+
+      final modelToSave = (debt.id != null && debt.id!.isNotEmpty)
+          ? debt
+          : MyDebtItemModel.fromEntity(debt.copyWith(id: debtRef.id));
 
       // Get person first to check if firstDate needs to be set/updated
       final personDoc = await personRef.get();
@@ -121,7 +127,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       final batch = firestore.batch();
 
       // 1. Add to debts collection
-      batch.set(debtRef, debt.toJson());
+      batch.set(debtRef, modelToSave.toJson());
 
       // 2. Add to operations collection
       batch.set(opRef, {
