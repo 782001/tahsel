@@ -186,10 +186,50 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       }
 
       await batch.commit();
+      await _recalculatePersonTotals(uid, personName);
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;
     }
+  }
+
+  Future<void> _recalculatePersonTotals(String uid, String personName) async {
+    if (personName.isEmpty) return;
+    try {
+      final itemsSnap = await firestore
+          .collection('users')
+          .doc(uid)
+          .collection('my_debt_items')
+          .where('personName', isEqualTo: personName)
+          .get();
+
+      double sumTotal = 0.0;
+      double sumRemaining = 0.0;
+      int count = itemsSnap.docs.length;
+
+      for (var doc in itemsSnap.docs) {
+        final data = doc.data();
+        sumTotal += (data['totalAmount'] as num? ?? 0.0).toDouble();
+        sumRemaining += (data['remainingAmount'] as num? ?? 0.0).toDouble();
+      }
+
+      final personRef = firestore
+          .collection('users')
+          .doc(uid)
+          .collection('my_debt_persons')
+          .doc(personName);
+
+      await personRef.set(
+        {
+          'name': personName,
+          'totalDebtAmount': sumTotal,
+          'totalRemainingDebt': sumRemaining,
+          'totalTransactions': count,
+          'lastUsedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    } catch (_) {}
   }
 
   @override
@@ -290,6 +330,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         }
 
         await batch.commit();
+        await _recalculatePersonTotals(debt.uid, debt.personName ?? '');
         return debtRef.id;
       }
 
@@ -303,17 +344,19 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
 
       // Update firstDate if it's null OR if the new debt's date is earlier
       bool shouldUpdateFirstDate = firstDateIsNull;
-      if (!shouldUpdateFirstDate && debt.timestamp != null && personDoc.exists) {
-        final existingFirstDate = (personDoc.data()!['firstDate'] as Timestamp).toDate();
-        shouldUpdateFirstDate = debt.timestamp!.isBefore(existingFirstDate);
+      if (!firstDateIsNull && debt.timestamp != null) {
+        final existingFirstDate = (personDoc.data()?['firstDate'] as Timestamp?)?.toDate();
+        if (existingFirstDate != null && debt.timestamp!.isBefore(existingFirstDate)) {
+          shouldUpdateFirstDate = true;
+        }
       }
 
       final batch = firestore.batch();
 
-      // 1. Add to debts collection
-      batch.set(debtRef, modelToSave.toJson());
+      // 1. Add/Update debt item doc
+      batch.set(debtRef, modelToSave.toJson(), SetOptions(merge: true));
 
-      // 2. Add to operations collection
+      // 2. Add/Update operation record
       batch.set(opRef, {
         'uid': debt.uid,
         'type': debt.operationType,
@@ -380,6 +423,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       batch.set(personRef, personUpdate, SetOptions(merge: true));
 
       await batch.commit();
+      await _recalculatePersonTotals(debt.uid, debt.personName ?? '');
       return debtRef.id;
     } catch (e) {
       FirebaseErrorHandler.handle(e);
@@ -459,6 +503,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       });
 
       await batch.commit();
+      await _recalculatePersonTotals(uid, debt.personName ?? '');
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;
@@ -563,6 +608,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       });
 
       await batch.commit();
+      await _recalculatePersonTotals(uid, personName);
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;
@@ -782,6 +828,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
 
         await batch.commit();
       }
+      await _recalculatePersonTotals(uid, personName);
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;
@@ -984,6 +1031,16 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           });
         }
       });
+      final debtSnap = await firestore
+          .collection('users')
+          .doc(uid)
+          .collection('my_debt_items')
+          .doc(debtId)
+          .get();
+      if (debtSnap.exists) {
+        final personName = debtSnap.data()?['personName'] as String? ?? '';
+        await _recalculatePersonTotals(uid, personName);
+      }
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;
@@ -1004,10 +1061,12 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           .doc(debtId);
       final paymentRef = debtRef.collection('payments').doc(paymentId);
 
+      String personNameForRecalc = '';
       await firestore.runTransaction((transaction) async {
         final debtSnap = await transaction.get(debtRef);
         if (!debtSnap.exists) throw Exception('Debt not found');
 
+        personNameForRecalc = debtSnap.data()?['personName'] as String? ?? '';
         final paymentsSnapshot = await debtRef
             .collection('payments')
             .orderBy('createdAt', descending: true)
@@ -1071,6 +1130,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           });
         }
       });
+      await _recalculatePersonTotals(uid, personNameForRecalc);
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       throw Exception('Failed to delete payment: $e');

@@ -505,8 +505,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
       final debtId = 'debt_pur_$cleanId';
 
       if (purchase.paymentMethod == 'debt') {
-        final remainingAmount =
-            (purchase.totalAmount - purchase.paidAmount).clamp(0.0, double.infinity);
+        final remainingAmount = purchase.totalAmount - purchase.paidAmount;
 
         final debtItem = MyDebtItemEntity(
           id: debtId,
