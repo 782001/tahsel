@@ -133,8 +133,8 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
         notes: _notesController.text.trim().isNotEmpty
             ? _notesController.text.trim()
             : null,
-        paymentMethod: _selectedPaymentMethod,
-        paidAmount: actualPaidAmount,
+        paymentMethod: widget.initialPurchase!.paymentMethod,
+        paidAmount: widget.initialPurchase!.paidAmount,
         isSynced: false,
       );
       success = await purchasesCubit.updatePurchase(
@@ -459,10 +459,12 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                             ],
                           ),
                           SizedBox(height: isDesktop ? 14 : 14.h),
-                          const Divider(),
-                          SizedBox(height: isDesktop ? 10 : 10.h),
-                          _buildPaymentMethodSection(isDesktop),
-                          SizedBox(height: isDesktop ? 16 : 16.h),
+                          if (widget.initialPurchase == null) ...[
+                            const Divider(),
+                            SizedBox(height: isDesktop ? 10 : 10.h),
+                            _buildPaymentMethodSection(isDesktop),
+                            SizedBox(height: isDesktop ? 16 : 16.h),
+                          ],
                           SizedBox(
                             width: double.infinity,
                             height: isDesktop ? 48 : 48.h,
