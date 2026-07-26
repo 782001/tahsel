@@ -130,7 +130,7 @@ class MyDebtSummaryRow extends StatelessWidget {
         ),
         SizedBox(height: 8.h),
         Text(
-          '${amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
+          '${amount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
           style: TextStyles.customStyle(
             color: color,
             fontSize: 16,

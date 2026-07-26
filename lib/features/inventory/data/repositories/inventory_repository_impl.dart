@@ -556,8 +556,11 @@ class InventoryRepositoryImpl implements InventoryRepository {
     required InventoryPurchaseEntity newPurchase,
   }) async {
     try {
-      await _removePurchaseFromMyDebts(oldPurchase);
-      await _syncPurchaseToMyDebts(newPurchase);
+      if (newPurchase.paymentMethod == 'debt') {
+        await _syncPurchaseToMyDebts(newPurchase);
+      } else {
+        await _removePurchaseFromMyDebts(oldPurchase);
+      }
     } catch (_) {}
   }
 

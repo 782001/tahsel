@@ -109,6 +109,91 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           .collection('my_debt_persons')
           .doc(debt.personName);
 
+      // Check if debt item already exists (e.g., editing an existing purchase invoice)
+      final existingDebtSnap = await debtRef.get();
+      if (existingDebtSnap.exists) {
+        final existingData = existingDebtSnap.data() as Map<String, dynamic>;
+        final double oldTotal =
+            (existingData['totalAmount'] as num? ?? 0.0).toDouble();
+        final double existingPaid =
+            (existingData['paidAmount'] as num? ?? 0.0).toDouble();
+        final double oldRemaining =
+            (existingData['remainingAmount'] as num? ?? 0.0).toDouble();
+
+        final double newTotal = debt.totalAmount;
+        // Preserve existing payment history!
+        final double actualPaid = existingPaid;
+        final double newRemaining = newTotal - actualPaid;
+        final bool isPaid = newRemaining <= 0;
+
+        final updatedModel = MyDebtItemModel.fromEntity(
+          debt.copyWith(
+            id: debtRef.id,
+            totalAmount: newTotal,
+            paidAmount: actualPaid,
+            remainingAmount: newRemaining,
+            isPaid: isPaid,
+          ),
+        );
+
+        final double deltaTotal = newTotal - oldTotal;
+        final double deltaRemaining = newRemaining - oldRemaining;
+
+        final batch = firestore.batch();
+        batch.set(debtRef, updatedModel.toJson(), SetOptions(merge: true));
+
+        batch.set(
+          opRef,
+          {
+            'uid': debt.uid,
+            'type': debt.operationType,
+            'personName': debt.personName,
+            'details': debt.details,
+            'totalAmount': newTotal,
+            'paidAmount': actualPaid,
+            'remainingDebt': newRemaining,
+            'timestamp': debt.timestamp != null
+                ? Timestamp.fromDate(debt.timestamp!)
+                : FieldValue.serverTimestamp(),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+
+        batch.set(
+          personRef,
+          {
+            'name': debt.personName,
+            'lastUsedAt': debt.timestamp != null
+                ? Timestamp.fromDate(debt.timestamp!)
+                : FieldValue.serverTimestamp(),
+            'totalDebtAmount': FieldValue.increment(deltaTotal),
+            'totalRemainingDebt': FieldValue.increment(deltaRemaining),
+          },
+          SetOptions(merge: true),
+        );
+
+        final debtAddedQuery = await debtRef
+            .collection('payments')
+            .where('type', isEqualTo: 'debtAdded')
+            .limit(1)
+            .get();
+        if (debtAddedQuery.docs.isNotEmpty) {
+          final debtAddedDocRef = debtAddedQuery.docs.first.reference;
+          batch.set(
+            debtAddedDocRef,
+            {
+              'amountPaid': newTotal,
+              'remainingAmount': newTotal,
+            },
+            SetOptions(merge: true),
+          );
+        }
+
+        await batch.commit();
+        return debtRef.id;
+      }
+
       final modelToSave = (debt.id != null && debt.id!.isNotEmpty)
           ? debt
           : MyDebtItemModel.fromEntity(debt.copyWith(id: debtRef.id));

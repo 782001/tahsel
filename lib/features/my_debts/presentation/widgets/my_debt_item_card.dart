@@ -303,7 +303,7 @@ class MyDebtItemCard extends StatelessWidget {
         ),
         SizedBox(height: 4.h),
         Text(
-          '${amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
+          '${amount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
           style: TextStyles.customStyle(
             color: isRemaining ? AppColors.error : AppColors.textColor,
             fontSize: 14,
