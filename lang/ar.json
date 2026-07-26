@@ -856,5 +856,9 @@
   "payment_method": "طريقة الدفع",
   "payment_cash": "نقداً (كاش)",
   "payment_card": "بطاقة (كارت)",
-  "payment_debt": "آجل (دَين عليا)"
+  "payment_debt": "آجل (دَين عليا)",
+  "supplier_credit": "رصيد لك لدى المورد",
+  "settle_supplier_credit": "استلام الرصيد الدائن وتسوية الحساب",
+  "settle_supplier_credit_confirm_msg": "هل أخذت مبلغ الرصيد الدائن وقدره {amount} من المورد؟\n\nسيتم تسجيل استلام المبلغ وتسوية كافة الحسابات لتصبح صفر.",
+  "settle_supplier_credit_success_msg": "تم استلام الرصيد الدائن وتسوية الحساب بنجاح"
 }

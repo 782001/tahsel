@@ -200,4 +200,10 @@ class AppColors {
   /// Stock subtraction button red
   static Color get stockSubtractionRed =>
       isDark ? const Color(0xFFEF5350) : Colors.red.shade700;
+
+  // --- Supplier & Customer Credit Theme Colors ---
+  static const Color creditAmberStart = Color(0xFFF59E0B);
+  static const Color creditAmberEnd = Color(0xFFB45309);
+  static Color get supplierCreditColor =>
+      isDark ? const Color(0xFFF59E0B) : const Color(0xFFB45309);
 }

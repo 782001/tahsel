@@ -288,6 +288,26 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
   }
 
   @override
+  Future<Either<Failure, void>> settleSupplierCredit({
+    required String uid,
+    required String debtId,
+    required double creditAmount,
+    String? note,
+  }) async {
+    try {
+      await itemRemoteDataSource.settleSupplierCredit(
+        uid: uid,
+        debtId: debtId,
+        creditAmount: creditAmount,
+        note: note,
+      );
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> distributeMyDebtPayment({
     required String uid,
     required String personName,

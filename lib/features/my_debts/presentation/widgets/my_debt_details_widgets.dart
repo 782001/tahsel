@@ -97,10 +97,16 @@ class MyDebtSummaryRow extends StatelessWidget {
             color: AppColors.disabledColor.withValues(alpha: 0.2),
           ),
           _buildSummaryItem(
-            AppStrings.remainingDebt.tr(),
-            remainingAmount,
-            AppColors.error,
-            Icons.timer_outlined,
+            remainingAmount < 0
+                ? AppStrings.supplierCredit.tr()
+                : AppStrings.remainingDebt.tr(),
+            remainingAmount.abs(),
+            remainingAmount < 0
+                ? AppColors.supplierCreditColor
+                : AppColors.error,
+            remainingAmount < 0
+                ? Icons.account_balance_wallet_outlined
+                : Icons.timer_outlined,
           ),
         ],
       ),
@@ -113,7 +119,9 @@ class MyDebtSummaryRow extends StatelessWidget {
     Color color,
     IconData icon,
   ) {
+    final double displayAmount = amount.abs();
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
@@ -130,7 +138,7 @@ class MyDebtSummaryRow extends StatelessWidget {
         ),
         SizedBox(height: 8.h),
         Text(
-          '${amount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+          '${displayAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
           style: TextStyles.customStyle(
             color: color,
             fontSize: 16,

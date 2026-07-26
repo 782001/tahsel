@@ -373,6 +373,12 @@ class AppStrings {
   static const String none = "none";
   static const String smsNotSupported = "sms_not_supported";
   static const String ledgerNumber = "ledger_number";
+  static const String supplierCredit = "supplier_credit";
+  static const String settleSupplierCredit = "settle_supplier_credit";
+  static const String settleSupplierCreditConfirmMsg =
+      "settle_supplier_credit_confirm_msg";
+  static const String settleSupplierCreditSuccessMsg =
+      "settle_supplier_credit_success_msg";
   static const String comparisonIncrease = "comparison_increase";
   static const String comparisonDecrease = "comparison_decrease";
   static const String comparisonNoChange = "comparison_no_change";

@@ -93,192 +93,203 @@ class MyDebtItemCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 10.w,
-                              vertical: 4.h,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryColor.withValues(
-                                alpha: 0.1,
-                              ),
-                              borderRadius: BorderRadius.circular(20.r),
-                            ),
-                            child: Text(
-                              '#$index',
-                              style: TextStyles.customStyle(
-                                color: AppColors.primaryColor,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          if (item.isPending) ...[
-                            SizedBox(width: 8.w),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
                             Container(
                               padding: EdgeInsets.symmetric(
-                                horizontal: 8.w,
-                                vertical: 2.h,
+                                horizontal: 10.w,
+                                vertical: 4.h,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.error.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(4.r),
-                              ),
-                              child: Row(
-                                children: [
-                                  SizedBox(
-                                    width: 10,
-                                    height: 10,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 1.5,
-                                      color: AppColors.error,
-                                    ),
-                                  ),
-                                  SizedBox(width: 4.w),
-                                  Text(
-                                    AppStrings.syncing.tr(),
-                                    style: TextStyles.customStyle(
-                                      color: AppColors.error,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      Text(
-                        item.timestamp != null
-                            ? DateFormat('yyyy/MM/dd').format(item.timestamp!)
-                            : '',
-                        style: TextStyles.customStyle(
-                          color: AppColors.subTitleColor,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 12.h),
-                  Text(
-                    item.details?.isNotEmpty == true
-                        ? item.details!
-                        : AppStrings.noDescription.tr(),
-                    style: TextStyles.customStyle(
-                      color: AppColors.textColor,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: 16.h),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildAmountInfo(
-                        AppStrings.totalDueLabel.tr(),
-                        item.totalAmount,
-                      ),
-                      _buildAmountInfo(
-                        AppStrings.amountPaid.tr(),
-                        item.paidAmount,
-                      ),
-                      _buildAmountInfo(
-                        AppStrings.remainingDebt.tr(),
-                        item.remainingAmount,
-                        isRemaining: true,
-                      ),
-                    ],
-                  ),
-                  if (item.remainingAmount > 0) ...[
-                    const Divider(height: 24, thickness: 0.5),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: item.isPending
-                                ? null
-                                : () => onPayPartial(item),
-                            icon: Icon(Icons.payments_outlined, size: 16.r),
-                            label: Text(AppStrings.partialPayLabel.tr()),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.primaryColor,
-                              side: BorderSide(
                                 color: AppColors.primaryColor.withValues(
-                                  alpha: 0.5,
+                                  alpha: 0.1,
+                                ),
+                                borderRadius: BorderRadius.circular(20.r),
+                              ),
+                              child: Text(
+                                '#$index',
+                                style: TextStyles.customStyle(
+                                  color: AppColors.primaryColor,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              padding: EdgeInsets.symmetric(vertical: 8.h),
-                              textStyle: TextStyles.customStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8.r),
-                              ),
                             ),
-                          ),
-                        ),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: (isFullPaying || item.isPending)
-                                ? null
-                                : () => onPayFull(item),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primaryColor,
-                              foregroundColor: AppColors.whiteColor,
-                              elevation: 0,
-                              padding: EdgeInsets.symmetric(vertical: 8.h),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8.r),
-                              ),
-                            ),
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  if (isFullPaying) ...[
+                            if (item.isPending) ...[
+                              SizedBox(width: 8.w),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 8.w,
+                                  vertical: 2.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.error.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(4.r),
+                                ),
+                                child: Row(
+                                  children: [
                                     SizedBox(
-                                      height: 16,
-                                      width: 16,
+                                      width: 10,
+                                      height: 10,
                                       child: CircularProgressIndicator(
-                                        color: AppColors.primaryColor,
-                                        strokeWidth: 2,
+                                        strokeWidth: 1.5,
+                                        color: AppColors.error,
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
-                                  ] else
-                                    Icon(
-                                      Icons.check_circle_outline,
-                                      size: 16.r,
+                                    SizedBox(width: 4.w),
+                                    Text(
+                                      AppStrings.syncing.tr(),
+                                      style: TextStyles.customStyle(
+                                        color: AppColors.error,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    AppStrings.fullPaymentLabel.tr(),
-                                    style: TextStyles.customStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.whiteColor,
-                                    ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
+                            ],
+                          ],
+                        ),
+                        Text(
+                          item.timestamp != null
+                              ? DateFormat('yyyy/MM/dd').format(item.timestamp!)
+                              : '',
+                          style: TextStyles.customStyle(
+                            color: AppColors.subTitleColor,
+                            fontSize: 12,
                           ),
                         ),
                       ],
                     ),
+                    SizedBox(height: 12.h),
+                    Text(
+                      item.details?.isNotEmpty == true
+                          ? item.details!
+                          : AppStrings.noDescription.tr(),
+                      style: TextStyles.customStyle(
+                        color: AppColors.textColor,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildAmountInfo(
+                          AppStrings.totalDueLabel.tr(),
+                          item.totalAmount,
+                        ),
+                        _buildAmountInfo(
+                          AppStrings.amountPaid.tr(),
+                          item.paidAmount,
+                        ),
+                        _buildAmountInfo(
+                          (item.remainingAmount < 0 ||
+                                  item.paidAmount > item.totalAmount)
+                              ? AppStrings.supplierCredit.tr()
+                              : AppStrings.remainingDebt.tr(),
+                          (item.remainingAmount < 0 ||
+                                  item.paidAmount > item.totalAmount)
+                              ? (item.paidAmount > item.totalAmount
+                                    ? (item.paidAmount - item.totalAmount)
+                                    : item.remainingAmount.abs())
+                              : item.remainingAmount,
+                          isRemaining: true,
+                          isCredit:
+                              item.remainingAmount < 0 ||
+                              item.paidAmount > item.totalAmount,
+                        ),
+                      ],
+                    ),
+                    if (item.remainingAmount > 0) ...[
+                      const Divider(height: 24, thickness: 0.5),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: item.isPending
+                                  ? null
+                                  : () => onPayPartial(item),
+                              icon: Icon(Icons.payments_outlined, size: 16.r),
+                              label: Text(AppStrings.partialPayLabel.tr()),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.primaryColor,
+                                side: BorderSide(
+                                  color: AppColors.primaryColor.withValues(
+                                    alpha: 0.5,
+                                  ),
+                                ),
+                                padding: EdgeInsets.symmetric(vertical: 8.h),
+                                textStyle: TextStyles.customStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 12.w),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: (isFullPaying || item.isPending)
+                                  ? null
+                                  : () => onPayFull(item),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryColor,
+                                foregroundColor: AppColors.whiteColor,
+                                elevation: 0,
+                                padding: EdgeInsets.symmetric(vertical: 8.h),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                              ),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    if (isFullPaying) ...[
+                                      SizedBox(
+                                        height: 16,
+                                        width: 16,
+                                        child: CircularProgressIndicator(
+                                          color: AppColors.primaryColor,
+                                          strokeWidth: 2,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                    ] else
+                                      Icon(
+                                        Icons.check_circle_outline,
+                                        size: 16.r,
+                                      ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      AppStrings.fullPaymentLabel.tr(),
+                                      style: TextStyles.customStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.whiteColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
             ),
           ),
         ),
@@ -290,22 +301,31 @@ class MyDebtItemCard extends StatelessWidget {
     String label,
     double amount, {
     bool isRemaining = false,
+    bool isCredit = false,
   }) {
+    final double displayAmount = amount.abs();
+    final Color textColor = isCredit
+        ? AppColors.supplierCreditColor
+        : (isRemaining ? AppColors.error : AppColors.textColor);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
           style: TextStyles.customStyle(
-            color: AppColors.subTitleColor,
+            color: isCredit
+                ? AppColors.supplierCreditColor
+                : AppColors.subTitleColor,
             fontSize: 10,
+            fontWeight: isCredit ? FontWeight.bold : FontWeight.normal,
           ),
         ),
         SizedBox(height: 4.h),
         Text(
-          '${amount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+          '${displayAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
           style: TextStyles.customStyle(
-            color: isRemaining ? AppColors.error : AppColors.textColor,
+            color: textColor,
             fontSize: 14,
             fontWeight: FontWeight.bold,
           ),

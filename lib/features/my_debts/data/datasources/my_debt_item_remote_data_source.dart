@@ -53,6 +53,12 @@ abstract class MyDebtItemRemoteDataSource {
     required String debtId,
     required String paymentId,
   });
+  Future<void> settleSupplierCredit({
+    required String uid,
+    required String debtId,
+    required double creditAmount,
+    String? note,
+  });
   Future<MyDebtItemModel?> getMyDebtItemById(
     String uid,
     String debtId, {
@@ -87,6 +93,99 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         return MyDebtItemModel.fromJson(doc.data()!, doc.id);
       }
       return null;
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> settleSupplierCredit({
+    required String uid,
+    required String debtId,
+    required double creditAmount,
+    String? note,
+  }) async {
+    try {
+      final userRef = firestore.collection('users').doc(uid);
+      final debtRef = userRef.collection('my_debt_items').doc(debtId);
+
+      final debtSnap = await debtRef.get();
+      if (!debtSnap.exists) return;
+
+      final debtData = debtSnap.data() as Map<String, dynamic>;
+      final double totalAmount =
+          (debtData['totalAmount'] as num? ?? 0.0).toDouble();
+      final String personName = debtData['personName'] as String? ?? '';
+      final String operationId = debtData['operationId'] as String? ?? '';
+
+      final double newPaid = totalAmount;
+      final double newRemaining = 0.0;
+      final bool isPaid = true;
+
+      final batch = firestore.batch();
+
+      batch.update(debtRef, {
+        'paidAmount': newPaid,
+        'remainingAmount': newRemaining,
+        'isPaid': isPaid,
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      });
+
+      final paymentRef = debtRef.collection('payments').doc();
+      batch.set(paymentRef, {
+        'debtId': debtId,
+        'amountPaid': -creditAmount,
+        'remainingAmount': newRemaining,
+        'createdAt': FieldValue.serverTimestamp(),
+        'type': 'settlement',
+        'note': note ?? 'استلام الرصيد الدائن من المورد',
+      });
+
+      if (operationId.isNotEmpty) {
+        final opRef = userRef.collection('my_debt_operations').doc(operationId);
+        batch.set(
+          opRef,
+          {
+            'paidAmount': newPaid,
+            'remainingDebt': newRemaining,
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      }
+
+      if (personName.isNotEmpty) {
+        final personRef = userRef.collection('my_debt_persons').doc(personName);
+        batch.set(
+          personRef,
+          {
+            'totalRemainingDebt': FieldValue.increment(creditAmount),
+            'lastUsedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      }
+
+      final String? purchaseId = (operationId.startsWith('pur_'))
+          ? operationId
+          : (debtId.startsWith('debt_pur_')
+              ? debtId.replaceAll('debt_', '')
+              : null);
+      if (purchaseId != null) {
+        final purchaseRef = userRef.collection('purchases').doc(purchaseId);
+        batch.set(
+          purchaseRef,
+          {
+            'paidAmount': newPaid,
+            'isPaid': isPaid,
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      }
+
+      await batch.commit();
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;

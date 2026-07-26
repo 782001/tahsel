@@ -49,23 +49,9 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
       // Rule 1: Only latest 2 items
       final bool isLatest2 = index >= 0 && index < 2;
 
-      if (isLatest2) {
+      if (isLatest2 && !isDebtAdded) {
         canEdit = true;
         canDelete = true;
-
-        // Rule 2: For 'Add Debt' items, check for newer payments
-        if (isDebtAdded) {
-          final hasNewerPayments = transactions.any(
-            (t) =>
-                (t.type == PaymentType.partial ||
-                    t.type == PaymentType.full ||
-                    t.type == PaymentType.settlement) &&
-                t.createdAt!.isAfter(transaction.createdAt!),
-          );
-          if (hasNewerPayments) {
-            canDelete = false;
-          }
-        }
       }
     }
 

@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/extensions/extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_person_entity.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_state.dart';
 import 'package:tahsel/routes/app_routes.dart';
-import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 class MyDebtCard extends StatelessWidget {
   final MyDebtPersonEntity person;
@@ -133,9 +133,13 @@ class MyDebtCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: _buildAmountInfo(
-                            AppStrings.remainingDebt.tr(),
-                            person.totalRemainingDebt,
-                            AppColors.error,
+                            person.totalRemainingDebt < 0
+                                ? AppStrings.supplierCredit.tr()
+                                : AppStrings.remainingDebt.tr(),
+                            person.totalRemainingDebt.abs(),
+                            person.totalRemainingDebt < 0
+                                ? AppColors.supplierCreditColor
+                                : AppColors.error,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -181,9 +185,14 @@ class MyDebtCard extends StatelessWidget {
   }
 
   Widget _buildStatusBadge() {
+    final bool hasCredit = person.totalRemainingDebt < 0;
     final bool isPaid = person.totalRemainingDebt <= 0;
-    final color = isPaid ? AppColors.success : AppColors.error;
-    final text = isPaid ? AppStrings.paid : AppStrings.remaining;
+    final color = hasCredit
+        ? AppColors.supplierCreditColor
+        : (isPaid ? AppColors.success : AppColors.error);
+    final text = hasCredit
+        ? AppStrings.supplierCredit
+        : (isPaid ? AppStrings.paid : AppStrings.remaining);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -203,6 +212,7 @@ class MyDebtCard extends StatelessWidget {
   }
 
   Widget _buildAmountInfo(String label, double amount, Color color) {
+    final double displayAmount = amount.abs();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -217,7 +227,7 @@ class MyDebtCard extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          '${amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
+          '${displayAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
           style: TextStyles.customStyle(
             color: color,
             fontSize: 14,

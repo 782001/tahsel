@@ -58,6 +58,12 @@ abstract class MyDebtRepository {
     String? note,
     DateTime? paymentDate,
   });
+  Future<Either<Failure, void>> settleSupplierCredit({
+    required String uid,
+    required String debtId,
+    required double creditAmount,
+    String? note,
+  });
   Future<Either<Failure, List<PaymentEntity>>> getMyDebtItemPayments(
     String uid,
     String debtId, {
