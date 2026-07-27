@@ -22,7 +22,8 @@ import '../widgets/product_card_item.dart';
 import '../widgets/product_details_dialog.dart';
 
 class ProductsScreen extends StatefulWidget {
-  const ProductsScreen({super.key});
+  final bool showLowStockOnly;
+  const ProductsScreen({super.key, this.showLowStockOnly = false});
 
   @override
   State<ProductsScreen> createState() => _ProductsScreenState();
@@ -35,10 +36,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
   List<InventorySupplierEntity> _suppliers = [];
   String? _selectedCategory;
   String? _selectedSupplier;
+  bool _showLowStockOnly = false;
 
   @override
   void initState() {
     super.initState();
+    _showLowStockOnly = widget.showLowStockOnly;
     _scrollController.addListener(_onScroll);
     context.read<InventoryProductsCubit>().fetchProducts();
     context.read<InventoryCategoriesCubit>().fetchCategories();
@@ -244,6 +247,67 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 padding: EdgeInsets.all(isDesktop ? 24 : 16.w),
                 child: Column(
                   children: [
+                    // Low Stock Active Filter Banner
+                    if (_showLowStockOnly)
+                      Padding(
+                        padding: EdgeInsets.only(bottom: 12.h),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 14.w,
+                            vertical: 10.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.warning.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10.r),
+                            border: Border.all(
+                              color: AppColors.warning.withValues(alpha: 0.4),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.warning_amber_rounded,
+                                    color: AppColors.warning,
+                                    size: 20,
+                                  ),
+                                  SizedBox(width: 8.w),
+                                  Text(
+                                    AppStrings.lowStockWarning.tr(),
+                                    style: TextStyles.customStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.warning,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              InkWell(
+                                onTap: () {
+                                  setState(() => _showLowStockOnly = false);
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.all(4.r),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.warning.withValues(
+                                      alpha: 0.2,
+                                    ),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.close_rounded,
+                                    color: AppColors.warning,
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
                     // Search Bar
                     QuickAddTextField(
                       controller: _searchController,
@@ -276,7 +340,13 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                 );
                               }
                               if (state is InventoryProductsLoaded) {
-                                final products = state.products;
+                                var products = state.products;
+
+                                if (_showLowStockOnly) {
+                                  products = products
+                                      .where((p) => p.currentQuantity <= p.minQuantity)
+                                      .toList();
+                                }
 
                                 if (products.isEmpty) {
                                   return InventoryEmptyState(

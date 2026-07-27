@@ -170,14 +170,23 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                               ),
                               SizedBox(width: isDesktop ? 14 : 10.w),
                               Expanded(
-                                child: _buildTahselKpiCard(
-                                  title: AppStrings.lowStockCount.tr(),
-                                  value: '$lowStockCount',
-                                  icon: Icons.warning_amber_rounded,
-                                  color: lowStockCount > 0
-                                      ? AppColors.warning
-                                      : AppColors.success,
-                                  isDesktop: isDesktop,
+                                child: InkWell(
+                                  onTap: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      AppRoutes.inventoryProducts,
+                                      arguments: true,
+                                    );
+                                  },
+                                  child: _buildTahselKpiCard(
+                                    title: AppStrings.lowStockCount.tr(),
+                                    value: '$lowStockCount',
+                                    icon: Icons.warning_amber_rounded,
+                                    color: lowStockCount > 0
+                                        ? AppColors.warning
+                                        : AppColors.success,
+                                    isDesktop: isDesktop,
+                                  ),
                                 ),
                               ),
                               SizedBox(width: isDesktop ? 14 : 10.w),

@@ -106,15 +106,21 @@ class AppRoutes {
         );
       case inventoryProducts:
         if (!AppStrings.isVip) return _vipRestrictedRoute();
+        final showLowStockOnly = settings.arguments is bool
+            ? settings.arguments as bool
+            : (settings.arguments is Map &&
+                (settings.arguments as Map)['showLowStockOnly'] == true);
         return MaterialPageRoute(
           builder: (_) => MultiBlocProvider(
             providers: [
               BlocProvider(create: (_) => di.sl<InventoryProductsCubit>()),
               BlocProvider(create: (_) => di.sl<InventoryCategoriesCubit>()),
               BlocProvider(create: (_) => di.sl<InventorySuppliersCubit>()),
-              BlocProvider(create: (_) => di.sl<InventoryStockMovementsCubit>()),
+              BlocProvider(
+                create: (_) => di.sl<InventoryStockMovementsCubit>(),
+              ),
             ],
-            child: const ProductsScreen(),
+            child: ProductsScreen(showLowStockOnly: showLowStockOnly),
           ),
         );
       case inventoryCategories:
