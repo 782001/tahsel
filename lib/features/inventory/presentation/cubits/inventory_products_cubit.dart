@@ -1,5 +1,9 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
+
+import '../../data/datasources/inventory_local_data_source.dart';
+import '../../data/services/inventory_excel_service.dart';
 import '../../domain/entities/inventory_product_entity.dart';
 import '../../domain/usecases/inventory_product_usecases.dart';
 
@@ -77,19 +81,18 @@ class InventoryProductsCubit extends Cubit<InventoryProductsState> {
       supplierId: supplierId,
       limit: _currentLimit,
     );
-    result.fold(
-      (failure) => emit(InventoryProductsError(failure.message)),
-      (products) {
-        _hasMore = products.length >= _currentLimit;
-        emit(
-          InventoryProductsLoaded(
-            products,
-            hasMore: _hasMore,
-            isPaginationLoading: false,
-          ),
-        );
-      },
-    );
+    result.fold((failure) => emit(InventoryProductsError(failure.message)), (
+      products,
+    ) {
+      _hasMore = products.length >= _currentLimit;
+      emit(
+        InventoryProductsLoaded(
+          products,
+          hasMore: _hasMore,
+          isPaginationLoading: false,
+        ),
+      );
+    });
   }
 
   Future<void> fetchMoreProducts({
@@ -157,5 +160,22 @@ class InventoryProductsCubit extends Cubit<InventoryProductsState> {
         return true;
       },
     );
+  }
+
+  Future<String?> exportAllProductsToExcel() async {
+    try {
+      final localDataSource = GetIt.I<InventoryLocalDataSource>();
+      final localModels = await localDataSource.getProducts();
+      if (localModels.isEmpty) return null;
+
+      final products = localModels
+          .map((m) => m as InventoryProductEntity)
+          .toList();
+      products.sort((a, b) => a.name.compareTo(b.name));
+
+      return await InventoryExcelService.exportProducts(products);
+    } catch (_) {
+      return null;
+    }
   }
 }

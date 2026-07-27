@@ -176,6 +176,50 @@ class _ProductsScreenState extends State<ProductsScreen> {
               color: AppColors.primaryColor,
             ),
           ),
+          actions: [
+            IconButton(
+              icon: Icon(
+                Icons.table_chart_rounded,
+                color: AppColors.success,
+                size: isDesktop ? 26 : 26.w,
+              ),
+              tooltip: AppStrings.exportToExcel.tr(),
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text(AppStrings.exportingExcel.tr()),
+                    duration: const Duration(seconds: 2),
+                    backgroundColor: AppColors.primaryColor,
+                  ),
+                );
+                final savedPath = await context
+                    .read<InventoryProductsCubit>()
+                    .exportAllProductsToExcel();
+                if (mounted) {
+                  if (savedPath != null && savedPath.isNotEmpty) {
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          '${AppStrings.exportSuccess.tr()}\n$savedPath',
+                        ),
+                        backgroundColor: AppColors.success,
+                        duration: const Duration(seconds: 4),
+                      ),
+                    );
+                  } else {
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text(AppStrings.exportFailed.tr()),
+                        backgroundColor: AppColors.error,
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
+            SizedBox(width: 8.w),
+          ],
         ),
         floatingActionButton: FloatingActionButton.extended(
           backgroundColor: AppColors.primaryColor,
@@ -258,9 +302,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                   },
                                   child: ListView.separated(
                                     controller: _scrollController,
-                                    physics: const AlwaysScrollableScrollPhysics(
-                                      parent: BouncingScrollPhysics(),
-                                    ),
+                                    physics:
+                                        const AlwaysScrollableScrollPhysics(
+                                          parent: BouncingScrollPhysics(),
+                                        ),
                                     itemCount:
                                         products.length +
                                         (state.isPaginationLoading ? 1 : 0),
@@ -284,7 +329,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                       return ProductCardItem(
                                         product: p,
                                         index: index,
-                                        onTap: () => _openProductDetailsDialog(p),
+                                        onTap: () =>
+                                            _openProductDetailsDialog(p),
                                         onManualAdjustment: () =>
                                             _openManualAdjustmentDialog(p),
                                         onEdit: () =>

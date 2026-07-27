@@ -61,17 +61,10 @@ class InventoryRepositoryImpl implements InventoryRepository {
             _currentUid!,
             limit: limit,
           );
-          final remoteIds = remoteProducts.map((p) => p.id).toSet();
           for (final p in remoteProducts) {
             final existing = await localDataSource.getProductById(p.id);
             if (existing == null || existing.isSynced) {
               await localDataSource.saveProduct(p);
-            }
-          }
-          // Remove local synced products that were deleted remotely by another device
-          for (final lp in products) {
-            if (lp.isSynced && !remoteIds.contains(lp.id)) {
-              await localDataSource.deleteProduct(lp.id);
             }
           }
           products = await localDataSource.getProducts();

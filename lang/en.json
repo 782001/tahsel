@@ -855,5 +855,12 @@
   "supplier_credit": "Supplier Credit",
   "settle_supplier_credit": "Receive Credit Refund & Settle Account",
   "settle_supplier_credit_confirm_msg": "Did you receive the supplier credit refund amount of {amount} from the supplier?\n\nThis will record the refund and settle all balances to zero.",
-  "settle_supplier_credit_success_msg": "Supplier credit refund received and account settled successfully"
+  "settle_supplier_credit_success_msg": "Supplier credit refund received and account settled successfully",
+  "export_to_excel": "Export to Excel",
+  "exporting_excel": "Exporting Excel sheet...",
+  "export_failed": "Failed to export Excel file",
+  "export_success": "Excel file saved and exported successfully to device:",
+  "status": "Status",
+  "notes": "Notes",
+  "egp": "EGP"
 }

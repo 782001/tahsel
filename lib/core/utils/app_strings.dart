@@ -968,4 +968,23 @@ class AppStrings {
   static const String paymentCash = "payment_cash";
   static const String paymentCard = "payment_card";
   static const String paymentDebt = "payment_debt";
+  static const String exportToExcel = "export_to_excel";
+  static const String exportingExcel = "exporting_excel";
+  static const String exportFailed = "export_failed";
+  static const String exportSuccess = "export_success";
+  static const String purchasePriceKey = "purchase_price";
+  static const String sellingPriceKey = "selling_price";
+  static const String currentQuantityKey = "current_quantity";
+  static const String unitKey = "unit";
+  static const String skuKey = "sku";
+  static const String categoryKey = "category";
+  static const String supplierKey = "supplier";
+  static const String outOfStockKey = "out_of_stock";
+  static const String lowStockAlertKey = "low_stock_alert";
+  static const String stableStockKey = "stable_stock";
+  static const String noCategoryKey = "no_category";
+  static const String noSupplierKey = "no_supplier";
+  static const String statusKey = "status";
+  static const String notesKey = "notes";
+  static const String egpKey = "egp";
 }
