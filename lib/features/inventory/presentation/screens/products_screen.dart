@@ -30,6 +30,7 @@ class ProductsScreen extends StatefulWidget {
 
 class _ProductsScreenState extends State<ProductsScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   List<InventoryCategoryEntity> _categories = [];
   List<InventorySupplierEntity> _suppliers = [];
   String? _selectedCategory;
@@ -38,13 +39,27 @@ class _ProductsScreenState extends State<ProductsScreen> {
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     context.read<InventoryProductsCubit>().fetchProducts();
     context.read<InventoryCategoriesCubit>().fetchCategories();
     context.read<InventorySuppliersCubit>().fetchSuppliers();
   }
 
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      context.read<InventoryProductsCubit>().fetchMoreProducts(
+        query: _searchController.text,
+        categoryId: _selectedCategory,
+        supplierId: _selectedSupplier,
+      );
+    }
+  }
+
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -144,6 +159,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
         appBar: AppBar(
           backgroundColor: AppColors.scafoldBackGround,
           elevation: 0,
+          scrolledUnderElevation: 0,
           leading: IconButton(
             icon: Icon(
               Icons.arrow_back_ios_new_rounded,
@@ -201,50 +217,72 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
                     // Products List View
                     Expanded(
-                      child: BlocBuilder<InventoryProductsCubit, InventoryProductsState>(
-                        builder: (context, state) {
-                          if (state is InventoryProductsLoading) {
-                            return Center(
-                              child: CircularProgressIndicator(
-                                color: AppColors.primaryColor,
-                                strokeWidth: 4,
-                              ),
-                            );
-                          }
-                          if (state is InventoryProductsLoaded) {
-                            final products = state.products;
-
-                            if (products.isEmpty) {
-                              return InventoryEmptyState(
-                                icon: Icons.inventory_2_outlined,
-                                title: AppStrings.noProductsFound.tr(),
-                                description: AppStrings.emptyProductsDesc.tr(),
-                                actionLabel: AppStrings.addProduct.tr(),
-                                onAction: () => _openAddEditProductDialog(),
-                              );
-                            }
-
-                            return ListView.separated(
-                              physics: const BouncingScrollPhysics(),
-                              itemCount: products.length,
-                              separatorBuilder: (_, __) =>
-                                  SizedBox(height: isDesktop ? 12 : 12.h),
-                              itemBuilder: (context, index) {
-                                final p = products[index];
-                                return ProductCardItem(
-                                  product: p,
-                                  index: index,
-                                  onTap: () => _openProductDetailsDialog(p),
-                                  onManualAdjustment: () =>
-                                      _openManualAdjustmentDialog(p),
-                                  onEdit: () => _openAddEditProductDialog(p),
+                      child:
+                          BlocBuilder<
+                            InventoryProductsCubit,
+                            InventoryProductsState
+                          >(
+                            builder: (context, state) {
+                              if (state is InventoryProductsLoading) {
+                                return Center(
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.primaryColor,
+                                    strokeWidth: 4,
+                                  ),
                                 );
-                              },
-                            );
-                          }
-                          return const SizedBox.shrink();
-                        },
-                      ),
+                              }
+                              if (state is InventoryProductsLoaded) {
+                                final products = state.products;
+
+                                if (products.isEmpty) {
+                                  return InventoryEmptyState(
+                                    icon: Icons.inventory_2_outlined,
+                                    title: AppStrings.noProductsFound.tr(),
+                                    description: AppStrings.emptyProductsDesc
+                                        .tr(),
+                                    actionLabel: AppStrings.addProduct.tr(),
+                                    onAction: () => _openAddEditProductDialog(),
+                                  );
+                                }
+
+                                return ListView.separated(
+                                  controller: _scrollController,
+                                  physics: const BouncingScrollPhysics(),
+                                  itemCount:
+                                      products.length +
+                                      (state.isPaginationLoading ? 1 : 0),
+                                  separatorBuilder: (_, __) =>
+                                      SizedBox(height: isDesktop ? 12 : 12.h),
+                                  itemBuilder: (context, index) {
+                                    if (index == products.length) {
+                                      return Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: isDesktop ? 16 : 16.h,
+                                        ),
+                                        child: Center(
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 4,
+                                            color: AppColors.primaryColor,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                    final p = products[index];
+                                    return ProductCardItem(
+                                      product: p,
+                                      index: index,
+                                      onTap: () => _openProductDetailsDialog(p),
+                                      onManualAdjustment: () =>
+                                          _openManualAdjustmentDialog(p),
+                                      onEdit: () =>
+                                          _openAddEditProductDialog(p),
+                                    );
+                                  },
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            },
+                          ),
                     ),
                   ],
                 ),

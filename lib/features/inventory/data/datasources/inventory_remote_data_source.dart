@@ -15,7 +15,10 @@ abstract class InventoryRemoteDataSource {
   Future<void> deleteSupplierFromRemote(String uid, String supplierId);
 
   Future<void> syncProducts(String uid, List<InventoryProductModel> products);
-  Future<List<InventoryProductModel>> fetchProductsFromRemote(String uid);
+  Future<List<InventoryProductModel>> fetchProductsFromRemote(
+    String uid, {
+    int limit = 15,
+  });
   Future<void> deleteProductFromRemote(String uid, String productId);
 
   Future<void> syncPurchases(String uid, List<InventoryPurchaseModel> purchases);
@@ -72,8 +75,14 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
   }
 
   @override
-  Future<List<InventoryProductModel>> fetchProductsFromRemote(String uid) async {
-    final snapshot = await _getCol(uid, 'inventory_products').get();
+  Future<List<InventoryProductModel>> fetchProductsFromRemote(
+    String uid, {
+    int limit = 15,
+  }) async {
+    final snapshot = await _getCol(uid, 'inventory_products')
+        .orderBy('updatedAt', descending: true)
+        .limit(limit)
+        .get();
     return snapshot.docs.map((doc) {
       final map = doc.data() as Map<String, dynamic>;
       map['id'] = doc.id;

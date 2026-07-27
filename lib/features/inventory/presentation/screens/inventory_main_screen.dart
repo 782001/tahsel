@@ -152,12 +152,20 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                           child: Row(
                             children: [
                               Expanded(
-                                child: _buildTahselKpiCard(
-                                  title: AppStrings.totalProductsCount.tr(),
-                                  value: '$totalProducts',
-                                  icon: Icons.inventory_2_rounded,
-                                  color: AppColors.primaryColor,
-                                  isDesktop: isDesktop,
+                                child: InkWell(
+                                  onTap: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      AppRoutes.inventoryProducts,
+                                    );
+                                  },
+                                  child: _buildTahselKpiCard(
+                                    title: AppStrings.totalProductsCount.tr(),
+                                    value: '$totalProducts',
+                                    icon: Icons.inventory_2_rounded,
+                                    color: AppColors.primaryColor,
+                                    isDesktop: isDesktop,
+                                  ),
                                 ),
                               ),
                               SizedBox(width: isDesktop ? 14 : 10.w),

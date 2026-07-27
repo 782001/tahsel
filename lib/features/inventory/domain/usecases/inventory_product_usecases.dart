@@ -11,11 +11,13 @@ class GetInventoryProductsUseCase {
     String? query,
     String? categoryId,
     String? supplierId,
+    int limit = 15,
   }) {
     return repository.getProducts(
       query: query,
       categoryId: categoryId,
       supplierId: supplierId,
+      limit: limit,
     );
   }
 }

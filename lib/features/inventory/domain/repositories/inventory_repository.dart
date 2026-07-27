@@ -12,6 +12,7 @@ abstract class InventoryRepository {
     String? query,
     String? categoryId,
     String? supplierId,
+    int limit = 15,
   });
   Future<Either<Failure, InventoryProductEntity?>> getProductById(String id);
   Future<Either<Failure, void>> saveProduct(InventoryProductEntity product);

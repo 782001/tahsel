@@ -48,6 +48,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
     String? query,
     String? categoryId,
     String? supplierId,
+    int limit = 15,
   }) async {
     try {
       List<InventoryProductModel> products = await localDataSource
@@ -60,6 +61,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
         try {
           final remoteProducts = await remoteDataSource.fetchProductsFromRemote(
             _currentUid!,
+            limit: limit,
           );
           for (final p in remoteProducts) {
             await localDataSource.saveProduct(p);

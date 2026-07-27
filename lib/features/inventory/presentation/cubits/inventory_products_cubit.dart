@@ -15,9 +15,29 @@ class InventoryProductsLoading extends InventoryProductsState {}
 
 class InventoryProductsLoaded extends InventoryProductsState {
   final List<InventoryProductEntity> products;
-  const InventoryProductsLoaded(this.products);
+  final bool hasMore;
+  final bool isPaginationLoading;
+
+  const InventoryProductsLoaded(
+    this.products, {
+    this.hasMore = true,
+    this.isPaginationLoading = false,
+  });
+
+  InventoryProductsLoaded copyWith({
+    List<InventoryProductEntity>? products,
+    bool? hasMore,
+    bool? isPaginationLoading,
+  }) {
+    return InventoryProductsLoaded(
+      products ?? this.products,
+      hasMore: hasMore ?? this.hasMore,
+      isPaginationLoading: isPaginationLoading ?? this.isPaginationLoading,
+    );
+  }
+
   @override
-  List<Object?> get props => [products];
+  List<Object?> get props => [products, hasMore, isPaginationLoading];
 }
 
 class InventoryProductsError extends InventoryProductsState {
@@ -32,6 +52,10 @@ class InventoryProductsCubit extends Cubit<InventoryProductsState> {
   final SaveInventoryProductUseCase saveProductUseCase;
   final DeleteInventoryProductUseCase deleteProductUseCase;
 
+  int _currentLimit = 15;
+  bool _hasMore = true;
+  bool _isFetchingMore = false;
+
   InventoryProductsCubit({
     required this.getProductsUseCase,
     required this.saveProductUseCase,
@@ -43,15 +67,67 @@ class InventoryProductsCubit extends Cubit<InventoryProductsState> {
     String? categoryId,
     String? supplierId,
   }) async {
+    _currentLimit = 15;
+    _hasMore = true;
+    _isFetchingMore = false;
     emit(InventoryProductsLoading());
     final result = await getProductsUseCase(
       query: query,
       categoryId: categoryId,
       supplierId: supplierId,
+      limit: _currentLimit,
     );
     result.fold(
       (failure) => emit(InventoryProductsError(failure.message)),
-      (products) => emit(InventoryProductsLoaded(products)),
+      (products) {
+        _hasMore = products.length >= _currentLimit;
+        emit(
+          InventoryProductsLoaded(
+            products,
+            hasMore: _hasMore,
+            isPaginationLoading: false,
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> fetchMoreProducts({
+    String? query,
+    String? categoryId,
+    String? supplierId,
+  }) async {
+    final currentState = state;
+    if (currentState is! InventoryProductsLoaded) return;
+    if (_isFetchingMore || !_hasMore) return;
+
+    _isFetchingMore = true;
+    emit(currentState.copyWith(isPaginationLoading: true));
+
+    _currentLimit += 15;
+    final result = await getProductsUseCase(
+      query: query,
+      categoryId: categoryId,
+      supplierId: supplierId,
+      limit: _currentLimit,
+    );
+
+    result.fold(
+      (failure) {
+        _isFetchingMore = false;
+        emit(currentState.copyWith(isPaginationLoading: false));
+      },
+      (products) {
+        _isFetchingMore = false;
+        _hasMore = products.length >= _currentLimit;
+        emit(
+          InventoryProductsLoaded(
+            products,
+            hasMore: _hasMore,
+            isPaginationLoading: false,
+          ),
+        );
+      },
     );
   }
 
