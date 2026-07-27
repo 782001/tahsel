@@ -245,39 +245,53 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                   );
                                 }
 
-                                return ListView.separated(
-                                  controller: _scrollController,
-                                  physics: const BouncingScrollPhysics(),
-                                  itemCount:
-                                      products.length +
-                                      (state.isPaginationLoading ? 1 : 0),
-                                  separatorBuilder: (_, __) =>
-                                      SizedBox(height: isDesktop ? 12 : 12.h),
-                                  itemBuilder: (context, index) {
-                                    if (index == products.length) {
-                                      return Padding(
-                                        padding: EdgeInsets.symmetric(
-                                          vertical: isDesktop ? 16 : 16.h,
-                                        ),
-                                        child: Center(
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 4,
-                                            color: AppColors.primaryColor,
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                    final p = products[index];
-                                    return ProductCardItem(
-                                      product: p,
-                                      index: index,
-                                      onTap: () => _openProductDetailsDialog(p),
-                                      onManualAdjustment: () =>
-                                          _openManualAdjustmentDialog(p),
-                                      onEdit: () =>
-                                          _openAddEditProductDialog(p),
-                                    );
+                                return RefreshIndicator(
+                                  color: AppColors.primaryColor,
+                                  onRefresh: () async {
+                                    await context
+                                        .read<InventoryProductsCubit>()
+                                        .fetchProducts(
+                                          query: _searchController.text,
+                                          categoryId: _selectedCategory,
+                                          supplierId: _selectedSupplier,
+                                        );
                                   },
+                                  child: ListView.separated(
+                                    controller: _scrollController,
+                                    physics: const AlwaysScrollableScrollPhysics(
+                                      parent: BouncingScrollPhysics(),
+                                    ),
+                                    itemCount:
+                                        products.length +
+                                        (state.isPaginationLoading ? 1 : 0),
+                                    separatorBuilder: (_, __) =>
+                                        SizedBox(height: isDesktop ? 12 : 12.h),
+                                    itemBuilder: (context, index) {
+                                      if (index == products.length) {
+                                        return Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            vertical: isDesktop ? 16 : 16.h,
+                                          ),
+                                          child: Center(
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 4,
+                                              color: AppColors.primaryColor,
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                      final p = products[index];
+                                      return ProductCardItem(
+                                        product: p,
+                                        index: index,
+                                        onTap: () => _openProductDetailsDialog(p),
+                                        onManualAdjustment: () =>
+                                            _openManualAdjustmentDialog(p),
+                                        onEdit: () =>
+                                            _openAddEditProductDialog(p),
+                                      );
+                                    },
+                                  ),
                                 );
                               }
                               return const SizedBox.shrink();

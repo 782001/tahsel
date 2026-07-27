@@ -54,19 +54,27 @@ class InventoryRepositoryImpl implements InventoryRepository {
       List<InventoryProductModel> products = await localDataSource
           .getProducts();
 
-      // If local is empty and connected, try initial pull from remote
-      if (products.isEmpty &&
-          await connectionChecker.hasConnection &&
-          _currentUid != null) {
+      // Reconcile with remote server if connected so all devices see updates
+      if (await connectionChecker.hasConnection && _currentUid != null) {
         try {
           final remoteProducts = await remoteDataSource.fetchProductsFromRemote(
             _currentUid!,
             limit: limit,
           );
+          final remoteIds = remoteProducts.map((p) => p.id).toSet();
           for (final p in remoteProducts) {
-            await localDataSource.saveProduct(p);
+            final existing = await localDataSource.getProductById(p.id);
+            if (existing == null || existing.isSynced) {
+              await localDataSource.saveProduct(p);
+            }
           }
-          products = remoteProducts;
+          // Remove local synced products that were deleted remotely by another device
+          for (final lp in products) {
+            if (lp.isSynced && !remoteIds.contains(lp.id)) {
+              await localDataSource.deleteProduct(lp.id);
+            }
+          }
+          products = await localDataSource.getProducts();
         } catch (_) {}
       }
 
@@ -864,6 +872,16 @@ class InventoryRepositoryImpl implements InventoryRepository {
       );
       await localDataSource.saveStockMovement(movement);
 
+      if (await connectionChecker.hasConnection && _currentUid != null) {
+        try {
+          await remoteDataSource.updateProductQuantityInRemote(
+            _currentUid!,
+            product.id,
+            adjustmentQuantity,
+          );
+        } catch (_) {}
+      }
+
       _triggerBackgroundSync();
       return const Right(null);
     } catch (e) {
@@ -939,6 +957,16 @@ class InventoryRepositoryImpl implements InventoryRepository {
             isSynced: false,
           );
           await localDataSource.saveStockMovement(movement);
+
+          if (await connectionChecker.hasConnection && _currentUid != null) {
+            try {
+              await remoteDataSource.updateProductQuantityInRemote(
+                _currentUid!,
+                matchingProduct.id,
+                delta,
+              );
+            } catch (_) {}
+          }
         }
       }
 
