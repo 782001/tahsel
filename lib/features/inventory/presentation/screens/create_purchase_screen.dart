@@ -1026,6 +1026,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
           children: [
             Expanded(
               child: ChoiceChip(
+                showCheckmark: false,
                 label: Center(
                   child: Text(
                     AppStrings.paymentCash.tr(),
@@ -1053,6 +1054,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
             SizedBox(width: isDesktop ? 8 : 8.w),
             Expanded(
               child: ChoiceChip(
+                showCheckmark: false,
                 label: Center(
                   child: Text(
                     AppStrings.paymentCard.tr(),
@@ -1080,6 +1082,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
             SizedBox(width: isDesktop ? 8 : 8.w),
             Expanded(
               child: ChoiceChip(
+                showCheckmark: false,
                 label: Center(
                   child: Text(
                     AppStrings.paymentDebt.tr(),
