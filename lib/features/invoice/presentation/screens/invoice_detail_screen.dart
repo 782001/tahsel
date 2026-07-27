@@ -480,6 +480,79 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                       InvoiceItemsCard(items: _invoice.items),
                                       const SizedBox(height: 20),
 
+                                      // ── Overall Cash Discount Card ─────────────
+                                      if (_invoice.discountAmount > 0) ...[
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 14,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.orange.withValues(
+                                              alpha: 0.08,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
+                                            border: Border.all(
+                                              color: AppColors.orange.withValues(
+                                                alpha: 0.3,
+                                              ),
+                                              width: 1.2,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.all(8),
+                                                    decoration: BoxDecoration(
+                                                      color: AppColors.orange
+                                                          .withValues(
+                                                            alpha: 0.15,
+                                                          ),
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                    child: const Icon(
+                                                      Icons.local_offer_rounded,
+                                                      color: AppColors.orange,
+                                                      size: 20,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 12),
+                                                  Text(
+                                                    AppStrings
+                                                        .overallDiscountAmount
+                                                        .tr(),
+                                                    style: TextStyles
+                                                        .customStyle(
+                                                          fontSize: 14,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: AppColors
+                                                              .black,
+                                                        ),
+                                                  ),
+                                                ],
+                                              ),
+                                              Text(
+                                                '-${_invoice.discountAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                                                style: TextStyles.customStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: AppColors.orange,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 20),
+                                      ],
+
                                       // ── Payment Summary ────────────────────────────────
                                       PaymentSummaryCard(invoice: _invoice),
                                       const SizedBox(height: 20),

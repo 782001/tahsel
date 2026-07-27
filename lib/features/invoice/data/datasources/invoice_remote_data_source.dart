@@ -269,6 +269,7 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
           'notes': invoice.notes,
           'items': items,
           'totalAmount': newTotalAmount,
+          'discountAmount': invoice.discountAmount,
           'lastUpdatedAt': FieldValue.serverTimestamp(),
         });
         return;
@@ -378,6 +379,7 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
         'notes': invoice.notes,
         'items': items,
         'totalAmount': newTotalAmount,
+        'discountAmount': invoice.discountAmount,
         'status': newStatus,
         'syncedTotalPaid': totalPaid,
         'lastUpdatedAt': FieldValue.serverTimestamp(),

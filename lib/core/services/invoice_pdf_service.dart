@@ -446,9 +446,24 @@ class InvoicePdfService {
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             _buildSummaryRow(
-              isArabic ? "الإجمالي:" : "Subtotal:",
-              "${invoice.totalAmount.toSmartAmount()} $currency",
+              isArabic ? "الإجمالي قبل الخصم:" : "Subtotal:",
+              "${invoice.subtotalAmount.toSmartAmount()} $currency",
               isBold: false,
+            ),
+            if (invoice.discountAmount > 0) ...[
+              pw.SizedBox(height: 8),
+              _buildSummaryRow(
+                isArabic ? "الخصم الإجمالي:" : "Overall Discount:",
+                "-${invoice.discountAmount.toSmartAmount()} $currency",
+                isBold: false,
+                color: _error,
+              ),
+            ],
+            pw.SizedBox(height: 8),
+            _buildSummaryRow(
+              isArabic ? "المبلغ الإجمالي:" : "Total Amount:",
+              "${invoice.totalAmount.toSmartAmount()} $currency",
+              isBold: true,
             ),
             pw.SizedBox(height: 8),
             _buildSummaryRow(

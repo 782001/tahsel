@@ -991,4 +991,7 @@ class AppStrings {
   static const String availableInStock = "available_in_stock";
   static const String confirmSelection = "confirm_selection";
   static const String maxQuantityReached = "max_quantity_reached";
+  static const String overallDiscountLabel = "overall_discount_label";
+  static const String subtotalBeforeDiscount = "subtotal_before_discount";
+  static const String overallDiscountAmount = "overall_discount_amount";
 }

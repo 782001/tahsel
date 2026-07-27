@@ -117,6 +117,9 @@ class InvoiceEntity extends Equatable {
   /// When present, it takes priority over the computed payments-array total.
   final double? syncedTotalPaid;
 
+  /// Overall cash discount applied to the total invoice amount in currency (EGP).
+  final double discountAmount;
+
   const InvoiceEntity({
     required this.id,
     required this.uid,
@@ -132,9 +135,15 @@ class InvoiceEntity extends Equatable {
     this.referenceNumber,
     this.linkedDebtId,
     this.syncedTotalPaid,
+    this.discountAmount = 0.0,
   });
 
-  double get totalAmount => items.fold(0.0, (sum, item) => sum + item.total);
+  double get subtotalAmount => items.fold(0.0, (sum, item) => sum + item.total);
+
+  double get totalAmount {
+    final net = subtotalAmount - discountAmount;
+    return net > 0 ? net : 0.0;
+  }
 
   /// If the debt-sync has written a `syncedTotalPaid` value, use it as the
   /// authoritative paid amount; otherwise fall back to the payments array.
@@ -163,6 +172,7 @@ class InvoiceEntity extends Equatable {
     String? referenceNumber,
     String? linkedDebtId,
     double? syncedTotalPaid,
+    double? discountAmount,
   }) {
     return InvoiceEntity(
       id: id ?? this.id,
@@ -179,6 +189,7 @@ class InvoiceEntity extends Equatable {
       referenceNumber: referenceNumber ?? this.referenceNumber,
       linkedDebtId: linkedDebtId ?? this.linkedDebtId,
       syncedTotalPaid: syncedTotalPaid ?? this.syncedTotalPaid,
+      discountAmount: discountAmount ?? this.discountAmount,
     );
   }
 
@@ -198,5 +209,6 @@ class InvoiceEntity extends Equatable {
     referenceNumber,
     linkedDebtId,
     syncedTotalPaid,
+    discountAmount,
   ];
 }

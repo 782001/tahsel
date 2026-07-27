@@ -66,12 +66,13 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
   final _phoneController = TextEditingController();
   final _ledgerController = TextEditingController();
   final _notesController = TextEditingController();
+  final _overallDiscountController = TextEditingController();
 
   // ── Line items ─────────────────────────────────────────────────────────────
   final List<_ItemControllers> _itemControllers = [];
 
   // ── Derived total ──────────────────────────────────────────────────────────
-  double get _grandTotal {
+  double get _subtotal {
     double sum = 0;
     for (final ctrl in _itemControllers) {
       final qty = double.tryParse(ctrl.qty.text) ?? 1.0;
@@ -81,6 +82,14 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
       sum += subtotal * (1 - discountPct / 100.0);
     }
     return sum;
+  }
+
+  double get _overallDiscount =>
+      double.tryParse(_overallDiscountController.text) ?? 0.0;
+
+  double get _grandTotal {
+    final net = _subtotal - _overallDiscount;
+    return net > 0 ? net : 0.0;
   }
 
   bool get _isEditMode => widget.invoiceToEdit != null;
@@ -94,6 +103,8 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
       _phoneController.text = inv.customerPhone ?? '';
       _ledgerController.text = inv.ledgerNumber ?? '';
       _notesController.text = inv.notes ?? '';
+      _overallDiscountController.text =
+          inv.discountAmount > 0 ? inv.discountAmount.toSmartAmount() : '';
       for (final item in inv.items) {
         _itemControllers.add(_ItemControllers.fromItem(item));
       }
@@ -109,6 +120,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
     _phoneController.dispose();
     _ledgerController.dispose();
     _notesController.dispose();
+    _overallDiscountController.dispose();
     for (final c in _itemControllers) {
       c.dispose();
     }
@@ -187,6 +199,9 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
       );
     }).toList();
 
+    final overallDiscount =
+        double.tryParse(_overallDiscountController.text) ?? 0.0;
+
     if (_isEditMode) {
       // Edit mode — patch mutable fields, preserve payments/status/createdAt
       final updated = widget.invoiceToEdit!.copyWith(
@@ -201,6 +216,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
         notes: _notesController.text.trim().isNotEmpty
             ? _notesController.text.trim()
             : null,
+        discountAmount: overallDiscount,
         lastUpdatedAt: DateTime.now(),
       );
       context.read<InvoiceCubit>().updateInvoice(
@@ -223,6 +239,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
         notes: _notesController.text.trim().isNotEmpty
             ? _notesController.text.trim()
             : null,
+        discountAmount: overallDiscount,
         createdAt: DateTime.now(),
         lastUpdatedAt: DateTime.now(),
       );
@@ -410,9 +427,21 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                               ),
                             ),
                             const SizedBox(height: 16),
+                            _SimpleField(
+                              controller: _overallDiscountController,
+                              hint: '0',
+                              label: AppStrings.overallDiscountLabel.tr(),
+                              isNumber: true,
+                              onChanged: (_) => setState(() {}),
+                            ),
+                            const SizedBox(height: 16),
 
                             // ── Grand Total ──────────────────────────────────
-                            _TotalCard(grandTotal: _grandTotal),
+                            _TotalCard(
+                              subtotal: _subtotal,
+                              discountAmount: _overallDiscount,
+                              grandTotal: _grandTotal,
+                            ),
                             const SizedBox(height: 24),
 
                             // ── Notes ────────────────────────────────────────
@@ -526,12 +555,14 @@ class _SimpleField extends StatelessWidget {
   final String hint;
   final String label;
   final bool isNumber;
+  final ValueChanged<String>? onChanged;
 
   const _SimpleField({
     required this.controller,
     required this.hint,
     required this.label,
     this.isNumber = false,
+    this.onChanged,
   });
 
   @override
@@ -552,6 +583,7 @@ class _SimpleField extends StatelessWidget {
           cursorColor: AppColors.primaryColor,
           controller: controller,
           keyboardType: isNumber ? TextInputType.phone : TextInputType.text,
+          onChanged: onChanged,
           style: TextStyles.customStyle(fontSize: 15),
           decoration: InputDecoration(
             hintText: hint,
@@ -617,9 +649,15 @@ class _NotesField extends StatelessWidget {
 }
 
 class _TotalCard extends StatelessWidget {
+  final double subtotal;
+  final double discountAmount;
   final double grandTotal;
 
-  const _TotalCard({required this.grandTotal});
+  const _TotalCard({
+    required this.subtotal,
+    required this.discountAmount,
+    required this.grandTotal,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -644,24 +682,72 @@ class _TotalCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
         children: [
-          Text(
-            AppStrings.invoiceGrandTotal.tr(),
-            style: TextStyles.customStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
+          if (discountAmount > 0) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  AppStrings.subtotalBeforeDiscount.tr(),
+                  style: TextStyles.customStyle(
+                    fontSize: 13,
+                    color: Colors.white.withValues(alpha: 0.8),
+                  ),
+                ),
+                Text(
+                  '${subtotal.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                  style: TextStyles.customStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
             ),
-          ),
-          Text(
-            '${grandTotal.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-            style: TextStyles.customStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  AppStrings.overallDiscountAmount.tr(),
+                  style: TextStyles.customStyle(
+                    fontSize: 13,
+                    color: Colors.yellowAccent.withValues(alpha: 0.9),
+                  ),
+                ),
+                Text(
+                  '-${discountAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                  style: TextStyles.customStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.yellowAccent,
+                  ),
+                ),
+              ],
             ),
+            const Divider(color: Colors.white24, height: 16),
+          ],
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                AppStrings.invoiceGrandTotal.tr(),
+                style: TextStyles.customStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              Text(
+                '${grandTotal.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                style: TextStyles.customStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
           ),
         ],
       ),

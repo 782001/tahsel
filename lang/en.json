@@ -866,5 +866,9 @@
   "unit_price": "Unit Price",
   "available_in_stock": "Available in Stock",
   "confirm_selection": "Confirm Selection",
+  "max_quantity_reached": "Max available quantity in stock",
+  "overall_discount_label": "Discount on Total Invoice Amount (Cash / EGP)",
+  "subtotal_before_discount": "Subtotal Before Discount:",
+  "overall_discount_amount": "Overall Discount (Cash):",
   "all": "All"
 }
