@@ -38,7 +38,8 @@ abstract class InvoiceRepository {
 
   /// Updates mutable fields (customer info, notes, items) on an existing invoice.
   /// Payments and original totals are never mutated.
-  Future<Either<Failure, void>> updateInvoice(InvoiceEntity invoice);
+  Future<Either<Failure, void>> updateInvoice(InvoiceEntity invoice,
+      {InvoiceEntity? previous});
 
   /// Irreversibly voids an invoice. Status becomes [InvoiceStatus.voided].
   Future<Either<Failure, void>> voidInvoice(String uid, String invoiceId);

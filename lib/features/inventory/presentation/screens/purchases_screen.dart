@@ -308,7 +308,12 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
               child: BlocBuilder<InventoryPurchasesCubit, InventoryPurchasesState>(
                 builder: (context, state) {
                   if (state is InventoryPurchasesLoading) {
-                    return const Center(child: CircularProgressIndicator());
+                    return Center(
+                      child: CircularProgressIndicator(
+                        strokeWidth: 4,
+                        color: AppColors.primaryColor,
+                      ),
+                    );
                   }
 
                   if (state is InventoryPurchasesError) {

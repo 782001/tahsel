@@ -994,4 +994,8 @@ class AppStrings {
   static const String overallDiscountLabel = "overall_discount_label";
   static const String subtotalBeforeDiscount = "subtotal_before_discount";
   static const String overallDiscountAmount = "overall_discount_amount";
+  static const String requestedQuantity = "requested_quantity";
+  static const String selectedItemsCount = "selected_items_count";
+  static const String addSelectedItemsToInvoice = "add_selected_items_to_invoice";
+  static const String totalLabel = "total_label";
 }

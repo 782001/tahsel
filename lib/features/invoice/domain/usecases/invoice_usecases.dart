@@ -126,8 +126,9 @@ class UpdateInvoiceUseCase {
 
   UpdateInvoiceUseCase(this.repository);
 
-  Future<Either<Failure, void>> call(InvoiceEntity invoice) {
-    return repository.updateInvoice(invoice);
+  Future<Either<Failure, void>> call(InvoiceEntity invoice,
+      {InvoiceEntity? previous}) {
+    return repository.updateInvoice(invoice, previous: previous);
   }
 }
 

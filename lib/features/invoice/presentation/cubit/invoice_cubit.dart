@@ -499,7 +499,10 @@ class InvoiceCubit extends Cubit<InvoiceState> {
       previous: previous,
     );
 
-    final result = await updateInvoiceUseCase(params.updated);
+    final result = await updateInvoiceUseCase(
+      params.updated,
+      previous: params.previous,
+    );
     result.fold(
       (failure) => emit(InvoiceFailure(failure.message)),
       (_) async {

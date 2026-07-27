@@ -14,6 +14,7 @@ import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_cubit.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_state.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/invoice_item_row.dart';
+import 'package:tahsel/features/invoice/presentation/widgets/multi_inventory_picker_bottom_sheet.dart';
 import 'package:tahsel/shared/widgets/buttons/quick_action_button.dart';
 
 class _ItemControllers {
@@ -149,6 +150,37 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
         _phoneController.text = result['phone'] ?? '';
       });
     }
+  }
+
+  void _openMultiInventoryPicker() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => MultiInventoryPickerBottomSheet(
+        onItemsConfirmed: (selectedItems) {
+          setState(() {
+            if (_itemControllers.length == 1 &&
+                _itemControllers.first.desc.text.trim().isEmpty &&
+                _itemControllers.first.price.text.trim().isEmpty) {
+              _itemControllers.clear();
+            }
+
+            for (final item in selectedItems) {
+              final newCtrl = _ItemControllers();
+              newCtrl.desc.text = item.product.name;
+              newCtrl.price.text = item.product.sellingPrice.toSmartAmount();
+              newCtrl.qty.text = item.quantity.toSmartAmount();
+              _itemControllers.add(newCtrl);
+            }
+
+            if (_itemControllers.isEmpty) {
+              _addItem();
+            }
+          });
+        },
+      ),
+    );
   }
 
   void _submit(BuildContext context) {
@@ -390,6 +422,23 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                                 _SectionHeader(
                                   title: AppStrings.invoiceItemsSection.tr(),
                                 ),
+                                if (AppStrings.isVip)
+                                  TextButton.icon(
+                                    onPressed: _openMultiInventoryPicker,
+                                    icon: Icon(
+                                      Icons.storefront_outlined,
+                                      color: AppColors.primaryColor,
+                                      size: 18,
+                                    ),
+                                    label: Text(
+                                      AppStrings.selectFromInventory.tr(),
+                                      style: TextStyles.customStyle(
+                                        color: AppColors.primaryColor,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
                               ],
                             ),
                             const SizedBox(height: 12),

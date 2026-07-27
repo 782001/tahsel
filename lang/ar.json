@@ -874,5 +874,9 @@
   "max_quantity_reached": "الحد الأقصى المتاح بالمخزن",
   "overall_discount_label": "خصم من المبلغ الكلي للفاتورة (مبلغ نقدي / ج.م)",
   "subtotal_before_discount": "الإجمالي قبل الخصم:",
-  "overall_discount_amount": "خصم إجمالي (مبلغ):"
+  "overall_discount_amount": "خصم إجمالي (مبلغ):",
+  "requested_quantity": "الكمية المطلوبة:",
+  "selected_items_count": "{count} بنود محددة",
+  "add_selected_items_to_invoice": "إضافة البنود المحددة إلى الفاتورة",
+  "total_label": "الإجمالي:"
 }

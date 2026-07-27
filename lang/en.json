@@ -870,5 +870,9 @@
   "overall_discount_label": "Discount on Total Invoice Amount (Cash / EGP)",
   "subtotal_before_discount": "Subtotal Before Discount:",
   "overall_discount_amount": "Overall Discount (Cash):",
+  "requested_quantity": "Requested Quantity:",
+  "selected_items_count": "{count} selected items",
+  "add_selected_items_to_invoice": "Add Selected Items to Invoice",
+  "total_label": "Total:",
   "all": "All"
 }
