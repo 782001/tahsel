@@ -25,7 +25,19 @@ class ProductCubit extends Cubit<ProductState> {
   }
 
   Future<void> saveProduct(String uid, String name) async {
-    final product = ProductEntity(name: name, lastUsedAt: DateTime.now());
+    String cleanName = name.trim();
+    final match =
+        RegExp(r'^(.*?)(?:\s*\(\s*\d+.*?\))?$').firstMatch(cleanName);
+    if (match != null) {
+      final extracted = match.group(1)?.trim();
+      if (extracted != null && extracted.isNotEmpty) {
+        cleanName = extracted;
+      }
+    }
+
+    if (cleanName.isEmpty) return;
+
+    final product = ProductEntity(name: cleanName, lastUsedAt: DateTime.now());
 
     // We don't await this if we want to be fast, but usually UI expects some feedback or just quiet update
     final result = await saveProductUseCase(
@@ -41,10 +53,37 @@ class ProductCubit extends Cubit<ProductState> {
   }
 
   List<ProductEntity> getSuggestions(String query) {
-    if (query.isEmpty) return _allProducts;
-    return _allProducts
-        .where((c) => c.name.toLowerCase().contains(query.toLowerCase()))
-        .toList();
+    final Set<String> seenNames = {};
+    final List<ProductEntity> result = [];
+
+    for (final p in _allProducts) {
+      String cleanName = p.name.trim();
+      final match =
+          RegExp(r'^(.*?)(?:\s*\(\s*\d+.*?\))?$').firstMatch(cleanName);
+      if (match != null) {
+        final extracted = match.group(1)?.trim();
+        if (extracted != null && extracted.isNotEmpty) {
+          cleanName = extracted;
+        }
+      }
+
+      if (cleanName.isEmpty) continue;
+
+      if (query.isEmpty ||
+          cleanName.toLowerCase().contains(query.toLowerCase())) {
+        final lowerKey = cleanName.toLowerCase();
+        if (!seenNames.contains(lowerKey)) {
+          seenNames.add(lowerKey);
+          result.add(ProductEntity(
+            id: p.id,
+            name: cleanName,
+            lastUsedAt: p.lastUsedAt,
+          ));
+        }
+      }
+    }
+
+    return result;
   }
 
   void clearData() {

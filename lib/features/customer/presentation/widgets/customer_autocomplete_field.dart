@@ -7,10 +7,6 @@ import '../../domain/entities/customer_entity.dart';
 import '../cubit/customer_cubit.dart';
 
 /// A customer-name autocomplete field backed by [CustomerCubit].
-///
-/// [RawAutocomplete] requires that [textEditingController] and [focusNode] are
-/// either BOTH provided or BOTH null.  Since we always receive a controller
-/// from the parent, we own an internal [FocusNode] when none is supplied.
 class CustomerAutocompleteField extends StatefulWidget {
   final TextEditingController controller;
   final String hint;
@@ -43,161 +39,182 @@ class CustomerAutocompleteField extends StatefulWidget {
 }
 
 class _CustomerAutocompleteFieldState extends State<CustomerAutocompleteField> {
-  // When the caller does not supply a FocusNode we own one ourselves so that
-  // RawAutocomplete's assertion "(focusNode == null) == (controller == null)"
-  // is always satisfied.
+  final LayerLink _layerLink = LayerLink();
+  OverlayEntry? _overlayEntry;
   FocusNode? _ownedFocusNode;
+  List<CustomerEntity> _suggestions = [];
 
   FocusNode get _effectiveFocusNode =>
       widget.focusNode ?? (_ownedFocusNode ??= FocusNode());
 
   @override
+  void initState() {
+    super.initState();
+    _effectiveFocusNode.addListener(_onFocusChange);
+    widget.controller.addListener(_onTextChanged);
+  }
+
+  @override
   void dispose() {
+    _effectiveFocusNode.removeListener(_onFocusChange);
+    widget.controller.removeListener(_onTextChanged);
+    _hideOverlay();
     _ownedFocusNode?.dispose();
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return RawAutocomplete<CustomerEntity>(
-      textEditingController: widget.controller,
-      focusNode: _effectiveFocusNode,
-      optionsBuilder: (TextEditingValue textEditingValue) {
-        return context.read<CustomerCubit>().getSuggestions(
-          textEditingValue.text,
-        );
-      },
-      displayStringForOption: (CustomerEntity option) => option.name,
-      fieldViewBuilder:
-          (context, fieldController, fieldFocusNode, onFieldSubmitted) {
-            return TextField(
-              cursorColor: AppColors.primaryColor,
-              controller: fieldController,
-              focusNode: fieldFocusNode,
-              textInputAction: widget.textInputAction,
-              onSubmitted: widget.onSubmitted,
-              style: TextStyles.customStyle(
-                fontWeight: FontWeight.w600,
-                color: AppColors.black,
-              ),
-              decoration: InputDecoration(
-                hintText: widget.hint,
-                errorText: widget.errorText,
-                hintStyle: TextStyles.customStyle(
-                  color: AppColors.blackLight.withValues(alpha: 0.5),
-                  fontWeight: FontWeight.normal,
-                ),
-                prefixIcon: widget.icon != null
-                    ? Icon(widget.icon, color: AppColors.blackLight)
-                    : null,
-                suffixIcon: widget.suffixIcon != null
-                    ? IconButton(
-                        icon: Icon(
-                          widget.suffixIcon,
-                          color: AppColors.primaryColor,
-                        ),
-                        onPressed: widget.onSuffixIconPressed,
-                      )
-                    : null,
-                filled: true,
-                fillColor: AppColors.stitchSurfaceHigh.withValues(alpha: 0.5),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 18,
-                ),
-              ),
-            );
-          },
+  void _onFocusChange() {
+    if (!_effectiveFocusNode.hasFocus) {
+      _hideOverlay();
+    } else if (widget.controller.text.isNotEmpty) {
+      _updateSuggestions(widget.controller.text);
+    }
+  }
 
-      optionsViewBuilder: (context, onSelected, options) {
-        return Align(
-          alignment: Alignment.topLeft,
-          child: Material(
-            elevation: 4,
-            borderRadius: const BorderRadius.vertical(
-              bottom: Radius.circular(16),
-            ),
-            color: AppColors.surface,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final fieldWidth =
-                    FocusScope.of(context).focusedChild?.size.width ?? 300;
+  void _onTextChanged() {
+    if (_effectiveFocusNode.hasFocus) {
+      _updateSuggestions(widget.controller.text);
+    }
+  }
 
-                return SizedBox(
-                  width: fieldWidth,
-                  child: Stack(
-                    children: [
-                      ListView.separated(
-                        padding: const EdgeInsets.only(top: 16),
-                        shrinkWrap: true,
-                        itemCount: options.length,
-                        separatorBuilder: (context, index) => Divider(
-                          height: 1,
-                          color: AppColors.blackLight.withValues(alpha: 0.1),
-                        ),
-                        itemBuilder: (context, index) {
-                          final CustomerEntity option = options.elementAt(
-                            index,
-                          );
-                          return ListTile(
-                            title: Text(
-                              option.name,
-                              style: TextStyles.customStyle(
-                                color: AppColors.black,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            onTap: () {
-                              onSelected(option);
-                              if (widget.onSelected != null) {
-                                widget.onSelected!(option);
-                              }
-                            },
-                          );
-                        },
-                      ),
-                      Positioned(
-                        top: 4,
-                        right: 4,
-                        child: InkWell(
-                          onTap: () {
-                            Future.delayed(
-                              const Duration(milliseconds: 50),
-                              () {
-                                if (context.mounted) {
-                                  FocusScope.of(context).unfocus();
-                                }
-                              },
-                            );
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: AppColors.blackLight.withValues(
-                                alpha: 0.1,
-                              ),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.close,
-                              size: 22,
-                              color: AppColors.blackLight,
-                            ),
+  void _updateSuggestions(String text) {
+    if (!mounted) return;
+    final suggestions = context.read<CustomerCubit>().getSuggestions(text);
+    _suggestions = suggestions;
+
+    if (suggestions.isNotEmpty && _effectiveFocusNode.hasFocus) {
+      _showOverlay();
+    } else {
+      _hideOverlay();
+    }
+  }
+
+  void _showOverlay() {
+    if (!mounted) return;
+    if (_overlayEntry != null) {
+      _overlayEntry!.markNeedsBuild();
+      return;
+    }
+
+    final renderBox = context.findRenderObject() as RenderBox?;
+    final size = renderBox?.size ?? const Size(300, 50);
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) {
+        return Positioned(
+          width: size.width,
+          child: CompositedTransformFollower(
+            link: _layerLink,
+            showWhenUnlinked: false,
+            offset: Offset(0.0, size.height + 4.0),
+            child: Material(
+              elevation: 6,
+              borderRadius: BorderRadius.circular(16),
+              color: AppColors.surface,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  constraints: const BoxConstraints(maxHeight: 220),
+                  color: AppColors.surface,
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    shrinkWrap: true,
+                    itemCount: _suggestions.length,
+                    separatorBuilder: (context, index) => Divider(
+                      height: 1,
+                      color: AppColors.blackLight.withValues(alpha: 0.1),
+                    ),
+                    itemBuilder: (context, index) {
+                      final option = _suggestions[index];
+                      return ListTile(
+                        dense: true,
+                        title: Text(
+                          option.name,
+                          style: TextStyles.customStyle(
+                            color: AppColors.black,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
                           ),
                         ),
-                      ),
-                    ],
+                        onTap: () {
+                          widget.controller.text = option.name;
+                          widget.controller.selection =
+                              TextSelection.fromPosition(
+                                TextPosition(offset: option.name.length),
+                              );
+                          if (widget.onSelected != null) {
+                            widget.onSelected!(option);
+                          }
+                          _hideOverlay();
+                          _effectiveFocusNode.unfocus();
+                        },
+                      );
+                    },
                   ),
-                );
-              },
+                ),
+              ),
             ),
           ),
         );
       },
+    );
+
+    Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  void _hideOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CompositedTransformTarget(
+      link: _layerLink,
+      child: TextField(
+        cursorColor: AppColors.primaryColor,
+        controller: widget.controller,
+        focusNode: _effectiveFocusNode,
+        textInputAction: widget.textInputAction,
+        onSubmitted: (val) {
+          _hideOverlay();
+          widget.onSubmitted?.call(val);
+        },
+        style: TextStyles.customStyle(
+          fontWeight: FontWeight.w600,
+          color: AppColors.black,
+        ),
+        decoration: InputDecoration(
+          hintText: widget.hint,
+          errorText: widget.errorText,
+          hintStyle: TextStyles.customStyle(
+            color: AppColors.blackLight.withValues(alpha: 0.5),
+            fontWeight: FontWeight.normal,
+          ),
+          prefixIcon: widget.icon != null
+              ? Icon(widget.icon, color: AppColors.blackLight)
+              : null,
+          suffixIcon: widget.suffixIcon != null
+              ? IconButton(
+                  icon: Icon(
+                    widget.suffixIcon,
+                    color: AppColors.primaryColor,
+                  ),
+                  onPressed: widget.onSuffixIconPressed,
+                )
+              : null,
+          filled: true,
+          fillColor: AppColors.stitchSurfaceHigh.withValues(alpha: 0.5),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 18,
+          ),
+        ),
+      ),
     );
   }
 }

@@ -68,13 +68,13 @@ class InventoryExcelService {
         AppStrings.productName.tr(),
         AppStrings.categoryKey.tr(),
         AppStrings.supplierKey.tr(),
-        '${AppStrings.purchasePriceKey.tr()} (${AppStrings.egpKey.tr()})',
-        '${AppStrings.sellingPriceKey.tr()} (${AppStrings.egpKey.tr()})',
+        '${AppStrings.purchasePriceKey.tr()} (${AppStrings.currencyEgp.tr()})',
+        '${AppStrings.sellingPriceKey.tr()} (${AppStrings.currencyEgp.tr()})',
         AppStrings.currentQuantityKey.tr(),
         AppStrings.unitKey.tr(),
-        '${AppStrings.totalAmount.tr()} (${AppStrings.egpKey.tr()})',
+        '${AppStrings.totalAmount.tr()} (${AppStrings.currencyEgp.tr()})',
         AppStrings.statusKey.tr(),
-        AppStrings.notesKey.tr(),
+        AppStrings.notes.tr(),
       ];
 
       sheet.appendRow(headers.map((h) => TextCellValue(h)).toList());

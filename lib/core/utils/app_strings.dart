@@ -985,6 +985,10 @@ class AppStrings {
   static const String noCategoryKey = "no_category";
   static const String noSupplierKey = "no_supplier";
   static const String statusKey = "status";
-  static const String notesKey = "notes";
-  static const String egpKey = "egp";
+  static const String selectFromInventory = "select_from_inventory";
+  static const String selectProductAndQty = "select_product_and_qty";
+  static const String unitPriceKey = "unit_price";
+  static const String availableInStock = "available_in_stock";
+  static const String confirmSelection = "confirm_selection";
+  static const String maxQuantityReached = "max_quantity_reached";
 }

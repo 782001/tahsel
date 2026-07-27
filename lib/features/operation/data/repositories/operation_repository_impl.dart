@@ -1,9 +1,13 @@
 import 'dart:convert';
 
 import 'package:dartz/dartz.dart';
+import 'package:get_it/get_it.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 
 import '../../../../core/error/failures.dart';
+import '../../../inventory/domain/entities/stock_movement_entity.dart';
+import '../../../inventory/domain/repositories/inventory_repository.dart';
 import '../../../offline_sync/data/models/offline_record.dart';
 import '../../../offline_sync/domain/repositories/offline_sync_repository.dart';
 import '../../domain/entities/operation_entity.dart';
@@ -67,6 +71,14 @@ class OperationRepositoryImpl implements OperationRepository {
         offlineRecord,
       );
 
+      // Deduct inventory stock automatically if matching product exists
+      if (model.type == 'shop' &&
+          model.productName != null &&
+          model.productName!.trim().isNotEmpty &&
+          AppStrings.isVip) {
+        _deductInventoryStock(localId, model.productName!.trim());
+      }
+
       return saveResult.fold((failure) => Left(failure), (_) async {
         // 2. Immediate prioritized sync if online
         final hasConnection = await connectionChecker.hasConnection;
@@ -78,6 +90,39 @@ class OperationRepositoryImpl implements OperationRepository {
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
+  }
+
+  Future<void> _deductInventoryStock(
+    String localId,
+    String rawProductName,
+  ) async {
+    try {
+      if (!GetIt.I.isRegistered<InventoryRepository>()) return;
+
+      String name = rawProductName;
+      double quantity = 1.0;
+      final match = RegExp(
+        r'^(.*?)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*×.*?\))?$',
+      ).firstMatch(rawProductName);
+      if (match != null) {
+        final extractedName = match.group(1)?.trim();
+        if (extractedName != null && extractedName.isNotEmpty) {
+          name = extractedName;
+        }
+        if (match.group(2) != null) {
+          quantity = double.tryParse(match.group(2)!) ?? 1.0;
+        }
+      }
+
+      final inventoryRepo = GetIt.I<InventoryRepository>();
+      await inventoryRepo.processInvoiceStockChange(
+        invoiceId: localId,
+        items: [
+          {'name': name, 'quantity': quantity},
+        ],
+        type: StockMovementType.invoiceSale,
+      );
+    } catch (_) {}
   }
 
   String _generateIdempotencyKey(OperationModel model, DateTime date) {

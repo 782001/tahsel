@@ -469,7 +469,7 @@
   "total_employees": "Total Employees",
   "reports_summary_title": "Monthly Reports Summary",
   "reports_summary_desc": "Visual performance review based on overall attendance and paid wages.",
-  "all": "All",
+
   "hourly": "Hourly",
   "monthly": "Monthly",
   "daily": "Daily",
@@ -861,6 +861,10 @@
   "export_failed": "Failed to export Excel file",
   "export_success": "Excel file saved and exported successfully to device:",
   "status": "Status",
-  "notes": "Notes",
-  "egp": "EGP"
+  "select_from_inventory": "Pick from Inventory",
+  "select_product_and_qty": "Select Product & Quantity",
+  "unit_price": "Unit Price",
+  "available_in_stock": "Available in Stock",
+  "confirm_selection": "Confirm Selection",
+  "all": "All"
 }

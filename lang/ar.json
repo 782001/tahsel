@@ -866,6 +866,10 @@
   "export_failed": "فشل تصدير ملف الإكسيل",
   "export_success": "تم حفظ وتصدير ملف الإكسيل بنجاح في الجهاز:",
   "status": "الحالة",
-  "notes": "ملاحظات",
-  "egp": "ج.م"
+  "select_from_inventory": "اختر من المحل / المخزن",
+  "select_product_and_qty": "اختر المنتج والكمية",
+  "unit_price": "سعر القطعة",
+  "available_in_stock": "المتاح بالمخزن",
+  "confirm_selection": "تأكيد واختيار",
+  "max_quantity_reached": "الحد الأقصى المتاح بالمخزن"
 }
