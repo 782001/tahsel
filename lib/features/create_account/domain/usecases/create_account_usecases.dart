@@ -22,6 +22,7 @@ class CreateUserParams {
   final String userType;
   final String platformType;
   final bool isVip;
+  final Map<String, dynamic>? currency;
 
   CreateUserParams({
     required this.email,
@@ -33,6 +34,7 @@ class CreateUserParams {
     this.userType = 'cafe',
     this.platformType = 'mobile',
     this.isVip = false,
+    this.currency,
   });
 
   Map<String, dynamic> toMap() => {
@@ -45,5 +47,6 @@ class CreateUserParams {
     'userType': userType,
     'platformType': platformType,
     'isVip': isVip,
+    if (currency != null) 'currency': currency,
   };
 }

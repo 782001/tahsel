@@ -39,9 +39,17 @@ import '../../features/standard_features/localization/presentation/cubit/locale_
 import '../../features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import '../../features/standard_features/theme/presentation/cubit/theme_cubit.dart';
 
+import 'package:tahsel/core/services/currency/currency_service.dart';
+
 final sl = GetIt.instance;
 
 Future<void> initDependencies() async {
+  // Initialize CurrencyService
+  await CurrencyService.instance.init();
+  if (!sl.isRegistered<CurrencyService>()) {
+    sl.registerLazySingleton<CurrencyService>(() => CurrencyService.instance);
+  }
+
   // firebase
   if (!sl.isRegistered<FirebaseAuth>()) {
     sl.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);

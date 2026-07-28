@@ -452,7 +452,7 @@ class _SupplierDetailsScreenState extends State<SupplierDetailsScreen> {
                                           ),
                                         ),
                                         Text(
-                                          '${pur.totalAmount.toStringAsFixed(2)} ${AppStrings.egp.tr()}',
+                                          '${pur.totalAmount.toStringAsFixed(2)} ${AppStrings.currencyEgp.tr()}',
                                           style: TextStyles.customStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
@@ -516,7 +516,7 @@ class _SupplierDetailsScreenState extends State<SupplierDetailsScreen> {
                                                     width: isDesktop ? 8 : 8.w,
                                                   ),
                                                   Text(
-                                                    '${item.quantity.toSmartAmount()} × ${item.purchasePrice.toSmartAmount()} ${AppStrings.egp.tr()}',
+                                                    '${item.quantity.toSmartAmount()} × ${item.purchasePrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                                                     style:
                                                         TextStyles.customStyle(
                                                           fontSize: 12,
@@ -582,7 +582,7 @@ class _SupplierDetailsScreenState extends State<SupplierDetailsScreen> {
                                         ),
                                         SizedBox(height: isDesktop ? 2 : 2.h),
                                         Text(
-                                          '${AppStrings.purchasePrice.tr()}: ${prod.purchasePrice.toSmartAmount()} ${AppStrings.egp.tr()}',
+                                          '${AppStrings.purchasePrice.tr()}: ${prod.purchasePrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                                           style: TextStyles.customStyle(
                                             fontSize: 12,
                                             color: AppColors.sandText,

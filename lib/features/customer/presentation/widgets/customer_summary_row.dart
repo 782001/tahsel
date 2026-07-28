@@ -32,7 +32,7 @@ class CustomerSummaryRow extends StatelessWidget {
           ),
         ),
         Text(
-          '${value.toSmartAmount()} ${AppStrings.egp.tr()}',
+          '${value.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
           style: TextStyles.customStyle(
             color: isWhite ? Colors.white : AppColors.black,
             fontSize: 16,

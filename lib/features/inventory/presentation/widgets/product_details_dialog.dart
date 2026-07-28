@@ -177,7 +177,7 @@ class ProductDetailsDialog extends StatelessWidget {
                             child: _buildMetricTile(
                               label: AppStrings.purchasePrice.tr(),
                               value:
-                                  '${product.purchasePrice.toStringAsFixed(2)} ${AppStrings.egp.tr()}',
+                                  '${product.purchasePrice.toStringAsFixed(2)} ${AppStrings.currencyEgp.tr()}',
                               icon: Icons.shopping_bag_outlined,
                               color: AppColors.primaryColor,
                               isDesktop: isDesktop,
@@ -188,7 +188,7 @@ class ProductDetailsDialog extends StatelessWidget {
                             child: _buildMetricTile(
                               label: AppStrings.sellingPrice.tr(),
                               value:
-                                  '${product.sellingPrice.toStringAsFixed(2)} ${AppStrings.egp.tr()}',
+                                  '${product.sellingPrice.toStringAsFixed(2)} ${AppStrings.currencyEgp.tr()}',
                               icon: Icons.sell_outlined,
                               color: AppColors.success,
                               isDesktop: isDesktop,

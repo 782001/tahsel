@@ -194,7 +194,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                                 child: _buildTahselKpiCard(
                                   title: AppStrings.totalInventoryValue.tr(),
                                   value: totalValue.toStringAsFixed(0),
-                                  subtitle: AppStrings.egp.tr(),
+                                  subtitle: AppStrings.currencyEgp.tr(),
                                   icon: Icons.account_balance_wallet_rounded,
                                   color: AppColors.success,
                                   isDesktop: isDesktop,

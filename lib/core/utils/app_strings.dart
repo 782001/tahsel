@@ -44,6 +44,14 @@ class AppStrings {
   /// Central support phone number — change here to update all WhatsApp links.
   static const String supportPhoneNumber = '+201028341201';
 
+  // Currency Management
+  static const String changeCurrency = 'change_currency';
+  static const String selectCurrency = 'select_currency';
+  static const String selectCurrencyHint = 'select_currency_hint';
+  static const String searchCurrencyHint = 'search_currency_hint';
+  static const String currencyUpdatedSuccess = 'currency_updated_success';
+  static const String currencyLabel = 'currency_label';
+
   // Subscription & Account
   static const String subscriptionStatus = 'subscription_status';
   static const String accountStatus = 'account_status';
@@ -401,7 +409,6 @@ class AppStrings {
   static const String totalPurchases = "total_purchases";
   static const String totalPaid = "total_paid";
   static const String remainingAmount = "remaining_amount";
-  static const String egp = "egp";
   static const String myDebts = "my_debts";
   static const String myDebtsTab = "my_debts_tab";
   static const String customerDebtsTab = "customer_debts_tab";

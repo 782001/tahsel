@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:tahsel/core/extensions/extensions.dart';
 import 'package:tahsel/core/utils/app_constants.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 
 import '../utils/assets.dart';
 
@@ -531,7 +532,7 @@ class ReceiptImageService {
     );
 
     // Currency and Value
-    final currency = isArabic ? "ج.م" : "EGP";
+    final currency = AppStrings.currencyEgp.tr();
     final valuePainter = TextPainter(
       textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
       text: TextSpan(

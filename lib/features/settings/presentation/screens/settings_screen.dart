@@ -6,6 +6,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/currency/currency_service.dart';
+import 'package:tahsel/core/services/currency/domain/entities/currency_entity.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/storage/secure_storage_helper.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
@@ -17,6 +19,7 @@ import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:tahsel/features/auth/presentation/cubit/auth_state.dart';
 import 'package:tahsel/features/settings/presentation/widgets/appearance_card.dart';
+import 'package:tahsel/features/settings/presentation/widgets/currency_selection_bottom_sheet.dart';
 import 'package:tahsel/features/settings/presentation/widgets/language_option.dart';
 import 'package:tahsel/features/settings/presentation/widgets/logout_button.dart';
 import 'package:tahsel/features/settings/presentation/widgets/section_header.dart';
@@ -250,6 +253,93 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   }
                                 },
                               ),
+                              SizedBox(height: isDesktop ? 32 : 32.h),
+
+                              // Currency Section
+                              SectionHeader(
+                                title: AppStrings.changeCurrency.tr(),
+                              ),
+                              SizedBox(height: isDesktop ? 12 : 12.h),
+                              ValueListenableBuilder<CurrencyEntity>(
+                                valueListenable:
+                                    CurrencyService.instance.currencyNotifier,
+                                builder: (context, activeCurrency, child) {
+                                  return InkWell(
+                                    onTap: () =>
+                                        CurrencySelectionBottomSheet.show(
+                                          context,
+                                        ),
+                                    borderRadius: BorderRadius.circular(16.r),
+                                    child: Container(
+                                      padding: EdgeInsets.all(
+                                        isDesktop ? 16 : 16.w,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.surface,
+                                        borderRadius: BorderRadius.circular(
+                                          16.r,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: isDesktop ? 50 : 50.w,
+                                            height: isDesktop ? 50 : 50.w,
+                                            decoration: BoxDecoration(
+                                              color: AppColors.primaryColor
+                                                  .withValues(alpha: 0.1),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            alignment: Alignment.center,
+                                            child: Text(
+                                              activeCurrency.getSymbol(
+                                                currentLang,
+                                              ),
+                                              style: TextStyles.customStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.primaryColor,
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(width: 16.w),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  activeCurrency.getName(
+                                                    currentLang,
+                                                  ),
+                                                  style: TextStyles.customStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: AppColors.black,
+                                                  ),
+                                                ),
+                                                SizedBox(height: 2.h),
+                                                Text(
+                                                  '${activeCurrency.code} (${activeCurrency.arabicSymbol} / ${activeCurrency.englishSymbol})',
+                                                  style: TextStyles.customStyle(
+                                                    fontSize: 13,
+                                                    color: AppColors.sandText,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Icon(
+                                            Icons.arrow_forward_ios,
+                                            size: 16,
+                                            color: AppColors.disabledColor,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
                               if (!Platform.isIOS || AppStrings.isVip)
                                 SizedBox(height: isDesktop ? 16 : 16.h),
                               // Inventory Management (VIP) Section
@@ -277,14 +367,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       gradient: LinearGradient(
                                         colors: [
                                           AppColors.primaryColor,
-                                          AppColors.primaryColor.withValues(alpha: 0.82),
+                                          AppColors.primaryColor.withValues(
+                                            alpha: 0.82,
+                                          ),
                                         ],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       ),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: AppColors.primaryColor.withValues(alpha: 0.3),
+                                          color: AppColors.primaryColor
+                                              .withValues(alpha: 0.3),
                                           blurRadius: 16,
                                           offset: const Offset(0, 8),
                                         ),
@@ -301,7 +394,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                             height: 130.h,
                                             decoration: BoxDecoration(
                                               shape: BoxShape.circle,
-                                              color: AppColors.vipGoldStart.withValues(alpha: 0.12),
+                                              color: AppColors.vipGoldStart
+                                                  .withValues(alpha: 0.12),
                                             ),
                                           ),
                                         ),
@@ -313,7 +407,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                             height: 100.h,
                                             decoration: BoxDecoration(
                                               shape: BoxShape.circle,
-                                              color: Colors.white.withValues(alpha: 0.08),
+                                              color: Colors.white.withValues(
+                                                alpha: 0.08,
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -362,7 +458,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                                     ),
                                                     child: const Icon(
                                                       Icons.inventory_2_rounded,
-                                                      color: AppColors.vipGoldStart,
+                                                      color: AppColors
+                                                          .vipGoldStart,
                                                       size: 28,
                                                     ),
                                                   ),

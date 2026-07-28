@@ -177,7 +177,7 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
               Row(
                 children: [
                   Text(
-                    '${widget.purchase.totalAmount.toSmartAmount()} ${AppStrings.egp.tr()}',
+                    '${widget.purchase.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                     style: TextStyles.customStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -396,7 +396,7 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
                       borderRadius: BorderRadius.circular(4.r),
                     ),
                     child: Text(
-                      '${item.subtotal.toSmartAmount()} ${AppStrings.egp.tr()}',
+                      '${item.subtotal.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                       style: TextStyles.customStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,

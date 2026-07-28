@@ -213,13 +213,13 @@ class _SubscriptionInfoWidgetState extends State<SubscriptionInfoWidget> {
                 Icon(
                   Icons.card_membership_rounded,
                   color: AppColors.primaryColor,
-                  size: isDesktop ? 28 : 22.sp,
+                  size: isDesktop ? 22 : 22.sp,
                 ),
-                SizedBox(width: isDesktop ? 12 : 8.w),
+                SizedBox(width: isDesktop ? 8 : 8.w),
                 Text(
                   AppStrings.subscriptionSection.tr(),
                   style: TextStyles.customStyle(
-                    fontSize: isDesktop ? 20 : 18,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: AppColors.primaryColor,
                   ),
@@ -228,8 +228,8 @@ class _SubscriptionInfoWidgetState extends State<SubscriptionInfoWidget> {
                 // VIP Badge Chip
                 Container(
                   padding: EdgeInsets.symmetric(
-                    horizontal: isDesktop ? 10 : 8.w,
-                    vertical: isDesktop ? 6 : 4.h,
+                    horizontal: isDesktop ? 8 : 8.w,
+                    vertical: isDesktop ? 4 : 4.h,
                   ),
                   decoration: BoxDecoration(
                     color: isVip
@@ -237,7 +237,11 @@ class _SubscriptionInfoWidgetState extends State<SubscriptionInfoWidget> {
                         : AppColors.dividerColor.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(20.r),
                     border: isVip
-                        ? Border.all(color: AppColors.vipGoldStart.withValues(alpha: 0.5))
+                        ? Border.all(
+                            color: AppColors.vipGoldStart.withValues(
+                              alpha: 0.5,
+                            ),
+                          )
                         : null,
                   ),
                   child: Row(
@@ -246,7 +250,9 @@ class _SubscriptionInfoWidgetState extends State<SubscriptionInfoWidget> {
                       Icon(
                         isVip ? Icons.stars_rounded : Icons.star_border_rounded,
                         size: 14.sp,
-                        color: isVip ? AppColors.vipGoldStart : AppColors.sandText,
+                        color: isVip
+                            ? AppColors.vipGoldStart
+                            : AppColors.sandText,
                       ),
                       SizedBox(width: 4.w),
                       Text(
@@ -254,7 +260,9 @@ class _SubscriptionInfoWidgetState extends State<SubscriptionInfoWidget> {
                         style: TextStyles.customStyle(
                           fontSize: isDesktop ? 13 : 12,
                           fontWeight: FontWeight.bold,
-                          color: isVip ? AppColors.vipGoldStart : AppColors.sandText,
+                          color: isVip
+                              ? AppColors.vipGoldStart
+                              : AppColors.sandText,
                         ),
                       ),
                     ],
@@ -264,8 +272,8 @@ class _SubscriptionInfoWidgetState extends State<SubscriptionInfoWidget> {
                 // Status Badge
                 Container(
                   padding: EdgeInsets.symmetric(
-                    horizontal: isDesktop ? 22 : 12.w,
-                    vertical: isDesktop ? 12 : 6.h,
+                    horizontal: isDesktop ? 12 : 12.w,
+                    vertical: isDesktop ? 6 : 6.h,
                   ),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.12),

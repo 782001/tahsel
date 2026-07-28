@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert' show json;
+import 'package:tahsel/core/services/currency/currency_service.dart';
 import 'app_localizations_delegate.dart';
 
 class AppLocalizations {
@@ -45,6 +46,15 @@ class AppLocalizations {
     List<String>? args,
     Map<String, String>? namedArgs,
   }) {
+    if (key == 'currency_egp' || key == 'currency_egp_per_hour') {
+      final symbol = CurrencyService.instance.currentSymbol;
+      if (key == 'currency_egp_per_hour') {
+        final perHourStr = _instance?.locale.languageCode == 'en' ? '/hr' : '/ساعة';
+        return '$symbol $perHourStr';
+      }
+      return symbol;
+    }
+
     String value = _instance?._localizedStrings[key] ?? key;
 
     // Handle positional arguments: {0}, {1}, etc.
@@ -70,6 +80,13 @@ class AppLocalizations {
         value = value.replaceAll('{$key}', val);
       });
     }
+
+    // Dynamic replacement for currency placeholders and legacy currency text
+    final activeSymbol = CurrencyService.instance.currentSymbol;
+    value = value.replaceAll('{currency}', activeSymbol);
+    value = value.replaceAll('ج.م.', activeSymbol);
+    value = value.replaceAll('ج.م', activeSymbol);
+    value = value.replaceAll('EGP', activeSymbol);
 
     return value;
   }

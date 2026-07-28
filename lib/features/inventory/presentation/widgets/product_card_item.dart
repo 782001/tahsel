@@ -371,7 +371,7 @@ class ProductCardItem extends StatelessWidget {
                                       width: 4.w,
                                     ),
                                     Text(
-                                      '${AppStrings.sellingPrice.tr()}: ${p.sellingPrice.toSmartAmount()} ${AppStrings.egp.tr()}',
+                                      '${AppStrings.sellingPrice.tr()}: ${p.sellingPrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                                       style: TextStyles.customStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.bold,

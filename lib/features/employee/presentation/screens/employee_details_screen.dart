@@ -1527,7 +1527,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                       ),
                       SizedBox(height: isDesktop ? 4 : 4.h),
                       Text(
-                        "${netSalary.toSmartAmount()} ${AppStrings.egp.tr()}",
+                        "${netSalary.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
                         style: TextStyles.customStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w900,
@@ -1637,7 +1637,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        "${AppStrings.outstandingBalance.tr()}: ${employee.outstandingBalance.toSmartAmount()} ${AppStrings.egp.tr()}\n${AppStrings.carriedForwardAutomatically.tr()}",
+                        "${AppStrings.outstandingBalance.tr()}: ${employee.outstandingBalance.toSmartAmount()} ${AppStrings.currencyEgp.tr()}\n${AppStrings.carriedForwardAutomatically.tr()}",
                         style: TextStyles.customStyle(
                           fontSize: 11,
                           color: Colors.white,
@@ -1816,20 +1816,20 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                 Expanded(
                   child: _buildPendingMetricItem(
                     AppStrings.pendingBaseSalary.tr(),
-                    "${baseSalary.toSmartAmount()} ${AppStrings.egp.tr()}",
+                    "${baseSalary.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
                   ),
                 ),
                 if (employee.salaryType != 'hourly') ...[
                   Expanded(
                     child: _buildPendingMetricItem(
                       AppStrings.pendingOvertimeComp.tr(),
-                      "${overtimeComp.toSmartAmount()} ${AppStrings.egp.tr()}\n (${overtimeHours.toSmartAmount()} ${AppStrings.hours.tr()})",
+                      "${overtimeComp.toSmartAmount()} ${AppStrings.currencyEgp.tr()}\n (${overtimeHours.toSmartAmount()} ${AppStrings.hours.tr()})",
                     ),
                   ),
                   Expanded(
                     child: _buildPendingMetricItem(
                       AppStrings.pendingDeductionsEst.tr(),
-                      "-${deductions.toSmartAmount()} ${AppStrings.egp.tr()}",
+                      "-${deductions.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
                       isDeduction: true,
                     ),
                   ),

@@ -383,7 +383,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                                   ),
                                                 ),
                                                 Text(
-                                                  '${item.purchasePrice.toSmartAmount()} ${AppStrings.egp.tr()}',
+                                                  '${item.purchasePrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                                                   style: TextStyles.customStyle(
                                                     fontSize: 13,
                                                     color: AppColors.sandText,
@@ -398,7 +398,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                                   ),
                                                 ),
                                                 Text(
-                                                  '${item.totalPrice.toSmartAmount()} ${AppStrings.egp.tr()}',
+                                                  '${item.totalPrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                                                   style: TextStyles.customStyle(
                                                     fontSize: 14,
                                                     fontWeight: FontWeight.bold,
@@ -449,7 +449,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                 ),
                               ),
                               Text(
-                                '${_totalAmount.toSmartAmount()} ${AppStrings.egp.tr()}',
+                                '${_totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                                 style: TextStyles.customStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
@@ -1158,7 +1158,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                       ),
                       SizedBox(height: isDesktop ? 2 : 2.h),
                       Text(
-                        '${remainingDebt.toSmartAmount()} ${AppStrings.egp.tr()}',
+                        '${remainingDebt.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                         style: TextStyles.customStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,

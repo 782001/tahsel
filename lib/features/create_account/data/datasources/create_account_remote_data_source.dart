@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tahsel/core/constants/admin_constants.dart';
+import 'package:tahsel/core/services/currency/domain/entities/currency_entity.dart';
 import 'package:tahsel/features/create_account/data/services/create_account_auth_service.dart';
 import 'package:tahsel/features/create_account/data/utils/search_keywords_builder.dart';
 import 'package:tahsel/features/create_account/domain/services/user_access_policy.dart';
@@ -53,6 +54,7 @@ class CreateAccountRemoteDataSourceImpl implements CreateAccountRemoteDataSource
       'userType': data['userType'] ?? 'cafe',
       'platformType': data['platformType'] ?? "mobile",
       'isVip': data['isVip'] ?? false,
+      'currency': data['currency'] ?? CurrencyEntity.defaultCurrency.toMap(),
       'subscriptionEnd': endDate,
       'gracePeriodEnd': Timestamp.fromDate(graceEndDate),
       'loginAllowed': true,

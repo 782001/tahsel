@@ -9,6 +9,9 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/assets.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/core/services/currency/currency_service.dart';
+import 'package:tahsel/core/services/currency/data/world_currencies.dart';
+import 'package:tahsel/core/services/currency/domain/entities/currency_entity.dart';
 import 'package:tahsel/features/create_account/domain/usecases/create_account_usecases.dart';
 import 'package:tahsel/features/create_account/presentation/cubit/create_account/create_account_cubit.dart';
 import 'package:tahsel/features/create_account/presentation/cubit/create_account/create_account_state.dart';
@@ -34,6 +37,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   final int _days = 5;
   String _userType = 'cafe';
   String _platformType = 'mobile';
+  CurrencyEntity _selectedCurrency = CurrencyEntity.defaultCurrency;
   bool _isVip = false;
   bool _isLoading = false;
 
@@ -573,6 +577,71 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                       ),
                                       SizedBox(height: isDesktop ? 24 : 24.h),
 
+                                      // Currency Dropdown (Displays ONLY full currency name)
+                                      DropdownButtonFormField<CurrencyEntity>(
+                                        initialValue: _selectedCurrency,
+                                        style: TextStyles.customStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.textColor,
+                                        ),
+                                        dropdownColor:
+                                            AppColors.scafoldBackGround,
+                                        decoration: InputDecoration(
+                                          labelText: AppStrings.currencyLabel.tr(),
+                                          labelStyle: TextStyles.customStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.textColor,
+                                          ),
+                                          prefixIcon: Icon(
+                                            Icons.payments_outlined,
+                                            color: AppColors.primaryColor,
+                                          ),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              12.r,
+                                            ),
+                                            borderSide: BorderSide(
+                                              color: AppColors.primaryColor,
+                                            ),
+                                          ),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              12.r,
+                                            ),
+                                            borderSide: BorderSide(
+                                              color: AppColors.primaryColor,
+                                            ),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              12.r,
+                                            ),
+                                            borderSide: BorderSide(
+                                              color: AppColors.primaryColor,
+                                            ),
+                                          ),
+                                        ),
+                                        items: WorldCurrencies.allCurrencies.map((c) {
+                                          return DropdownMenuItem<CurrencyEntity>(
+                                            value: c,
+                                            child: Text(
+                                              c.getName(AppStrings.currentLang),
+                                              style: TextStyles.customStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                                color: AppColors.textColor,
+                                              ),
+                                            ),
+                                          );
+                                        }).toList(),
+                                        onChanged: (v) => setState(
+                                          () => _selectedCurrency = v ?? CurrencyEntity.defaultCurrency,
+                                        ),
+                                      ),
+                                      SizedBox(height: isDesktop ? 24 : 24.h),
+
                                       // VIP Account Switch Tile
                                       Container(
                                         padding: EdgeInsets.symmetric(
@@ -650,6 +719,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                                 if (!isValidPlatform) {
                                                   return;
                                                 }
+
                                                 if (_formKey.currentState!
                                                     .validate()) {
                                                   var days = _days == 0
@@ -659,6 +729,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                                   setState(
                                                     () => _isLoading = true,
                                                   );
+
+                                                  await CurrencyService.instance
+                                                      .updateCurrency(_selectedCurrency);
 
                                                   await context
                                                       .read<
@@ -696,6 +769,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                                           platformType:
                                                               _platformType,
                                                           isVip: _isVip,
+                                                          currency: _selectedCurrency.toMap(),
                                                         ),
                                                       );
 

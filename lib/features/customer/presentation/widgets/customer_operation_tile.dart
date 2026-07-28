@@ -63,7 +63,7 @@ class CustomerOperationTile extends StatelessWidget {
             ),
           ),
           Text(
-            '${operation.type == CustomerOperationType.payment ? "-" : "+"}${operation.amount.toSmartAmount()} ${AppStrings.egp.tr()}',
+            '${operation.type == CustomerOperationType.payment ? "-" : "+"}${operation.amount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
             style: TextStyles.customStyle(
               color: color,
               fontWeight: FontWeight.bold,

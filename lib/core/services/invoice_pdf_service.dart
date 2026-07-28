@@ -8,6 +8,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 import 'package:tahsel/core/extensions/extensions.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/inventory/domain/entities/inventory_purchase_entity.dart';
 import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
 import 'package:whatsapp_share2/whatsapp_share2.dart';
@@ -430,7 +431,7 @@ class InvoicePdfService {
   }
 
   static pw.Widget _buildSummary(InvoiceEntity invoice, bool isArabic) {
-    final currency = isArabic ? "ج.م" : "EGP";
+    final currency = AppStrings.currencyEgp.tr();
 
     return pw.Container(
       alignment: isArabic ? pw.Alignment.centerLeft : pw.Alignment.centerRight,
@@ -600,8 +601,9 @@ class InvoicePdfService {
     await shareFile.writeAsBytes(pdfBytes);
 
     final idShort = purchase.id.replaceAll('pur_', '');
-    final subject =
-        isArabic ? 'فاتورة شراء رقم #$idShort' : 'Purchase Invoice #$idShort';
+    final subject = isArabic
+        ? 'فاتورة شراء رقم #$idShort'
+        : 'Purchase Invoice #$idShort';
 
     await SharePlus.instance.share(
       ShareParams(
@@ -640,8 +642,7 @@ class InvoicePdfService {
         pageTheme: pw.PageTheme(
           pageFormat: PdfPageFormat.a4,
           theme: pw.ThemeData.withFont(base: ttfRegular, bold: ttfBold),
-          textDirection:
-              isArabic ? pw.TextDirection.rtl : pw.TextDirection.ltr,
+          textDirection: isArabic ? pw.TextDirection.rtl : pw.TextDirection.ltr,
           buildBackground: (context) => pw.Container(color: PdfColors.white),
           margin: const pw.EdgeInsets.all(32),
         ),
@@ -724,11 +725,7 @@ class InvoicePdfService {
               ],
             ),
             if (logoImage != null)
-              pw.Container(
-                height: 65,
-                width: 65,
-                child: pw.Image(logoImage),
-              ),
+              pw.Container(height: 65, width: 65, child: pw.Image(logoImage)),
           ],
         ),
         pw.SizedBox(height: 15),
@@ -792,8 +789,8 @@ class InvoicePdfService {
         '$idx',
         item.productName,
         item.quantity.toSmartAmount(),
-        '${item.purchasePrice.toSmartAmount()} ${isArabic ? "ج.م" : "EGP"}',
-        '${item.totalPrice.toSmartAmount()} ${isArabic ? "ج.م" : "EGP"}',
+        '${item.purchasePrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+        '${item.totalPrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
       ];
     }).toList();
 
@@ -826,7 +823,7 @@ class InvoicePdfService {
     InventoryPurchaseEntity purchase,
     bool isArabic,
   ) {
-    final currency = isArabic ? "ج.م" : "EGP";
+    final currency = AppStrings.currencyEgp.tr();
 
     return pw.Row(
       mainAxisAlignment: pw.MainAxisAlignment.end,
