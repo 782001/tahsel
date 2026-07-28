@@ -14,6 +14,7 @@ class ProductAutocompleteField extends StatefulWidget {
   final FocusNode? focusNode;
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onSubmitted;
+  final ValueChanged<ProductEntity>? onSelected;
 
   const ProductAutocompleteField({
     super.key,
@@ -24,6 +25,7 @@ class ProductAutocompleteField extends StatefulWidget {
     this.focusNode,
     this.textInputAction,
     this.onSubmitted,
+    this.onSelected,
   });
 
   @override
@@ -58,7 +60,11 @@ class _ProductAutocompleteFieldState extends State<ProductAutocompleteField> {
 
   void _onFocusChange() {
     if (!_effectiveFocusNode.hasFocus) {
-      _hideOverlay();
+      Future.delayed(const Duration(milliseconds: 200), () {
+        if (mounted && !_effectiveFocusNode.hasFocus) {
+          _hideOverlay();
+        }
+      });
     } else if (widget.controller.text.isNotEmpty) {
       _updateSuggestions(widget.controller.text);
     }
@@ -80,6 +86,18 @@ class _ProductAutocompleteFieldState extends State<ProductAutocompleteField> {
     } else {
       _hideOverlay();
     }
+  }
+
+  void _selectOption(ProductEntity option) {
+    widget.controller.text = option.name;
+    widget.controller.selection = TextSelection.fromPosition(
+      TextPosition(offset: option.name.length),
+    );
+    if (widget.onSelected != null) {
+      widget.onSelected!(option);
+    }
+    _hideOverlay();
+    _effectiveFocusNode.unfocus();
   }
 
   void _showOverlay() {
@@ -119,25 +137,23 @@ class _ProductAutocompleteFieldState extends State<ProductAutocompleteField> {
                     ),
                     itemBuilder: (context, index) {
                       final option = _suggestions[index];
-                      return ListTile(
-                        dense: true,
-                        title: Text(
-                          option.name,
-                          style: TextStyles.customStyle(
-                            color: AppColors.black,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
+                      return InkWell(
+                        onTapDown: (_) => _selectOption(option),
+                        onTap: () => _selectOption(option),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          child: Text(
+                            option.name,
+                            style: TextStyles.customStyle(
+                              color: AppColors.black,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                            ),
                           ),
                         ),
-                        onTap: () {
-                          widget.controller.text = option.name;
-                          widget.controller.selection =
-                              TextSelection.fromPosition(
-                                TextPosition(offset: option.name.length),
-                              );
-                          _hideOverlay();
-                          _effectiveFocusNode.unfocus();
-                        },
                       );
                     },
                   ),
