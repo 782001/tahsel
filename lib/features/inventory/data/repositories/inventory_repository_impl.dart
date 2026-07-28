@@ -64,7 +64,14 @@ class InventoryRepositoryImpl implements InventoryRepository {
           for (final p in remoteProducts) {
             final existing = await localDataSource.getProductById(p.id);
             if (existing == null || existing.isSynced) {
-              await localDataSource.saveProduct(p);
+              final double highestSold =
+                  (existing != null && existing.totalSoldQuantity > p.totalSoldQuantity)
+                      ? existing.totalSoldQuantity
+                      : p.totalSoldQuantity;
+              final mergedProduct = InventoryProductModel.fromEntity(
+                p.copyWith(totalSoldQuantity: highestSold),
+              );
+              await localDataSource.saveProduct(mergedProduct);
             }
           }
           products = await localDataSource.getProducts();
@@ -119,7 +126,15 @@ class InventoryRepositoryImpl implements InventoryRepository {
         final remoteProducts = await remoteDataSource
             .fetchAllProductsFromRemoteWithoutLimit(_currentUid!);
         for (final p in remoteProducts) {
-          await localDataSource.saveProduct(p);
+          final existing = await localDataSource.getProductById(p.id);
+          final double highestSold =
+              (existing != null && existing.totalSoldQuantity > p.totalSoldQuantity)
+                  ? existing.totalSoldQuantity
+                  : p.totalSoldQuantity;
+          final mergedProduct = InventoryProductModel.fromEntity(
+            p.copyWith(totalSoldQuantity: highestSold),
+          );
+          await localDataSource.saveProduct(mergedProduct);
         }
       }
       final products = await localDataSource.getProducts();
@@ -990,6 +1005,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
                 _currentUid!,
                 matchingProduct.id,
                 delta,
+                deltaSoldQuantity: deltaSold,
               );
             } catch (_) {}
           }

@@ -25,8 +25,9 @@ abstract class InventoryRemoteDataSource {
   Future<void> updateProductQuantityInRemote(
     String uid,
     String productId,
-    double deltaQuantity,
-  );
+    double deltaQuantity, {
+    double deltaSoldQuantity = 0.0,
+  });
   Future<void> deleteProductFromRemote(String uid, String productId);
 
   Future<void> syncPurchases(String uid, List<InventoryPurchaseModel> purchases);
@@ -119,13 +120,18 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
   Future<void> updateProductQuantityInRemote(
     String uid,
     String productId,
-    double deltaQuantity,
-  ) async {
+    double deltaQuantity, {
+    double deltaSoldQuantity = 0.0,
+  }) async {
     final docRef = _getCol(uid, 'inventory_products').doc(productId);
-    await docRef.set({
+    final Map<String, dynamic> data = {
       'currentQuantity': FieldValue.increment(deltaQuantity),
       'updatedAt': DateTime.now().millisecondsSinceEpoch,
-    }, SetOptions(merge: true));
+    };
+    if (deltaSoldQuantity != 0) {
+      data['totalSoldQuantity'] = FieldValue.increment(deltaSoldQuantity);
+    }
+    await docRef.set(data, SetOptions(merge: true));
   }
 
   // --- CATEGORIES ---
