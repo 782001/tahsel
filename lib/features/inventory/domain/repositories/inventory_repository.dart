@@ -14,6 +14,8 @@ abstract class InventoryRepository {
     String? supplierId,
     int limit = 15,
   });
+  Future<Either<Failure, List<InventoryProductEntity>>>
+      fetchAllProductsFromRemoteWithoutLimit();
   Future<Either<Failure, InventoryProductEntity?>> getProductById(String id);
   Future<Either<Failure, void>> saveProduct(InventoryProductEntity product);
   Future<Either<Failure, void>> deleteProduct(String id);

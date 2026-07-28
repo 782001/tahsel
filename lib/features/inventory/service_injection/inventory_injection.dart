@@ -69,6 +69,9 @@ class InventoryInjection {
     sl.registerLazySingleton(
       () => GetLowStockProductsUseCase(sl<InventoryRepository>()),
     );
+    sl.registerLazySingleton(
+      () => FetchAllProductsFromRemoteUseCase(sl<InventoryRepository>()),
+    );
 
     // Use cases - Categories
     sl.registerLazySingleton(
@@ -125,6 +128,8 @@ class InventoryInjection {
       () => InventoryDashboardCubit(
         getProductsUseCase: sl<GetInventoryProductsUseCase>(),
         getLowStockProductsUseCase: sl<GetLowStockProductsUseCase>(),
+        fetchAllProductsFromRemoteUseCase:
+            sl<FetchAllProductsFromRemoteUseCase>(),
       ),
     );
 

@@ -19,6 +19,9 @@ abstract class InventoryRemoteDataSource {
     String uid, {
     int limit = 15,
   });
+  Future<List<InventoryProductModel>> fetchAllProductsFromRemoteWithoutLimit(
+    String uid,
+  );
   Future<void> updateProductQuantityInRemote(
     String uid,
     String productId,
@@ -90,6 +93,20 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
     final snapshot = await _getCol(uid, 'inventory_products')
         .orderBy('updatedAt', descending: true)
         .limit(limit)
+        .get();
+    return snapshot.docs.map((doc) {
+      final map = doc.data() as Map<String, dynamic>;
+      map['id'] = doc.id;
+      return InventoryProductModel.fromMap(map);
+    }).toList();
+  }
+
+  @override
+  Future<List<InventoryProductModel>> fetchAllProductsFromRemoteWithoutLimit(
+    String uid,
+  ) async {
+    final snapshot = await _getCol(uid, 'inventory_products')
+        .orderBy('updatedAt', descending: true)
         .get();
     return snapshot.docs.map((doc) {
       final map = doc.data() as Map<String, dynamic>;

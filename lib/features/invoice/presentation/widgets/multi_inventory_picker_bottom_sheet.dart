@@ -8,6 +8,7 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/inventory/data/datasources/inventory_local_data_source.dart';
 import 'package:tahsel/features/inventory/domain/entities/inventory_product_entity.dart';
+import 'package:tahsel/features/inventory/domain/repositories/inventory_repository.dart';
 import 'package:tahsel/features/inventory/domain/utils/best_seller_helper.dart';
 import 'package:tahsel/features/inventory/presentation/widgets/barcode_scanner_dialog.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
@@ -55,7 +56,14 @@ class _MultiInventoryPickerBottomSheetState
   Future<void> _loadProducts() async {
     try {
       final localDataSource = GetIt.I<InventoryLocalDataSource>();
-      final models = await localDataSource.getProducts();
+      var models = await localDataSource.getProducts();
+
+      if (models.isEmpty) {
+        final repository = GetIt.I<InventoryRepository>();
+        await repository.fetchAllProductsFromRemoteWithoutLimit();
+        models = await localDataSource.getProducts();
+      }
+
       final products = models
           .map((m) => m as InventoryProductEntity)
           .where((p) => p.currentQuantity > 0)

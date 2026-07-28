@@ -48,3 +48,12 @@ class GetLowStockProductsUseCase {
     return repository.getLowStockProducts();
   }
 }
+
+class FetchAllProductsFromRemoteUseCase {
+  final InventoryRepository repository;
+  FetchAllProductsFromRemoteUseCase(this.repository);
+
+  Future<Either<Failure, List<InventoryProductEntity>>> call() {
+    return repository.fetchAllProductsFromRemoteWithoutLimit();
+  }
+}

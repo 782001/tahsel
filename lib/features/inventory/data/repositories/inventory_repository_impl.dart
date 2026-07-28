@@ -112,6 +112,26 @@ class InventoryRepositoryImpl implements InventoryRepository {
   }
 
   @override
+  Future<Either<Failure, List<InventoryProductEntity>>>
+      fetchAllProductsFromRemoteWithoutLimit() async {
+    try {
+      if (await connectionChecker.hasConnection && _currentUid != null) {
+        final remoteProducts = await remoteDataSource
+            .fetchAllProductsFromRemoteWithoutLimit(_currentUid!);
+        for (final p in remoteProducts) {
+          await localDataSource.saveProduct(p);
+        }
+      }
+      final products = await localDataSource.getProducts();
+      return Right(
+        products.map((p) => p as InventoryProductEntity).toList(),
+      );
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, InventoryProductEntity?>> getProductById(
     String id,
   ) async {

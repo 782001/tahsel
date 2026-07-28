@@ -1,3 +1,4 @@
+import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/inventory_product_entity.dart';
@@ -45,15 +46,34 @@ class InventoryDashboardError extends InventoryDashboardState {
 class InventoryDashboardCubit extends Cubit<InventoryDashboardState> {
   final GetInventoryProductsUseCase getProductsUseCase;
   final GetLowStockProductsUseCase getLowStockProductsUseCase;
+  final FetchAllProductsFromRemoteUseCase fetchAllProductsFromRemoteUseCase;
 
   InventoryDashboardCubit({
     required this.getProductsUseCase,
     required this.getLowStockProductsUseCase,
+    required this.fetchAllProductsFromRemoteUseCase,
   }) : super(InventoryDashboardInitial());
 
   Future<void> loadDashboardMetrics() async {
     emit(InventoryDashboardLoading());
-    final productsResult = await getProductsUseCase();
+    var productsResult = await getProductsUseCase();
+
+    // If products list is empty during loadDashboard, automatically fetch all products from Firebase without limit
+    await productsResult.fold(
+      (failure) async {},
+      (products) async {
+        if (products.isEmpty) {
+          final remoteAllResult = await fetchAllProductsFromRemoteUseCase();
+          remoteAllResult.fold(
+            (_) {},
+            (allProducts) {
+              productsResult = Right(allProducts);
+            },
+          );
+        }
+      },
+    );
+
     final lowStockResult = await getLowStockProductsUseCase();
 
     productsResult.fold(
