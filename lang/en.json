@@ -882,5 +882,8 @@
   "currency_updated_success": "Application currency updated successfully",
   "currency_label": "Currency",
   "best_seller": "Best Seller 🔥",
-  "total_sold": "Total Sold"
+  "best_sellers_only": "Best Sellers 🔥",
+  "total_sold": "Total Sold",
+  "filter_by_type": "Filter by Type",
+  "all_movements": "All Movements"
 }

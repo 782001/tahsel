@@ -153,6 +153,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                             children: [
                               Expanded(
                                 child: InkWell(
+                                  borderRadius: BorderRadius.circular(18.r),
                                   onTap: () {
                                     Navigator.pushNamed(
                                       context,
@@ -178,6 +179,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                                       arguments: true,
                                     );
                                   },
+                                  borderRadius: BorderRadius.circular(18.r),
                                   child: _buildTahselKpiCard(
                                     title: AppStrings.lowStockCount.tr(),
                                     value: '$lowStockCount',

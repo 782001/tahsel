@@ -83,8 +83,12 @@ class _MultiInventoryPickerBottomSheetState
     }
   }
 
+  bool _showBestSellersOnly = false;
+
   void _applyFilter() {
     final q = _searchController.text.trim().toLowerCase();
+    final top20Ids = BestSellerHelper.getTop20BestSellerIds(_allProducts);
+
     setState(() {
       _filteredProducts = _allProducts.where((p) {
         final hasStock = p.currentQuantity > 0;
@@ -97,7 +101,10 @@ class _MultiInventoryPickerBottomSheetState
         final matchesCategory =
             _selectedCategory == null || p.categoryName == _selectedCategory;
 
-        return hasStock && matchesQuery && matchesCategory;
+        final matchesBestSeller =
+            !_showBestSellersOnly || top20Ids.contains(p.id);
+
+        return hasStock && matchesQuery && matchesCategory && matchesBestSeller;
       }).toList();
     });
   }
@@ -228,29 +235,109 @@ class _MultiInventoryPickerBottomSheetState
           ),
           SizedBox(height: isDesktop ? 10 : 10.h),
 
-          // Category Chips Filter
-          if (_categories.isNotEmpty)
-            SizedBox(
-              height: isDesktop ? 38 : 38.h,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.symmetric(
-                  horizontal: isDesktop ? 20 : 20.w,
+          // Filter Chips (Best Sellers & Categories)
+          SizedBox(
+            height: isDesktop ? 38 : 38.h,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(
+                horizontal: isDesktop ? 20 : 20.w,
+              ),
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(left: isDesktop ? 8 : 8.w),
+                  child: FilterChip(
+                    showCheckmark: false,
+                    selected: _showBestSellersOnly,
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.local_fire_department_rounded,
+                          color: Colors.white,
+                          size: 14,
+                        ),
+                        SizedBox(width: isDesktop ? 4 : 4.w),
+                        Text(
+                          AppStrings.bestSellersOnly.tr(),
+                          style: TextStyles.customStyle(
+                            fontSize: isDesktop ? 13 : 13,
+                            fontWeight: FontWeight.bold,
+                            color: _showBestSellersOnly
+                                ? Colors.white
+                                : AppColors.bestSellerStart,
+                          ),
+                        ),
+                      ],
+                    ),
+                    selectedColor: AppColors.bestSellerStart,
+                    backgroundColor: AppColors.bestSellerStart.withValues(
+                      alpha: 0.1,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.r),
+                      side: BorderSide(
+                        color: _showBestSellersOnly
+                            ? AppColors.bestSellerStart
+                            : AppColors.bestSellerStart.withValues(
+                              alpha: 0.3,
+                            ),
+                      ),
+                    ),
+                    onSelected: (selected) {
+                      setState(() {
+                        _showBestSellersOnly = selected;
+                        _applyFilter();
+                      });
+                    },
+                  ),
                 ),
-                itemCount: _categories.length + 1,
-                itemBuilder: (context, index) {
-                  final isAll = index == 0;
-                  final category = isAll ? null : _categories[index - 1];
+                Padding(
+                  padding: EdgeInsets.only(left: isDesktop ? 8 : 8.w),
+                  child: FilterChip(
+                    selected: _selectedCategory == null && !_showBestSellersOnly,
+                    label: Text(
+                      AppStrings.all.tr(),
+                      style: TextStyles.customStyle(
+                        fontSize: isDesktop ? 13 : 13,
+                        fontWeight: _selectedCategory == null && !_showBestSellersOnly
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                        color: _selectedCategory == null && !_showBestSellersOnly
+                            ? Colors.white
+                            : AppColors.blackLight,
+                      ),
+                    ),
+                    selectedColor: AppColors.primaryColor,
+                    backgroundColor: AppColors.surface,
+                    checkmarkColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.r),
+                      side: BorderSide(
+                        color: _selectedCategory == null && !_showBestSellersOnly
+                            ? AppColors.primaryColor
+                            : AppColors.dividerColor,
+                      ),
+                    ),
+                    onSelected: (_) {
+                      setState(() {
+                        _selectedCategory = null;
+                        _showBestSellersOnly = false;
+                        _applyFilter();
+                      });
+                    },
+                  ),
+                ),
+                ..._categories.map((category) {
                   final isSelected = _selectedCategory == category;
-
                   return Padding(
                     padding: EdgeInsets.only(left: isDesktop ? 8 : 8.w),
                     child: FilterChip(
                       selected: isSelected,
                       label: Text(
-                        isAll ? AppStrings.all.tr() : category!,
+                        category,
                         style: TextStyles.customStyle(
-                          fontSize: isDesktop ? 13 : 13 ,
+                          fontSize: isDesktop ? 13 : 13,
                           fontWeight: isSelected
                               ? FontWeight.bold
                               : FontWeight.normal,
@@ -278,9 +365,10 @@ class _MultiInventoryPickerBottomSheetState
                       },
                     ),
                   );
-                },
-              ),
+                }),
+              ],
             ),
+          ),
           SizedBox(height: isDesktop ? 10 : 10.h),
 
           // Products List

@@ -894,7 +894,10 @@ class AppStrings {
   static const String filterBySupplier = "filter_by_supplier";
   static const String totalProductsCount = "total_products_count";
   static const String bestSeller = "best_seller";
+  static const String bestSellersOnly = "best_sellers_only";
   static const String totalSold = "total_sold";
+  static const String filterByType = "filter_by_type";
+  static const String allMovements = "all_movements";
   static const String lowStockCount = "low_stock_count";
   static const String totalInventoryValue = "total_inventory_value";
   static const String confirmDeleteProduct = "confirm_delete_product";

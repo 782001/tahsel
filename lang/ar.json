@@ -886,5 +886,8 @@
   "currency_updated_success": "تم تغيير عملة التطبيق بنجاح",
   "currency_label": "العملة",
   "best_seller": "الأكثر مبيعا 🔥",
-  "total_sold": "إجمالي المبيعات"
+  "best_sellers_only": "الأكثر مبيعا 🔥",
+  "total_sold": "إجمالي المبيعات",
+  "filter_by_type": "تصفية حسب النوع",
+  "all_movements": "جميع الحركات"
 }

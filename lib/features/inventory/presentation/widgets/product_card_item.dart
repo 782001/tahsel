@@ -7,6 +7,7 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+
 import '../../domain/entities/inventory_product_entity.dart';
 
 class ProductCardItem extends StatelessWidget {
@@ -37,49 +38,37 @@ class ProductCardItem extends StatelessWidget {
     final statusColor = isOut
         ? AppColors.error
         : isLow
-            ? AppColors.lowStockOrange
-            : AppColors.success;
+        ? AppColors.lowStockOrange
+        : AppColors.success;
 
     final statusLabel = isOut
         ? AppStrings.outOfStock.tr()
         : isLow
-            ? AppStrings.lowStockAlert.tr()
-            : AppStrings.stableStock.tr();
+        ? AppStrings.lowStockAlert.tr()
+        : AppStrings.stableStock.tr();
 
     return FadeInUp(
-      duration: Duration(
-        milliseconds: 200 + (index * 30).clamp(0, 300),
-      ),
+      duration: Duration(milliseconds: 200 + (index * 30).clamp(0, 300)),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(
-            isDesktop ? 16 : 16.r,
-          ),
+          borderRadius: BorderRadius.circular(isDesktop ? 16 : 16.r),
           child: Container(
-            padding: EdgeInsets.all(
-              isDesktop ? 16 : 14.w,
-            ),
+            padding: EdgeInsets.all(isDesktop ? 16 : 14.w),
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.circular(
-                isDesktop ? 16 : 16.r,
-              ),
+              borderRadius: BorderRadius.circular(isDesktop ? 16 : 16.r),
               boxShadow: [
                 BoxShadow(
-                  color: statusColor.withValues(
-                    alpha: 0.1,
-                  ),
+                  color: statusColor.withValues(alpha: 0.1),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
               ],
               border: Border.all(
                 color: isOut || isLow
-                    ? statusColor.withValues(
-                        alpha: 0.6,
-                      )
+                    ? statusColor.withValues(alpha: 0.6)
                     : AppColors.surface,
                 width: isOut || isLow ? 1.5 : 1,
               ),
@@ -95,16 +84,10 @@ class ProductCardItem extends StatelessWidget {
                         vertical: isDesktop ? 3 : 3.h,
                       ),
                       decoration: BoxDecoration(
-                        color: statusColor.withValues(
-                          alpha: 0.12,
-                        ),
-                        borderRadius: BorderRadius.circular(
-                          12.r,
-                        ),
+                        color: statusColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12.r),
                         border: Border.all(
-                          color: statusColor.withValues(
-                            alpha: 0.4,
-                          ),
+                          color: statusColor.withValues(alpha: 0.4),
                         ),
                       ),
                       child: Text(
@@ -188,9 +171,7 @@ class ProductCardItem extends StatelessWidget {
                     ),
                   ],
                 ),
-                SizedBox(
-                  height: isDesktop ? 8 : 8.h,
-                ),
+                SizedBox(height: isDesktop ? 8 : 8.h),
                 Row(
                   children: [
                     CircleAvatar(
@@ -202,9 +183,7 @@ class ProductCardItem extends StatelessWidget {
                         size: isDesktop ? 22 : 20,
                       ),
                     ),
-                    SizedBox(
-                      width: isDesktop ? 14 : 12.w,
-                    ),
+                    SizedBox(width: isDesktop ? 14 : 12.w),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -225,9 +204,7 @@ class ProductCardItem extends StatelessWidget {
                               ),
                             ],
                           ),
-                          SizedBox(
-                            height: isDesktop ? 6 : 6.h,
-                          ),
+                          SizedBox(height: isDesktop ? 6 : 6.h),
                           Wrap(
                             spacing: 6,
                             runSpacing: 4,
@@ -241,9 +218,7 @@ class ProductCardItem extends StatelessWidget {
                                   ),
                                   decoration: BoxDecoration(
                                     color: AppColors.scafoldBackGround,
-                                    borderRadius: BorderRadius.circular(
-                                      6.r,
-                                    ),
+                                    borderRadius: BorderRadius.circular(6.r),
                                     border: Border.all(
                                       color: AppColors.dividerColor,
                                     ),
@@ -256,9 +231,7 @@ class ProductCardItem extends StatelessWidget {
                                         size: 12,
                                         color: AppColors.sandText,
                                       ),
-                                      SizedBox(
-                                        width: 4.w,
-                                      ),
+                                      SizedBox(width: 4.w),
                                       Text(
                                         p.sku,
                                         style: TextStyles.customStyle(
@@ -277,9 +250,7 @@ class ProductCardItem extends StatelessWidget {
                                 ),
                                 decoration: BoxDecoration(
                                   color: AppColors.scafoldBackGround,
-                                  borderRadius: BorderRadius.circular(
-                                    6.r,
-                                  ),
+                                  borderRadius: BorderRadius.circular(6.r),
                                   border: Border.all(
                                     color: AppColors.dividerColor,
                                   ),
@@ -292,9 +263,7 @@ class ProductCardItem extends StatelessWidget {
                                       size: 12,
                                       color: AppColors.inventoryCategoryBrown,
                                     ),
-                                    SizedBox(
-                                      width: 4.w,
-                                    ),
+                                    SizedBox(width: 4.w),
                                     Text(
                                       '${AppStrings.category.tr()}: ${p.categoryName.isNotEmpty ? p.categoryName : "-"}',
                                       style: TextStyles.customStyle(
@@ -306,6 +275,7 @@ class ProductCardItem extends StatelessWidget {
                                   ],
                                 ),
                               ),
+
                               // if (p.supplierName.isNotEmpty)
                               //   Container(
                               //     padding: EdgeInsets.symmetric(
@@ -347,12 +317,9 @@ class ProductCardItem extends StatelessWidget {
                               //       ],
                               //     ),
                               //   ),
-                          
                             ],
                           ),
-                          SizedBox(
-                            height: isDesktop ? 6 : 6.h,
-                          ),
+                          SizedBox(height: isDesktop ? 6 : 6.h),
                           Wrap(
                             spacing: 6,
                             runSpacing: 4,
@@ -364,16 +331,10 @@ class ProductCardItem extends StatelessWidget {
                                   vertical: isDesktop ? 3 : 3.h,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: statusColor.withValues(
-                                    alpha: 0.1,
-                                  ),
-                                  borderRadius: BorderRadius.circular(
-                                    6.r,
-                                  ),
+                                  color: statusColor.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(6.r),
                                   border: Border.all(
-                                    color: statusColor.withValues(
-                                      alpha: 0.3,
-                                    ),
+                                    color: statusColor.withValues(alpha: 0.3),
                                   ),
                                 ),
                                 child: Row(
@@ -384,9 +345,7 @@ class ProductCardItem extends StatelessWidget {
                                       size: 12,
                                       color: statusColor,
                                     ),
-                                    SizedBox(
-                                      width: 4.w,
-                                    ),
+                                    SizedBox(width: 4.w),
                                     Text(
                                       '${AppStrings.quantity.tr()}: ${p.currentQuantity.toSmartAmount()} ${p.unit}',
                                       style: TextStyles.customStyle(
@@ -407,9 +366,7 @@ class ProductCardItem extends StatelessWidget {
                                   color: AppColors.success.withValues(
                                     alpha: 0.1,
                                   ),
-                                  borderRadius: BorderRadius.circular(
-                                    6.r,
-                                  ),
+                                  borderRadius: BorderRadius.circular(6.r),
                                   border: Border.all(
                                     color: AppColors.success.withValues(
                                       alpha: 0.3,
@@ -424,9 +381,7 @@ class ProductCardItem extends StatelessWidget {
                                       size: 12,
                                       color: AppColors.success,
                                     ),
-                                    SizedBox(
-                                      width: 4.w,
-                                    ),
+                                    SizedBox(width: 4.w),
                                     Text(
                                       '${AppStrings.sellingPrice.tr()}: ${p.sellingPrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                                       style: TextStyles.customStyle(

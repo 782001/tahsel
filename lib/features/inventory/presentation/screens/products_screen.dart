@@ -39,6 +39,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
   String? _selectedCategory;
   String? _selectedSupplier;
   bool _showLowStockOnly = false;
+  bool _showBestSellersOnly = false;
 
   @override
   void initState() {
@@ -323,7 +324,62 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         );
                       },
                     ),
-                    SizedBox(height: isDesktop ? 16 : 16.h),
+                    SizedBox(height: isDesktop ? 12 : 12.h),
+
+                    // Quick Filter Chips Row
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      child: Row(
+                        children: [
+                          ChoiceChip(
+                            showCheckmark: false,
+                            selected: _showBestSellersOnly,
+                            label: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.local_fire_department_rounded,
+                                  color: Colors.white,
+                                  size: 14,
+                                ),
+                                SizedBox(width: isDesktop ? 4 : 4.w),
+                                Text(
+                                  AppStrings.bestSellersOnly.tr(),
+                                  style: TextStyles.customStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: _showBestSellersOnly
+                                        ? Colors.white
+                                        : AppColors.bestSellerStart,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            selectedColor: AppColors.bestSellerStart,
+                            backgroundColor: AppColors.bestSellerStart.withValues(
+                              alpha: 0.1,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                isDesktop ? 20 : 20.r,
+                              ),
+                              side: BorderSide(
+                                color: _showBestSellersOnly
+                                    ? AppColors.bestSellerStart
+                                    : AppColors.bestSellerStart.withValues(
+                                      alpha: 0.3,
+                                    ),
+                              ),
+                            ),
+                            onSelected: (selected) {
+                              setState(() => _showBestSellersOnly = selected);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: isDesktop ? 12 : 12.h),
 
                     // Products List View
                     Expanded(
@@ -343,10 +399,20 @@ class _ProductsScreenState extends State<ProductsScreen> {
                               }
                               if (state is InventoryProductsLoaded) {
                                 var products = state.products;
+                                final top20Ids =
+                                    BestSellerHelper.getTop20BestSellerIds(
+                                      state.products,
+                                    );
 
                                 if (_showLowStockOnly) {
                                   products = products
                                       .where((p) => p.currentQuantity <= p.minQuantity)
+                                      .toList();
+                                }
+
+                                if (_showBestSellersOnly) {
+                                  products = products
+                                      .where((p) => top20Ids.contains(p.id))
                                       .toList();
                                 }
 
@@ -360,11 +426,6 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                     onAction: () => _openAddEditProductDialog(),
                                   );
                                 }
-
-                                final top20Ids =
-                                    BestSellerHelper.getTop20BestSellerIds(
-                                      products,
-                                    );
 
                                 return RefreshIndicator(
                                   color: AppColors.primaryColor,
