@@ -102,12 +102,7 @@ class QuickAddTextField extends StatelessWidget {
                     ),
                   )
                 : null,
-        suffixIcon: suffixIcon != null
-            ? IconButton(
-                icon: Icon(suffixIcon, color: AppColors.primaryColor),
-                onPressed: onSuffixIconPressed,
-              )
-            : null,
+        suffixIcon: _buildSuffixIcon(),
         suffixText: suffixText,
         suffixStyle: TextStyles.customStyle(
           color: AppColors.blackLight,
@@ -136,6 +131,48 @@ class QuickAddTextField extends StatelessWidget {
           vertical: 18,
         ),
       ),
+    );
+  }
+
+  Widget? _buildSuffixIcon() {
+    if (controller == null) {
+      if (suffixIcon != null) {
+        return IconButton(
+          icon: Icon(suffixIcon, color: AppColors.primaryColor),
+          onPressed: onSuffixIconPressed,
+        );
+      }
+      return null;
+    }
+
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: controller!,
+      builder: (context, value, _) {
+        final hasText = value.text.isNotEmpty;
+        if (!hasText && suffixIcon == null) return const SizedBox.shrink();
+
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (hasText)
+              IconButton(
+                icon: Icon(
+                  Icons.clear_rounded,
+                  color: AppColors.blackLight.withValues(alpha: 0.6),
+                ),
+                onPressed: () {
+                  controller?.clear();
+                  onChanged?.call('');
+                },
+              ),
+            if (suffixIcon != null)
+              IconButton(
+                icon: Icon(suffixIcon, color: AppColors.primaryColor),
+                onPressed: onSuffixIconPressed,
+              ),
+          ],
+        );
+      },
     );
   }
 }

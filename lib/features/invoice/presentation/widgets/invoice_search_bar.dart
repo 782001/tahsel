@@ -4,6 +4,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 class InvoiceSearchBar extends StatelessWidget {
   final TextEditingController controller;
@@ -17,8 +18,12 @@ class InvoiceSearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 16 : 16.w,
+        vertical: isDesktop ? 8 : 8.h,
+      ),
       child: TextField(
         controller: controller,
         onChanged: onChanged,
@@ -28,7 +33,7 @@ class InvoiceSearchBar extends StatelessWidget {
           hintText: AppStrings.searchInvoices.tr(),
           hintStyle: TextStyles.customStyle(
             color: AppColors.disabledColor,
-            fontSize: 14,
+            fontSize: 12,
           ),
           prefixIcon: Icon(
             Icons.search_rounded,
