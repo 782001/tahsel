@@ -206,4 +206,8 @@ class AppColors {
   static const Color creditAmberEnd = Color(0xFFB45309);
   static Color get supplierCreditColor =>
       isDark ? const Color(0xFFF59E0B) : const Color(0xFFB45309);
+
+  // --- Best Seller Badge Colors ---
+  static const Color bestSellerStart = Color(0xFFFF2A00);
+  static const Color bestSellerEnd = Color(0xFFFF8800);
 }

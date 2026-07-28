@@ -917,16 +917,23 @@ class InventoryRepositoryImpl implements InventoryRepository {
 
         if (matchingProduct != null) {
           final prevQty = matchingProduct.currentQuantity;
-          // Sales decrease stock (-qtyChange), Returns increase stock (+qtyChange)
           final double delta = (type == StockMovementType.invoiceSale)
               ? -qtyChange.abs()
               : qtyChange.abs();
-          final newQty = prevQty + delta;
+          final double newQty = prevQty + delta;
+
+          final double deltaSold = (type == StockMovementType.invoiceSale)
+              ? qtyChange.abs()
+              : -qtyChange.abs();
+          final newSoldQty =
+              (matchingProduct.totalSoldQuantity + deltaSold)
+                  .clamp(0.0, double.infinity);
 
           // Update Product
           final updated = InventoryProductModel.fromEntity(
             matchingProduct.copyWith(
               currentQuantity: newQty,
+              totalSoldQuantity: newSoldQty,
               updatedAt: DateTime.now(),
               isSynced: false,
             ),

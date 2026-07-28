@@ -8,6 +8,7 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/inventory/data/datasources/inventory_local_data_source.dart';
 import 'package:tahsel/features/inventory/domain/entities/inventory_product_entity.dart';
+import 'package:tahsel/features/inventory/domain/utils/best_seller_helper.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 
 class QuickInventoryPickerBottomSheet extends StatefulWidget {
@@ -114,7 +115,7 @@ class _QuickInventoryPickerBottomSheetState
         child: Text(
           AppStrings.outOfStockKey.tr(),
           style: TextStyles.customStyle(
-            fontSize: isDesktop ? 11 : 11.sp,
+            fontSize: isDesktop ? 11 : 11 ,
             color: AppColors.error,
             fontWeight: FontWeight.bold,
           ),
@@ -131,7 +132,7 @@ class _QuickInventoryPickerBottomSheetState
         child: Text(
           '${AppStrings.availableInStock.tr()}: ${p.currentQuantity} (${AppStrings.lowStockAlertKey.tr()})',
           style: TextStyles.customStyle(
-            fontSize: isDesktop ? 11 : 11.sp,
+            fontSize: isDesktop ? 11 : 11 ,
             color: AppColors.warning,
             fontWeight: FontWeight.bold,
           ),
@@ -147,7 +148,7 @@ class _QuickInventoryPickerBottomSheetState
         child: Text(
           '${AppStrings.availableInStock.tr()}: ${p.currentQuantity.toSmartAmount()} ${p.unit}',
           style: TextStyles.customStyle(
-            fontSize: isDesktop ? 11 : 11.sp,
+            fontSize: isDesktop ? 11 : 11 ,
             color: AppColors.success,
             fontWeight: FontWeight.w600,
           ),
@@ -195,7 +196,7 @@ class _QuickInventoryPickerBottomSheetState
 
           // Header Row
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment .spaceBetween,
             children: [
               Row(
                 children: [
@@ -218,7 +219,7 @@ class _QuickInventoryPickerBottomSheetState
                       Text(
                         AppStrings.selectFromInventory.tr(),
                         style: TextStyles.customStyle(
-                          fontSize: isDesktop ? 18 : 16.sp,
+                          fontSize: isDesktop ? 18 : 16 ,
                           fontWeight: FontWeight.bold,
                           color: AppColors.primaryColor,
                         ),
@@ -226,7 +227,7 @@ class _QuickInventoryPickerBottomSheetState
                       Text(
                         AppStrings.selectProductAndQty.tr(),
                         style: TextStyles.customStyle(
-                          fontSize: isDesktop ? 12 : 11.sp,
+                          fontSize: isDesktop ? 12 : 11 ,
                           color: AppColors.subTitleColor,
                         ),
                       ),
@@ -355,7 +356,13 @@ class _QuickInventoryPickerBottomSheetState
                     separatorBuilder: (_, __) =>
                         SizedBox(height: isDesktop ? 10 : 10.h),
                     itemBuilder: (context, index) {
+                      final top20Ids = BestSellerHelper.getTop20BestSellerIds(
+                        _allProducts,
+                      );
                       final product = _filteredProducts[index];
+                      final isBestSeller =
+                          product.totalSoldQuantity > 0 &&
+                          top20Ids.contains(product.id);
                       final isSelected = _selectedProduct?.id == product.id;
 
                       return InkWell(
@@ -403,54 +410,152 @@ class _QuickInventoryPickerBottomSheetState
                             children: [
                               Row(
                                 mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                    MainAxisAlignment .spaceBetween,
                                 children: [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        padding: EdgeInsets.all(8.r),
-                                        decoration: BoxDecoration(
-                                          color: isSelected
-                                              ? AppColors.primaryColor
-                                              : AppColors.primaryColor
-                                                    .withValues(alpha: 0.1),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Icon(
-                                          isSelected
-                                              ? Icons.check_rounded
-                                              : Icons.inventory_2_rounded,
-                                          color: isSelected
-                                              ? Colors.white
-                                              : AppColors.primaryColor,
-                                          size: 16.r,
-                                        ),
-                                      ),
-                                      SizedBox(width: 10.w),
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            product.name,
-                                            style: TextStyles.customStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColors.blackReal,
-                                            ),
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          padding: EdgeInsets.all(8.r),
+                                          decoration: BoxDecoration(
+                                            color: isSelected
+                                                ? AppColors.primaryColor
+                                                : AppColors.primaryColor
+                                                      .withValues(alpha: 0.1),
+                                            shape: BoxShape.circle,
                                           ),
-                                          if (product.categoryName.isNotEmpty)
-                                            Text(
-                                              product.categoryName,
-                                              style: TextStyles.customStyle(
-                                                fontSize: 11,
-                                                color: AppColors.subTitleColor,
+                                          child: Icon(
+                                            isSelected
+                                                ? Icons.check_rounded
+                                                : Icons.inventory_2_rounded,
+                                            color: isSelected
+                                                ? Colors.white
+                                                : AppColors.primaryColor,
+                                            size: 16.r,
+                                          ),
+                                        ),
+                                        SizedBox(width: isDesktop ? 10 : 10.w),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(
+                                                      product.name,
+                                                      style:
+                                                          TextStyles.customStyle(
+                                                            fontSize: 15,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: AppColors
+                                                                .blackReal,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                  if (isBestSeller) ...[
+                                                    SizedBox(
+                                                      width: isDesktop
+                                                          ? 4
+                                                          : 4.w,
+                                                    ),
+                                                    Transform.rotate(
+                                                      angle: -0.10,
+                                                      child: Container(
+                                                        padding:
+                                                            EdgeInsets.symmetric(
+                                                              horizontal:
+                                                                  isDesktop
+                                                                  ? 6
+                                                                  : 6.w,
+                                                              vertical:
+                                                                  isDesktop
+                                                                  ? 2
+                                                                  : 2.h,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          gradient:
+                                                              const LinearGradient(
+                                                                colors: [
+                                                                  AppColors.bestSellerStart,
+                                                                  AppColors.bestSellerEnd,
+                                                                ],
+                                                              ),
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                isDesktop ? 6 : 6.r,
+                                                              ),
+                                                          boxShadow: [
+                                                            BoxShadow(
+                                                              color:
+                                                                  AppColors.bestSellerStart.withValues(
+                                                                    alpha: 0.35,
+                                                                  ),
+                                                              blurRadius: 6,
+                                                              offset:
+                                                                  const Offset(
+                                                                    0,
+                                                                    2,
+                                                                  ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        child: Row(
+                                                          mainAxisSize:
+                                                              MainAxisSize.min,
+                                                          children: [
+                                                            const Icon(
+                                                              Icons
+                                                                  .local_fire_department_rounded,
+                                                              color:
+                                                                  Colors.white,
+                                                              size: 11,
+                                                            ),
+                                                            SizedBox(
+                                                              width: isDesktop
+                                                                  ? 2
+                                                                  : 2.w,
+                                                            ),
+                                                            Text(
+                                                              AppStrings
+                                                                  .bestSeller
+                                                                  .tr(),
+                                                              style: TextStyles.customStyle(
+                                                                fontSize: 9,
+                                                                color: Colors
+                                                                    .white,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w900,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ],
                                               ),
-                                            ),
-                                        ],
-                                      ),
-                                    ],
+                                              if (product
+                                                  .categoryName
+                                                  .isNotEmpty)
+                                                Text(
+                                                  product.categoryName,
+                                                  style: TextStyles.customStyle(
+                                                    fontSize: 11,
+                                                    color:
+                                                        AppColors.subTitleColor,
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
+                                  SizedBox(width: isDesktop ? 8 : 8.w),
                                   Text(
                                     '${product.sellingPrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                                     style: TextStyles.customStyle(
@@ -464,7 +569,7 @@ class _QuickInventoryPickerBottomSheetState
                               SizedBox(height: isDesktop ? 8 : 8.h),
                               Row(
                                 mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                    MainAxisAlignment .spaceBetween,
                                 children: [
                                   _buildStockBadge(product, isDesktop),
                                   if (product.unit.isNotEmpty)
@@ -510,7 +615,7 @@ class _QuickInventoryPickerBottomSheetState
                 children: [
                   // Quantity Counter & Quick Increment Buttons
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment .spaceBetween,
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -528,7 +633,7 @@ class _QuickInventoryPickerBottomSheetState
                             Text(
                               AppStrings.maxQuantityReached.tr(),
                               style: TextStyles.customStyle(
-                                fontSize: isDesktop ? 11 : 11.sp,
+                                fontSize: isDesktop ? 11 : 11 ,
                                 color: AppColors.warning,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -627,7 +732,7 @@ class _QuickInventoryPickerBottomSheetState
                                   child: Text(
                                     '+$inc',
                                     style: TextStyles.customStyle(
-                                      fontSize: isDesktop ? 11 : 11.sp,
+                                      fontSize: isDesktop ? 11 : 11 ,
                                       fontWeight: FontWeight.bold,
                                       color: canAdd
                                           ? AppColors.primaryColor
@@ -646,7 +751,7 @@ class _QuickInventoryPickerBottomSheetState
 
                   // Total calculation banner & Confirm Button
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment .spaceBetween,
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

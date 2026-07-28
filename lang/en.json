@@ -880,5 +880,7 @@
   "select_currency_hint": "Select Account Currency",
   "search_currency_hint": "Search by currency name...",
   "currency_updated_success": "Application currency updated successfully",
-  "currency_label": "Currency"
+  "currency_label": "Currency",
+  "best_seller": "Best Seller 🔥",
+  "total_sold": "Total Sold"
 }

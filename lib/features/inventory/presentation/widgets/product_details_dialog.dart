@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -91,7 +92,7 @@ class ProductDetailsDialog extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'SKU: ${product.sku}',
+                            product.sku,
                             style: TextStyles.customStyle(
                               fontSize: 12,
                               color: AppColors.sandText,
@@ -221,6 +222,23 @@ class ProductDetailsDialog extends StatelessWidget {
                           ),
                         ],
                       ),
+                      if (product.totalSoldQuantity > 0) ...[
+                        SizedBox(height: isDesktop ? 10 : 10.h),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildMetricTile(
+                                label: AppStrings.totalSold.tr(),
+                                value:
+                                    '${product.totalSoldQuantity.toSmartAmount()} ${product.unit}',
+                                icon: Icons.local_fire_department_rounded,
+                                color: AppColors.bestSellerEnd,
+                                isDesktop: isDesktop,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                       SizedBox(height: isDesktop ? 16 : 16.h),
 
                       // Category & Supplier Section

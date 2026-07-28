@@ -884,5 +884,7 @@
   "select_currency_hint": "اختر عملة الحساب",
   "search_currency_hint": "ابحث باسم العملة...",
   "currency_updated_success": "تم تغيير عملة التطبيق بنجاح",
-  "currency_label": "العملة"
+  "currency_label": "العملة",
+  "best_seller": "الأكثر مبيعا 🔥",
+  "total_sold": "إجمالي المبيعات"
 }

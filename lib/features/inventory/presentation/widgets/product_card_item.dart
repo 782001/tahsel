@@ -12,6 +12,7 @@ import '../../domain/entities/inventory_product_entity.dart';
 class ProductCardItem extends StatelessWidget {
   final InventoryProductEntity product;
   final int index;
+  final bool isBestSeller;
   final VoidCallback onTap;
   final VoidCallback onManualAdjustment;
   final VoidCallback onEdit;
@@ -20,6 +21,7 @@ class ProductCardItem extends StatelessWidget {
     super.key,
     required this.product,
     required this.index,
+    this.isBestSeller = false,
     required this.onTap,
     required this.onManualAdjustment,
     required this.onEdit,
@@ -114,6 +116,61 @@ class ProductCardItem extends StatelessWidget {
                         ),
                       ),
                     ),
+                    if (isBestSeller) ...[
+                      SizedBox(width: isDesktop ? 8 : 8.w),
+                      Transform.rotate(
+                        angle: -0.12,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isDesktop ? 9 : 9.w,
+                            vertical: isDesktop ? 4 : 4.h,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                AppColors.bestSellerStart,
+                                AppColors.bestSellerEnd,
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(
+                              isDesktop ? 8 : 8.r,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.bestSellerStart.withValues(
+                                  alpha: 0.45,
+                                ),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.6),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.local_fire_department_rounded,
+                                color: Colors.white,
+                                size: 13,
+                              ),
+                              SizedBox(width: isDesktop ? 3 : 3.w),
+                              Text(
+                                AppStrings.bestSeller.tr(),
+                                style: TextStyles.customStyle(
+                                  fontSize: 10.5,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                     const Spacer(),
                     IconButton(
                       icon: Icon(

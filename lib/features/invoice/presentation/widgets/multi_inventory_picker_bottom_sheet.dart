@@ -8,16 +8,14 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/inventory/data/datasources/inventory_local_data_source.dart';
 import 'package:tahsel/features/inventory/domain/entities/inventory_product_entity.dart';
+import 'package:tahsel/features/inventory/domain/utils/best_seller_helper.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 
 class SelectedInventoryItem {
   final InventoryProductEntity product;
   final double quantity;
 
-  SelectedInventoryItem({
-    required this.product,
-    required this.quantity,
-  });
+  SelectedInventoryItem({required this.product, required this.quantity});
 
   double get totalPrice => quantity * product.sellingPrice;
 }
@@ -183,9 +181,7 @@ class _MultiInventoryPickerBottomSheetState
 
           // Header
           Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: isDesktop ? 20 : 20.w,
-            ),
+            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 20 : 20.w),
             child: Row(
               children: [
                 Container(
@@ -197,7 +193,7 @@ class _MultiInventoryPickerBottomSheetState
                   child: Icon(
                     Icons.storefront_outlined,
                     color: AppColors.primaryColor,
-                    size: isDesktop ? 22 : 22.sp,
+                    size: isDesktop ? 22 : 22 ,
                   ),
                 ),
                 SizedBox(width: isDesktop ? 12 : 12.w),
@@ -205,7 +201,7 @@ class _MultiInventoryPickerBottomSheetState
                   child: Text(
                     AppStrings.selectFromInventory.tr(),
                     style: TextStyles.customStyle(
-                      fontSize: isDesktop ? 18 : 18.sp,
+                      fontSize: isDesktop ? 18 : 18 ,
                       fontWeight: FontWeight.bold,
                       color: AppColors.black,
                     ),
@@ -222,9 +218,7 @@ class _MultiInventoryPickerBottomSheetState
 
           // Search input
           Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: isDesktop ? 20 : 20.w,
-            ),
+            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 20 : 20.w),
             child: QuickAddTextField(
               controller: _searchController,
               hint: AppStrings.searchInventory.tr(),
@@ -250,15 +244,13 @@ class _MultiInventoryPickerBottomSheetState
                   final isSelected = _selectedCategory == category;
 
                   return Padding(
-                    padding: EdgeInsets.only(
-                      left: isDesktop ? 8 : 8.w,
-                    ),
+                    padding: EdgeInsets.only(left: isDesktop ? 8 : 8.w),
                     child: FilterChip(
                       selected: isSelected,
                       label: Text(
                         isAll ? AppStrings.all.tr() : category!,
                         style: TextStyles.customStyle(
-                          fontSize: isDesktop ? 13 : 13.sp,
+                          fontSize: isDesktop ? 13 : 13 ,
                           fontWeight: isSelected
                               ? FontWeight.bold
                               : FontWeight.normal,
@@ -300,187 +292,267 @@ class _MultiInventoryPickerBottomSheetState
                     ),
                   )
                 : _filteredProducts.isEmpty
-                    ? Center(
-                        child: Text(
-                          AppStrings.noProductsFound.tr(),
-                          style: TextStyles.customStyle(
-                            fontSize: isDesktop ? 14 : 14.sp,
-                            color: AppColors.disabledColor,
+                ? Center(
+                    child: Text(
+                      AppStrings.noProductsFound.tr(),
+                      style: TextStyles.customStyle(
+                        fontSize: isDesktop ? 14 : 14 ,
+                        color: AppColors.disabledColor,
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isDesktop ? 20 : 20.w,
+                      vertical: 6,
+                    ),
+                    itemCount: _filteredProducts.length,
+                    itemBuilder: (context, index) {
+                      final top20Ids = BestSellerHelper.getTop20BestSellerIds(
+                        _allProducts,
+                      );
+                      final product = _filteredProducts[index];
+                      final isBestSeller =
+                          product.totalSoldQuantity > 0 &&
+                          top20Ids.contains(product.id);
+                      final selectedQty =
+                          _selectedQuantities[product.id] ?? 0.0;
+                      final isSelected = selectedQty > 0;
+                      final maxQty = product.currentQuantity;
+
+                      return Container(
+                        margin: EdgeInsets.only(bottom: isDesktop ? 10 : 10.h),
+                        padding: EdgeInsets.all(isDesktop ? 12 : 12.r),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.primaryColor.withValues(alpha: 0.05)
+                              : AppColors.surface,
+                          borderRadius: BorderRadius.circular(16.r),
+                          border: Border.all(
+                            color: isSelected
+                                ? AppColors.primaryColor
+                                : AppColors.dividerColor,
+                            width: isSelected ? 1.5 : 1.0,
                           ),
                         ),
-                      )
-                    : ListView.builder(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: isDesktop ? 20 : 20.w,
-                          vertical: 6,
-                        ),
-                        itemCount: _filteredProducts.length,
-                        itemBuilder: (context, index) {
-                          final product = _filteredProducts[index];
-                          final selectedQty =
-                              _selectedQuantities[product.id] ?? 0.0;
-                          final isSelected = selectedQty > 0;
-                          final maxQty = product.currentQuantity;
-
-                          return Container(
-                            margin: EdgeInsets.only(
-                              bottom: isDesktop ? 10 : 10.h,
-                            ),
-                            padding: EdgeInsets.all(isDesktop ? 12 : 12.r),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppColors.primaryColor.withValues(alpha: 0.05)
-                                  : AppColors.surface,
-                              borderRadius: BorderRadius.circular(16.r),
-                              border: Border.all(
-                                color: isSelected
-                                    ? AppColors.primaryColor
-                                    : AppColors.dividerColor,
-                                width: isSelected ? 1.5 : 1.0,
-                              ),
-                            ),
-                            child: Column(
+                        child: Column(
+                          children: [
+                            Row(
                               children: [
-                                Row(
-                                  children: [
-                                    Checkbox(
-                                      value: isSelected,
-                                      activeColor: AppColors.primaryColor,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(4.r),
-                                      ),
-                                      onChanged: (_) =>
-                                          _toggleProductSelection(product),
-                                    ),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            product.name,
-                                            style: TextStyles.customStyle(
-                                              fontSize: isDesktop ? 15 : 15.sp,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColors.black,
-                                            ),
-                                          ),
-                                          SizedBox(height: isDesktop ? 4 : 4.h),
-                                          Row(
-                                            children: [
-                                              Text(
-                                                '${product.sellingPrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-                                                style: TextStyles.customStyle(
-                                                  fontSize:
-                                                      isDesktop ? 13 : 13.sp,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: AppColors.primaryColor,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 12),
-                                              Container(
-                                                padding: EdgeInsets.symmetric(
-                                                  horizontal: 8.w,
-                                                  vertical: 2.h,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: AppColors.success
-                                                      .withValues(alpha: 0.1),
-                                                  borderRadius:
-                                                      BorderRadius.circular(8.r),
-                                                ),
-                                                child: Text(
-                                                  '${AppStrings.availableInStock.tr()}: ${maxQty.toSmartAmount()}',
-                                                  style: TextStyles.customStyle(
-                                                    fontSize:
-                                                        isDesktop ? 11 : 11.sp,
-                                                    color: AppColors.success,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
+                                Checkbox(
+                                  value: isSelected,
+                                  activeColor: AppColors.primaryColor,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(4.r),
+                                  ),
+                                  onChanged: (_) =>
+                                      _toggleProductSelection(product),
                                 ),
-
-                                // Quantity Controls if selected
-                                if (isSelected) ...[
-                                  SizedBox(height: isDesktop ? 10 : 10.h),
-                                  const Divider(height: 1),
-                                  SizedBox(height: isDesktop ? 8 : 8.h),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        AppStrings.requestedQuantity.tr(),
-                                        style: TextStyles.customStyle(
-                                          fontSize: isDesktop ? 13 : 13.sp,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.blackLight,
-                                        ),
-                                      ),
                                       Row(
                                         children: [
-                                          IconButton(
-                                            onPressed: () =>
-                                                _updateQuantity(product, -1),
-                                            icon: Icon(
-                                              Icons.remove_circle_outline,
-                                              color: AppColors.error,
-                                              size: isDesktop ? 22 : 22.sp,
-                                            ),
-                                          ),
-                                          Container(
-                                            padding: EdgeInsets.symmetric(
-                                              horizontal: 14.w,
-                                              vertical: 4.h,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: AppColors.surface,
-                                              borderRadius:
-                                                  BorderRadius.circular(8.r),
-                                              border: Border.all(
-                                                color: AppColors.dividerColor,
-                                              ),
-                                            ),
+                                          Expanded(
                                             child: Text(
-                                              selectedQty.toSmartAmount(),
+                                              product.name,
                                               style: TextStyles.customStyle(
-                                                fontSize:
-                                                    isDesktop ? 15 : 15.sp,
+                                                fontSize: isDesktop
+                                                    ? 15
+                                                    : 15 ,
                                                 fontWeight: FontWeight.bold,
                                                 color: AppColors.black,
                                               ),
                                             ),
                                           ),
-                                          IconButton(
-                                            onPressed: selectedQty >= maxQty
-                                                ? null
-                                                : () =>
-                                                    _updateQuantity(product, 1),
-                                            icon: Icon(
-                                              Icons.add_circle_outline,
-                                              color: selectedQty >= maxQty
-                                                  ? AppColors.disabledColor
-                                                  : AppColors.primaryColor,
-                                              size: isDesktop ? 22 : 22.sp,
+                                          if (isBestSeller) ...[
+                                            SizedBox(
+                                              width: isDesktop ? 6 : 6.w,
+                                            ),
+                                            Transform.rotate(
+                                              angle: -0.10,
+                                              child: Container(
+                                                padding: EdgeInsets.symmetric(
+                                                  horizontal: isDesktop
+                                                      ? 7
+                                                      : 7.w,
+                                                  vertical: isDesktop ? 3 : 3.h,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  gradient:
+                                                      const LinearGradient(
+                                                        colors: [
+                                                          AppColors.bestSellerStart,
+                                                          AppColors.bestSellerEnd,
+                                                        ],
+                                                      ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        isDesktop ? 6 : 6.r,
+                                                      ),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: AppColors.bestSellerStart
+                                                          .withValues(alpha: 0.35),
+                                                      blurRadius: 6,
+                                                      offset: const Offset(
+                                                        0,
+                                                        2,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      Icons
+                                                          .local_fire_department_rounded,
+                                                      color: Colors.white,
+                                                      size: isDesktop
+                                                          ? 11
+                                                          : 11 ,
+                                                    ),
+                                                    SizedBox(
+                                                      width: isDesktop
+                                                          ? 2
+                                                          : 2.w,
+                                                    ),
+                                                    Text(
+                                                      AppStrings.bestSeller
+                                                          .tr(),
+                                                      style:
+                                                          TextStyles.customStyle(
+                                                            fontSize: 9,
+                                                            color: Colors.white,
+                                                            fontWeight:
+                                                                FontWeight.w900,
+                                                          ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                      SizedBox(height: isDesktop ? 4 : 4.h),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            '${product.sellingPrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                                            style: TextStyles.customStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.primaryColor,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: isDesktop ? 8 : 8.w,
+                                              vertical: isDesktop ? 2 : 2.h,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.success
+                                                  .withValues(alpha: 0.1),
+                                              borderRadius:
+                                                  BorderRadius.circular(8.r),
+                                            ),
+                                            child: Text(
+                                              '${AppStrings.availableInStock.tr()}: ${maxQty.toSmartAmount()}',
+                                              style: TextStyles.customStyle(
+                                                fontSize:  11
+                                                    ,
+                                                color: AppColors.success,
+                                                fontWeight: FontWeight.w600,
+                                              ),
                                             ),
                                           ),
                                         ],
                                       ),
                                     ],
                                   ),
-                                ],
+                                ),
                               ],
                             ),
-                          );
-                        },
-                      ),
+
+                            // Quantity Controls if selected
+                            if (isSelected) ...[
+                              SizedBox(height: isDesktop ? 10 : 10.h),
+                              const Divider(height: 1),
+                              SizedBox(height: isDesktop ? 8 : 8.h),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    AppStrings.requestedQuantity.tr(),
+                                    style: TextStyles.customStyle(
+                                      fontSize: isDesktop ? 13 : 13 ,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.blackLight,
+                                    ),
+                                  ),
+                                  Row(
+                                    children: [
+                                      IconButton(
+                                        onPressed: () =>
+                                            _updateQuantity(product, -1),
+                                        icon: Icon(
+                                          Icons.remove_circle_outline,
+                                          color: AppColors.error,
+                                          size: isDesktop ? 22 : 22 ,
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 14.w,
+                                          vertical: 4.h,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.surface,
+                                          borderRadius: BorderRadius.circular(
+                                            8.r,
+                                          ),
+                                          border: Border.all(
+                                            color: AppColors.dividerColor,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          selectedQty.toSmartAmount(),
+                                          style: TextStyles.customStyle(
+                                            fontSize: isDesktop ? 15 : 15 ,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.black,
+                                          ),
+                                        ),
+                                      ),
+                                      IconButton(
+                                        onPressed: selectedQty >= maxQty
+                                            ? null
+                                            : () => _updateQuantity(product, 1),
+                                        icon: Icon(
+                                          Icons.add_circle_outline,
+                                          color: selectedQty >= maxQty
+                                              ? AppColors.disabledColor
+                                              : AppColors.primaryColor,
+                                          size: isDesktop ? 22 : 22 ,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      );
+                    },
+                  ),
           ),
 
           // Bottom Action Footer
@@ -490,8 +562,7 @@ class _MultiInventoryPickerBottomSheetState
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 boxShadow: const [AppColors.shadow],
-                borderRadius:
-                    BorderRadius.vertical(top: Radius.circular(20.r)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
               ),
               child: Column(
                 children: [
@@ -503,7 +574,7 @@ class _MultiInventoryPickerBottomSheetState
                           namedArgs: {'count': selectedItems.length.toString()},
                         ),
                         style: TextStyles.customStyle(
-                          fontSize: isDesktop ? 14 : 14.sp,
+                          fontSize: isDesktop ? 14 : 14 ,
                           fontWeight: FontWeight.w600,
                           color: AppColors.blackLight,
                         ),
@@ -511,7 +582,7 @@ class _MultiInventoryPickerBottomSheetState
                       Text(
                         '${AppStrings.totalLabel.tr()} ${_totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                         style: TextStyles.customStyle(
-                          fontSize: isDesktop ? 16 : 16.sp,
+                          fontSize: isDesktop ? 16 : 16 ,
                           fontWeight: FontWeight.bold,
                           color: AppColors.primaryColor,
                         ),
@@ -534,12 +605,14 @@ class _MultiInventoryPickerBottomSheetState
                         ),
                         elevation: 0,
                       ),
-                      icon: const Icon(Icons.check_circle_outline,
-                          color: Colors.white),
+                      icon: const Icon(
+                        Icons.check_circle_outline,
+                        color: Colors.white,
+                      ),
                       label: Text(
                         AppStrings.addSelectedItemsToInvoice.tr(),
                         style: TextStyles.customStyle(
-                          fontSize: isDesktop ? 15 : 15.sp,
+                          fontSize: isDesktop ? 15 : 15 ,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),

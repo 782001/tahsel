@@ -19,6 +19,7 @@ class InventoryProductEntity extends Equatable {
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isSynced;
+  final double totalSoldQuantity;
 
   const InventoryProductEntity({
     required this.id,
@@ -39,6 +40,7 @@ class InventoryProductEntity extends Equatable {
     required this.createdAt,
     required this.updatedAt,
     this.isSynced = false,
+    this.totalSoldQuantity = 0.0,
   });
 
   bool get isLowStock => currentQuantity <= minQuantity;
@@ -62,6 +64,7 @@ class InventoryProductEntity extends Equatable {
     DateTime? createdAt,
     DateTime? updatedAt,
     bool? isSynced,
+    double? totalSoldQuantity,
   }) {
     return InventoryProductEntity(
       id: id ?? this.id,
@@ -82,6 +85,7 @@ class InventoryProductEntity extends Equatable {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       isSynced: isSynced ?? this.isSynced,
+      totalSoldQuantity: totalSoldQuantity ?? this.totalSoldQuantity,
     );
   }
 
@@ -105,5 +109,6 @@ class InventoryProductEntity extends Equatable {
         createdAt,
         updatedAt,
         isSynced,
+        totalSoldQuantity,
       ];
 }

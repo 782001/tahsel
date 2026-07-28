@@ -8,6 +8,8 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 
+import '../../domain/utils/best_seller_helper.dart';
+
 import '../../domain/entities/inventory_category_entity.dart';
 import '../../domain/entities/inventory_product_entity.dart';
 import '../../domain/entities/inventory_supplier_entity.dart';
@@ -359,6 +361,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                   );
                                 }
 
+                                final top20Ids =
+                                    BestSellerHelper.getTop20BestSellerIds(
+                                      products,
+                                    );
+
                                 return RefreshIndicator(
                                   color: AppColors.primaryColor,
                                   onRefresh: () async {
@@ -399,6 +406,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                       return ProductCardItem(
                                         product: p,
                                         index: index,
+                                        isBestSeller: top20Ids.contains(p.id),
                                         onTap: () =>
                                             _openProductDetailsDialog(p),
                                         onManualAdjustment: () =>

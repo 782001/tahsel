@@ -20,6 +20,7 @@ class InventoryProductModel extends InventoryProductEntity {
     required super.createdAt,
     required super.updatedAt,
     super.isSynced,
+    super.totalSoldQuantity,
   });
 
   factory InventoryProductModel.fromEntity(InventoryProductEntity entity) {
@@ -42,6 +43,7 @@ class InventoryProductModel extends InventoryProductEntity {
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
       isSynced: entity.isSynced,
+      totalSoldQuantity: entity.totalSoldQuantity,
     );
   }
 
@@ -69,6 +71,7 @@ class InventoryProductModel extends InventoryProductEntity {
           ? DateTime.fromMillisecondsSinceEpoch(map['updatedAt'] as int)
           : DateTime.now(),
       isSynced: map['isSynced'] as bool? ?? false,
+      totalSoldQuantity: (map['totalSoldQuantity'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
@@ -92,6 +95,7 @@ class InventoryProductModel extends InventoryProductEntity {
       'createdAt': createdAt.millisecondsSinceEpoch,
       'updatedAt': updatedAt.millisecondsSinceEpoch,
       'isSynced': isSynced,
+      'totalSoldQuantity': totalSoldQuantity,
     };
   }
 
