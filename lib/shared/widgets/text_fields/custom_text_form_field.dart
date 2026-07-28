@@ -117,6 +117,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
                 : null,
             suffixIcon: widget.isPassword
                 ? IconButton(
+                    focusNode: FocusNode(skipTraversal: true),
                     icon: Icon(
                       _obscureText ? Icons.visibility_off : Icons.visibility,
                       color: AppColors.disabledColor,

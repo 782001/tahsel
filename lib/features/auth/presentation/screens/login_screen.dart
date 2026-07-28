@@ -39,6 +39,14 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  void _submitLogin() {
+    if (_formKey.currentState!.validate()) {
+      final email = _emailController.text.trim();
+      final password = _passwordController.text;
+      context.read<AuthCubit>().login(email, password);
+    }
+  }
+
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -189,6 +197,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       keyboardType: TextInputType.emailAddress,
                                       hintText: 'name@gmail.com',
                                       prefixIcon: Icons.email_outlined,
+                                      textInputAction: TextInputAction.next,
                                       validator: (value) {
                                         if (value == null || value.isEmpty) {
                                           return AppStrings
@@ -212,6 +221,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                       isPassword: true,
                                       hintText: '••••••••',
                                       prefixIcon: Icons.lock_outline,
+                                      textInputAction: TextInputAction.done,
+                                      onFieldSubmitted: (_) => _submitLogin(),
                                       validator: (value) {
                                         if (value == null || value.isEmpty) {
                                           return AppStrings
@@ -251,20 +262,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           );
                                         }
                                         return GestureDetector(
-                                          onTap: () {
-                                            if (_formKey.currentState!
-                                                .validate()) {
-                                              final email = _emailController
-                                                  .text
-                                                  .trim();
-                                              final password =
-                                                  _passwordController.text;
-                                              context.read<AuthCubit>().login(
-                                                email,
-                                                password,
-                                              );
-                                            }
-                                          },
+                                          onTap: _submitLogin,
                                           child: Container(
                                             width: double.infinity,
                                             height: isDesktop ? 56 : 56.h,
