@@ -795,20 +795,23 @@ class InventoryRepositoryImpl implements InventoryRepository {
   @override
   Future<Either<Failure, List<StockMovementEntity>>> getStockMovements({
     String? productId,
+    int? limit,
   }) async {
     try {
       List<StockMovementModel> movements = await localDataSource
           .getStockMovements();
-      if (movements.isEmpty &&
-          await connectionChecker.hasConnection &&
-          _currentUid != null) {
+      if (await connectionChecker.hasConnection && _currentUid != null) {
         try {
           final remoteMovements = await remoteDataSource
-              .fetchStockMovementsFromRemote(_currentUid!);
+              .fetchStockMovementsFromRemote(_currentUid!, limit: limit);
           for (final m in remoteMovements) {
-            await localDataSource.saveStockMovement(m);
+            final matches = movements.where((x) => x.id == m.id);
+            final localItem = matches.isNotEmpty ? matches.first : null;
+            if (localItem == null || localItem.isSynced) {
+              await localDataSource.saveStockMovement(m);
+            }
           }
-          movements = remoteMovements;
+          movements = await localDataSource.getStockMovements();
         } catch (_) {}
       }
 
@@ -821,6 +824,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
       }
 
       resultList.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      if (limit != null && resultList.length > limit) {
+        resultList = resultList.take(limit).toList();
+      }
       return Right(resultList);
     } catch (e) {
       return Left(CacheFailure(e.toString()));

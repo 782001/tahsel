@@ -21,10 +21,27 @@ class StockMovementsScreen extends StatefulWidget {
 }
 
 class _StockMovementsScreenState extends State<StockMovementsScreen> {
+  late ScrollController _scrollController;
+
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController()..addListener(_onScroll);
     context.read<InventoryStockMovementsCubit>().fetchStockMovements();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      context.read<InventoryStockMovementsCubit>().fetchMoreStockMovements();
+    }
   }
 
   Color _getMovementColor(StockMovementType type) {
@@ -118,13 +135,38 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
                           );
                         }
 
-                        return ListView.separated(
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: movements.length,
-                          separatorBuilder: (_, __) =>
-                              SizedBox(height: isDesktop ? 12 : 12.h),
-                          itemBuilder: (context, index) {
-                            final m = movements[index];
+                        return RefreshIndicator(
+                          color: AppColors.primaryColor,
+                          onRefresh: () async {
+                            await context
+                                .read<InventoryStockMovementsCubit>()
+                                .fetchStockMovements();
+                          },
+                          child: ListView.separated(
+                            controller: _scrollController,
+                            physics: const AlwaysScrollableScrollPhysics(
+                              parent: BouncingScrollPhysics(),
+                            ),
+                            itemCount:
+                                movements.length +
+                                (state.isPaginationLoading ? 1 : 0),
+                            separatorBuilder: (_, __) =>
+                                SizedBox(height: isDesktop ? 12 : 12.h),
+                            itemBuilder: (context, index) {
+                              if (index == movements.length) {
+                                return Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: isDesktop ? 16 : 16.h,
+                                  ),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 4,
+                                      color: AppColors.primaryColor,
+                                    ),
+                                  ),
+                                );
+                              }
+                              final m = movements[index];
                             final isPositive = m.quantity > 0;
                             final color = _getMovementColor(m.type);
 
@@ -280,7 +322,8 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
                               ),
                             );
                           },
-                        );
+                        ),
+                      );
                       }
                       return const SizedBox.shrink();
                     },

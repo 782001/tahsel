@@ -7,8 +7,14 @@ class GetStockMovementsUseCase {
   final InventoryRepository repository;
   GetStockMovementsUseCase(this.repository);
 
-  Future<Either<Failure, List<StockMovementEntity>>> call({String? productId}) {
-    return repository.getStockMovements(productId: productId);
+  Future<Either<Failure, List<StockMovementEntity>>> call({
+    String? productId,
+    int? limit,
+  }) {
+    return repository.getStockMovements(
+      productId: productId,
+      limit: limit,
+    );
   }
 }
 

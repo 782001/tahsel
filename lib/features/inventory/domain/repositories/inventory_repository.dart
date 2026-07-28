@@ -42,7 +42,10 @@ abstract class InventoryRepository {
   Future<Either<Failure, void>> deletePurchase(InventoryPurchaseEntity purchase);
 
   // Stock Movements & Adjustments
-  Future<Either<Failure, List<StockMovementEntity>>> getStockMovements({String? productId});
+  Future<Either<Failure, List<StockMovementEntity>>> getStockMovements({
+    String? productId,
+    int? limit,
+  });
   Future<Either<Failure, void>> createManualAdjustment({
     required String productId,
     required double adjustmentQuantity,
