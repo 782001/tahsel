@@ -8,11 +8,10 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 
-import '../../domain/utils/best_seller_helper.dart';
-
 import '../../domain/entities/inventory_category_entity.dart';
 import '../../domain/entities/inventory_product_entity.dart';
 import '../../domain/entities/inventory_supplier_entity.dart';
+import '../../domain/utils/best_seller_helper.dart';
 import '../cubits/inventory_categories_cubit.dart';
 import '../cubits/inventory_products_cubit.dart';
 import '../cubits/inventory_stock_movements_cubit.dart';
@@ -338,9 +337,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
                             label: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.local_fire_department_rounded,
-                                  color: Colors.white,
+                                  color: AppColors.blackLight,
                                   size: 14,
                                 ),
                                 SizedBox(width: isDesktop ? 4 : 4.w),
@@ -357,9 +356,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                               ],
                             ),
                             selectedColor: AppColors.bestSellerStart,
-                            backgroundColor: AppColors.bestSellerStart.withValues(
-                              alpha: 0.1,
-                            ),
+                            backgroundColor: AppColors.bestSellerStart
+                                .withValues(alpha: 0.1),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(
                                 isDesktop ? 20 : 20.r,
@@ -368,8 +366,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                 color: _showBestSellersOnly
                                     ? AppColors.bestSellerStart
                                     : AppColors.bestSellerStart.withValues(
-                                      alpha: 0.3,
-                                    ),
+                                        alpha: 0.3,
+                                      ),
                               ),
                             ),
                             onSelected: (selected) {
@@ -406,7 +404,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
                                 if (_showLowStockOnly) {
                                   products = products
-                                      .where((p) => p.currentQuantity <= p.minQuantity)
+                                      .where(
+                                        (p) =>
+                                            p.currentQuantity <= p.minQuantity,
+                                      )
                                       .toList();
                                 }
 
