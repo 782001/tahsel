@@ -18,6 +18,7 @@ import 'package:tahsel/core/widgets/delete_account_confirmation_dialog.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:tahsel/features/auth/presentation/cubit/auth_state.dart';
+import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:tahsel/features/settings/presentation/widgets/appearance_card.dart';
 import 'package:tahsel/features/settings/presentation/widgets/currency_selection_bottom_sheet.dart';
 import 'package:tahsel/features/settings/presentation/widgets/language_option.dart';
@@ -126,7 +127,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         builder: (context, state) {
           final currentLang = context.read<LocaleCubit>().currentLangCode;
           final isArabic = currentLang == AppStrings.arabicCode;
-
+          final isShop = context.read<MainLayoutCubit>().isShop;
           return Scaffold(
             backgroundColor: AppColors.scafoldBackGround,
             body: Stack(
@@ -255,104 +256,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                               SizedBox(height: isDesktop ? 32 : 32.h),
 
-                              // Currency Section
-                              SectionHeader(
-                                title: AppStrings.changeCurrency.tr(),
-                              ),
-                              SizedBox(height: isDesktop ? 12 : 12.h),
-                              ValueListenableBuilder<CurrencyEntity>(
-                                valueListenable:
-                                    CurrencyService.instance.currencyNotifier,
-                                builder: (context, activeCurrency, child) {
-                                  return InkWell(
-                                    onTap: () =>
-                                        CurrencySelectionBottomSheet.show(
-                                          context,
-                                        ),
-                                    borderRadius: BorderRadius.circular(16.r),
-                                    child: Container(
-                                      padding: EdgeInsets.all(
-                                        isDesktop ? 16 : 16.w,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.surface,
-                                        borderRadius: BorderRadius.circular(
-                                          16.r,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Container(
-                                            width: isDesktop ? 50 : 50.w,
-                                            height: isDesktop ? 50 : 50.w,
-                                            decoration: BoxDecoration(
-                                              color: AppColors.primaryColor
-                                                  .withValues(alpha: 0.1),
-                                              shape: BoxShape.circle,
-                                            ),
-                                            alignment: Alignment.center,
-                                            child: Text(
-                                              activeCurrency.getSymbol(
-                                                currentLang,
-                                              ),
-                                              style: TextStyles.customStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppColors.primaryColor,
-                                              ),
-                                            ),
-                                          ),
-                                          SizedBox(width: 16.w),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  activeCurrency.getName(
-                                                    currentLang,
-                                                  ),
-                                                  style: TextStyles.customStyle(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: AppColors.black,
-                                                  ),
-                                                ),
-                                                SizedBox(height: 2.h),
-                                                Text(
-                                                  '${activeCurrency.code} (${activeCurrency.arabicSymbol} / ${activeCurrency.englishSymbol})',
-                                                  style: TextStyles.customStyle(
-                                                    fontSize: 13,
-                                                    color: AppColors.sandText,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          Icon(
-                                            Icons.arrow_forward_ios,
-                                            size: 16,
-                                            color: AppColors.disabledColor,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                              if (!Platform.isIOS || AppStrings.isVip)
+                              if (!Platform.isIOS ||
+                                  (AppStrings.isVip && isShop))
                                 SizedBox(height: isDesktop ? 16 : 16.h),
                               // Inventory Management (VIP) Section
-                              if (!Platform.isIOS || AppStrings.isVip)
+                              if (!Platform.isIOS ||
+                                  (AppStrings.isVip && isShop))
                                 SectionHeader(
                                   title: AppStrings.inventoryManagementVIP.tr(),
                                 ),
-                              if (!Platform.isIOS || AppStrings.isVip)
+                              if (!Platform.isIOS ||
+                                  (AppStrings.isVip && isShop))
                                 SizedBox(height: isDesktop ? 5 : 5.h),
-                              if (!Platform.isIOS || AppStrings.isVip)
+                              if (!Platform.isIOS ||
+                                  (AppStrings.isVip && isShop))
                                 InkWell(
                                   onTap: () {
-                                    if (!AppStrings.isVip) {
+                                    if (!(AppStrings.isVip && isShop)) {
                                       _showVipNoticeDialog(context);
                                       return;
                                     }
@@ -780,6 +700,91 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 const SubscriptionInfoWidget(),
 
                               SizedBox(height: isDesktop ? 32 : 32.h),
+                              // Currency Section
+                              SectionHeader(
+                                title: AppStrings.changeCurrency.tr(),
+                              ),
+                              SizedBox(height: isDesktop ? 12 : 12.h),
+                              ValueListenableBuilder<CurrencyEntity>(
+                                valueListenable:
+                                    CurrencyService.instance.currencyNotifier,
+                                builder: (context, activeCurrency, child) {
+                                  return InkWell(
+                                    onTap: () =>
+                                        CurrencySelectionBottomSheet.show(
+                                          context,
+                                        ),
+                                    borderRadius: BorderRadius.circular(16.r),
+                                    child: Container(
+                                      padding: EdgeInsets.all(
+                                        isDesktop ? 16 : 16.w,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.surface,
+                                        borderRadius: BorderRadius.circular(
+                                          16.r,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: isDesktop ? 50 : 50.w,
+                                            height: isDesktop ? 50 : 50.w,
+                                            decoration: BoxDecoration(
+                                              color: AppColors.primaryColor
+                                                  .withValues(alpha: 0.1),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            alignment: Alignment.center,
+                                            child: Text(
+                                              activeCurrency.getSymbol(
+                                                currentLang,
+                                              ),
+                                              style: TextStyles.customStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.primaryColor,
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(width: 16.w),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  activeCurrency.getName(
+                                                    currentLang,
+                                                  ),
+                                                  style: TextStyles.customStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: AppColors.black,
+                                                  ),
+                                                ),
+                                                SizedBox(height: 2.h),
+                                                Text(
+                                                  '${activeCurrency.code} (${activeCurrency.arabicSymbol} / ${activeCurrency.englishSymbol})',
+                                                  style: TextStyles.customStyle(
+                                                    fontSize: 13,
+                                                    color: AppColors.sandText,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Icon(
+                                            Icons.arrow_forward_ios,
+                                            size: 16,
+                                            color: AppColors.disabledColor,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
 
                               // Account Section
                               SectionHeader(title: AppStrings.account.tr()),
