@@ -10,6 +10,7 @@ import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 import '../../domain/entities/inventory_category_entity.dart';
 import '../../domain/entities/inventory_product_entity.dart';
 import '../../domain/entities/inventory_supplier_entity.dart';
+import 'barcode_scanner_dialog.dart';
 import 'searchable_dropdown_field.dart';
 
 class AddEditProductDialog extends StatefulWidget {
@@ -144,6 +145,15 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
     }
   }
 
+  Future<void> _scanBarcode() async {
+    final scannedCode = await BarcodeScannerDialog.scan(context);
+    if (scannedCode != null && scannedCode.isNotEmpty) {
+      setState(() {
+        _barcodeController.text = scannedCode;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.product != null;
@@ -204,8 +214,6 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                               ? AppStrings.validationFieldRequired.tr()
                               : null,
                         ),
-                        SizedBox(height: isDesktop ? 12 : 12.h),
-
                         // SKU & Barcode
                         Row(
                           children: [
@@ -220,6 +228,8 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                               child: _buildTextField(
                                 controller: _barcodeController,
                                 label: AppStrings.barcode.tr(),
+                                suffixIcon: Icons.qr_code_scanner_rounded,
+                                onSuffixIconPressed: _scanBarcode,
                               ),
                             ),
                           ],
@@ -421,6 +431,8 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
     TextInputType keyboardType = TextInputType.text,
     int maxLines = 1,
     String? Function(String?)? validator,
+    IconData? suffixIcon,
+    VoidCallback? onSuffixIconPressed,
   }) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
     return Column(
@@ -442,6 +454,8 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
           maxLines: maxLines,
           validator: validator,
           hint: label,
+          suffixIcon: suffixIcon,
+          onSuffixIconPressed: onSuffixIconPressed,
         ),
       ],
     );

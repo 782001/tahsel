@@ -17,6 +17,7 @@ import '../cubits/inventory_products_cubit.dart';
 import '../cubits/inventory_stock_movements_cubit.dart';
 import '../cubits/inventory_suppliers_cubit.dart';
 import '../widgets/add_edit_product_dialog.dart';
+import '../widgets/barcode_scanner_dialog.dart';
 import '../widgets/inventory_empty_state.dart';
 import '../widgets/manual_stock_adjustment_dialog.dart';
 import '../widgets/product_card_item.dart';
@@ -315,6 +316,19 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       controller: _searchController,
                       hint: AppStrings.searchInventory.tr(),
                       icon: Icons.search,
+                      suffixIcon: Icons.qr_code_scanner_rounded,
+                      onSuffixIconPressed: () async {
+                        final cubit = context.read<InventoryProductsCubit>();
+                        final scannedCode = await BarcodeScannerDialog.scan(context);
+                        if (scannedCode != null && scannedCode.isNotEmpty) {
+                          _searchController.text = scannedCode;
+                          cubit.fetchProducts(
+                            query: scannedCode,
+                            categoryId: _selectedCategory,
+                            supplierId: _selectedSupplier,
+                          );
+                        }
+                      },
                       onChanged: (val) {
                         context.read<InventoryProductsCubit>().fetchProducts(
                           query: val,
