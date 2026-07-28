@@ -214,26 +214,21 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                               ? AppStrings.validationFieldRequired.tr()
                               : null,
                         ),
-                        // SKU & Barcode
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildTextField(
-                                controller: _skuController,
-                                label: AppStrings.sku.tr(),
-                              ),
-                            ),
-                            SizedBox(width: isDesktop ? 12 : 12.w),
-                            Expanded(
-                              child: _buildTextField(
-                                controller: _barcodeController,
-                                label: AppStrings.barcode.tr(),
-                                suffixIcon: Icons.qr_code_scanner_rounded,
-                                onSuffixIconPressed: _scanBarcode,
-                              ),
-                            ),
-                          ],
+                        //  Barcode
+                        _buildTextField(
+                          controller: _barcodeController,
+                          label: AppStrings.barcode.tr(),
+                          suffixIcon: Icons.qr_code_scanner_rounded,
+                          onSuffixIconPressed: _scanBarcode,
                         ),
+                        SizedBox(height: isDesktop ? 12 : 12.h),
+
+                        // SKU
+                        _buildTextField(
+                          controller: _skuController,
+                          label: AppStrings.sku.tr(),
+                        ),
+
                         SizedBox(height: isDesktop ? 12 : 12.h),
 
                         // Category Dropdown (Searchable)
