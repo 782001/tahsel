@@ -642,92 +642,106 @@ class _QuickInventoryPickerBottomSheetState
               child: Column(
                 children: [
                   // Quantity Counter & Quick Increment Buttons
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment .spaceBetween,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            AppStrings.quantity.tr(),
-                            style: TextStyles.customStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.blackReal,
-                            ),
-                          ),
-                          if (_selectedProduct != null &&
-                              _quantity >= _selectedProduct!.currentQuantity)
-                            Text(
-                              AppStrings.maxQuantityReached.tr(),
-                              style: TextStyles.customStyle(
-                                fontSize: isDesktop ? 11 : 11 ,
-                                color: AppColors.warning,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                        ],
-                      ),
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.remove_circle_outline),
-                            color: _quantity > 1
-                                ? AppColors.primaryColor
-                                : AppColors.blackLight.withValues(alpha: 0.3),
-                            onPressed: _quantity > 1
-                                ? () => setState(() => _quantity--)
-                                : null,
-                          ),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: isDesktop ? 16 : 16.w,
-                              vertical: isDesktop ? 6 : 6.h,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  AppStrings.quantity.tr(),
+                                  style: TextStyles.customStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.blackReal,
+                                  ),
+                                ),
+                                if (_selectedProduct != null &&
+                                    _quantity >=
+                                        _selectedProduct!.currentQuantity)
+                                  Text(
+                                    AppStrings.maxQuantityReached.tr(),
+                                    style: TextStyles.customStyle(
+                                      fontSize: isDesktop ? 11 : 11,
+                                      color: AppColors.warning,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                              ],
                             ),
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryColor.withValues(
-                                alpha: 0.1,
+                          ),
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.remove_circle_outline),
+                                color: _quantity > 1
+                                    ? AppColors.primaryColor
+                                    : AppColors.blackLight.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                onPressed: _quantity > 1
+                                    ? () => setState(() => _quantity--)
+                                    : null,
                               ),
-                              borderRadius: BorderRadius.circular(10.r),
-                              border: Border.all(
-                                color: AppColors.primaryColor.withValues(
-                                  alpha: 0.3,
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isDesktop ? 16 : 14.w,
+                                  vertical: isDesktop ? 6 : 4.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryColor.withValues(
+                                    alpha: 0.1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  border: Border.all(
+                                    color: AppColors.primaryColor.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                  ),
+                                ),
+                                child: Text(
+                                  _quantity.toInt().toString(),
+                                  style: TextStyles.customStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primaryColor,
+                                  ),
                                 ),
                               ),
-                            ),
-                            child: Text(
-                              _quantity.toInt().toString(),
-                              style: TextStyles.customStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primaryColor,
+                              IconButton(
+                                icon: const Icon(Icons.add_circle_outline),
+                                color: _selectedProduct != null &&
+                                        _quantity <
+                                            _selectedProduct!.currentQuantity
+                                    ? AppColors.primaryColor
+                                    : AppColors.blackLight.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                onPressed: _selectedProduct != null &&
+                                        _quantity <
+                                            _selectedProduct!.currentQuantity
+                                    ? () => setState(() => _quantity++)
+                                    : null,
                               ),
-                            ),
+                            ],
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.add_circle_outline),
-                            color:
-                                _selectedProduct != null &&
-                                    _quantity <
-                                        _selectedProduct!.currentQuantity
-                                ? AppColors.primaryColor
-                                : AppColors.blackLight.withValues(alpha: 0.3),
-                            onPressed:
-                                _selectedProduct != null &&
-                                    _quantity <
-                                        _selectedProduct!.currentQuantity
-                                ? () => setState(() => _quantity++)
-                                : null,
-                          ),
-                          // Quick increment shortcuts (+1, +5, +10)
-                          SizedBox(width: 4.w),
+                        ],
+                      ),
+                      SizedBox(height: 6.h),
+                      // Quick increment shortcuts (+1, +5, +10)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
                           Wrap(
-                            spacing: 4,
+                            spacing: 6.w,
                             children: [1, 5, 10].map((inc) {
                               final maxAvailable =
                                   _selectedProduct?.currentQuantity ?? 1.0;
-                              final canAdd =
-                                  _selectedProduct != null &&
+                              final canAdd = _selectedProduct != null &&
                                   _quantity < maxAvailable;
                               return InkWell(
                                 onTap: canAdd
@@ -742,7 +756,7 @@ class _QuickInventoryPickerBottomSheetState
                                     : null,
                                 child: Container(
                                   padding: EdgeInsets.symmetric(
-                                    horizontal: isDesktop ? 8 : 8.w,
+                                    horizontal: isDesktop ? 10 : 8.w,
                                     vertical: isDesktop ? 4 : 4.h,
                                   ),
                                   decoration: BoxDecoration(
@@ -760,7 +774,7 @@ class _QuickInventoryPickerBottomSheetState
                                   child: Text(
                                     '+$inc',
                                     style: TextStyles.customStyle(
-                                      fontSize: isDesktop ? 11 : 11 ,
+                                      fontSize: isDesktop ? 11 : 11,
                                       fontWeight: FontWeight.bold,
                                       color: canAdd
                                           ? AppColors.primaryColor
