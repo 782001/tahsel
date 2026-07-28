@@ -348,6 +348,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   title: AppStrings.inventoryManagementVIP.tr(),
                                 ),
                               if (!Platform.isIOS || AppStrings.isVip)
+                                SizedBox(height: isDesktop ? 5 : 5.h),
+                              if (!Platform.isIOS || AppStrings.isVip)
                                 InkWell(
                                   onTap: () {
                                     if (!AppStrings.isVip) {
@@ -647,6 +649,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               SectionHeader(
                                 title: AppStrings.employeeManagement.tr(),
                               ),
+                              SizedBox(height: isDesktop ? 5 : 5.h),
                               InkWell(
                                 onTap: () {
                                   Navigator.pushNamed(
