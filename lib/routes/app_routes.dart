@@ -50,6 +50,7 @@ import 'package:tahsel/features/inventory/presentation/cubits/inventory_purchase
 import 'package:tahsel/features/inventory/presentation/cubits/inventory_stock_movements_cubit.dart';
 import 'package:tahsel/features/inventory/presentation/cubits/inventory_suppliers_cubit.dart';
 import 'package:tahsel/features/inventory/presentation/screens/categories_screen.dart';
+import 'package:tahsel/features/inventory/presentation/screens/inventory_analytics_screen.dart';
 import 'package:tahsel/features/inventory/presentation/screens/inventory_main_screen.dart';
 import 'package:tahsel/features/inventory/presentation/screens/products_screen.dart';
 import 'package:tahsel/features/inventory/presentation/screens/purchases_screen.dart';
@@ -93,6 +94,7 @@ class AppRoutes {
   static const String inventorySuppliers = '/inventory-suppliers';
   static const String inventoryPurchases = '/inventory-purchases';
   static const String inventoryStockMovements = '/inventory-stock-movements';
+  static const String inventoryAnalytics = '/inventory-analytics';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -157,6 +159,19 @@ class AppRoutes {
           builder: (_) => BlocProvider(
             create: (_) => di.sl<InventoryStockMovementsCubit>(),
             child: const StockMovementsScreen(),
+          ),
+        );
+      case inventoryAnalytics:
+        if (!AppStrings.isVip) return _vipRestrictedRoute();
+        return MaterialPageRoute(
+          builder: (_) => MultiBlocProvider(
+            providers: [
+              BlocProvider(create: (_) => di.sl<InventoryProductsCubit>()),
+              BlocProvider(
+                create: (_) => di.sl<InventoryStockMovementsCubit>(),
+              ),
+            ],
+            child: const InventoryAnalyticsScreen(),
           ),
         );
       case employeeList:

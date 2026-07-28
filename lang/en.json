@@ -885,5 +885,16 @@
   "best_sellers_only": "Best Sellers 🔥",
   "total_sold": "Total Sold",
   "filter_by_type": "Filter by Type",
-  "all_movements": "All Movements"
+  "all_movements": "All Movements",
+  "inventory_analytics": "Profitability & Analytics 📊",
+  "inventory_analytics_desc": "Analyze net product margins and detect dead stock",
+  "expected_inventory_profit": "Expected Profits",
+  "avg_profit_margin": "Avg Profit Margin",
+  "dead_stock": "Dead Stock 🧊",
+  "tied_up_capital": "Tied-up Capital",
+  "top_profitable_products": "Top Profitable Products 💰",
+  "unit_profit": "Unit Profit",
+  "profit_margin_ratio": "Profit Ratio",
+  "no_profitable_products": "No Profitable Products Found 💰",
+  "no_profitable_products_desc": "Set purchase and selling prices for products to compute profit margins"
 }

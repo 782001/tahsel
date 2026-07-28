@@ -900,6 +900,17 @@ class AppStrings {
   static const String allMovements = "all_movements";
   static const String lowStockCount = "low_stock_count";
   static const String totalInventoryValue = "total_inventory_value";
+  static const String inventoryAnalytics = "inventory_analytics";
+  static const String inventoryAnalyticsDesc = "inventory_analytics_desc";
+  static const String expectedInventoryProfit = "expected_inventory_profit";
+  static const String avgProfitMargin = "avg_profit_margin";
+  static const String deadStock = "dead_stock";
+  static const String tiedUpCapital = "tied_up_capital";
+  static const String topProfitableProducts = "top_profitable_products";
+  static const String unitProfit = "unit_profit";
+  static const String profitMarginRatio = "profit_margin_ratio";
+  static const String noProfitableProducts = "no_profitable_products";
+  static const String noProfitableProductsDesc = "no_profitable_products_desc";
   static const String confirmDeleteProduct = "confirm_delete_product";
   static const String confirmDeleteCategory = "confirm_delete_category";
   static const String confirmDeleteSupplier = "confirm_delete_supplier";

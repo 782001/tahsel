@@ -889,5 +889,16 @@
   "best_sellers_only": "الأكثر مبيعا 🔥",
   "total_sold": "إجمالي المبيعات",
   "filter_by_type": "تصفية حسب النوع",
-  "all_movements": "جميع الحركات"
+  "all_movements": "جميع الحركات",
+  "inventory_analytics": "ربحية المخزون والركود 📊",
+  "inventory_analytics_desc": "تحليل صافي أرباح المنتجات وتحديد البضائع الراكدة",
+  "expected_inventory_profit": "الأرباح المتوقعة",
+  "avg_profit_margin": "متوسط الربح",
+  "dead_stock": "البضائع الراكدة 🧊",
+  "tied_up_capital": "رأس المال الراكد",
+  "top_profitable_products": "المنتجات الأكثر ربحية 💰",
+  "unit_profit": "ربح القطعة",
+  "profit_margin_ratio": "نسبة الربح",
+  "no_profitable_products": "لا توجد منتجات ذات ربحية محددة 💰",
+  "no_profitable_products_desc": "يرجى تحديد سعر الشراء وسعر البيع للمنتجات بشكل صحيح لحساب صافي الربح"
 }
