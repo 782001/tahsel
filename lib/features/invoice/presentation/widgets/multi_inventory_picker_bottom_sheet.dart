@@ -9,6 +9,7 @@ import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/inventory/data/datasources/inventory_local_data_source.dart';
 import 'package:tahsel/features/inventory/domain/entities/inventory_product_entity.dart';
 import 'package:tahsel/features/inventory/domain/utils/best_seller_helper.dart';
+import 'package:tahsel/features/inventory/presentation/widgets/barcode_scanner_dialog.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 
 class SelectedInventoryItem {
@@ -230,6 +231,27 @@ class _MultiInventoryPickerBottomSheetState
               controller: _searchController,
               hint: AppStrings.searchInventory.tr(),
               icon: Icons.search_rounded,
+              suffixIcon: Icons.qr_code_scanner_rounded,
+              onSuffixIconPressed: () async {
+                final scannedCode = await BarcodeScannerDialog.scan(context);
+                if (scannedCode != null && scannedCode.isNotEmpty) {
+                  _searchController.text = scannedCode;
+                  _applyFilter();
+                  final target = scannedCode.trim().toLowerCase();
+                  for (final p in _allProducts) {
+                    if ((p.barcode?.trim().toLowerCase() == target) ||
+                        (p.sku.trim().toLowerCase() == target)) {
+                      final currentQty = _selectedQuantities[p.id] ?? 0;
+                      if (currentQty < p.currentQuantity) {
+                        setState(() {
+                          _selectedQuantities[p.id] = currentQty + 1;
+                        });
+                      }
+                      break;
+                    }
+                  }
+                }
+              },
               onChanged: (_) => _applyFilter(),
             ),
           ),

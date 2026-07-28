@@ -243,38 +243,41 @@ class ProductCardItem extends StatelessWidget {
                                     ],
                                   ),
                                 ),
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: isDesktop ? 8 : 6.w,
-                                  vertical: isDesktop ? 2 : 2.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.scafoldBackGround,
-                                  borderRadius: BorderRadius.circular(6.r),
-                                  border: Border.all(
-                                    color: AppColors.dividerColor,
+                               if (p.barcode != null &&
+                                  p.barcode!.isNotEmpty) ...[
+                                SizedBox(width: isDesktop ? 6 : 4.w),
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: isDesktop ? 8 : 6.w,
+                                    vertical: isDesktop ? 2 : 2.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryColor.withValues(
+                                      alpha: 0.08,
+                                    ),
+                                    borderRadius: BorderRadius.circular(6.r),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.qr_code_scanner_rounded,
+                                        size: 11,
+                                        color: AppColors.primaryColor,
+                                      ),
+                                      SizedBox(width: 4.w),
+                                      Text(
+                                        p.barcode!,
+                                        style: TextStyles.customStyle(
+                                          fontSize: 10.5,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.primaryColor,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.category_outlined,
-                                      size: 12,
-                                      color: AppColors.inventoryCategoryBrown,
-                                    ),
-                                    SizedBox(width: 4.w),
-                                    Text(
-                                      '${AppStrings.category.tr()}: ${p.categoryName.isNotEmpty ? p.categoryName : "-"}',
-                                      style: TextStyles.customStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.inventoryCategoryBrown,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                              ],
 
                               // if (p.supplierName.isNotEmpty)
                               //   Container(

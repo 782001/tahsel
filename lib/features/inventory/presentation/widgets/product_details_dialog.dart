@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
@@ -237,6 +239,65 @@ class ProductDetailsDialog extends StatelessWidget {
                               ),
                             ),
                           ],
+                        ),
+                      ],
+                      if (product.barcode != null &&
+                          product.barcode!.isNotEmpty) ...[
+                        SizedBox(height: isDesktop ? 10 : 10.h),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isDesktop ? 14 : 14.w,
+                            vertical: isDesktop ? 8 : 8.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryColor.withValues(
+                              alpha: 0.06,
+                            ),
+                            borderRadius: BorderRadius.circular(
+                              isDesktop ? 12 : 12.r,
+                            ),
+                            border: Border.all(
+                              color: AppColors.primaryColor.withValues(
+                                alpha: 0.2,
+                              ),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.qr_code_rounded,
+                                    color: AppColors.primaryColor,
+                                    size: 20,
+                                  ),
+                                  SizedBox(width: isDesktop ? 8 : 8.w),
+                                  Text(
+                                    '${AppStrings.barcode.tr()}: ${product.barcode}',
+                                    style: TextStyles.customStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.primaryColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  Icons.copy_rounded,
+                                  size: 18,
+                                  color: AppColors.primaryColor,
+                                ),
+                                onPressed: () {
+                                  Clipboard.setData(
+                                    ClipboardData(text: product.barcode!),
+                                  );
+                                  Fluttertoast.showToast(msg: 'تم نسخ الباركود 📋');
+                                },
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                       SizedBox(height: isDesktop ? 16 : 16.h),
