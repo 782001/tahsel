@@ -9,6 +9,7 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+
 import '../../domain/entities/inventory_category_entity.dart';
 import '../../domain/entities/inventory_product_entity.dart';
 import '../../domain/entities/inventory_supplier_entity.dart';
@@ -121,175 +122,174 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
             constraints: BoxConstraints(
               maxWidth: isDesktop ? 1000 : double.infinity,
             ),
-            child:
-                BlocBuilder<InventoryProductsCubit, InventoryProductsState>(
-                  builder: (context, state) {
-                    if (state is InventoryProductsLoading) {
-                      return Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primaryColor,
-                          strokeWidth: 4,
-                        ),
-                      );
+            child: BlocBuilder<InventoryProductsCubit, InventoryProductsState>(
+              builder: (context, state) {
+                if (state is InventoryProductsLoading) {
+                  return Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.primaryColor,
+                      strokeWidth: 4,
+                    ),
+                  );
+                }
+
+                if (state is InventoryProductsLoaded) {
+                  final products = state.products;
+
+                  if (products.isEmpty) {
+                    return InventoryEmptyState(
+                      icon: Icons.analytics_outlined,
+                      title: AppStrings.noProductsFound.tr(),
+                      description: AppStrings.emptyProductsDesc.tr(),
+                    );
+                  }
+
+                  // KPI Calculations
+                  double totalExpectedProfit = 0.0;
+                  double totalPurchaseValue = 0.0;
+                  double totalSellingValue = 0.0;
+                  double totalTiedUpCapital = 0.0;
+
+                  final List<InventoryProductEntity> deadStockProducts = [];
+                  final List<InventoryProductEntity> sortedProfitable = products
+                      .where((p) => (p.sellingPrice - p.purchasePrice) > 0)
+                      .toList();
+
+                  for (final p in products) {
+                    final unitProfit = p.sellingPrice - p.purchasePrice;
+                    if (p.currentQuantity > 0) {
+                      totalExpectedProfit += unitProfit * p.currentQuantity;
+                      totalPurchaseValue += p.purchasePrice * p.currentQuantity;
+                      totalSellingValue += p.sellingPrice * p.currentQuantity;
                     }
 
-                    if (state is InventoryProductsLoaded) {
-                      final products = state.products;
-
-                      if (products.isEmpty) {
-                        return InventoryEmptyState(
-                          icon: Icons.analytics_outlined,
-                          title: AppStrings.noProductsFound.tr(),
-                          description: AppStrings.emptyProductsDesc.tr(),
-                        );
-                      }
-
-                      // KPI Calculations
-                      double totalExpectedProfit = 0.0;
-                      double totalPurchaseValue = 0.0;
-                      double totalSellingValue = 0.0;
-                      double totalTiedUpCapital = 0.0;
-
-                      final List<InventoryProductEntity> deadStockProducts = [];
-                      final List<InventoryProductEntity> sortedProfitable = products
-                          .where((p) => (p.sellingPrice - p.purchasePrice) > 0)
-                          .toList();
-
-                      for (final p in products) {
-                        final unitProfit = p.sellingPrice - p.purchasePrice;
-                        if (p.currentQuantity > 0) {
-                          totalExpectedProfit += unitProfit * p.currentQuantity;
-                          totalPurchaseValue += p.purchasePrice * p.currentQuantity;
-                          totalSellingValue += p.sellingPrice * p.currentQuantity;
-                        }
-
-                        if (p.totalSoldQuantity <= 0) {
-                          deadStockProducts.add(p);
-                          totalTiedUpCapital += p.purchasePrice * p.currentQuantity;
-                        }
-                      }
-
-                      sortedProfitable.sort((a, b) {
-                        final profitA = a.sellingPrice - a.purchasePrice;
-                        final profitB = b.sellingPrice - b.purchasePrice;
-                        return profitB.compareTo(profitA);
-                      });
-
-                      final double avgProfitMarginPct = totalPurchaseValue > 0
-                          ? ((totalSellingValue - totalPurchaseValue) /
-                                  totalPurchaseValue) *
-                              100
-                          : 0.0;
-
-                      return RefreshIndicator(
-                        color: AppColors.primaryColor,
-                        onRefresh: () async {
-                          await context
-                              .read<InventoryProductsCubit>()
-                              .fetchProducts();
-                        },
-                        child: Column(
-                          children: [
-                            Padding(
-                              padding: EdgeInsets.all(isDesktop ? 20 : 16.w),
-                              child: Column(
-                                children: [
-                                  // Top Analytics Cards
-                                  FadeInDown(
-                                    duration: const Duration(milliseconds: 300),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: _buildMetricCard(
-                                            title: AppStrings
-                                                .expectedInventoryProfit
-                                                .tr(),
-                                            value:
-                                                '${totalExpectedProfit.toSmartAmount()} ${CurrencyService.instance.currentSymbol}',
-                                            icon: Icons.trending_up_rounded,
-                                            color: AppColors.success,
-                                            isDesktop: isDesktop,
-                                          ),
-                                        ),
-                                        SizedBox(width: isDesktop ? 12 : 10.w),
-                                        Expanded(
-                                          child: _buildMetricCard(
-                                            title: AppStrings.avgProfitMargin.tr(),
-                                            value:
-                                                '${avgProfitMarginPct.toStringAsFixed(1)}%',
-                                            icon: Icons.percent_rounded,
-                                            color: AppColors.actionButton,
-                                            isDesktop: isDesktop,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  SizedBox(height: isDesktop ? 12 : 10.h),
-                                  FadeInDown(
-                                    duration: const Duration(milliseconds: 350),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: _buildMetricCard(
-                                            title: AppStrings.tiedUpCapital.tr(),
-                                            value:
-                                                '${totalTiedUpCapital.toSmartAmount()} ${CurrencyService.instance.currentSymbol}',
-                                            subtitle:
-                                                '${deadStockProducts.length} ${AppStrings.deadStock.tr()}',
-                                            icon: Icons.ac_unit_rounded,
-                                            color: AppColors.creditAmberStart,
-                                            isDesktop: isDesktop,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  SizedBox(height: isDesktop ? 16 : 14.h),
-
-                                  // Smart Animated Tab Selector
-                                  InventoryTabSelector(
-                                    tabs: [
-                                      AppStrings.topProfitableProducts.tr(),
-                                      '${AppStrings.deadStock.tr()} (${deadStockProducts.length})',
-                                    ],
-                                    selectedIndex: _selectedTabIndex,
-                                    onTabChanged: (index) {
-                                      setState(() => _selectedTabIndex = index);
-                                      _tabController.animateTo(index);
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            // Tab Views
-                            Expanded(
-                              child: TabBarView(
-                                controller: _tabController,
-                                children: [
-                                  // Tab 1: Top Profitable Products
-                                  _buildProfitableProductsList(
-                                    sortedProfitable,
-                                    isDesktop: isDesktop,
-                                  ),
-
-                                  // Tab 2: Dead Stock List
-                                  _buildDeadStockList(
-                                    deadStockProducts,
-                                    isDesktop: isDesktop,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
+                    if (p.totalSoldQuantity <= 0) {
+                      deadStockProducts.add(p);
+                      totalTiedUpCapital += p.purchasePrice * p.currentQuantity;
                     }
+                  }
 
-                    return const SizedBox.shrink();
-                  },
-                ),
+                  sortedProfitable.sort((a, b) {
+                    final profitA = a.sellingPrice - a.purchasePrice;
+                    final profitB = b.sellingPrice - b.purchasePrice;
+                    return profitB.compareTo(profitA);
+                  });
+
+                  final double avgProfitMarginPct = totalPurchaseValue > 0
+                      ? ((totalSellingValue - totalPurchaseValue) /
+                                totalPurchaseValue) *
+                            100
+                      : 0.0;
+
+                  return RefreshIndicator(
+                    color: AppColors.primaryColor,
+                    onRefresh: () async {
+                      await context
+                          .read<InventoryProductsCubit>()
+                          .fetchProducts();
+                    },
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.all(isDesktop ? 20 : 16.w),
+                          child: Column(
+                            children: [
+                              // Top Analytics Cards
+                              FadeInDown(
+                                duration: const Duration(milliseconds: 300),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildMetricCard(
+                                        title: AppStrings
+                                            .expectedInventoryProfit
+                                            .tr(),
+                                        value:
+                                            '${totalExpectedProfit.toSmartAmount()} ${CurrencyService.instance.currentSymbol}',
+                                        icon: Icons.trending_up_rounded,
+                                        color: AppColors.success,
+                                        isDesktop: isDesktop,
+                                      ),
+                                    ),
+                                    SizedBox(width: isDesktop ? 12 : 10.w),
+                                    Expanded(
+                                      child: _buildMetricCard(
+                                        title: AppStrings.avgProfitMargin.tr(),
+                                        value:
+                                            '${avgProfitMarginPct.toStringAsFixed(1)}%',
+                                        icon: Icons.percent_rounded,
+                                        color: AppColors.actionButton,
+                                        isDesktop: isDesktop,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(height: isDesktop ? 12 : 10.h),
+                              FadeInDown(
+                                duration: const Duration(milliseconds: 350),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildMetricCard(
+                                        title: AppStrings.tiedUpCapital.tr(),
+                                        value:
+                                            '${totalTiedUpCapital.toSmartAmount()} ${CurrencyService.instance.currentSymbol}',
+                                        subtitle:
+                                            '${deadStockProducts.length} ${AppStrings.deadStock.tr()}',
+                                        icon: Icons.ac_unit_rounded,
+                                        color: AppColors.creditAmberStart,
+                                        isDesktop: isDesktop,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(height: isDesktop ? 16 : 14.h),
+
+                              // Smart Animated Tab Selector
+                              InventoryTabSelector(
+                                tabs: [
+                                  AppStrings.topProfitableProducts.tr(),
+                                  '${AppStrings.deadStock.tr()} (${deadStockProducts.length})',
+                                ],
+                                selectedIndex: _selectedTabIndex,
+                                onTabChanged: (index) {
+                                  setState(() => _selectedTabIndex = index);
+                                  _tabController.animateTo(index);
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Tab Views
+                        Expanded(
+                          child: TabBarView(
+                            controller: _tabController,
+                            children: [
+                              // Tab 1: Top Profitable Products
+                              _buildProfitableProductsList(
+                                sortedProfitable,
+                                isDesktop: isDesktop,
+                              ),
+
+                              // Tab 2: Dead Stock List
+                              _buildDeadStockList(
+                                deadStockProducts,
+                                isDesktop: isDesktop,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return const SizedBox.shrink();
+              },
+            ),
           ),
         ),
       ),
@@ -463,7 +463,10 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
                           ),
                         ),
                         SizedBox(height: isDesktop ? 4 : 4.h),
-                        Row(
+                        Wrap(
+                          spacing: isDesktop ? 8 : 6.w,
+                          runSpacing: 4.h,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             Container(
                               padding: EdgeInsets.symmetric(
@@ -483,7 +486,6 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
                                 ),
                               ),
                             ),
-                            SizedBox(width: isDesktop ? 8 : 6.w),
                             Container(
                               padding: EdgeInsets.symmetric(
                                 horizontal: isDesktop ? 8 : 6.w,
@@ -642,7 +644,10 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
                       ),
                     ),
                     SizedBox(height: isDesktop ? 4 : 4.h),
-                    Row(
+                    Wrap(
+                      spacing: isDesktop ? 8 : 6.w,
+                      runSpacing: 4.h,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Container(
                           padding: EdgeInsets.symmetric(
@@ -664,12 +669,23 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
                             ),
                           ),
                         ),
-                        SizedBox(width: isDesktop ? 8 : 6.w),
-                        Text(
-                          '${p.currentQuantity.toSmartAmount()} ${p.unit}',
-                          style: TextStyles.customStyle(
-                            fontSize: 11,
-                            color: AppColors.subTitleColor,
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isDesktop ? 8 : 6.w,
+                            vertical: isDesktop ? 3 : 2.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryColor.withValues(
+                              alpha: 0.08,
+                            ),
+                            borderRadius: BorderRadius.circular(6.r),
+                          ),
+                          child: Text(
+                            '${p.currentQuantity.toSmartAmount()} ${p.unit}',
+                            style: TextStyles.customStyle(
+                              fontSize: 11,
+                              color: AppColors.subTitleColor,
+                            ),
                           ),
                         ),
                       ],

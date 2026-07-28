@@ -229,7 +229,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                         crossAxisCount: isDesktop ? 3 : 2,
                         mainAxisSpacing: isDesktop ? 16 : 12.h,
                         crossAxisSpacing: isDesktop ? 16 : 12.w,
-                        childAspectRatio: isDesktop ? 1.35 : 1.1,
+                        childAspectRatio: isDesktop ? 1.35 : 1.0,
                         children: [
                           _buildTahselModuleTile(
                             context,
@@ -580,10 +580,10 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                     SizedBox(height: 2.h),
                     Text(
                       subtitle,
-                      maxLines: 3,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyles.customStyle(
-                        fontSize: isDesktop ? 11 : 11,
+                        fontSize: isDesktop ? 11 : 10.5,
                         color: AppColors.sandText,
                       ),
                     ),
