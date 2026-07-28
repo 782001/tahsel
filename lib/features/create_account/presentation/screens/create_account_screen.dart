@@ -10,9 +10,9 @@ import 'package:tahsel/core/utils/assets.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/core/services/currency/currency_service.dart';
-import 'package:tahsel/core/services/currency/data/world_currencies.dart';
 import 'package:tahsel/core/services/currency/domain/entities/currency_entity.dart';
 import 'package:tahsel/features/create_account/domain/usecases/create_account_usecases.dart';
+import 'package:tahsel/features/settings/presentation/widgets/currency_selection_bottom_sheet.dart';
 import 'package:tahsel/features/create_account/presentation/cubit/create_account/create_account_cubit.dart';
 import 'package:tahsel/features/create_account/presentation/cubit/create_account/create_account_state.dart';
 import 'package:tahsel/features/offline_sync/presentation/widgets/offline_banner.dart';
@@ -577,67 +577,105 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                       ),
                                       SizedBox(height: isDesktop ? 24 : 24.h),
 
-                                      // Currency Dropdown (Displays ONLY full currency name)
-                                      DropdownButtonFormField<CurrencyEntity>(
-                                        initialValue: _selectedCurrency,
-                                        style: TextStyles.customStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.textColor,
-                                        ),
-                                        dropdownColor:
-                                            AppColors.scafoldBackGround,
-                                        decoration: InputDecoration(
-                                          labelText: AppStrings.currencyLabel.tr(),
-                                          labelStyle: TextStyles.customStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColors.textColor,
-                                          ),
-                                          prefixIcon: Icon(
-                                            Icons.payments_outlined,
-                                            color: AppColors.primaryColor,
-                                          ),
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              12.r,
+                                      // Currency Selector (Opens Smart Currency Bottom Sheet)
+                                      InkWell(
+                                        onTap: () async {
+                                          final selected =
+                                              await CurrencySelectionBottomSheet
+                                                  .show(
+                                            context,
+                                            initialCurrency: _selectedCurrency,
+                                            onCurrencySelected: (c) {
+                                              setState(() => _selectedCurrency = c);
+                                            },
+                                          );
+                                          if (selected != null) {
+                                            setState(
+                                              () => _selectedCurrency = selected,
+                                            );
+                                          }
+                                        },
+                                        borderRadius: BorderRadius.circular(12.r),
+                                        child: InputDecorator(
+                                          decoration: InputDecoration(
+                                            labelText: AppStrings.currencyLabel.tr(),
+                                            labelStyle: TextStyles.customStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.textColor,
                                             ),
-                                            borderSide: BorderSide(
+                                            prefixIcon: Icon(
+                                              Icons.payments_outlined,
                                               color: AppColors.primaryColor,
                                             ),
-                                          ),
-                                          enabledBorder: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              12.r,
-                                            ),
-                                            borderSide: BorderSide(
+                                            suffixIcon: Icon(
+                                              Icons.arrow_drop_down_rounded,
                                               color: AppColors.primaryColor,
+                                              size: 26,
                                             ),
-                                          ),
-                                          focusedBorder: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              12.r,
-                                            ),
-                                            borderSide: BorderSide(
-                                              color: AppColors.primaryColor,
-                                            ),
-                                          ),
-                                        ),
-                                        items: WorldCurrencies.allCurrencies.map((c) {
-                                          return DropdownMenuItem<CurrencyEntity>(
-                                            value: c,
-                                            child: Text(
-                                              c.getName(AppStrings.currentLang),
-                                              style: TextStyles.customStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w600,
-                                                color: AppColors.textColor,
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(
+                                                12.r,
+                                              ),
+                                              borderSide: BorderSide(
+                                                color: AppColors.primaryColor,
                                               ),
                                             ),
-                                          );
-                                        }).toList(),
-                                        onChanged: (v) => setState(
-                                          () => _selectedCurrency = v ?? CurrencyEntity.defaultCurrency,
+                                            enabledBorder: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(
+                                                12.r,
+                                              ),
+                                              borderSide: BorderSide(
+                                                color: AppColors.primaryColor,
+                                              ),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(
+                                                12.r,
+                                              ),
+                                              borderSide: BorderSide(
+                                                color: AppColors.primaryColor,
+                                              ),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  _selectedCurrency.getName(
+                                                    AppStrings.currentLang,
+                                                  ),
+                                                  style: TextStyles.customStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: AppColors.textColor,
+                                                  ),
+                                                ),
+                                              ),
+                                              Container(
+                                                padding: EdgeInsets.symmetric(
+                                                  horizontal: 6.w,
+                                                  vertical: 2.h,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.primaryColor
+                                                      .withValues(alpha: 0.1),
+                                                  borderRadius:
+                                                      BorderRadius.circular(6.r),
+                                                ),
+                                                child: Text(
+                                                  _selectedCurrency.getSymbol(
+                                                    AppStrings.currentLang,
+                                                  ),
+                                                  style: TextStyles.customStyle(
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: AppColors.primaryColor,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ),
                                       SizedBox(height: isDesktop ? 24 : 24.h),

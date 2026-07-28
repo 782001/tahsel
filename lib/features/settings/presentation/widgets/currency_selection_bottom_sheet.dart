@@ -10,14 +10,28 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 class CurrencySelectionBottomSheet extends StatefulWidget {
-  const CurrencySelectionBottomSheet({super.key});
+  final CurrencyEntity? initialCurrency;
+  final ValueChanged<CurrencyEntity>? onCurrencySelected;
 
-  static Future<void> show(BuildContext context) {
-    return showModalBottomSheet(
+  const CurrencySelectionBottomSheet({
+    super.key,
+    this.initialCurrency,
+    this.onCurrencySelected,
+  });
+
+  static Future<CurrencyEntity?> show(
+    BuildContext context, {
+    CurrencyEntity? initialCurrency,
+    ValueChanged<CurrencyEntity>? onCurrencySelected,
+  }) {
+    return showModalBottomSheet<CurrencyEntity>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => const CurrencySelectionBottomSheet(),
+      builder: (context) => CurrencySelectionBottomSheet(
+        initialCurrency: initialCurrency,
+        onCurrencySelected: onCurrencySelected,
+      ),
     );
   }
 
@@ -54,8 +68,14 @@ class _CurrencySelectionBottomSheetState
     final nav = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
 
+    if (widget.onCurrencySelected != null) {
+      widget.onCurrencySelected!(currency);
+      nav.pop(currency);
+      return;
+    }
+
     await CurrencyService.instance.updateCurrency(currency);
-    nav.pop();
+    nav.pop(currency);
 
     messenger.showSnackBar(
       SnackBar(
@@ -93,7 +113,8 @@ class _CurrencySelectionBottomSheetState
   Widget build(BuildContext context) {
     final bool isDesktop = ResponsiveLayout.isDesktop(context);
     final currentLang = AppStrings.currentLang;
-    final activeCurrency = CurrencyService.instance.currentCurrency;
+    final activeCurrency =
+        widget.initialCurrency ?? CurrencyService.instance.currentCurrency;
 
     return Container(
       height: MediaQuery.of(context).size.height * (isDesktop ? 0.75 : 0.82),
@@ -141,7 +162,7 @@ class _CurrencySelectionBottomSheetState
                     Text(
                       AppStrings.selectCurrency.tr(),
                       style: TextStyles.customStyle(
-                        fontSize: isDesktop ? 19 : 19.sp,
+                        fontSize: isDesktop ? 19 : 19,
                         fontWeight: FontWeight.bold,
                         color: AppColors.black,
                       ),
@@ -150,7 +171,7 @@ class _CurrencySelectionBottomSheetState
                     Text(
                       '${AppStrings.currencyLabel.tr()}: ${activeCurrency.getName(currentLang)} (${activeCurrency.getSymbol(currentLang)})',
                       style: TextStyles.customStyle(
-                        fontSize: isDesktop ? 12 : 12.sp,
+                        fontSize: isDesktop ? 12 : 12,
                         color: AppColors.primaryColor,
                         fontWeight: FontWeight.w600,
                       ),
@@ -169,7 +190,7 @@ class _CurrencySelectionBottomSheetState
                 icon: Icon(
                   Icons.close_rounded,
                   color: AppColors.blackLight,
-                  size: isDesktop ? 20 : 20.sp,
+                  size: isDesktop ? 20 : 20,
                 ),
               ),
             ],
@@ -181,21 +202,21 @@ class _CurrencySelectionBottomSheetState
             controller: _searchController,
             cursorColor: AppColors.primaryColor,
             style: TextStyles.customStyle(
-              fontSize: isDesktop ? 14 : 14.sp,
+              fontSize: isDesktop ? 14 : 14,
               color: AppColors.black,
               fontWeight: FontWeight.w600,
             ),
             decoration: InputDecoration(
               hintText: AppStrings.searchCurrencyHint.tr(),
               hintStyle: TextStyles.customStyle(
-                fontSize: isDesktop ? 13 : 13.sp,
+                fontSize: isDesktop ? 13 : 13,
                 color: AppColors.disabledColor,
                 fontWeight: FontWeight.normal,
               ),
               prefixIcon: Icon(
                 Icons.search_rounded,
                 color: AppColors.primaryColor,
-                size: isDesktop ? 22 : 22.sp,
+                size: isDesktop ? 22 : 22,
               ),
               suffixIcon: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -212,7 +233,7 @@ class _CurrencySelectionBottomSheetState
                     child: Text(
                       '${_filteredCurrencies.length}',
                       style: TextStyles.customStyle(
-                        fontSize: isDesktop ? 11 : 11.sp,
+                        fontSize: isDesktop ? 11 : 11,
                         fontWeight: FontWeight.bold,
                         color: AppColors.primaryColor,
                       ),
@@ -256,7 +277,7 @@ class _CurrencySelectionBottomSheetState
                         Text(
                           AppStrings.noData.tr(),
                           style: TextStyles.customStyle(
-                            fontSize: isDesktop ? 14 : 14.sp,
+                            fontSize: isDesktop ? 14 : 14,
                             color: AppColors.disabledColor,
                             fontWeight: FontWeight.w500,
                           ),
@@ -333,7 +354,7 @@ class _CurrencySelectionBottomSheetState
                                   child: Text(
                                     currency.getSymbol(currentLang),
                                     style: TextStyles.customStyle(
-                                      fontSize: isDesktop ? 15 : 15.sp,
+                                      fontSize: isDesktop ? 15 : 15,
                                       fontWeight: FontWeight.bold,
                                       color: isSelected
                                           ? Colors.white
@@ -355,9 +376,7 @@ class _CurrencySelectionBottomSheetState
                                             child: Text(
                                               currency.getName(currentLang),
                                               style: TextStyles.customStyle(
-                                                fontSize: isDesktop
-                                                    ? 15
-                                                    : 15.sp,
+                                                fontSize: 15,
                                                 fontWeight: isSelected
                                                     ? FontWeight.bold
                                                     : FontWeight.w600,
@@ -384,9 +403,7 @@ class _CurrencySelectionBottomSheetState
                                             child: Text(
                                               currency.code,
                                               style: TextStyles.customStyle(
-                                                fontSize: isDesktop
-                                                    ? 11
-                                                    : 11.sp,
+                                                fontSize: isDesktop ? 11 : 11,
                                                 fontWeight: FontWeight.bold,
                                                 color: isSelected
                                                     ? AppColors.primaryColor
@@ -398,9 +415,9 @@ class _CurrencySelectionBottomSheetState
                                       ),
                                       SizedBox(height: 3.h),
                                       Text(
-                                        '${currency.arabicSymbol}  •  ${currency.englishSymbol}  •  ${AppStrings.currentLang == "ar" ? currency.englishName : currency.arabicName}',
+                                        '${currency.arabicSymbol}  •  ${currency.englishSymbol}  •  ${currentLang == "ar" ? currency.englishName : currency.arabicName}',
                                         style: TextStyles.customStyle(
-                                          fontSize: isDesktop ? 12 : 12.sp,
+                                          fontSize: isDesktop ? 12 : 12,
                                           color: AppColors.sandText,
                                         ),
                                         maxLines: 1,
