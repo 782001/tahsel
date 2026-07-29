@@ -232,9 +232,9 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
           (acc, p) => acc + (p['amount'] as num? ?? 0).toDouble(),
         );
 
-        // Parse items to calculate total amount
+        // Parse items to calculate subtotal amount
         final items = data['items'] as List<dynamic>? ?? [];
-        final double totalAmount = items.fold<double>(0.0, (acc, i) {
+        final double rawSubtotal = items.fold<double>(0.0, (acc, i) {
           final double unitPrice = (i['unitPrice'] as num? ?? 0).toDouble();
           final double quantity = (i['quantity'] as num? ?? 0).toDouble();
           final double taxRate = (i['taxRate'] as num? ?? 0).toDouble();
@@ -245,6 +245,11 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
           final double taxAmount = (subtotal - discountAmount) * taxRate;
           return acc + (subtotal - discountAmount + taxAmount);
         });
+
+        final double overallDiscount =
+            (data['discountAmount'] as num? ?? 0.0).toDouble();
+        final double netTotal = rawSubtotal - overallDiscount;
+        final double totalAmount = netTotal > 0 ? netTotal : 0.0;
 
         final double remaining = totalAmount - totalPaid;
         final double finalRemaining = remaining > 0 ? remaining : 0.0;
