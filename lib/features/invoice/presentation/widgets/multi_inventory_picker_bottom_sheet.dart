@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get_it/get_it.dart';
@@ -239,27 +241,31 @@ class _MultiInventoryPickerBottomSheetState
               controller: _searchController,
               hint: AppStrings.searchInventory.tr(),
               icon: Icons.search_rounded,
-              suffixIcon: Icons.qr_code_scanner_rounded,
-              onSuffixIconPressed: () async {
-                final scannedCode = await BarcodeScannerDialog.scan(context);
-                if (scannedCode != null && scannedCode.isNotEmpty) {
-                  _searchController.text = scannedCode;
-                  _applyFilter();
-                  final target = scannedCode.trim().toLowerCase();
-                  for (final p in _allProducts) {
-                    if ((p.barcode?.trim().toLowerCase() == target) ||
-                        (p.sku.trim().toLowerCase() == target)) {
-                      final currentQty = _selectedQuantities[p.id] ?? 0;
-                      if (currentQty < p.currentQuantity) {
-                        setState(() {
-                          _selectedQuantities[p.id] = currentQty + 1;
-                        });
+              suffixIcon: (!kIsWeb && Platform.isWindows)
+                  ? null
+                  : Icons.qr_code_scanner_rounded,
+              onSuffixIconPressed: (!kIsWeb && Platform.isWindows)
+                  ? null
+                  : () async {
+                      final scannedCode = await BarcodeScannerDialog.scan(context);
+                      if (scannedCode != null && scannedCode.isNotEmpty) {
+                        _searchController.text = scannedCode;
+                        _applyFilter();
+                        final target = scannedCode.trim().toLowerCase();
+                        for (final p in _allProducts) {
+                          if ((p.barcode?.trim().toLowerCase() == target) ||
+                              (p.sku.trim().toLowerCase() == target)) {
+                            final currentQty = _selectedQuantities[p.id] ?? 0;
+                            if (currentQty < p.currentQuantity) {
+                              setState(() {
+                                _selectedQuantities[p.id] = currentQty + 1;
+                              });
+                            }
+                            break;
+                          }
+                        }
                       }
-                      break;
-                    }
-                  }
-                }
-              },
+                    },
               onChanged: (_) => _applyFilter(),
             ),
           ),

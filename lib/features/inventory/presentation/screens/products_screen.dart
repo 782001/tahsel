@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -316,19 +318,24 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       controller: _searchController,
                       hint: AppStrings.searchInventory.tr(),
                       icon: Icons.search,
-                      suffixIcon: Icons.qr_code_scanner_rounded,
-                      onSuffixIconPressed: () async {
-                        final cubit = context.read<InventoryProductsCubit>();
-                        final scannedCode = await BarcodeScannerDialog.scan(context);
-                        if (scannedCode != null && scannedCode.isNotEmpty) {
-                          _searchController.text = scannedCode;
-                          cubit.fetchProducts(
-                            query: scannedCode,
-                            categoryId: _selectedCategory,
-                            supplierId: _selectedSupplier,
-                          );
-                        }
-                      },
+                      suffixIcon: (!kIsWeb && Platform.isWindows)
+                          ? null
+                          : Icons.qr_code_scanner_rounded,
+                      onSuffixIconPressed: (!kIsWeb && Platform.isWindows)
+                          ? null
+                          : () async {
+                              final cubit = context.read<InventoryProductsCubit>();
+                              final scannedCode =
+                                  await BarcodeScannerDialog.scan(context);
+                              if (scannedCode != null && scannedCode.isNotEmpty) {
+                                _searchController.text = scannedCode;
+                                cubit.fetchProducts(
+                                  query: scannedCode,
+                                  categoryId: _selectedCategory,
+                                  supplierId: _selectedSupplier,
+                                );
+                              }
+                            },
                       onChanged: (val) {
                         context.read<InventoryProductsCubit>().fetchProducts(
                           query: val,

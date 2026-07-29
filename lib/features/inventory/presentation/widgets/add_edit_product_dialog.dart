@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/extensions.dart';
@@ -261,8 +263,12 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                         _buildTextField(
                           controller: _barcodeController,
                           label: AppStrings.barcode.tr(),
-                          suffixIcon: Icons.qr_code_scanner_rounded,
-                          onSuffixIconPressed: _scanBarcode,
+                          suffixIcon: (!kIsWeb && Platform.isWindows)
+                              ? null
+                              : Icons.qr_code_scanner_rounded,
+                          onSuffixIconPressed: (!kIsWeb && Platform.isWindows)
+                              ? null
+                              : _scanBarcode,
                         ),
                         SizedBox(height: isDesktop ? 12 : 12.h),
 
