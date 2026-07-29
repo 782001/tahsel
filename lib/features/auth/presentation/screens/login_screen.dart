@@ -47,6 +47,97 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _showForgotPasswordDialog() {
+    final resetEmailController = TextEditingController(
+      text: _emailController.text,
+    );
+    final isDesktop = ResponsiveLayout.isDesktop(context);
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+          child: Container(
+            width: isDesktop ? 420 : 320.w,
+            padding: EdgeInsets.all(isDesktop ? 24 : 20.w),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      AppStrings.resetPasswordTitle.tr(),
+                      style: TextStyles.customStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primaryColor,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Navigator.pop(dialogContext),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8.h),
+                Text(
+                  AppStrings.resetPasswordSubtitle.tr(),
+                  style: TextStyles.customStyle(
+                    fontSize: 12,
+                    color: AppColors.subTitleColor,
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                CustomTextFormField(
+                  labelText: AppStrings.emailAddress.tr(),
+                  controller: resetEmailController,
+                  keyboardType: TextInputType.emailAddress,
+                  hintText: 'name@gmail.com',
+                  prefixIcon: Icons.email_outlined,
+                ),
+                SizedBox(height: 20.h),
+                SizedBox(
+                  width: double.infinity,
+                  height: isDesktop ? 46 : 44.h,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
+                    ),
+                    onPressed: () {
+                      final email = resetEmailController.text.trim();
+                      Navigator.pop(dialogContext);
+                      context.read<AuthCubit>().sendPasswordResetEmail(email);
+                    },
+                    child: Text(
+                      AppStrings.sendResetLink.tr(),
+                      style: TextStyles.customStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -237,7 +328,22 @@ class _LoginScreenState extends State<LoginScreen> {
                                         return null;
                                       },
                                     ),
-                                    SizedBox(height: isDesktop ? 32 : 32.h),
+                                    SizedBox(height: isDesktop ? 6 : 6.h),
+                                    Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: TextButton(
+                                        onPressed: _showForgotPasswordDialog,
+                                        child: Text(
+                                          AppStrings.forgotPassword.tr(),
+                                          style: TextStyles.customStyle(
+                                            fontSize: 13,
+                                            color: AppColors.primaryColor,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(height: isDesktop ? 20 : 20.h),
 
                                     // Login Button
                                     BlocConsumer<AuthCubit, AuthState>(

@@ -22,6 +22,7 @@ import 'package:tahsel/features/operation/presentation/cubit/operation_cubit.dar
 import 'package:tahsel/features/product/presentation/cubit/product_cubit.dart';
 import 'package:tahsel/features/reports/presentation/cubit/reports_cubit/reports_cubit.dart';
 import 'package:tahsel/routes/app_routes.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
 import '../../domain/usecases/delete_account_usecase.dart';
 import '../../domain/usecases/login_usecase.dart';
@@ -267,5 +268,29 @@ class AuthCubit extends Cubit<AuthState> {
         await forceLogout();
       },
     );
+  }
+
+  /// Sends a password reset email via Firebase Auth.
+  Future<void> sendPasswordResetEmail(String email) async {
+    final cleanEmail = email.trim();
+    if (cleanEmail.isEmpty || !cleanEmail.isValidEmail()) {
+      showfailureToast(AppStrings.validationEmailInvalid.tr());
+      return;
+    }
+
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: cleanEmail);
+      showSuccessToast(AppStrings.passwordResetSent.tr());
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        showfailureToast(AppStrings.userNotFound.tr());
+      } else if (e.code == 'invalid-email') {
+        showfailureToast(AppStrings.validationEmailInvalid.tr());
+      } else {
+        showfailureToast(AppStrings.failedToSendResetEmail.tr());
+      }
+    } catch (e) {
+      showfailureToast(AppStrings.failedToSendResetEmail.tr());
+    }
   }
 }

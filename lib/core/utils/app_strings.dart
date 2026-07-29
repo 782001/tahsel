@@ -817,6 +817,12 @@ class AppStrings {
   static const String cameraNotAvailable = "camera_not_available";
   static const String scanOrEnterBarcode = "scan_or_enter_barcode";
   static const String barcodeCopied = "barcode_copied";
+  static const String forgotPassword = "forgot_password";
+  static const String resetPasswordTitle = "reset_password_title";
+  static const String resetPasswordSubtitle = "reset_password_subtitle";
+  static const String sendResetLink = "send_reset_link";
+  static const String passwordResetSent = "password_reset_sent";
+  static const String failedToSendResetEmail = "failed_to_send_reset_email";
 
   // Invoice Features Section
   static const String invoiceFeaturesTitle = "invoice_features_title";
