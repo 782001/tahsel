@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/customer/presentation/widgets/customer_autocomplete_field.dart';
+import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:tahsel/features/product/presentation/widgets/product_autocomplete_field.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 import 'quick_inventory_picker_bottom_sheet.dart';
@@ -157,7 +159,7 @@ class QuickAddShopForm extends StatelessWidget {
                   fontSize: 16,
                 ),
               ),
-              if (AppStrings.isVip)
+              if (AppStrings.isVip&&context.read<MainLayoutCubit>().isShop)
                 InkWell(
                   onTap: () => _openInventoryPicker(context),
                   borderRadius: BorderRadius.circular(10),

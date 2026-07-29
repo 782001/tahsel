@@ -54,8 +54,26 @@ class InventoryRepositoryImpl implements InventoryRepository {
       List<InventoryProductModel> products = await localDataSource
           .getProducts();
 
-      // Reconcile with remote server if connected so all devices see updates
-      if (await connectionChecker.hasConnection && _currentUid != null) {
+      // If local storage is empty, fetch ALL products from remote without limit
+      if (products.isEmpty && await connectionChecker.hasConnection && _currentUid != null) {
+        try {
+          final remoteProducts = await remoteDataSource
+              .fetchAllProductsFromRemoteWithoutLimit(_currentUid!);
+          for (final p in remoteProducts) {
+            final existing = await localDataSource.getProductById(p.id);
+            final double highestSold =
+                (existing != null && existing.totalSoldQuantity > p.totalSoldQuantity)
+                    ? existing.totalSoldQuantity
+                    : p.totalSoldQuantity;
+            final mergedProduct = InventoryProductModel.fromEntity(
+              p.copyWith(totalSoldQuantity: highestSold),
+            );
+            await localDataSource.saveProduct(mergedProduct);
+          }
+          products = await localDataSource.getProducts();
+        } catch (_) {}
+      } else if (await connectionChecker.hasConnection && _currentUid != null) {
+        // Reconcile with remote server if connected so all devices see updates
         try {
           final remoteProducts = await remoteDataSource.fetchProductsFromRemote(
             _currentUid!,

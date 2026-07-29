@@ -15,6 +15,7 @@ import 'package:tahsel/features/invoice/presentation/cubit/invoice_cubit.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_state.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/invoice_item_row.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/multi_inventory_picker_bottom_sheet.dart';
+import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:tahsel/shared/widgets/buttons/quick_action_button.dart';
 
 class _ItemControllers {
@@ -104,8 +105,9 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
       _phoneController.text = inv.customerPhone ?? '';
       _ledgerController.text = inv.ledgerNumber ?? '';
       _notesController.text = inv.notes ?? '';
-      _overallDiscountController.text =
-          inv.discountAmount > 0 ? inv.discountAmount.toSmartAmount() : '';
+      _overallDiscountController.text = inv.discountAmount > 0
+          ? inv.discountAmount.toSmartAmount()
+          : '';
       for (final item in inv.items) {
         _itemControllers.add(_ItemControllers.fromItem(item));
       }
@@ -422,7 +424,8 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                                 _SectionHeader(
                                   title: AppStrings.invoiceItemsSection.tr(),
                                 ),
-                                if (AppStrings.isVip)
+                                if (AppStrings.isVip &&
+                                    context.read<MainLayoutCubit>().isShop)
                                   TextButton.icon(
                                     onPressed: _openMultiInventoryPicker,
                                     icon: Icon(
