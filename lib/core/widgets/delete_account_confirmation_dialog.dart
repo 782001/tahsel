@@ -6,6 +6,10 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 
+import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:tahsel/core/services/injection_container.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
+
 class DeleteAccountConfirmationDialog extends StatelessWidget {
   const DeleteAccountConfirmationDialog({super.key});
 
@@ -109,7 +113,18 @@ class DeleteAccountConfirmationDialog extends StatelessWidget {
               SizedBox(width: isDesktop ? 16 : 16.w),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(true),
+                  onPressed: () async {
+                    final hasConn = await sl<
+                      InternetConnectionChecker
+                    >().hasConnection;
+                    if (!hasConn) {
+                      showfailureToast(AppStrings.noInternetConnection.tr());
+                      return;
+                    }
+                    if (context.mounted) {
+                      Navigator.of(context).pop(true);
+                    }
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.error,
                     padding: EdgeInsets.symmetric(

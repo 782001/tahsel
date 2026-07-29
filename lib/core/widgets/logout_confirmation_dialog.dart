@@ -4,6 +4,9 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:tahsel/core/services/injection_container.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 class LogoutConfirmationDialog extends StatelessWidget {
@@ -110,7 +113,18 @@ class LogoutConfirmationDialog extends StatelessWidget {
               (isDesktop ? 20 : 16).horizontalSpace,
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(true),
+                  onPressed: () async {
+                    final hasConn = await sl<
+                      InternetConnectionChecker
+                    >().hasConnection;
+                    if (!hasConn) {
+                      showfailureToast(AppStrings.noInternetConnection.tr());
+                      return;
+                    }
+                    if (context.mounted) {
+                      Navigator.of(context).pop(true);
+                    }
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.error,
                     padding: EdgeInsets.symmetric(

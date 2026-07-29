@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/currency/currency_service.dart';
 import 'package:tahsel/core/services/currency/domain/entities/currency_entity.dart';
@@ -29,6 +30,7 @@ import 'package:tahsel/features/standard_features/localization/presentation/cubi
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_cubit.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_state.dart';
 import 'package:tahsel/routes/app_routes.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -710,10 +712,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     CurrencyService.instance.currencyNotifier,
                                 builder: (context, activeCurrency, child) {
                                   return InkWell(
-                                    onTap: () =>
+                                    onTap: () async {
+                                      final hasConn = await sl<
+                                        InternetConnectionChecker
+                                      >().hasConnection;
+                                      if (!hasConn) {
+                                        showfailureToast(
+                                          AppStrings.noInternetConnection.tr(),
+                                        );
+                                        return;
+                                      }
+                                      if (context.mounted) {
                                         CurrencySelectionBottomSheet.show(
                                           context,
-                                        ),
+                                        );
+                                      }
+                                    },
                                     borderRadius: BorderRadius.circular(16.r),
                                     child: Container(
                                       padding: EdgeInsets.all(
@@ -790,6 +804,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               SectionHeader(title: AppStrings.account.tr()),
                               InkWell(
                                 onTap: () async {
+                                  final hasConn = await sl<
+                                    InternetConnectionChecker
+                                  >().hasConnection;
+                                  if (!hasConn) {
+                                    showfailureToast(
+                                      AppStrings.noInternetConnection.tr(),
+                                    );
+                                    return;
+                                  }
+                                  if (!context.mounted) return;
                                   final shouldDelete = await showDialog<bool>(
                                     context: context,
                                     builder: (context) =>

@@ -259,7 +259,9 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                 IconButton(
                   icon: Icon(
                     Icons.picture_as_pdf_rounded,
-                    color: AppColors.primaryColor,
+                    color: isDisconnected
+                        ? AppColors.disabledColor
+                        : AppColors.primaryColor,
                   ),
                   tooltip: AppStrings.invoiceSharePdf.tr(),
                   onPressed: () async {
@@ -495,9 +497,8 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                               16,
                                             ),
                                             border: Border.all(
-                                              color: AppColors.orange.withValues(
-                                                alpha: 0.3,
-                                              ),
+                                              color: AppColors.orange
+                                                  .withValues(alpha: 0.3),
                                               width: 1.2,
                                             ),
                                           ),
@@ -528,13 +529,13 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                                     AppStrings
                                                         .overallDiscountAmount
                                                         .tr(),
-                                                    style: TextStyles
-                                                        .customStyle(
+                                                    style:
+                                                        TextStyles.customStyle(
                                                           fontSize: 14,
                                                           fontWeight:
                                                               FontWeight.bold,
-                                                          color: AppColors
-                                                              .black,
+                                                          color:
+                                                              AppColors.black,
                                                         ),
                                                   ),
                                                 ],

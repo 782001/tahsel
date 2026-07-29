@@ -7,6 +7,9 @@ import 'package:tahsel/core/services/currency/domain/entities/currency_entity.da
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:tahsel/core/services/injection_container.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 class CurrencySelectionBottomSheet extends StatefulWidget {
@@ -65,6 +68,12 @@ class _CurrencySelectionBottomSheetState
   }
 
   Future<void> _selectCurrency(CurrencyEntity currency) async {
+    final hasConn = await sl<InternetConnectionChecker>().hasConnection;
+    if (!hasConn) {
+      showfailureToast(AppStrings.noInternetConnection.tr());
+      return;
+    }
+    if (!mounted) return;
     final nav = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
 
