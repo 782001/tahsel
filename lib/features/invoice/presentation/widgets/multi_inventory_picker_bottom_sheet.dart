@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -211,7 +212,7 @@ class _MultiInventoryPickerBottomSheetState
                   child: Icon(
                     Icons.storefront_outlined,
                     color: AppColors.primaryColor,
-                    size: isDesktop ? 22 : 22 ,
+                    size: isDesktop ? 22 : 22,
                   ),
                 ),
                 SizedBox(width: isDesktop ? 12 : 12.w),
@@ -219,7 +220,7 @@ class _MultiInventoryPickerBottomSheetState
                   child: Text(
                     AppStrings.selectFromInventory.tr(),
                     style: TextStyles.customStyle(
-                      fontSize: isDesktop ? 18 : 18 ,
+                      fontSize: isDesktop ? 18 : 18,
                       fontWeight: FontWeight.bold,
                       color: AppColors.black,
                     ),
@@ -247,7 +248,9 @@ class _MultiInventoryPickerBottomSheetState
               onSuffixIconPressed: (!kIsWeb && Platform.isWindows)
                   ? null
                   : () async {
-                      final scannedCode = await BarcodeScannerDialog.scan(context);
+                      final scannedCode = await BarcodeScannerDialog.scan(
+                        context,
+                      );
                       if (scannedCode != null && scannedCode.isNotEmpty) {
                         _searchController.text = scannedCode;
                         _applyFilter();
@@ -266,7 +269,26 @@ class _MultiInventoryPickerBottomSheetState
                         }
                       }
                     },
+              autofocus: true,
               onChanged: (_) => _applyFilter(),
+              onSubmitted: (scannedCode) {
+                if (scannedCode.isNotEmpty) {
+                  _applyFilter();
+                  final target = scannedCode.trim().toLowerCase();
+                  for (final p in _allProducts) {
+                    if ((p.barcode?.trim().toLowerCase() == target) ||
+                        (p.sku.trim().toLowerCase() == target)) {
+                      final currentQty = _selectedQuantities[p.id] ?? 0;
+                      if (currentQty < p.currentQuantity) {
+                        setState(() {
+                          _selectedQuantities[p.id] = currentQty + 1;
+                        });
+                      }
+                      break;
+                    }
+                  }
+                }
+              },
             ),
           ),
           SizedBox(height: isDesktop ? 10 : 10.h),
@@ -276,9 +298,7 @@ class _MultiInventoryPickerBottomSheetState
             height: isDesktop ? 38 : 38.h,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.symmetric(
-                horizontal: isDesktop ? 20 : 20.w,
-              ),
+              padding: EdgeInsets.symmetric(horizontal: isDesktop ? 20 : 20.w),
               children: [
                 Padding(
                   padding: EdgeInsets.only(left: isDesktop ? 8 : 8.w),
@@ -288,9 +308,11 @@ class _MultiInventoryPickerBottomSheetState
                     label: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.local_fire_department_rounded,
-                          color: Colors.white,
+                          color: _showBestSellersOnly
+                              ? Colors.white
+                              : AppColors.blackLight,
                           size: 14,
                         ),
                         SizedBox(width: isDesktop ? 4 : 4.w),
@@ -315,9 +337,7 @@ class _MultiInventoryPickerBottomSheetState
                       side: BorderSide(
                         color: _showBestSellersOnly
                             ? AppColors.bestSellerStart
-                            : AppColors.bestSellerStart.withValues(
-                              alpha: 0.3,
-                            ),
+                            : AppColors.bestSellerStart.withValues(alpha: 0.3),
                       ),
                     ),
                     onSelected: (selected) {
@@ -331,15 +351,18 @@ class _MultiInventoryPickerBottomSheetState
                 Padding(
                   padding: EdgeInsets.only(left: isDesktop ? 8 : 8.w),
                   child: FilterChip(
-                    selected: _selectedCategory == null && !_showBestSellersOnly,
+                    selected:
+                        _selectedCategory == null && !_showBestSellersOnly,
                     label: Text(
                       AppStrings.all.tr(),
                       style: TextStyles.customStyle(
                         fontSize: isDesktop ? 13 : 13,
-                        fontWeight: _selectedCategory == null && !_showBestSellersOnly
+                        fontWeight:
+                            _selectedCategory == null && !_showBestSellersOnly
                             ? FontWeight.bold
                             : FontWeight.normal,
-                        color: _selectedCategory == null && !_showBestSellersOnly
+                        color:
+                            _selectedCategory == null && !_showBestSellersOnly
                             ? Colors.white
                             : AppColors.blackLight,
                       ),
@@ -350,7 +373,8 @@ class _MultiInventoryPickerBottomSheetState
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20.r),
                       side: BorderSide(
-                        color: _selectedCategory == null && !_showBestSellersOnly
+                        color:
+                            _selectedCategory == null && !_showBestSellersOnly
                             ? AppColors.primaryColor
                             : AppColors.dividerColor,
                       ),
@@ -420,7 +444,7 @@ class _MultiInventoryPickerBottomSheetState
                     child: Text(
                       AppStrings.noProductsFound.tr(),
                       style: TextStyles.customStyle(
-                        fontSize: isDesktop ? 14 : 14 ,
+                        fontSize: isDesktop ? 14 : 14,
                         color: AppColors.disabledColor,
                       ),
                     ),
@@ -483,9 +507,7 @@ class _MultiInventoryPickerBottomSheetState
                                             child: Text(
                                               product.name,
                                               style: TextStyles.customStyle(
-                                                fontSize: isDesktop
-                                                    ? 15
-                                                    : 15 ,
+                                                fontSize: isDesktop ? 15 : 15,
                                                 fontWeight: FontWeight.bold,
                                                 color: AppColors.black,
                                               ),
@@ -508,8 +530,10 @@ class _MultiInventoryPickerBottomSheetState
                                                   gradient:
                                                       const LinearGradient(
                                                         colors: [
-                                                          AppColors.bestSellerStart,
-                                                          AppColors.bestSellerEnd,
+                                                          AppColors
+                                                              .bestSellerStart,
+                                                          AppColors
+                                                              .bestSellerEnd,
                                                         ],
                                                       ),
                                                   borderRadius:
@@ -518,8 +542,11 @@ class _MultiInventoryPickerBottomSheetState
                                                       ),
                                                   boxShadow: [
                                                     BoxShadow(
-                                                      color: AppColors.bestSellerStart
-                                                          .withValues(alpha: 0.35),
+                                                      color: AppColors
+                                                          .bestSellerStart
+                                                          .withValues(
+                                                            alpha: 0.35,
+                                                          ),
                                                       blurRadius: 6,
                                                       offset: const Offset(
                                                         0,
@@ -536,9 +563,7 @@ class _MultiInventoryPickerBottomSheetState
                                                       Icons
                                                           .local_fire_department_rounded,
                                                       color: Colors.white,
-                                                      size: isDesktop
-                                                          ? 11
-                                                          : 11 ,
+                                                      size: isDesktop ? 11 : 11,
                                                     ),
                                                     SizedBox(
                                                       width: isDesktop
@@ -589,8 +614,7 @@ class _MultiInventoryPickerBottomSheetState
                                             child: Text(
                                               '${AppStrings.availableInStock.tr()}: ${maxQty.toSmartAmount()}',
                                               style: TextStyles.customStyle(
-                                                fontSize:  11
-                                                    ,
+                                                fontSize: 11,
                                                 color: AppColors.success,
                                                 fontWeight: FontWeight.w600,
                                               ),
@@ -616,7 +640,7 @@ class _MultiInventoryPickerBottomSheetState
                                   Text(
                                     AppStrings.requestedQuantity.tr(),
                                     style: TextStyles.customStyle(
-                                      fontSize: isDesktop ? 13 : 13 ,
+                                      fontSize: isDesktop ? 13 : 13,
                                       fontWeight: FontWeight.w600,
                                       color: AppColors.blackLight,
                                     ),
@@ -629,7 +653,7 @@ class _MultiInventoryPickerBottomSheetState
                                         icon: Icon(
                                           Icons.remove_circle_outline,
                                           color: AppColors.error,
-                                          size: isDesktop ? 22 : 22 ,
+                                          size: isDesktop ? 22 : 22,
                                         ),
                                       ),
                                       Container(
@@ -649,7 +673,7 @@ class _MultiInventoryPickerBottomSheetState
                                         child: Text(
                                           selectedQty.toSmartAmount(),
                                           style: TextStyles.customStyle(
-                                            fontSize: isDesktop ? 15 : 15 ,
+                                            fontSize: isDesktop ? 15 : 15,
                                             fontWeight: FontWeight.bold,
                                             color: AppColors.black,
                                           ),
@@ -664,7 +688,7 @@ class _MultiInventoryPickerBottomSheetState
                                           color: selectedQty >= maxQty
                                               ? AppColors.disabledColor
                                               : AppColors.primaryColor,
-                                          size: isDesktop ? 22 : 22 ,
+                                          size: isDesktop ? 22 : 22,
                                         ),
                                       ),
                                     ],
@@ -698,7 +722,7 @@ class _MultiInventoryPickerBottomSheetState
                           namedArgs: {'count': selectedItems.length.toString()},
                         ),
                         style: TextStyles.customStyle(
-                          fontSize: isDesktop ? 14 : 14 ,
+                          fontSize: isDesktop ? 14 : 14,
                           fontWeight: FontWeight.w600,
                           color: AppColors.blackLight,
                         ),
@@ -706,7 +730,7 @@ class _MultiInventoryPickerBottomSheetState
                       Text(
                         '${AppStrings.totalLabel.tr()} ${_totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                         style: TextStyles.customStyle(
-                          fontSize: isDesktop ? 16 : 16 ,
+                          fontSize: isDesktop ? 16 : 16,
                           fontWeight: FontWeight.bold,
                           color: AppColors.primaryColor,
                         ),
@@ -736,7 +760,7 @@ class _MultiInventoryPickerBottomSheetState
                       label: Text(
                         AppStrings.addSelectedItemsToInvoice.tr(),
                         style: TextStyles.customStyle(
-                          fontSize: isDesktop ? 15 : 15 ,
+                          fontSize: isDesktop ? 15 : 15,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),

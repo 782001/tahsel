@@ -282,7 +282,24 @@ class _QuickInventoryPickerBottomSheetState
                       }
                     }
                   },
+            autofocus: true,
             onChanged: (_) => _applyFilter(),
+            onSubmitted: (scannedCode) {
+              if (scannedCode.isNotEmpty) {
+                _applyFilter();
+                final target = scannedCode.trim().toLowerCase();
+                for (final p in _allProducts) {
+                  if ((p.barcode?.trim().toLowerCase() == target) ||
+                      (p.sku.trim().toLowerCase() == target)) {
+                    setState(() {
+                      _selectedProduct = p;
+                      _quantity = 1.0;
+                    });
+                    break;
+                  }
+                }
+              }
+            },
           ),
           SizedBox(height: isDesktop ? 10 : 10.h),
 

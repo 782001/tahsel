@@ -26,6 +26,8 @@ class QuickAddTextField extends StatelessWidget {
   final VoidCallback? onTap;
   final TextInputType? keyboardType;
 
+  final bool autofocus;
+
   const QuickAddTextField({
     super.key,
     required this.hint,
@@ -50,11 +52,13 @@ class QuickAddTextField extends StatelessWidget {
     this.enabled = true,
     this.onTap,
     this.keyboardType,
+    this.autofocus = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      autofocus: autofocus,
       cursorColor: AppColors.primaryColor,
       controller: controller,
       focusNode: focusNode,
