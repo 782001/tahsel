@@ -9,6 +9,9 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 
+import 'package:get_it/get_it.dart';
+import '../../data/datasources/inventory_local_data_source.dart';
+import '../../domain/entities/inventory_category_entity.dart';
 import '../../domain/entities/inventory_product_entity.dart';
 import '../../domain/entities/inventory_purchase_entity.dart';
 import '../../domain/entities/inventory_supplier_entity.dart';
@@ -501,7 +504,15 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
     );
   }
 
-  void _showAddItemDialog() {
+  Future<void> _showAddItemDialog() async {
+    List<InventoryCategoryEntity> categories = [];
+    try {
+      final catModels = await GetIt.I<InventoryLocalDataSource>().getCategories();
+      categories = catModels.map((c) => c as InventoryCategoryEntity).toList();
+    } catch (_) {}
+
+    if (!mounted) return;
+
     final isDesktop = ResponsiveLayout.isDesktop(context);
     bool isNewProductMode = _allProducts.isEmpty;
     InventoryProductEntity? selectedProd = _allProducts.isNotEmpty
@@ -523,6 +534,11 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
     final newSellingPriceController = TextEditingController();
     final newQtyController = TextEditingController(text: '1');
     final newUnitController = TextEditingController(text: 'قطعة');
+
+    String? newSelectedCategoryId =
+        categories.isNotEmpty ? categories.first.id : null;
+    String newSelectedCategoryName =
+        categories.isNotEmpty ? categories.first.name : '';
 
     showDialog(
       context: context,
@@ -732,6 +748,28 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                     hint: AppStrings.productName.tr(),
                                   ),
                                   SizedBox(height: isDesktop ? 10 : 10.h),
+                                  SearchableDropdownField<
+                                    InventoryCategoryEntity
+                                  >(
+                                    label: AppStrings.category.tr(),
+                                    items: categories,
+                                    selectedId: newSelectedCategoryId,
+                                    getName: (c) => c.name,
+                                    getId: (c) => c.id,
+                                    onSelected: (c) {
+                                      setDialogState(() {
+                                        newSelectedCategoryId = c.id;
+                                        newSelectedCategoryName = c.name;
+                                      });
+                                    },
+                                    onCleared: () {
+                                      setDialogState(() {
+                                        newSelectedCategoryId = null;
+                                        newSelectedCategoryName = '';
+                                      });
+                                    },
+                                  ),
+                                  SizedBox(height: isDesktop ? 10 : 10.h),
                                   Text(
                                     AppStrings.sku.tr(),
                                     style: TextStyles.customStyle(
@@ -928,8 +966,8 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                   id: 'prod_${DateTime.now().millisecondsSinceEpoch}',
                                   sku: newSkuController.text.trim(),
                                   name: name,
-                                  categoryId: '',
-                                  categoryName: '',
+                                  categoryId: newSelectedCategoryId ?? '',
+                                  categoryName: newSelectedCategoryName,
                                   supplierId: _selectedSupplier?.id ?? '',
                                   supplierName: _selectedSupplier?.name ?? '',
                                   purchasePrice: purchasePrice,
