@@ -746,63 +746,48 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                     hint: AppStrings.skuCodeOptional.tr(),
                                   ),
                                   SizedBox(height: isDesktop ? 10 : 10.h),
-                                  Row(
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              '${AppStrings.purchasePrice.tr()} *',
-                                              style: TextStyles.customStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w600,
-                                                color: AppColors.blackReal,
-                                              ),
-                                            ),
-                                            SizedBox(
-                                              height: isDesktop ? 6 : 6.h,
-                                            ),
-                                            QuickAddTextField(
-                                              controller:
-                                                  newPurchasePriceController,
-                                              isNumber: true,
-                                              hint: AppStrings.purchasePrice
-                                                  .tr(),
-                                            ),
-                                          ],
+                                      Text(
+                                        '${AppStrings.purchasePrice.tr()} *',
+                                        style: TextStyles.customStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.blackReal,
                                         ),
                                       ),
-                                      SizedBox(width: isDesktop ? 10 : 10.w),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              AppStrings.sellingPrice.tr(),
-                                              style: TextStyles.customStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w600,
-                                                color: AppColors.blackReal,
-                                              ),
-                                            ),
-                                            SizedBox(
-                                              height: isDesktop ? 6 : 6.h,
-                                            ),
-                                            QuickAddTextField(
-                                              controller:
-                                                  newSellingPriceController,
-                                              isNumber: true,
-                                              hint: AppStrings.sellingPrice
-                                                  .tr(),
-                                            ),
-                                          ],
-                                        ),
+                                      SizedBox(height: isDesktop ? 6 : 6.h),
+                                      QuickAddTextField(
+                                        controller: newPurchasePriceController,
+                                        isNumber: true,
+                                        hint: AppStrings.purchasePrice.tr(),
                                       ),
                                     ],
                                   ),
+                                  SizedBox(height: isDesktop ? 10 : 10.h),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        AppStrings.sellingPrice.tr(),
+                                        style: TextStyles.customStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.blackReal,
+                                        ),
+                                      ),
+                                      SizedBox(height: isDesktop ? 6 : 6.h),
+                                      QuickAddTextField(
+                                        controller: newSellingPriceController,
+                                        isNumber: true,
+                                        hint: AppStrings.sellingPrice.tr(),
+                                      ),
+                                    ],
+                                  ),
+
                                   SizedBox(height: isDesktop ? 10 : 10.h),
                                   Row(
                                     children: [
