@@ -10,9 +10,12 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 
+import 'package:get_it/get_it.dart';
+import '../../data/datasources/inventory_local_data_source.dart';
 import '../../domain/entities/inventory_category_entity.dart';
 import '../../domain/entities/inventory_product_entity.dart';
 import '../../domain/entities/inventory_supplier_entity.dart';
+import '../../domain/repositories/inventory_repository.dart';
 import '../cubits/inventory_categories_cubit.dart';
 import '../cubits/inventory_products_cubit.dart';
 import '../cubits/inventory_suppliers_cubit.dart';
@@ -54,38 +57,87 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
     super.dispose();
   }
 
-  void _openEditProductDialog(InventoryProductEntity product) {
+  Future<void> _openEditProductDialog(InventoryProductEntity product) async {
+    InventoryProductsCubit? productsCubit;
+    InventoryCategoriesCubit? catCubit;
+    InventorySuppliersCubit? supCubit;
+
+    try {
+      productsCubit = context.read<InventoryProductsCubit>();
+    } catch (_) {
+      if (GetIt.I.isRegistered<InventoryProductsCubit>()) {
+        productsCubit = GetIt.I<InventoryProductsCubit>();
+      }
+    }
+
+    try {
+      catCubit = context.read<InventoryCategoriesCubit>();
+    } catch (_) {
+      if (GetIt.I.isRegistered<InventoryCategoriesCubit>()) {
+        catCubit = GetIt.I<InventoryCategoriesCubit>();
+      }
+    }
+
+    try {
+      supCubit = context.read<InventorySuppliersCubit>();
+    } catch (_) {
+      if (GetIt.I.isRegistered<InventorySuppliersCubit>()) {
+        supCubit = GetIt.I<InventorySuppliersCubit>();
+      }
+    }
+
     List<InventoryCategoryEntity> categories = [];
     List<InventorySupplierEntity> suppliers = [];
 
     try {
-      final catState = context.read<InventoryCategoriesCubit>().state;
-      if (catState is InventoryCategoriesLoaded) {
-        categories = catState.categories;
+      if (catCubit != null &&
+          catCubit.state is InventoryCategoriesLoaded &&
+          (catCubit.state as InventoryCategoriesLoaded).categories.isNotEmpty) {
+        categories = (catCubit.state as InventoryCategoriesLoaded).categories;
+      } else {
+        final catModels = await GetIt.I<InventoryLocalDataSource>().getCategories();
+        categories = catModels.map((c) => c as InventoryCategoryEntity).toList();
       }
     } catch (_) {}
 
     try {
-      final supState = context.read<InventorySuppliersCubit>().state;
-      if (supState is InventorySuppliersLoaded) {
-        suppliers = supState.suppliers;
+      if (supCubit != null &&
+          supCubit.state is InventorySuppliersLoaded &&
+          (supCubit.state as InventorySuppliersLoaded).suppliers.isNotEmpty) {
+        suppliers = (supCubit.state as InventorySuppliersLoaded).suppliers;
+      } else {
+        final supModels = await GetIt.I<InventoryLocalDataSource>().getSuppliers();
+        suppliers = supModels.map((s) => s as InventorySupplierEntity).toList();
       }
     } catch (_) {}
+
+    if (!mounted) return;
 
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => BlocProvider.value(
-        value: context.read<InventoryProductsCubit>(),
-        child: AddEditProductDialog(
+      builder: (_) {
+        final dialogChild = AddEditProductDialog(
           product: product,
           categories: categories,
           suppliers: suppliers,
           onSave: (updated) {
-            context.read<InventoryProductsCubit>().saveProduct(updated);
+            if (productsCubit != null) {
+              productsCubit.saveProduct(updated);
+            } else if (GetIt.I.isRegistered<InventoryRepository>()) {
+              GetIt.I<InventoryRepository>().saveProduct(updated);
+            }
           },
-        ),
-      ),
+        );
+
+        if (productsCubit != null) {
+          return BlocProvider.value(
+            value: productsCubit,
+            child: dialogChild,
+          );
+        }
+        return dialogChild;
+      },
     );
   }
 

@@ -7,6 +7,8 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 
+import 'package:get_it/get_it.dart';
+import '../../data/datasources/inventory_local_data_source.dart';
 import '../../domain/entities/inventory_category_entity.dart';
 import '../../domain/entities/inventory_product_entity.dart';
 import '../../domain/entities/inventory_supplier_entity.dart';
@@ -43,6 +45,9 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
   late TextEditingController _unitController;
   late TextEditingController _notesController;
 
+  late List<InventoryCategoryEntity> _categories;
+  late List<InventorySupplierEntity> _suppliers;
+
   String? _selectedCategoryId;
   String _selectedCategoryName = '';
   String? _selectedSupplierId;
@@ -52,6 +57,9 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
   @override
   void initState() {
     super.initState();
+    _categories = List.from(widget.categories);
+    _suppliers = List.from(widget.suppliers);
+
     final p = widget.product;
     _nameController = TextEditingController(text: p?.name ?? '');
     _skuController = TextEditingController(
@@ -79,19 +87,54 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
 
     _selectedCategoryId =
         p?.categoryId ??
-        (widget.categories.isNotEmpty ? widget.categories.first.id : null);
+        (_categories.isNotEmpty ? _categories.first.id : null);
     _selectedCategoryName =
         p?.categoryName ??
-        (widget.categories.isNotEmpty ? widget.categories.first.name : '');
+        (_categories.isNotEmpty ? _categories.first.name : '');
 
     _selectedSupplierId =
         p?.supplierId ??
-        (widget.suppliers.isNotEmpty ? widget.suppliers.first.id : null);
+        (_suppliers.isNotEmpty ? _suppliers.first.id : null);
     _selectedSupplierName =
         p?.supplierName ??
-        (widget.suppliers.isNotEmpty ? widget.suppliers.first.name : '');
+        (_suppliers.isNotEmpty ? _suppliers.first.name : '');
 
     _isAvailable = p?.isAvailable ?? true;
+    _loadMissingCategoriesAndSuppliers();
+  }
+
+  Future<void> _loadMissingCategoriesAndSuppliers() async {
+    if (_categories.isEmpty || _suppliers.isEmpty) {
+      try {
+        final localDataSource = GetIt.I<InventoryLocalDataSource>();
+        if (_categories.isEmpty) {
+          final cats = await localDataSource.getCategories();
+          if (cats.isNotEmpty) {
+            _categories = cats.map((c) => c as InventoryCategoryEntity).toList();
+          }
+        }
+        if (_suppliers.isEmpty) {
+          final sups = await localDataSource.getSuppliers();
+          if (sups.isNotEmpty) {
+            _suppliers = sups.map((s) => s as InventorySupplierEntity).toList();
+          }
+        }
+
+        final p = widget.product;
+        if ((_selectedCategoryId == null || _selectedCategoryId!.isEmpty) &&
+            _categories.isNotEmpty) {
+          _selectedCategoryId = p?.categoryId ?? _categories.first.id;
+          _selectedCategoryName = p?.categoryName ?? _categories.first.name;
+        }
+        if ((_selectedSupplierId == null || _selectedSupplierId!.isEmpty) &&
+            _suppliers.isNotEmpty) {
+          _selectedSupplierId = p?.supplierId ?? _suppliers.first.id;
+          _selectedSupplierName = p?.supplierName ?? _suppliers.first.name;
+        }
+
+        if (mounted) setState(() {});
+      } catch (_) {}
+    }
   }
 
   @override
@@ -234,7 +277,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                         // Category Dropdown (Searchable)
                         SearchableDropdownField<InventoryCategoryEntity>(
                           label: AppStrings.category.tr(),
-                          items: widget.categories,
+                          items: _categories,
                           selectedId: _selectedCategoryId,
                           getName: (c) => c.name,
                           getId: (c) => c.id,
@@ -256,7 +299,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                         // Supplier Dropdown (Searchable)
                         SearchableDropdownField<InventorySupplierEntity>(
                           label: AppStrings.supplier.tr(),
-                          items: widget.suppliers,
+                          items: _suppliers,
                           selectedId: _selectedSupplierId,
                           getName: (s) => s.name,
                           getId: (s) => s.id,
