@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/services.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
 import '../../domain/entities/inventory_product_entity.dart';
 
@@ -293,7 +293,9 @@ class ProductDetailsDialog extends StatelessWidget {
                                   Clipboard.setData(
                                     ClipboardData(text: product.barcode!),
                                   );
-                                  Fluttertoast.showToast(msg: 'تم نسخ الباركود 📋');
+                                  showSuccessToast(
+                                    AppStrings.barcodeCopied.tr(),
+                                  );
                                 },
                               ),
                             ],

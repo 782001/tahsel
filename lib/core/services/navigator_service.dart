@@ -9,8 +9,10 @@ class NavigatorService {
   factory NavigatorService() => _instance;
   NavigatorService._internal();
 
-  // Global key
+  // Global keys
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
+      GlobalKey<ScaffoldMessengerState>();
 
   /// Current context
   BuildContext? get context => navigatorKey.currentContext;

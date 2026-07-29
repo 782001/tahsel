@@ -1,5 +1,9 @@
 {
   "no_data": "لا يوجد بيانات",
+  "scan_barcode_title": "مسح الباركود 📷",
+  "camera_not_available": "تعذر تشغيل الكاميرا أو لا توجد كاميرا متصلة",
+  "scan_or_enter_barcode": "وجّه الكاميرا نحو الباركود أو أدخله يدوياً ⌨️",
+  "barcode_copied": "تم نسخ الباركود 📋",
   "unknown": "غير معروف",
   "cannot_delete_unpaid_debt": "لا يمكن حذف دين غير مسدد بالكامل",
   "swipe_down": "اسحب لأسفل",

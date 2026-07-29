@@ -813,6 +813,10 @@ class AppStrings {
   static const String copiedSuccessfully = "copiedSuccessfully";
   static const String showMore = "show_more";
   static const String showLess = "show_less";
+  static const String barcodeScanTitle = "scan_barcode_title";
+  static const String cameraNotAvailable = "camera_not_available";
+  static const String scanOrEnterBarcode = "scan_or_enter_barcode";
+  static const String barcodeCopied = "barcode_copied";
 
   // Invoice Features Section
   static const String invoiceFeaturesTitle = "invoice_features_title";

@@ -150,6 +150,8 @@ class MyApp extends StatelessWidget {
                 builder: (context, child) {
                   return MaterialApp(
                     navigatorKey: sl<NavigatorService>().navigatorKey,
+                    scaffoldMessengerKey:
+                        sl<NavigatorService>().scaffoldMessengerKey,
                     debugShowCheckedModeBanner: false,
                     title: 'تحصيل',
                     scrollBehavior: AppScrollBehavior(),

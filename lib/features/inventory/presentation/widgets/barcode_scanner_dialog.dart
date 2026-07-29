@@ -108,7 +108,7 @@ class _BarcodeScannerDialogState extends State<BarcodeScannerDialog> {
                   SizedBox(width: isDesktop ? 10 : 8.w),
                   Expanded(
                     child: Text(
-                      'مسح الباركود 📷',
+                      AppStrings.barcodeScanTitle.tr(),
                       style: TextStyles.customStyle(
                         fontSize: isDesktop ? 16 : 15,
                         fontWeight: FontWeight.bold,
@@ -145,7 +145,7 @@ class _BarcodeScannerDialogState extends State<BarcodeScannerDialog> {
                               ),
                               const SizedBox(height: 12),
                               Text(
-                                'تعذر تشغيل الكاميرا أو لا توجد كاميرا متصلة',
+                                AppStrings.cameraNotAvailable.tr(),
                                 textAlign: TextAlign.center,
                                 style: TextStyles.customStyle(
                                   fontSize: 13,
@@ -237,7 +237,7 @@ class _BarcodeScannerDialogState extends State<BarcodeScannerDialog> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'وجّه الكاميرا نحو الباركود أو أدخله يدوياً ⌨️',
+                    AppStrings.scanOrEnterBarcode.tr(),
                     style: TextStyles.customStyle(
                       fontSize: 11,
                       color: AppColors.subTitleColor,

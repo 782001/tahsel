@@ -1,5 +1,9 @@
 {
   "no_data": "No Data",
+  "scan_barcode_title": "Scan Barcode 📷",
+  "camera_not_available": "Unable to start camera or no camera connected",
+  "scan_or_enter_barcode": "Point camera at barcode or enter manually ⌨️",
+  "barcode_copied": "Barcode copied 📋",
   "unknown": "Unknown",
   "cannot_delete_unpaid_debt": "Cannot delete a debt that is not fully paid",
   "swipe_down": "Swipe down",
