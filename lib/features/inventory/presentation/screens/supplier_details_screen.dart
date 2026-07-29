@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:intl/intl.dart';
-import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/features/inventory/presentation/widgets/supplied_product_card_item.dart';
+import 'package:tahsel/features/inventory/presentation/widgets/supplier_purchase_card.dart';
 
 import '../../domain/entities/inventory_supplier_entity.dart';
 import '../cubits/inventory_suppliers_cubit.dart';
@@ -391,223 +391,76 @@ class _SupplierDetailsScreenState extends State<SupplierDetailsScreen> {
 
                 // Tab Views
                 Expanded(
-                  child: BlocBuilder<InventorySuppliersCubit, InventorySuppliersState>(
-                    builder: (context, state) {
-                      if (state is InventorySuppliersLoading) {
-                        return Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.primaryColor,
-                            strokeWidth: 4,
-                          ),
-                        );
-                      }
-                      if (state is SupplierDetailsLoaded) {
-                        final purchases = state.purchases;
-                        final products = state.suppliedProducts;
+                  child:
+                      BlocBuilder<
+                        InventorySuppliersCubit,
+                        InventorySuppliersState
+                      >(
+                        builder: (context, state) {
+                          if (state is InventorySuppliersLoading) {
+                            return Center(
+                              child: CircularProgressIndicator(
+                                color: AppColors.primaryColor,
+                                strokeWidth: 4,
+                              ),
+                            );
+                          }
+                          if (state is SupplierDetailsLoaded) {
+                            final purchases = state.purchases;
+                            final products = state.suppliedProducts;
 
-                        // Show view based on selected tab
-                        if (_selectedTabIndex == 0) {
-                          // Purchase History Tab
-                          if (purchases.isEmpty) {
-                            return Center(
-                              child: Text(
-                                AppStrings.noPurchasesFound.tr(),
-                                style: TextStyles.customStyle(
-                                  color: AppColors.disabledColor,
-                                ),
-                              ),
-                            );
-                          }
-                          return ListView.separated(
-                            padding: EdgeInsets.all(isDesktop ? 16 : 16.w),
-                            itemCount: purchases.length,
-                            separatorBuilder: (_, __) =>
-                                SizedBox(height: isDesktop ? 12 : 12.h),
-                            itemBuilder: (context, index) {
-                              final pur = purchases[index];
-                              final dateStr = DateFormat(
-                                'yyyy/MM/dd - hh:mm a',
-                              ).format(pur.createdAt);
-                              return Container(
-                                padding: EdgeInsets.all(isDesktop ? 14 : 14.w),
-                                decoration: BoxDecoration(
-                                  color: AppColors.surface,
-                                  borderRadius: BorderRadius.circular(
-                                    isDesktop ? 12 : 12.r,
+                            // Show view based on selected tab
+                            if (_selectedTabIndex == 0) {
+                              // Purchase History Tab
+                              if (purchases.isEmpty) {
+                                return Center(
+                                  child: Text(
+                                    AppStrings.noPurchasesFound.tr(),
+                                    style: TextStyles.customStyle(
+                                      color: AppColors.disabledColor,
+                                    ),
                                   ),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          '${AppStrings.purchaseInvoiceNum.tr()} #${pur.id.substring(pur.id.length > 8 ? pur.id.length - 8 : 0)}',
-                                          style: TextStyles.customStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.blackReal,
-                                          ),
-                                        ),
-                                        Text(
-                                          '${pur.totalAmount.toStringAsFixed(2)} ${AppStrings.currencyEgp.tr()}',
-                                          style: TextStyles.customStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.primaryColor,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(height: isDesktop ? 4 : 4.h),
-                                    Text(
-                                      dateStr,
-                                      style: TextStyles.customStyle(
-                                        fontSize: 12,
-                                        color: AppColors.sandText,
-                                      ),
-                                    ),
-                                    const Divider(),
-                                    Column(
-                                      children: pur.items
-                                          .map(
-                                            (item) => Padding(
-                                              padding: EdgeInsets.symmetric(
-                                                vertical: isDesktop ? 4 : 4.h,
-                                              ),
-                                              child: Row(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.center,
-                                                children: [
-                                                  Container(
-                                                    width: 6,
-                                                    height: 6,
-                                                    decoration: BoxDecoration(
-                                                      color: AppColors
-                                                          .inventoryPurchasePurple
-                                                          .withValues(
-                                                            alpha: 0.7,
-                                                          ),
-                                                      shape: BoxShape.circle,
-                                                    ),
-                                                  ),
-                                                  SizedBox(
-                                                    width: isDesktop ? 8 : 8.w,
-                                                  ),
-                                                  Expanded(
-                                                    child: Text(
-                                                      item.productName,
-                                                      maxLines: 2,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style:
-                                                          TextStyles.customStyle(
-                                                            fontSize: 13,
-                                                            fontWeight:
-                                                                FontWeight.w600,
-                                                            color: AppColors
-                                                                .blackReal,
-                                                          ),
-                                                    ),
-                                                  ),
-                                                  SizedBox(
-                                                    width: isDesktop ? 8 : 8.w,
-                                                  ),
-                                                  Text(
-                                                    '${item.quantity.toSmartAmount()} × ${item.purchasePrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-                                                    style:
-                                                        TextStyles.customStyle(
-                                                          fontSize: 12,
-                                                          fontWeight:
-                                                              FontWeight.w500,
-                                                          color: AppColors
-                                                              .sandText,
-                                                        ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          )
-                                          .toList(),
-                                    ),
-                                  ],
-                                ),
+                                );
+                              }
+                              return ListView.separated(
+                                padding: EdgeInsets.all(isDesktop ? 16 : 16.w),
+                                itemCount: purchases.length,
+                                separatorBuilder: (_, __) =>
+                                    SizedBox(height: isDesktop ? 12 : 12.h),
+                                itemBuilder: (context, index) {
+                                  return SupplierPurchaseCard(
+                                    purchase: purchases[index],
+                                  );
+                                },
                               );
-                            },
-                          );
-                        } else {
-                          // Supplied Stock Tab
-                          if (products.isEmpty) {
-                            return Center(
-                              child: Text(
-                                AppStrings.noProductsFound.tr(),
-                                style: TextStyles.customStyle(
-                                  color: AppColors.disabledColor,
-                                ),
-                              ),
-                            );
-                          }
-                          return ListView.separated(
-                            padding: EdgeInsets.all(isDesktop ? 16 : 16.w),
-                            itemCount: products.length,
-                            separatorBuilder: (_, __) =>
-                                SizedBox(height: isDesktop ? 12 : 12.h),
-                            itemBuilder: (context, index) {
-                              final prod = products[index];
-                              return Container(
-                                padding: EdgeInsets.all(isDesktop ? 14 : 14.w),
-                                decoration: BoxDecoration(
-                                  color: AppColors.surface,
-                                  borderRadius: BorderRadius.circular(
-                                    isDesktop ? 12 : 12.r,
+                            } else {
+                              // Supplied Stock Tab
+                              if (products.isEmpty) {
+                                return Center(
+                                  child: Text(
+                                    AppStrings.noProductsFound.tr(),
+                                    style: TextStyles.customStyle(
+                                      color: AppColors.disabledColor,
+                                    ),
                                   ),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          prod.name,
-                                          style: TextStyles.customStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.blackReal,
-                                          ),
-                                        ),
-                                        SizedBox(height: isDesktop ? 2 : 2.h),
-                                        Text(
-                                          '${AppStrings.purchasePrice.tr()}: ${prod.purchasePrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-                                          style: TextStyles.customStyle(
-                                            fontSize: 12,
-                                            color: AppColors.sandText,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    Text(
-                                      '${AppStrings.quantity.tr()}: ${prod.currentQuantity.toSmartAmount()} ${prod.unit}',
-                                      style: TextStyles.customStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.primaryColor,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                );
+                              }
+                              return ListView.separated(
+                                padding: EdgeInsets.all(isDesktop ? 16 : 16.w),
+                                itemCount: products.length,
+                                separatorBuilder: (_, __) =>
+                                    SizedBox(height: isDesktop ? 12 : 12.h),
+                                itemBuilder: (context, index) {
+                                  return SuppliedProductCardItem(
+                                    product: products[index],
+                                  );
+                                },
                               );
-                            },
-                          );
-                        }
-                      }
-                      return const SizedBox.shrink();
-                    },
-                  ),
+                            }
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
                 ),
               ],
             ),
