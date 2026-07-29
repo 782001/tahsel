@@ -275,31 +275,22 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                         ),
                         SizedBox(height: isDesktop ? 12 : 12.h),
 
-                        // Purchase Price & Selling Price
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildTextField(
-                                controller: _purchasePriceController,
-                                label: AppStrings.purchasePrice.tr(),
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                      decimal: true,
-                                    ),
-                              ),
-                            ),
-                            SizedBox(width: isDesktop ? 12 : 12.w),
-                            Expanded(
-                              child: _buildTextField(
-                                controller: _sellingPriceController,
-                                label: AppStrings.sellingPrice.tr(),
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                      decimal: true,
-                                    ),
-                              ),
-                            ),
-                          ],
+                        // Purchase Price
+                        _buildTextField(
+                          controller: _purchasePriceController,
+                          label: AppStrings.purchasePrice.tr(),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                        ),
+                        SizedBox(height: isDesktop ? 12 : 12.h),
+                        // Selling Price
+                        _buildTextField(
+                          controller: _sellingPriceController,
+                          label: AppStrings.sellingPrice.tr(),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
                         ),
                         SizedBox(height: isDesktop ? 12 : 12.h),
 

@@ -120,72 +120,46 @@ class _AddEditSupplierDialogState extends State<AddEditSupplierDialog> {
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildField(
+                    children: [_buildField(
                               controller: _nameController,
                               label: AppStrings.supplierName.tr(),
                               textInputAction: TextInputAction.next,
                               validator: (v) => v == null || v.trim().isEmpty
                                   ? AppStrings.validationFieldRequired.tr()
                                   : null,
-                            ),
-                          ),
-                          SizedBox(width: isDesktop ? 12 : 12.w),
-                          Expanded(
-                            child: _buildField(
+                            ), 
+                             SizedBox(height: isDesktop ? 12 : 12.h),
+                            _buildField(
                               controller: _companyNameController,
                               label: AppStrings.companyName.tr(),
                               textInputAction: TextInputAction.next,
                             ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: isDesktop ? 12 : 12.h),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildField(
+                             SizedBox(height: isDesktop ? 12 : 12.h), _buildField(
                               controller: _phoneController,
                               label: AppStrings.supplierPhone.tr(),
                               keyboardType: TextInputType.phone,
                               textInputAction: TextInputAction.next,
                             ),
-                          ),
-                          SizedBox(width: isDesktop ? 12 : 12.w),
-                          Expanded(
-                            child: _buildField(
+                             SizedBox(height: isDesktop ? 12 : 12.h), _buildField(
                               controller: _taxNumberController,
                               label: AppStrings.taxNumber.tr(),
                               keyboardType: TextInputType.number,
                               textInputAction: TextInputAction.next,
                             ),
-                          ),
-                        ],
-                      ),
+                     
                       SizedBox(height: isDesktop ? 12 : 12.h),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildField(
+                  _buildField(
                               controller: _emailController,
                               label: AppStrings.supplierEmail.tr(),
                               keyboardType: TextInputType.emailAddress,
                               textInputAction: TextInputAction.next,
                             ),
-                          ),
-                          SizedBox(width: isDesktop ? 12 : 12.w),
-                          Expanded(
-                            child: _buildField(
+                      SizedBox(height: isDesktop ? 12 : 12.h),
+                     _buildField(
                               controller: _addressController,
                               label: AppStrings.supplierAddress.tr(),
                               textInputAction: TextInputAction.next,
                             ),
-                          ),
-                        ],
-                      ),
                       SizedBox(height: isDesktop ? 12 : 12.h),
                       _buildField(
                         controller: _notesController,
