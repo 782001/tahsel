@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:tahsel/core/config/locale/app_localizations_setup.dart';
 import 'package:tahsel/core/services/injection_container.dart' as di;
 import 'package:tahsel/core/services/injection_container.dart';
@@ -44,7 +45,7 @@ class AppScrollBehavior extends MaterialScrollBehavior {
 }
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  SentryWidgetsFlutterBinding.ensureInitialized();
 
   // Lock portrait mode
   await SystemChrome.setPreferredOrientations([
@@ -85,13 +86,43 @@ void main() async {
     return ErrorScreen(errorDetails: details);
   };
 
-  // Global Error Handling for Framework
-  FlutterError.onError = (FlutterErrorDetails details) {
-    FlutterError.presentError(details);
-    // Add custom logging here if needed (e.g. Sentry)
-  };
+  if (kReleaseMode) {
+    // ── Sentry Initialization ──────────────────────────────────────────
+    await SentryFlutter.init(
+      (options) {
+        options.dsn =
+            'https://7b62877558b3b8f81d757d9181881401@o4511819849596928.ingest.us.sentry.io/4511819859361792';
+        options.sendDefaultPii = true;
+        options.tracesSampleRate = .01;
+        options.attachScreenshot = true;
+        options.enableAutoPerformanceTracing = true;
+        options.environment = kDebugMode ? 'development' : 'production';
+      },
+      appRunner: () {
+        // Route Flutter framework errors to Sentry
+        FlutterError.onError = (FlutterErrorDetails details) {
+          FlutterError.presentError(details);
+          Sentry.captureException(details.exception, stackTrace: details.stack);
+        };
 
-  runApp(const MyApp());
+        // Catch errors outside the Flutter framework (async, platform, etc.)
+        PlatformDispatcher.instance.onError = (error, stack) {
+          Sentry.captureException(error, stackTrace: stack);
+          return true;
+        };
+
+        runApp(const MyApp());
+      },
+    );
+  } else {
+    // Global Error Handling for Framework
+    FlutterError.onError = (FlutterErrorDetails details) {
+      FlutterError.presentError(details);
+      // Add custom logging here if needed (e.g. Sentry)
+    };
+
+    runApp(const MyApp());
+  }
 }
 
 class MyApp extends StatelessWidget {
