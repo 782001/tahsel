@@ -109,7 +109,6 @@ flutter:
 
   assets:
     - assets/images/
-    - assets/svg/
     - lang/ar.json
     - lang/en.json
 
