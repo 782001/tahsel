@@ -67,30 +67,15 @@ class AuthCubit extends Cubit<AuthState> {
         final bool hasLocalSession =
             localToken != null && localToken.isNotEmpty;
 
-        // Only trigger logout if we ARE online AND we have NO local session
-        // or if we are online and Firebase explicitly cleared the user (meaning session expired).
-        if (hasInternet) {
-          if (!hasLocalSession) {
-            // Already logged out locally, just ensure state is correct
-            if (state is! AuthUnauthenticated && state is! AuthInitial) {
-              await forceLogout();
-            }
-          } else {
-            // Online but Firebase says null? This usually means the session is invalid.
-            AppLogger.printMessage(
-              'Firebase user is null while ONLINE - Session likely expired on server',
-            );
+        // Only trigger logout if we have NO local session
+        if (!hasLocalSession) {
+          if (state is! AuthUnauthenticated && state is! AuthInitial) {
             await forceLogout();
           }
         } else {
-          // OFFLINE: If we have a local session, IGNORE Firebase being null.
-          if (hasLocalSession) {
-            AppLogger.printMessage(
-              'Firebase Auth is null while OFFLINE, but local session exists. Keeping user logged in.',
-            );
-          } else {
-            // No internet and no local session? Nothing to do, user is already out.
-          }
+          AppLogger.printMessage(
+            'Firebase Auth user is null, but local session exists. Keeping user logged in.',
+          );
         }
       } else {
         // User is present. We only reload to check server status if we are online.
@@ -98,24 +83,25 @@ class AuthCubit extends Cubit<AuthState> {
           try {
             await user.reload();
           } catch (e) {
-            // Only logout if it's NOT a network error and NOT a "no-signed-in-user" status
             final errorStr = e.toString().toLowerCase();
-            if (errorStr.contains('network-request-failed') ||
-                errorStr.contains('connection-failed') ||
-                errorStr.contains('no internet')) {
+
+            // ONLY logout if server explicitly revoked or disabled the user account.
+            // Generic/internal SDK errors (like 'unknown-error' on Windows C++ SDK) must NOT logout the user.
+            final isExplicitLogoutError = errorStr.contains('user-disabled') ||
+                errorStr.contains('user-not-found') ||
+                errorStr.contains('user-token-expired') ||
+                errorStr.contains('invalid-user-token') ||
+                errorStr.contains('user-revoked');
+
+            if (isExplicitLogoutError) {
               AppLogger.printMessage(
-                'User reload failed due to network - keeping session: $e',
-              );
-            } else if (errorStr.contains('no-signed-in-user') ||
-                errorStr.contains('no-signed-in')) {
-              AppLogger.printMessage(
-                'User reload failed because user is already signed out: $e',
-              );
-            } else {
-              AppLogger.printMessage(
-                'User verification failed for non-network reason - logging out: $e',
+                'User session explicitly revoked/disabled on server - logging out: $e',
               );
               await forceLogout();
+            } else {
+              AppLogger.printMessage(
+                'User reload encountered non-fatal error - keeping session active: $e',
+              );
             }
           }
         }
