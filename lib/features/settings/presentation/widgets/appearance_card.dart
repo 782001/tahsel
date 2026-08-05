@@ -53,7 +53,7 @@ class AppearanceCard extends StatelessWidget {
             Icon(
               icon,
               color: isSelected ? AppColors.primaryColor : AppColors.sandText,
-              size: isDesktop ? 32 : 32.sp,
+              size: isDesktop ? 32 : 32,
             ),
             SizedBox(height: isDesktop ? 12 : 12.h),
             Text(

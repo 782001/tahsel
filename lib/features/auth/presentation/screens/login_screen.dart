@@ -395,7 +395,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                                     color: Colors.white,
                                                     fontSize: isDesktop
                                                         ? 16
-                                                        : 16.sp,
+                                                        : 16,
                                                     fontWeight: FontWeight.bold,
                                                   ),
                                                 ),
@@ -405,7 +405,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                                 Icon(
                                                   Icons.arrow_forward,
                                                   color: Colors.white,
-                                                  size: isDesktop ? 20 : 20.sp,
+                                                  size: isDesktop ? 20 : 20
                                                 ),
                                               ],
                                             ),

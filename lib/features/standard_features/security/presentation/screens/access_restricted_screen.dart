@@ -91,7 +91,7 @@ class AccessRestrictedScreen extends StatelessWidget {
                   ),
                   child: Icon(
                     _icon,
-                    size: isDesktop ? 64 : 64.sp,
+                    size: isDesktop ? 64 : 64,
                     color: _iconColor(context),
                   ),
                 ),

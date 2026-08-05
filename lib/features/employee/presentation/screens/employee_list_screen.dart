@@ -398,7 +398,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                     if (isSelected) ...[
                       Icon(
                         Icons.check_circle_rounded,
-                        size: isDesktop ? 16 : 16.sp,
+                        size: isDesktop ? 16 : 16 ,
                         color: AppColors.isDark ? Colors.black87 : Colors.white,
                       ),
                       SizedBox(width: isDesktop ? 6 : 6.w),

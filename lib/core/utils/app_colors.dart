@@ -210,4 +210,41 @@ class AppColors {
   // --- Best Seller Badge Colors ---
   static const Color bestSellerStart = Color(0xFFFF2A00);
   static const Color bestSellerEnd = Color(0xFFFF8800);
+
+  // --- Shipping Reconciliation Theme Colors ---
+  static Color get reconciliationMatched =>
+      isDark ? const Color(0xFF81C784) : const Color(0xFF1B5E20);
+  static Color get reconciliationMatchedBg =>
+      isDark ? const Color(0xFF1B381E) : const Color(0xFFE8F5E9);
+
+  static Color get reconciliationMissing =>
+      isDark ? const Color(0xFFEF9A9A) : const Color(0xFFB71C1C);
+  static Color get reconciliationMissingBg =>
+      isDark ? const Color(0xFF3E1A1A) : const Color(0xFFFFEBEE);
+
+  static Color get reconciliationConflict =>
+      isDark ? const Color(0xFFFFB74D) : const Color(0xFFE65100);
+  static Color get reconciliationConflictBg =>
+      isDark ? const Color(0xFF3E2810) : const Color(0xFFFFF3E0);
+
+  static Color get reconciliationReportOnly =>
+      isDark ? const Color(0xFFCE93D8) : const Color(0xFF4A148C);
+  static Color get reconciliationReportOnlyBg =>
+      isDark ? const Color(0xFF2C1635) : const Color(0xFFF3E5F5);
+
+  static Color get reconciliationDuplicate =>
+      isDark ? const Color(0xFFD7CCC8) : const Color(0xFF3E2723);
+  static Color get reconciliationDuplicateBg =>
+      isDark ? const Color(0xFF2C221E) : const Color(0xFFEFEBE9);
+
+  static Color get shippingDelivered =>
+      isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32);
+  static Color get shippingReturned =>
+      isDark ? const Color(0xFFEF5350) : const Color(0xFFD32F2F);
+  static Color get shippingOutForDelivery =>
+      isDark ? const Color(0xFF64B5F6) : const Color(0xFF1976D2);
+  static Color get shippingShipped =>
+      isDark ? const Color(0xFF4DD0E1) : const Color(0xFF00838F);
+  static Color get shippingFailed =>
+      isDark ? const Color(0xFFFFB74D) : const Color(0xFFE65100);
 }

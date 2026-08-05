@@ -60,7 +60,7 @@ class LanguageOption extends StatelessWidget {
                 child: Icon(
                   Icons.language,
                   color: isSelected ? AppColors.white : AppColors.sandText,
-                  size: isDesktop ? 24 : 24.sp,
+                  size: isDesktop ? 24 : 24,
                 ),
               ),
             ),
@@ -92,7 +92,7 @@ class LanguageOption extends StatelessWidget {
               Icon(
                 Icons.check_circle,
                 color: AppColors.primaryColor,
-                size: isDesktop ? 24 : 24.sp,
+                size: isDesktop ? 24 : 24,
               ),
           ],
         ),

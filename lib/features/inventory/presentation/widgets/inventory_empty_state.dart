@@ -38,7 +38,7 @@ class InventoryEmptyState extends StatelessWidget {
               ),
               child: Icon(
                 icon,
-                size: isDesktop ? 48 : 48.sp,
+                size: isDesktop ? 48 : 48,
                 color: AppColors.primaryColor.withValues(alpha: 0.8),
               ),
             ),

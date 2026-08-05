@@ -23,6 +23,19 @@ import 'package:tahsel/features/employee/presentation/screens/employee_details_s
 import 'package:tahsel/features/employee/presentation/screens/employee_list_screen.dart';
 import 'package:tahsel/features/employee/presentation/screens/employee_reports_screen.dart';
 import 'package:tahsel/features/expenses/presentation/screens/add_expense_screen.dart';
+import 'package:tahsel/features/inventory/presentation/cubits/inventory_categories_cubit.dart';
+import 'package:tahsel/features/inventory/presentation/cubits/inventory_dashboard_cubit.dart';
+import 'package:tahsel/features/inventory/presentation/cubits/inventory_products_cubit.dart';
+import 'package:tahsel/features/inventory/presentation/cubits/inventory_purchases_cubit.dart';
+import 'package:tahsel/features/inventory/presentation/cubits/inventory_stock_movements_cubit.dart';
+import 'package:tahsel/features/inventory/presentation/cubits/inventory_suppliers_cubit.dart';
+import 'package:tahsel/features/inventory/presentation/screens/categories_screen.dart';
+import 'package:tahsel/features/inventory/presentation/screens/inventory_analytics_screen.dart';
+import 'package:tahsel/features/inventory/presentation/screens/inventory_main_screen.dart';
+import 'package:tahsel/features/inventory/presentation/screens/products_screen.dart';
+import 'package:tahsel/features/inventory/presentation/screens/purchases_screen.dart';
+import 'package:tahsel/features/inventory/presentation/screens/stock_movements_screen.dart';
+import 'package:tahsel/features/inventory/presentation/screens/suppliers_screen.dart';
 import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_cubit.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_history_cubit.dart';
@@ -39,27 +52,17 @@ import 'package:tahsel/features/my_debts/presentation/screens/my_debt_details_sc
 import 'package:tahsel/features/reports/presentation/cubit/income_cubit/income_details_cubit.dart';
 import 'package:tahsel/features/reports/presentation/cubit/reports_cubit/reports_cubit.dart';
 import 'package:tahsel/features/reports/presentation/screens/income_details_screen.dart';
+import 'package:tahsel/features/shipping_reconciliation/presentation/screens/shipping_reconciliation_screen.dart';
 import 'package:tahsel/features/splash/splash_screen.dart';
 import 'package:tahsel/features/standard_features/security/presentation/screens/access_restricted_screen.dart';
 import 'package:tahsel/features/standard_features/security/presentation/screens/security_warning_screen.dart';
 import 'package:tahsel/features/standard_features/security/presentation/screens/subscription_expired_screen.dart';
-import 'package:tahsel/features/inventory/presentation/cubits/inventory_categories_cubit.dart';
-import 'package:tahsel/features/inventory/presentation/cubits/inventory_dashboard_cubit.dart';
-import 'package:tahsel/features/inventory/presentation/cubits/inventory_products_cubit.dart';
-import 'package:tahsel/features/inventory/presentation/cubits/inventory_purchases_cubit.dart';
-import 'package:tahsel/features/inventory/presentation/cubits/inventory_stock_movements_cubit.dart';
-import 'package:tahsel/features/inventory/presentation/cubits/inventory_suppliers_cubit.dart';
-import 'package:tahsel/features/inventory/presentation/screens/categories_screen.dart';
-import 'package:tahsel/features/inventory/presentation/screens/inventory_analytics_screen.dart';
-import 'package:tahsel/features/inventory/presentation/screens/inventory_main_screen.dart';
-import 'package:tahsel/features/inventory/presentation/screens/products_screen.dart';
-import 'package:tahsel/features/inventory/presentation/screens/purchases_screen.dart';
-import 'package:tahsel/features/inventory/presentation/screens/stock_movements_screen.dart';
-import 'package:tahsel/features/inventory/presentation/screens/suppliers_screen.dart';
 import 'package:tahsel/shared/widgets/fields/text_widget.dart';
 
 class AppRoutes {
   AppRoutes._();
+
+  static const String shippingReconciliation = '/shipping-reconciliation';
 
   static const String splash = '/';
   static const String mainLayout = '/main-layout';
@@ -98,6 +101,11 @@ class AppRoutes {
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
+      case shippingReconciliation:
+        if (!AppStrings.isVip) return _vipRestrictedRoute();
+        return MaterialPageRoute(
+          builder: (_) => const ShippingReconciliationScreen(),
+        );
       case inventoryMain:
         if (!AppStrings.isVip) return _vipRestrictedRoute();
         return MaterialPageRoute(
@@ -111,7 +119,7 @@ class AppRoutes {
         final showLowStockOnly = settings.arguments is bool
             ? settings.arguments as bool
             : (settings.arguments is Map &&
-                (settings.arguments as Map)['showLowStockOnly'] == true);
+                  (settings.arguments as Map)['showLowStockOnly'] == true);
         return MaterialPageRoute(
           builder: (_) => MultiBlocProvider(
             providers: [
@@ -404,17 +412,20 @@ class AppRoutes {
           backgroundColor: AppColors.scafoldBackGround,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.primaryColor),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          title: Text(
-            AppStrings.inventoryManagementVIP.tr(),
-            style: TextStyles.customStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
               color: AppColors.primaryColor,
             ),
+            onPressed: () => Navigator.of(context).pop(),
           ),
+          // title: Text(
+          //   AppStrings.inventoryManagementVIP.tr(),
+          //   style: TextStyles.customStyle(
+          //     fontSize: 20,
+          //     fontWeight: FontWeight.bold,
+          //     color: AppColors.primaryColor,
+          //   ),
+          // ),
         ),
         body: Center(
           child: Padding(
@@ -456,7 +467,10 @@ class AppRoutes {
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryColor,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),

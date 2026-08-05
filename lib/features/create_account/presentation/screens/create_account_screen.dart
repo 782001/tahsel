@@ -851,7 +851,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                                             color: Colors.white,
                                                             fontSize: isDesktop
                                                                 ? 16
-                                                                : 16.sp,
+                                                                : 16,
                                                             fontWeight:
                                                                 FontWeight.bold,
                                                           ),
@@ -866,7 +866,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                                       color: Colors.white,
                                                       size: isDesktop
                                                           ? 20
-                                                          : 20.sp,
+                                                          : 20,  
                                                     ),
                                                   ],
                                                 ),

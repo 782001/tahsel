@@ -106,12 +106,10 @@ class WhatsAppService {
         text: message,
       );
     } else {
-      await SharePlus.instance.share(
-        ShareParams(
-          files: [XFile(image.path)],
-          text: message,
-          subject: 'Receipt',
-        ),
+      await Share.shareXFiles(
+        [XFile(image.path)],
+        text: message,
+        subject: 'Receipt',
       );
     }
   }

@@ -75,7 +75,7 @@ class GracePeriodWarningBanner extends StatelessWidget {
                   Icon(
                     Icons.warning_amber_rounded,
                     color: Colors.white,
-                    size: isDesktop ? 24 : 24.sp,
+                    size: isDesktop ? 24 : 24 
                   ),
                   SizedBox(width: isDesktop ? 12 : 12.w),
                   Expanded(

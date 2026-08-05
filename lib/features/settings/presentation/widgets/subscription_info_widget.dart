@@ -213,7 +213,7 @@ class _SubscriptionInfoWidgetState extends State<SubscriptionInfoWidget> {
                 Icon(
                   Icons.card_membership_rounded,
                   color: AppColors.primaryColor,
-                  size: isDesktop ? 22 : 22.sp,
+                  size: isDesktop ? 22 : 22,
                 ),
                 SizedBox(width: isDesktop ? 8 : 8.w),
                 Text(
@@ -252,7 +252,7 @@ class _SubscriptionInfoWidgetState extends State<SubscriptionInfoWidget> {
                           isVip
                               ? Icons.stars_rounded
                               : Icons.star_border_rounded,
-                          size: isDesktop ? 14 : 14.sp,
+                          size: isDesktop ? 14 : 14,
                           color: isVip
                               ? AppColors.vipGoldStart
                               : AppColors.sandText,
@@ -431,7 +431,7 @@ class _SubscriptionInfoWidgetState extends State<SubscriptionInfoWidget> {
   }) {
     return Row(
       children: [
-        Icon(icon, size: isDesktop ? 18 : 18.sp, color: AppColors.sandText),
+        Icon(icon, size: isDesktop ? 18 : 18, color: AppColors.sandText),
         SizedBox(width: isDesktop ? 12 : 10.w),
         Text(
           label,

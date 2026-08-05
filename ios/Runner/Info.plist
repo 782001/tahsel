@@ -71,7 +71,11 @@
 		</array>
 		<key>UIStatusBarHidden</key>
 		<false/>
-	<key>NSContactsUsageDescription</key>
-	<string>يحتاج التطبيق للوصول إلى جهات الاتصال لتسهيل تحديد أرقام الهواتف.</string>
-		</dict>
+		<key>NSContactsUsageDescription</key>
+		<string>يحتاج التطبيق للوصول إلى جهات الاتصال لتسهيل تحديد أرقام الهواتف.</string>
+		<key>UISupportsDocumentBrowser</key>
+		<true/>
+		<key>LSSupportsOpeningDocumentsInPlace</key>
+		<true/>
+	</dict>
 </plist>

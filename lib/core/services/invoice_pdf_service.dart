@@ -105,12 +105,10 @@ class InvoicePdfService {
         text: subject,
       );
     } else {
-      await SharePlus.instance.share(
-        ShareParams(
-          files: [XFile(shareFile.path, mimeType: 'application/pdf')],
-          text: subject,
-          subject: subject,
-        ),
+      await Share.shareXFiles(
+        [XFile(shareFile.path, mimeType: 'application/pdf')],
+        text: subject,
+        subject: subject,
       );
     }
 
@@ -605,12 +603,10 @@ class InvoicePdfService {
         ? 'فاتورة شراء رقم #$idShort'
         : 'Purchase Invoice #$idShort';
 
-    await SharePlus.instance.share(
-      ShareParams(
-        files: [XFile(shareFile.path, mimeType: 'application/pdf')],
-        text: subject,
-        subject: subject,
-      ),
+    await Share.shareXFiles(
+      [XFile(shareFile.path, mimeType: 'application/pdf')],
+      text: subject,
+      subject: subject,
     );
 
     return shareFile;

@@ -18,6 +18,7 @@ import 'package:tahsel/features/offline_sync/service_injection/offline_sync_inje
 import 'package:tahsel/features/operation/service_injection/operation_injection.dart';
 import 'package:tahsel/features/product/service_injection/product_injection.dart';
 import 'package:tahsel/features/reports/service_injection/reports_injection.dart';
+import 'package:tahsel/features/shipping_reconciliation/service_injection/shipping_reconciliation_injection.dart';
 import 'package:tahsel/features/update/data/datasources/update_remote_data_source.dart';
 import 'package:tahsel/features/update/data/repositories/update_repository_impl.dart';
 import 'package:tahsel/features/update/domain/repositories/update_repository.dart';
@@ -75,6 +76,7 @@ Future<void> initDependencies() async {
   MyDebtsInjection.init(sl);
   EmployeeInjection.init();
   InventoryInjection.init(sl);
+  ShippingReconciliationInjection.init(sl);
 
   // localization
   /// -----localizationCubit------

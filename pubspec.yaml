@@ -17,7 +17,6 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
 
-
 # Apple Version
 # version: 1.0.2+9
 
@@ -86,13 +85,14 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   window_manager: ^0.5.1
-  package_info_plus: ^10.1.0
+  package_info_plus: ^8.0.0
   # open_filex: ^4.7.0
   # flutter_dotenv: 5.2.1
-  share_plus: ^13.2.0
+  share_plus: ^10.0.0
   pdf: ^3.12.0
   whatsapp_share2: ^2.1.1
   excel: ^4.0.6
+  file_picker: ^8.1.4
   mobile_scanner: ^7.4.0
   sentry_flutter: ^9.25.0
 

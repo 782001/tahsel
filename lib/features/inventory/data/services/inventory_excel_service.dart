@@ -140,11 +140,9 @@ class InventoryExcelService {
       final file = File('${dir.path}/$fileName');
       await file.writeAsBytes(bytes);
 
-      await SharePlus.instance.share(
-        ShareParams(
-          files: [XFile(file.path)],
-          text: AppStrings.exportSuccess.tr(),
-        ),
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        text: AppStrings.exportSuccess.tr(),
       );
 
       return file.path;

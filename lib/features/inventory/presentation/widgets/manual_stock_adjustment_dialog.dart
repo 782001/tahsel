@@ -122,7 +122,7 @@ class _ManualStockAdjustmentDialogState
                     child: Icon(
                       Icons.tune_rounded,
                       color: themeColor,
-                      size: isDesktop ? 22 : 20.sp,
+                      size: isDesktop ? 22 : 20,
                     ),
                   ),
                   SizedBox(width: isDesktop ? 12 : 10.w),

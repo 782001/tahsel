@@ -91,7 +91,7 @@ class InvoiceQuickLaunchCard extends StatelessWidget {
               children: [
                 Padding(
                   padding: EdgeInsets.symmetric(
-                    horizontal: isDesktop ? 20 : 20.sp,
+                    horizontal: isDesktop ? 20 : 20 
                   ),
                   child: _buildDashedDivider(),
                 ),

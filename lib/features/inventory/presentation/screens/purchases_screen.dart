@@ -375,7 +375,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                             Text(
                               AppStrings.inventoryPurchases.tr(),
                               style: TextStyles.customStyle(
-                                fontSize: isDesktop ? 22 : 18.sp,
+                                fontSize: isDesktop ? 22 : 18  ,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.primaryColor,
                               ),

@@ -78,7 +78,7 @@ class ProductDetailsDialog extends StatelessWidget {
                         child: Icon(
                           Icons.inventory_2_rounded,
                           color: AppColors.primaryColor,
-                          size: isDesktop ? 24 : 24.sp,
+                          size: isDesktop ? 24 : 24 
                         ),
                       ),
                       SizedBox(width: isDesktop ? 12 : 12.w),
