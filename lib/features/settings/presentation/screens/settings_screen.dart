@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/currency/currency_service.dart';
@@ -939,10 +940,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 builder: (context, activeCurrency, child) {
                                   return InkWell(
                                     onTap: () async {
-                                      final hasConn =
-                                          await sl<InternetConnectionChecker>()
-                                              .hasConnection;
-                                      if (!hasConn) {
+                                      final isOffline = context.read<ConnectivityCubit>().state is ConnectivityDisconnected;
+                                      if (isOffline) {
                                         showfailureToast(
                                           AppStrings.noInternetConnection.tr(),
                                         );
@@ -1030,10 +1029,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               SectionHeader(title: AppStrings.account.tr()),
                               InkWell(
                                 onTap: () async {
-                                  final hasConn =
-                                      await sl<InternetConnectionChecker>()
-                                          .hasConnection;
-                                  if (!hasConn) {
+                                  final isOffline = context.read<ConnectivityCubit>().state is ConnectivityDisconnected;
+                                  if (isOffline) {
                                     showfailureToast(
                                       AppStrings.noInternetConnection.tr(),
                                     );

@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../services/injection_container.dart';
@@ -25,13 +26,13 @@ class FirebaseErrorHandler {
       ];
 
       if (authErrorCodes.contains(code)) {
-        // CRITICAL FIX: Only logout if we are ONLINE.
-        // If offline, errors like 'permission-denied' can happen due to
+        // CRITICAL FIX: Only logout if internet is verified stable.
+        // If offline/unstable, errors like 'permission-denied' can happen due to
         // network sync issues or token refresh failures, which should NOT log out the user.
-        final bool hasInternet =
-            await sl<InternetConnectionChecker>().hasConnection;
+        final bool isOnlineAndStable =
+            sl<ConnectivityCubit>().state is ConnectivityConnected;
 
-        if (hasInternet) {
+        if (isOnlineAndStable) {
           AppLogger.printMessage(
             'Auth-related error detected while ONLINE, forcing logout...',
           );
@@ -42,7 +43,7 @@ class FirebaseErrorHandler {
           }
         } else {
           AppLogger.printMessage(
-            'Auth-related error ($code) detected while OFFLINE - IGNORING to preserve session',
+            'Auth-related error ($code) detected while OFFLINE/UNSTABLE - IGNORING to preserve session',
           );
         }
       }

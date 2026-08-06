@@ -5,7 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/core/base_usecase/base_usecase.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
@@ -95,9 +96,12 @@ class _SplashScreenState extends State<SplashScreen>
   /// Verifies the current Firebase session in the background.
   /// If the session is invalid (user deleted/disabled), it triggers a logout.
   void _verifySessionInBackground() async {
-    final bool hasInternet =
-        await sl<InternetConnectionChecker>().hasConnection;
-    if (!hasInternet) return;
+    // Only verify if internet is confirmed stable by ConnectivityCubit.
+    // During startup, state may still be ConnectivityInitial/Loading — that's OK,
+    // we skip verification and AuthCubit._listenToAuthChanges will handle it later.
+    final bool isOnlineAndStable =
+        sl<ConnectivityCubit>().state is ConnectivityConnected;
+    if (!isOnlineAndStable) return;
 
     try {
       final user = FirebaseAuth.instance.currentUser;

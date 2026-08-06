@@ -25,6 +25,7 @@ class AuthInjection {
         loginUseCase: sl(),
         logoutUseCase: sl(),
         deleteAccountUseCase: sl(),
+        connectivityCubit: sl(),
       ),
     );
 

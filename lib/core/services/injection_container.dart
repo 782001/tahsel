@@ -63,6 +63,9 @@ Future<void> initDependencies() async {
 
   //! Features
 
+  // connectivity — registered first because AuthCubit and OfflineSyncCubit depend on it
+  sl.registerLazySingleton<ConnectivityCubit>(() => ConnectivityCubit());
+
   AuthInjection.init(sl);
   CreateAccountDependencies.init(sl);
   await initDebt();
@@ -87,8 +90,6 @@ Future<void> initDependencies() async {
   // theme
   sl.registerFactory<ThemeCubit>(() => ThemeCubit(cashHelper: sl()));
 
-  // connectivity
-  sl.registerFactory<ConnectivityCubit>(() => ConnectivityCubit());
 
   // main layout
   sl.registerFactory<MainLayoutCubit>(

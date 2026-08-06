@@ -4,7 +4,8 @@ import 'dart:io' show Platform;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/core/base_usecase/base_usecase.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
@@ -33,6 +34,7 @@ class AuthCubit extends Cubit<AuthState> {
   final LoginUseCase loginUseCase;
   final LogoutUseCase logoutUseCase;
   final DeleteAccountUseCase deleteAccountUseCase;
+  final ConnectivityCubit connectivityCubit;
   StreamSubscription? _authSubscription;
   bool _isDeletingAccount = false;
 
@@ -40,6 +42,7 @@ class AuthCubit extends Cubit<AuthState> {
     required this.loginUseCase,
     required this.logoutUseCase,
     required this.deleteAccountUseCase,
+    required this.connectivityCubit,
   }) : super(AuthInitial()) {
     _listenToAuthChanges();
   }
@@ -56,8 +59,8 @@ class AuthCubit extends Cubit<AuthState> {
         return;
       }
 
-      final bool hasInternet =
-          await sl<InternetConnectionChecker>().hasConnection;
+      final bool isOnlineAndStable =
+          connectivityCubit.state is ConnectivityConnected;
 
       if (user == null) {
         // Source of truth: Check if we have a local session stored securely
@@ -79,7 +82,7 @@ class AuthCubit extends Cubit<AuthState> {
         }
       } else {
         // User is present. We only reload to check server status if we are online.
-        if (hasInternet) {
+        if (isOnlineAndStable) {
           try {
             await user.reload();
           } catch (e) {
@@ -175,14 +178,17 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  Future<void> forceLogout() async {
-    // ABSOLUTE GUARD: Never force logout while offline.
+  Future<void> forceLogout({bool bypassConnectivityCheck = false}) async {
+    // ABSOLUTE GUARD: Never force logout while offline or internet unstable.
     // This prevents accidental logouts during network transitions or stream glitches.
-    final bool hasInternet =
-        await sl<InternetConnectionChecker>().hasConnection;
-    if (!hasInternet) {
-      AppLogger.printMessage('Blocking forced logout: Device is OFFLINE');
-      return;
+    // Exception: when called after successful account deletion (bypass = true).
+    if (!bypassConnectivityCheck) {
+      final bool isOnlineAndStable =
+          connectivityCubit.state is ConnectivityConnected;
+      if (!isOnlineAndStable) {
+        AppLogger.printMessage('Blocking forced logout: Internet is not stable');
+        return;
+      }
     }
 
     if (state is AuthUnauthenticated) return;
@@ -250,8 +256,9 @@ class AuthCubit extends Cubit<AuthState> {
         emit(AuthDeleteSuccess());
         _isDeletingAccount = false;
 
-        // Perform force logout to clean all local caches, storage, and navigate to login
-        await forceLogout();
+        // Perform force logout to clean all local caches, storage, and navigate to login.
+        // Bypass connectivity check because the server-side deletion already succeeded.
+        await forceLogout(bypassConnectivityCheck: true);
       },
     );
   }

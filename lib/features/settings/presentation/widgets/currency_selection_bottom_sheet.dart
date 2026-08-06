@@ -7,8 +7,9 @@ import 'package:tahsel/core/services/currency/domain/entities/currency_entity.da
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
-import 'package:internet_connection_checker/internet_connection_checker.dart';
-import 'package:tahsel/core/services/injection_container.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 
@@ -68,8 +69,8 @@ class _CurrencySelectionBottomSheetState
   }
 
   Future<void> _selectCurrency(CurrencyEntity currency) async {
-    final hasConn = await sl<InternetConnectionChecker>().hasConnection;
-    if (!hasConn) {
+    final isOffline = context.read<ConnectivityCubit>().state is ConnectivityDisconnected;
+    if (isOffline) {
       showfailureToast(AppStrings.noInternetConnection.tr());
       return;
     }
@@ -78,12 +79,14 @@ class _CurrencySelectionBottomSheetState
     final messenger = ScaffoldMessenger.of(context);
 
     if (widget.onCurrencySelected != null) {
-      widget.onCurrencySelected!(currency);
+      // Pop first to release navigator lock, then invoke callback
       nav.pop(currency);
+      widget.onCurrencySelected!(currency);
       return;
     }
 
     await CurrencyService.instance.updateCurrency(currency);
+    if (!mounted) return;
     nav.pop(currency);
 
     messenger.showSnackBar(

@@ -4,8 +4,9 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
-import 'package:internet_connection_checker/internet_connection_checker.dart';
-import 'package:tahsel/core/services/injection_container.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 
@@ -114,10 +115,8 @@ class LogoutConfirmationDialog extends StatelessWidget {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () async {
-                    final hasConn = await sl<
-                      InternetConnectionChecker
-                    >().hasConnection;
-                    if (!hasConn) {
+                    final isOffline = context.read<ConnectivityCubit>().state is ConnectivityDisconnected;
+                    if (isOffline) {
                       showfailureToast(AppStrings.noInternetConnection.tr());
                       return;
                     }
