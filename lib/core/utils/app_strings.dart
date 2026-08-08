@@ -1176,4 +1176,41 @@ class AppStrings {
   static const String featureSmartOfflineMatching = "feature_smart_offline_matching";
   static const String featurePrivacySecurity100 = "feature_privacy_security_100";
   static const String featureExportExcelSheet = "feature_export_excel_sheet";
+
+  // Cashbox Feature Strings
+  static const String cashboxManagement = "cashbox_management";
+  static const String cashboxManagementDesc = "cashbox_management_desc";
+  static const String cashboxSummary = "cashbox_summary";
+  static const String currentBalance = "current_balance";
+  static const String todayIncome = "today_income";
+  static const String todayExpense = "today_expense";
+  static const String monthIncome = "month_income";
+  static const String monthExpense = "month_expense";
+  static const String totalExpense = "total_expense";
+  static const String netBalance = "net_balance";
+  static const String manualDeposit = "manual_deposit";
+  static const String manualWithdraw = "manual_withdraw";
+  static const String moneyIn = "money_in";
+  static const String moneyOut = "money_out";
+  static const String filterAll = "filter_all";
+  static const String sourceType = "source_type";
+  static const String depositSuccess = "deposit_success";
+  static const String withdrawSuccess = "withdraw_success";
+  static const String deleteTransaction = "delete_transaction";
+  static const String deleteTransactionConfirm = "delete_transaction_confirm";
+  static const String onlineOnlyNotice = "online_only_notice";
+  static const String enterAmount = "enter_amount";
+  static const String enterNotes = "enter_notes";
+  static const String selectDate = "select_date";
+  static const String loadMore = "load_more";
+  static const String cashboxSourceInvoice = "cashbox_source_invoice";
+  static const String cashboxSourceCustomerDebt = "cashbox_source_customer_debt";
+  static const String cashboxSourceSupplierDebt = "cashbox_source_supplier_debt";
+  static const String cashboxSourceExpense = "cashbox_source_expense";
+  static const String cashboxSourceInventoryPurchase = "cashbox_source_inventory_purchase";
+  static const String cashboxSourceManualAdd = "cashbox_source_manual_add";
+  static const String cashboxSourceManualWithdraw = "cashbox_source_manual_withdraw";
+  static const String cashboxSourceRefund = "cashbox_source_refund";
+  static const String cashboxSourceAdjustment = "cashbox_source_adjustment";
 }
+
