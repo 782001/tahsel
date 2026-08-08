@@ -14,6 +14,7 @@ class ExpenseCard extends StatelessWidget {
   final String date;
   final bool isGrid;
   final VoidCallback? onDelete;
+  final String? expenseId;
 
   const ExpenseCard({
     super.key,
@@ -24,6 +25,7 @@ class ExpenseCard extends StatelessWidget {
     required this.date,
     this.isGrid = false,
     this.onDelete,
+    this.expenseId,
   });
 
   @override
@@ -129,23 +131,29 @@ class ExpenseCard extends StatelessWidget {
       );
     }
 
+    final bool isPurchaseExpense =
+        expenseId != null && expenseId!.startsWith('exp_pur_');
+    final bool canDelete = onDelete != null && !isPurchaseExpense;
+
     return Slidable(
       key: ValueKey(title + date + amount.toString()),
-      enabled: onDelete != null,
-      endActionPane: ActionPane(
-        motion: const ScrollMotion(),
-        extentRatio: 0.25,
-        children: [
-          SlidableAction(
-            onPressed: (_) => onDelete?.call(),
-            backgroundColor: AppColors.error,
-            foregroundColor: AppColors.white,
-            icon: Icons.delete_outline,
-            label: AppStrings.delete.tr(),
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ],
-      ),
+      enabled: canDelete,
+      endActionPane: canDelete
+          ? ActionPane(
+              motion: const ScrollMotion(),
+              extentRatio: 0.25,
+              children: [
+                SlidableAction(
+                  onPressed: (_) => onDelete?.call(),
+                  backgroundColor: AppColors.error,
+                  foregroundColor: AppColors.white,
+                  icon: Icons.delete_outline,
+                  label: AppStrings.delete.tr(),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ],
+            )
+          : null,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
