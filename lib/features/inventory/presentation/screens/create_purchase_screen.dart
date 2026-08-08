@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get_it/get_it.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
@@ -9,7 +10,6 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 
-import 'package:get_it/get_it.dart';
 import '../../data/datasources/inventory_local_data_source.dart';
 import '../../domain/entities/inventory_category_entity.dart';
 import '../../domain/entities/inventory_product_entity.dart';
@@ -29,6 +29,7 @@ class CreatePurchaseScreen extends StatefulWidget {
 }
 
 class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
+  bool _isLoading = false;
   InventorySupplierEntity? _selectedSupplier;
   final List<InventoryPurchaseItemEntity> _selectedItems = [];
   final TextEditingController _notesController = TextEditingController();
@@ -90,6 +91,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
   }
 
   Future<void> _savePurchase() async {
+    if (_isLoading) return;
     if (_selectedSupplier == null) {
       ScaffoldMessenger.of(
         context,
@@ -103,76 +105,88 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
       return;
     }
 
-    final productsCubit = context.read<InventoryProductsCubit>();
-    final purchasesCubit = context.read<InventoryPurchasesCubit>();
-    final messenger = ScaffoldMessenger.of(context);
-    final navigator = Navigator.of(context);
+    setState(() {
+      _isLoading = true;
+    });
 
-    // 1. Save all new products first so they exist in database
-    final selectedProductIds = _selectedItems.map((e) => e.productId).toSet();
-    for (final newProd in _newProductsToCreate) {
-      if (selectedProductIds.contains(newProd.id)) {
-        await productsCubit.saveProduct(newProd);
+    try {
+      final productsCubit = context.read<InventoryProductsCubit>();
+      final purchasesCubit = context.read<InventoryPurchasesCubit>();
+      final messenger = ScaffoldMessenger.of(context);
+      final navigator = Navigator.of(context);
+
+      // 1. Save all new products first so they exist in database
+      final selectedProductIds = _selectedItems.map((e) => e.productId).toSet();
+      for (final newProd in _newProductsToCreate) {
+        if (selectedProductIds.contains(newProd.id)) {
+          await productsCubit.saveProduct(newProd);
+        }
       }
-    }
 
-    // Parse paid amount for debt payments
-    final double parsedPaid =
-        double.tryParse(_paidAmountController.text.trim()) ?? 0.0;
-    final double actualPaidAmount = _selectedPaymentMethod == 'debt'
-        ? parsedPaid.clamp(0.0, _totalAmount)
-        : _totalAmount;
+      // Parse paid amount for debt payments
+      final double parsedPaid =
+          double.tryParse(_paidAmountController.text.trim()) ?? 0.0;
+      final double actualPaidAmount = _selectedPaymentMethod == 'debt'
+          ? parsedPaid.clamp(0.0, _totalAmount)
+          : _totalAmount;
 
-    // 2. Create or Update the purchase invoice
-    final bool isEdit = widget.initialPurchase != null;
-    bool success = false;
+      // 2. Create or Update the purchase invoice
+      final bool isEdit = widget.initialPurchase != null;
+      bool success = false;
 
-    if (isEdit) {
-      final updatedPurchase = widget.initialPurchase!.copyWith(
-        supplierId: _selectedSupplier!.id,
-        supplierName: _selectedSupplier!.name,
-        items: List.from(_selectedItems),
-        totalAmount: _totalAmount,
-        notes: _notesController.text.trim().isNotEmpty
-            ? _notesController.text.trim()
-            : null,
-        paymentMethod: widget.initialPurchase!.paymentMethod,
-        paidAmount: widget.initialPurchase!.paidAmount,
-        isSynced: false,
-      );
-      success = await purchasesCubit.updatePurchase(
-        oldPurchase: widget.initialPurchase!,
-        newPurchase: updatedPurchase,
-      );
-    } else {
-      final newPurchase = InventoryPurchaseEntity(
-        id: 'pur_${DateTime.now().millisecondsSinceEpoch}',
-        supplierId: _selectedSupplier!.id,
-        supplierName: _selectedSupplier!.name,
-        items: List.from(_selectedItems),
-        totalAmount: _totalAmount,
-        notes: _notesController.text.trim().isNotEmpty
-            ? _notesController.text.trim()
-            : null,
-        createdAt: DateTime.now(),
-        isSynced: false,
-        paymentMethod: _selectedPaymentMethod,
-        paidAmount: actualPaidAmount,
-      );
-      success = await purchasesCubit.createPurchase(newPurchase);
-    }
+      if (isEdit) {
+        final updatedPurchase = widget.initialPurchase!.copyWith(
+          supplierId: _selectedSupplier!.id,
+          supplierName: _selectedSupplier!.name,
+          items: List.from(_selectedItems),
+          totalAmount: _totalAmount,
+          notes: _notesController.text.trim().isNotEmpty
+              ? _notesController.text.trim()
+              : null,
+          paymentMethod: widget.initialPurchase!.paymentMethod,
+          paidAmount: widget.initialPurchase!.paidAmount,
+          isSynced: false,
+        );
+        success = await purchasesCubit.updatePurchase(
+          oldPurchase: widget.initialPurchase!,
+          newPurchase: updatedPurchase,
+        );
+      } else {
+        final newPurchase = InventoryPurchaseEntity(
+          id: 'pur_${DateTime.now().millisecondsSinceEpoch}',
+          supplierId: _selectedSupplier!.id,
+          supplierName: _selectedSupplier!.name,
+          items: List.from(_selectedItems),
+          totalAmount: _totalAmount,
+          notes: _notesController.text.trim().isNotEmpty
+              ? _notesController.text.trim()
+              : null,
+          createdAt: DateTime.now(),
+          isSynced: false,
+          paymentMethod: _selectedPaymentMethod,
+          paidAmount: actualPaidAmount,
+        );
+        success = await purchasesCubit.createPurchase(newPurchase);
+      }
 
-    if (success && mounted) {
-      // 3. Refresh products data so all quantities & new products are re-fetched cleanly
-      await productsCubit.fetchProducts();
+      if (success && mounted) {
+        // 3. Refresh products data so all quantities & new products are re-fetched cleanly
+        await productsCubit.fetchProducts();
 
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(AppStrings.purchaseSavedSuccess.tr()),
-          backgroundColor: AppColors.success,
-        ),
-      );
-      navigator.pop();
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(AppStrings.purchaseSavedSuccess.tr()),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        navigator.pop();
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -480,15 +494,24 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                   ),
                                 ),
                               ),
-                              onPressed: _savePurchase,
-                              child: Text(
-                                AppStrings.savePurchase.tr(),
-                                style: TextStyles.customStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
+                              onPressed: _isLoading ? null : _savePurchase,
+                              child: _isLoading
+                                  ?   SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        color: AppColors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Text(
+                                      AppStrings.savePurchase.tr(),
+                                      style: TextStyles.customStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
                             ),
                           ),
                         ],
@@ -507,7 +530,8 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
   Future<void> _showAddItemDialog() async {
     List<InventoryCategoryEntity> categories = [];
     try {
-      final catModels = await GetIt.I<InventoryLocalDataSource>().getCategories();
+      final catModels = await GetIt.I<InventoryLocalDataSource>()
+          .getCategories();
       categories = catModels.map((c) => c as InventoryCategoryEntity).toList();
     } catch (_) {}
 
@@ -535,10 +559,12 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
     final newQtyController = TextEditingController(text: '1');
     final newUnitController = TextEditingController(text: 'قطعة');
 
-    String? newSelectedCategoryId =
-        categories.isNotEmpty ? categories.first.id : null;
-    String newSelectedCategoryName =
-        categories.isNotEmpty ? categories.first.name : '';
+    String? newSelectedCategoryId = categories.isNotEmpty
+        ? categories.first.id
+        : null;
+    String newSelectedCategoryName = categories.isNotEmpty
+        ? categories.first.name
+        : '';
 
     showDialog(
       context: context,
