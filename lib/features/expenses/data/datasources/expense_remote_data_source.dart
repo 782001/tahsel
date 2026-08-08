@@ -21,7 +21,7 @@ class ExpensePaginationResult {
 }
 
 abstract class ExpenseRemoteDataSource {
-  Future<String> addExpense(ExpenseModel expense);
+  Future<String> addExpense(ExpenseModel expense, {double? previousAmount});
   Future<List<ExpenseModel>> getExpenses(String uid);
   Future<MonthlyPaginationResult> getMonthlyAggregates(
     String uid, {
@@ -45,7 +45,7 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
   ExpenseRemoteDataSourceImpl({required this.firestore});
 
   @override
-  Future<String> addExpense(ExpenseModel expense) async {
+  Future<String> addExpense(ExpenseModel expense, {double? previousAmount}) async {
     try {
       final userRef = firestore.collection('users').doc(expense.uid);
       final collectionRef = userRef.collection('expenses');
@@ -54,20 +54,35 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
           ? collectionRef.doc(expense.id)
           : collectionRef.doc();
 
+      final double deltaAmount = previousAmount != null
+          ? (expense.amount - previousAmount)
+          : expense.amount;
+      final int countIncrement = previousAmount != null
+          ? 0
+          : (expense.amount > 0 ? 1 : 0);
+
       final batch = firestore.batch();
 
       // 1. Set the expense document
-      batch.set(docRef, expense.toJson());
+      batch.set(docRef, expense.toJson(), SetOptions(merge: true));
 
       // 2. Update Summaries
-      final summaryKeys = SummaryHelper.getSummaryKeys(expense.createdAt);
-      for (final key in summaryKeys) {
-        final summaryRef = userRef.collection('summaries').doc(key);
-        batch.set(summaryRef, {
-          'totalExpenses': FieldValue.increment(expense.amount),
-          'transactionCount': FieldValue.increment(1),
-          'lastUpdatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+      if (deltaAmount != 0 || countIncrement != 0) {
+        final summaryKeys = SummaryHelper.getSummaryKeys(expense.createdAt);
+        for (final key in summaryKeys) {
+          final summaryRef = userRef.collection('summaries').doc(key);
+          final Map<String, dynamic> summaryData = {
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          };
+          if (deltaAmount != 0) {
+            summaryData['totalExpenses'] = FieldValue.increment(deltaAmount);
+          }
+          if (countIncrement != 0) {
+            summaryData['transactionCount'] =
+                FieldValue.increment(countIncrement);
+          }
+          batch.set(summaryRef, summaryData, SetOptions(merge: true));
+        }
       }
 
       await batch.commit();

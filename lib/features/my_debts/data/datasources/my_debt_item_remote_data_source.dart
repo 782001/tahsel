@@ -1,6 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:get_it/get_it.dart';
 import 'package:tahsel/core/error/firebase_error_handler.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/usecases/pagination_params.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/date_formatter.dart';
+import 'package:tahsel/features/expenses/data/datasources/expense_remote_data_source.dart';
+import 'package:tahsel/features/expenses/data/models/expense_model.dart';
 import 'package:tahsel/features/my_debts/data/models/my_debt_item_model.dart';
 import 'package:tahsel/features/my_debts/data/models/my_debt_payment_model.dart';
 
@@ -68,8 +74,12 @@ abstract class MyDebtItemRemoteDataSource {
 
 class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
   final FirebaseFirestore firestore;
+  final ExpenseRemoteDataSource? expenseRemoteDataSource;
 
-  MyDebtItemRemoteDataSourceImpl({required this.firestore});
+  MyDebtItemRemoteDataSourceImpl({
+    required this.firestore,
+    this.expenseRemoteDataSource,
+  });
 
   @override
   Future<MyDebtItemModel?> getMyDebtItemById(
@@ -187,10 +197,130 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
 
       await batch.commit();
       await _recalculatePersonTotals(uid, personName);
+
+      await _syncPaymentToExpense(
+        uid: uid,
+        paymentId: paymentRef.id,
+        amountPaid: creditAmount,
+        paymentDate: DateTime.now(),
+        personName: personName,
+        operationId: operationId,
+        debtId: debtId,
+        note: note ?? 'استلام الرصيد الدائن من المورد',
+      );
+      await _syncPurchasePaidAmount(
+        uid: uid,
+        debtId: debtId,
+        operationId: operationId,
+      );
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;
     }
+  }
+
+  ExpenseRemoteDataSource get _expenseDataSource =>
+      expenseRemoteDataSource ?? GetIt.I<ExpenseRemoteDataSource>();
+
+  Future<void> _syncPaymentToExpense({
+    required String uid,
+    required String paymentId,
+    required double amountPaid,
+    required DateTime paymentDate,
+    required String personName,
+    required String? operationId,
+    required String debtId,
+    String? note,
+    double? previousAmount,
+  }) async {
+    try {
+      if (amountPaid <= 0 && (previousAmount == null || previousAmount <= 0)) return;
+
+      final expenseId = 'exp_pay_$paymentId';
+      final String? purchaseId = (operationId != null && operationId.startsWith('pur_'))
+          ? operationId
+          : (debtId.startsWith('debt_pur_')
+              ? debtId.replaceAll('debt_', '')
+              : null);
+
+      final String categoryName = (purchaseId != null && purchaseId.isNotEmpty)
+          ? (AppStrings.inventoryPurchases.tr().isNotEmpty
+              ? AppStrings.inventoryPurchases.tr()
+              : 'مشتريات مخزون')
+          : (AppStrings.myDebts.tr().isNotEmpty
+              ? AppStrings.myDebts.tr()
+              : 'سداد ديون');
+
+      final String cleanId =
+          purchaseId != null ? purchaseId.replaceAll('pur_', '') : '';
+      final String description = purchaseId != null
+          ? '${AppStrings.purchaseInvoiceNum.tr()} #$cleanId - $personName${note != null && note.isNotEmpty ? " ($note)" : ""}'
+          : 'سداد دين - $personName${note != null && note.isNotEmpty ? " ($note)" : ""}';
+
+      final expense = ExpenseModel(
+        id: expenseId,
+        uid: uid,
+        amount: amountPaid,
+        category: categoryName,
+        description: description,
+        createdAt: paymentDate,
+        monthKey: DateFormatter.formatNumericMonth(paymentDate),
+      );
+
+      await _expenseDataSource.addExpense(expense, previousAmount: previousAmount);
+    } catch (_) {}
+  }
+
+  Future<void> _deletePaymentExpense({
+    required String uid,
+    required String paymentId,
+  }) async {
+    try {
+      final expenseId = 'exp_pay_$paymentId';
+      await _expenseDataSource.deleteExpense(uid, expenseId);
+    } catch (_) {}
+  }
+
+  Future<void> _syncPurchasePaidAmount({
+    required String uid,
+    required String debtId,
+    required String? operationId,
+  }) async {
+    try {
+      final String? purchaseId = (operationId != null && operationId.startsWith('pur_'))
+          ? operationId
+          : (debtId.startsWith('debt_pur_')
+              ? debtId.replaceAll('debt_', '')
+              : null);
+
+      if (purchaseId == null) return;
+
+      final debtRef = firestore
+          .collection('users')
+          .doc(uid)
+          .collection('my_debt_items')
+          .doc(debtId);
+
+      final debtSnap = await debtRef.get();
+      if (!debtSnap.exists) return;
+
+      final data = debtSnap.data() as Map<String, dynamic>;
+      final double paidAmount = (data['paidAmount'] as num? ?? 0.0).toDouble();
+      final double totalAmount = (data['totalAmount'] as num? ?? 0.0).toDouble();
+      final bool isPaid = paidAmount >= totalAmount;
+
+      final purchaseRef = firestore
+          .collection('users')
+          .doc(uid)
+          .collection('purchases')
+          .doc(purchaseId);
+
+      await purchaseRef.set({
+        'paidAmount': paidAmount,
+        'isPaid': isPaid,
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (_) {}
   }
 
   Future<void> _recalculatePersonTotals(String uid, String personName) async {
@@ -383,9 +513,9 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         'type': 'debtAdded',
       });
 
-      // 4. Add initial payment if any
+      DocumentReference? actualPaymentRef;
       if (debt.paidAmount > 0) {
-        final actualPaymentRef = debtRef.collection('payments').doc();
+        actualPaymentRef = debtRef.collection('payments').doc();
         batch.set(actualPaymentRef, {
           'debtId': debtRef.id,
           'amountPaid': debt.paidAmount,
@@ -424,6 +554,20 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
 
       await batch.commit();
       await _recalculatePersonTotals(debt.uid, debt.personName ?? '');
+
+      if (actualPaymentRef != null &&
+          !debt.operationId.startsWith('pur_')) {
+        await _syncPaymentToExpense(
+          uid: debt.uid,
+          paymentId: actualPaymentRef.id,
+          amountPaid: debt.paidAmount,
+          paymentDate: debt.timestamp ?? DateTime.now(),
+          personName: debt.personName ?? '',
+          operationId: debt.operationId,
+          debtId: debtRef.id,
+          note: debt.details,
+        );
+      }
       return debtRef.id;
     } catch (e) {
       FirebaseErrorHandler.handle(e);
@@ -533,6 +677,8 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       final batch = firestore.batch();
       double remainingToPay = amount;
 
+      final List<Map<String, dynamic>> createdPayments = [];
+
       for (var doc in snapshot.docs) {
         if (remainingToPay <= 0) break;
 
@@ -594,6 +740,13 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           'type': isPaid ? 'full' : 'partial',
           'note': note,
         });
+
+        createdPayments.add({
+          'paymentId': paymentRef.id,
+          'amountPaid': paymentForThisItem,
+          'debtId': debtId,
+          'operationId': operationId,
+        });
       }
 
       // Update person doc once with total amount distributed
@@ -609,6 +762,24 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
 
       await batch.commit();
       await _recalculatePersonTotals(uid, personName);
+
+      for (final p in createdPayments) {
+        await _syncPaymentToExpense(
+          uid: uid,
+          paymentId: p['paymentId'] as String,
+          amountPaid: p['amountPaid'] as double,
+          paymentDate: paymentDate ?? DateTime.now(),
+          personName: personName,
+          operationId: p['operationId'] as String?,
+          debtId: p['debtId'] as String,
+          note: note,
+        );
+        await _syncPurchasePaidAmount(
+          uid: uid,
+          debtId: p['debtId'] as String,
+          operationId: p['operationId'] as String?,
+        );
+      }
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;
@@ -629,12 +800,15 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       if (snapshot.docs.isEmpty) return;
 
       final batch = firestore.batch();
+      final List<Map<String, dynamic>> createdPayments = [];
 
       for (var doc in snapshot.docs) {
         final debtData = doc.data();
         final debtId = doc.id;
         final operationId = debtData['operationId'] as String?;
         final currentTotal = (debtData['totalAmount'] as num).toDouble();
+        final amountPaid =
+            currentTotal - (debtData['paidAmount'] as num).toDouble();
 
         final debtRef = firestore
             .collection('users')
@@ -667,11 +841,17 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         final paymentRef = debtRef.collection('payments').doc();
         batch.set(paymentRef, {
           'debtId': debtId,
-          'amountPaid':
-              currentTotal - (debtData['paidAmount'] as num).toDouble(),
+          'amountPaid': amountPaid,
           'remainingAmount': 0.0,
           'createdAt': FieldValue.serverTimestamp(),
           'type': 'settlement',
+        });
+
+        createdPayments.add({
+          'paymentId': paymentRef.id,
+          'amountPaid': amountPaid,
+          'debtId': debtId,
+          'operationId': operationId,
         });
       }
 
@@ -687,6 +867,24 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       });
 
       await batch.commit();
+
+      for (final p in createdPayments) {
+        await _syncPaymentToExpense(
+          uid: uid,
+          paymentId: p['paymentId'] as String,
+          amountPaid: p['amountPaid'] as double,
+          paymentDate: DateTime.now(),
+          personName: personName,
+          operationId: p['operationId'] as String?,
+          debtId: p['debtId'] as String,
+          note: 'تسوية المديونية بالكامل',
+        );
+        await _syncPurchasePaidAmount(
+          uid: uid,
+          debtId: p['debtId'] as String,
+          operationId: p['operationId'] as String?,
+        );
+      }
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;
@@ -708,6 +906,10 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           .collection('my_debt_items')
           .doc(debtId);
 
+      String personName = '';
+      String? operationId;
+      String paymentId = '';
+
       await firestore.runTransaction((transaction) async {
         final snapshot = await transaction.get(debtRef);
         if (!snapshot.exists) return;
@@ -715,7 +917,8 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         final data = snapshot.data() as Map<String, dynamic>;
         final currentPaid = (data['paidAmount'] as num).toDouble();
         final totalAmount = (data['totalAmount'] as num).toDouble();
-        final operationId = data['operationId'] as String?;
+        operationId = data['operationId'] as String?;
+        personName = data['personName'] as String? ?? '';
 
         final newPaidAmount = currentPaid + amount;
         final newRemainingAmount = totalAmount - newPaidAmount;
@@ -730,12 +933,12 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         });
 
         // 2. Update operation if exists
-        if (operationId != null && operationId.isNotEmpty) {
+        if (operationId != null && operationId!.isNotEmpty) {
           final opRef = firestore
               .collection('users')
               .doc(uid)
               .collection('my_debt_operations')
-              .doc(operationId);
+              .doc(operationId!);
           transaction.update(opRef, {
             'paidAmount': newPaidAmount,
             'remainingDebt': newRemainingAmount,
@@ -745,6 +948,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
 
         // 3. Add payment record
         final paymentRef = debtRef.collection('payments').doc();
+        paymentId = paymentRef.id;
         transaction.set(paymentRef, {
           'debtId': debtId,
           'amountPaid': amount,
@@ -755,7 +959,6 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         });
 
         // 4. Update person doc
-        final personName = data['personName'] as String;
         final personRef = firestore
             .collection('users')
             .doc(uid)
@@ -766,6 +969,24 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           'lastUsedAt': paymentDate != null ? Timestamp.fromDate(paymentDate) : FieldValue.serverTimestamp(),
         });
       });
+
+      if (paymentId.isNotEmpty) {
+        await _syncPaymentToExpense(
+          uid: uid,
+          paymentId: paymentId,
+          amountPaid: amount,
+          paymentDate: paymentDate ?? DateTime.now(),
+          personName: personName,
+          operationId: operationId,
+          debtId: debtId,
+          note: note,
+        );
+        await _syncPurchasePaidAmount(
+          uid: uid,
+          debtId: debtId,
+          operationId: operationId,
+        );
+      }
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;
@@ -952,9 +1173,16 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           .collection('my_debt_items')
           .doc(debtId);
 
+      MyDebtPaymentModel? targetPayment;
+      String personName = '';
+      String? operationId;
+
       await firestore.runTransaction((transaction) async {
         final debtSnap = await transaction.get(debtRef);
         if (!debtSnap.exists) throw Exception('Debt not found');
+
+        personName = debtSnap.data()?['personName'] as String? ?? '';
+        operationId = debtSnap.data()?['operationId'] as String?;
 
         final paymentsSnapshot = await debtRef
             .collection('payments')
@@ -964,18 +1192,18 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
             .map((doc) => MyDebtPaymentModel.fromJson(doc.data(), doc.id))
             .toList();
 
-        final targetPayment = allPayments.firstWhere((p) => p.id == paymentId);
-        final String relatedTo = targetPayment.type == 'debtAdded'
+        targetPayment = allPayments.firstWhere((p) => p.id == paymentId);
+        final String relatedTo = targetPayment!.type == 'debtAdded'
             ? 'debt'
             : 'payment';
 
         // RULE 3 validation for debtAdded
-        if (targetPayment.type == 'debtAdded') {
+        if (targetPayment!.type == 'debtAdded') {
           final paymentsAfter = allPayments
               .where(
                 (p) =>
                     (p.type == 'partial' || p.type == 'full') &&
-                    p.createdAt.isAfter(targetPayment.createdAt),
+                    p.createdAt.isAfter(targetPayment!.createdAt),
               )
               .toList();
 
@@ -987,14 +1215,14 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           }
         }
 
-        final delta = newAmount - targetPayment.amountPaid;
+        final delta = newAmount - targetPayment!.amountPaid;
         if (delta == 0) return;
 
         // Direct Mutation: Update the same item
         final paymentRef = debtRef.collection('payments').doc(paymentId);
         transaction.update(paymentRef, {
           'amountPaid': newAmount,
-          'note': note ?? targetPayment.note,
+          'note': note ?? targetPayment!.note,
           'lastUpdatedAt': FieldValue.serverTimestamp(),
         });
 
@@ -1014,7 +1242,6 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         }
 
         // Update person doc
-        final personName = debtSnap.data()?['personName'] as String;
         final personRef = firestore
             .collection('users')
             .doc(uid)
@@ -1031,15 +1258,28 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           });
         }
       });
-      final debtSnap = await firestore
-          .collection('users')
-          .doc(uid)
-          .collection('my_debt_items')
-          .doc(debtId)
-          .get();
-      if (debtSnap.exists) {
-        final personName = debtSnap.data()?['personName'] as String? ?? '';
+
+      if (personName.isNotEmpty) {
         await _recalculatePersonTotals(uid, personName);
+      }
+
+      if (targetPayment != null && targetPayment!.type != 'debtAdded') {
+        await _syncPaymentToExpense(
+          uid: uid,
+          paymentId: paymentId,
+          amountPaid: newAmount,
+          paymentDate: targetPayment!.createdAt,
+          personName: personName,
+          operationId: operationId,
+          debtId: debtId,
+          note: note ?? targetPayment!.note,
+          previousAmount: targetPayment!.amountPaid,
+        );
+        await _syncPurchasePaidAmount(
+          uid: uid,
+          debtId: debtId,
+          operationId: operationId,
+        );
       }
     } catch (e) {
       FirebaseErrorHandler.handle(e);
@@ -1062,11 +1302,16 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       final paymentRef = debtRef.collection('payments').doc(paymentId);
 
       String personNameForRecalc = '';
+      MyDebtPaymentModel? targetPayment;
+      String? operationId;
+
       await firestore.runTransaction((transaction) async {
         final debtSnap = await transaction.get(debtRef);
         if (!debtSnap.exists) throw Exception('Debt not found');
 
         personNameForRecalc = debtSnap.data()?['personName'] as String? ?? '';
+        operationId = debtSnap.data()?['operationId'] as String?;
+
         final paymentsSnapshot = await debtRef
             .collection('payments')
             .orderBy('createdAt', descending: true)
@@ -1075,17 +1320,17 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
             .map((doc) => MyDebtPaymentModel.fromJson(doc.data(), doc.id))
             .toList();
 
-        final targetPayment = allPayments.firstWhere((p) => p.id == paymentId);
-        final String relatedTo = targetPayment.type == 'debtAdded'
+        targetPayment = allPayments.firstWhere((p) => p.id == paymentId);
+        final String relatedTo = targetPayment!.type == 'debtAdded'
             ? 'debt'
             : 'payment';
 
-        if (targetPayment.type == 'debtAdded') {
+        if (targetPayment!.type == 'debtAdded') {
           // RULE 2: Check for newer payments
           final hasNewerPayments = allPayments.any(
             (p) =>
                 (p.type == 'partial' || p.type == 'full') &&
-                p.createdAt.isAfter(targetPayment.createdAt),
+                p.createdAt.isAfter(targetPayment!.createdAt),
           );
           if (hasNewerPayments) {
             throw Exception('delete_not_allowed');
@@ -1096,7 +1341,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         transaction.delete(paymentRef);
 
         // Update stored totals
-        final amountToDelete = targetPayment.amountPaid;
+        final amountToDelete = targetPayment!.amountPaid;
         if (relatedTo == 'debt') {
           transaction.update(debtRef, {
             'totalAmount': FieldValue.increment(-amountToDelete),
@@ -1130,7 +1375,20 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           });
         }
       });
+
       await _recalculatePersonTotals(uid, personNameForRecalc);
+
+      if (targetPayment != null && targetPayment!.type != 'debtAdded') {
+        await _deletePaymentExpense(
+          uid: uid,
+          paymentId: paymentId,
+        );
+        await _syncPurchasePaidAmount(
+          uid: uid,
+          debtId: debtId,
+          operationId: operationId,
+        );
+      }
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       throw Exception('Failed to delete payment: $e');

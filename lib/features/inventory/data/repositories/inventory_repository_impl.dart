@@ -503,10 +503,12 @@ class InventoryRepositoryImpl implements InventoryRepository {
       final description =
           '${AppStrings.purchaseInvoiceNum.tr()} #$cleanId - ${purchase.supplierName}';
 
+      if (purchase.paidAmount <= 0) return;
+
       final expense = ExpenseEntity(
         id: expenseId,
         uid: uid,
-        amount: purchase.totalAmount,
+        amount: purchase.paidAmount,
         category: categoryName.isNotEmpty ? categoryName : 'مشتريات مخزون',
         description: description,
         createdAt: purchase.createdAt,
@@ -541,7 +543,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
     required InventoryPurchaseEntity newPurchase,
   }) async {
     try {
-      await _removePurchaseFromExpenses(oldPurchase);
+      // await _removePurchaseFromExpenses(oldPurchase);
       await _syncPurchaseToExpenses(newPurchase);
     } catch (_) {}
   }
