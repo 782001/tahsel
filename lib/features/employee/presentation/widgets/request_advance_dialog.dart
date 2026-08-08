@@ -98,6 +98,7 @@ class _RequestAdvanceDialogState extends State<RequestAdvanceDialog> {
       );
 
       final expense = ExpenseEntity(
+        id: 'exp_emp_adv_${DateTime.now().millisecondsSinceEpoch}',
         uid: AppStrings.userToken,
         amount: amount,
         category: categoryName,

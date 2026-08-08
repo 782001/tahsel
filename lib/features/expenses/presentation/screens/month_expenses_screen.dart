@@ -334,7 +334,10 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
         amount: expense.amount,
         date: DateFormatter.formatNumericDate(expense.createdAt),
         expenseId: expense.id,
-        onDelete: (expense.id != null && expense.id!.startsWith('exp_pur_'))
+        onDelete: (expense.id != null &&
+                (expense.id!.startsWith('exp_pur_') ||
+                    expense.id!.startsWith('exp_pay_') ||
+                    expense.id!.startsWith('exp_emp_')))
             ? null
             : () => _confirmDelete(context, expense.id ?? ''),
       ),

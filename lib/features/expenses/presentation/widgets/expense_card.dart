@@ -131,9 +131,11 @@ class ExpenseCard extends StatelessWidget {
       );
     }
 
-    final bool isPurchaseExpense =
-        expenseId != null && expenseId!.startsWith('exp_pur_');
-    final bool canDelete = onDelete != null && !isPurchaseExpense;
+    final bool isAutomatedExpense = expenseId != null &&
+        (expenseId!.startsWith('exp_pur_') ||
+            expenseId!.startsWith('exp_pay_') ||
+            expenseId!.startsWith('exp_emp_'));
+    final bool canDelete = onDelete != null && !isAutomatedExpense;
 
     return Slidable(
       key: ValueKey(title + date + amount.toString()),

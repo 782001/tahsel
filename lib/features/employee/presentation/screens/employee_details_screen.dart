@@ -1764,7 +1764,10 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                                         },
                                       );
 
+                                  final expenseId =
+                                      'exp_emp_sal_${(payroll.id != null && payroll.id!.isNotEmpty) ? payroll.id! : DateTime.now().millisecondsSinceEpoch}';
                                   final expense = ExpenseEntity(
+                                    id: expenseId,
                                     uid: AppStrings.userToken,
                                     amount: payroll.netSalary,
                                     category: categoryName,
