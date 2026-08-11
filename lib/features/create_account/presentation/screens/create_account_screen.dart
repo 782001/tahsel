@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/error/firebase_error_handler.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -228,7 +229,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
           Navigator.pushReplacementNamed(context, AppRoutes.login);
         }
         if (state is CreateAccountError) {
-          _showError(AppStrings.failedToCreateUser.tr());
+          final errorMessage = FirebaseErrorHandler.getLocalizedMessage(state.message);
+          _showError(errorMessage);
         }
       },
       child: Scaffold(
