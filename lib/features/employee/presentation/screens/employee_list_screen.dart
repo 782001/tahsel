@@ -48,7 +48,8 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
-      appBar: AppBar(scrolledUnderElevation: 0,
+      appBar: AppBar(
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
@@ -365,7 +366,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                   color: isSelected
                       ? AppColors.primaryColor
                       : (AppColors.isDark ? Colors.grey[850] : Colors.white),
-                  borderRadius: BorderRadius.circular(24.r),
+                  borderRadius: BorderRadius.circular(10.r),
                   border: Border.all(
                     color: isSelected
                         ? AppColors.primaryColor
@@ -395,14 +396,14 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (isSelected) ...[
-                      Icon(
-                        Icons.check_circle_rounded,
-                        size: isDesktop ? 16 : 16 ,
-                        color: AppColors.isDark ? Colors.black87 : Colors.white,
-                      ),
-                      SizedBox(width: isDesktop ? 6 : 6.w),
-                    ],
+                    // if (isSelected) ...[
+                    //   Icon(
+                    //     Icons.check_circle_rounded,
+                    //     size: isDesktop ? 16 : 16 ,
+                    //     color: AppColors.isDark ? Colors.black87 : Colors.white,
+                    //   ),
+                    //   SizedBox(width: isDesktop ? 6 : 6.w),
+                    // ],
                     Text(
                       _getFilterTranslation(f),
                       style: TextStyles.customStyle(
