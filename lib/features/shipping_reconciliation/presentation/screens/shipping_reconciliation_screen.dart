@@ -61,7 +61,7 @@ class _ShippingReconciliationScreenContent extends StatelessWidget {
       case 2:
         return AppStrings.reviewColumnMapping.tr();
       case 3:
-        return AppStrings.shippingReportsReconciliationVip.tr();
+        return AppStrings.shippingReportsReconciliation.tr();
       case 1:
       default:
         return AppStrings.shippingReconciliationTitle.tr();
@@ -134,52 +134,6 @@ class _ShippingReconciliationScreenContent extends StatelessWidget {
                 ],
               ),
               centerTitle: true,
-              actions: [
-                Container(
-                  margin: EdgeInsets.symmetric(
-                    horizontal: isDesktop ? 16 : 16.w,
-                    vertical: isDesktop ? 10 : 10.h,
-                  ),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isDesktop ? 12 : 10.w,
-                    vertical: isDesktop ? 6 : 5.h,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.vipGoldStart, AppColors.vipGoldEnd],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(20.r),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.vipGoldStart.withValues(alpha: 0.35),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.workspace_premium_rounded,
-                        size: 16,
-                        color: Colors.black87,
-                      ),
-                      SizedBox(width: isDesktop ? 4 : 4.w),
-                      Text(
-                        'VIP',
-                        style: TextStyles.customStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
             ),
             body: RefreshIndicator(
               color: AppColors.primaryColor,

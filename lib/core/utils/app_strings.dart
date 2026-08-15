@@ -22,6 +22,19 @@ class AppStrings {
   static String userToken = '';
   static String userType = 'cafe';
   static bool isVip = false;
+
+  /// Single Source of Truth for Vault Eligibility
+  /// Vault is available ONLY when AppStrings.isVip == true AND isShop == true
+  static bool isVaultEnabled([bool? isShopUser]) {
+    final bool shopCheck =
+        isShopUser ?? (userType == shop || userType == 'shop');
+    return isVip && shopCheck;
+  }
+
+  static const String insufficientBalance = "insufficient_balance";
+  static const String depositToVault = "deposit_to_vault";
+  static const String depositCashToContinue = "deposit_cash_to_continue";
+
   static const String isVipKey = 'is_vip';
   static const String vipAccount = 'vip_account';
   static const String vipOnlyNotice = 'vip_only_notice';
@@ -73,7 +86,8 @@ class AppStrings {
 
   // Shipping Reconciliation
   static const String shippingReconciliation = 'shipping_reconciliation';
-  static const String shippingReconciliationDesc = 'shipping_reconciliation_desc';
+  static const String shippingReconciliationDesc =
+      'shipping_reconciliation_desc';
 
   ///-----------------------------
   ///-----------------------------
@@ -958,8 +972,10 @@ class AppStrings {
   static const String profitMargin = "profit_margin";
   static const String noCategory = "no_category";
   static const String noSupplier = "no_supplier";
-  static const String pleaseEnterQtyGreaterThanZero = "please_enter_qty_greater_than_zero";
-  static const String pleaseEnterAdjustmentReason = "please_enter_adjustment_reason";
+  static const String pleaseEnterQtyGreaterThanZero =
+      "please_enter_qty_greater_than_zero";
+  static const String pleaseEnterAdjustmentReason =
+      "please_enter_adjustment_reason";
   static const String increaseStock = "increase_stock";
   static const String decreaseStock = "decrease_stock";
   static const String adjustmentReasonHint = "adjustment_reason_hint";
@@ -980,7 +996,8 @@ class AppStrings {
   static const String emailCopiedToClipboard = "email_copied_to_clipboard";
   static const String reasonPeriodicInventory = "reason_periodic_inventory";
   static const String reasonSurplusGoods = "reason_surplus_goods";
-  static const String reasonUnregisteredPurchases = "reason_unregistered_purchases";
+  static const String reasonUnregisteredPurchases =
+      "reason_unregistered_purchases";
   static const String reasonErrorCorrection = "reason_error_correction";
   static const String reasonDamagedScrap = "reason_damaged_scrap";
   static const String reasonSampleDemo = "reason_sample_demo";
@@ -998,7 +1015,8 @@ class AppStrings {
   static const String skuCodeOptional = "sku_code_optional";
   static const String unitPlaceholder = "unit_placeholder";
   static const String pleaseEnterProductName = "please_enter_product_name";
-  static const String confirmDeletePurchaseWarning = "confirm_delete_purchase_warning";
+  static const String confirmDeletePurchaseWarning =
+      "confirm_delete_purchase_warning";
   static const String errorSharingInvoice = "error_sharing_invoice";
   static const String errorSavingInvoice = "error_saving_invoice";
   static const String paymentMethod = "payment_method";
@@ -1033,18 +1051,21 @@ class AppStrings {
   static const String overallDiscountAmount = "overall_discount_amount";
   static const String requestedQuantity = "requested_quantity";
   static const String selectedItemsCount = "selected_items_count";
-  static const String addSelectedItemsToInvoice = "add_selected_items_to_invoice";
+  static const String addSelectedItemsToInvoice =
+      "add_selected_items_to_invoice";
   static const String totalLabel = "total_label";
 
   // Shipping Reconciliation
-  static const String shippingReconciliationTitle = "shipping_reconciliation_title";
+  static const String shippingReconciliationTitle =
+      "shipping_reconciliation_title";
   static const String resetSession = "reset_session";
   static const String offlinePrivacyNotice = "offline_privacy_notice";
   static const String offlineProcessingHint = "offline_processing_hint";
   static const String internalDbFileTitle = "internal_db_file_title";
   static const String internalDbFileSubtitle = "internal_db_file_subtitle";
   static const String shippingReportFileTitle = "shipping_report_file_title";
-  static const String shippingReportFileSubtitle = "shipping_report_file_subtitle";
+  static const String shippingReportFileSubtitle =
+      "shipping_report_file_subtitle";
   static const String fileNameLabel = "file_name_label";
   static const String rowCountUnit = "row_count_unit";
   static const String changeFile = "change_file";
@@ -1085,7 +1106,8 @@ class AppStrings {
   static const String partiallyCollectedCount = "partially_collected_count";
   static const String notCollectedCount = "not_collected_count";
   static const String conflictsCount = "conflicts_count";
-  static const String searchReconciliationPlaceholder = "search_reconciliation_placeholder";
+  static const String searchReconciliationPlaceholder =
+      "search_reconciliation_placeholder";
   static const String allFilter = "all_filter";
   static const String deliveredFilter = "delivered_filter";
   static const String returnedFilter = "returned_filter";
@@ -1093,8 +1115,10 @@ class AppStrings {
   static const String noResultsMatchingFilter = "no_results_matching_filter";
   static const String newReconciliation = "new_reconciliation";
   static const String matchStatusMatched = "match_status_matched";
-  static const String matchStatusMissingFromShipping = "match_status_missing_from_shipping";
-  static const String matchStatusShippingReportOnly = "match_status_shipping_report_only";
+  static const String matchStatusMissingFromShipping =
+      "match_status_missing_from_shipping";
+  static const String matchStatusShippingReportOnly =
+      "match_status_shipping_report_only";
   static const String matchStatusConflict = "match_status_conflict";
   static const String matchStatusDuplicate = "match_status_duplicate";
   static const String statusOutForDelivery = "status_out_for_delivery";
@@ -1107,7 +1131,8 @@ class AppStrings {
   static const String orderMatchDetails = "order_match_details";
   static const String customerLabel = "customer_label";
   static const String discrepancyNotesTitle = "discrepancy_notes_title";
-  static const String financialReconciliationSection = "financial_reconciliation_section";
+  static const String financialReconciliationSection =
+      "financial_reconciliation_section";
   static const String shippingStatusLabel = "shipping_status_label";
   static const String collectionStatusLabel = "collection_status_label";
   static const String returnDestinationLabel = "return_destination_label";
@@ -1119,10 +1144,13 @@ class AppStrings {
   static const String shippingReportTitle = "shipping_report_title";
   static const String shippingStatusRawText = "shipping_status_raw_text";
   static const String shippingReturnNotes = "shipping_return_notes";
-  static const String shippingReportsReconciliationVip = "shipping_reports_reconciliation_vip";
-  static const String shippingReportsReconciliationOffline = "shipping_reports_reconciliation_offline";
+  static const String shippingReportsReconciliation =
+      "shipping_reports_reconciliation";
+  static const String shippingReportsReconciliationOffline =
+      "shipping_reports_reconciliation_offline";
   static const String returnDestInternalStore = "return_dest_internal_store";
-  static const String returnDestShippingWarehouse = "return_dest_shipping_warehouse";
+  static const String returnDestShippingWarehouse =
+      "return_dest_shipping_warehouse";
   static const String returnDestNotReturned = "return_dest_not_returned";
   static const String selectColumnFor = "select_column_for";
   static const String samplePrefix = "sample_prefix";
@@ -1130,12 +1158,14 @@ class AppStrings {
   static const String requiredForMatchingBadge = "required_for_matching_badge";
   static const String optionalBadge = "optional_badge";
   static const String sampleFromFilePrefix = "sample_from_file_prefix";
-  static const String analyzingAndReconcilingMessage = "analyzing_and_reconciling_message";
+  static const String analyzingAndReconcilingMessage =
+      "analyzing_and_reconciling_message";
   static const String exportExcelReport = "export_excel_report";
   static const String exportExcelSuccess = "export_excel_success";
   static const String exportExcelFailure = "export_excel_failure";
   static const String sheetFinancialSummary = "sheet_financial_summary";
-  static const String sheetReconciliationDetails = "sheet_reconciliation_details";
+  static const String sheetReconciliationDetails =
+      "sheet_reconciliation_details";
   static const String confidenceHigh = "confidence_high";
   static const String confidenceMedium = "confidence_medium";
   static const String confidenceLow = "confidence_low";
@@ -1166,15 +1196,18 @@ class AppStrings {
   static const String colDiscrepancyNotes = "col_discrepancy_notes";
   static const String noDiscrepancyNotes = "no_discrepancy_notes";
   static const String sheetComparisonName = "sheet_comparison_name";
-  static const String sheetComparisonBannerTitle = "sheet_comparison_banner_title";
+  static const String sheetComparisonBannerTitle =
+      "sheet_comparison_banner_title";
   static const String colCustomerInternal = "col_customer_internal";
   static const String colCustomerShipping = "col_customer_shipping";
   static const String colPhoneInternal = "col_phone_internal";
   static const String colPhoneShipping = "col_phone_shipping";
   static const String colProductInternal = "col_product_internal";
   static const String colProductShipping = "col_product_shipping";
-  static const String featureSmartOfflineMatching = "feature_smart_offline_matching";
-  static const String featurePrivacySecurity100 = "feature_privacy_security_100";
+  static const String featureSmartOfflineMatching =
+      "feature_smart_offline_matching";
+  static const String featurePrivacySecurity100 =
+      "feature_privacy_security_100";
   static const String featureExportExcelSheet = "feature_export_excel_sheet";
 
   // Cashbox Feature Strings
@@ -1204,13 +1237,31 @@ class AppStrings {
   static const String selectDate = "select_date";
   static const String loadMore = "load_more";
   static const String cashboxSourceInvoice = "cashbox_source_invoice";
-  static const String cashboxSourceCustomerDebt = "cashbox_source_customer_debt";
-  static const String cashboxSourceSupplierDebt = "cashbox_source_supplier_debt";
+  static const String cashboxSourceCustomerDebt =
+      "cashbox_source_customer_debt";
+  static const String cashboxSourceSupplierDebt =
+      "cashbox_source_supplier_debt";
   static const String cashboxSourceExpense = "cashbox_source_expense";
-  static const String cashboxSourceInventoryPurchase = "cashbox_source_inventory_purchase";
+  static const String cashboxSourceInventoryPurchase =
+      "cashbox_source_inventory_purchase";
   static const String cashboxSourceManualAdd = "cashbox_source_manual_add";
-  static const String cashboxSourceManualWithdraw = "cashbox_source_manual_withdraw";
+  static const String cashboxSourceManualWithdraw =
+      "cashbox_source_manual_withdraw";
   static const String cashboxSourceRefund = "cashbox_source_refund";
   static const String cashboxSourceAdjustment = "cashbox_source_adjustment";
+  static const String cashboxSourceEmployee = "cashbox_source_employee";
+  static const String salaryPayment = "salary_payment";
+  static const String employeeAdvance = "employee_advance";
+  static const String vaultTitle = "vault_title";
+  static const String vaultSubtitle = "vault_subtitle";
+  static const String validationAmountGreaterThanZero =
+      "validation_amount_greater_than_zero";
+  static const String currentlyAvailableBalance = "currently_available_balance";
+  static const String editManualDeposit = "edit_manual_deposit";
+  static const String editManualWithdrawal = "edit_manual_withdrawal";
+  static const String confirmDeleteTransaction = "confirm_delete_transaction";
+  static const String deleteTransactionWarning = "delete_transaction_warning";
+  static const String transactionUpdatedSuccess = "transaction_updated_success";
+  static const String transactionDeletedSuccess = "transaction_deleted_success";
+  static const String vaultDeficit = "vault_deficit";
 }
-

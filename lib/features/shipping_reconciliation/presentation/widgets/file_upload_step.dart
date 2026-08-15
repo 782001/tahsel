@@ -107,7 +107,7 @@ class FileUploadStep extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            AppStrings.shippingReportsReconciliationVip.tr(),
+                            AppStrings.shippingReportsReconciliation.tr(),
                             style: TextStyles.customStyle(
                               fontSize: isDesktop ? 16 : 14,
                               fontWeight: FontWeight.bold,

@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
-import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/currency/currency_service.dart';
@@ -28,6 +26,8 @@ import 'package:tahsel/features/settings/presentation/widgets/logout_button.dart
 import 'package:tahsel/features/settings/presentation/widgets/section_header.dart';
 import 'package:tahsel/features/settings/presentation/widgets/subscription_info_widget.dart';
 import 'package:tahsel/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_cubit.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_state.dart';
 import 'package:tahsel/routes/app_routes.dart';
@@ -181,98 +181,266 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                               SizedBox(height: isDesktop ? 32 : 32.h),
 
-                              // Appearance Section
-                              SectionHeader(title: AppStrings.appearance.tr()),
-                              BlocBuilder<ThemeCubit, ThemeState>(
-                                builder: (context, themeState) {
-                                  final isDark =
-                                      themeState.themeMode == ThemeMode.dark;
-                                  return Row(
-                                    children: [
-                                      Expanded(
-                                        child: AppearanceCard(
-                                          title: AppStrings.lightMode.tr(),
-                                          icon: Icons.light_mode_rounded,
-                                          isSelected: !isDark,
-                                          onTap: () {
-                                            setState(() {});
-                                            context
-                                                .read<ThemeCubit>()
-                                                .toLightMode();
-                                          },
-                                        ),
-                                      ),
-                                      SizedBox(width: isDesktop ? 16 : 16.w),
-                                      Expanded(
-                                        child: AppearanceCard(
-                                          title: AppStrings.darkMode.tr(),
-                                          icon: Icons.dark_mode_rounded,
-                                          isSelected: isDark,
-                                          onTap: () {
-                                            context
-                                                .read<ThemeCubit>()
-                                                .toDarkMode();
-                                            setState(() {});
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ),
-                              SizedBox(height: isDesktop ? 32 : 32.h),
-
-                              // Language Section
-                              SectionHeader(
-                                title: AppStrings.changeLanguage.tr(),
-                              ),
-                              Text(
-                                AppStrings.changeLanguageDesc.tr(),
-                                style: TextStyles.customStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w400,
-                                  color: AppColors.sandText,
-                                ),
-                              ),
-                              SizedBox(height: isDesktop ? 24 : 24.h),
-
-                              LanguageOption(
-                                title: AppStrings.arabic.tr(),
-                                subtitle: AppStrings.arabicDesc.tr(),
-                                isSelected: isArabic,
-                                onTap: () {
-                                  if (!isArabic) {
-                                    context.read<LocaleCubit>().toArabic();
-                                  }
-                                },
-                              ),
-                              SizedBox(height: isDesktop ? 16 : 16.h),
-                              LanguageOption(
-                                title: AppStrings.english.tr(),
-                                subtitle: AppStrings.englishDesc.tr(),
-                                isSelected: !isArabic,
-                                onTap: () {
-                                  if (isArabic) {
-                                    context.read<LocaleCubit>().toEnglish();
-                                  }
-                                },
-                              ),
-                              SizedBox(height: isDesktop ? 32 : 32.h),
-
-                              if (!Platform.isIOS ||
-                                  (AppStrings.isVip && isShop))
+                              // Vault / Cash Register (VIP + Shop) Section
+                              if ((!Platform.isIOS && isShop) ||
+                                  (AppStrings.isVip && isShop)) ...[
                                 SizedBox(height: isDesktop ? 16 : 16.h),
-                              // Inventory Management (VIP) Section
-                              if (!Platform.isIOS ||
-                                  (AppStrings.isVip && isShop))
+                                SectionHeader(
+                                  title: AppStrings.vaultTitle.tr(),
+                                ),
+                                SizedBox(height: isDesktop ? 5 : 5.h),
+                                InkWell(
+                                  onTap: () {
+                                    if (!(AppStrings.isVip && isShop)) {
+                                      _showVipNoticeDialog(context);
+                                      return;
+                                    }
+                                    Navigator.pushNamed(
+                                      context,
+                                      AppRoutes.vault,
+                                    );
+                                  },
+                                  borderRadius: BorderRadius.circular(20.r),
+                                  child: Container(
+                                    clipBehavior: Clip.antiAlias,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(20.r),
+                                      gradient: const LinearGradient(
+                                        colors: [
+                                          AppColors.vaultEmeraldStart,
+                                          AppColors.vaultEmeraldEnd,
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppColors.vaultEmeraldStart
+                                              .withValues(alpha: 0.3),
+                                          blurRadius: 16,
+                                          offset: const Offset(0, 8),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Stack(
+                                      children: [
+                                        // Decorative Background Glow Circles
+                                        Positioned(
+                                          right: -30,
+                                          top: -30,
+                                          child: Container(
+                                            width: 130.w,
+                                            height: 130.h,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: AppColors.vipGoldStart
+                                                  .withValues(alpha: 0.12),
+                                            ),
+                                          ),
+                                        ),
+                                        Positioned(
+                                          left: -20,
+                                          bottom: -20,
+                                          child: Container(
+                                            width: 100.w,
+                                            height: 100.h,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: Colors.white.withValues(
+                                                alpha: 0.08,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: EdgeInsets.all(
+                                            isDesktop ? 22 : 18.w,
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Container(
+                                                    padding: EdgeInsets.all(
+                                                      isDesktop ? 14 : 12.w,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      gradient: LinearGradient(
+                                                        colors: [
+                                                          AppColors.whiteColor
+                                                              .withValues(
+                                                                alpha: 0.25,
+                                                              ),
+                                                          AppColors.whiteColor
+                                                              .withValues(
+                                                                alpha: 0.1,
+                                                              ),
+                                                        ],
+                                                      ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            isDesktop
+                                                                ? 16
+                                                                : 14.r,
+                                                          ),
+                                                      border: Border.all(
+                                                        color: AppColors
+                                                            .whiteColor
+                                                            .withValues(
+                                                              alpha: 0.3,
+                                                            ),
+                                                        width: 1,
+                                                      ),
+                                                    ),
+                                                    child: const Icon(
+                                                      Icons
+                                                          .account_balance_wallet_rounded,
+                                                      color: AppColors
+                                                          .vipGoldStart,
+                                                      size: 28,
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    width: isDesktop
+                                                        ? 16
+                                                        : 14.w,
+                                                  ),
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Text(
+                                                          AppStrings.vaultTitle
+                                                              .tr(),
+                                                          style:
+                                                              TextStyles.customStyle(
+                                                                fontSize: 18,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                color: AppColors
+                                                                    .whiteColor,
+                                                              ),
+                                                        ),
+                                                        SizedBox(
+                                                          height: isDesktop
+                                                              ? 4
+                                                              : 4.h,
+                                                        ),
+                                                        Text(
+                                                          AppStrings
+                                                              .vaultSubtitle
+                                                              .tr(),
+                                                          style:
+                                                              TextStyles.customStyle(
+                                                                fontSize: 12,
+                                                                color: AppColors
+                                                                    .whiteColor
+                                                                    .withValues(
+                                                                      alpha:
+                                                                          0.85,
+                                                                    ),
+                                                              ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  // VIP Golden Metallic Badge
+                                                  Container(
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                          horizontal: isDesktop
+                                                              ? 12
+                                                              : 10.w,
+                                                          vertical: isDesktop
+                                                              ? 6
+                                                              : 5.h,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      gradient:
+                                                          const LinearGradient(
+                                                            colors: [
+                                                              AppColors
+                                                                  .vipGoldStart,
+                                                              AppColors
+                                                                  .vipGoldEnd,
+                                                            ],
+                                                            begin: Alignment
+                                                                .topLeft,
+                                                            end: Alignment
+                                                                .bottomRight,
+                                                          ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            isDesktop
+                                                                ? 20
+                                                                : 20.r,
+                                                          ),
+                                                      boxShadow: [
+                                                        BoxShadow(
+                                                          color: AppColors
+                                                              .vipGoldStart
+                                                              .withValues(
+                                                                alpha: 0.4,
+                                                              ),
+                                                          blurRadius: 8,
+                                                          offset: const Offset(
+                                                            0,
+                                                            2,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        const Icon(
+                                                          Icons
+                                                              .workspace_premium_rounded,
+                                                          size: 16,
+                                                          color: Colors.black87,
+                                                        ),
+                                                        SizedBox(
+                                                          width: isDesktop
+                                                              ? 4
+                                                              : 4.w,
+                                                        ),
+                                                        Text(
+                                                          'VIP',
+                                                          style:
+                                                              TextStyles.customStyle(
+                                                                fontSize: 12,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w900,
+                                                                color: Colors
+                                                                    .black87,
+                                                              ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(height: isDesktop ? 32 : 32.h),
+
+                                // Inventory Management (VIP) Section
                                 SectionHeader(
                                   title: AppStrings.inventoryManagementVIP.tr(),
                                 ),
-                              if (!Platform.isIOS ||
-                                  (AppStrings.isVip && isShop))
                                 SizedBox(height: isDesktop ? 5 : 5.h),
-                              if (!Platform.isIOS ||
-                                  (AppStrings.isVip && isShop))
                                 InkWell(
                                   onTap: () {
                                     if (!(AppStrings.isVip && isShop)) {
@@ -451,8 +619,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                                       gradient:
                                                           const LinearGradient(
                                                             colors: [
-                                                              Color(0xFFFFD700),
-                                                              Color(0xFFFFA500),
+                                                              AppColors
+                                                                  .vipGoldStart,
+                                                              AppColors
+                                                                  .vipGoldEnd,
                                                             ],
                                                             begin: Alignment
                                                                 .topLeft,
@@ -467,10 +637,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                                           ),
                                                       boxShadow: [
                                                         BoxShadow(
-                                                          color:
-                                                              const Color(
-                                                                0xFFFFD700,
-                                                              ).withValues(
+                                                          color: AppColors
+                                                              .vipGoldStart
+                                                              .withValues(
                                                                 alpha: 0.4,
                                                               ),
                                                           blurRadius: 8,
@@ -566,32 +735,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     ),
                                   ),
                                 ),
-                              SizedBox(height: isDesktop ? 32 : 32.h),
+                                SizedBox(height: isDesktop ? 32 : 32.h),
+                              ],
 
-                              if (!Platform.isIOS ||
-                                  (AppStrings.isVip && isShop))
-                                SizedBox(height: isDesktop ? 16 : 16.h),
-
-                              // Shipping Reports Reconciliation (VIP) Section
-                              if (!Platform.isIOS ||
-                                  (AppStrings.isVip && isShop))
+                              // Employee Management (VIP) Section work for cafe and shops accounts
+                              if (!Platform.isIOS || (AppStrings.isVip)) ...[
                                 SectionHeader(
-                                  title: AppStrings.shippingReportsReconciliationVip.tr(),
+                                  title: AppStrings.employeeManagement.tr(),
                                 ),
-                              if (!Platform.isIOS ||
-                                  (AppStrings.isVip && isShop))
                                 SizedBox(height: isDesktop ? 5 : 5.h),
-                              if (!Platform.isIOS ||
-                                  (AppStrings.isVip && isShop))
                                 InkWell(
                                   onTap: () {
-                                    if (!(AppStrings.isVip && isShop)) {
+                                    if (!(AppStrings.isVip)) {
                                       _showVipNoticeDialog(context);
                                       return;
                                     }
                                     Navigator.pushNamed(
                                       context,
-                                      AppRoutes.shippingReconciliation,
+                                      AppRoutes.employeeList,
                                     );
                                   },
                                   borderRadius: BorderRadius.circular(20.r),
@@ -602,16 +763,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       gradient: LinearGradient(
                                         colors: [
                                           AppColors.primaryColor,
-                                          AppColors.success,
+                                          AppColors.primaryColor.withValues(
+                                            alpha: 0.82,
+                                          ),
                                         ],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       ),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: AppColors.success.withValues(
-                                            alpha: 0.3,
-                                          ),
+                                          color: AppColors.primaryColor
+                                              .withValues(alpha: 0.3),
                                           blurRadius: 16,
                                           offset: const Offset(0, 8),
                                         ),
@@ -619,6 +781,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     ),
                                     child: Stack(
                                       children: [
+                                        // Decorative Background Glow Circles
                                         Positioned(
                                           right: -30,
                                           top: -30,
@@ -629,6 +792,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                               shape: BoxShape.circle,
                                               color: AppColors.vipGoldStart
                                                   .withValues(alpha: 0.12),
+                                            ),
+                                          ),
+                                        ),
+                                        Positioned(
+                                          left: -20,
+                                          bottom: -20,
+                                          child: Container(
+                                            width: 100.w,
+                                            height: 100.h,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: Colors.white.withValues(
+                                                alpha: 0.08,
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -675,8 +852,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                                       ),
                                                     ),
                                                     child: const Icon(
-                                                      Icons.analytics_rounded,
-                                                      color: Colors.white,
+                                                      Icons.groups_rounded,
+                                                      color: AppColors
+                                                          .vipGoldStart,
                                                       size: 28,
                                                     ),
                                                   ),
@@ -692,7 +870,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                                               .start,
                                                       children: [
                                                         Text(
-                                                          AppStrings.shippingReportsReconciliationOffline.tr(),
+                                                          AppStrings
+                                                              .employeeManagement
+                                                              .tr(),
                                                           style:
                                                               TextStyles.customStyle(
                                                                 fontSize: 18,
@@ -709,7 +889,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                                               : 4.h,
                                                         ),
                                                         Text(
-                                                          AppStrings.shippingReconciliationDesc.tr(),
+                                                          AppStrings
+                                                              .employeeManagementDesc
+                                                              .tr(),
                                                           style:
                                                               TextStyles.customStyle(
                                                                 fontSize: 12,
@@ -724,6 +906,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                                       ],
                                                     ),
                                                   ),
+                                                  // VIP Golden Metallic Badge
                                                   Container(
                                                     padding:
                                                         EdgeInsets.symmetric(
@@ -738,8 +921,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                                       gradient:
                                                           const LinearGradient(
                                                             colors: [
-                                                              Color(0xFFFFD700),
-                                                              Color(0xFFFFA500),
+                                                              AppColors
+                                                                  .vipGoldStart,
+                                                              AppColors
+                                                                  .vipGoldEnd,
                                                             ],
                                                             begin: Alignment
                                                                 .topLeft,
@@ -752,6 +937,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                                                 ? 20
                                                                 : 20.r,
                                                           ),
+                                                      boxShadow: [
+                                                        BoxShadow(
+                                                          color: AppColors
+                                                              .vipGoldStart
+                                                              .withValues(
+                                                                alpha: 0.4,
+                                                              ),
+                                                          blurRadius: 8,
+                                                          offset: const Offset(
+                                                            0,
+                                                            2,
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
                                                     child: Row(
                                                       mainAxisSize:
@@ -792,134 +991,207 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     ),
                                   ),
                                 ),
-                              SizedBox(height: isDesktop ? 32 : 32.h),
+                                SizedBox(height: isDesktop ? 32 : 32.h),
+                              ],
 
-                              // Employee Management Section
-                              SectionHeader(
-                                title: AppStrings.employeeManagement.tr(),
-                              ),
-                              SizedBox(height: isDesktop ? 5 : 5.h),
-                              InkWell(
-                                onTap: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.employeeList,
-                                  );
-                                },
-                                borderRadius: BorderRadius.circular(16.r),
-                                child: Container(
-                                  padding: EdgeInsets.all(
-                                    isDesktop ? 20 : 18.w,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        AppColors.primaryColor,
-                                        AppColors.primaryColor.withValues(
-                                          alpha: 0.8,
+                              // Shipping Reports Reconciliation Section (Non-VIP)
+                              if (isShop)
+                                SectionHeader(
+                                  title: AppStrings
+                                      .shippingReportsReconciliationOffline
+                                      .tr(),
+                                ),
+                              if (isShop) SizedBox(height: isDesktop ? 5 : 5.h),
+                              if (isShop)
+                                InkWell(
+                                  onTap: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      AppRoutes.shippingReconciliation,
+                                    );
+                                  },
+                                  borderRadius: BorderRadius.circular(16.r),
+                                  child: Container(
+                                    padding: EdgeInsets.all(
+                                      isDesktop ? 20 : 18.w,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          AppColors.primaryColor,
+                                          AppColors.success,
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      borderRadius: BorderRadius.circular(16.r),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppColors.success.withValues(
+                                            alpha: 0.3,
+                                          ),
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 6),
                                         ),
                                       ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
                                     ),
-                                    borderRadius: BorderRadius.circular(16.r),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.primaryColor
-                                            .withValues(alpha: 0.3),
-                                        blurRadius: 12,
-                                        offset: const Offset(0, 6),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        padding: EdgeInsets.all(
-                                          isDesktop ? 12 : 12.w,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.whiteColor
-                                              .withValues(alpha: 0.2),
-                                          borderRadius: BorderRadius.circular(
-                                            isDesktop ? 12 : 12.r,
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          padding: EdgeInsets.all(
+                                            isDesktop ? 12 : 12.w,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.whiteColor
+                                                .withValues(alpha: 0.2),
+                                            borderRadius: BorderRadius.circular(
+                                              isDesktop ? 12 : 12.r,
+                                            ),
+                                          ),
+                                          child: Icon(
+                                            Icons.analytics_rounded,
+                                            color: AppColors.whiteColor,
+                                            size: 28,
                                           ),
                                         ),
-                                        child: Icon(
-                                          Icons.groups_rounded,
-                                          color: AppColors.whiteColor,
-                                          size: 28,
+                                        SizedBox(width: isDesktop ? 16 : 16.w),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                AppStrings
+                                                    .shippingReportsReconciliationOffline
+                                                    .tr(),
+                                                style: TextStyles.customStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: AppColors.whiteColor,
+                                                ),
+                                              ),
+                                              SizedBox(
+                                                height: isDesktop ? 6 : 6.h,
+                                              ),
+                                              Text(
+                                                AppStrings
+                                                    .shippingReconciliationDesc
+                                                    .tr(),
+                                                style: TextStyles.customStyle(
+                                                  fontSize: 13,
+                                                  color: AppColors.whiteColor
+                                                      .withValues(alpha: 0.9),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: isDesktop ? 12 : 12.w,
+                                            vertical: isDesktop ? 8 : 8.h,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.whiteColor
+                                                .withValues(alpha: 0.2),
+                                            borderRadius: BorderRadius.circular(
+                                              isDesktop ? 20 : 20.r,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.arrow_forward_ios_rounded,
+                                                size: 14,
+                                                color: AppColors.whiteColor,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              SizedBox(height: isDesktop ? 32 : 32.h),
+
+                              // Appearance Section
+                              SectionHeader(title: AppStrings.appearance.tr()),
+                              BlocBuilder<ThemeCubit, ThemeState>(
+                                builder: (context, themeState) {
+                                  final isDark =
+                                      themeState.themeMode == ThemeMode.dark;
+                                  return Row(
+                                    children: [
+                                      Expanded(
+                                        child: AppearanceCard(
+                                          title: AppStrings.lightMode.tr(),
+                                          icon: Icons.light_mode_rounded,
+                                          isSelected: !isDark,
+                                          onTap: () {
+                                            setState(() {});
+                                            context
+                                                .read<ThemeCubit>()
+                                                .toLightMode();
+                                          },
                                         ),
                                       ),
                                       SizedBox(width: isDesktop ? 16 : 16.w),
                                       Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              AppStrings.employeeManagement
-                                                  .tr(),
-                                              style: TextStyles.customStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppColors.whiteColor,
-                                              ),
-                                            ),
-                                            SizedBox(
-                                              height: isDesktop ? 6 : 6.h,
-                                            ),
-                                            Text(
-                                              AppStrings.employeeManagementDesc
-                                                  .tr(),
-                                              style: TextStyles.customStyle(
-                                                fontSize: 13,
-                                                color: AppColors.whiteColor
-                                                    .withValues(alpha: 0.9),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      Container(
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: isDesktop ? 12 : 12.w,
-                                          vertical: isDesktop ? 8 : 8.h,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.whiteColor
-                                              .withValues(alpha: 0.2),
-                                          borderRadius: BorderRadius.circular(
-                                            isDesktop ? 20 : 20.r,
-                                          ),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              Icons.star_rounded,
-                                              size: 16,
-                                              color: AppColors.whiteColor,
-                                            ),
-                                            SizedBox(
-                                              width: isDesktop ? 4 : 4.w,
-                                            ),
-                                            Icon(
-                                              Icons.arrow_forward_ios_rounded,
-                                              size: 14,
-                                              color: AppColors.whiteColor,
-                                            ),
-                                          ],
+                                        child: AppearanceCard(
+                                          title: AppStrings.darkMode.tr(),
+                                          icon: Icons.dark_mode_rounded,
+                                          isSelected: isDark,
+                                          onTap: () {
+                                            context
+                                                .read<ThemeCubit>()
+                                                .toDarkMode();
+                                            setState(() {});
+                                          },
                                         ),
                                       ),
                                     ],
-                                  ),
+                                  );
+                                },
+                              ),
+                              SizedBox(height: isDesktop ? 32 : 32.h),
+
+                              // Language Section
+                              SectionHeader(
+                                title: AppStrings.changeLanguage.tr(),
+                              ),
+                              Text(
+                                AppStrings.changeLanguageDesc.tr(),
+                                style: TextStyles.customStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  color: AppColors.sandText,
                                 ),
                               ),
+                              SizedBox(height: isDesktop ? 24 : 24.h),
 
-                              if (!Platform.isIOS)
-                                SizedBox(height: isDesktop ? 32 : 32.h),
-
+                              LanguageOption(
+                                title: AppStrings.arabic.tr(),
+                                subtitle: AppStrings.arabicDesc.tr(),
+                                isSelected: isArabic,
+                                onTap: () {
+                                  if (!isArabic) {
+                                    context.read<LocaleCubit>().toArabic();
+                                  }
+                                },
+                              ),
+                              SizedBox(height: isDesktop ? 16 : 16.h),
+                              LanguageOption(
+                                title: AppStrings.english.tr(),
+                                subtitle: AppStrings.englishDesc.tr(),
+                                isSelected: !isArabic,
+                                onTap: () {
+                                  if (isArabic) {
+                                    context.read<LocaleCubit>().toEnglish();
+                                  }
+                                },
+                              ),
+                              SizedBox(height: isDesktop ? 32 : 32.h),
                               // Subscription Section
                               if (!Platform.isIOS)
                                 SectionHeader(
@@ -940,7 +1212,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 builder: (context, activeCurrency, child) {
                                   return InkWell(
                                     onTap: () async {
-                                      final isOffline = context.read<ConnectivityCubit>().state is ConnectivityDisconnected;
+                                      final isOffline =
+                                          context
+                                                  .read<ConnectivityCubit>()
+                                                  .state
+                                              is ConnectivityDisconnected;
                                       if (isOffline) {
                                         showfailureToast(
                                           AppStrings.noInternetConnection.tr(),
@@ -1029,7 +1305,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               SectionHeader(title: AppStrings.account.tr()),
                               InkWell(
                                 onTap: () async {
-                                  final isOffline = context.read<ConnectivityCubit>().state is ConnectivityDisconnected;
+                                  final isOffline =
+                                      context.read<ConnectivityCubit>().state
+                                          is ConnectivityDisconnected;
                                   if (isOffline) {
                                     showfailureToast(
                                       AppStrings.noInternetConnection.tr(),
@@ -1512,7 +1790,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: const Color(0xFFFFD700)),
+          Icon(icon, size: 12, color: AppColors.vipGoldStart),
           SizedBox(width: 4.w),
           Text(
             label,

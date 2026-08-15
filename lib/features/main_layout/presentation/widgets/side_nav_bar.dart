@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
@@ -6,6 +8,8 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/assets.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
+import 'package:tahsel/features/main_layout/presentation/widgets/side_nav_bar_action_nav_tile.dart';
+import 'package:tahsel/routes/app_routes.dart';
 
 class SideNavBar extends StatelessWidget {
   final MainLayoutCubit cubit;
@@ -137,6 +141,47 @@ class SideNavBar extends StatelessWidget {
                   isSelected: cubit.currentIndex == 4,
                   onTap: () => cubit.changeBottomNav(4),
                 ),
+                if ((!Platform.isIOS && isShop) ||
+                    (AppStrings.isVip && isShop)) ...[
+                  const SizedBox(height: 16),
+                  _buildSectionHeader(context, AppStrings.vipAccount.tr()),
+                  SideNavBarActionNavTile(
+                    icon: Icons.account_balance_wallet_rounded,
+                    label: AppStrings.vaultTitle.tr(),
+                    tag: "VIP ✨",
+                    onTap: () => Navigator.pushNamed(context, AppRoutes.vault),
+                  ),
+                  SideNavBarActionNavTile(
+                    icon: Icons.inventory_2_rounded,
+                    label: AppStrings.inventoryManagementVIP.tr(),
+                    tag: "VIP ✨",
+                    onTap: () =>
+                        Navigator.pushNamed(context, AppRoutes.inventoryMain),
+                  ),
+                ],
+                if (!Platform.isIOS || (AppStrings.isVip)) ...[
+                  if (!isShop) const SizedBox(height: 16),
+                  if (!isShop)
+                    _buildSectionHeader(context, AppStrings.vipAccount.tr()),
+                  SideNavBarActionNavTile(
+                    icon: Icons.badge_rounded,
+                    label: AppStrings.employeeManagement.tr(),
+                    tag: "VIP ✨",
+                    onTap: () =>
+                        Navigator.pushNamed(context, AppRoutes.employeeList),
+                  ),
+                ],
+
+                if (isShop) const SizedBox(height: 8),
+                if (isShop)
+                  SideNavBarActionNavTile(
+                    icon: Icons.local_shipping_rounded,
+                    label: AppStrings.shippingReportsReconciliationOffline.tr(),
+                    onTap: () => Navigator.pushNamed(
+                      context,
+                      AppRoutes.shippingReconciliation,
+                    ),
+                  ),
 
                 const SizedBox(height: 16),
                 _buildSectionHeader(context, AppStrings.other.tr()),
@@ -147,6 +192,7 @@ class SideNavBar extends StatelessWidget {
                   isSelected: cubit.currentIndex == 5,
                   onTap: () => cubit.changeBottomNav(5),
                 ),
+                const SizedBox(height: 16),
               ],
             ),
           ),

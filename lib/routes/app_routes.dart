@@ -6,6 +6,8 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/auth/presentation/screens/login_screen.dart';
+import 'package:tahsel/features/cashbox/presentation/cubit/vault_cubit.dart';
+import 'package:tahsel/features/cashbox/presentation/screens/vault_screen.dart';
 import 'package:tahsel/features/create_account/presentation/screens/create_account_screen.dart';
 import 'package:tahsel/features/customer/presentation/screens/customer_report_details_screen.dart';
 import 'package:tahsel/features/customer/presentation/screens/customers_list_screen.dart';
@@ -99,15 +101,25 @@ class AppRoutes {
   static const String inventoryStockMovements = '/inventory-stock-movements';
   static const String inventoryAnalytics = '/inventory-analytics';
 
+  // Vault Route
+  static const String vault = '/vault';
+
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
+      case vault:
+        if (!AppStrings.isVaultEnabled()) return _vipRestrictedRoute();
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (_) => di.sl<VaultCubit>(),
+            child: VaultScreen(uid: AppStrings.userToken),
+          ),
+        );
       case shippingReconciliation:
-        if (!AppStrings.isVip) return _vipRestrictedRoute();
         return MaterialPageRoute(
           builder: (_) => const ShippingReconciliationScreen(),
         );
       case inventoryMain:
-        if (!AppStrings.isVip) return _vipRestrictedRoute();
+        if (!AppStrings.isVaultEnabled()) return _vipRestrictedRoute();
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
             create: (_) => di.sl<InventoryDashboardCubit>(),
@@ -183,6 +195,7 @@ class AppRoutes {
           ),
         );
       case employeeList:
+        if (!AppStrings.isVip) return _vipRestrictedRoute();
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: di.sl<EmployeeCubit>(),
@@ -190,6 +203,7 @@ class AppRoutes {
           ),
         );
       case employeeDetails:
+        if (!AppStrings.isVip) return _vipRestrictedRoute();
         final employee = settings.arguments as EmployeeEntity;
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
@@ -198,6 +212,7 @@ class AppRoutes {
           ),
         );
       case employeeReports:
+        if (!AppStrings.isVip) return _vipRestrictedRoute();
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: di.sl<EmployeeCubit>(),

@@ -250,7 +250,7 @@ class _SubscriptionInfoWidgetState extends State<SubscriptionInfoWidget> {
                       children: [
                         Icon(
                           isVip
-                              ? Icons.stars_rounded
+                              ? Icons.workspace_premium_rounded
                               : Icons.star_border_rounded,
                           size: isDesktop ? 14 : 14,
                           color: isVip
@@ -298,7 +298,7 @@ class _SubscriptionInfoWidgetState extends State<SubscriptionInfoWidget> {
 
             // Rows
             _buildDetailRow(
-              icon: Icons.stars_rounded,
+              icon: Icons.workspace_premium_rounded,
               label: AppStrings.vipAccount.tr(),
               value: isVip ? 'VIP ✨' : 'Standard',
               valueColor: isVip ? AppColors.vipGoldStart : AppColors.sandText,
