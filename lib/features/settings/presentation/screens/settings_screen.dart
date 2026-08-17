@@ -153,7 +153,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: Center(
                     child: ConstrainedBox(
                       constraints: BoxConstraints(
-                        maxWidth: isDesktop ? 600 : double.infinity,
+                        maxWidth: isDesktop ? 800 : double.infinity,
                       ),
                       child: SingleChildScrollView(
                         physics: const BouncingScrollPhysics(),
