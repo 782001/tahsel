@@ -24,144 +24,137 @@ class PurchaseSearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
+    final hasDate = selectedDateRange != null;
+    final hasText = searchController.text.trim().isNotEmpty;
+
     return Container(
-      padding: EdgeInsets.all(isDesktop ? 12 : 12.w),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: Column(
-        children: [
-          TextField(
-            controller: searchController,
-            decoration: InputDecoration(
-              hintText: AppStrings.searchInvoiceHint.tr(),
-              hintStyle: TextStyles.customStyle(
-                fontSize: 12,
-                color: AppColors.blackLight,
-              ),
-              prefixIcon: Icon(
-                Icons.search_rounded,
-                color: AppColors.blackLight,
-              ),
-              suffixIcon: searchController.text.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear_rounded),
-                      onPressed: () {
-                        searchController.clear();
-                      },
-                    )
-                  : null,
-              filled: true,
-              fillColor: AppColors.scafoldBackGround,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: isDesktop ? 16 : 16.w,
-                vertical: isDesktop ? 12 : 12.h,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10.r),
-                borderSide: BorderSide.none,
-              ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(
+              alpha: AppColors.isDark ? 0.2 : 0.03,
             ),
-          ),
-          SizedBox(height: isDesktop ? 10 : 10.h),
-          Row(
-            children: [
-              Expanded(
-                child: InkWell(
-                  onTap: onSelectDateRange,
-                  borderRadius: BorderRadius.circular(10.r),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isDesktop ? 12 : 12.w,
-                      vertical: isDesktop ? 10 : 10.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: selectedDateRange != null
-                          ? AppColors.primaryColor.withValues(alpha: 0.1)
-                          : AppColors.scafoldBackGround,
-                      borderRadius: BorderRadius.circular(10.r),
-                      border: selectedDateRange != null
-                          ? Border.all(
-                              color: AppColors.primaryColor.withValues(
-                                alpha: 0.3,
-                              ),
-                            )
-                          : null,
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_month_rounded,
-                          size: 18,
-                          color: selectedDateRange != null
-                              ? AppColors.primaryColor
-                              : AppColors.blackLight,
-                        ),
-                        SizedBox(width: isDesktop ? 8 : 8.w),
-                        Expanded(
-                          child: Text(
-                            selectedDateRange != null
-                                ? '${DateFormat('yyyy/MM/dd').format(selectedDateRange!.start)} - ${DateFormat('yyyy/MM/dd').format(selectedDateRange!.end)}'
-                                : AppStrings.selectDatePeriod.tr(),
-                            style: TextStyles.customStyle(
-                              fontSize: 12,
-                              fontWeight: selectedDateRange != null
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                              color: selectedDateRange != null
-                                  ? AppColors.primaryColor
-                                  : AppColors.sandText,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              if (searchController.text.isNotEmpty ||
-                  selectedDateRange != null) ...[
-                SizedBox(width: isDesktop ? 8 : 8.w),
-                InkWell(
-                  onTap: onClearFilters,
-                  borderRadius: BorderRadius.circular(10.r),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isDesktop ? 12 : 12.w,
-                      vertical: isDesktop ? 10 : 10.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.error.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10.r),
-                      border: Border.all(
-                        color: AppColors.error.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.refresh_rounded,
-                          size: 16,
-                          color: AppColors.error,
-                        ),
-                        SizedBox(width: 4.w),
-                        Text(
-                          AppStrings.clearFilter.tr(),
-                          style: TextStyles.customStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.error,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ],
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
+      ),
+      child: TextField(
+        controller: searchController,
+        style: TextStyles.customStyle(
+          fontSize: 13,
+          color: AppColors.textColor,
+        ),
+        decoration: InputDecoration(
+          hintText: AppStrings.searchInvoiceHint.tr(),
+          hintStyle: TextStyles.customStyle(
+            fontSize: 12,
+            color: AppColors.blackLight,
+          ),
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            color: (hasText || hasDate)
+                ? AppColors.primaryColor
+                : AppColors.blackLight,
+            size: 22.r,
+          ),
+          suffixIcon: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Date Range Filter Button / Active Chip
+              InkWell(
+                onTap: onSelectDateRange,
+                borderRadius: BorderRadius.circular(8.r),
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: hasDate ? (isDesktop ? 10 : 8.w) : (isDesktop ? 8 : 6.w),
+                    vertical: isDesktop ? 8 : 6.h,
+                  ),
+                  margin: EdgeInsets.symmetric(horizontal: isDesktop ? 6 : 4.w),
+                  decoration: BoxDecoration(
+                    color: hasDate
+                        ? AppColors.primaryColor.withValues(alpha: 0.12)
+                        : AppColors.scafoldBackGround,
+                    borderRadius: BorderRadius.circular(8.r),
+                    border: hasDate
+                        ? Border.all(
+                            color: AppColors.primaryColor.withValues(alpha: 0.3),
+                            width: 1,
+                          )
+                        : null,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.calendar_month_rounded,
+                        size: 16.r,
+                        color: hasDate
+                            ? AppColors.primaryColor
+                            : AppColors.blackLight,
+                      ),
+                      if (hasDate) ...[
+                        SizedBox(width: 4.w),
+                        Text(
+                          '${DateFormat('MM/dd').format(selectedDateRange!.start)} - ${DateFormat('MM/dd').format(selectedDateRange!.end)}',
+                          style: TextStyles.customStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryColor,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+
+              // Clear Button (if any filter is active)
+              if (hasText || hasDate)
+                IconButton(
+                  icon: Icon(
+                    Icons.cancel_rounded,
+                    color: AppColors.error,
+                    size: 20.r,
+                  ),
+                  tooltip: AppStrings.clearFilter.tr(),
+                  onPressed: onClearFilters,
+                ),
+              SizedBox(width: 4.w),
+            ],
+          ),
+          filled: true,
+          fillColor: AppColors.surface,
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: isDesktop ? 16 : 16.w,
+            vertical: isDesktop ? 12 : 12.h,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.r),
+            borderSide: BorderSide(
+              color: (hasText || hasDate)
+                  ? AppColors.primaryColor.withValues(alpha: 0.3)
+                  : AppColors.dividerColor.withValues(alpha: 0.3),
+            ),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.r),
+            borderSide: BorderSide(
+              color: (hasText || hasDate)
+                  ? AppColors.primaryColor.withValues(alpha: 0.3)
+                  : AppColors.dividerColor.withValues(alpha: 0.3),
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.r),
+            borderSide: BorderSide(
+              color: AppColors.primaryColor,
+              width: 1.5,
+            ),
+          ),
+        ),
       ),
     );
   }

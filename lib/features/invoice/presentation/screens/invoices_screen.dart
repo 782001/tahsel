@@ -37,14 +37,20 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _searchController.addListener(_onSearchChanged);
     final uid = AppStrings.userToken;
     if (uid.isNotEmpty) {
       context.read<InvoiceCubit>().fetchInvoices(uid);
     }
   }
 
+  void _onSearchChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
+    _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -136,125 +142,15 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                   // ── App Bar ─────────────────────────────────────────────────
                   const InvoicesAppBar(),
 
-                  // ── Search Bar ──────────────────────────────────────────────
+                  // ── Unified Search & Date Filter Bar ────────────────────────
                   InvoiceSearchBar(
                     controller: _searchController,
                     onChanged: (q) => context.read<InvoiceCubit>().search(q),
+                    selectedDateRange: _selectedDateRange,
+                    onSelectDateRange: () => _pickDateRange(context),
+                    onClearFilters: _clearFilters,
                   ),
-
-                  // ── Date Range Filter Bar ─────────────────────────────────────
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 4.h,
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: InkWell(
-                            onTap: () => _pickDateRange(context),
-                            borderRadius: BorderRadius.circular(10.r),
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 12.w,
-                                vertical: 10.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: _selectedDateRange != null
-                                    ? AppColors.primaryColor
-                                        .withValues(alpha: 0.1)
-                                    : AppColors.surface,
-                                borderRadius: BorderRadius.circular(10.r),
-                                border: Border.all(
-                                  color: _selectedDateRange != null
-                                      ? AppColors.primaryColor
-                                      : AppColors.dividerColor,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.date_range_rounded,
-                                    size: 18,
-                                    color: AppColors.primaryColor,
-                                  ),
-                                  SizedBox(width: 8.w),
-                                  Expanded(
-                                    child: Text(
-                                      _selectedDateRange != null
-                                          ? '${DateFormat('yyyy/MM/dd').format(_selectedDateRange!.start)} - ${DateFormat('yyyy/MM/dd').format(_selectedDateRange!.end)}'
-                                          : AppStrings.selectDatePeriod.tr(),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyles.customStyle(
-                                        fontSize: 13,
-                                        fontWeight: _selectedDateRange != null
-                                            ? FontWeight.bold
-                                            : FontWeight.normal,
-                                        color: _selectedDateRange != null
-                                            ? AppColors.primaryColor
-                                            : AppColors.sandText,
-                                      ),
-                                    ),
-                                  ),
-                                  if (_selectedDateRange != null)
-                                    GestureDetector(
-                                      onTap: () => setState(
-                                        () => _selectedDateRange = null,
-                                      ),
-                                      child: Icon(
-                                        Icons.cancel_rounded,
-                                        size: 16,
-                                        color: AppColors.primaryColor,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        if (_searchController.text.isNotEmpty ||
-                            _selectedDateRange != null) ...[
-                          SizedBox(width: 8.w),
-                          InkWell(
-                            onTap: _clearFilters,
-                            borderRadius: BorderRadius.circular(10.r),
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 12.w,
-                                vertical: 10.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.error.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(10.r),
-                                border: Border.all(
-                                  color: AppColors.error.withValues(alpha: 0.3),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.refresh_rounded,
-                                    size: 16,
-                                    color: AppColors.error,
-                                  ),
-                                  SizedBox(width: 4.w),
-                                  Text(
-                                    AppStrings.clearFilter.tr(),
-                                    style: TextStyles.customStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.error,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
+                  SizedBox(height: 4.h),
 
                   // ── Body ────────────────────────────────────────────────────
                   Expanded(
