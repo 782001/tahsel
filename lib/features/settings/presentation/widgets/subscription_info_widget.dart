@@ -300,7 +300,7 @@ class _SubscriptionInfoWidgetState extends State<SubscriptionInfoWidget> {
             _buildDetailRow(
               icon: Icons.workspace_premium_rounded,
               label: AppStrings.vipAccount.tr(),
-              value: isVip ? 'VIP ✨' : 'Standard',
+              value: isVip ? 'VIP ✨' : AppStrings.disabled.tr(),
               valueColor: isVip ? AppColors.vipGoldStart : AppColors.sandText,
               isDesktop: isDesktop,
             ),

@@ -66,6 +66,7 @@ class AppStrings {
   static const String vipFeatureReports = 'vip_feature_reports';
   static const String vipStatusEnabled = 'vip_status_enabled';
   static const String vipStatusDisabled = 'vip_status_disabled';
+  static const String disabled = 'disabled';
   static const String vipToggleHint = 'vip_toggle_hint';
   static const String vipShowDetails = 'vip_show_details';
   static const String vipHideDetails = 'vip_hide_details';

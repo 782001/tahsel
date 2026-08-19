@@ -1143,6 +1143,7 @@
   "vip_feature_reports_desc": "Comprehensive profit & sales analytics and business growth indicators.",
   "vip_status_enabled": "Enabled - All advanced VIP tools unlocked ✨",
   "vip_status_disabled": "Disabled (Standard Account)",
+  "disabled": "Disabled",
   "vip_toggle_hint": "Toggle to switch between VIP Premium and Standard Account",
   "vip_show_details": "Show VIP Benefits",
   "vip_hide_details": "Hide Details",
