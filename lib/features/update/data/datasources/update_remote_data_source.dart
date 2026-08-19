@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../domain/services/app_version_comparator.dart';
 import '../models/app_version_model.dart';
 
 abstract class UpdateRemoteDataSource {
@@ -33,37 +34,55 @@ class UpdateRemoteDataSourceImpl implements UpdateRemoteDataSource {
   @override
   Future<AppVersionModel?> checkForUpdate() async {
     final PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    final currentBuildNumber = int.tryParse(packageInfo.buildNumber) ?? 0;
+    final String currentVersion = packageInfo.version;
+    final int currentBuild = AppVersionComparator.parseBuildNumber(
+      packageInfo.buildNumber,
+    );
+    final String platformName = Platform.isAndroid
+        ? 'Android'
+        : Platform.isIOS
+            ? 'iOS'
+            : 'Windows';
 
-    AppLogger.printMessage('DEBUG: Checking for update...');
-    AppLogger.printMessage('DEBUG: Current Build Number: $currentBuildNumber');
+    AppLogger.printMessage(
+      'DEBUG: [UpdateCheck] Platform: $platformName | Installed: $currentVersion (Build $currentBuild)',
+    );
 
     final doc = await firestore.collection(_collection).doc(_document).get();
 
     if (!doc.exists) {
       AppLogger.printMessage(
-        "DEBUG: Firestore document '$_collection/$_document' does not exist.",
+        "DEBUG: [UpdateCheck] Firestore document '$_collection/$_document' does not exist.",
       );
       return null;
     }
 
     final data = doc.data();
     if (data == null) {
-      AppLogger.printMessage('DEBUG: Firestore document data is null.');
+      AppLogger.printMessage(
+        'DEBUG: [UpdateCheck] Firestore document data is null.',
+      );
       return null;
     }
 
     final latestAppVersion = AppVersionModel.fromFirestore(data);
     AppLogger.printMessage(
-      'DEBUG: Latest Build Number from Firestore: ${latestAppVersion.buildNumber}',
+      'DEBUG: [UpdateCheck] Remote ($platformName): ${latestAppVersion.versionName} (Build ${latestAppVersion.buildNumber})',
     );
 
-    if (latestAppVersion.buildNumber > currentBuildNumber) {
-      AppLogger.printMessage('DEBUG: Update available!');
+    final isRequired = AppVersionComparator.isUpdateRequired(
+      currentVersion: currentVersion,
+      currentBuild: currentBuild,
+      remoteVersion: latestAppVersion.versionName,
+      remoteBuild: latestAppVersion.buildNumber,
+    );
+
+    if (isRequired) {
+      AppLogger.printMessage('DEBUG: [UpdateCheck] Update Available!');
       return latestAppVersion;
     }
 
-    AppLogger.printMessage('DEBUG: No update available.');
+    AppLogger.printMessage('DEBUG: [UpdateCheck] App is up to date.');
     return null;
   }
 

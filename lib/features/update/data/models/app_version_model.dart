@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import '../../domain/services/app_version_comparator.dart';
+
 class AppVersionModel {
   final int buildNumber;
   final String versionName;
@@ -53,34 +55,43 @@ class AppVersionModel {
       final Map<String, dynamic> p =
           Map<String, dynamic>.from(json[platformKey] as Map);
       return AppVersionModel(
-        buildNumber: (p['buildNumber'] as num?)?.toInt() ?? 0,
-        versionName: p['versionName'] as String? ?? '',
+        buildNumber: AppVersionComparator.parseBuildNumber(
+          p['buildNumber'] ?? p['build_number'],
+        ),
+        versionName: p['versionName']?.toString() ??
+            p['version_name']?.toString() ??
+            p['version']?.toString() ??
+            '',
         downloadUrl:
-            p['downloadUrl'] as String? ?? p['storeUrl'] as String? ?? '',
-        forceUpdate: p['forceUpdate'] as bool? ?? false,
-        updateTitle: p['updateTitle'] as String? ?? '',
-        updateMessage: p['updateMessage'] as String? ?? '',
-        releaseNotes: p['releaseNotes'] as String? ?? '',
+            p['downloadUrl']?.toString() ?? p['storeUrl']?.toString() ?? '',
+        forceUpdate: p['forceUpdate'] == true || p['force_update'] == true,
+        updateTitle: p['updateTitle']?.toString() ?? '',
+        updateMessage: p['updateMessage']?.toString() ?? '',
+        releaseNotes: p['releaseNotes']?.toString() ?? '',
       );
     }
 
     // ── Fallback: legacy flat structure ───────────────────────────────────
     String legacyUrl = '';
     if (Platform.isAndroid) {
-      legacyUrl = json['android_download_url'] as String? ?? '';
+      legacyUrl = json['android_download_url']?.toString() ?? '';
     } else if (Platform.isWindows) {
-      legacyUrl = json['windows_download_url'] as String? ?? '';
+      legacyUrl = json['windows_download_url']?.toString() ?? '';
     } else if (Platform.isIOS) {
-      legacyUrl = json['ios_download_url'] as String? ?? '';
+      legacyUrl = json['ios_download_url']?.toString() ?? '';
     }
 
     return AppVersionModel(
-      buildNumber: (json['latest_version'] as num?)?.toInt() ?? 0,
-      versionName: json['version_name'] as String? ?? '',
+      buildNumber: AppVersionComparator.parseBuildNumber(
+        json['latest_version'] ?? json['buildNumber'],
+      ),
+      versionName: json['version_name']?.toString() ??
+          json['versionName']?.toString() ??
+          '',
       downloadUrl: legacyUrl,
-      forceUpdate: json['force_update'] as bool? ?? false,
+      forceUpdate: json['force_update'] == true || json['forceUpdate'] == true,
       updateTitle: '',
-      updateMessage: json['update_message'] as String? ?? '',
+      updateMessage: json['update_message']?.toString() ?? '',
       releaseNotes: '',
     );
   }
