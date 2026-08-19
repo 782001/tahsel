@@ -38,6 +38,40 @@ class AppStrings {
   static const String isVipKey = 'is_vip';
   static const String vipAccount = 'vip_account';
   static const String vipOnlyNotice = 'vip_only_notice';
+  static const String createAccountAccuracyNoticeTitle =
+      'create_account_accuracy_notice_title';
+  static const String createAccountAccuracyNoticeDesc =
+      'create_account_accuracy_notice_desc';
+  static const String createAccountEmailNoticeTitle =
+      'create_account_email_notice_title';
+  static const String createAccountEmailNoticeDesc =
+      'create_account_email_notice_desc';
+  static const String vipAccountBadge = 'vip_account_badge';
+  static const String vipAccountDesc = 'vip_account_desc';
+  static const String vipFeaturesTitle = 'vip_features_title';
+  static const String vipFeatureInventoryTitle = 'vip_feature_inventory_title';
+  static const String vipFeatureInventoryDesc = 'vip_feature_inventory_desc';
+  static const String vipFeatureVaultTitle = 'vip_feature_vault_title';
+  static const String vipFeatureVaultDesc = 'vip_feature_vault_desc';
+  static const String vipFeatureEmployeesTitle = 'vip_feature_employees_title';
+  static const String vipFeatureEmployeesDesc = 'vip_feature_employees_desc';
+  static const String vipFeatureShippingTitle = 'vip_feature_shipping_title';
+  static const String vipFeatureShippingDesc = 'vip_feature_shipping_desc';
+  static const String vipFeatureReportsTitle = 'vip_feature_reports_title';
+  static const String vipFeatureReportsDesc = 'vip_feature_reports_desc';
+  static const String vipFeatureInventory = 'vip_feature_inventory';
+  static const String vipFeatureVault = 'vip_feature_vault';
+  static const String vipFeatureEmployees = 'vip_feature_employees';
+  static const String vipFeatureShipping = 'vip_feature_shipping';
+  static const String vipFeatureReports = 'vip_feature_reports';
+  static const String vipStatusEnabled = 'vip_status_enabled';
+  static const String vipStatusDisabled = 'vip_status_disabled';
+  static const String vipToggleHint = 'vip_toggle_hint';
+  static const String vipShowDetails = 'vip_show_details';
+  static const String vipHideDetails = 'vip_hide_details';
+  static const String vipMajorFeaturesCount = 'vip_major_features_count';
+  static const String projectNameHint = 'project_name_hint';
+  static const String fullNameHint = 'full_name_hint';
   static String userCreatedSuccessfully = 'user_created_successfully';
   static String failedToCreateUser = 'failed_to_create_user';
   static const String fullName = "full_name";
@@ -822,6 +856,19 @@ class AppStrings {
   static const String historyToday = "history_today";
   static const String historyYesterday = "history_yesterday";
   static const String invoiceVoidNotice = "invoice_void_notice";
+  static const String refundToCustomer = "refund_to_customer";
+  static const String refundSuccess = "refund_success";
+  static const String refundConfirmationTitle = "refund_confirmation_title";
+  static const String refundConfirmationMessage = "refund_confirmation_message";
+  static const String refundAlreadyDone = "refund_already_done";
+  static const String amountDeductedFromVault = "amount_deducted_from_vault";
+  static const String customerNameLabel = "customer_name_label";
+  static const String unspecifiedCustomer = "unspecified_customer";
+  static const String refundCreditToCustomer = "refund_credit_to_customer";
+  static const String refundOverpaidToCustomer = "refund_overpaid_to_customer";
+  static const String confirmRefundCredit = "confirm_refund_credit";
+  static const String confirmRefundOverpaid = "confirm_refund_overpaid";
+  static const String refundCreditSuccess = "refund_credit_success";
   static const String invoicePaidNotice = "invoice_paid_notice";
   static const String offlineNoRecentInvoices = "offlineNoRecentInvoices";
   static const String facebookPage = "facebookPage";

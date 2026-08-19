@@ -5,18 +5,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/error/firebase_error_handler.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/currency/currency_service.dart';
+import 'package:tahsel/core/services/currency/domain/entities/currency_entity.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/assets.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
-import 'package:tahsel/core/services/currency/currency_service.dart';
-import 'package:tahsel/core/services/currency/domain/entities/currency_entity.dart';
 import 'package:tahsel/features/create_account/domain/usecases/create_account_usecases.dart';
-import 'package:tahsel/features/settings/presentation/widgets/currency_selection_bottom_sheet.dart';
 import 'package:tahsel/features/create_account/presentation/cubit/create_account/create_account_cubit.dart';
 import 'package:tahsel/features/create_account/presentation/cubit/create_account/create_account_state.dart';
 import 'package:tahsel/features/offline_sync/presentation/widgets/offline_banner.dart';
+import 'package:tahsel/features/settings/presentation/widgets/currency_selection_bottom_sheet.dart';
 import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/text_fields/custom_text_form_field.dart';
 
@@ -40,6 +40,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   String _platformType = 'mobile';
   CurrencyEntity _selectedCurrency = CurrencyEntity.defaultCurrency;
   bool _isVip = false;
+  bool _showVipDetails = false;
   bool _isLoading = false;
 
   @override
@@ -229,7 +230,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
           Navigator.pushReplacementNamed(context, AppRoutes.login);
         }
         if (state is CreateAccountError) {
-          final errorMessage = FirebaseErrorHandler.getLocalizedMessage(state.message);
+          final errorMessage = FirebaseErrorHandler.getLocalizedMessage(
+            state.message,
+          );
           _showError(errorMessage);
         }
       },
@@ -334,14 +337,17 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      SizedBox(height: isDesktop ? 24 : 24.h),
+                                      SizedBox(height: isDesktop ? 16 : 14.h),
+                                      _buildDataAccuracyBanner(isDesktop),
+                                      SizedBox(height: isDesktop ? 20 : 18.h),
 
                                       // Project Name Field
                                       CustomTextFormField(
                                         labelText: AppStrings.projectName.tr(),
                                         controller: _projectNameController,
                                         keyboardType: TextInputType.text,
-                                        hintText: 'اسم مشروعك',
+                                        hintText: AppStrings.projectNameHint
+                                            .tr(),
                                         prefixIcon: Icons.storefront_outlined,
                                         validator: (value) {
                                           if (value == null || value.isEmpty) {
@@ -358,7 +364,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                         labelText: AppStrings.fullName.tr(),
                                         controller: _nameController,
                                         keyboardType: TextInputType.name,
-                                        hintText: 'عبدالله العوضي',
+                                        hintText: AppStrings.fullNameHint.tr(),
                                         prefixIcon: Icons.person_outline,
                                         validator: (value) {
                                           if (value == null || value.isEmpty) {
@@ -393,6 +399,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                           return null;
                                         },
                                       ),
+                                      _buildEmailNotice(isDesktop),
                                       SizedBox(height: isDesktop ? 24 : 24.h),
 
                                       // Phone Field
@@ -583,24 +590,30 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                       InkWell(
                                         onTap: () async {
                                           final selected =
-                                              await CurrencySelectionBottomSheet
-                                                  .show(
-                                            context,
-                                            initialCurrency: _selectedCurrency,
-                                            onCurrencySelected: (c) {
-                                              setState(() => _selectedCurrency = c);
-                                            },
-                                          );
+                                              await CurrencySelectionBottomSheet.show(
+                                                context,
+                                                initialCurrency:
+                                                    _selectedCurrency,
+                                                onCurrencySelected: (c) {
+                                                  setState(
+                                                    () => _selectedCurrency = c,
+                                                  );
+                                                },
+                                              );
                                           if (selected != null) {
                                             setState(
-                                              () => _selectedCurrency = selected,
+                                              () =>
+                                                  _selectedCurrency = selected,
                                             );
                                           }
                                         },
-                                        borderRadius: BorderRadius.circular(12.r),
+                                        borderRadius: BorderRadius.circular(
+                                          12.r,
+                                        ),
                                         child: InputDecorator(
                                           decoration: InputDecoration(
-                                            labelText: AppStrings.currencyLabel.tr(),
+                                            labelText: AppStrings.currencyLabel
+                                                .tr(),
                                             labelStyle: TextStyles.customStyle(
                                               fontSize: 12,
                                               fontWeight: FontWeight.w600,
@@ -616,25 +629,22 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                               size: 26,
                                             ),
                                             border: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(
-                                                12.r,
-                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(12.r),
                                               borderSide: BorderSide(
                                                 color: AppColors.primaryColor,
                                               ),
                                             ),
                                             enabledBorder: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(
-                                                12.r,
-                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(12.r),
                                               borderSide: BorderSide(
                                                 color: AppColors.primaryColor,
                                               ),
                                             ),
                                             focusedBorder: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(
-                                                12.r,
-                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(12.r),
                                               borderSide: BorderSide(
                                                 color: AppColors.primaryColor,
                                               ),
@@ -656,14 +666,18 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                               ),
                                               Container(
                                                 padding: EdgeInsets.symmetric(
-                                                  horizontal: 6.w,
-                                                  vertical: 2.h,
+                                                  horizontal: isDesktop
+                                                      ? 6
+                                                      : 6.w,
+                                                  vertical: isDesktop ? 2 : 2.h,
                                                 ),
                                                 decoration: BoxDecoration(
                                                   color: AppColors.primaryColor
                                                       .withValues(alpha: 0.1),
                                                   borderRadius:
-                                                      BorderRadius.circular(6.r),
+                                                      BorderRadius.circular(
+                                                        6.r,
+                                                      ),
                                                 ),
                                                 child: Text(
                                                   _selectedCurrency.getSymbol(
@@ -672,7 +686,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                                   style: TextStyles.customStyle(
                                                     fontSize: 11,
                                                     fontWeight: FontWeight.bold,
-                                                    color: AppColors.primaryColor,
+                                                    color:
+                                                        AppColors.primaryColor,
                                                   ),
                                                 ),
                                               ),
@@ -682,66 +697,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                       ),
                                       SizedBox(height: isDesktop ? 24 : 24.h),
 
-                                      // VIP Account Switch Tile
-                                      Container(
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: 16.w,
-                                          vertical: 8.h,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: _isVip
-                                              ? Colors.amber.withValues(alpha: 0.1)
-                                              : AppColors.scafoldBackGround,
-                                          borderRadius: BorderRadius.circular(12.r),
-                                          border: Border.all(
-                                            color: _isVip
-                                                ? Colors.amber
-                                                : AppColors.primaryColor.withValues(alpha: 0.3),
-                                            width: _isVip ? 1.5 : 1,
-                                          ),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              Icons.workspace_premium_rounded,
-                                              color: _isVip ? Colors.amber : AppColors.sandText,
-                                              size: 24,
-                                            ),
-                                            SizedBox(width: 12.w),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    AppStrings.vipAccount.tr(),
-                                                    style: TextStyles.customStyle(
-                                                      fontSize: 14,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: AppColors.textColor,
-                                                    ),
-                                                  ),
-                                                  Text(
-                                                    _isVip ? 'مفعل (☑ Enabled)' : 'غير مفعل (☐ Disabled)',
-                                                    style: TextStyles.customStyle(
-                                                      fontSize: 11,
-                                                      color: _isVip ? Colors.amber.shade800 : AppColors.sandText,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            Switch(
-                                              value: _isVip,
-                                              activeThumbColor: Colors.amber,
-                                              onChanged: (val) {
-                                                setState(() {
-                                                  _isVip = val;
-                                                });
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                      ),
+                                      // VIP Account Section
+                                      _buildVipAccountSection(isDesktop),
                                       SizedBox(height: isDesktop ? 24 : 24.h),
 
                                       // Create Account / Submit Action Button
@@ -771,7 +728,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                                   );
 
                                                   await CurrencyService.instance
-                                                      .updateCurrency(_selectedCurrency);
+                                                      .updateCurrency(
+                                                        _selectedCurrency,
+                                                      );
 
                                                   await context
                                                       .read<
@@ -809,7 +768,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                                           platformType:
                                                               _platformType,
                                                           isVip: _isVip,
-                                                          currency: _selectedCurrency.toMap(),
+                                                          currency:
+                                                              _selectedCurrency
+                                                                  .toMap(),
                                                         ),
                                                       );
 
@@ -866,9 +827,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                                     Icon(
                                                       Icons.arrow_forward,
                                                       color: Colors.white,
-                                                      size: isDesktop
-                                                          ? 20
-                                                          : 20,  
+                                                      size: isDesktop ? 20 : 20,
                                                     ),
                                                   ],
                                                 ),
@@ -910,6 +869,415 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// بطاقة تنبيه للتأكد من صحة ودقة البيانات المدخلة
+  Widget _buildDataAccuracyBanner(bool isDesktop) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(isDesktop ? 16 : 12.w),
+      decoration: BoxDecoration(
+        color: AppColors.primaryColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(
+          color: AppColors.primaryColor.withValues(alpha: 0.22),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: EdgeInsets.all(isDesktop ? 8 : 6.w),
+            decoration: BoxDecoration(
+              color: AppColors.primaryColor.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.verified_user_outlined,
+              color: AppColors.primaryColor,
+              size: isDesktop ? 20 : 18,
+            ),
+          ),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  AppStrings.createAccountAccuracyNoticeTitle.tr(),
+                  style: TextStyles.customStyle(
+                    fontSize: isDesktop ? 15 : 15,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textColor,
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  AppStrings.createAccountAccuracyNoticeDesc.tr(),
+                  style: TextStyles.customStyle(
+                    fontSize: isDesktop ? 13 : 13,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.subTitleColor,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// توضيح خاص ومميز بحقل البريد الإلكتروني
+  Widget _buildEmailNotice(bool isDesktop) {
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.only(top: 8.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 12 : 10.w,
+        vertical: isDesktop ? 8 : 8.h,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.stitchSurfaceHigh.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(
+          color: AppColors.primaryColor.withValues(alpha: 0.15),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.mark_email_read_outlined,
+            color: AppColors.primaryColor,
+            size: isDesktop ? 16 : 15,
+          ),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Text(
+              AppStrings.createAccountEmailNoticeDesc.tr(),
+              style: TextStyles.customStyle(
+                fontSize: isDesktop ? 11 : 10.5,
+                fontWeight: FontWeight.w500,
+                color: AppColors.subTitleColor,
+                height: 1.3,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// قسم وبطاقة الحساب المميز VIP التفاعلية
+  Widget _buildVipAccountSection(bool isDesktop) {
+    const Color goldStart = AppColors.vipGoldStart;
+    const Color goldEnd = AppColors.vipGoldEnd;
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: _isVip
+            ? goldStart.withValues(alpha: 0.08)
+            : AppColors.stitchSurfaceHigh.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: _isVip
+              ? goldStart
+              : AppColors.primaryColor.withValues(alpha: 0.2),
+          width: _isVip ? 1.5 : 1,
+        ),
+        boxShadow: _isVip
+            ? [
+                BoxShadow(
+                  color: goldStart.withValues(alpha: 0.12),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : null,
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(isDesktop ? 18 : 14.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // شريط العنوان مع سويتش التفعيل وشارة VIP
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(isDesktop ? 8 : 8.w),
+                  decoration: BoxDecoration(
+                    gradient: _isVip
+                        ? LinearGradient(
+                            colors: [Colors.amber.shade900, goldEnd],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          )
+                        : null,
+                    color: _isVip
+                        ? null
+                        : AppColors.disabledColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Icon(
+                    Icons.workspace_premium_rounded,
+                    color: _isVip ? Colors.white : AppColors.sandText,
+                    size: isDesktop ? 22 : 20,
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              AppStrings.vipAccount.tr(),
+                              style: TextStyles.customStyle(
+                                fontSize: isDesktop ? 15 : 14,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textColor,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          SizedBox(width: 6.w),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 6.w,
+                              vertical: 2.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _isVip
+                                  ? goldStart.withValues(alpha: 0.2)
+                                  : AppColors.disabledColor.withValues(
+                                      alpha: 0.1,
+                                    ),
+                              borderRadius: BorderRadius.circular(4.r),
+                              border: Border.all(
+                                color: _isVip
+                                    ? goldStart
+                                    : AppColors.disabledColor,
+                                width: 0.8,
+                              ),
+                            ),
+                            child: Text(
+                              'VIP ✨',
+                              style: TextStyles.customStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: _isVip
+                                    ? Colors.amber.shade500
+                                    : AppColors.sandText,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 2.h),
+                      Text(
+                        _isVip
+                            ? AppStrings.vipStatusEnabled.tr()
+                            : AppStrings.vipStatusDisabled.tr(),
+                        style: TextStyles.customStyle(
+                          fontSize: isDesktop ? 11 : 10.5,
+                          fontWeight: FontWeight.w600,
+                          color: _isVip
+                              ? Colors.amber.shade900
+                              : AppColors.sandText,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: _isVip,
+                  activeThumbColor: Colors.amber.shade900,
+                  activeTrackColor: Colors.amber.shade900.withValues(
+                    alpha: 0.4,
+                  ),
+                  onChanged: (val) {
+                    setState(() {
+                      _isVip = val;
+                    });
+                  },
+                ),
+              ],
+            ),
+
+            SizedBox(height: 10.h),
+            // نبذة توضيحية عن الحساب المميز
+            Text(
+              AppStrings.vipAccountDesc.tr(),
+              style: TextStyles.customStyle(
+                fontSize: isDesktop ? 12 : 11,
+                color: AppColors.subTitleColor,
+                fontWeight: FontWeight.w500,
+                height: 1.35,
+              ),
+            ),
+
+            SizedBox(height: 12.h),
+            Divider(
+              color: _isVip
+                  ? goldStart.withValues(alpha: 0.2)
+                  : AppColors.dividerColor,
+              height: 1,
+            ),
+            SizedBox(height: 10.h),
+
+            // زر طي وتوسيع تفاصيل مميزات VIP
+            InkWell(
+              onTap: () {
+                setState(() {
+                  _showVipDetails = !_showVipDetails;
+                });
+              },
+              borderRadius: BorderRadius.circular(8.r),
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 4.h, horizontal: 2.w),
+                child: Row(
+                  children: [
+                    Icon(
+                      _showVipDetails
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      color: _isVip
+                          ? Colors.amber.shade800
+                          : AppColors.primaryColor,
+                      size: 20,
+                    ),
+                    SizedBox(width: 4.w),
+                    Text(
+                      _showVipDetails
+                          ? AppStrings.vipHideDetails.tr()
+                          : AppStrings.vipShowDetails.tr(),
+                      style: TextStyles.customStyle(
+                        fontSize: isDesktop ? 12 : 11,
+                        fontWeight: FontWeight.bold,
+                        color: _isVip
+                            ? Colors.amber.shade500
+                            : AppColors.primaryColor,
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 6.w,
+                        vertical: 2.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: (_isVip ? goldStart : AppColors.primaryColor)
+                            .withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6.r),
+                      ),
+                      child: Text(
+                        AppStrings.vipMajorFeaturesCount.tr(),
+                        style: TextStyles.customStyle(
+                          fontSize: isDesktop ? 10 : 9.5,
+                          fontWeight: FontWeight.w600,
+                          color: _isVip
+                              ? Colors.amber.shade900
+                              : AppColors.primaryColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            if (_showVipDetails) ...[
+              SizedBox(height: 10.h),
+              _buildVipFeatureItem(
+                icon: Icons.inventory_2_outlined,
+                title: AppStrings.vipFeatureInventoryTitle.tr(),
+                description: AppStrings.vipFeatureInventoryDesc.tr(),
+                color: AppColors.inventoryCategoryBrown,
+                isDesktop: isDesktop,
+              ),
+              _buildVipFeatureItem(
+                icon: Icons.account_balance_wallet_outlined,
+                title: AppStrings.vipFeatureVaultTitle.tr(),
+                description: AppStrings.vipFeatureVaultDesc.tr(),
+                color: AppColors.vaultEmeraldStart,
+                isDesktop: isDesktop,
+              ),
+              _buildVipFeatureItem(
+                icon: Icons.badge_outlined,
+                title: AppStrings.vipFeatureEmployeesTitle.tr(),
+                description: AppStrings.vipFeatureEmployeesDesc.tr(),
+                color: AppColors.inventoryPurchasePurple,
+                isDesktop: isDesktop,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVipFeatureItem({
+    required IconData icon,
+    required String title,
+    required String description,
+    required Color color,
+    required bool isDesktop,
+  }) {
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 4.h),
+      padding: EdgeInsets.all(isDesktop ? 10 : 8.w),
+      decoration: BoxDecoration(
+        color: AppColors.surface.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: color.withValues(alpha: 0.25), width: 1),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: EdgeInsets.all(isDesktop ? 6 : 6.w),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            child: Icon(icon, color: color, size: isDesktop ? 16 : 15),
+          ),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyles.customStyle(
+                    fontSize: isDesktop ? 12.5 : 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textColor,
+                  ),
+                ),
+                SizedBox(height: 3.h),
+                Text(
+                  description,
+                  style: TextStyles.customStyle(
+                    fontSize: isDesktop ? 10.5 : 10,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.subTitleColor,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
