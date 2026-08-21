@@ -35,10 +35,10 @@ class ExpenseCard extends StatelessWidget {
     if (isGrid) {
       // ... kept as is (no slidable for grid in typical mobile UX)
       return Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: backgroundColor,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(10),
           boxShadow: const [
             BoxShadow(
               color: AppColors.shadowColor,
@@ -51,16 +51,16 @@ class ExpenseCard extends StatelessWidget {
           clipBehavior: Clip.none,
           children: [
             Positioned(
-              right: -16,
-              top: -16,
-              bottom: -16,
+              right: -10,
+              top: -10,
+              bottom: -10,
               child: Container(
                 width: 4,
                 decoration: BoxDecoration(
                   color: AppColors.error,
                   borderRadius: const BorderRadius.only(
-                    topRight: Radius.circular(16),
-                    bottomRight: Radius.circular(16),
+                    topRight: Radius.circular(10),
+                    bottomRight: Radius.circular(10),
                   ),
                 ),
               ),
@@ -91,10 +91,11 @@ class ExpenseCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
                 Flexible(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         title,
@@ -111,7 +112,7 @@ class ExpenseCard extends StatelessWidget {
                         fit: BoxFit.scaleDown,
                         alignment: AlignmentDirectional.centerStart,
                         child: Text(
-                          '-${amount.toStringAsFixed(1)}',
+                          '-${amount.toSmartAmount()}',
                           textDirection: TextDirection.ltr,
                           style: TextStyles.customStyle(
                             color: AppColors.error,
@@ -131,7 +132,8 @@ class ExpenseCard extends StatelessWidget {
       );
     }
 
-    final bool isAutomatedExpense = expenseId != null &&
+    final bool isAutomatedExpense =
+        expenseId != null &&
         (expenseId!.startsWith('exp_pur_') ||
             expenseId!.startsWith('exp_pay_') ||
             expenseId!.startsWith('exp_emp_'));
@@ -151,16 +153,16 @@ class ExpenseCard extends StatelessWidget {
                   foregroundColor: AppColors.white,
                   icon: Icons.delete_outline,
                   label: AppStrings.delete.tr(),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ],
             )
           : null,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: backgroundColor,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(10),
           boxShadow: const [
             BoxShadow(
               color: AppColors.shadowColor,
@@ -173,16 +175,16 @@ class ExpenseCard extends StatelessWidget {
           clipBehavior: Clip.none,
           children: [
             Positioned(
-              right: -16,
-              top: -16,
-              bottom: -16,
+              right: -10,
+              top: -10,
+              bottom: -10,
               child: Container(
                 width: 4,
                 decoration: BoxDecoration(
                   color: AppColors.error,
                   borderRadius: const BorderRadius.only(
-                    topRight: Radius.circular(16),
-                    bottomRight: Radius.circular(16),
+                    topRight: Radius.circular(10),
+                    bottomRight: Radius.circular(10),
                   ),
                 ),
               ),
@@ -191,8 +193,8 @@ class ExpenseCard extends StatelessWidget {
               children: [
                 // Icon — fixed size, never overflows
                 Container(
-                  width: 52,
-                  height: 52,
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
                     color: AppColors.stitchBlue.withValues(alpha: 0.08),
                     shape: BoxShape.circle,
@@ -204,6 +206,7 @@ class ExpenseCard extends StatelessWidget {
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         title,
@@ -211,7 +214,7 @@ class ExpenseCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyles.customStyle(
                           color: AppColors.black,
-                          fontSize: 16,
+                          fontSize: 15,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -235,6 +238,7 @@ class ExpenseCard extends StatelessWidget {
                   constraints: const BoxConstraints(maxWidth: 110),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       FittedBox(
                         fit: BoxFit.scaleDown,
@@ -244,7 +248,7 @@ class ExpenseCard extends StatelessWidget {
                           textDirection: TextDirection.ltr,
                           style: TextStyles.customStyle(
                             color: AppColors.error,
-                            fontSize: 18,
+                            fontSize: 17,
                             fontWeight: FontWeight.w800,
                           ),
                           maxLines: 1,
