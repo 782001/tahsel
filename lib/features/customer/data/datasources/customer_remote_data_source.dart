@@ -186,20 +186,29 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
       final opsSnapshot = await opsQuery.get();
       List<CustomerOperation> operations = [];
 
+      DateTime parseDate(dynamic val) {
+        if (val == null) return DateTime.now();
+        if (val is Timestamp) return val.toDate();
+        if (val is DateTime) return val;
+        if (val is String) return DateTime.tryParse(val) ?? DateTime.now();
+        if (val is int) return DateTime.fromMillisecondsSinceEpoch(val);
+        return DateTime.now();
+      }
+
       for (var doc in opsSnapshot.docs) {
         final data = doc.data();
-        final type = (data['remainingDebt'] ?? 0) > 0
+        final type = ((data['remainingDebt'] as num?)?.toDouble() ?? 0.0) > 0
             ? CustomerOperationType.debt
             : CustomerOperationType.purchase;
 
         operations.add(
           CustomerOperation(
             id: doc.id,
-            activityName: data['type'] ?? '',
-            amount: (data['totalAmount'] as num).toDouble(),
+            activityName: data['type']?.toString() ?? '',
+            amount: (data['totalAmount'] as num?)?.toDouble() ?? 0.0,
             type: type,
-            date: (data['timestamp'] as Timestamp).toDate(),
-            details: data['productName'],
+            date: parseDate(data['timestamp']),
+            details: data['productName']?.toString(),
           ),
         );
       }
@@ -219,7 +228,7 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
           totalSpent += (debtData['totalAmount'] as num? ?? 0.0).toDouble();
           totalPaid += (debtData['paidAmount'] as num? ?? 0.0).toDouble();
 
-          final activityName = debtData['operationType'] as String;
+          final activityName = debtData['operationType']?.toString() ?? '';
 
           final paymentsSnapshot = await debtDoc.reference
               .collection('payments')
@@ -233,9 +242,9 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
               CustomerOperation(
                 id: paymentDoc.id,
                 activityName: activityName,
-                amount: (pData['amountPaid'] as num).toDouble(),
+                amount: (pData['amountPaid'] as num?)?.toDouble() ?? 0.0,
                 type: CustomerOperationType.payment,
-                date: (pData['createdAt'] as Timestamp).toDate(),
+                date: parseDate(pData['createdAt']),
                 details: null,
               ),
             );
