@@ -10,7 +10,7 @@ class AppStrings {
   static const String englishCode = "en";
   static const String locale = "locale";
   static const String unknown = "unknown";
-  static const String tahselWebsiteUrl = "https://782001.github.io/tahsel-web/";
+  static const String tahselWebsiteUrl = "https://tahsel-page.vercel.app/";
 
   // Auth Screen
   static const String login = "login";
@@ -961,6 +961,10 @@ class AppStrings {
   static const String movementInvoiceSale = "movement_invoice_sale";
   static const String movementInvoiceReturn = "movement_invoice_return";
   static const String movementManualAdjustment = "movement_manual_adjustment";
+  static const String movementManualAdjustmentIncrease =
+      "movement_manual_adjustment_increase";
+  static const String movementManualAdjustmentDecrease =
+      "movement_manual_adjustment_decrease";
   static const String movementPurchaseReturn = "movement_purchase_return";
   static const String manualStockAdjustment = "manual_stock_adjustment";
   static const String adjustmentReason = "adjustment_reason";
@@ -1067,6 +1071,8 @@ class AppStrings {
       "confirm_delete_purchase_warning";
   static const String errorSharingInvoice = "error_sharing_invoice";
   static const String errorSavingInvoice = "error_saving_invoice";
+  static const String loading = "loading";
+  static const String deletingPurchase = "deleting_purchase";
   static const String paymentMethod = "payment_method";
   static const String paymentCash = "payment_cash";
   static const String paymentCard = "payment_card";
