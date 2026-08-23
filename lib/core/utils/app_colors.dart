@@ -247,4 +247,12 @@ class AppColors {
       isDark ? const Color(0xFF4DD0E1) : const Color(0xFF00838F);
   static Color get shippingFailed =>
       isDark ? const Color(0xFFFFB74D) : const Color(0xFFE65100);
+
+  // --- Vault / Cashbox Colors ---
+  static const Color vaultEmeraldStart = Color(0xFF0F766E);
+  static const Color vaultEmeraldEnd = Color(0xFF14B8A6);
+  static Color get vaultInflow =>
+      isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32);
+  static Color get vaultOutflow =>
+      isDark ? const Color(0xFFEF5350) : const Color(0xFFD32F2F);
 }

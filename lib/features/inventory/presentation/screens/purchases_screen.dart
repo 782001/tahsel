@@ -28,6 +28,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   DateTimeRange? _selectedDateRange;
+  bool _isDeleting = false;
 
   @override
   void initState() {
@@ -103,12 +104,13 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
     }
   }
 
-  Future<void> _editPurchase(InventoryPurchaseEntity pur) async {
+  void _editPurchase(InventoryPurchaseEntity pur) {
     final purchasesCubit = context.read<InventoryPurchasesCubit>();
     final productsCubit = context.read<InventoryProductsCubit>();
     final suppliersCubit = context.read<InventorySuppliersCubit>();
 
-    await Navigator.of(context).push(
+    Navigator.push(
+      context,
       MaterialPageRoute(
         builder: (_) => MultiBlocProvider(
           providers: [
@@ -196,19 +198,31 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
     );
 
     if (confirm == true && mounted) {
+      setState(() {
+        _isDeleting = true;
+      });
+
       final purchasesCubit = context.read<InventoryPurchasesCubit>();
       final productsCubit = context.read<InventoryProductsCubit>();
       final messenger = ScaffoldMessenger.of(context);
 
-      final success = await purchasesCubit.deletePurchase(pur);
-      if (success && mounted) {
-        await productsCubit.fetchProducts();
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text(AppStrings.deletedSuccessfully.tr()),
-            backgroundColor: AppColors.success,
-          ),
-        );
+      try {
+        final success = await purchasesCubit.deletePurchase(pur);
+        if (success && mounted) {
+          await productsCubit.fetchProducts();
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(AppStrings.deletedSuccessfully.tr()),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isDeleting = false;
+          });
+        }
       }
     }
   }
@@ -293,191 +307,197 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
           ),
         ),
       ),
-      body: SafeArea(
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: isDesktop ? 1000 : double.infinity,
-            ),
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: isDesktop ? 24 : 16.w,
-                vertical: isDesktop ? 20 : 16.h,
-              ),
-              child: BlocBuilder<InventoryPurchasesCubit, InventoryPurchasesState>(
-                builder: (context, state) {
-                  if (state is InventoryPurchasesLoading) {
-                    return Center(
-                      child: CircularProgressIndicator(
-                        strokeWidth: 4,
-                        color: AppColors.primaryColor,
-                      ),
-                    );
-                  }
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isDesktop ? 1000 : double.infinity,
+                ),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isDesktop ? 24 : 16.w,
+                    vertical: isDesktop ? 20 : 16.h,
+                  ),
+                  child: BlocBuilder<InventoryPurchasesCubit, InventoryPurchasesState>(
+                    builder: (context, state) {
+                      if (state is InventoryPurchasesLoading) {
+                        return Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 4,
+                            color: AppColors.primaryColor,
+                          ),
+                        );
+                      }
 
-                  if (state is InventoryPurchasesError) {
-                    return InventoryEmptyState(
-                      icon: Icons.error_outline_rounded,
-                      title: AppStrings.noResults.tr(),
-                      description: state.message,
-                      actionLabel: AppStrings.clearFilter.tr(),
-                      onAction: () => context
-                          .read<InventoryPurchasesCubit>()
-                          .fetchPurchases(),
-                    );
-                  }
+                      if (state is InventoryPurchasesError) {
+                        return InventoryEmptyState(
+                          icon: Icons.error_outline_rounded,
+                          title: AppStrings.noResults.tr(),
+                          description: state.message,
+                          actionLabel: AppStrings.tryAgain.tr(),
+                          onAction: () => context
+                              .read<InventoryPurchasesCubit>()
+                              .fetchPurchases(),
+                        );
+                      }
 
-                  if (state is InventoryPurchasesLoaded) {
-                    if (state.purchases.isEmpty) {
-                      return InventoryEmptyState(
-                        icon: Icons.shopping_bag_outlined,
-                        title: AppStrings.noPurchasesFound.tr(),
-                        description: AppStrings.emptyPurchasesDesc.tr(),
-                        actionLabel: AppStrings.newPurchase.tr(),
-                        onAction: _navigateToCreatePurchase,
-                      );
-                    }
-
-                    // Apply Search & Date Filters
-                    final query = _searchController.text.trim().toLowerCase();
-                    final filteredPurchases = state.purchases.where((p) {
-                      final matchesSearch =
-                          query.isEmpty ||
-                          p.supplierName.toLowerCase().contains(query) ||
-                          p.id.toLowerCase().contains(query) ||
-                          p.items.any(
-                            (i) => i.productName.toLowerCase().contains(query),
+                      if (state is InventoryPurchasesLoaded) {
+                        if (state.purchases.isEmpty) {
+                          return InventoryEmptyState(
+                            icon: Icons.shopping_bag_outlined,
+                            title: AppStrings.noPurchasesFound.tr(),
+                            description: AppStrings.emptyPurchasesDesc.tr(),
+                            actionLabel: AppStrings.newPurchase.tr(),
+                            onAction: _navigateToCreatePurchase,
                           );
+                        }
 
-                      final matchesDate =
-                          _selectedDateRange == null ||
-                          (p.createdAt.isAfter(
-                                _selectedDateRange!.start.subtract(
-                                  const Duration(seconds: 1),
-                                ),
-                              ) &&
-                              p.createdAt.isBefore(
-                                _selectedDateRange!.end.add(
-                                  const Duration(days: 1),
-                                ),
-                              ));
+                        // Apply Search & Date Filters
+                        final query = _searchController.text.trim().toLowerCase();
+                        final filteredPurchases = state.purchases.where((p) {
+                          final matchesSearch =
+                              query.isEmpty ||
+                              p.supplierName.toLowerCase().contains(query) ||
+                              p.id.toLowerCase().contains(query) ||
+                              p.items.any(
+                                (i) => i.productName.toLowerCase().contains(query),
+                              );
 
-                      return matchesSearch && matchesDate;
-                    }).toList();
+                          final matchesDate =
+                              _selectedDateRange == null ||
+                              (p.createdAt.isAfter(
+                                    _selectedDateRange!.start.subtract(
+                                      const Duration(days: 1),
+                                    ),
+                                  ) &&
+                                  p.createdAt.isBefore(
+                                    _selectedDateRange!.end.add(
+                                      const Duration(days: 1),
+                                    ),
+                                  ));
 
-                    return Column(
-                      children: [
-                        // Header bar with Add Purchase button
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          return matchesSearch && matchesDate;
+                        }).toList();
+
+                        return Column(
                           children: [
-                            Text(
-                              AppStrings.inventoryPurchases.tr(),
-                              style: TextStyles.customStyle(
-                                fontSize: isDesktop ? 22 : 18  ,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primaryColor,
-                              ),
+                            SizedBox(height: 14.h),
+
+                            // Search and Date Filter Bar Component
+                            PurchaseSearchBar(
+                              searchController: _searchController,
+                              selectedDateRange: _selectedDateRange,
+                              onSelectDateRange: () => _pickDateRange(context),
+                              onClearFilters: _clearFilters,
                             ),
-                            ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    AppColors.inventoryPurchasePurple,
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: isDesktop ? 18 : 14.w,
-                                  vertical: isDesktop ? 12 : 10.h,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10.r),
-                                ),
-                              ),
-                              onPressed: _navigateToCreatePurchase,
-                              icon: const Icon(
-                                Icons.add_rounded,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                              label: Text(
-                                AppStrings.newPurchase.tr(),
-                                style: TextStyles.customStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
+                            SizedBox(height: 14.h),
+
+                            // Filtered Invoices List with Infinite Scroll Pagination
+                            Expanded(
+                              child: filteredPurchases.isEmpty
+                                  ? InventoryEmptyState(
+                                      icon: Icons.search_off_rounded,
+                                      title: AppStrings.noResults.tr(),
+                                      description: AppStrings.noPurchasesFound.tr(),
+                                      actionLabel: AppStrings.tryAgain.tr(),
+                                      onAction: _clearFilters,
+                                    )
+                                  : ListView.builder(
+                                      controller: _scrollController,
+                                      physics: const BouncingScrollPhysics(),
+                                      itemCount:
+                                          filteredPurchases.length +
+                                          (state.isPaginationLoading ? 1 : 0),
+                                      itemBuilder: (context, index) {
+                                        if (index == filteredPurchases.length) {
+                                          return Padding(
+                                            padding: EdgeInsets.symmetric(
+                                              vertical: isDesktop ? 16 : 16.h,
+                                            ),
+                                            child: Center(
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 4,
+                                                color: AppColors.primaryColor,
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                        final pur = filteredPurchases[index];
+                                        return Padding(
+                                          padding: EdgeInsets.only(
+                                            bottom: isDesktop ? 12 : 12.h,
+                                          ),
+                                          child: PurchaseCardItem(
+                                            purchase: pur,
+                                            onSharePdf: () =>
+                                                _sharePurchasePdf(pur),
+                                            onDownloadPdf: () =>
+                                                _downloadPurchasePdf(pur),
+                                            onEdit: () => _editPurchase(pur),
+                                            onDelete: () =>
+                                                _confirmDeletePurchase(pur),
+                                          ),
+                                        );
+                                      },
+                                    ),
                             ),
                           ],
-                        ),
-                        SizedBox(height: 14.h),
-
-                        // Search and Date Filter Bar Component
-                        PurchaseSearchBar(
-                          searchController: _searchController,
-                          selectedDateRange: _selectedDateRange,
-                          onSelectDateRange: () => _pickDateRange(context),
-                          onClearFilters: _clearFilters,
-                        ),
-                        SizedBox(height: 14.h),
-
-                        // Filtered Invoices List with Infinite Scroll Pagination
-                        Expanded(
-                          child: filteredPurchases.isEmpty
-                              ? InventoryEmptyState(
-                                  icon: Icons.search_off_rounded,
-                                  title: AppStrings.noResults.tr(),
-                                  description: AppStrings.noPurchasesFound.tr(),
-                                  actionLabel: AppStrings.clearFilter.tr(),
-                                  onAction: _clearFilters,
-                                )
-                              : ListView.builder(
-                                  controller: _scrollController,
-                                  physics: const BouncingScrollPhysics(),
-                                  itemCount:
-                                      filteredPurchases.length +
-                                      (state.isPaginationLoading ? 1 : 0),
-                                  itemBuilder: (context, index) {
-                                    if (index == filteredPurchases.length) {
-                                      return Padding(
-                                        padding: EdgeInsets.symmetric(
-                                          vertical: isDesktop ? 16 : 16.h,
-                                        ),
-                                        child: Center(
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 4,
-                                            color: AppColors.primaryColor,
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                    final pur = filteredPurchases[index];
-                                    return Padding(
-                                      padding: EdgeInsets.only(
-                                        bottom: isDesktop ? 12 : 12.h,
-                                      ),
-                                      child: PurchaseCardItem(
-                                        purchase: pur,
-                                        onSharePdf: () =>
-                                            _sharePurchasePdf(pur),
-                                        onDownloadPdf: () =>
-                                            _downloadPurchasePdf(pur),
-                                        onEdit: () => _editPurchase(pur),
-                                        onDelete: () =>
-                                            _confirmDeletePurchase(pur),
-                                      ),
-                                    );
-                                  },
-                                ),
-                        ),
-                      ],
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
+                ),
               ),
             ),
           ),
-        ),
+          if (_isDeleting)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withValues(alpha: 0.45),
+                child: Center(
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isDesktop ? 28 : 24.w,
+                      vertical: isDesktop ? 22 : 18.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(16.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.15),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(
+                          strokeWidth: 3.5,
+                          color: AppColors.primaryColor,
+                        ),
+                        SizedBox(height: 14.h),
+                        Text(
+                          AppStrings.deletingPurchase.tr(),
+                          style: TextStyles.customStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

@@ -120,6 +120,9 @@ class InvoiceEntity extends Equatable {
   /// Overall cash discount applied to the total invoice amount in currency (EGP).
   final double discountAmount;
 
+  /// Indicates if the paid amount of this voided invoice was refunded to customer and deducted from vault.
+  final bool isRefundedToCustomer;
+
   const InvoiceEntity({
     required this.id,
     required this.uid,
@@ -136,6 +139,7 @@ class InvoiceEntity extends Equatable {
     this.linkedDebtId,
     this.syncedTotalPaid,
     this.discountAmount = 0.0,
+    this.isRefundedToCustomer = false,
   });
 
   double get subtotalAmount => items.fold(0.0, (sum, item) => sum + item.total);
@@ -173,6 +177,7 @@ class InvoiceEntity extends Equatable {
     String? linkedDebtId,
     double? syncedTotalPaid,
     double? discountAmount,
+    bool? isRefundedToCustomer,
   }) {
     return InvoiceEntity(
       id: id ?? this.id,
@@ -190,6 +195,7 @@ class InvoiceEntity extends Equatable {
       linkedDebtId: linkedDebtId ?? this.linkedDebtId,
       syncedTotalPaid: syncedTotalPaid ?? this.syncedTotalPaid,
       discountAmount: discountAmount ?? this.discountAmount,
+      isRefundedToCustomer: isRefundedToCustomer ?? this.isRefundedToCustomer,
     );
   }
 
@@ -210,5 +216,6 @@ class InvoiceEntity extends Equatable {
     linkedDebtId,
     syncedTotalPaid,
     discountAmount,
+    isRefundedToCustomer,
   ];
 }

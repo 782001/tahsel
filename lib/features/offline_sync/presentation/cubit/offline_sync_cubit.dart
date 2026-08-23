@@ -1,14 +1,20 @@
 import 'dart:async';
 
+import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/services/injection_container.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/features/cashbox/presentation/cubit/vault_cubit.dart';
+import 'package:tahsel/features/inventory/data/datasources/inventory_local_data_source.dart';
+import 'package:tahsel/features/inventory/domain/repositories/inventory_repository.dart';
+import 'package:tahsel/features/inventory/presentation/cubits/inventory_products_cubit.dart';
+import 'package:tahsel/features/inventory/presentation/cubits/inventory_purchases_cubit.dart';
 import 'package:tahsel/features/invoice/data/datasources/offline_invoice_local_data_source.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_cubit.dart';
 
 import '../../../standard_features/no-internet/logic/connectivity_cubit.dart';
 import '../../../standard_features/no-internet/logic/connectivity_state.dart';
 import '../../domain/usecases/offline_sync_usecases.dart';
-import 'package:equatable/equatable.dart';
 
 part 'offline_sync_state.dart';
 
@@ -52,11 +58,35 @@ class OfflineSyncCubit extends Cubit<OfflineSyncState> {
     );
 
     // Also check for pending invoices
-    final invoiceLocal = sl<OfflineInvoiceLocalDataSource>();
-    final pendingInvoices = await invoiceLocal.getPendingInvoices();
-    final hasInvoices = pendingInvoices.isNotEmpty;
+    bool hasInvoices = false;
+    if (sl.isRegistered<OfflineInvoiceLocalDataSource>()) {
+      try {
+        final invoiceLocal = sl<OfflineInvoiceLocalDataSource>();
+        final pendingInvoices = await invoiceLocal.getPendingInvoices();
+        hasInvoices = pendingInvoices.isNotEmpty;
+      } catch (_) {}
+    }
 
-    if (!hasData && !hasInvoices) return;
+    // Also check for pending inventory data (purchases, products, movements, suppliers, categories)
+    bool hasInventory = false;
+    if (sl.isRegistered<InventoryLocalDataSource>()) {
+      try {
+        final invLocal = sl<InventoryLocalDataSource>();
+        final unsyncedPurchases = await invLocal.getUnsyncedPurchases();
+        final unsyncedProducts = await invLocal.getUnsyncedProducts();
+        final unsyncedMovements = await invLocal.getUnsyncedStockMovements();
+        final unsyncedSuppliers = await invLocal.getUnsyncedSuppliers();
+        final unsyncedCategories = await invLocal.getUnsyncedCategories();
+        hasInventory =
+            unsyncedPurchases.isNotEmpty ||
+            unsyncedProducts.isNotEmpty ||
+            unsyncedMovements.isNotEmpty ||
+            unsyncedSuppliers.isNotEmpty ||
+            unsyncedCategories.isNotEmpty;
+      } catch (_) {}
+    }
+
+    if (!hasData && !hasInvoices && !hasInventory) return;
 
     // 2. Second check if we are actually online. NO CONNECTION -> SILENT EXIT.
     // This prevents "Sync Failed" snackbar when just blipping the network or pulling drawer.
@@ -66,10 +96,30 @@ class OfflineSyncCubit extends Cubit<OfflineSyncState> {
     emit(OfflineSyncInProgress());
 
     final result = await syncPendingOperationsUseCase.call(null);
-    
+
     // Sync invoices silently in the same transaction context
-    if (hasInvoices) {
-      await sl<InvoiceCubit>().syncOfflineInvoices();
+    if (hasInvoices && sl.isRegistered<InvoiceCubit>()) {
+      try {
+        await sl<InvoiceCubit>().syncOfflineInvoices();
+      } catch (_) {}
+    }
+
+    // Sync inventory data (purchases, stock movements, products, vault, expenses, my debts)
+    if (hasInventory && sl.isRegistered<InventoryRepository>()) {
+      try {
+        await sl<InventoryRepository>().syncInventoryData();
+        if (sl.isRegistered<InventoryPurchasesCubit>()) {
+          sl<InventoryPurchasesCubit>().fetchPurchases();
+        }
+        if (sl.isRegistered<InventoryProductsCubit>()) {
+          sl<InventoryProductsCubit>().fetchProducts();
+        }
+        if (sl.isRegistered<VaultCubit>() &&
+            AppStrings.userToken.isNotEmpty &&
+            AppStrings.isVaultEnabled()) {
+          sl<VaultCubit>().loadVaultData(AppStrings.userToken);
+        }
+      } catch (_) {}
     }
 
     result.fold(

@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tahsel/core/utils/date_formatter.dart';
 import 'package:tahsel/core/utils/summary_helper.dart';
+import 'package:tahsel/features/cashbox/data/datasources/vault_remote_data_source.dart';
+import 'package:tahsel/features/cashbox/domain/entities/vault_transaction_entity.dart';
 
 import '../../../../core/error/firebase_error_handler.dart';
 import '../../domain/entities/expense_entity.dart';
@@ -45,7 +47,10 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
   ExpenseRemoteDataSourceImpl({required this.firestore});
 
   @override
-  Future<String> addExpense(ExpenseModel expense, {double? previousAmount}) async {
+  Future<String> addExpense(
+    ExpenseModel expense, {
+    double? previousAmount,
+  }) async {
     try {
       final userRef = firestore.collection('users').doc(expense.uid);
       final collectionRef = userRef.collection('expenses');
@@ -61,12 +66,45 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
           ? 0
           : (expense.amount > 0 ? 1 : 0);
 
+      final bool isInternalSync =
+          docRef.id.startsWith('exp_pur_') || docRef.id.startsWith('exp_pay_');
+
+      // 1. Sync Vault FIRST (Atomically checks balance inside Vault transaction without standalone .get() read)
+      if (!isInternalSync && deltaAmount != 0) {
+        VaultTransactionSource vSource = VaultTransactionSource.expense;
+        String vType = 'manual_expense';
+        if (docRef.id.startsWith('exp_emp_sal_')) {
+          vSource = VaultTransactionSource.employee;
+          vType = 'salary_payment';
+        } else if (docRef.id.startsWith('exp_emp_adv_')) {
+          vSource = VaultTransactionSource.employee;
+          vType = 'employee_advance';
+        }
+
+        await VaultRemoteDataSourceImpl.syncVaultTransaction(
+          firestore: firestore,
+          uid: expense.uid,
+          transactionId: 'vault_tx_${docRef.id}',
+          amount: deltaAmount.abs(),
+          direction: deltaAmount >= 0
+              ? VaultTransactionDirection.outFlow
+              : VaultTransactionDirection.inFlow,
+          source: vSource,
+          type: vType,
+          description: expense.description.isNotEmpty
+              ? expense.description
+              : expense.category,
+          relatedEntityId: docRef.id,
+          createdAt: expense.createdAt,
+        );
+      }
+
       final batch = firestore.batch();
 
-      // 1. Set the expense document
+      // 2. Set the expense document
       batch.set(docRef, expense.toJson(), SetOptions(merge: true));
 
-      // 2. Update Summaries
+      // 3. Update Summaries
       if (deltaAmount != 0 || countIncrement != 0) {
         final summaryKeys = SummaryHelper.getSummaryKeys(expense.createdAt);
         for (final key in summaryKeys) {
@@ -78,8 +116,9 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
             summaryData['totalExpenses'] = FieldValue.increment(deltaAmount);
           }
           if (countIncrement != 0) {
-            summaryData['transactionCount'] =
-                FieldValue.increment(countIncrement);
+            summaryData['transactionCount'] = FieldValue.increment(
+              countIncrement,
+            );
           }
           batch.set(summaryRef, summaryData, SetOptions(merge: true));
         }
@@ -297,6 +336,34 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
       }
 
       await batch.commit();
+
+      if (expenseId.startsWith('exp_pur_') ||
+          expenseId.startsWith('exp_pay_') ||
+          expenseId.startsWith('exp_vault_manual_with_')) {
+        // Vault reversal transactions for purchases, debt payments, and manual withdrawals are managed directly by Inventory/MyDebts/Vault modules
+        return;
+      }
+
+      VaultTransactionSource vSource = VaultTransactionSource.expense;
+      if (expenseId.startsWith('exp_emp_sal_') ||
+          expenseId.startsWith('exp_emp_adv_')) {
+        vSource = VaultTransactionSource.employee;
+      }
+
+      await VaultRemoteDataSourceImpl.syncVaultTransaction(
+        firestore: firestore,
+        uid: uid,
+        transactionId:
+            'vault_tx_${expenseId}_rev_${DateTime.now().millisecondsSinceEpoch}',
+        amount: expense.amount,
+        direction: VaultTransactionDirection.inFlow,
+        source: vSource,
+        type: 'reversal',
+        description:
+            'إلغاء مصروف: ${expense.description.isNotEmpty ? expense.description : expense.category}',
+        relatedEntityId: expenseId,
+        createdAt: DateTime.now(),
+      );
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       throw Exception('Failed to delete expense: $e');

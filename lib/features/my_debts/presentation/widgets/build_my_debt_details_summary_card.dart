@@ -6,6 +6,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_item_entity.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_report_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/widgets/my_debt_details_summary_item.dart';
@@ -32,8 +33,8 @@ class BuildMyDebtDetailsSummaryCard extends StatelessWidget {
     final bool hasCredit = remainingDebt < 0 || (amountPaid > totalAmount);
     final double supplierCredit = hasCredit
         ? (amountPaid > totalAmount
-            ? (amountPaid - totalAmount)
-            : remainingDebt.abs())
+              ? (amountPaid - totalAmount)
+              : remainingDebt.abs())
         : 0.0;
 
     // Three visual states:
@@ -43,39 +44,36 @@ class BuildMyDebtDetailsSummaryCard extends StatelessWidget {
     final Color cardColor = hasCredit
         ? AppColors.creditAmberEnd
         : isSettled
-            ? AppColors.primaryColor
-            : AppColors.error;
+        ? AppColors.primaryColor
+        : AppColors.error;
 
     final List<Color> gradientColors = hasCredit
-        ? [
-            AppColors.creditAmberStart,
-            AppColors.creditAmberEnd,
-          ]
+        ? [AppColors.creditAmberStart, AppColors.creditAmberEnd]
         : isSettled
-            ? [
-                AppColors.primaryColor,
-                AppColors.primaryColor.withValues(alpha: 0.8),
-              ]
-            : [AppColors.error.withValues(alpha: 0.9), AppColors.error];
+        ? [
+            AppColors.primaryColor,
+            AppColors.primaryColor.withValues(alpha: 0.8),
+          ]
+        : [AppColors.error.withValues(alpha: 0.9), AppColors.error];
 
     final String statusBadgeLabel = hasCredit
         ? AppStrings.supplierCredit.tr()
         : isSettled
-            ? AppStrings.fullSettlement.tr()
-            : AppStrings.debtStatusOverdue.tr();
+        ? AppStrings.fullSettlement.tr()
+        : AppStrings.debtStatusOverdue.tr();
 
     final double displayRemaining = remainingDebt < 0 ? 0.0 : remainingDebt;
-
+    final isDesktop = ResponsiveLayout.isDesktop(context);
     return Container(
-      margin: EdgeInsets.all(16.r),
-      padding: EdgeInsets.all(20.r),
+      margin: EdgeInsets.all(isDesktop ? 16 : 16.r),
+      padding: EdgeInsets.all(isDesktop ? 16 : 16.r),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: gradientColors,
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(24.r),
+        borderRadius: BorderRadius.circular(isDesktop ? 24 : 24.r),
         boxShadow: [
           BoxShadow(
             color: cardColor.withValues(alpha: 0.3),
@@ -104,11 +102,11 @@ class BuildMyDebtDetailsSummaryCard extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 4.h),
+                    SizedBox(height: isDesktop ? 4 : 4.h),
                     Container(
                       padding: EdgeInsets.symmetric(
-                        horizontal: 8.w,
-                        vertical: 2.h,
+                        horizontal: isDesktop ? 8 : 8.w,
+                        vertical: isDesktop ? 2 : 2.h,
                       ),
                       decoration: BoxDecoration(
                         color: AppColors.whiteOpacity(0.2),
@@ -128,18 +126,24 @@ class BuildMyDebtDetailsSummaryCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: AppColors.whiteOpacity(0.2),
-                  borderRadius: BorderRadius.circular(20.r),
-                ),
-                child: Text(
-                  statusBadgeLabel,
-                  style: TextStyles.customStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isDesktop ? 12 : 12.w,
+                    vertical: isDesktop ? 6 : 6.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.whiteOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20.r),
+                  ),
+                  child: Text(
+                    statusBadgeLabel,
+                    style: TextStyles.customStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -148,10 +152,13 @@ class BuildMyDebtDetailsSummaryCard extends StatelessWidget {
 
           // ── Supplier Credit banner & Refund Settlement Button ──────────
           if (hasCredit) ...[
-            SizedBox(height: 16.h),
+            SizedBox(height: isDesktop ? 4 : 16.h),
             Container(
               width: double.infinity,
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+              padding: EdgeInsets.symmetric(
+                horizontal: isDesktop ? 12 : 12.w,
+                vertical: isDesktop ? 10 : 10.h,
+              ),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.18),
                 borderRadius: BorderRadius.circular(12.r),
@@ -167,7 +174,7 @@ class BuildMyDebtDetailsSummaryCard extends StatelessWidget {
                     color: Colors.white,
                     size: 18.r,
                   ),
-                  SizedBox(width: 8.w),
+                  SizedBox(width: isDesktop ? 12 : 8.w),
                   Expanded(
                     child: Text(
                       '${AppStrings.supplierCredit.tr()}: ${supplierCredit.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
@@ -181,7 +188,7 @@ class BuildMyDebtDetailsSummaryCard extends StatelessWidget {
                 ],
               ),
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: isDesktop ? 12 : 12.h),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -191,8 +198,10 @@ class BuildMyDebtDetailsSummaryCard extends StatelessWidget {
                   backgroundColor: Colors.white,
                   foregroundColor: AppColors.supplierCreditColor,
                   elevation: 2,
-                  padding:
-                      EdgeInsets.symmetric(vertical: 10.h, horizontal: 14.w),
+                  padding: EdgeInsets.symmetric(
+                    vertical: 10.h,
+                    horizontal: 14.w,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12.r),
                   ),

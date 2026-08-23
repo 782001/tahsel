@@ -7,6 +7,7 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/utils/vault_balance_helper.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_item_entity.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_person_entity.dart';
@@ -279,13 +280,18 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
           context.read<MyDebtDetailsCubit>().clearFlags();
         } else if (state.status == MyDebtDetailsStatus.error &&
             state.message != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              duration: const Duration(milliseconds: 1500),
-              content: Text(state.message!.tr()),
-              backgroundColor: AppColors.error,
-            ),
-          );
+          if (state.message!.contains(AppStrings.insufficientBalance) ||
+              state.message!.contains('insufficient_balance')) {
+            VaultBalanceHelper.showInsufficientBalanceDialog(context);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                duration: const Duration(milliseconds: 1500),
+                content: Text(state.message!.tr()),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          }
         }
       },
       child: BlocBuilder<MyDebtDetailsCubit, MyDebtDetailsState>(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 class AddExpenseField extends StatelessWidget {
   final String label;
@@ -35,11 +36,15 @@ class AddExpenseField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
+          padding: EdgeInsets.symmetric(
+            horizontal: isDesktop ? 24 : 24.w,
+            vertical: isDesktop ? 8 : 8.h,
+          ),
           child: Text(
             label,
             style: TextStyles.customStyle(
@@ -50,7 +55,7 @@ class AddExpenseField extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24.w),
+          padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 : 24.w),
           child: TextField(
             cursorColor: AppColors.primaryColor,
             controller: controller,
@@ -79,7 +84,9 @@ class AddExpenseField extends StatelessWidget {
               ),
               prefixIcon: prefixText != null
                   ? Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isDesktop ? 16 : 16.w,
+                      ),
                       child: Text(
                         prefixText!,
                         style: TextStyles.customStyle(
@@ -95,17 +102,21 @@ class AddExpenseField extends StatelessWidget {
                 minHeight: 0,
               ),
               suffixIcon: suffixIcon != null
-                  ? Icon(suffixIcon, color: AppColors.blackLight, size: 22.r)
+                  ? Icon(
+                      suffixIcon,
+                      color: AppColors.blackLight,
+                      size: isDesktop ? 22 : 22.r,
+                    )
                   : null,
               filled: true,
               fillColor: AppColors.stitchSurfaceLow,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(24.r),
+                borderRadius: BorderRadius.circular(isDesktop ? 24 : 24.r),
                 borderSide: BorderSide.none,
               ),
               contentPadding: EdgeInsets.symmetric(
-                horizontal: 24.w,
-                vertical: 18.h,
+                horizontal: isDesktop ? 24 : 24.w,
+                vertical: isDesktop ? 18 : 18.h,
               ),
             ),
           ),

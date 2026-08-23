@@ -1,18 +1,17 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:intl/intl.dart';
 import 'package:tahsel/core/extensions/extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/utils/vault_balance_helper.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/employee/domain/entities/advance_entity.dart';
 import 'package:tahsel/features/employee/domain/entities/employee_entity.dart';
 import 'package:tahsel/features/employee/presentation/cubit/employee_cubit.dart';
 import 'package:tahsel/features/employee/presentation/cubit/employee_state.dart';
-import 'package:tahsel/features/expenses/domain/entities/expense_entity.dart';
-import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
 
 class RequestAdvanceDialog extends StatefulWidget {
   final EmployeeEntity employee;
@@ -75,10 +74,29 @@ class _RequestAdvanceDialogState extends State<RequestAdvanceDialog> {
     );
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
       final amount = double.tryParse(_amountController.text) ?? 0.0;
       if (amount <= 0) return;
+
+      if (AppStrings.isVaultEnabled() && amount > 0) {
+        final uid = AppStrings.userToken;
+        final summaryDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('vault')
+            .doc('summary')
+            .get();
+        final double currentBalance = (summaryDoc.exists && summaryDoc.data() != null)
+            ? ((summaryDoc.data()!['currentBalance'] as num?)?.toDouble() ?? 0.0)
+            : 0.0;
+        if (currentBalance <= 0 || currentBalance < amount) {
+          if (mounted) {
+            VaultBalanceHelper.showInsufficientBalanceDialog(context);
+          }
+          return;
+        }
+      }
 
       final advance = AdvanceEntity(
         id: '', // Handled by repository
@@ -91,26 +109,12 @@ class _RequestAdvanceDialogState extends State<RequestAdvanceDialog> {
         status: 'paid',
       );
 
+      if (!mounted) return;
       context.read<EmployeeCubit>().requestAdvance(advance);
 
-      final categoryName = AppStrings.advanceExpenseFor.tr(
-        namedArgs: {'name': widget.employee.name},
-      );
-
-      final expense = ExpenseEntity(
-        id: 'exp_emp_adv_${DateTime.now().millisecondsSinceEpoch}',
-        uid: AppStrings.userToken,
-        amount: amount,
-        category: categoryName,
-        description: _notesController.text.trim(),
-        createdAt: DateTime.now(),
-        monthKey: DateFormat('yyyy-MM', 'en').format(DateTime.now()),
-      );
       if (mounted) {
-        context.read<ExpenseCubit>().addExpense(expense);
+        Navigator.pop(context);
       }
-
-      Navigator.pop(context);
     }
   }
 

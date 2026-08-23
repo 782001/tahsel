@@ -90,6 +90,7 @@ class InvoiceModel extends InvoiceEntity {
     super.linkedDebtId,
     super.syncedTotalPaid,
     super.discountAmount,
+    super.isRefundedToCustomer,
   });
 
   factory InvoiceModel.fromEntity(InvoiceEntity e) => InvoiceModel(
@@ -108,6 +109,7 @@ class InvoiceModel extends InvoiceEntity {
     linkedDebtId: e.linkedDebtId,
     syncedTotalPaid: e.syncedTotalPaid,
     discountAmount: e.discountAmount,
+    isRefundedToCustomer: e.isRefundedToCustomer,
   );
 
   factory InvoiceModel.fromMap(Map<String, dynamic> map) => InvoiceModel(
@@ -135,6 +137,7 @@ class InvoiceModel extends InvoiceEntity {
     linkedDebtId: map['linkedDebtId'] as String?,
     syncedTotalPaid: (map['syncedTotalPaid'] as num?)?.toDouble(),
     discountAmount: (map['discountAmount'] as num? ?? 0.0).toDouble(),
+    isRefundedToCustomer: map['isRefundedToCustomer'] as bool? ?? false,
   );
 
   /// Converts the model to a plain JSON-safe Map (no Firestore Timestamps).
@@ -156,6 +159,7 @@ class InvoiceModel extends InvoiceEntity {
     'linkedDebtId': linkedDebtId,
     if (syncedTotalPaid != null) 'syncedTotalPaid': syncedTotalPaid,
     'discountAmount': discountAmount,
+    'isRefundedToCustomer': isRefundedToCustomer,
   };
 
   String toJson() => jsonEncode(toMap());

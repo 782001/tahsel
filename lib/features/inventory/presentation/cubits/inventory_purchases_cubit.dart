@@ -122,10 +122,15 @@ class InventoryPurchasesCubit extends Cubit<InventoryPurchasesState> {
   }
 
   Future<bool> createPurchase(InventoryPurchaseEntity purchase) async {
+    final prevState = state;
     final result = await createPurchaseUseCase(purchase);
     return result.fold(
       (failure) {
-        emit(InventoryPurchasesError(failure.message));
+        if (prevState is InventoryPurchasesLoaded) {
+          emit(prevState);
+        } else {
+          emit(InventoryPurchasesError(failure.message));
+        }
         return false;
       },
       (_) {
@@ -139,13 +144,18 @@ class InventoryPurchasesCubit extends Cubit<InventoryPurchasesState> {
     required InventoryPurchaseEntity oldPurchase,
     required InventoryPurchaseEntity newPurchase,
   }) async {
+    final prevState = state;
     final result = await updatePurchaseUseCase(
       oldPurchase: oldPurchase,
       newPurchase: newPurchase,
     );
     return result.fold(
       (failure) {
-        emit(InventoryPurchasesError(failure.message));
+        if (prevState is InventoryPurchasesLoaded) {
+          emit(prevState);
+        } else {
+          emit(InventoryPurchasesError(failure.message));
+        }
         return false;
       },
       (_) {
@@ -156,10 +166,15 @@ class InventoryPurchasesCubit extends Cubit<InventoryPurchasesState> {
   }
 
   Future<bool> deletePurchase(InventoryPurchaseEntity purchase) async {
+    final prevState = state;
     final result = await deletePurchaseUseCase(purchase);
     return result.fold(
       (failure) {
-        emit(InventoryPurchasesError(failure.message));
+        if (prevState is InventoryPurchasesLoaded) {
+          emit(prevState);
+        } else {
+          emit(InventoryPurchasesError(failure.message));
+        }
         return false;
       },
       (_) {

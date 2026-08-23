@@ -31,6 +31,8 @@ class DebtItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool hasCredit =
+        item.remainingDebt < 0 || item.amountPaid > item.totalAmount;
     final bool isSettled = item.remainingDebt <= 0;
     final bool isDesktop = ResponsiveLayout.isDesktop(context);
     return InkWell(
@@ -54,9 +56,11 @@ class DebtItemCard extends StatelessWidget {
           color: AppColors.debtCardSurface,
           borderRadius: BorderRadius.circular(16.r),
           border: Border.all(
-            color: isSettled
-                ? AppColors.primaryColor.withValues(alpha: 0.2)
-                : AppColors.error.withValues(alpha: 0.15),
+            color: hasCredit
+                ? AppColors.creditAmberEnd.withValues(alpha: 0.3)
+                : (isSettled
+                    ? AppColors.primaryColor.withValues(alpha: 0.2)
+                    : AppColors.error.withValues(alpha: 0.15)),
             width: 1,
           ),
           boxShadow: [
@@ -134,26 +138,32 @@ class DebtItemCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // Settled / pending pill
+                  // Settled / pending / credit pill
                   Container(
                     padding: EdgeInsets.symmetric(
                       horizontal: 8.w,
                       vertical: 3.h,
                     ),
                     decoration: BoxDecoration(
-                      color: isSettled
-                          ? AppColors.primaryColor.withValues(alpha: 0.1)
-                          : AppColors.error.withValues(alpha: 0.1),
+                      color: hasCredit
+                          ? AppColors.creditAmberEnd.withValues(alpha: 0.1)
+                          : (isSettled
+                              ? AppColors.primaryColor.withValues(alpha: 0.1)
+                              : AppColors.error.withValues(alpha: 0.1)),
                       borderRadius: BorderRadius.circular(20.r),
                     ),
                     child: Text(
-                      isSettled
-                          ? AppStrings.fullPaymentLabel.tr()
-                          : AppStrings.debtStatusOverdue.tr(),
+                      hasCredit
+                          ? AppStrings.customerCredit.tr()
+                          : (isSettled
+                              ? AppStrings.fullPaymentLabel.tr()
+                              : AppStrings.debtStatusOverdue.tr()),
                       style: TextStyles.customStyle(
-                        color: isSettled
-                            ? AppColors.primaryColor
-                            : AppColors.error,
+                        color: hasCredit
+                            ? AppColors.creditAmberEnd
+                            : (isSettled
+                                ? AppColors.primaryColor
+                                : AppColors.error),
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
                       ),
@@ -184,11 +194,19 @@ class DebtItemCard extends StatelessWidget {
                     ),
                     _Divider(),
                     _FinancialCell(
-                      label: AppStrings.remainingDebt.tr(),
-                      amount: item.remainingDebt,
-                      color: item.remainingDebt > 0
-                          ? AppColors.error
-                          : AppColors.primaryColor,
+                      label: hasCredit
+                          ? AppStrings.customerCredit.tr()
+                          : AppStrings.remainingDebt.tr(),
+                      amount: hasCredit
+                          ? (item.amountPaid > item.totalAmount
+                              ? (item.amountPaid - item.totalAmount)
+                              : item.remainingDebt.abs())
+                          : item.remainingDebt,
+                      color: hasCredit
+                          ? AppColors.creditAmberEnd
+                          : (item.remainingDebt > 0
+                              ? AppColors.error
+                              : AppColors.primaryColor),
                     ),
                   ],
                 ),

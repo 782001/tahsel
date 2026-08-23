@@ -30,21 +30,28 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final cubit = context.read<MyDebtDetailsReportCubit>();
     final state = cubit.state;
-    final bool isDebtAdded = transaction.type == PaymentType.debtAdded;
+    final bool isSettlement = transaction.type == PaymentType.settlement ||
+        transaction.amountPaid < 0;
+    final bool isDebtAdded =
+        transaction.type == PaymentType.debtAdded && !isSettlement;
 
     bool canEdit = false;
     bool canDelete = false;
 
     List<PaymentEntity>? transactions;
+    double? remainingDebt;
     if (state is MyDebtDetailsReportLoaded) {
       transactions = state.transactions;
+      remainingDebt = state.remainingAmount;
     } else if (state is MyDebtDetailsUpdateSuccess) {
       transactions = state.transactions;
+      remainingDebt = state.remainingAmount;
     } else if (state is MyDebtDetailsDeleteSuccess) {
       transactions = state.transactions;
+      remainingDebt = state.remainingAmount;
     }
 
-    if (transactions != null) {
+    if (transactions != null && !isSettlement) {
       final index = transactions.indexOf(transaction);
       // Rule 1: Only latest 2 items
       final bool isLatest2 = index >= 0 && index < 2;
@@ -53,6 +60,12 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
         canEdit = true;
         canDelete = true;
       }
+    }
+
+    // Rule 2: Cannot edit or delete settlement transactions or if there is credit
+    if (isSettlement || (remainingDebt != null && remainingDebt < 0)) {
+      canEdit = false;
+      canDelete = false;
     }
 
     final String dateStr = transaction.createdAt != null
@@ -101,8 +114,16 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.all(16.r),
           decoration: BoxDecoration(
-            color: AppColors.debtCardSurface,
+            color: isSettlement
+                ? AppColors.creditAmberEnd.withValues(alpha: 0.05)
+                : AppColors.debtCardSurface,
             borderRadius: BorderRadius.circular(16.r),
+            border: isSettlement
+                ? Border.all(
+                    color: AppColors.creditAmberEnd.withValues(alpha: 0.3),
+                    width: 1.2,
+                  )
+                : null,
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.02),
@@ -117,16 +138,23 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
                 width: 48.r,
                 height: 48.r,
                 decoration: BoxDecoration(
-                  color:
-                      (isDebtAdded ? AppColors.error : AppColors.primaryColor)
+                  color: isSettlement
+                      ? AppColors.creditAmberEnd.withValues(alpha: 0.12)
+                      : (isDebtAdded ? AppColors.error : AppColors.primaryColor)
                           .withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Icon(
-                  isDebtAdded
-                      ? Icons.add_circle_outline
-                      : Icons.account_balance_wallet_outlined,
-                  color: isDebtAdded ? AppColors.error : AppColors.primaryColor,
+                  isSettlement
+                      ? Icons.output_rounded
+                      : (isDebtAdded
+                          ? Icons.add_circle_outline
+                          : Icons.account_balance_wallet_outlined),
+                  color: isSettlement
+                      ? AppColors.creditAmberEnd
+                      : (isDebtAdded
+                          ? AppColors.error
+                          : AppColors.primaryColor),
                   size: 24.r,
                 ),
               ),
@@ -138,7 +166,9 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
                     Text(
                       _getTransactionTitle(),
                       style: TextStyles.customStyle(
-                        color: AppColors.textColor,
+                        color: isSettlement
+                            ? AppColors.creditAmberEnd
+                            : AppColors.textColor,
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
@@ -149,7 +179,9 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
                       Text(
                         transaction.activityName!,
                         style: TextStyles.customStyle(
-                          color: AppColors.primaryColor,
+                          color: isSettlement
+                              ? AppColors.creditAmberEnd
+                              : AppColors.primaryColor,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
@@ -172,11 +204,15 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
-                      '${isDebtAdded ? "+" : "-"}${transaction.amountPaid.abs().toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                      isSettlement
+                          ? '- ${transaction.amountPaid.abs().toSmartAmount()} ${AppStrings.currencyEgp.tr()}'
+                          : '${isDebtAdded ? "+" : "-"}${transaction.amountPaid.abs().toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                       style: TextStyles.customStyle(
-                        color: isDebtAdded
-                            ? AppColors.error
-                            : AppColors.primaryColor,
+                        color: isSettlement
+                            ? AppColors.creditAmberEnd
+                            : (isDebtAdded
+                                ? AppColors.error
+                                : AppColors.primaryColor),
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
                       ),

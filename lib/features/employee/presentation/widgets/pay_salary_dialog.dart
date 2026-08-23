@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
@@ -5,6 +6,7 @@ import 'package:tahsel/core/extensions/extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/utils/vault_balance_helper.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/employee/domain/entities/advance_entity.dart';
 import 'package:tahsel/features/employee/domain/entities/employee_entity.dart';
@@ -1058,7 +1060,7 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
     );
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
       final double base = double.parse(_baseSalaryController.text);
       final double otHours = widget.employee.salaryType == 'hourly'
@@ -1082,6 +1084,25 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
       if (_netSalary < 0) {
         actualPaid = 0.0;
         carriedForward = _netSalary.abs();
+      }
+
+      if (AppStrings.isVaultEnabled() && actualPaid > 0) {
+        final uid = AppStrings.userToken;
+        final summaryDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('vault')
+            .doc('summary')
+            .get();
+        final double currentBalance = (summaryDoc.exists && summaryDoc.data() != null)
+            ? ((summaryDoc.data()!['currentBalance'] as num?)?.toDouble() ?? 0.0)
+            : 0.0;
+        if (currentBalance <= 0 || currentBalance < actualPaid) {
+          if (mounted) {
+            VaultBalanceHelper.showInsufficientBalanceDialog(context);
+          }
+          return;
+        }
       }
 
       final start = widget.employee.salaryType == 'monthly'
@@ -1123,7 +1144,9 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
       );
 
       widget.onPay(payroll, _selectedAdvanceIds.toList());
-      Navigator.pop(context);
+      if (mounted) {
+        Navigator.pop(context);
+      }
     }
   }
 }

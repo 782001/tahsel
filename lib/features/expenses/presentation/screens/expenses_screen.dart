@@ -5,6 +5,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/vault_balance_helper.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_state.dart';
@@ -46,12 +47,17 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 ),
               );
             } else if (state is ExpenseFailure) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.message),
-                  backgroundColor: AppColors.error,
-                ),
-              );
+              if (state.message.contains(AppStrings.insufficientBalance) ||
+                  state.message.contains('insufficient_balance')) {
+                VaultBalanceHelper.showInsufficientBalanceDialog(context);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: AppColors.error,
+                  ),
+                );
+              }
             }
           },
         ),
@@ -100,7 +106,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     ),
                     Padding(
                       padding: EdgeInsets.symmetric(
-                        horizontal: isDesktop ? 24 : 24.w,
+                        horizontal: isDesktop ? 80 : 24.w,
                         vertical: isDesktop ? 20 : 20.h,
                       ),
                       child: QuickActionButton(

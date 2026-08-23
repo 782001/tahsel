@@ -7,13 +7,14 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/date_formatter.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/utils/vault_balance_helper.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/skeletons/customer_debt_skeleton.dart';
 import 'package:tahsel/features/expenses/domain/entities/expense_entity.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_state.dart';
 import 'package:tahsel/features/expenses/presentation/widgets/expense_card.dart';
 import 'package:tahsel/features/offline_sync/presentation/cubit/offline_sync_cubit.dart';
-import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 class MonthExpensesScreen extends StatefulWidget {
   final String monthKey;
@@ -73,6 +74,7 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
       child: Scaffold(
         backgroundColor: AppColors.scafoldBackGround,
         appBar: AppBar(
+          scrolledUnderElevation: 0,
           backgroundColor: AppColors.white,
           elevation: 0,
           centerTitle: true,
@@ -112,12 +114,17 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
                   // We no longer auto-refresh details here.
                   // The user can refresh manually if they want to verify the deletion on the server.
                 } else if (state is ExpenseFailure) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(state.message),
-                      backgroundColor: AppColors.error,
-                    ),
-                  );
+                  if (state.message.contains(AppStrings.insufficientBalance) ||
+                      state.message.contains('insufficient_balance')) {
+                    VaultBalanceHelper.showInsufficientBalanceDialog(context);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(state.message),
+                        backgroundColor: AppColors.error,
+                      ),
+                    );
+                  }
                 }
               },
             ),
@@ -334,10 +341,12 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
         amount: expense.amount,
         date: DateFormatter.formatNumericDate(expense.createdAt),
         expenseId: expense.id,
-        onDelete: (expense.id != null &&
+        onDelete:
+            (expense.id != null &&
                 (expense.id!.startsWith('exp_pur_') ||
                     expense.id!.startsWith('exp_pay_') ||
-                    expense.id!.startsWith('exp_emp_')))
+                    expense.id!.startsWith('exp_emp_') ||
+                    expense.id!.startsWith('exp_vault_manual_with_')))
             ? null
             : () => _confirmDelete(context, expense.id ?? ''),
       ),

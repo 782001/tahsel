@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/extensions/extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -164,7 +164,7 @@ class _PartialPaymentDialogState extends State<PartialPaymentDialog> {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      '${AppStrings.amountPaid.tr()} (${AppStrings.remainingDebt.tr()}: ${widget.totalRemaining.toStringAsFixed(1)})',
+                      '${AppStrings.amountPaid.tr()} (${AppStrings.remainingDebt.tr()}: ${widget.totalRemaining.toSmartAmount()})',
                       style: TextStyles.customStyle(
                         color: AppColors.disabledColor,
                         fontSize: 12,

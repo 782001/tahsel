@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -12,7 +13,11 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/utils/summary_helper.dart';
+import 'package:tahsel/core/utils/vault_balance_helper.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/features/cashbox/data/datasources/vault_remote_data_source.dart';
+import 'package:tahsel/features/cashbox/domain/entities/vault_transaction_entity.dart';
 import 'package:tahsel/features/customer/presentation/cubit/customer_cubit.dart';
 import 'package:tahsel/features/debt/domain/entities/payment_entity.dart';
 import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
@@ -35,6 +40,7 @@ import 'package:tahsel/features/standard_features/no-internet/logic/connectivity
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/no_internet_view.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
 class InvoiceDetailScreen extends StatefulWidget {
   final InvoiceEntity invoice;
@@ -96,6 +102,654 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
         child: RecordPaymentSheet(invoice: _invoice, onSuccess: () {}),
       ),
     );
+  }
+
+  bool _isRefunding = false;
+
+  Future<void> _handleRefundToCustomer() async {
+    final connectivityState = context.read<ConnectivityCubit>().state;
+    if (connectivityState is ConnectivityDisconnected) {
+      showfailureToast(AppStrings.noInternetConnection.tr());
+      return;
+    }
+
+    final amountToRefund = _invoice.totalPaid;
+    if (amountToRefund <= 0) return;
+
+    // Pre-check Vault balance
+    if (AppStrings.isVaultEnabled()) {
+      final vaultSnap = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(AppStrings.userToken)
+          .collection('vault')
+          .doc('summary')
+          .get();
+      if (!mounted) return;
+      final double currentVaultBalance =
+          (vaultSnap.exists && vaultSnap.data() != null)
+          ? ((vaultSnap.data()!['currentBalance'] as num?)?.toDouble() ?? 0.0)
+          : 0.0;
+      if (currentVaultBalance < amountToRefund) {
+        VaultBalanceHelper.showInsufficientBalanceDialog(context);
+        return;
+      }
+    }
+
+    if (!mounted) return;
+
+    final isDesktop = ResponsiveLayout.isDesktop(context);
+    final double radius = isDesktop ? 20 : 20.r;
+    final double titleFontSize = isDesktop ? 16 : 16.sp;
+    final double smallFontSize = isDesktop ? 12 : 12.sp;
+    final double iconSize = isDesktop ? 22 : 22.sp;
+    final double paddingVal = isDesktop ? 20 : 20.w;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radius),
+        ),
+        backgroundColor: AppColors.surface,
+        contentPadding: EdgeInsets.all(paddingVal),
+        titlePadding: EdgeInsets.fromLTRB(
+          paddingVal,
+          paddingVal,
+          paddingVal,
+          0,
+        ),
+        actionsPadding: EdgeInsets.fromLTRB(
+          paddingVal,
+          0,
+          paddingVal,
+          paddingVal,
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(isDesktop ? 8 : 8.w),
+              decoration: BoxDecoration(
+                color: AppColors.error.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.account_balance_wallet_outlined,
+                color: AppColors.error,
+                size: iconSize,
+              ),
+            ),
+            SizedBox(width: isDesktop ? 12 : 12.w),
+            Expanded(
+              child: Text(
+                AppStrings.refundConfirmationTitle.tr(),
+                textAlign: TextAlign.center,
+                style: TextStyles.customStyle(
+                  fontSize: titleFontSize,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textColor,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: ConstrainedBox(
+          constraints: BoxConstraints(
+            minWidth: isDesktop ? 340 : 280,
+            maxWidth: isDesktop ? 440 : double.infinity,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: isDesktop ? 16 : 16.h),
+
+              // Smart Financial Summary Breakdown Card
+              Container(
+                padding: EdgeInsets.all(isDesktop ? 14 : 14.w),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(isDesktop ? 14 : 14.r),
+                  border: Border.all(
+                    color: AppColors.error.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            AppStrings.customerNameLabel.tr(),
+                            style: TextStyles.customStyle(
+                              fontSize: smallFontSize,
+                              color: AppColors.subTitleColor,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: isDesktop ? 8 : 8.w),
+                        Flexible(
+                          child: Text(
+                            _invoice.customerName ??
+                                AppStrings.unspecifiedCustomer.tr(),
+                            style: TextStyles.customStyle(
+                              fontSize: smallFontSize,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textColor,
+                            ),
+                            textAlign: TextAlign.end,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: isDesktop ? 8 : 8.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            AppStrings.amountDeductedFromVault.tr(),
+                            style: TextStyles.customStyle(
+                              fontSize: smallFontSize,
+                              color: AppColors.subTitleColor,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: isDesktop ? 8 : 8.w),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isDesktop ? 8 : 8.w,
+                            vertical: isDesktop ? 4 : 4.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.error,
+                            borderRadius: BorderRadius.circular(
+                              isDesktop ? 8 : 8.r,
+                            ),
+                          ),
+                          child: Text(
+                            '- ${amountToRefund.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                            style: TextStyles.customStyle(
+                              fontSize: smallFontSize,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          Center(
+            child: ElevatedButton.icon(
+              onPressed: () => Navigator.of(dialogCtx).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(
+                  horizontal: isDesktop ? 16 : 16.w,
+                  vertical: isDesktop ? 10 : 10.h,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(isDesktop ? 10 : 10.r),
+                ),
+              ),
+              icon: Icon(
+                Icons.output_rounded,
+                size: isDesktop ? 18 : 18.sp,
+                color: Colors.white,
+              ),
+              label: Text(
+                textAlign: TextAlign.center,
+                AppStrings.refundToCustomer.tr(),
+                style: TextStyles.customStyle(
+                  fontSize: 12,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+          Center(
+            child: TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(false),
+              child: Text(
+                textAlign: TextAlign.center,
+                AppStrings.cancel.tr(),
+                style: TextStyles.customStyle(
+                  fontSize: 14,
+                  color: AppColors.subTitleColor,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isRefunding = true);
+
+    try {
+      final uid = AppStrings.userToken;
+
+      // Vault Balance Check
+      if (AppStrings.isVaultEnabled() && amountToRefund > 0) {
+        final vaultSummaryRef = FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('vault')
+            .doc('summary');
+        final vaultSnap = await vaultSummaryRef.get();
+        final double currentVaultBalance =
+            (vaultSnap.exists && vaultSnap.data() != null)
+            ? ((vaultSnap.data()!['currentBalance'] as num?)?.toDouble() ?? 0.0)
+            : 0.0;
+        if (currentVaultBalance < amountToRefund) {
+          if (mounted) {
+            setState(() => _isRefunding = false);
+            VaultBalanceHelper.showInsufficientBalanceDialog(context);
+          }
+          return;
+        }
+      }
+
+      await VaultRemoteDataSourceImpl.syncVaultTransaction(
+        uid: uid,
+        transactionId: 'vault_tx_refund_${_invoice.id}',
+        amount: amountToRefund,
+        direction: VaultTransactionDirection.outFlow,
+        source: VaultTransactionSource.customerDebt,
+        type: 'invoice_refund',
+        description:
+            'إرجاع مبلغ فاتورة ملغاة: #${_invoice.id} للعميل: ${_invoice.customerName ?? ""}',
+        relatedEntityId: _invoice.id,
+        createdAt: DateTime.now(),
+      );
+
+      await FirebaseFirestore.instance
+          .collection('users/$uid/invoices')
+          .doc(_invoice.id)
+          .set({'isRefundedToCustomer': true}, SetOptions(merge: true));
+
+      if (mounted) {
+        setState(() {
+          _isRefunding = false;
+          _invoice = _invoice.copyWith(isRefundedToCustomer: true);
+        });
+
+        showSuccessToast(AppStrings.refundSuccess.tr());
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isRefunding = false);
+        if (e.toString().contains(AppStrings.insufficientBalance) ||
+            e.toString().contains('insufficient_balance')) {
+          VaultBalanceHelper.showInsufficientBalanceDialog(context);
+        } else {
+          showfailureToast(e.toString());
+        }
+      }
+    }
+  }
+
+  Future<void> _handleRefundOverpaidSurplus() async {
+    final connectivityState = context.read<ConnectivityCubit>().state;
+    if (connectivityState is ConnectivityDisconnected) {
+      showfailureToast(AppStrings.noInternetConnection.tr());
+      return;
+    }
+
+    final surplus = _invoice.totalPaid - _invoice.totalAmount;
+    if (surplus <= 0) return;
+
+    // Pre-check Vault balance
+    if (AppStrings.isVaultEnabled()) {
+      final vaultSnap = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(AppStrings.userToken)
+          .collection('vault')
+          .doc('summary')
+          .get();
+      if (!mounted) return;
+      final double currentVaultBalance =
+          (vaultSnap.exists && vaultSnap.data() != null)
+          ? ((vaultSnap.data()!['currentBalance'] as num?)?.toDouble() ?? 0.0)
+          : 0.0;
+      if (currentVaultBalance < surplus) {
+        VaultBalanceHelper.showInsufficientBalanceDialog(context);
+        return;
+      }
+    }
+
+    if (!mounted) return;
+
+    final isDesktop = ResponsiveLayout.isDesktop(context);
+    final double radius = isDesktop ? 20 : 20.r;
+    final double titleFontSize = isDesktop ? 16 : 16.sp;
+    final double smallFontSize = isDesktop ? 12 : 12.sp;
+    final double iconSize = isDesktop ? 22 : 22.sp;
+    final double paddingVal = isDesktop ? 20 : 20.w;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radius),
+        ),
+        backgroundColor: AppColors.surface,
+        contentPadding: EdgeInsets.all(paddingVal),
+        titlePadding: EdgeInsets.fromLTRB(
+          paddingVal,
+          paddingVal,
+          paddingVal,
+          0,
+        ),
+        actionsPadding: EdgeInsets.fromLTRB(
+          paddingVal,
+          0,
+          paddingVal,
+          paddingVal,
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(isDesktop ? 8 : 8.w),
+              decoration: BoxDecoration(
+                color: AppColors.error.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.account_balance_wallet_outlined,
+                color: AppColors.error,
+                size: iconSize,
+              ),
+            ),
+            SizedBox(width: isDesktop ? 12 : 12.w),
+            Expanded(
+              child: Text(
+                AppStrings.confirmRefundOverpaid.tr(),
+                style: TextStyles.customStyle(
+                  fontSize: titleFontSize,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textColor,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: ConstrainedBox(
+          constraints: BoxConstraints(
+            minWidth: isDesktop ? 340 : 280,
+            maxWidth: isDesktop ? 440 : double.infinity,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: isDesktop ? 16 : 16.h),
+
+              // Smart Financial Summary Breakdown Card
+              Container(
+                padding: EdgeInsets.all(isDesktop ? 14 : 14.w),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(isDesktop ? 14 : 14.r),
+                  border: Border.all(
+                    color: AppColors.error.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            AppStrings.customerNameLabel.tr(),
+                            style: TextStyles.customStyle(
+                              fontSize: smallFontSize,
+                              color: AppColors.subTitleColor,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: isDesktop ? 8 : 8.w),
+                        Flexible(
+                          child: Text(
+                            _invoice.customerName ??
+                                AppStrings.unspecifiedCustomer.tr(),
+                            style: TextStyles.customStyle(
+                              fontSize: smallFontSize,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textColor,
+                            ),
+                            textAlign: TextAlign.end,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: isDesktop ? 8 : 8.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            AppStrings.amountDeductedFromVault.tr(),
+                            style: TextStyles.customStyle(
+                              fontSize: smallFontSize,
+                              color: AppColors.subTitleColor,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: isDesktop ? 8 : 8.w),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isDesktop ? 8 : 8.w,
+                            vertical: isDesktop ? 4 : 4.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.error,
+                            borderRadius: BorderRadius.circular(
+                              isDesktop ? 8 : 8.r,
+                            ),
+                          ),
+                          child: Text(
+                            '- ${surplus.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                            style: TextStyles.customStyle(
+                              fontSize: smallFontSize,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          Center(
+            child: ElevatedButton.icon(
+              onPressed: () => Navigator.of(dialogCtx).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(
+                  horizontal: isDesktop ? 16 : 16.w,
+                  vertical: isDesktop ? 10 : 10.h,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(isDesktop ? 10 : 10.r),
+                ),
+              ),
+              icon: Icon(
+                Icons.output_rounded,
+                size: isDesktop ? 18 : 18.sp,
+                color: Colors.white,
+              ),
+              label: Text(
+                AppStrings.refundOverpaidToCustomer.tr(),
+                style: TextStyles.customStyle(
+                  fontSize: 12,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Center(
+            child: TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(false),
+              child: Text(
+                AppStrings.cancel.tr(),
+                style: TextStyles.customStyle(
+                  fontSize: 14,
+                  color: AppColors.subTitleColor,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isRefunding = true);
+
+    try {
+      final uid = AppStrings.userToken;
+
+      // Vault Balance Check
+      if (AppStrings.isVaultEnabled() && surplus > 0) {
+        final vaultSummaryRef = FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('vault')
+            .doc('summary');
+        final vaultSnap = await vaultSummaryRef.get();
+        final double currentVaultBalance =
+            (vaultSnap.exists && vaultSnap.data() != null)
+            ? ((vaultSnap.data()!['currentBalance'] as num?)?.toDouble() ?? 0.0)
+            : 0.0;
+        if (currentVaultBalance < surplus) {
+          if (mounted) {
+            setState(() => _isRefunding = false);
+            VaultBalanceHelper.showInsufficientBalanceDialog(context);
+          }
+          return;
+        }
+      }
+
+      // 1. Record Vault Outflow
+      await VaultRemoteDataSourceImpl.syncVaultTransaction(
+        uid: uid,
+        transactionId: 'vault_tx_refund_overpaid_${_invoice.id}',
+        amount: surplus,
+        direction: VaultTransactionDirection.outFlow,
+        source: VaultTransactionSource.customerDebt,
+        type: 'invoice_overpaid_refund',
+        description:
+            'إرجاع فائض مدفوعات فاتورة: #${_invoice.id} للعميل: ${_invoice.customerName ?? ""}',
+        relatedEntityId: _invoice.id,
+        createdAt: DateTime.now(),
+      );
+
+      final batch = FirebaseFirestore.instance.batch();
+
+      // 2. Update Invoice document
+      final invoiceRef = FirebaseFirestore.instance
+          .collection('users/$uid/invoices')
+          .doc(_invoice.id);
+      batch.set(invoiceRef, {
+        'syncedTotalPaid': _invoice.totalAmount,
+        'isRefundedToCustomer': true,
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      // 3. Update Linked Debt if any
+      final linkedDebtId = _invoice.linkedDebtId ?? 'debt_inv_${_invoice.id}';
+      final debtRef = FirebaseFirestore.instance
+          .collection('users/$uid/debts')
+          .doc(linkedDebtId);
+      final debtDoc = await debtRef.get();
+      if (debtDoc.exists) {
+        batch.update(debtRef, {
+          'paidAmount': _invoice.totalAmount,
+          'remainingAmount': 0.0,
+          'isPaid': true,
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        });
+
+        final paymentRef = debtRef.collection('payments').doc();
+        batch.set(paymentRef, {
+          'uid': uid,
+          'debtId': linkedDebtId,
+          'amountPaid': -surplus,
+          'remainingAmount': 0.0,
+          'createdAt': FieldValue.serverTimestamp(),
+          'type': 'settlement',
+          'relatedTo': _invoice.customerName ?? '',
+          'activityName': 'إرجاع فائض مدفوعات الفاتورة للعميل',
+        });
+      }
+
+      // 4. Update Summary collections
+      final allTimeSummaryRef = FirebaseFirestore.instance
+          .collection('users/$uid/summaries')
+          .doc(SummaryHelper.getAllTimeKey());
+      batch.set(allTimeSummaryRef, {
+        'totalCollected': FieldValue.increment(-surplus),
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      final monthlySummaryRef = FirebaseFirestore.instance
+          .collection('users/$uid/summaries')
+          .doc(SummaryHelper.getMonthlyKey(DateTime.now()));
+      batch.set(monthlySummaryRef, {
+        'totalCollected': FieldValue.increment(-surplus),
+        'isHealed': false,
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      await batch.commit();
+
+      if (mounted) {
+        setState(() {
+          _isRefunding = false;
+          _invoice = _invoice.copyWith(
+            syncedTotalPaid: _invoice.totalAmount,
+            isRefundedToCustomer: true,
+          );
+        });
+
+        showSuccessToast(AppStrings.refundCreditSuccess.tr());
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isRefunding = false);
+        if (e.toString().contains(AppStrings.insufficientBalance) ||
+            e.toString().contains('insufficient_balance')) {
+          VaultBalanceHelper.showInsufficientBalanceDialog(context);
+        } else {
+          showfailureToast(e.toString());
+        }
+      }
+    }
   }
 
   Color _statusColor(InvoiceStatus status) {
@@ -558,6 +1212,144 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                       PaymentSummaryCard(invoice: _invoice),
                                       const SizedBox(height: 20),
                                       if (_invoice.status ==
+                                              InvoiceStatus.paid &&
+                                          _invoice.totalPaid >
+                                              _invoice.totalAmount)
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            bottom: 16,
+                                          ),
+                                          child: Container(
+                                            padding: EdgeInsets.all(
+                                              isDesktop ? 14 : 14.w,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.info.withValues(
+                                                alpha: 0.08,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                    isDesktop ? 14 : 14.r,
+                                                  ),
+                                              border: Border.all(
+                                                color: AppColors.info
+                                                    .withValues(alpha: 0.3),
+                                              ),
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons
+                                                          .info_outline_rounded,
+                                                      size: isDesktop
+                                                          ? 18
+                                                          : 18.sp,
+                                                      color: AppColors.info,
+                                                    ),
+                                                    SizedBox(
+                                                      width: isDesktop
+                                                          ? 8
+                                                          : 8.w,
+                                                    ),
+                                                    Expanded(
+                                                      child: Text(
+                                                        "${AppStrings.invoicePaidNotice.tr()}   ${(_invoice.totalPaid - _invoice.totalAmount).toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
+                                                        style:
+                                                            TextStyles.customStyle(
+                                                              fontSize: 12,
+                                                              color: AppColors
+                                                                  .info,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                            ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                SizedBox(
+                                                  height: isDesktop ? 10 : 10.h,
+                                                ),
+                                                SizedBox(
+                                                  width: double.infinity,
+                                                  child: ElevatedButton.icon(
+                                                    onPressed: _isRefunding
+                                                        ? null
+                                                        : () =>
+                                                              _handleRefundOverpaidSurplus(),
+                                                    style: ElevatedButton.styleFrom(
+                                                      backgroundColor:
+                                                          AppColors.info,
+                                                      foregroundColor:
+                                                          Colors.white,
+                                                      elevation: 0,
+                                                      padding:
+                                                          EdgeInsets.symmetric(
+                                                            horizontal:
+                                                                isDesktop
+                                                                ? 14
+                                                                : 14.w,
+                                                            vertical: isDesktop
+                                                                ? 8
+                                                                : 8.h,
+                                                          ),
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              isDesktop
+                                                                  ? 10
+                                                                  : 10.r,
+                                                            ),
+                                                      ),
+                                                    ),
+                                                    icon: _isRefunding
+                                                        ? SizedBox(
+                                                            width: isDesktop
+                                                                ? 16
+                                                                : 16.sp,
+                                                            height: isDesktop
+                                                                ? 16
+                                                                : 16.sp,
+                                                            child:
+                                                                const CircularProgressIndicator(
+                                                                  strokeWidth:
+                                                                      2,
+                                                                  color: Colors
+                                                                      .white,
+                                                                ),
+                                                          )
+                                                        : Icon(
+                                                            Icons
+                                                                .output_rounded,
+                                                            size: isDesktop
+                                                                ? 18
+                                                                : 18.sp,
+                                                            color: Colors.white,
+                                                          ),
+                                                    label: Text(
+                                                      AppStrings
+                                                          .refundOverpaidToCustomer
+                                                          .tr(),
+                                                      style:
+                                                          TextStyles.customStyle(
+                                                            fontSize: 12,
+                                                            color: Colors.white,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      const SizedBox(height: 20),
+                                      if (_invoice.status ==
                                           InvoiceStatus.voided)
                                         Padding(
                                           padding: const EdgeInsets.only(
@@ -579,71 +1371,191 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                                     .withValues(alpha: 0.3),
                                               ),
                                             ),
-                                            child: Row(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
-                                                Icon(
-                                                  Icons.info_outline_rounded,
-                                                  size: 16,
-                                                  color: AppColors.info,
+                                                Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons
+                                                          .info_outline_rounded,
+                                                      size: 16,
+                                                      color: AppColors.info,
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    Expanded(
+                                                      child: Text(
+                                                        "${AppStrings.invoiceVoidNotice.tr()}   ${_invoice.totalPaid.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
+                                                        style:
+                                                            TextStyles.customStyle(
+                                                              fontSize: 13,
+                                                              color: AppColors
+                                                                  .info,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                            ),
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
-                                                const SizedBox(width: 8),
-                                                Expanded(
-                                                  child: Text(
-                                                    "${AppStrings.invoiceVoidNotice.tr()}   ${_invoice.totalPaid.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
-                                                    style:
-                                                        TextStyles.customStyle(
-                                                          fontSize: 12,
-                                                          color: AppColors.info,
-                                                        ),
+                                                if (_invoice.totalPaid > 0) ...[
+                                                  SizedBox(
+                                                    height: isDesktop
+                                                        ? 12
+                                                        : 12.h,
                                                   ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-
-                                      if (_invoice.status ==
-                                              InvoiceStatus.paid &&
-                                          _invoice.totalPaid >
-                                              _invoice.totalAmount)
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            bottom: 16,
-                                          ),
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 14,
-                                              vertical: 10,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: AppColors.info.withValues(
-                                                alpha: 0.08,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                              border: Border.all(
-                                                color: AppColors.info
-                                                    .withValues(alpha: 0.3),
-                                              ),
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                Icon(
-                                                  Icons.info_outline_rounded,
-                                                  size: 16,
-                                                  color: AppColors.info,
-                                                ),
-                                                const SizedBox(width: 8),
-                                                Expanded(
-                                                  child: Text(
-                                                    "${AppStrings.invoicePaidNotice.tr()}   ${(_invoice.totalPaid - _invoice.totalAmount).toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
-                                                    style:
-                                                        TextStyles.customStyle(
-                                                          fontSize: 12,
-                                                          color: AppColors.info,
+                                                  _invoice.isRefundedToCustomer
+                                                      ? Container(
+                                                          width:
+                                                              double.infinity,
+                                                          padding:
+                                                              EdgeInsets.symmetric(
+                                                                horizontal:
+                                                                    isDesktop
+                                                                    ? 14
+                                                                    : 14.w,
+                                                                vertical:
+                                                                    isDesktop
+                                                                    ? 10
+                                                                    : 10.h,
+                                                              ),
+                                                          decoration: BoxDecoration(
+                                                            color: AppColors
+                                                                .success
+                                                                .withValues(
+                                                                  alpha: 0.1,
+                                                                ),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  12.r,
+                                                                ),
+                                                            border: Border.all(
+                                                              color: AppColors
+                                                                  .success
+                                                                  .withValues(
+                                                                    alpha: 0.4,
+                                                                  ),
+                                                            ),
+                                                          ),
+                                                          child: Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .center,
+                                                            children: [
+                                                              Icon(
+                                                                Icons
+                                                                    .check_circle_rounded,
+                                                                color: AppColors
+                                                                    .success,
+                                                                size: isDesktop
+                                                                    ? 18
+                                                                    : 18.sp,
+                                                              ),
+                                                              SizedBox(
+                                                                width: isDesktop
+                                                                    ? 8
+                                                                    : 8.w,
+                                                              ),
+                                                              Expanded(
+                                                                child: Text(
+                                                                  AppStrings
+                                                                      .refundAlreadyDone
+                                                                      .tr(),
+                                                                  style: TextStyles.customStyle(
+                                                                    fontSize:
+                                                                        12,
+                                                                    color: AppColors
+                                                                        .success,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        )
+                                                      : SizedBox(
+                                                          width:
+                                                              double.infinity,
+                                                          child: ElevatedButton.icon(
+                                                            onPressed:
+                                                                _isRefunding
+                                                                ? null
+                                                                : () =>
+                                                                      _handleRefundToCustomer(),
+                                                            style: ElevatedButton.styleFrom(
+                                                              backgroundColor:
+                                                                  AppColors
+                                                                      .error,
+                                                              foregroundColor:
+                                                                  Colors.white,
+                                                              elevation: 2,
+                                                              padding:
+                                                                  EdgeInsets.symmetric(
+                                                                    vertical:
+                                                                        isDesktop
+                                                                        ? 12
+                                                                        : 12.h,
+                                                                    horizontal:
+                                                                        isDesktop
+                                                                        ? 16
+                                                                        : 16.w,
+                                                                  ),
+                                                              shape: RoundedRectangleBorder(
+                                                                borderRadius:
+                                                                    BorderRadius.circular(
+                                                                      12.r,
+                                                                    ),
+                                                              ),
+                                                            ),
+                                                            icon: _isRefunding
+                                                                ? SizedBox(
+                                                                    width:
+                                                                        isDesktop
+                                                                        ? 18
+                                                                        : 18.sp,
+                                                                    height:
+                                                                        isDesktop
+                                                                        ? 18
+                                                                        : 18.sp,
+                                                                    child: const CircularProgressIndicator(
+                                                                      strokeWidth:
+                                                                          2,
+                                                                      color: Colors
+                                                                          .white,
+                                                                    ),
+                                                                  )
+                                                                : Icon(
+                                                                    Icons
+                                                                        .output_rounded,
+                                                                    size:
+                                                                        isDesktop
+                                                                        ? 18
+                                                                        : 18.sp,
+                                                                    color: Colors
+                                                                        .white,
+                                                                  ),
+                                                            label: Center(
+                                                              child: Text(
+                                                                AppStrings
+                                                                    .refundToCustomer
+                                                                    .tr(),
+                                                                style: TextStyles.customStyle(
+                                                                  fontSize: 13,
+                                                                  color: Colors
+                                                                      .white,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
                                                         ),
-                                                  ),
-                                                ),
+                                                ],
                                               ],
                                             ),
                                           ),

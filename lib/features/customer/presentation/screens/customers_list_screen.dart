@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
@@ -181,6 +182,7 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
                 }
 
                 if (state is CustomerReportsError) {
+                  AppLogger.printMessage(state.message);
                   return SliverFillRemaining(
                     child: Center(child: Text(state.message)),
                   );

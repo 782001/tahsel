@@ -59,6 +59,7 @@ class SyncStatusListener extends StatelessWidget {
           );
         } else if (state is OfflineSyncFailure) {
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(AppStrings.syncFailed.tr()),

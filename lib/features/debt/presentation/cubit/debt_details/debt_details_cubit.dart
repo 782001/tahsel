@@ -10,6 +10,7 @@ import '../../../domain/usecases/get_debt_transactions_future_use_case.dart';
 import '../../../domain/usecases/update_payment_usecase.dart';
 import '../../../domain/usecases/get_debt_by_id_usecase.dart';
 import '../../../domain/entities/debt_entity.dart';
+import '../../../domain/repositories/debt_repository.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_cubit.dart';
 import 'package:tahsel/features/debt/presentation/cubit/total_debts/total_debts_cubit.dart';
@@ -221,6 +222,42 @@ class DebtDetailsCubit extends Cubit<DebtDetailsState> {
             ),
           );
         }
+      },
+    );
+  }
+
+  Future<bool> settleCustomerCredit({
+    required String uid,
+    required String debtId,
+    required double creditAmount,
+    String? note,
+  }) async {
+    final prevState = state;
+    emit(DebtDetailsLoading());
+    final repository = sl<DebtRepository>();
+    final result = await repository.settleCustomerCredit(
+      uid: uid,
+      debtId: debtId,
+      creditAmount: creditAmount,
+      note: note,
+    );
+
+    return await result.fold(
+      (failure) async {
+        if (prevState is DebtDetailsLoaded) {
+          emit(prevState);
+        }
+        emit(DebtDetailsError(failure.message));
+        return false;
+      },
+      (_) async {
+        // Trigger global refreshes
+        sl<TotalDebtsCubit>().getTotalDebts(uid, forceRefresh: true);
+        sl<DebtCubit>().getDebts(uid, forceRefresh: true);
+
+        // Reload current transactions
+        await loadTransactions(uid, debtId, forceRefresh: true);
+        return true;
       },
     );
   }

@@ -64,27 +64,27 @@ class MyDebtItemCard extends StatelessWidget {
                       }
                     });
                   },
-            onLongPress: item.isPending
-                ? null
-                : () {
-                    // if (item.remainingAmount > 0) {
-                    //   ScaffoldMessenger.of(context).showSnackBar(
-                    //     SnackBar(
-                    //       duration: const Duration(seconds: 2),
-                    //       backgroundColor: AppColors.error,
-                    //       content: Text(
-                    //         AppStrings.deleteDebtAfterPaid.tr(),
-                    //         style: TextStyles.customStyle(
-                    //           color: Colors.white,
-                    //           fontSize: 14,
-                    //         ),
-                    //       ),
-                    //     ),
-                    //   );
-                    // } else {
-                    onDelete(item);
-                    // }
-                  },
+            // onLongPress: item.isPending
+            //     ? null
+            //     : () {
+            //         // if (item.remainingAmount > 0) {
+            //         //   ScaffoldMessenger.of(context).showSnackBar(
+            //         //     SnackBar(
+            //         //       duration: const Duration(seconds: 2),
+            //         //       backgroundColor: AppColors.error,
+            //         //       content: Text(
+            //         //         AppStrings.deleteDebtAfterPaid.tr(),
+            //         //         style: TextStyles.customStyle(
+            //         //           color: Colors.white,
+            //         //           fontSize: 14,
+            //         //         ),
+            //         //       ),
+            //         //     ),
+            //         //   );
+            //         // } else {
+            //         onDelete(item);
+            //         // }
+            //       },
             child: Padding(
               padding: EdgeInsets.all(16.r),
               child: SingleChildScrollView(

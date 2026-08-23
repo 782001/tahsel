@@ -358,16 +358,27 @@ class _MonthlyCollectedTransactionsScreenState
           ).format(payment.createdAt!)
         : '';
 
-    final accentColor = payment.type == PaymentType.full
-        ? AppColors.green
-        : AppColors.primaryColor;
+    final bool isSettlement = payment.type == PaymentType.settlement ||
+        payment.amountPaid < 0;
+    final accentColor = isSettlement
+        ? AppColors.creditAmberEnd
+        : (payment.type == PaymentType.full
+            ? AppColors.green
+            : AppColors.primaryColor);
 
     return Container(
       margin: EdgeInsets.only(bottom: isDesktop ? 0 : 12.h),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: isSettlement
+            ? AppColors.creditAmberEnd.withValues(alpha: 0.05)
+            : AppColors.surface,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: AppColors.grey.withValues(alpha: 0.1)),
+        border: Border.all(
+          color: isSettlement
+              ? AppColors.creditAmberEnd.withValues(alpha: 0.3)
+              : AppColors.grey.withValues(alpha: 0.1),
+          width: isSettlement ? 1.2 : 1.0,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -405,7 +416,9 @@ class _MonthlyCollectedTransactionsScreenState
                                   style: TextStyles.customStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w800,
-                                    color: AppColors.primaryColor,
+                                    color: isSettlement
+                                        ? AppColors.creditAmberEnd
+                                        : AppColors.primaryColor,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -437,20 +450,26 @@ class _MonthlyCollectedTransactionsScreenState
                               children: [
                                 FittedBox(
                                   child: Text(
-                                    "+${payment.amountPaid.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
+                                    isSettlement
+                                        ? "- ${payment.amountPaid.abs().toSmartAmount()} ${AppStrings.currencyEgp.tr()}"
+                                        : "+${payment.amountPaid.abs().toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
                                     style: TextStyles.customStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w900,
-                                      color: AppColors.green,
+                                      color: isSettlement
+                                          ? AppColors.creditAmberEnd
+                                          : AppColors.green,
                                     ),
                                   ),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  _getPaymentTypeLabel(payment.type),
+                                  _getPaymentTypeLabel(payment.type, payment.amountPaid),
                                   style: TextStyles.customStyle(
                                     fontSize: 10,
-                                    color: AppColors.grey,
+                                    color: isSettlement
+                                        ? AppColors.creditAmberEnd
+                                        : AppColors.grey,
                                     fontWeight: FontWeight.w600,
                                   ),
                                   maxLines: 1,
@@ -516,7 +535,10 @@ class _MonthlyCollectedTransactionsScreenState
     );
   }
 
-  String _getPaymentTypeLabel(PaymentType type) {
+  String _getPaymentTypeLabel(PaymentType type, [double? amountPaid]) {
+    if (type == PaymentType.settlement || (amountPaid != null && amountPaid < 0)) {
+      return AppStrings.settlement.tr();
+    }
     switch (type) {
       case PaymentType.full:
         return AppStrings.paidFull.tr();

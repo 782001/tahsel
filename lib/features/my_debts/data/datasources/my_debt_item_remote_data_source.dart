@@ -8,7 +8,11 @@ import 'package:tahsel/core/utils/date_formatter.dart';
 import 'package:tahsel/features/expenses/data/datasources/expense_remote_data_source.dart';
 import 'package:tahsel/features/expenses/data/models/expense_model.dart';
 import 'package:tahsel/features/my_debts/data/models/my_debt_item_model.dart';
+import 'package:tahsel/features/inventory/data/datasources/inventory_local_data_source.dart';
+import 'package:tahsel/features/inventory/data/models/inventory_purchase_model.dart';
 import 'package:tahsel/features/my_debts/data/models/my_debt_payment_model.dart';
+import 'package:tahsel/features/cashbox/data/datasources/vault_remote_data_source.dart';
+import 'package:tahsel/features/cashbox/domain/entities/vault_transaction_entity.dart';
 
 abstract class MyDebtItemRemoteDataSource {
   Future<String> addDebtItem(MyDebtItemModel debt);
@@ -183,7 +187,8 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
               ? debtId.replaceAll('debt_', '')
               : null);
       if (purchaseId != null) {
-        final purchaseRef = userRef.collection('purchases').doc(purchaseId);
+        final purchaseRef =
+            userRef.collection('inventory_purchases').doc(purchaseId);
         batch.set(
           purchaseRef,
           {
@@ -195,19 +200,46 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         );
       }
 
+      // Vault Inflow (Adding refunded credit from supplier to the vault)
+      if (AppStrings.isVaultEnabled() && creditAmount > 0) {
+        final vaultTxId = 'vault_tx_mydebt_${paymentRef.id}';
+        final vaultTxRef =
+            userRef.collection('vault_transactions').doc(vaultTxId);
+        final vaultSummaryRef = userRef.collection('vault').doc('summary');
+
+        final bool isPurchase = (debtId.startsWith('debt_pur_') ||
+            operationId.startsWith('pur_'));
+
+        batch.set(vaultTxRef, {
+          'id': vaultTxId,
+          'uid': uid,
+          'amount': creditAmount,
+          'direction': 'in',
+          'source': isPurchase
+              ? VaultTransactionSource.inventory.name
+              : VaultTransactionSource.myDebt.name,
+          'type': 'supplier_credit_settlement',
+          'description': 'استلام الرصيد الدائن من المورد: $personName',
+          'relatedEntityId': paymentRef.id,
+          'relatedOperationId': debtId,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        batch.set(
+          vaultSummaryRef,
+          {
+            'currentBalance': FieldValue.increment(creditAmount),
+            'totalIn': FieldValue.increment(creditAmount),
+            'transactionCount': FieldValue.increment(1),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      }
+
       await batch.commit();
       await _recalculatePersonTotals(uid, personName);
 
-      await _syncPaymentToExpense(
-        uid: uid,
-        paymentId: paymentRef.id,
-        amountPaid: creditAmount,
-        paymentDate: DateTime.now(),
-        personName: personName,
-        operationId: operationId,
-        debtId: debtId,
-        note: note ?? 'استلام الرصيد الدائن من المورد',
-      );
       await _syncPurchasePaidAmount(
         uid: uid,
         debtId: debtId,
@@ -312,7 +344,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       final purchaseRef = firestore
           .collection('users')
           .doc(uid)
-          .collection('purchases')
+          .collection('inventory_purchases')
           .doc(purchaseId);
 
       await purchaseRef.set({
@@ -320,6 +352,22 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         'isPaid': isPaid,
         'lastUpdatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
+
+      // Also update local cache if InventoryLocalDataSource is available
+      if (GetIt.I.isRegistered<InventoryLocalDataSource>()) {
+        final localDS = GetIt.I<InventoryLocalDataSource>();
+        final purchases = await localDS.getPurchases();
+        final idx = purchases.indexWhere((p) => p.id == purchaseId);
+        if (idx != -1) {
+          final updated = InventoryPurchaseModel.fromEntity(
+            purchases[idx].copyWith(
+              paidAmount: paidAmount,
+              isSynced: true,
+            ),
+          );
+          await localDS.savePurchase(updated);
+        }
+      }
     } catch (_) {}
   }
 
@@ -481,6 +529,22 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         }
       }
 
+      final bool isPurchase = (debt.id?.startsWith('debt_pur_') == true ||
+          debt.operationId.startsWith('pur_') ||
+          debt.operationType.contains('مشتريات') ||
+          debt.operationType.contains('Purchase'));
+
+      // Balance Check before batch commit for initial paid amount (Only for non-purchase debts because purchases already perform balance check)
+      if (AppStrings.isVaultEnabled() && debt.paidAmount > 0 && !isPurchase) {
+        final summaryDoc = await userRef.collection('vault').doc('summary').get();
+        final double currentBalance = (summaryDoc.exists && summaryDoc.data() != null)
+            ? ((summaryDoc.data()!['currentBalance'] as num?)?.toDouble() ?? 0.0)
+            : 0.0;
+        if (currentBalance <= 0 || currentBalance < debt.paidAmount) {
+          throw Exception(AppStrings.insufficientBalance);
+        }
+      }
+
       final batch = firestore.batch();
 
       // 1. Add/Update debt item doc
@@ -527,6 +591,38 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
               : FieldValue.serverTimestamp(),
           'type': debt.remainingAmount <= 0 ? 'full' : 'partial',
         });
+
+        // Only sync to Vault if NOT a purchase (since InventoryRepository already handles the purchase vault transaction)
+        if (AppStrings.isVaultEnabled() && !isPurchase) {
+          final vaultTxRef = userRef.collection('vault_transactions').doc('vault_tx_mydebt_${actualPaymentRef.id}');
+          final vaultSummaryRef = userRef.collection('vault').doc('summary');
+
+          batch.set(vaultTxRef, {
+            'id': 'vault_tx_mydebt_${actualPaymentRef.id}',
+            'uid': debt.uid,
+            'amount': debt.paidAmount,
+            'direction': 'out',
+            'source': VaultTransactionSource.myDebt.name,
+            'type': 'debt_payment',
+            'description': 'سداد دين للمورد/الشخص: ${debt.personName ?? ''}',
+            'relatedEntityId': actualPaymentRef.id,
+            'relatedOperationId': debt.id,
+            'createdAt': debt.timestamp != null
+                ? Timestamp.fromDate(debt.timestamp!.add(const Duration(milliseconds: 1)))
+                : FieldValue.serverTimestamp(),
+          });
+
+          batch.set(
+            vaultSummaryRef,
+            {
+              'currentBalance': FieldValue.increment(-debt.paidAmount),
+              'totalOut': FieldValue.increment(debt.paidAmount),
+              'transactionCount': FieldValue.increment(1),
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          );
+        }
       }
 
       // 5. Update person doc with totals
@@ -647,6 +743,30 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       });
 
       await batch.commit();
+
+      final bool isPurchase = (debt.id?.startsWith('debt_pur_') == true ||
+          debt.operationId.startsWith('pur_') ||
+          debt.operationType.contains('مشتريات') ||
+          debt.operationType.contains('Purchase'));
+
+      await VaultRemoteDataSourceImpl.syncVaultTransaction(
+        firestore: firestore,
+        uid: uid,
+        transactionId: 'vault_tx_mydebt_${paymentRef.id}',
+        amount: payment.amountPaid,
+        direction: VaultTransactionDirection.outFlow,
+        source: isPurchase
+            ? VaultTransactionSource.inventory
+            : VaultTransactionSource.myDebt,
+        type: isPurchase ? 'purchase_payment' : 'debt_payment',
+        description: isPurchase
+            ? 'سداد دفعة شراء للمورد: ${debt.personName ?? ''}'
+            : 'سداد دين للمورد/الشخص: ${debt.personName ?? ''}',
+        relatedEntityId: paymentRef.id,
+        relatedOperationId: debt.id,
+        createdAt: payment.createdAt,
+      );
+
       await _recalculatePersonTotals(uid, debt.personName ?? '');
     } catch (e) {
       FirebaseErrorHandler.handle(e);
@@ -672,7 +792,20 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           .orderBy('timestamp', descending: false)
           .get();
 
-      if (snapshot.docs.isEmpty) return;
+      if (AppStrings.isVaultEnabled() && amount > 0) {
+        final summaryDoc = await firestore
+            .collection('users')
+            .doc(uid)
+            .collection('vault')
+            .doc('summary')
+            .get();
+        final double currentBalance = (summaryDoc.exists && summaryDoc.data() != null)
+            ? ((summaryDoc.data()!['currentBalance'] as num?)?.toDouble() ?? 0.0)
+            : 0.0;
+        if (currentBalance <= 0 || currentBalance < amount) {
+          throw Exception(AppStrings.insufficientBalance);
+        }
+      }
 
       final batch = firestore.batch();
       double remainingToPay = amount;
@@ -764,20 +897,48 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       await _recalculatePersonTotals(uid, personName);
 
       for (final p in createdPayments) {
+        final paymentId = p['paymentId'] as String;
+        final amountPaid = p['amountPaid'] as double;
+        final debtId = p['debtId'] as String;
+        final operationId = p['operationId'] as String?;
+
+        final bool isPurchase = (debtId.startsWith('debt_pur_') ||
+            (operationId != null && operationId.startsWith('pur_')));
+
+        if (amountPaid > 0) {
+          await VaultRemoteDataSourceImpl.syncVaultTransaction(
+            firestore: firestore,
+            uid: uid,
+            transactionId: 'vault_tx_mydebt_$paymentId',
+            amount: amountPaid,
+            direction: VaultTransactionDirection.outFlow,
+            source: isPurchase
+                ? VaultTransactionSource.inventory
+                : VaultTransactionSource.myDebt,
+            type: isPurchase ? 'purchase_payment' : 'debt_payment',
+            description: isPurchase
+                ? 'سداد دفعة شراء للمورد: $personName'
+                : 'سداد دين للمورد/الشخص: $personName',
+            relatedEntityId: paymentId,
+            relatedOperationId: debtId,
+            createdAt: paymentDate ?? DateTime.now(),
+          );
+        }
+
         await _syncPaymentToExpense(
           uid: uid,
-          paymentId: p['paymentId'] as String,
-          amountPaid: p['amountPaid'] as double,
+          paymentId: paymentId,
+          amountPaid: amountPaid,
           paymentDate: paymentDate ?? DateTime.now(),
           personName: personName,
-          operationId: p['operationId'] as String?,
-          debtId: p['debtId'] as String,
+          operationId: operationId,
+          debtId: debtId,
           note: note,
         );
         await _syncPurchasePaidAmount(
           uid: uid,
-          debtId: p['debtId'] as String,
-          operationId: p['operationId'] as String?,
+          debtId: debtId,
+          operationId: operationId,
         );
       }
     } catch (e) {
@@ -798,6 +959,31 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           .get();
 
       if (snapshot.docs.isEmpty) return;
+
+      double totalRequired = 0.0;
+      for (var doc in snapshot.docs) {
+        final debtData = doc.data();
+        final currentTotal = (debtData['totalAmount'] as num).toDouble();
+        final amountPaid = currentTotal - (debtData['paidAmount'] as num).toDouble();
+        if (amountPaid > 0) {
+          totalRequired += amountPaid;
+        }
+      }
+
+      if (AppStrings.isVaultEnabled() && totalRequired > 0) {
+        final summaryDoc = await firestore
+            .collection('users')
+            .doc(uid)
+            .collection('vault')
+            .doc('summary')
+            .get();
+        final double currentBalance = (summaryDoc.exists && summaryDoc.data() != null)
+            ? ((summaryDoc.data()!['currentBalance'] as num?)?.toDouble() ?? 0.0)
+            : 0.0;
+        if (currentBalance <= 0 || currentBalance < totalRequired) {
+          throw Exception(AppStrings.insufficientBalance);
+        }
+      }
 
       final batch = firestore.batch();
       final List<Map<String, dynamic>> createdPayments = [];
@@ -869,20 +1055,48 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       await batch.commit();
 
       for (final p in createdPayments) {
+        final paymentId = p['paymentId'] as String;
+        final amountPaid = p['amountPaid'] as double;
+        final debtId = p['debtId'] as String;
+        final operationId = p['operationId'] as String?;
+
+        final bool isPurchase = (debtId.startsWith('debt_pur_') ||
+            (operationId != null && operationId.startsWith('pur_')));
+
+        if (amountPaid > 0) {
+          await VaultRemoteDataSourceImpl.syncVaultTransaction(
+            firestore: firestore,
+            uid: uid,
+            transactionId: 'vault_tx_mydebt_$paymentId',
+            amount: amountPaid,
+            direction: VaultTransactionDirection.outFlow,
+            source: isPurchase
+                ? VaultTransactionSource.inventory
+                : VaultTransactionSource.myDebt,
+            type: isPurchase ? 'full_purchase_settlement' : 'full_debt_settlement',
+            description: isPurchase
+                ? 'تسوية مديونية شراء للمورد بالكامل: $personName'
+                : 'تسوية مديونية للمورد/الشخص بالكامل: $personName',
+            relatedEntityId: paymentId,
+            relatedOperationId: debtId,
+            createdAt: DateTime.now(),
+          );
+        }
+
         await _syncPaymentToExpense(
           uid: uid,
-          paymentId: p['paymentId'] as String,
-          amountPaid: p['amountPaid'] as double,
+          paymentId: paymentId,
+          amountPaid: amountPaid,
           paymentDate: DateTime.now(),
           personName: personName,
-          operationId: p['operationId'] as String?,
-          debtId: p['debtId'] as String,
+          operationId: operationId,
+          debtId: debtId,
           note: 'تسوية المديونية بالكامل',
         );
         await _syncPurchasePaidAmount(
           uid: uid,
-          debtId: p['debtId'] as String,
-          operationId: p['operationId'] as String?,
+          debtId: debtId,
+          operationId: operationId,
         );
       }
     } catch (e) {
@@ -909,6 +1123,22 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       String personName = '';
       String? operationId;
       String paymentId = '';
+
+      // Balance check before starting transaction (prevents Windows C++ plugin crash inside runTransaction)
+      if (AppStrings.isVaultEnabled() && amount > 0) {
+        final vaultSummaryRef = firestore
+            .collection('users')
+            .doc(uid)
+            .collection('vault')
+            .doc('summary');
+        final vaultSnap = await vaultSummaryRef.get();
+        final double currentVaultBalance = (vaultSnap.exists && vaultSnap.data() != null)
+            ? ((vaultSnap.data()!['currentBalance'] as num?)?.toDouble() ?? 0.0)
+            : 0.0;
+        if (currentVaultBalance <= 0 || currentVaultBalance < amount) {
+          throw Exception(AppStrings.insufficientBalance);
+        }
+      }
 
       await firestore.runTransaction((transaction) async {
         final snapshot = await transaction.get(debtRef);
@@ -971,6 +1201,29 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       });
 
       if (paymentId.isNotEmpty) {
+        final bool isPurchase = (debtId.startsWith('debt_pur_') ||
+            (operationId != null && operationId!.startsWith('pur_')));
+
+        if (amount > 0) {
+          await VaultRemoteDataSourceImpl.syncVaultTransaction(
+            firestore: firestore,
+            uid: uid,
+            transactionId: 'vault_tx_mydebt_$paymentId',
+            amount: amount,
+            direction: VaultTransactionDirection.outFlow,
+            source: isPurchase
+                ? VaultTransactionSource.inventory
+                : VaultTransactionSource.myDebt,
+            type: isPurchase ? 'purchase_payment' : 'debt_payment',
+            description: isPurchase
+                ? 'سداد دفعة شراء للمورد: $personName'
+                : 'سداد دين للمورد/الشخص: $personName',
+            relatedEntityId: paymentId,
+            relatedOperationId: debtId,
+            createdAt: paymentDate ?? DateTime.now(),
+          );
+        }
+
         await _syncPaymentToExpense(
           uid: uid,
           paymentId: paymentId,
@@ -1009,17 +1262,32 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       final personName = debtData['personName'] as String;
       final totalAmount = (debtData['totalAmount'] as num).toDouble();
       final remainingAmount = (debtData['remainingAmount'] as num).toDouble();
+      final operationId = debtData['operationId'] as String?;
 
-      // 1. Get payments to delete
+      // 1. Get payments to delete and remove their expense records
       final paymentsSnapshot = await debtRef.collection('payments').get();
 
       final List<DocumentReference> allRefs = [];
       for (var paymentDoc in paymentsSnapshot.docs) {
         allRefs.add(paymentDoc.reference);
+        try {
+          await _expenseDataSource.deleteExpense(uid, 'exp_pay_${paymentDoc.id}');
+        } catch (_) {}
       }
 
       // 2. Add the debt doc itself
       allRefs.add(debtRef);
+
+      // 3. Add the operation doc if exists
+      if (operationId != null && operationId.isNotEmpty) {
+        allRefs.add(
+          firestore
+              .collection('users')
+              .doc(uid)
+              .collection('my_debt_operations')
+              .doc(operationId),
+        );
+      }
 
       // 3. Perform batch deletion (Firestore limit is 500)
       for (var i = 0; i < allRefs.length; i += 500) {
@@ -1226,19 +1494,99 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           'lastUpdatedAt': FieldValue.serverTimestamp(),
         });
 
+        if (relatedTo == 'payment') {
+          final userRef = firestore.collection('users').doc(uid);
+          final vaultTxId = 'vault_tx_mydebt_${paymentId}_adj_${DateTime.now().millisecondsSinceEpoch}';
+          final vaultTxRef = userRef.collection('vault_transactions').doc(vaultTxId);
+          final vaultSummaryRef = userRef.collection('vault').doc('summary');
+
+          final bool isPurchase = (debtId.startsWith('debt_pur_') ||
+              (operationId != null && operationId!.startsWith('pur_')));
+
+          transaction.set(vaultTxRef, {
+            'id': vaultTxId,
+            'uid': uid,
+            'amount': delta.abs(),
+            'direction': delta > 0 ? 'out' : 'in',
+            'source': isPurchase
+                ? VaultTransactionSource.inventory.name
+                : VaultTransactionSource.myDebt.name,
+            'type': 'adjustment',
+            'description': isPurchase
+                ? 'تعديل دفعة شراء: $personName'
+                : 'تعديل دفعة دين: $personName',
+            'relatedEntityId': paymentId,
+            'relatedOperationId': debtId,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+
+          transaction.set(
+            vaultSummaryRef,
+            {
+              'currentBalance': FieldValue.increment(-delta),
+              'totalOut': FieldValue.increment(delta > 0 ? delta : 0.0),
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          );
+        }
+
+        // Calculate new values
+        final currentTotal = (debtSnap.data()?['totalAmount'] as num?)?.toDouble() ?? 0.0;
+        final currentPaid = (debtSnap.data()?['paidAmount'] as num?)?.toDouble() ?? 0.0;
+        final currentRemaining = (debtSnap.data()?['remainingAmount'] as num?)?.toDouble() ?? 0.0;
+
+        double newTotalAmount = currentTotal;
+        double newPaidAmount = currentPaid;
+        double newRemainingAmount = currentRemaining;
+
+        if (relatedTo == 'debt') {
+          newTotalAmount = currentTotal + delta;
+          newRemainingAmount = currentRemaining + delta;
+        } else {
+          newPaidAmount = currentPaid + delta;
+          newRemainingAmount = currentRemaining - delta;
+        }
+
+        final bool newIsPaid = newRemainingAmount <= 1e-9;
+
         // Update stored totals
         if (relatedTo == 'debt') {
           transaction.update(debtRef, {
-            'totalAmount': FieldValue.increment(delta),
-            'remainingAmount': FieldValue.increment(delta),
+            'totalAmount': newTotalAmount,
+            'remainingAmount': newRemainingAmount,
+            'isPaid': newIsPaid,
             'lastUpdatedAt': FieldValue.serverTimestamp(),
           });
         } else {
           transaction.update(debtRef, {
-            'paidAmount': FieldValue.increment(delta),
-            'remainingAmount': FieldValue.increment(-delta),
+            'paidAmount': newPaidAmount,
+            'remainingAmount': newRemainingAmount,
+            'isPaid': newIsPaid,
             'lastUpdatedAt': FieldValue.serverTimestamp(),
           });
+        }
+
+        // Update operation if it exists
+        if (operationId != null && operationId!.isNotEmpty) {
+          final opRef = firestore
+              .collection('users')
+              .doc(uid)
+              .collection('my_debt_operations')
+              .doc(operationId);
+          if (relatedTo == 'debt') {
+            transaction.update(opRef, {
+              'totalAmount': newTotalAmount,
+              'remainingDebt': newRemainingAmount,
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
+            });
+          } else {
+            transaction.update(opRef, {
+              'paidAmount': newPaidAmount,
+              'remainingDebt': newRemainingAmount,
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
+            });
+          }
         }
 
         // Update person doc
@@ -1340,20 +1688,101 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         // Direct Mutation: Delete the same item
         transaction.delete(paymentRef);
 
-        // Update stored totals
         final amountToDelete = targetPayment!.amountPaid;
+
+        if (relatedTo == 'payment' && amountToDelete > 0) {
+          final userRef = firestore.collection('users').doc(uid);
+          final vaultTxId = 'vault_tx_mydebt_${paymentId}_rev_${DateTime.now().millisecondsSinceEpoch}';
+          final vaultTxRef = userRef.collection('vault_transactions').doc(vaultTxId);
+          final vaultSummaryRef = userRef.collection('vault').doc('summary');
+
+          final bool isPurchase = (debtId.startsWith('debt_pur_') ||
+              (operationId != null && operationId!.startsWith('pur_')));
+
+          transaction.set(vaultTxRef, {
+            'id': vaultTxId,
+            'uid': uid,
+            'amount': amountToDelete,
+            'direction': 'in',
+            'source': isPurchase
+                ? VaultTransactionSource.inventory.name
+                : VaultTransactionSource.myDebt.name,
+            'type': 'reversal',
+            'description': isPurchase
+                ? 'إلغاء دفعة شراء: $personNameForRecalc'
+                : 'إلغاء دفعة دين: $personNameForRecalc',
+            'relatedEntityId': paymentId,
+            'relatedOperationId': debtId,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+
+          transaction.set(
+            vaultSummaryRef,
+            {
+              'currentBalance': FieldValue.increment(amountToDelete),
+              'totalOut': FieldValue.increment(-amountToDelete),
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          );
+        }
+
+        // Calculate new values
+        final currentTotal = (debtSnap.data()?['totalAmount'] as num?)?.toDouble() ?? 0.0;
+        final currentPaid = (debtSnap.data()?['paidAmount'] as num?)?.toDouble() ?? 0.0;
+        final currentRemaining = (debtSnap.data()?['remainingAmount'] as num?)?.toDouble() ?? 0.0;
+
+        double newTotalAmount = currentTotal;
+        double newPaidAmount = currentPaid;
+        double newRemainingAmount = currentRemaining;
+
+        if (relatedTo == 'debt') {
+          newTotalAmount = currentTotal - amountToDelete;
+          newRemainingAmount = currentRemaining - amountToDelete;
+        } else {
+          newPaidAmount = currentPaid - amountToDelete;
+          newRemainingAmount = currentRemaining + amountToDelete;
+        }
+
+        final bool newIsPaid = newRemainingAmount <= 1e-9;
+
+        // Update stored totals
         if (relatedTo == 'debt') {
           transaction.update(debtRef, {
-            'totalAmount': FieldValue.increment(-amountToDelete),
-            'remainingAmount': FieldValue.increment(-amountToDelete),
+            'totalAmount': newTotalAmount,
+            'remainingAmount': newRemainingAmount,
+            'isPaid': newIsPaid,
             'lastUpdatedAt': FieldValue.serverTimestamp(),
           });
         } else {
           transaction.update(debtRef, {
-            'paidAmount': FieldValue.increment(-amountToDelete),
-            'remainingAmount': FieldValue.increment(amountToDelete),
+            'paidAmount': newPaidAmount,
+            'remainingAmount': newRemainingAmount,
+            'isPaid': newIsPaid,
             'lastUpdatedAt': FieldValue.serverTimestamp(),
           });
+        }
+
+        // Update operation if it exists
+        if (operationId != null && operationId!.isNotEmpty) {
+          final opRef = firestore
+              .collection('users')
+              .doc(uid)
+              .collection('my_debt_operations')
+              .doc(operationId);
+          if (relatedTo == 'debt') {
+            transaction.update(opRef, {
+              'totalAmount': newTotalAmount,
+              'remainingDebt': newRemainingAmount,
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
+            });
+          } else {
+            transaction.update(opRef, {
+              'paidAmount': newPaidAmount,
+              'remainingDebt': newRemainingAmount,
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
+            });
+          }
         }
 
         // Update person doc

@@ -7,14 +7,14 @@ import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/date_formatter.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/utils/vault_balance_helper.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_state.dart';
 import 'package:tahsel/shared/widgets/buttons/custom_button.dart';
 import 'package:tahsel/shared/widgets/text_fields/custom_text_form_field.dart';
-import 'package:tahsel/core/utils/date_formatter.dart';
-
 
 class AddMyDebtScreen extends StatefulWidget {
   const AddMyDebtScreen({super.key});
@@ -68,7 +68,6 @@ class _AddMyDebtScreenState extends State<AddMyDebtScreen> {
     }
   }
 
-
   @override
   void initState() {
     super.initState();
@@ -113,9 +112,15 @@ class _AddMyDebtScreenState extends State<AddMyDebtScreen> {
       child: BlocListener<MyDebtsCubit, MyDebtsState>(
         listener: (context, state) {
           if (state.status == MyDebtsStatus.error) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(state.message ?? 'Error')));
+            if (state.message != null &&
+                (state.message!.contains(AppStrings.insufficientBalance) ||
+                    state.message!.contains('insufficient_balance'))) {
+              VaultBalanceHelper.showInsufficientBalanceDialog(context);
+            } else {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(state.message ?? 'Error')));
+            }
           }
         },
         child: Scaffold(
@@ -321,7 +326,9 @@ class _AddMyDebtScreenState extends State<AddMyDebtScreen> {
                               color: AppColors.surfaceContainerHigh,
                               borderRadius: BorderRadius.circular(12.r),
                               border: Border.all(
-                                color: AppColors.disabledColor.withValues(alpha: 0.1),
+                                color: AppColors.disabledColor.withValues(
+                                  alpha: 0.1,
+                                ),
                               ),
                             ),
                             child: Row(

@@ -78,7 +78,7 @@ class InventoryEmptyState extends StatelessWidget {
                   ),
                 ),
                 onPressed: onAction,
-                icon: const Icon(Icons.add, color: Colors.white, size: 18),
+                // icon: const Icon(Icons.add, color: Colors.white, size: 18),
                 label: Text(
                   actionLabel!,
                   style: TextStyles.customStyle(

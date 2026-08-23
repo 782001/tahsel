@@ -405,7 +405,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                                 Icon(
                                                   Icons.arrow_forward,
                                                   color: Colors.white,
-                                                  size: isDesktop ? 20 : 20
+                                                  size: isDesktop ? 20 : 20,
                                                 ),
                                               ],
                                             ),
@@ -469,7 +469,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                                 );
                                               },
                                               child: Text(
-                                                AppStrings.createNewAccount.tr(),
+                                                AppStrings.createNewAccount
+                                                    .tr(),
                                                 style:
                                                     TextStyles.customStyle(
                                                       color: AppColors

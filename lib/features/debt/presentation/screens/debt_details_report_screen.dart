@@ -5,6 +5,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/utils/vault_balance_helper.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/customer/presentation/widgets/notification_dialog.dart';
 import 'package:tahsel/features/debt/domain/entities/debt_entity.dart';
@@ -72,12 +73,17 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
         } else if (state is DebtDetailsNotFound) {
           Navigator.pop(context, true);
         } else if (state is DebtDetailsError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: AppColors.error,
-            ),
-          );
+          if (state.message.contains(AppStrings.insufficientBalance) ||
+              state.message.contains('insufficient_balance')) {
+            VaultBalanceHelper.showInsufficientBalanceDialog(context);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          }
         }
       },
       child: PopScope(

@@ -8,6 +8,7 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/utils/vault_balance_helper.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/employee/domain/entities/advance_entity.dart';
 import 'package:tahsel/features/employee/domain/entities/attendance_entity.dart';
@@ -21,8 +22,6 @@ import 'package:tahsel/features/employee/presentation/widgets/check_in_out_dialo
 import 'package:tahsel/features/employee/presentation/widgets/employee_details_tab_selector.dart';
 import 'package:tahsel/features/employee/presentation/widgets/pay_salary_dialog.dart';
 import 'package:tahsel/features/employee/presentation/widgets/request_advance_dialog.dart';
-import 'package:tahsel/features/expenses/domain/entities/expense_entity.dart';
-import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/shared/widgets/no_internet_view.dart';
@@ -242,12 +241,17 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                   ),
                 );
               } else if (state is EmployeeFailure) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(state.message),
-                    backgroundColor: AppColors.error,
-                  ),
-                );
+                if (state.message.contains(AppStrings.insufficientBalance) ||
+                    state.message.contains('insufficient_balance')) {
+                  VaultBalanceHelper.showInsufficientBalanceDialog(context);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.message),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
               }
             },
             builder: (context, state) {
@@ -1738,48 +1742,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                                   payroll,
                                   advanceIdsToDeduct: paidAdvanceIds,
                                   attendanceIds: unpaidAttendanceIds,
-                                )
-                                .then((_) {
-                                  String salaryTypeLabel;
-                                  switch (payroll.salaryType) {
-                                    case 'monthly':
-                                      salaryTypeLabel = AppStrings.monthly.tr();
-                                      break;
-                                    case 'daily':
-                                      salaryTypeLabel = AppStrings.daily.tr();
-                                      break;
-                                    case 'hourly':
-                                      salaryTypeLabel = AppStrings.hourly.tr();
-                                      break;
-                                    default:
-                                      salaryTypeLabel = AppStrings.monthly.tr();
-                                  }
-
-                                  final categoryName = AppStrings
-                                      .salaryExpenseFor
-                                      .tr(
-                                        namedArgs: {
-                                          'type': salaryTypeLabel,
-                                          'name': payroll.employeeName,
-                                        },
-                                      );
-
-                                  final expenseId =
-                                      'exp_emp_sal_${(payroll.id != null && payroll.id!.isNotEmpty) ? payroll.id! : DateTime.now().millisecondsSinceEpoch}';
-                                  final expense = ExpenseEntity(
-                                    id: expenseId,
-                                    uid: AppStrings.userToken,
-                                    amount: payroll.netSalary,
-                                    category: categoryName,
-                                    description: payroll.notes,
-                                    createdAt: payroll.paymentDate,
-                                    monthKey: payroll.monthKey,
-                                  );
-                                  if (!mounted) return;
-                                  context.read<ExpenseCubit>().addExpense(
-                                    expense,
-                                  );
-                                });
+                                );
                           },
                         ),
                       );
@@ -2268,15 +2231,11 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
       return;
     }
     final employeeCubit = context.read<EmployeeCubit>();
-    final expenseCubit = context.read<ExpenseCubit>();
     showDialog(
       context: context,
       builder: (ctx) {
-        return MultiBlocProvider(
-          providers: [
-            BlocProvider.value(value: employeeCubit),
-            BlocProvider.value(value: expenseCubit),
-          ],
+        return BlocProvider.value(
+          value: employeeCubit,
           child: RequestAdvanceDialog(employee: employee),
         );
       },

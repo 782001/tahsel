@@ -7,6 +7,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/utils/vault_balance_helper.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 
@@ -123,15 +124,43 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
         }
       }
 
-      // Parse paid amount for debt payments
-      final double parsedPaid =
-          double.tryParse(_paidAmountController.text.trim()) ?? 0.0;
-      final double actualPaidAmount = _selectedPaymentMethod == 'debt'
-          ? parsedPaid.clamp(0.0, _totalAmount)
-          : _totalAmount;
+      // Parse paid amount
+      final bool isEdit = widget.initialPurchase != null;
+      final double actualPaidAmount;
+      if (isEdit) {
+        if (widget.initialPurchase!.paymentMethod == 'debt') {
+          actualPaidAmount = widget.initialPurchase!.paidAmount.clamp(
+            0.0,
+            _totalAmount,
+          );
+        } else {
+          actualPaidAmount = _totalAmount;
+        }
+      } else {
+        final double parsedPaid =
+            double.tryParse(_paidAmountController.text.trim()) ?? 0.0;
+        actualPaidAmount = _selectedPaymentMethod == 'debt'
+            ? parsedPaid.clamp(0.0, _totalAmount)
+            : _totalAmount;
+      }
+
+      // Proactive Vault Balance check (only checks incremental amount needed)
+      final double neededFromVault = isEdit
+          ? (actualPaidAmount - widget.initialPurchase!.paidAmount)
+          : actualPaidAmount;
+
+      if (neededFromVault > 0 && AppStrings.isVaultEnabled()) {
+        final currentVaultBalance =
+            await VaultBalanceHelper.getCurrentBalance();
+        if (currentVaultBalance < neededFromVault) {
+          if (mounted) {
+            VaultBalanceHelper.showInsufficientBalanceDialog(context);
+          }
+          return;
+        }
+      }
 
       // 2. Create or Update the purchase invoice
-      final bool isEdit = widget.initialPurchase != null;
       bool success = false;
 
       if (isEdit) {
@@ -143,8 +172,8 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
           notes: _notesController.text.trim().isNotEmpty
               ? _notesController.text.trim()
               : null,
-          paymentMethod: widget.initialPurchase!.paymentMethod,
-          paidAmount: widget.initialPurchase!.paidAmount,
+          paymentMethod: _selectedPaymentMethod,
+          paidAmount: actualPaidAmount,
           isSynced: false,
         );
         success = await purchasesCubit.updatePurchase(
@@ -180,6 +209,13 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
           ),
         );
         navigator.pop();
+      } else if (!success && mounted) {
+        final state = purchasesCubit.state;
+        if (state is InventoryPurchasesError &&
+            (state.message.contains(AppStrings.insufficientBalance) ||
+                state.message.contains('insufficient_balance'))) {
+          VaultBalanceHelper.showInsufficientBalanceDialog(context);
+        }
       }
     } finally {
       if (mounted) {
@@ -235,6 +271,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
             ),
             onPressed: () => Navigator.of(context).pop(),
           ),
+          centerTitle: true,
           title: Text(
             widget.initialPurchase != null
                 ? '${AppStrings.edit.tr()} ${AppStrings.purchaseInvoiceNum.tr()} #${widget.initialPurchase!.id.replaceAll("pur_", "")}'
@@ -496,7 +533,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                               ),
                               onPressed: _isLoading ? null : _savePurchase,
                               child: _isLoading
-                                  ?   SizedBox(
+                                  ? SizedBox(
                                       width: 24,
                                       height: 24,
                                       child: CircularProgressIndicator(

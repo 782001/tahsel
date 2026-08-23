@@ -305,6 +305,26 @@ class DebtRepositoryImpl implements DebtRepository {
   }
 
   @override
+  Future<Either<Failure, void>> settleCustomerCredit({
+    required String uid,
+    required String debtId,
+    required double creditAmount,
+    String? note,
+  }) async {
+    try {
+      await remoteDataSource.settleCustomerCredit(
+        uid: uid,
+        debtId: debtId,
+        creditAmount: creditAmount,
+        note: note,
+      );
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, PaginatedResult<PaymentEntity>>>
   getAllUserPaymentsPaginated(
     String uid, {

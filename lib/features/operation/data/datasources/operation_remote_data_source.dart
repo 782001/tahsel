@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/error/firebase_error_handler.dart';
 import '../../../../core/utils/app_strings.dart';
 import '../../../../core/utils/summary_helper.dart';
+import '../../../cashbox/domain/entities/vault_transaction_entity.dart';
 import '../models/operation_model.dart';
 
 abstract class OperationRemoteDataSource {
@@ -46,6 +47,48 @@ class OperationRemoteDataSourceImpl implements OperationRemoteDataSource {
           'transactionCount': FieldValue.increment(1),
           'lastUpdatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
+      }
+
+      // 3. Record Vault Inflow for fully paid direct operations
+      final double paidCash = operation.remainingDebt <= 0
+          ? (operation.paidAmount > 0
+              ? operation.paidAmount
+              : operation.totalAmount)
+          : operation.paidAmount;
+
+      if (AppStrings.isVaultEnabled() && paidCash > 0) {
+        final vaultTxRef = userRef
+            .collection('vault_transactions')
+            .doc('vault_tx_op_${docRef.id}');
+        final vaultSummaryRef = userRef.collection('vault').doc('summary');
+
+        final String desc = operation.productName != null &&
+                operation.productName!.isNotEmpty
+            ? '${operation.productName}'
+            : (operation.type);
+
+        batch.set(vaultTxRef, {
+          'id': 'vault_tx_op_${docRef.id}',
+          'uid': operation.uid,
+          'amount': paidCash,
+          'direction': 'in',
+          'source': VaultTransactionSource.customerDebt.name,
+          'type': 'cash_sale',
+          'description': 'مبيعات مباشرة: $desc',
+          'relatedEntityId': docRef.id,
+          'createdAt': Timestamp.fromDate(timestamp),
+        });
+
+        batch.set(
+          vaultSummaryRef,
+          {
+            'currentBalance': FieldValue.increment(paidCash),
+            'totalIn': FieldValue.increment(paidCash),
+            'transactionCount': FieldValue.increment(1),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
       }
 
       await batch.commit();

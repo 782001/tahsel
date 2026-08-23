@@ -3,6 +3,9 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/firebase_error_handler.dart';
+import '../../../../core/utils/app_strings.dart';
+import '../../../cashbox/domain/entities/vault_transaction_entity.dart';
+import '../../../../core/utils/summary_helper.dart';
 import '../models/advance_model.dart';
 import '../models/attendance_model.dart';
 import '../models/employee_model.dart';
@@ -381,6 +384,72 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
         'outstandingBalance': payroll.carriedForwardBalance ?? 0.0,
       });
 
+      // Record Vault Outflow for salary payment
+      if (AppStrings.isVaultEnabled() && payroll.netSalary > 0) {
+        final vaultTxRef = userRef
+            .collection('vault_transactions')
+            .doc('vault_tx_exp_emp_sal_${docRef.id}');
+        final vaultSummaryRef = userRef.collection('vault').doc('summary');
+
+        batch.set(vaultTxRef, {
+          'id': 'vault_tx_exp_emp_sal_${docRef.id}',
+          'uid': payroll.uid,
+          'amount': payroll.netSalary,
+          'direction': 'out',
+          'source': VaultTransactionSource.employee.name,
+          'type': 'salary_payment',
+          'description': 'صرف راتب الموظف: ${payroll.employeeName}',
+          'relatedEntityId': docRef.id,
+          'relatedOperationId': payroll.employeeId,
+          'createdAt': Timestamp.fromDate(payroll.paymentDate),
+        });
+
+        batch.set(
+          vaultSummaryRef,
+          {
+            'currentBalance': FieldValue.increment(-payroll.netSalary),
+            'totalOut': FieldValue.increment(payroll.netSalary),
+            'transactionCount': FieldValue.increment(1),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      }
+
+      // Record Expense and Summaries for salary payment atomically
+      if (payroll.netSalary > 0) {
+        final expenseDocRef =
+            userRef.collection('expenses').doc('exp_emp_sal_${docRef.id}');
+        String salaryTypeLabel = 'راتب شهري';
+        if (payroll.salaryType == 'daily') {
+          salaryTypeLabel = 'يومية';
+        } else if (payroll.salaryType == 'hourly') {
+          salaryTypeLabel = 'ساعات عمل';
+        }
+        final String categoryName =
+            'صرف $salaryTypeLabel للموظف: ${payroll.employeeName}';
+
+        batch.set(expenseDocRef, {
+          'id': 'exp_emp_sal_${docRef.id}',
+          'uid': payroll.uid,
+          'amount': payroll.netSalary,
+          'category': categoryName,
+          'description': payroll.notes,
+          'createdAt': Timestamp.fromDate(payroll.paymentDate),
+          'monthKey': payroll.monthKey,
+          'syncedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
+        final summaryKeys = SummaryHelper.getSummaryKeys(payroll.paymentDate);
+        for (final key in summaryKeys) {
+          batch.set(userRef.collection('summaries').doc(key), {
+            'totalExpenses': FieldValue.increment(payroll.netSalary),
+            'transactionCount': FieldValue.increment(1),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        }
+      }
+
       await batch.commit();
       return docRef.id;
     } catch (e) {
@@ -447,6 +516,65 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
           'totalSalariesPaid': FieldValue.increment(advance.amount),
           'lastUpdatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
+      }
+
+      // Record Vault Outflow for advance payment
+      if (AppStrings.isVaultEnabled() && advance.amount > 0) {
+        final vaultTxRef = userRef
+            .collection('vault_transactions')
+            .doc('vault_tx_exp_emp_adv_${docRef.id}');
+        final vaultSummaryRef = userRef.collection('vault').doc('summary');
+
+        batch.set(vaultTxRef, {
+          'id': 'vault_tx_exp_emp_adv_${docRef.id}',
+          'uid': advance.uid,
+          'amount': advance.amount,
+          'direction': 'out',
+          'source': VaultTransactionSource.employee.name,
+          'type': 'employee_advance',
+          'description': 'صرف سلفة للموظف: ${advance.employeeName}',
+          'relatedEntityId': docRef.id,
+          'relatedOperationId': advance.employeeId,
+          'createdAt': Timestamp.fromDate(advance.date),
+        });
+
+        batch.set(
+          vaultSummaryRef,
+          {
+            'currentBalance': FieldValue.increment(-advance.amount),
+            'totalOut': FieldValue.increment(advance.amount),
+            'transactionCount': FieldValue.increment(1),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      }
+
+      // Record Expense and Summaries for advance payment atomically
+      if (advance.amount > 0) {
+        final expenseDocRef =
+            userRef.collection('expenses').doc('exp_emp_adv_${docRef.id}');
+        final String categoryName = 'صرف سلفة للموظف: ${advance.employeeName}';
+
+        batch.set(expenseDocRef, {
+          'id': 'exp_emp_adv_${docRef.id}',
+          'uid': advance.uid,
+          'amount': advance.amount,
+          'category': categoryName,
+          'description': advance.notes,
+          'createdAt': Timestamp.fromDate(advance.date),
+          'monthKey': monthKey,
+          'syncedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
+        final summaryKeys = SummaryHelper.getSummaryKeys(advance.date);
+        for (final key in summaryKeys) {
+          batch.set(userRef.collection('summaries').doc(key), {
+            'totalExpenses': FieldValue.increment(advance.amount),
+            'transactionCount': FieldValue.increment(1),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        }
       }
 
       await batch.commit();

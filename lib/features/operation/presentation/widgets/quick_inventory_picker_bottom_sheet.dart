@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -126,7 +127,7 @@ class _QuickInventoryPickerBottomSheetState
         child: Text(
           AppStrings.outOfStockKey.tr(),
           style: TextStyles.customStyle(
-            fontSize: isDesktop ? 11 : 11 ,
+            fontSize: isDesktop ? 11 : 11,
             color: AppColors.error,
             fontWeight: FontWeight.bold,
           ),
@@ -141,9 +142,9 @@ class _QuickInventoryPickerBottomSheetState
           border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
         ),
         child: Text(
-          '${AppStrings.availableInStock.tr()}: ${p.currentQuantity} (${AppStrings.lowStockAlertKey.tr()})',
+          '${AppStrings.availableInStock.tr()}: ${p.currentQuantity.toSmartAmount()} ${p.unit} (${AppStrings.lowStockAlertKey.tr()})',
           style: TextStyles.customStyle(
-            fontSize: isDesktop ? 11 : 11 ,
+            fontSize: isDesktop ? 11 : 11,
             color: AppColors.warning,
             fontWeight: FontWeight.bold,
           ),
@@ -159,7 +160,7 @@ class _QuickInventoryPickerBottomSheetState
         child: Text(
           '${AppStrings.availableInStock.tr()}: ${p.currentQuantity.toSmartAmount()} ${p.unit}',
           style: TextStyles.customStyle(
-            fontSize: isDesktop ? 11 : 11 ,
+            fontSize: isDesktop ? 11 : 11,
             color: AppColors.success,
             fontWeight: FontWeight.w600,
           ),
@@ -207,7 +208,7 @@ class _QuickInventoryPickerBottomSheetState
 
           // Header Row
           Row(
-            mainAxisAlignment: MainAxisAlignment .spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [
@@ -230,7 +231,7 @@ class _QuickInventoryPickerBottomSheetState
                       Text(
                         AppStrings.selectFromInventory.tr(),
                         style: TextStyles.customStyle(
-                          fontSize: isDesktop ? 18 : 16 ,
+                          fontSize: isDesktop ? 18 : 16,
                           fontWeight: FontWeight.bold,
                           color: AppColors.primaryColor,
                         ),
@@ -238,7 +239,7 @@ class _QuickInventoryPickerBottomSheetState
                       Text(
                         AppStrings.selectProductAndQty.tr(),
                         style: TextStyles.customStyle(
-                          fontSize: isDesktop ? 12 : 11 ,
+                          fontSize: isDesktop ? 12 : 11,
                           color: AppColors.subTitleColor,
                         ),
                       ),
@@ -265,7 +266,9 @@ class _QuickInventoryPickerBottomSheetState
             onSuffixIconPressed: (!kIsWeb && Platform.isWindows)
                 ? null
                 : () async {
-                    final scannedCode = await BarcodeScannerDialog.scan(context);
+                    final scannedCode = await BarcodeScannerDialog.scan(
+                      context,
+                    );
                     if (scannedCode != null && scannedCode.isNotEmpty) {
                       _searchController.text = scannedCode;
                       _applyFilter();
@@ -461,7 +464,7 @@ class _QuickInventoryPickerBottomSheetState
                             children: [
                               Row(
                                 mainAxisAlignment:
-                                    MainAxisAlignment .spaceBetween,
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Expanded(
                                     child: Row(
@@ -527,21 +530,25 @@ class _QuickInventoryPickerBottomSheetState
                                                                   : 2.h,
                                                             ),
                                                         decoration: BoxDecoration(
-                                                          gradient:
-                                                              const LinearGradient(
-                                                                colors: [
-                                                                  AppColors.bestSellerStart,
-                                                                  AppColors.bestSellerEnd,
-                                                                ],
-                                                              ),
+                                                          gradient: const LinearGradient(
+                                                            colors: [
+                                                              AppColors
+                                                                  .bestSellerStart,
+                                                              AppColors
+                                                                  .bestSellerEnd,
+                                                            ],
+                                                          ),
                                                           borderRadius:
                                                               BorderRadius.circular(
-                                                                isDesktop ? 6 : 6.r,
+                                                                isDesktop
+                                                                    ? 6
+                                                                    : 6.r,
                                                               ),
                                                           boxShadow: [
                                                             BoxShadow(
-                                                              color:
-                                                                  AppColors.bestSellerStart.withValues(
+                                                              color: AppColors
+                                                                  .bestSellerStart
+                                                                  .withValues(
                                                                     alpha: 0.35,
                                                                   ),
                                                               blurRadius: 6,
@@ -620,7 +627,7 @@ class _QuickInventoryPickerBottomSheetState
                               SizedBox(height: isDesktop ? 8 : 8.h),
                               Row(
                                 mainAxisAlignment:
-                                    MainAxisAlignment .spaceBetween,
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   _buildStockBadge(product, isDesktop),
                                   if (product.unit.isNotEmpty)
@@ -737,14 +744,16 @@ class _QuickInventoryPickerBottomSheetState
                               ),
                               IconButton(
                                 icon: const Icon(Icons.add_circle_outline),
-                                color: _selectedProduct != null &&
+                                color:
+                                    _selectedProduct != null &&
                                         _quantity <
                                             _selectedProduct!.currentQuantity
                                     ? AppColors.primaryColor
                                     : AppColors.blackLight.withValues(
                                         alpha: 0.3,
                                       ),
-                                onPressed: _selectedProduct != null &&
+                                onPressed:
+                                    _selectedProduct != null &&
                                         _quantity <
                                             _selectedProduct!.currentQuantity
                                     ? () => setState(() => _quantity++)
@@ -764,7 +773,8 @@ class _QuickInventoryPickerBottomSheetState
                             children: [1, 5, 10].map((inc) {
                               final maxAvailable =
                                   _selectedProduct?.currentQuantity ?? 1.0;
-                              final canAdd = _selectedProduct != null &&
+                              final canAdd =
+                                  _selectedProduct != null &&
                                   _quantity < maxAvailable;
                               return InkWell(
                                 onTap: canAdd
@@ -816,7 +826,7 @@ class _QuickInventoryPickerBottomSheetState
 
                   // Total calculation banner & Confirm Button
                   Row(
-                    mainAxisAlignment: MainAxisAlignment .spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

@@ -6,6 +6,7 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/summary_helper.dart';
 
 import '../models/offline_record.dart';
+import 'package:tahsel/features/cashbox/domain/entities/vault_transaction_entity.dart';
 
 abstract class OfflineRemoteDataSource {
   Future<void> syncRecord(OfflineRecord record);
@@ -72,13 +73,20 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
         .doc(record.id); // Use Hive ID for idempotency
 
     // 0. CHECK IF ALREADY SYNCED
-    final existingDoc = await debtRef.get();
-    if (existingDoc.exists) {
-      AppLogger.printMessage(
-        "[OfflineSync] Record ${record.id} already exists. Skipping.",
+    try {
+      final existingDoc = await debtRef.get(
+        const GetOptions(source: Source.serverAndCache),
       );
-      return;
-    }
+      if (existingDoc.exists) {
+        final data = existingDoc.data();
+        if (data != null && data['syncedAt'] != null) {
+          AppLogger.printMessage(
+            "[OfflineSync] Record ${record.id} already exists. Skipping.",
+          );
+          return;
+        }
+      }
+    } catch (_) {}
 
     final opRef = userRef.collection('my_debt_operations').doc(operationId);
     final personRef = userRef.collection('my_debt_persons').doc(personName);
@@ -138,6 +146,42 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
         ),
         'type': remainingAmount <= 0 ? 'full' : 'partial',
       });
+
+      if (AppStrings.isVaultEnabled()) {
+        final bool isPurchase = (record.id.startsWith('debt_pur_') || operationId.startsWith('pur_'));
+        final vaultTxRef = userRef.collection('vault_transactions').doc('vault_tx_mydebt_${record.id}_payment');
+        final vaultSummaryRef = userRef.collection('vault').doc('summary');
+
+        batch.set(vaultTxRef, {
+          'id': 'vault_tx_mydebt_${record.id}_payment',
+          'uid': uid,
+          'amount': paidAmount,
+          'direction': 'out',
+          'source': isPurchase
+              ? VaultTransactionSource.inventory.name
+              : VaultTransactionSource.myDebt.name,
+          'type': isPurchase ? 'purchase_payment' : 'debt_payment',
+          'description': isPurchase
+              ? 'سداد دفعة شراء (مزامنة): $personName'
+              : 'سداد دين (مزامنة): $personName',
+          'relatedEntityId': '${record.id}_payment',
+          'relatedOperationId': record.id,
+          'createdAt': Timestamp.fromDate(
+            DateTime.parse(timestampStr).add(const Duration(milliseconds: 1)),
+          ),
+        });
+
+        batch.set(
+          vaultSummaryRef,
+          {
+            'currentBalance': FieldValue.increment(-paidAmount),
+            'totalOut': FieldValue.increment(paidAmount),
+            'transactionCount': FieldValue.increment(1),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      }
     }
 
     final Map<String, dynamic> personUpdate = {
@@ -175,13 +219,20 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
     final debtRef = userRef.collection('debts').doc(operationId);
 
     // 0. IDEMPOTENCY CHECK
-    final existingDoc = await debtRef.get();
-    if (existingDoc.exists) {
-      AppLogger.printMessage(
-        "[OfflineSync] Debt record $operationId already exists. Skipping.",
+    try {
+      final existingDoc = await debtRef.get(
+        const GetOptions(source: Source.serverAndCache),
       );
-      return;
-    }
+      if (existingDoc.exists) {
+        final data = existingDoc.data();
+        if (data != null && data['syncedAt'] != null) {
+          AppLogger.printMessage(
+            "[OfflineSync] Debt record $operationId already exists. Skipping.",
+          );
+          return;
+        }
+      }
+    } catch (_) {}
 
     final opRef = userRef.collection('operations').doc(operationId);
 
@@ -259,6 +310,37 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
         ),
         'type': remainingAmount <= 0 ? 'full' : 'partial',
       });
+
+      if (AppStrings.isVaultEnabled()) {
+        final vaultTxRef = userRef.collection('vault_transactions').doc('vault_tx_cust_${operationId}_payment');
+        final vaultSummaryRef = userRef.collection('vault').doc('summary');
+
+        batch.set(vaultTxRef, {
+          'id': 'vault_tx_cust_${operationId}_payment',
+          'uid': uid,
+          'amount': paidAmount,
+          'direction': 'in',
+          'source': VaultTransactionSource.customerDebt.name,
+          'type': remainingAmount <= 0 ? 'full_settlement' : 'partial_payment',
+          'description': 'تحصيل دفعة من العميل (مزامنة): $customerName',
+          'relatedEntityId': '${operationId}_payment',
+          'relatedOperationId': operationId,
+          'createdAt': Timestamp.fromDate(
+            timestampDate.add(const Duration(milliseconds: 1)),
+          ),
+        });
+
+        batch.set(
+          vaultSummaryRef,
+          {
+            'currentBalance': FieldValue.increment(paidAmount),
+            'totalIn': FieldValue.increment(paidAmount),
+            'transactionCount': FieldValue.increment(1),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      }
     }
 
     // 5. Update Summaries
@@ -316,12 +398,21 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
     final docRef = firestore.doc('$collectionPath/$docId');
 
     // 0. IDEMPOTENCY CHECK
-    final existingDoc = await docRef.get();
-    if (existingDoc.exists) {
-      AppLogger.printMessage(
-        "[OfflineSync] Simple record $docId already exists. Skipping.",
+    try {
+      final existingDoc = await docRef.get(
+        const GetOptions(source: Source.serverAndCache),
       );
-      return;
+      if (existingDoc.exists) {
+        final data = existingDoc.data();
+        if (data != null && data['syncedAt'] != null) {
+          AppLogger.printMessage(
+            "[OfflineSync] Simple record $docId already exists. Skipping.",
+          );
+          return;
+        }
+      }
+    } catch (_) {
+      // If reading fails (e.g. offline/network fluctuation), continue with the write batch
     }
 
     // Parse Dates
@@ -398,6 +489,56 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
             'transactionCount': FieldValue.increment(1),
             'lastUpdatedAt': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
+        }
+
+        final bool isInternalSync =
+            docId.startsWith('exp_pur_') || docId.startsWith('exp_pay_');
+
+        if (!isInternalSync && AppStrings.isVaultEnabled() && amount > 0) {
+          final vaultTxRef = userRef
+              .collection('vault_transactions')
+              .doc('vault_tx_$docId');
+          final vaultSummaryRef = userRef.collection('vault').doc('summary');
+
+          VaultTransactionSource vSource = VaultTransactionSource.expense;
+          String vType = 'manual_expense';
+          if (docId.startsWith('exp_emp_sal_')) {
+            vSource = VaultTransactionSource.employee;
+            vType = 'salary_payment';
+          } else if (docId.startsWith('exp_emp_adv_')) {
+            vSource = VaultTransactionSource.employee;
+            vType = 'employee_advance';
+          }
+
+          final String description =
+              (payload['description'] as String?)?.isNotEmpty == true
+                  ? (payload['description'] as String)
+                  : ((payload['category'] as String?)?.isNotEmpty == true
+                      ? (payload['category'] as String)
+                      : 'مصروف');
+
+          batch.set(vaultTxRef, {
+            'id': 'vault_tx_$docId',
+            'uid': uid,
+            'amount': amount,
+            'direction': 'out',
+            'source': vSource.name,
+            'type': vType,
+            'description': description,
+            'relatedEntityId': docId,
+            'createdAt': Timestamp.fromDate(timestampDate),
+          });
+
+          batch.set(
+            vaultSummaryRef,
+            {
+              'currentBalance': FieldValue.increment(-amount),
+              'totalOut': FieldValue.increment(amount),
+              'transactionCount': FieldValue.increment(1),
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          );
         }
       } else if (collectionPath.contains('employees')) {
         final allTimeRef = userRef.collection('summaries').doc('all_time');
@@ -480,13 +621,20 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
         .doc(record.id);
 
     // Idempotency check
-    final docSnapshot = await docRef.get();
-    if (docSnapshot.exists) {
-      AppLogger.printMessage(
-        "[OfflineSync] Session ${record.id} already exists. Skipping.",
+    try {
+      final docSnapshot = await docRef.get(
+        const GetOptions(source: Source.serverAndCache),
       );
-      return;
-    }
+      if (docSnapshot.exists) {
+        final data = docSnapshot.data();
+        if (data != null && data['syncedAt'] != null) {
+          AppLogger.printMessage(
+            "[OfflineSync] Session ${record.id} already exists. Skipping.",
+          );
+          return;
+        }
+      }
+    } catch (_) {}
 
     // Convert dates in payload from ISO8601 strings to Timestamp for Firestore
     if (payload['startTime'] is String) {

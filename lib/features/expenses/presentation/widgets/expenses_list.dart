@@ -157,12 +157,12 @@ class ExpensesList extends StatelessWidget {
 
             if (state is ExpenseFailure) {
               AppLogger.printMessage(state.message);
-              return Center(
-                child: Text(
-                  state.message,
-                  style: TextStyles.customStyle(color: AppColors.error),
-                ),
-              );
+              // return Center(
+              //   child: Text(
+              //     state.message,
+              //     style: TextStyles.customStyle(color: AppColors.error),
+              //   ),
+              // );
             }
 
             return const SizedBox.shrink();

@@ -85,6 +85,12 @@ abstract class DebtRepository {
   Future<Either<Failure, List<PaymentEntity>>> getAllUserPayments(String uid);
   Future<Either<Failure, List<MonthlyCollectedAmount>>>
   getMonthlyCollectedAmounts(String uid);
+  Future<Either<Failure, void>> settleCustomerCredit({
+    required String uid,
+    required String debtId,
+    required double creditAmount,
+    String? note,
+  });
 
   Future<Either<Failure, PaginatedResult<PaymentEntity>>>
   getAllUserPaymentsPaginated(

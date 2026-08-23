@@ -465,6 +465,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                           prefixIcon: Icon(
                                             Icons.badge_outlined,
                                             color: AppColors.primaryColor,
+                                            size: 20,
                                           ),
                                           border: OutlineInputBorder(
                                             borderRadius: BorderRadius.circular(
@@ -532,6 +533,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                           prefixIcon: Icon(
                                             Icons.devices_outlined,
                                             color: AppColors.primaryColor,
+                                            size: 20,
                                           ),
                                           border: OutlineInputBorder(
                                             borderRadius: BorderRadius.circular(
@@ -622,6 +624,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                             prefixIcon: Icon(
                                               Icons.payments_outlined,
                                               color: AppColors.primaryColor,
+                                              size: 20,
                                             ),
                                             suffixIcon: Icon(
                                               Icons.arrow_drop_down_rounded,

@@ -773,6 +773,8 @@
   "movement_invoice_sale": "Invoice Sale",
   "movement_invoice_return": "Invoice Return",
   "movement_manual_adjustment": "Manual Adjustment",
+  "movement_manual_adjustment_increase": "Adjustment (Increase)",
+  "movement_manual_adjustment_decrease": "Adjustment (Decrease)",
   "movement_purchase_return": "Purchase Return",
   "manual_stock_adjustment": "Manual Stock Adjustment",
   "adjustment_reason": "Adjustment Reason",
@@ -1149,5 +1151,7 @@
   "vip_hide_details": "Hide Details",
   "vip_major_features_count": "Major Features",
   "project_name_hint": "Your Project Name",
-  "full_name_hint": "Your Full Name"
+  "full_name_hint": "Your Full Name",
+  "loading": "Loading...",
+  "deleting_purchase": "Deleting invoice..."
 }

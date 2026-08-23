@@ -8,7 +8,7 @@
   "amount_deducted_from_vault": "المبلغ المخصوم من الخزنة:",
   "customer_name_label": "اسم العميل:",
   "unspecified_customer": "عميل غير محدد",
-  "refund_credit_to_customer": "إرجاع الرصيد للعميل (خصم من الخزنة)",
+  "refund_credit_to_customer": "اعطي للعميل (خصم من الخزنة)",
   "refund_overpaid_to_customer": "إرجاع الفائض للعميل (خصم من الخزنة)",
   "confirm_refund_credit": "تأكيد إرجاع الرصيد الدائن للعميل",
   "confirm_refund_overpaid": "تأكيد إرجاع فائض المبلغ للعميل",
@@ -793,6 +793,8 @@
   "movement_invoice_sale": "مبيعات (فاتورة)",
   "movement_invoice_return": "مرتجع مبيعات",
   "movement_manual_adjustment": "تعديل يدوي",
+  "movement_manual_adjustment_increase": "تعديل بالزيادة",
+  "movement_manual_adjustment_decrease": "تعديل بالنقصان",
   "movement_purchase_return": "مرتجع شراء",
   "manual_stock_adjustment": "تعديل يدوي للمخزون",
   "adjustment_reason": "سبب التعديل",
@@ -1152,5 +1154,7 @@
   "vip_hide_details": "إخفاء التفاصيل",
   "vip_major_features_count": "ميزات كبرى",
   "project_name_hint": "اسم مشروعك",
-  "full_name_hint": "اسمك الكامل"
+  "full_name_hint": "اسمك الكامل",
+  "loading": "جاري التحميل...",
+  "deleting_purchase": "جاري حذف الفاتورة..."
 }

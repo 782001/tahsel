@@ -45,6 +45,22 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
     }
   }
 
+  bool _isMovementIncrease(StockMovementEntity m) {
+    if (m.newQuantity != m.previousQuantity) {
+      return m.newQuantity > m.previousQuantity;
+    }
+    switch (m.type) {
+      case StockMovementType.purchase:
+      case StockMovementType.invoiceReturn:
+        return true;
+      case StockMovementType.invoiceSale:
+      case StockMovementType.purchaseReturn:
+        return false;
+      case StockMovementType.manualAdjustment:
+        return m.quantity >= 0;
+    }
+  }
+
   Color _getMovementColor(StockMovementType type) {
     switch (type) {
       case StockMovementType.purchase:
@@ -70,6 +86,42 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
         return AppStrings.movementInvoiceReturn.tr();
       case StockMovementType.manualAdjustment:
         return AppStrings.movementManualAdjustment.tr();
+      case StockMovementType.purchaseReturn:
+        return AppStrings.movementPurchaseReturn.tr();
+    }
+  }
+
+  Color _getMovementItemColor(StockMovementEntity m) {
+    final isIncrease = _isMovementIncrease(m);
+    switch (m.type) {
+      case StockMovementType.purchase:
+        return AppColors.movementPurchase;
+      case StockMovementType.invoiceSale:
+        return AppColors.movementInvoiceSale;
+      case StockMovementType.invoiceReturn:
+        return AppColors.movementInvoiceReturn;
+      case StockMovementType.manualAdjustment:
+        return isIncrease
+            ? AppColors.movementPurchase
+            : AppColors.movementInvoiceSale;
+      case StockMovementType.purchaseReturn:
+        return AppColors.movementPurchaseReturn;
+    }
+  }
+
+  String _getMovementItemTitle(StockMovementEntity m) {
+    switch (m.type) {
+      case StockMovementType.purchase:
+        return AppStrings.movementPurchase.tr();
+      case StockMovementType.invoiceSale:
+        return AppStrings.movementInvoiceSale.tr();
+      case StockMovementType.invoiceReturn:
+        return AppStrings.movementInvoiceReturn.tr();
+      case StockMovementType.manualAdjustment:
+        final isIncrease = _isMovementIncrease(m);
+        return isIncrease
+            ? AppStrings.movementManualAdjustmentIncrease.tr()
+            : AppStrings.movementManualAdjustmentDecrease.tr();
       case StockMovementType.purchaseReturn:
         return AppStrings.movementPurchaseReturn.tr();
     }
@@ -236,8 +288,11 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
                                   );
                                 }
                                 final m = movements[index];
-                                final isPositive = m.quantity > 0;
-                                final color = _getMovementColor(m.type);
+                                final isIncrease = _isMovementIncrease(m);
+                                final color = _getMovementItemColor(m);
+                                final title = _getMovementItemTitle(m);
+                                final qtySign = isIncrease ? '+' : '-';
+                                final displayQty = m.quantity.abs();
 
                                 return Container(
                                   padding: EdgeInsets.all(
@@ -257,7 +312,7 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
                                         ),
                                         radius: isDesktop ? 18 : 18.r,
                                         child: Icon(
-                                          isPositive
+                                          isIncrease
                                               ? Icons.add_circle_outline
                                               : Icons.remove_circle_outline,
                                           color: color,
@@ -286,7 +341,7 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
                                                   ),
                                                 ),
                                                 Text(
-                                                  '${isPositive ? '+' : ''}${m.quantity.toSmartAmount()}',
+                                                  '$qtySign${displayQty.toSmartAmount()}',
                                                   style: TextStyles.customStyle(
                                                     fontSize: 16,
                                                     fontWeight: FontWeight.bold,
@@ -323,7 +378,7 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
                                                         ),
                                                   ),
                                                   child: Text(
-                                                    _getMovementTitle(m.type),
+                                                    title,
                                                     style:
                                                         TextStyles.customStyle(
                                                           fontSize: 11,

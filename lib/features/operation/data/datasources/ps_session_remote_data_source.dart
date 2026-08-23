@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/error/firebase_error_handler.dart';
 import '../../../../core/utils/app_strings.dart';
 import '../../../../core/utils/summary_helper.dart';
+import '../../../cashbox/domain/entities/vault_transaction_entity.dart';
 import '../models/ps_session_model.dart';
 import '../models/operation_model.dart';
 
@@ -120,6 +121,42 @@ class PsSessionRemoteDataSourceImpl implements PsSessionRemoteDataSource {
           'transactionCount': FieldValue.increment(1),
           'lastUpdatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
+      }
+
+      // 4. Record Vault Inflow for completed PS session payments
+      if (AppStrings.isVaultEnabled() && paidAmount > 0) {
+        final vaultTxRef = userRef
+            .collection('vault_transactions')
+            .doc('vault_tx_ps_$sessionId');
+        final vaultSummaryRef = userRef.collection('vault').doc('summary');
+
+        final String cust = session.customerName != null &&
+                session.customerName!.isNotEmpty
+            ? session.customerName!
+            : 'عميل';
+
+        batch.set(vaultTxRef, {
+          'id': 'vault_tx_ps_$sessionId',
+          'uid': uid,
+          'amount': paidAmount,
+          'direction': 'in',
+          'source': VaultTransactionSource.customerDebt.name,
+          'type': 'ps_session_payment',
+          'description': 'تحصيل جلسة بلايستيشن: $cust',
+          'relatedEntityId': sessionId,
+          'createdAt': Timestamp.fromDate(endTime),
+        });
+
+        batch.set(
+          vaultSummaryRef,
+          {
+            'currentBalance': FieldValue.increment(paidAmount),
+            'totalIn': FieldValue.increment(paidAmount),
+            'transactionCount': FieldValue.increment(1),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
       }
 
       await batch.commit();

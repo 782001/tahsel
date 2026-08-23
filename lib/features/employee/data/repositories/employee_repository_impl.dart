@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:tahsel/core/error/failures.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 
 import '../../domain/entities/advance_entity.dart';
 import '../../domain/entities/attendance_entity.dart';
@@ -179,6 +180,22 @@ class EmployeeRepositoryImpl implements EmployeeRepository {
       if (!hasConnection) {
         return const Left(ServerFailure("No internet connection."));
       }
+
+      if (AppStrings.isVaultEnabled() && payroll.netSalary > 0) {
+        final summaryDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(payroll.uid)
+            .collection('vault')
+            .doc('summary')
+            .get();
+        final double currentBalance = (summaryDoc.exists && summaryDoc.data() != null)
+            ? ((summaryDoc.data()!['currentBalance'] as num?)?.toDouble() ?? 0.0)
+            : 0.0;
+        if (currentBalance <= 0 || currentBalance < payroll.netSalary) {
+          return const Left(ServerFailure(AppStrings.insufficientBalance));
+        }
+      }
+
       final model = PayrollModel.fromEntity(payroll);
       final id = await remoteDataSource.paySalary(
         model,
@@ -223,6 +240,22 @@ class EmployeeRepositoryImpl implements EmployeeRepository {
       if (!hasConnection) {
         return const Left(ServerFailure("No internet connection."));
       }
+
+      if (AppStrings.isVaultEnabled() && advance.amount > 0) {
+        final summaryDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(advance.uid)
+            .collection('vault')
+            .doc('summary')
+            .get();
+        final double currentBalance = (summaryDoc.exists && summaryDoc.data() != null)
+            ? ((summaryDoc.data()!['currentBalance'] as num?)?.toDouble() ?? 0.0)
+            : 0.0;
+        if (currentBalance <= 0 || currentBalance < advance.amount) {
+          return const Left(ServerFailure(AppStrings.insufficientBalance));
+        }
+      }
+
       final model = AdvanceModel.fromEntity(advance);
       final id = await remoteDataSource.requestAdvance(model);
       return Right(id);

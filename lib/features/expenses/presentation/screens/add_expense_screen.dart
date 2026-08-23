@@ -6,6 +6,7 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/date_formatter.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/utils/vault_balance_helper.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/expenses/domain/entities/expense_entity.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
@@ -140,13 +141,18 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             );
             Navigator.pop(context);
           } else if (state is ExpenseFailure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                duration: const Duration(milliseconds: 500),
-                content: Text(state.message),
-                backgroundColor: Colors.red,
-              ),
-            );
+            if (state.message.contains(AppStrings.insufficientBalance) ||
+                state.message.contains('insufficient_balance')) {
+              VaultBalanceHelper.showInsufficientBalanceDialog(context);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  duration: const Duration(milliseconds: 500),
+                  content: Text(state.message),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
           }
         },
         builder: (context, state) {

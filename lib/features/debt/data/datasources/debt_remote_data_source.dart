@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_types_as_parameter_names, unused_element
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 
 import '../../../../core/error/firebase_error_handler.dart';
 import '../../../../core/usecases/pagination_params.dart';
@@ -9,6 +10,7 @@ import '../../domain/entities/payment_entity.dart';
 import '../models/debt_model.dart';
 import '../models/payment_model.dart';
 import '../../domain/entities/monthly_collected_amount.dart';
+import 'package:tahsel/features/cashbox/domain/entities/vault_transaction_entity.dart';
 
 abstract class DebtRemoteDataSource {
   Future<String> addDebt(DebtModel debt);
@@ -89,12 +91,172 @@ abstract class DebtRemoteDataSource {
 
   Future<Map<String, dynamic>> getDebtSummary(String uid);
   Future<List<MonthlyCollectedAmount>> getMonthlyCollectedAmounts(String uid);
+  Future<void> settleCustomerCredit({
+    required String uid,
+    required String debtId,
+    required double creditAmount,
+    String? note,
+  });
 }
 
 class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
   final FirebaseFirestore firestore;
 
   DebtRemoteDataSourceImpl({required this.firestore});
+
+  @override
+  Future<void> settleCustomerCredit({
+    required String uid,
+    required String debtId,
+    required double creditAmount,
+    String? note,
+  }) async {
+    try {
+      final userRef = firestore.collection('users').doc(uid);
+      final debtRef = userRef.collection('debts').doc(debtId);
+
+      final debtSnap = await debtRef.get();
+      if (!debtSnap.exists) return;
+
+      final debtData = debtSnap.data() as Map<String, dynamic>;
+      final double totalAmount =
+          (debtData['totalAmount'] as num? ?? 0.0).toDouble();
+      final String customerName = debtData['customerName'] as String? ?? '';
+      final String operationId = debtData['operationId'] as String? ?? '';
+
+      final double newPaid = totalAmount;
+      final double newRemaining = 0.0;
+      final bool isPaid = true;
+
+      // Balance check before starting settlement
+      if (AppStrings.isVaultEnabled() && creditAmount > 0) {
+        final vaultSummaryRef = userRef.collection('vault').doc('summary');
+        final vaultSnap = await vaultSummaryRef.get();
+        final double currentVaultBalance =
+            (vaultSnap.exists && vaultSnap.data() != null)
+                ? ((vaultSnap.data()!['currentBalance'] as num?)?.toDouble() ??
+                    0.0)
+                : 0.0;
+        if (currentVaultBalance < creditAmount) {
+          throw Exception(AppStrings.insufficientBalance);
+        }
+      }
+
+      final batch = firestore.batch();
+
+      batch.update(debtRef, {
+        'paidAmount': newPaid,
+        'remainingAmount': newRemaining,
+        'isPaid': isPaid,
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      });
+
+      final paymentRef = debtRef.collection('payments').doc();
+      batch.set(paymentRef, {
+        'uid': uid,
+        'debtId': debtId,
+        'amountPaid': -creditAmount,
+        'remainingAmount': newRemaining,
+        'createdAt': FieldValue.serverTimestamp(),
+        'type': 'settlement',
+        'relatedTo': customerName,
+        'activityName': note ?? 'إرجاع الرصيد الدائن للعميل',
+      });
+
+      if (operationId.isNotEmpty) {
+        final opRef = userRef.collection('operations').doc(operationId);
+        batch.set(
+          opRef,
+          {
+            'paidAmount': newPaid,
+            'remainingDebt': newRemaining,
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      }
+
+      // If debt is linked to an invoice (e.g. debt_inv_...)
+      if (debtId.startsWith('debt_inv_')) {
+        final invoiceId = debtId.replaceFirst('debt_inv_', '');
+        if (invoiceId.isNotEmpty) {
+          final invoiceRef = userRef.collection('invoices').doc(invoiceId);
+          batch.set(
+            invoiceRef,
+            {
+              'syncedTotalPaid': newPaid,
+              'status': 'paid',
+              'isRefundedToCustomer': true,
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          );
+        }
+      }
+
+      // Vault Deduction (outFlow)
+      if (AppStrings.isVaultEnabled()) {
+        final vaultTxId = 'vault_tx_cust_${paymentRef.id}';
+        final vaultTxRef = userRef.collection('vault_transactions').doc(vaultTxId);
+        final vaultSummaryRef = userRef.collection('vault').doc('summary');
+
+        batch.set(vaultTxRef, {
+          'id': vaultTxId,
+          'uid': uid,
+          'amount': creditAmount,
+          'direction': 'out',
+          'source': VaultTransactionSource.customerDebt.name,
+          'type': 'customer_credit_settlement',
+          'description': 'إرجاع الرصيد الدائن للعميل: $customerName',
+          'relatedEntityId': paymentRef.id,
+          'relatedOperationId': debtId,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        batch.set(
+          vaultSummaryRef,
+          {
+            'currentBalance': FieldValue.increment(-creditAmount),
+            'totalOut': FieldValue.increment(creditAmount),
+            'transactionCount': FieldValue.increment(1),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      }
+
+      // Summary collections (monthly and all-time)
+      final allTimeRef = userRef
+          .collection('summaries')
+          .doc(SummaryHelper.getAllTimeKey());
+      batch.set(
+        allTimeRef,
+        {
+          'totalCollected': FieldValue.increment(-creditAmount),
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+
+      final now = DateTime.now();
+      final monthlyKey = SummaryHelper.getMonthlyKey(now);
+      final monthlyRef = userRef.collection('summaries').doc(monthlyKey);
+      batch.set(
+        monthlyRef,
+        {
+          'totalCollected': FieldValue.increment(-creditAmount),
+          'isHealed': false,
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+
+      await batch.commit();
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      rethrow;
+    }
+  }
 
   @override
   Future<DebtModel?> getDebtById(
@@ -337,6 +499,37 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           'relatedTo': debt.customerName,
           'activityName': debt.productOrSessionDetails,
         });
+
+        if (AppStrings.isVaultEnabled() && debt.paidAmount > 0) {
+          final vaultTxRef = userRef.collection('vault_transactions').doc('vault_tx_cust_${debt.operationId}_payment');
+          final vaultSummaryRef = userRef.collection('vault').doc('summary');
+
+          batch.set(vaultTxRef, {
+            'id': 'vault_tx_cust_${debt.operationId}_payment',
+            'uid': debt.uid,
+            'amount': debt.paidAmount,
+            'direction': 'in',
+            'source': VaultTransactionSource.customerDebt.name,
+            'type': debt.remainingAmount <= 0 ? 'full_settlement' : 'partial_payment',
+            'description': 'تحصيل دفعة من العميل: ${debt.customerName ?? ''}',
+            'relatedEntityId': '${debt.operationId}_payment',
+            'relatedOperationId': debt.operationId,
+            'createdAt': debt.timestamp != null
+                ? Timestamp.fromDate(debt.timestamp!.add(const Duration(milliseconds: 1)))
+                : FieldValue.serverTimestamp(),
+          });
+
+          batch.set(
+            vaultSummaryRef,
+            {
+              'currentBalance': FieldValue.increment(debt.paidAmount),
+              'totalIn': FieldValue.increment(debt.paidAmount),
+              'transactionCount': FieldValue.increment(1),
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          );
+        }
       }
 
       // 5. Update Summaries
@@ -511,6 +704,38 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           'relatedTo': debtData['customerName'],
           'activityName': debtData['productOrSessionDetails'],
         });
+
+        // Record Vault Movement (Atomic Inflow)
+        if (AppStrings.isVaultEnabled() && payment.amountPaid > 0) {
+          final vaultTxRef = userRef.collection('vault_transactions').doc('vault_tx_cust_${paymentRef.id}');
+          final vaultSummaryRef = userRef.collection('vault').doc('summary');
+
+          transaction.set(vaultTxRef, {
+            'id': 'vault_tx_cust_${paymentRef.id}',
+            'uid': uid,
+            'amount': payment.amountPaid,
+            'direction': 'in',
+            'source': VaultTransactionSource.customerDebt.name,
+            'type': isPaid ? 'full_settlement' : 'partial_payment',
+            'description': 'تحصيل دفعة من العميل: ${debtData['customerName'] ?? ''}',
+            'relatedEntityId': paymentRef.id,
+            'relatedOperationId': debtRef.id,
+            'createdAt': payment.createdAt != null
+                ? Timestamp.fromDate(payment.createdAt!)
+                : FieldValue.serverTimestamp(),
+          });
+
+          transaction.set(
+            vaultSummaryRef,
+            {
+              'currentBalance': FieldValue.increment(payment.amountPaid),
+              'totalIn': FieldValue.increment(payment.amountPaid),
+              'transactionCount': FieldValue.increment(1),
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          );
+        }
 
         // ── Invoice Sync (inline, atomic) ──────────────────────────────────
         _updateLinkedInvoice(
@@ -697,6 +922,41 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             'activityName': debtData['productOrSessionDetails'],
           });
 
+          // Record Vault Movement (Atomic Inflow)
+          if (AppStrings.isVaultEnabled() && paymentForThisItem > 0) {
+            final userRef = firestore.collection('users').doc(uid);
+            final vaultTxRef = userRef
+                .collection('vault_transactions')
+                .doc('vault_tx_cust_${paymentRef.id}');
+            final vaultSummaryRef = userRef.collection('vault').doc('summary');
+
+            transaction.set(vaultTxRef, {
+              'id': 'vault_tx_cust_${paymentRef.id}',
+              'uid': uid,
+              'amount': paymentForThisItem,
+              'direction': 'in',
+              'source': VaultTransactionSource.customerDebt.name,
+              'type': isPaid ? 'full_settlement' : 'partial_payment',
+              'description':
+                  'تحصيل دفعة من العميل: ${debtData['customerName'] ?? ''}',
+              'relatedEntityId': paymentRef.id,
+              'relatedOperationId': debtRef.id,
+              'createdAt': paymentDate != null
+                  ? Timestamp.fromDate(paymentDate)
+                  : FieldValue.serverTimestamp(),
+            });
+
+            transaction.set(
+              vaultSummaryRef,
+              {
+                'currentBalance': FieldValue.increment(paymentForThisItem),
+                'totalIn': FieldValue.increment(paymentForThisItem),
+                'lastUpdatedAt': FieldValue.serverTimestamp(),
+              },
+              SetOptions(merge: true),
+            );
+          }
+
           // ── Invoice Sync (inline, atomic) ──────────────────────────────
           _updateLinkedInvoice(
             transaction,
@@ -860,6 +1120,39 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             'relatedTo': debtData['customerName'],
             'activityName': debtData['productOrSessionDetails'],
           });
+
+          // Record Vault Movement (Atomic Inflow)
+          if (AppStrings.isVaultEnabled() && amountToPay > 0) {
+            final userRef = firestore.collection('users').doc(uid);
+            final vaultTxRef = userRef
+                .collection('vault_transactions')
+                .doc('vault_tx_cust_${paymentRef.id}');
+            final vaultSummaryRef = userRef.collection('vault').doc('summary');
+
+            transaction.set(vaultTxRef, {
+              'id': 'vault_tx_cust_${paymentRef.id}',
+              'uid': uid,
+              'amount': amountToPay,
+              'direction': 'in',
+              'source': VaultTransactionSource.customerDebt.name,
+              'type': 'full_settlement',
+              'description':
+                  'تحصيل كامل ديون العميل: ${debtData['customerName'] ?? ''}',
+              'relatedEntityId': paymentRef.id,
+              'relatedOperationId': debtId,
+              'createdAt': FieldValue.serverTimestamp(),
+            });
+
+            transaction.set(
+              vaultSummaryRef,
+              {
+                'currentBalance': FieldValue.increment(amountToPay),
+                'totalIn': FieldValue.increment(amountToPay),
+                'lastUpdatedAt': FieldValue.serverTimestamp(),
+              },
+              SetOptions(merge: true),
+            );
+          }
 
           // ── Invoice Sync (inline, atomic) ──────────────────────────────
           _updateLinkedInvoice(
@@ -1458,6 +1751,38 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           'lastUpdatedAt': FieldValue.serverTimestamp(),
         });
 
+        // Record Vault adjustment
+        if (AppStrings.isVaultEnabled() && relatedTo == 'payment') {
+          final userRef = firestore.collection('users').doc(uid);
+          final vaultTxId = 'vault_tx_cust_${paymentId}_adj_${DateTime.now().millisecondsSinceEpoch}';
+          final vaultTxRef = userRef.collection('vault_transactions').doc(vaultTxId);
+          final vaultSummaryRef = userRef.collection('vault').doc('summary');
+
+          transaction.set(vaultTxRef, {
+            'id': vaultTxId,
+            'uid': uid,
+            'amount': delta.abs(),
+            'direction': delta > 0 ? 'in' : 'out',
+            'source': VaultTransactionSource.customerDebt.name,
+            'type': 'adjustment',
+            'description': 'تعديل دفعة عميل: ${customerName ?? ''}',
+            'relatedEntityId': paymentId,
+            'relatedOperationId': debtId,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+
+          transaction.set(
+            vaultSummaryRef,
+            {
+              'currentBalance': FieldValue.increment(delta),
+              'totalIn': FieldValue.increment(delta > 0 ? delta : 0.0),
+              'totalOut': FieldValue.increment(delta < 0 ? -delta : 0.0),
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          );
+        }
+
         // Compute new values
         final currentTotal = (debtData['totalAmount'] as num).toDouble();
         final currentPaid = (debtData['paidAmount'] as num).toDouble();
@@ -1679,13 +2004,44 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         // Direct Mutation: Delete the same item
         transaction.delete(paymentRef);
 
+        final amountToDelete = targetPayment.amountPaid;
+
+        if (AppStrings.isVaultEnabled() && relatedTo == 'payment' && amountToDelete > 0) {
+          final userRef = firestore.collection('users').doc(uid);
+          final vaultTxId = 'vault_tx_cust_${paymentId}_rev_${DateTime.now().millisecondsSinceEpoch}';
+          final vaultTxRef = userRef.collection('vault_transactions').doc(vaultTxId);
+          final vaultSummaryRef = userRef.collection('vault').doc('summary');
+
+          transaction.set(vaultTxRef, {
+            'id': vaultTxId,
+            'uid': uid,
+            'amount': amountToDelete,
+            'direction': 'out',
+            'source': VaultTransactionSource.customerDebt.name,
+            'type': 'reversal',
+            'description': 'إلغاء دفعة عميل: ${customerName ?? ''}',
+            'relatedEntityId': paymentId,
+            'relatedOperationId': debtId,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+
+          transaction.set(
+            vaultSummaryRef,
+            {
+              'currentBalance': FieldValue.increment(-amountToDelete),
+              'totalIn': FieldValue.increment(-amountToDelete),
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          );
+        }
+
         // Calculate new values
         final currentTotal = (debtData['totalAmount'] as num).toDouble();
         final currentPaid = (debtData['paidAmount'] as num).toDouble();
         final currentRemaining = (debtData['remainingAmount'] as num)
             .toDouble();
         final originalIsPaid = (debtData['isPaid'] as bool?) ?? false;
-        final amountToDelete = targetPayment.amountPaid;
 
         double newTotalAmount = currentTotal;
         double newPaidAmount = currentPaid;

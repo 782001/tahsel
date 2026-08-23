@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:tahsel/core/error/failures.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/date_formatter.dart';
 import 'package:tahsel/features/expenses/domain/entities/expense_paginated_list.dart';
 import 'package:tahsel/features/expenses/domain/entities/monthly_paginated_list.dart';
@@ -84,7 +85,17 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
         // 2. CHECK CONNECTION: If online, trigger IMMEDIATE prioritized sync
         final hasConnection = await connectionChecker.hasConnection;
         if (hasConnection) {
-          await offlineSyncRepository.syncSingleRecord(offlineRecord);
+          final syncRes = await offlineSyncRepository.syncSingleRecord(offlineRecord);
+          return syncRes.fold(
+            (syncFailure) {
+              if (syncFailure.message.contains(AppStrings.insufficientBalance) ||
+                  syncFailure.message.contains('insufficient_balance')) {
+                return Left(syncFailure);
+              }
+              return Right(localId);
+            },
+            (_) => Right(localId),
+          );
         }
 
         return Right(localId);

@@ -445,8 +445,14 @@ class _CustomerGlobalPaymentsScreenState
 
   Widget _buildTransactionCard(PaymentEntity transaction) {
     final bool isDesktop = ResponsiveLayout.isDesktop(context);
-    final bool isAddition = transaction.type == PaymentType.debtAdded;
-    final Color typeColor = isAddition ? AppColors.error : AppColors.success;
+    final bool isSettlement =
+        transaction.type == PaymentType.settlement ||
+        transaction.amountPaid < 0;
+    final bool isAddition =
+        transaction.type == PaymentType.debtAdded && !isSettlement;
+    final Color typeColor = isSettlement
+        ? AppColors.creditAmberEnd
+        : (isAddition ? AppColors.error : AppColors.success);
     final String dateStr = transaction.createdAt != null
         ? DateFormat(
             'dd MMM yyyy, hh:mm a',
@@ -458,10 +464,15 @@ class _CustomerGlobalPaymentsScreenState
       margin: EdgeInsets.only(bottom: isDesktop ? 0 : 16.h),
       padding: EdgeInsets.all(isDesktop ? 16 : 16.r),
       decoration: BoxDecoration(
-        color: AppColors.debtCardSurface,
+        color: isSettlement
+            ? AppColors.creditAmberEnd.withValues(alpha: 0.05)
+            : AppColors.debtCardSurface,
         borderRadius: BorderRadius.circular(isDesktop ? 16 : 16.r),
         border: Border.all(
-          color: AppColors.disabledColor.withValues(alpha: 0.05),
+          color: isSettlement
+              ? AppColors.creditAmberEnd.withValues(alpha: 0.3)
+              : AppColors.disabledColor.withValues(alpha: 0.05),
+          width: isSettlement ? 1.2 : 1.0,
         ),
       ),
       child: Column(
@@ -473,12 +484,17 @@ class _CustomerGlobalPaymentsScreenState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    isAddition
-                        ? AppStrings.debtAdded.tr()
-                        : AppStrings.paymentReceived.tr(),
+                    transaction.activityName ??
+                        (isSettlement
+                            ? AppStrings.settlement.tr()
+                            : (isAddition
+                                  ? AppStrings.debtAdded.tr()
+                                  : AppStrings.paymentReceived.tr())),
                     textAlign: TextAlign.start,
                     style: TextStyles.customStyle(
-                      color: AppColors.textColor,
+                      color: isSettlement
+                          ? AppColors.creditAmberEnd
+                          : AppColors.textColor,
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
@@ -491,7 +507,9 @@ class _CustomerGlobalPaymentsScreenState
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    "${isAddition ? '+' : '-'}${transaction.amountPaid.toSmartAmount()}",
+                    isSettlement
+                        ? "- ${transaction.amountPaid.abs().toSmartAmount()}"
+                        : "${isAddition ? '+' : '-'}${transaction.amountPaid.abs().toSmartAmount()}",
                     style: TextStyles.customStyle(
                       color: typeColor,
                       fontSize: 18,
@@ -533,7 +551,13 @@ class _CustomerGlobalPaymentsScreenState
                   ),
                 ],
               ),
-              if (!isAddition)
+              if (isSettlement)
+                Icon(
+                  Icons.output_rounded,
+                  size: isDesktop ? 16 : 16.r,
+                  color: AppColors.creditAmberEnd,
+                )
+              else if (!isAddition)
                 Icon(
                   Icons.verified_outlined,
                   size: isDesktop ? 16 : 16.r,
