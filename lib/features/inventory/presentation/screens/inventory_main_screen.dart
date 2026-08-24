@@ -1,4 +1,3 @@
-import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -121,12 +120,9 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Tahsel Primary Theme Hero Card
-                    FadeInDown(
-                      duration: const Duration(milliseconds: 350),
-                      child: _buildTahselHeroCard(
-                        context,
-                        isDesktop: isDesktop,
-                      ),
+                    _buildTahselHeroCard(
+                      context,
+                      isDesktop: isDesktop,
                     ),
 
                     SizedBox(height: isDesktop ? 24 : 20.h),
@@ -147,63 +143,60 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                           totalValue = state.totalInventoryValue;
                         }
 
-                        return FadeInUp(
-                          duration: const Duration(milliseconds: 400),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(18.r),
-                                  onTap: () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      AppRoutes.inventoryProducts,
-                                    );
-                                  },
-                                  child: _buildTahselKpiCard(
-                                    title: AppStrings.totalProductsCount.tr(),
-                                    value: '$totalProducts',
-                                    icon: Icons.inventory_2_rounded,
-                                    color: AppColors.primaryColor,
-                                    isDesktop: isDesktop,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: isDesktop ? 14 : 10.w),
-                              Expanded(
-                                child: InkWell(
-                                  onTap: () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      AppRoutes.inventoryProducts,
-                                      arguments: true,
-                                    );
-                                  },
-                                  borderRadius: BorderRadius.circular(18.r),
-                                  child: _buildTahselKpiCard(
-                                    title: AppStrings.lowStockCount.tr(),
-                                    value: '$lowStockCount',
-                                    icon: Icons.warning_amber_rounded,
-                                    color: lowStockCount > 0
-                                        ? AppColors.warning
-                                        : AppColors.success,
-                                    isDesktop: isDesktop,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: isDesktop ? 14 : 10.w),
-                              Expanded(
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(18.r),
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    AppRoutes.inventoryProducts,
+                                  );
+                                },
                                 child: _buildTahselKpiCard(
-                                  title: AppStrings.totalInventoryValue.tr(),
-                                  value: totalValue.toStringAsFixed(0),
-                                  subtitle: AppStrings.currencyEgp.tr(),
-                                  icon: Icons.account_balance_wallet_rounded,
-                                  color: AppColors.success,
+                                  title: AppStrings.totalProductsCount.tr(),
+                                  value: '$totalProducts',
+                                  icon: Icons.inventory_2_rounded,
+                                  color: AppColors.primaryColor,
                                   isDesktop: isDesktop,
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                            SizedBox(width: isDesktop ? 14 : 10.w),
+                            Expanded(
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    AppRoutes.inventoryProducts,
+                                    arguments: true,
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(18.r),
+                                child: _buildTahselKpiCard(
+                                  title: AppStrings.lowStockCount.tr(),
+                                  value: '$lowStockCount',
+                                  icon: Icons.warning_amber_rounded,
+                                  color: lowStockCount > 0
+                                      ? AppColors.warning
+                                      : AppColors.success,
+                                  isDesktop: isDesktop,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: isDesktop ? 14 : 10.w),
+                            Expanded(
+                              child: _buildTahselKpiCard(
+                                title: AppStrings.totalInventoryValue.tr(),
+                                value: totalValue.toStringAsFixed(0),
+                                subtitle: AppStrings.currencyEgp.tr(),
+                                icon: Icons.account_balance_wallet_rounded,
+                                color: AppColors.success,
+                                isDesktop: isDesktop,
+                              ),
+                            ),
+                          ],
                         );
                       },
                     ),
@@ -221,9 +214,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                     SizedBox(height: isDesktop ? 16 : 16.h),
 
                     // Sub-modules Navigation Grid/List with Tahsel AppColors
-                    FadeInUp(
-                      duration: const Duration(milliseconds: 450),
-                      child: GridView.count(
+                    GridView.count(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         crossAxisCount: isDesktop ? 3 : 2,
@@ -288,9 +279,8 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
               ),
             ),
           ),

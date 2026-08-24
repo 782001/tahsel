@@ -54,7 +54,7 @@ class SyncStatusListener extends StatelessWidget {
             SnackBar(
               content: Text(AppStrings.syncSuccess.tr()),
               backgroundColor: AppColors.success,
-              duration: const Duration(seconds: 2),
+              duration: const Duration(seconds: 1),
             ),
           );
         } else if (state is OfflineSyncFailure) {
@@ -64,7 +64,7 @@ class SyncStatusListener extends StatelessWidget {
             SnackBar(
               content: Text(AppStrings.syncFailed.tr()),
               backgroundColor: AppColors.error,
-              duration: const Duration(seconds: 3),
+              duration: const Duration(seconds: 2),
             ),
           );
         }

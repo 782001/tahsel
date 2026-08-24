@@ -56,6 +56,7 @@ class InventoryProductsCubit extends Cubit<InventoryProductsState> {
   final SaveInventoryProductUseCase saveProductUseCase;
   final DeleteInventoryProductUseCase deleteProductUseCase;
 
+  List<InventoryProductEntity> _allProducts = [];
   int _currentLimit = 15;
   bool _hasMore = true;
   bool _isFetchingMore = false;
@@ -81,18 +82,20 @@ class InventoryProductsCubit extends Cubit<InventoryProductsState> {
       supplierId: supplierId,
       limit: _currentLimit,
     );
-    result.fold((failure) => emit(InventoryProductsError(failure.message)), (
-      products,
-    ) {
-      _hasMore = products.length >= _currentLimit;
-      emit(
-        InventoryProductsLoaded(
-          products,
-          hasMore: _hasMore,
-          isPaginationLoading: false,
-        ),
-      );
-    });
+    result.fold(
+      (failure) => emit(InventoryProductsError(failure.message)),
+      (products) {
+        _allProducts = products;
+        _hasMore = _allProducts.length > _currentLimit;
+        emit(
+          InventoryProductsLoaded(
+            _allProducts.take(_currentLimit).toList(),
+            hasMore: _hasMore,
+            isPaginationLoading: false,
+          ),
+        );
+      },
+    );
   }
 
   Future<void> fetchMoreProducts({
@@ -108,29 +111,15 @@ class InventoryProductsCubit extends Cubit<InventoryProductsState> {
     emit(currentState.copyWith(isPaginationLoading: true));
 
     _currentLimit += 15;
-    final result = await getProductsUseCase(
-      query: query,
-      categoryId: categoryId,
-      supplierId: supplierId,
-      limit: _currentLimit,
-    );
+    _hasMore = _allProducts.length > _currentLimit;
+    _isFetchingMore = false;
 
-    result.fold(
-      (failure) {
-        _isFetchingMore = false;
-        emit(currentState.copyWith(isPaginationLoading: false));
-      },
-      (products) {
-        _isFetchingMore = false;
-        _hasMore = products.length >= _currentLimit;
-        emit(
-          InventoryProductsLoaded(
-            products,
-            hasMore: _hasMore,
-            isPaginationLoading: false,
-          ),
-        );
-      },
+    emit(
+      InventoryProductsLoaded(
+        _allProducts.take(_currentLimit).toList(),
+        hasMore: _hasMore,
+        isPaginationLoading: false,
+      ),
     );
   }
 

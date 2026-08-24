@@ -1,4 +1,3 @@
-import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
@@ -47,9 +46,7 @@ class ProductCardItem extends StatelessWidget {
         ? AppStrings.lowStockAlert.tr()
         : AppStrings.stableStock.tr();
 
-    return FadeInUp(
-      duration: Duration(milliseconds: 200 + (index * 30).clamp(0, 300)),
-      child: Material(
+    return Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
@@ -407,7 +404,6 @@ class ProductCardItem extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 }

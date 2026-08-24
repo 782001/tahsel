@@ -1,6 +1,8 @@
 import '../../domain/entities/inventory_category_entity.dart';
 
 class InventoryCategoryModel extends InventoryCategoryEntity {
+  final bool isDeleted;
+
   const InventoryCategoryModel({
     required super.id,
     required super.name,
@@ -8,6 +10,7 @@ class InventoryCategoryModel extends InventoryCategoryEntity {
     required super.createdAt,
     required super.updatedAt,
     super.isSynced,
+    this.isDeleted = false,
   });
 
   factory InventoryCategoryModel.fromEntity(InventoryCategoryEntity entity) {
@@ -33,6 +36,7 @@ class InventoryCategoryModel extends InventoryCategoryEntity {
           ? DateTime.fromMillisecondsSinceEpoch(map['updatedAt'] as int)
           : DateTime.now(),
       isSynced: map['isSynced'] as bool? ?? false,
+      isDeleted: map['isDeleted'] as bool? ?? false,
     );
   }
 

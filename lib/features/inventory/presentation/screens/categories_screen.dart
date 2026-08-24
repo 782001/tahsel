@@ -201,81 +201,91 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                           );
                         }
 
-                        return ListView.separated(
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: categories.length,
-                          separatorBuilder: (_, __) =>
-                              SizedBox(height: isDesktop ? 12 : 12.h),
-                          itemBuilder: (context, index) {
-                            final cat = categories[index];
-                            return Container(
-                              padding: EdgeInsets.all(isDesktop ? 16 : 16.w),
-                              decoration: BoxDecoration(
-                                color: AppColors.surface,
-                                borderRadius: BorderRadius.circular(
-                                  isDesktop ? 14 : 14.r,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  CircleAvatar(
-                                    backgroundColor: AppColors
-                                        .inventoryCategoryBrown
-                                        .withValues(alpha: 0.12),
-                                    radius: isDesktop ? 22 : 22.r,
-                                    child: Icon(
-                                      Icons.category_rounded,
-                                      color: AppColors.inventoryCategoryBrown,
-                                    ),
+                        return RefreshIndicator(
+                          color: AppColors.primaryColor,
+                          onRefresh: () async {
+                            await context
+                                .read<InventoryCategoriesCubit>()
+                                .fetchCategories();
+                          },
+                          child: ListView.separated(
+                            physics: const AlwaysScrollableScrollPhysics(
+                              parent: BouncingScrollPhysics(),
+                            ),
+                            itemCount: categories.length,
+                            separatorBuilder: (_, __) =>
+                                SizedBox(height: isDesktop ? 12 : 12.h),
+                            itemBuilder: (context, index) {
+                              final cat = categories[index];
+                              return Container(
+                                padding: EdgeInsets.all(isDesktop ? 16 : 16.w),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface,
+                                  borderRadius: BorderRadius.circular(
+                                    isDesktop ? 14 : 14.r,
                                   ),
-                                  SizedBox(width: isDesktop ? 16 : 16.w),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          cat.name,
-                                          style: TextStyles.customStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.blackReal,
-                                          ),
-                                        ),
-                                        if (cat.description != null &&
-                                            cat.description!.isNotEmpty) ...[
-                                          SizedBox(height: isDesktop ? 4 : 4.h),
+                                ),
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundColor: AppColors
+                                          .inventoryCategoryBrown
+                                          .withValues(alpha: 0.12),
+                                      radius: isDesktop ? 22 : 22.r,
+                                      child: Icon(
+                                        Icons.category_rounded,
+                                        color: AppColors.inventoryCategoryBrown,
+                                      ),
+                                    ),
+                                    SizedBox(width: isDesktop ? 16 : 16.w),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
                                           Text(
-                                            cat.description!,
+                                            cat.name,
                                             style: TextStyles.customStyle(
-                                              fontSize: 13,
-                                              color: AppColors.sandText,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.blackReal,
                                             ),
                                           ),
+                                          if (cat.description != null &&
+                                              cat.description!.isNotEmpty) ...[
+                                            SizedBox(height: isDesktop ? 4 : 4.h),
+                                            Text(
+                                              cat.description!,
+                                              style: TextStyles.customStyle(
+                                                fontSize: 13,
+                                                color: AppColors.sandText,
+                                              ),
+                                            ),
+                                          ],
                                         ],
-                                      ],
+                                      ),
                                     ),
-                                  ),
-                                  IconButton(
-                                    icon: Icon(
-                                      Icons.edit_rounded,
-                                      color: AppColors.primaryColor,
+                                    IconButton(
+                                      icon: Icon(
+                                        Icons.edit_rounded,
+                                        color: AppColors.primaryColor,
+                                      ),
+                                      onPressed: () =>
+                                          _openAddEditCategoryDialog(cat),
                                     ),
-                                    onPressed: () =>
-                                        _openAddEditCategoryDialog(cat),
-                                  ),
-                                  IconButton(
-                                    icon: Icon(
-                                      Icons.delete_outline,
-                                      color: AppColors.deleteRed,
+                                    IconButton(
+                                      icon: Icon(
+                                        Icons.delete_outline_rounded,
+                                        color: AppColors.deleteRed,
+                                      ),
+                                      onPressed: () =>
+                                          _confirmDeleteCategory(context, cat),
                                     ),
-                                    onPressed: () =>
-                                        _confirmDeleteCategory(context, cat),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
                         );
                       }
                       return const SizedBox.shrink();

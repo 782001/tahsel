@@ -36,17 +36,17 @@ class OfflineSyncCubit extends Cubit<OfflineSyncState> {
   void _initConnectivityListener() {
     connectivitySubscription = connectivityCubit.stream.listen((state) {
       if (state is ConnectivityConnected) {
-        syncPendingData();
+        syncPendingData(forceInventoryRefresh: true);
       }
     });
 
     // Check on init if we have pending data and are connected
     if (connectivityCubit.state is ConnectivityConnected) {
-      syncPendingData();
+      syncPendingData(forceInventoryRefresh: true);
     }
   }
 
-  Future<void> syncPendingData() async {
+  Future<void> syncPendingData({bool forceInventoryRefresh = false}) async {
     if (_isSyncing) return;
 
     // 1. First check if there is data.
@@ -86,7 +86,7 @@ class OfflineSyncCubit extends Cubit<OfflineSyncState> {
       } catch (_) {}
     }
 
-    if (!hasData && !hasInvoices && !hasInventory) return;
+    if (!hasData && !hasInvoices && !hasInventory && !forceInventoryRefresh) return;
 
     // 2. Second check if we are actually online. NO CONNECTION -> SILENT EXIT.
     // This prevents "Sync Failed" snackbar when just blipping the network or pulling drawer.
@@ -104,15 +104,15 @@ class OfflineSyncCubit extends Cubit<OfflineSyncState> {
       } catch (_) {}
     }
 
-    // Sync inventory data (purchases, stock movements, products, vault, expenses, my debts)
-    if (hasInventory && sl.isRegistered<InventoryRepository>()) {
+    // Sync inventory data & fetch remote delta updates for all screens
+    if (sl.isRegistered<InventoryRepository>()) {
       try {
         await sl<InventoryRepository>().syncInventoryData();
-        if (sl.isRegistered<InventoryPurchasesCubit>()) {
-          sl<InventoryPurchasesCubit>().fetchPurchases();
-        }
         if (sl.isRegistered<InventoryProductsCubit>()) {
           sl<InventoryProductsCubit>().fetchProducts();
+        }
+        if (sl.isRegistered<InventoryPurchasesCubit>()) {
+          sl<InventoryPurchasesCubit>().fetchPurchases();
         }
         if (sl.isRegistered<VaultCubit>() &&
             AppStrings.userToken.isNotEmpty &&

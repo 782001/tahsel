@@ -22,6 +22,14 @@ abstract class InventoryRemoteDataSource {
   Future<List<InventoryProductModel>> fetchAllProductsFromRemoteWithoutLimit(
     String uid,
   );
+  Future<List<InventoryProductModel>> fetchProductsDeltaFromRemote(
+    String uid,
+    int sinceTimestamp,
+  );
+  Future<void> updateProductFieldsInRemote(
+    String uid,
+    InventoryProductModel product,
+  );
   Future<void> updateProductQuantityInRemote(
     String uid,
     String productId,
@@ -114,6 +122,30 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
       map['id'] = doc.id;
       return InventoryProductModel.fromMap(map);
     }).toList();
+  }
+
+  @override
+  Future<List<InventoryProductModel>> fetchProductsDeltaFromRemote(
+    String uid,
+    int sinceTimestamp,
+  ) async {
+    final snapshot = await _getCol(uid, 'inventory_products')
+        .where('updatedAt', isGreaterThan: sinceTimestamp)
+        .get();
+    return snapshot.docs.map((doc) {
+      final map = doc.data() as Map<String, dynamic>;
+      map['id'] = doc.id;
+      return InventoryProductModel.fromMap(map);
+    }).toList();
+  }
+
+  @override
+  Future<void> updateProductFieldsInRemote(
+    String uid,
+    InventoryProductModel product,
+  ) async {
+    final docRef = _getCol(uid, 'inventory_products').doc(product.id);
+    await docRef.set(product.toRemoteUpdateMap(), SetOptions(merge: true));
   }
 
   @override
@@ -244,21 +276,33 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
 
   @override
   Future<void> deleteCategoryFromRemote(String uid, String categoryId) async {
-    await _getCol(uid, 'inventory_categories').doc(categoryId).delete();
+    await _getCol(uid, 'inventory_categories').doc(categoryId).set({
+      'isDeleted': true,
+      'updatedAt': DateTime.now().millisecondsSinceEpoch,
+    }, SetOptions(merge: true));
   }
 
   @override
   Future<void> deleteSupplierFromRemote(String uid, String supplierId) async {
-    await _getCol(uid, 'inventory_suppliers').doc(supplierId).delete();
+    await _getCol(uid, 'inventory_suppliers').doc(supplierId).set({
+      'isDeleted': true,
+      'updatedAt': DateTime.now().millisecondsSinceEpoch,
+    }, SetOptions(merge: true));
   }
 
   @override
   Future<void> deleteProductFromRemote(String uid, String productId) async {
-    await _getCol(uid, 'inventory_products').doc(productId).delete();
+    await _getCol(uid, 'inventory_products').doc(productId).set({
+      'isDeleted': true,
+      'updatedAt': DateTime.now().millisecondsSinceEpoch,
+    }, SetOptions(merge: true));
   }
 
   @override
   Future<void> deletePurchaseFromRemote(String uid, String purchaseId) async {
-    await _getCol(uid, 'inventory_purchases').doc(purchaseId).delete();
+    await _getCol(uid, 'inventory_purchases').doc(purchaseId).set({
+      'isDeleted': true,
+      'updatedAt': DateTime.now().millisecondsSinceEpoch,
+    }, SetOptions(merge: true));
   }
 }

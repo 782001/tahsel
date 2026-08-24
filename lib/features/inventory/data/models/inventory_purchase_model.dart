@@ -41,6 +41,8 @@ class InventoryPurchaseItemModel extends InventoryPurchaseItemEntity {
 }
 
 class InventoryPurchaseModel extends InventoryPurchaseEntity {
+  final bool isDeleted;
+
   const InventoryPurchaseModel({
     required super.id,
     required super.supplierId,
@@ -52,6 +54,7 @@ class InventoryPurchaseModel extends InventoryPurchaseEntity {
     super.isSynced,
     super.paymentMethod = 'cash',
     super.paidAmount = 0.0,
+    this.isDeleted = false,
   });
 
   factory InventoryPurchaseModel.fromEntity(InventoryPurchaseEntity entity) {
@@ -97,6 +100,7 @@ class InventoryPurchaseModel extends InventoryPurchaseEntity {
       isSynced: map['isSynced'] as bool? ?? false,
       paymentMethod: map['paymentMethod'] as String? ?? 'cash',
       paidAmount: (map['paidAmount'] as num?)?.toDouble() ?? 0.0,
+      isDeleted: map['isDeleted'] as bool? ?? false,
     );
   }
 

@@ -53,6 +53,7 @@ class InventoryPurchasesCubit extends Cubit<InventoryPurchasesState> {
   final UpdateInventoryPurchaseUseCase updatePurchaseUseCase;
   final DeleteInventoryPurchaseUseCase deletePurchaseUseCase;
 
+  List<InventoryPurchaseEntity> _allPurchases = [];
   int _currentLimit = 15;
   bool _hasMore = true;
   bool _isFetchingMore = false;
@@ -76,10 +77,11 @@ class InventoryPurchasesCubit extends Cubit<InventoryPurchasesState> {
     result.fold(
       (failure) => emit(InventoryPurchasesError(failure.message)),
       (purchases) {
-        _hasMore = purchases.length >= _currentLimit;
+        _allPurchases = purchases;
+        _hasMore = _allPurchases.length > _currentLimit;
         emit(
           InventoryPurchasesLoaded(
-            purchases,
+            _allPurchases.take(_currentLimit).toList(),
             hasMore: _hasMore,
             isPaginationLoading: false,
           ),
@@ -97,27 +99,15 @@ class InventoryPurchasesCubit extends Cubit<InventoryPurchasesState> {
     emit(currentState.copyWith(isPaginationLoading: true));
 
     _currentLimit += 15;
-    final result = await getPurchasesUseCase(
-      supplierId: supplierId,
-      limit: _currentLimit,
-    );
+    _hasMore = _allPurchases.length > _currentLimit;
+    _isFetchingMore = false;
 
-    result.fold(
-      (failure) {
-        _isFetchingMore = false;
-        emit(currentState.copyWith(isPaginationLoading: false));
-      },
-      (purchases) {
-        _isFetchingMore = false;
-        _hasMore = purchases.length >= _currentLimit;
-        emit(
-          InventoryPurchasesLoaded(
-            purchases,
-            hasMore: _hasMore,
-            isPaginationLoading: false,
-          ),
-        );
-      },
+    emit(
+      InventoryPurchasesLoaded(
+        _allPurchases.take(_currentLimit).toList(),
+        hasMore: _hasMore,
+        isPaginationLoading: false,
+      ),
     );
   }
 

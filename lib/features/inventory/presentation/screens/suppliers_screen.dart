@@ -200,126 +200,136 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
                           );
                         }
 
-                        return ListView.separated(
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: suppliers.length,
-                          separatorBuilder: (_, __) =>
-                              SizedBox(height: isDesktop ? 12 : 12.h),
-                          itemBuilder: (context, index) {
-                            final sup = suppliers[index];
-                            return Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => BlocProvider(
-                                        create: (_) =>
-                                            sl<InventorySuppliersCubit>(),
-                                        child: SupplierDetailsScreen(
-                                          supplier: sup,
+                        return RefreshIndicator(
+                          color: AppColors.primaryColor,
+                          onRefresh: () async {
+                            await context
+                                .read<InventorySuppliersCubit>()
+                                .fetchSuppliers();
+                          },
+                          child: ListView.separated(
+                            physics: const AlwaysScrollableScrollPhysics(
+                              parent: BouncingScrollPhysics(),
+                            ),
+                            itemCount: suppliers.length,
+                            separatorBuilder: (_, __) =>
+                                SizedBox(height: isDesktop ? 12 : 12.h),
+                            itemBuilder: (context, index) {
+                              final sup = suppliers[index];
+                              return Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => BlocProvider(
+                                          create: (_) =>
+                                              sl<InventorySuppliersCubit>(),
+                                          child: SupplierDetailsScreen(
+                                            supplier: sup,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  );
-                                },
-                                borderRadius: BorderRadius.circular(
-                                  isDesktop ? 14 : 14.r,
-                                ),
-                                child: Container(
-                                  padding: EdgeInsets.all(
-                                    isDesktop ? 16 : 16.w,
+                                    );
+                                  },
+                                  borderRadius: BorderRadius.circular(
+                                    isDesktop ? 14 : 14.r,
                                   ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.surface,
-                                    borderRadius: BorderRadius.circular(
-                                      isDesktop ? 14 : 14.r,
+                                  child: Container(
+                                    padding: EdgeInsets.all(
+                                      isDesktop ? 16 : 16.w,
                                     ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      CircleAvatar(
-                                        backgroundColor: AppColors
-                                            .inventorySupplierTeal
-                                            .withValues(alpha: 0.12),
-                                        radius: isDesktop ? 22 : 22.r,
-                                        child: Icon(
-                                          Icons.local_shipping_rounded,
-                                          color:
-                                              AppColors.inventorySupplierTeal,
-                                        ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.surface,
+                                      borderRadius: BorderRadius.circular(
+                                        isDesktop ? 14 : 14.r,
                                       ),
-                                      SizedBox(width: isDesktop ? 16 : 16.w),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              sup.name,
-                                              style: TextStyles.customStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppColors.blackReal,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        CircleAvatar(
+                                          backgroundColor: AppColors
+                                              .inventorySupplierTeal
+                                              .withValues(alpha: 0.12),
+                                          radius: isDesktop ? 22 : 22.r,
+                                          child: Icon(
+                                            Icons.local_shipping_rounded,
+                                            color:
+                                                AppColors.inventorySupplierTeal,
+                                          ),
+                                        ),
+                                        SizedBox(width: isDesktop ? 16 : 16.w),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                sup.name,
+                                                style: TextStyles.customStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: AppColors.blackReal,
+                                                ),
                                               ),
-                                            ),
-                                            SizedBox(
-                                              height: isDesktop ? 4 : 4.h,
-                                            ),
-                                            Row(
-                                              children: [
-                                                Icon(
-                                                  Icons.phone,
-                                                  size: 14,
-                                                  color: AppColors.sandText,
-                                                ),
-                                                SizedBox(
-                                                  width: isDesktop ? 4 : 4.w,
-                                                ),
-                                                Text(
-                                                  sup.phone.isNotEmpty
-                                                      ? sup.phone
-                                                      : AppStrings.noPhone.tr(),
-                                                  style: TextStyles.customStyle(
-                                                    fontSize: 13,
+                                              SizedBox(
+                                                height: isDesktop ? 4 : 4.h,
+                                              ),
+                                              Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.phone,
+                                                    size: 14,
                                                     color: AppColors.sandText,
                                                   ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
+                                                  SizedBox(
+                                                    width: isDesktop ? 4 : 4.w,
+                                                  ),
+                                                  Text(
+                                                    sup.phone.isNotEmpty
+                                                        ? sup.phone
+                                                        : AppStrings.noPhone.tr(),
+                                                    style: TextStyles.customStyle(
+                                                      fontSize: 13,
+                                                      color: AppColors.sandText,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                      IconButton(
-                                        icon: Icon(
-                                          Icons.edit_rounded,
-                                          color: AppColors.primaryColor,
+                                        IconButton(
+                                          icon: Icon(
+                                            Icons.edit_rounded,
+                                            color: AppColors.primaryColor,
+                                          ),
+                                          onPressed: () =>
+                                              _openAddEditSupplierDialog(sup),
                                         ),
-                                        onPressed: () =>
-                                            _openAddEditSupplierDialog(sup),
-                                      ),
-                                      IconButton(
-                                        icon: Icon(
-                                          Icons.delete_outline_rounded,
-                                          color: AppColors.deleteRed,
+                                        IconButton(
+                                          icon: Icon(
+                                            Icons.delete_outline_rounded,
+                                            color: AppColors.deleteRed,
+                                          ),
+                                          onPressed: () => _confirmDeleteSupplier(
+                                            context,
+                                            sup,
+                                          ),
                                         ),
-                                        onPressed: () => _confirmDeleteSupplier(
-                                          context,
-                                          sup,
+                                        Icon(
+                                          Icons.arrow_forward_ios_rounded,
+                                          size: 16,
+                                          color: AppColors.sandText,
                                         ),
-                                      ),
-                                      Icon(
-                                        Icons.arrow_forward_ios_rounded,
-                                        size: 16,
-                                        color: AppColors.sandText,
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                            );
-                          },
+                              );
+                            },
+                          ),
                         );
                       }
                       return const SizedBox.shrink();

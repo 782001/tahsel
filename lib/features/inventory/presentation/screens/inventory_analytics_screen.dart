@@ -1,4 +1,3 @@
-import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -247,55 +246,49 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
                           child: Column(
                             children: [
                               // Top Analytics Cards
-                              FadeInDown(
-                                duration: const Duration(milliseconds: 300),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: _buildMetricCard(
-                                        title: AppStrings
-                                            .expectedInventoryProfit
-                                            .tr(),
-                                        value:
-                                            '${totalExpectedProfit.toSmartAmount()} ${CurrencyService.instance.currentSymbol}',
-                                        icon: Icons.trending_up_rounded,
-                                        color: AppColors.success,
-                                        isDesktop: isDesktop,
-                                      ),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildMetricCard(
+                                      title: AppStrings
+                                          .expectedInventoryProfit
+                                          .tr(),
+                                      value:
+                                          '${totalExpectedProfit.toSmartAmount()} ${CurrencyService.instance.currentSymbol}',
+                                      icon: Icons.trending_up_rounded,
+                                      color: AppColors.success,
+                                      isDesktop: isDesktop,
                                     ),
-                                    SizedBox(width: isDesktop ? 12 : 10.w),
-                                    Expanded(
-                                      child: _buildMetricCard(
-                                        title: AppStrings.avgProfitMargin.tr(),
-                                        value:
-                                            '${avgProfitMarginPct.toStringAsFixed(1)}%',
-                                        icon: Icons.percent_rounded,
-                                        color: AppColors.actionButton,
-                                        isDesktop: isDesktop,
-                                      ),
+                                  ),
+                                  SizedBox(width: isDesktop ? 12 : 10.w),
+                                  Expanded(
+                                    child: _buildMetricCard(
+                                      title: AppStrings.avgProfitMargin.tr(),
+                                      value:
+                                          '${avgProfitMarginPct.toStringAsFixed(1)}%',
+                                      icon: Icons.percent_rounded,
+                                      color: AppColors.actionButton,
+                                      isDesktop: isDesktop,
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                               SizedBox(height: isDesktop ? 12 : 10.h),
-                              FadeInDown(
-                                duration: const Duration(milliseconds: 350),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: _buildMetricCard(
-                                        title: AppStrings.tiedUpCapital.tr(),
-                                        value:
-                                            '${totalTiedUpCapital.toSmartAmount()} ${CurrencyService.instance.currentSymbol}',
-                                        subtitle:
-                                            '${deadStockProducts.length} ${AppStrings.deadStock.tr()}',
-                                        icon: Icons.ac_unit_rounded,
-                                        color: AppColors.creditAmberStart,
-                                        isDesktop: isDesktop,
-                                      ),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildMetricCard(
+                                      title: AppStrings.tiedUpCapital.tr(),
+                                      value:
+                                          '${totalTiedUpCapital.toSmartAmount()} ${CurrencyService.instance.currentSymbol}',
+                                      subtitle:
+                                          '${deadStockProducts.length} ${AppStrings.deadStock.tr()}',
+                                      icon: Icons.ac_unit_rounded,
+                                      color: AppColors.creditAmberStart,
+                                      isDesktop: isDesktop,
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                               SizedBox(height: isDesktop ? 16 : 14.h),
 

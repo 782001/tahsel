@@ -1,6 +1,8 @@
 import '../../domain/entities/inventory_product_entity.dart';
 
 class InventoryProductModel extends InventoryProductEntity {
+  final bool isDeleted;
+
   const InventoryProductModel({
     required super.id,
     required super.sku,
@@ -21,6 +23,7 @@ class InventoryProductModel extends InventoryProductEntity {
     required super.updatedAt,
     super.isSynced,
     super.totalSoldQuantity,
+    this.isDeleted = false,
   });
 
   factory InventoryProductModel.fromEntity(InventoryProductEntity entity) {
@@ -72,6 +75,7 @@ class InventoryProductModel extends InventoryProductEntity {
           : DateTime.now(),
       isSynced: map['isSynced'] as bool? ?? false,
       totalSoldQuantity: (map['totalSoldQuantity'] as num?)?.toDouble() ?? 0.0,
+      isDeleted: map['isDeleted'] as bool? ?? false,
     );
   }
 
@@ -103,5 +107,27 @@ class InventoryProductModel extends InventoryProductEntity {
     final map = toMap();
     map['isSynced'] = true;
     return map;
+  }
+
+  Map<String, dynamic> toRemoteUpdateMap() {
+    return {
+      'id': id,
+      'sku': sku,
+      'barcode': barcode,
+      'name': name,
+      'categoryId': categoryId,
+      'categoryName': categoryName,
+      'supplierId': supplierId,
+      'supplierName': supplierName,
+      'purchasePrice': purchasePrice,
+      'sellingPrice': sellingPrice,
+      'minQuantity': minQuantity,
+      'unit': unit,
+      'notes': notes,
+      'isAvailable': isAvailable,
+      'createdAt': createdAt.millisecondsSinceEpoch,
+      'updatedAt': updatedAt.millisecondsSinceEpoch,
+      'isSynced': true,
+    };
   }
 }

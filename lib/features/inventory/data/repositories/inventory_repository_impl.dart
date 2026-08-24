@@ -58,49 +58,74 @@ class InventoryRepositoryImpl implements InventoryRepository {
       List<InventoryProductModel> products = await localDataSource
           .getProducts();
 
-      // If local storage is empty, fetch ALL products from remote without limit
-      if (products.isEmpty && await connectionChecker.hasConnection && _currentUid != null) {
+      final bool hasConn = await connectionChecker.hasConnection;
+
+      if (hasConn && _currentUid != null) {
         try {
-          final remoteProducts = await remoteDataSource
-              .fetchAllProductsFromRemoteWithoutLimit(_currentUid!);
-          for (final p in remoteProducts) {
-            final existing = await localDataSource.getProductById(p.id);
-            final double highestSold =
-                (existing != null && existing.totalSoldQuantity > p.totalSoldQuantity)
-                    ? existing.totalSoldQuantity
-                    : p.totalSoldQuantity;
-            final mergedProduct = InventoryProductModel.fromEntity(
-              p.copyWith(totalSoldQuantity: highestSold),
-            );
-            await localDataSource.saveProduct(mergedProduct);
-          }
-          products = await localDataSource.getProducts();
-        } catch (_) {}
-      } else if (await connectionChecker.hasConnection && _currentUid != null) {
-        // Reconcile with remote server if connected so all devices see updates
-        try {
-          final remoteProducts = await remoteDataSource.fetchProductsFromRemote(
-            _currentUid!,
-            limit: limit,
-          );
-          for (final p in remoteProducts) {
-            final existing = await localDataSource.getProductById(p.id);
-            if (existing == null || existing.isSynced) {
-              final double highestSold =
-                  (existing != null && existing.totalSoldQuantity > p.totalSoldQuantity)
-                      ? existing.totalSoldQuantity
-                      : p.totalSoldQuantity;
-              final mergedProduct = InventoryProductModel.fromEntity(
-                p.copyWith(totalSoldQuantity: highestSold),
-              );
-              await localDataSource.saveProduct(mergedProduct);
+          final lastSync = await localDataSource.getLastProductsSyncTimestamp();
+          if (products.isEmpty || lastSync == null) {
+            final now = DateTime.now().millisecondsSinceEpoch;
+            final remoteProducts = await remoteDataSource
+                .fetchAllProductsFromRemoteWithoutLimit(_currentUid!);
+            final remoteIds = remoteProducts.where((p) => !p.isDeleted).map((p) => p.id).toSet();
+
+            for (final p in remoteProducts) {
+              if (p.isDeleted) {
+                await localDataSource.deleteProduct(p.id);
+              } else {
+                final existing = await localDataSource.getProductById(p.id);
+                final double highestSold =
+                    (existing != null && existing.totalSoldQuantity > p.totalSoldQuantity)
+                        ? existing.totalSoldQuantity
+                        : p.totalSoldQuantity;
+                final mergedProduct = InventoryProductModel.fromEntity(
+                  p.copyWith(totalSoldQuantity: highestSold, isSynced: true),
+                );
+                await localDataSource.saveProduct(mergedProduct);
+              }
             }
+
+            for (final localP in products) {
+              if (localP.isSynced && !remoteIds.contains(localP.id)) {
+                await localDataSource.deleteProduct(localP.id);
+              }
+            }
+
+            await localDataSource.saveLastProductsSyncTimestamp(now);
+            products = await localDataSource.getProducts();
+          } else {
+            final now = DateTime.now().millisecondsSinceEpoch;
+            final deltaProducts = await remoteDataSource.fetchProductsDeltaFromRemote(
+              _currentUid!,
+              lastSync,
+            );
+            if (deltaProducts.isNotEmpty) {
+              for (final p in deltaProducts) {
+                if (p.isDeleted) {
+                  await localDataSource.deleteProduct(p.id);
+                } else {
+                  final existing = await localDataSource.getProductById(p.id);
+                  if (existing == null || existing.isSynced) {
+                    final double highestSold =
+                        (existing != null && existing.totalSoldQuantity > p.totalSoldQuantity)
+                            ? existing.totalSoldQuantity
+                            : p.totalSoldQuantity;
+                    final mergedProduct = InventoryProductModel.fromEntity(
+                      p.copyWith(totalSoldQuantity: highestSold, isSynced: true),
+                    );
+                    await localDataSource.saveProduct(mergedProduct);
+                  }
+                }
+              }
+              products = await localDataSource.getProducts();
+            }
+            await localDataSource.saveLastProductsSyncTimestamp(now);
           }
-          products = await localDataSource.getProducts();
         } catch (_) {}
       }
 
       List<InventoryProductEntity> resultList = products
+          .where((p) => !p.isDeleted)
           .map((p) => p as InventoryProductEntity)
           .toList();
 
@@ -186,6 +211,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
   ) async {
     try {
       final existing = await localDataSource.getProductById(product.id);
+      final bool hasConn = await connectionChecker.hasConnection;
       // Preserve quantity if existing product (quantity must only change via stock movements)
       final finalQuantity = existing != null
           ? existing.currentQuantity
@@ -195,11 +221,21 @@ class InventoryRepositoryImpl implements InventoryRepository {
         product.copyWith(
           currentQuantity: finalQuantity,
           updatedAt: DateTime.now(),
-          isSynced: false,
+          isSynced: hasConn,
         ),
       );
 
       await localDataSource.saveProduct(model);
+
+      if (hasConn && _currentUid != null) {
+        try {
+          if (existing == null) {
+            await remoteDataSource.syncProducts(_currentUid!, [model]);
+          } else {
+            await remoteDataSource.updateProductFieldsInRemote(_currentUid!, model);
+          }
+        } catch (_) {}
+      }
 
       // If new product created with initial stock > 0, log an initial stock movement
       if (existing == null && finalQuantity > 0) {
@@ -261,20 +297,32 @@ class InventoryRepositoryImpl implements InventoryRepository {
     try {
       List<InventoryCategoryModel> categories = await localDataSource
           .getCategories();
-      if (categories.isEmpty &&
-          await connectionChecker.hasConnection &&
-          _currentUid != null) {
+      if (await connectionChecker.hasConnection && _currentUid != null) {
         try {
           final remoteCats = await remoteDataSource.fetchCategoriesFromRemote(
             _currentUid!,
           );
+          final remoteIds = remoteCats.where((c) => !c.isDeleted).map((c) => c.id).toSet();
+
           for (final c in remoteCats) {
-            await localDataSource.saveCategory(c);
+            if (c.isDeleted) {
+              await localDataSource.deleteCategory(c.id);
+            } else {
+              await localDataSource.saveCategory(c);
+            }
           }
-          categories = remoteCats;
+
+          for (final localC in categories) {
+            if (localC.isSynced && !remoteIds.contains(localC.id)) {
+              await localDataSource.deleteCategory(localC.id);
+            }
+          }
+
+          categories = await localDataSource.getCategories();
         } catch (_) {}
       }
       List<InventoryCategoryEntity> resultList = categories
+          .where((c) => !c.isDeleted)
           .map((c) => c as InventoryCategoryEntity)
           .toList();
       resultList.sort((a, b) => a.name.compareTo(b.name));
@@ -297,14 +345,22 @@ class InventoryRepositoryImpl implements InventoryRepository {
       // Cascade update categoryName in all products belonging to this categoryId
       final allProducts = await localDataSource.getProducts();
       final affectedProducts = allProducts.where((p) => p.categoryId == category.id).toList();
+      final bool hasConn = await connectionChecker.hasConnection;
       for (final p in affectedProducts) {
         if (p.categoryName != category.name) {
-          final updated = p.copyWith(
-            categoryName: category.name,
-            updatedAt: DateTime.now(),
-            isSynced: false,
+          final updated = InventoryProductModel.fromEntity(
+            p.copyWith(
+              categoryName: category.name,
+              updatedAt: DateTime.now(),
+              isSynced: p.isSynced,
+            ),
           );
-          await localDataSource.saveProduct(InventoryProductModel.fromEntity(updated));
+          await localDataSource.saveProduct(updated);
+          if (hasConn && _currentUid != null) {
+            try {
+              await remoteDataSource.updateProductFieldsInRemote(_currentUid!, updated);
+            } catch (_) {}
+          }
         }
       }
 
@@ -351,19 +407,31 @@ class InventoryRepositoryImpl implements InventoryRepository {
     try {
       List<InventorySupplierModel> suppliers = await localDataSource
           .getSuppliers();
-      if (suppliers.isEmpty &&
-          await connectionChecker.hasConnection &&
-          _currentUid != null) {
+      if (await connectionChecker.hasConnection && _currentUid != null) {
         try {
           final remoteSuppliers = await remoteDataSource
               .fetchSuppliersFromRemote(_currentUid!);
+          final remoteIds = remoteSuppliers.where((s) => !s.isDeleted).map((s) => s.id).toSet();
+
           for (final s in remoteSuppliers) {
-            await localDataSource.saveSupplier(s);
+            if (s.isDeleted) {
+              await localDataSource.deleteSupplier(s.id);
+            } else {
+              await localDataSource.saveSupplier(s);
+            }
           }
-          suppliers = remoteSuppliers;
+
+          for (final localS in suppliers) {
+            if (localS.isSynced && !remoteIds.contains(localS.id)) {
+              await localDataSource.deleteSupplier(localS.id);
+            }
+          }
+
+          suppliers = await localDataSource.getSuppliers();
         } catch (_) {}
       }
       List<InventorySupplierEntity> resultList = suppliers
+          .where((s) => !s.isDeleted)
           .map((s) => s as InventorySupplierEntity)
           .toList();
       resultList.sort((a, b) => a.name.compareTo(b.name));
@@ -386,14 +454,22 @@ class InventoryRepositoryImpl implements InventoryRepository {
       // Cascade update supplierName in all products belonging to this supplierId
       final allProducts = await localDataSource.getProducts();
       final affectedProducts = allProducts.where((p) => p.supplierId == supplier.id).toList();
+      final bool hasConn = await connectionChecker.hasConnection;
       for (final p in affectedProducts) {
         if (p.supplierName != supplier.name) {
-          final updated = p.copyWith(
-            supplierName: supplier.name,
-            updatedAt: DateTime.now(),
-            isSynced: false,
+          final updated = InventoryProductModel.fromEntity(
+            p.copyWith(
+              supplierName: supplier.name,
+              updatedAt: DateTime.now(),
+              isSynced: p.isSynced,
+            ),
           );
-          await localDataSource.saveProduct(InventoryProductModel.fromEntity(updated));
+          await localDataSource.saveProduct(updated);
+          if (hasConn && _currentUid != null) {
+            try {
+              await remoteDataSource.updateProductFieldsInRemote(_currentUid!, updated);
+            } catch (_) {}
+          }
         }
       }
 
@@ -460,19 +536,32 @@ class InventoryRepositoryImpl implements InventoryRepository {
         try {
           final remotePurchases = await remoteDataSource
               .fetchPurchasesFromRemote(_currentUid!, limit: limit);
+          final remoteIds = remotePurchases.where((p) => !p.isDeleted).map((p) => p.id).toSet();
+
           for (final p in remotePurchases) {
-            final matches = purchases.where((x) => x.id == p.id);
-            final localItem = matches.isNotEmpty ? matches.first : null;
-            // Only update local from remote if local item does not exist or local item is synced
-            if (localItem == null || localItem.isSynced) {
-              await localDataSource.savePurchase(p);
+            if (p.isDeleted) {
+              await localDataSource.deletePurchase(p.id);
+            } else {
+              final matches = purchases.where((x) => x.id == p.id);
+              final localItem = matches.isNotEmpty ? matches.first : null;
+              if (localItem == null || localItem.isSynced) {
+                await localDataSource.savePurchase(p);
+              }
             }
           }
+
+          for (final localP in purchases) {
+            if (localP.isSynced && !remoteIds.contains(localP.id)) {
+              await localDataSource.deletePurchase(localP.id);
+            }
+          }
+
           purchases = await localDataSource.getPurchases();
         } catch (_) {}
       }
 
       List<InventoryPurchaseEntity> resultList = purchases
+          .where((p) => !p.isDeleted)
           .map((p) => p as InventoryPurchaseEntity)
           .toList();
 
@@ -843,10 +932,20 @@ class InventoryRepositoryImpl implements InventoryRepository {
             product.copyWith(
               currentQuantity: newQty,
               updatedAt: DateTime.now(),
-              isSynced: false,
+              isSynced: hasConnection,
             ),
           );
           await localDataSource.saveProduct(updatedProduct);
+
+          if (hasConnection && _currentUid != null) {
+            try {
+              await remoteDataSource.updateProductQuantityInRemote(
+                _currentUid!,
+                item.productId,
+                -item.quantity,
+              );
+            } catch (_) {}
+          }
 
           // Save cancellation stock movement
           final movement = StockMovementModel(
@@ -969,10 +1068,20 @@ class InventoryRepositoryImpl implements InventoryRepository {
               currentQuantity: newQty,
               purchasePrice: newPrice,
               updatedAt: DateTime.now(),
-              isSynced: false,
+              isSynced: hasConnection,
             ),
           );
           await localDataSource.saveProduct(updatedProduct);
+
+          if (hasConnection && _currentUid != null && deltaQty != 0) {
+            try {
+              await remoteDataSource.updateProductQuantityInRemote(
+                _currentUid!,
+                productId,
+                deltaQty,
+              );
+            } catch (_) {}
+          }
 
           if (deltaQty != 0) {
             final movement = StockMovementModel(
@@ -1143,13 +1252,15 @@ class InventoryRepositoryImpl implements InventoryRepository {
               (matchingProduct.totalSoldQuantity + deltaSold)
                   .clamp(0.0, double.infinity);
 
+          final bool hasConn = await connectionChecker.hasConnection;
+
           // Update Product
           final updated = InventoryProductModel.fromEntity(
             matchingProduct.copyWith(
               currentQuantity: newQty,
               totalSoldQuantity: newSoldQty,
               updatedAt: DateTime.now(),
-              isSynced: false,
+              isSynced: hasConn,
             ),
           );
           await localDataSource.saveProduct(updated);

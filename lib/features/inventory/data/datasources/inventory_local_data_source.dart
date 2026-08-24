@@ -36,6 +36,10 @@ abstract class InventoryLocalDataSource {
   Future<List<StockMovementModel>> getStockMovements();
   Future<void> saveStockMovement(StockMovementModel movement);
   Future<List<StockMovementModel>> getUnsyncedStockMovements();
+
+  // Sync Metadata
+  Future<int?> getLastProductsSyncTimestamp();
+  Future<void> saveLastProductsSyncTimestamp(int timestamp);
 }
 
 class InventoryLocalDataSourceImpl implements InventoryLocalDataSource {
@@ -44,6 +48,7 @@ class InventoryLocalDataSourceImpl implements InventoryLocalDataSource {
   static const String suppliersBoxName = 'inventory_suppliers_box';
   static const String purchasesBoxName = 'inventory_purchases_box';
   static const String stockMovementsBoxName = 'inventory_stock_movements_box';
+  static const String metaBoxName = 'inventory_meta_box';
 
   Future<Box<String>> _getBox(String name) async {
     if (!Hive.isBoxOpen(name)) {
@@ -214,5 +219,20 @@ class InventoryLocalDataSourceImpl implements InventoryLocalDataSource {
   Future<List<StockMovementModel>> getUnsyncedStockMovements() async {
     final all = await getStockMovements();
     return all.where((m) => !m.isSynced).toList();
+  }
+
+  // --- SYNC METADATA ---
+  @override
+  Future<int?> getLastProductsSyncTimestamp() async {
+    final box = await _getBox(metaBoxName);
+    final val = box.get('last_products_sync_timestamp');
+    if (val == null || val.isEmpty) return null;
+    return int.tryParse(val);
+  }
+
+  @override
+  Future<void> saveLastProductsSyncTimestamp(int timestamp) async {
+    final box = await _getBox(metaBoxName);
+    await box.put('last_products_sync_timestamp', timestamp.toString());
   }
 }

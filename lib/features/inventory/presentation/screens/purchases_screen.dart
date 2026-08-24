@@ -405,43 +405,54 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                       actionLabel: AppStrings.tryAgain.tr(),
                                       onAction: _clearFilters,
                                     )
-                                  : ListView.builder(
-                                      controller: _scrollController,
-                                      physics: const BouncingScrollPhysics(),
-                                      itemCount:
-                                          filteredPurchases.length +
-                                          (state.isPaginationLoading ? 1 : 0),
-                                      itemBuilder: (context, index) {
-                                        if (index == filteredPurchases.length) {
-                                          return Padding(
-                                            padding: EdgeInsets.symmetric(
-                                              vertical: isDesktop ? 16 : 16.h,
-                                            ),
-                                            child: Center(
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 4,
-                                                color: AppColors.primaryColor,
+                                  : RefreshIndicator(
+                                      color: AppColors.primaryColor,
+                                      onRefresh: () async {
+                                        await context
+                                            .read<InventoryPurchasesCubit>()
+                                            .fetchPurchases();
+                                      },
+                                      child: ListView.builder(
+                                        controller: _scrollController,
+                                        physics:
+                                            const AlwaysScrollableScrollPhysics(
+                                          parent: BouncingScrollPhysics(),
+                                        ),
+                                        itemCount:
+                                            filteredPurchases.length +
+                                            (state.isPaginationLoading ? 1 : 0),
+                                        itemBuilder: (context, index) {
+                                          if (index == filteredPurchases.length) {
+                                            return Padding(
+                                              padding: EdgeInsets.symmetric(
+                                                vertical: isDesktop ? 16 : 16.h,
                                               ),
+                                              child: Center(
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 4,
+                                                  color: AppColors.primaryColor,
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                          final pur = filteredPurchases[index];
+                                          return Padding(
+                                            padding: EdgeInsets.only(
+                                              bottom: isDesktop ? 12 : 12.h,
+                                            ),
+                                            child: PurchaseCardItem(
+                                              purchase: pur,
+                                              onSharePdf: () =>
+                                                  _sharePurchasePdf(pur),
+                                              onDownloadPdf: () =>
+                                                  _downloadPurchasePdf(pur),
+                                              onEdit: () => _editPurchase(pur),
+                                              onDelete: () =>
+                                                  _confirmDeletePurchase(pur),
                                             ),
                                           );
-                                        }
-                                        final pur = filteredPurchases[index];
-                                        return Padding(
-                                          padding: EdgeInsets.only(
-                                            bottom: isDesktop ? 12 : 12.h,
-                                          ),
-                                          child: PurchaseCardItem(
-                                            purchase: pur,
-                                            onSharePdf: () =>
-                                                _sharePurchasePdf(pur),
-                                            onDownloadPdf: () =>
-                                                _downloadPurchasePdf(pur),
-                                            onEdit: () => _editPurchase(pur),
-                                            onDelete: () =>
-                                                _confirmDeletePurchase(pur),
-                                          ),
-                                        );
-                                      },
+                                        },
+                                      ),
                                     ),
                             ),
                           ],

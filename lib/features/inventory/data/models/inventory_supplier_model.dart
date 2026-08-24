@@ -1,6 +1,8 @@
 import '../../domain/entities/inventory_supplier_entity.dart';
 
 class InventorySupplierModel extends InventorySupplierEntity {
+  final bool isDeleted;
+
   const InventorySupplierModel({
     required super.id,
     required super.name,
@@ -13,6 +15,7 @@ class InventorySupplierModel extends InventorySupplierEntity {
     required super.createdAt,
     required super.updatedAt,
     super.isSynced,
+    this.isDeleted = false,
   });
 
   factory InventorySupplierModel.fromEntity(InventorySupplierEntity entity) {
@@ -48,6 +51,7 @@ class InventorySupplierModel extends InventorySupplierEntity {
           ? DateTime.fromMillisecondsSinceEpoch(map['updatedAt'] as int)
           : DateTime.now(),
       isSynced: map['isSynced'] as bool? ?? false,
+      isDeleted: map['isDeleted'] as bool? ?? false,
     );
   }
 
