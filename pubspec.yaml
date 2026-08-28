@@ -105,6 +105,8 @@ dev_dependencies:
   hive_generator: ^2.0.1
   build_runner: ^2.4.13
 flutter:
+  config:
+    enable-swift-package-manager: false
   uses-material-design: true
 
   assets:
