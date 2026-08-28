@@ -4,6 +4,10 @@
 	<dict>
 		<key>NSCameraUsageDescription</key>
 		<string>تطبيق تحصيل يحتاج إلى الكاميرا لمسح وقراءة الباركود للمنتجات</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>يحتاج تطبيق تحصيل للوصول إلى معرض الصور لاختيار وحفظ الصور والتقارير</string>
+		<key>NSPhotoLibraryAddUsageDescription</key>
+		<string>يحتاج تطبيق تحصيل للسماح بحفظ الصور والتقارير في معرض الصور</string>
 		<key>CADisableMinimumFrameDurationOnPhone</key>
 		<true/>
 		<key>CFBundleDevelopmentRegion</key>

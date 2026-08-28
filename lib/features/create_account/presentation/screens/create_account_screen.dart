@@ -39,7 +39,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   String _userType = 'cafe';
   String _platformType = 'mobile';
   CurrencyEntity _selectedCurrency = CurrencyEntity.defaultCurrency;
-  bool _isVip = false;
+  bool _isVip = true;
   bool _showVipDetails = false;
   bool _isLoading = false;
 
