@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../data/models/app_version_model.dart';
@@ -34,37 +32,14 @@ class UpdateCubit extends Cubit<UpdateState> {
   }
 
   Future<void> startUpdate(AppVersionModel versionInfo) async {
-    // Android & iOS: open the store link directly (Play Store / App Store)
-    if (Platform.isAndroid || Platform.isIOS) {
-      try {
-        emit(UpdateRedirectingToStore());
-        await _downloadUpdateUseCase.openDownloadLink(versionInfo.downloadUrl);
-        emit(
-          UpdateAvailable(versionInfo),
-        ); // return to available so dialog stays open
-      } catch (e) {
-        emit(UpdateError(e.toString()));
-      }
-      return;
-    }
-
-    // Windows: download the binary and open installer as before
-    final extension = 'exe';
-
-    final fileName = "TahselSetup-${versionInfo.versionName}.$extension";
-
-    emit(UpdateDownloading(0));
+    // جميع المنصات (Android, iOS, Windows) تفتح رابط المتجر مباشرة
     try {
-      await _downloadUpdateUseCase.downloadAndInstall(
-        url: versionInfo.downloadUrl,
-        fileName: fileName,
-        onProgress: (progress) {
-          emit(UpdateDownloading(progress));
-        },
-      );
-      emit(UpdateInstalled());
+      emit(UpdateRedirectingToStore());
+      await _downloadUpdateUseCase.openDownloadLink(versionInfo.downloadUrl);
+      emit(UpdateAvailable(versionInfo)); // return to available so dialog stays open
     } catch (e) {
       emit(UpdateError(e.toString()));
     }
   }
 }
+
