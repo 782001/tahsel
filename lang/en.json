@@ -1186,5 +1186,6 @@
   "confirm_full_settlement_btn": "Confirm Settlement",
   "confirm_pay_debt_title": "Confirm Debt Payment",
   "confirm_pay_debt_msg": "Are you sure you want to mark this debt ({item}) as paid with amount {amount} {currency}?",
-  "confirm_pay_debt_btn": "Confirm Payment"
+  "confirm_pay_debt_btn": "Confirm Payment",
+  "selling_below_cost_warning": "Warning: Selling price after discount is below purchase cost ({cost} {currency})"
 }

@@ -10,6 +10,7 @@ class InvoiceItemModel extends InvoiceItem {
     required super.quantity,
     super.taxRate,
     super.discountRate,
+    super.purchasePrice,
   });
 
   factory InvoiceItemModel.fromEntity(InvoiceItem item) => InvoiceItemModel(
@@ -19,6 +20,7 @@ class InvoiceItemModel extends InvoiceItem {
     quantity: item.quantity,
     taxRate: item.taxRate,
     discountRate: item.discountRate,
+    purchasePrice: item.purchasePrice,
   );
 
   factory InvoiceItemModel.fromMap(Map<String, dynamic> map) =>
@@ -29,6 +31,7 @@ class InvoiceItemModel extends InvoiceItem {
         quantity: (map['quantity'] as num).toDouble(),
         taxRate: (map['taxRate'] as num? ?? 0).toDouble(),
         discountRate: (map['discountRate'] as num? ?? 0).toDouble(),
+        purchasePrice: (map['purchasePrice'] as num?)?.toDouble(),
       );
 
   Map<String, dynamic> toMap() => {
@@ -38,6 +41,7 @@ class InvoiceItemModel extends InvoiceItem {
     'quantity': quantity,
     'taxRate': taxRate,
     'discountRate': discountRate,
+    if (purchasePrice != null) 'purchasePrice': purchasePrice,
   };
 }
 

@@ -23,6 +23,7 @@ class _ItemControllers {
   final TextEditingController price;
   final TextEditingController qty;
   final TextEditingController discount;
+  double? purchasePrice;
 
   /// Pre-fill from an existing InvoiceItem (edit mode).
   _ItemControllers.fromItem(InvoiceItem item)
@@ -30,12 +31,13 @@ class _ItemControllers {
       price = TextEditingController(text: item.unitPrice.toString()),
       qty = TextEditingController(text: item.quantity.toString()),
       discount = TextEditingController(
-        text: (item.discountRate * 100).toStringAsFixed(
-          item.discountRate == 0 ? 0 : 1,
-        ),
-      );
+        text: item.discountAmount > 0
+            ? item.discountAmount.toSmartAmount()
+            : '0',
+      ),
+      purchasePrice = item.purchasePrice;
 
-  _ItemControllers()
+  _ItemControllers({this.purchasePrice})
     : desc = TextEditingController(),
       price = TextEditingController(),
       qty = TextEditingController(text: '1'),
@@ -80,9 +82,9 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
     for (final ctrl in _itemControllers) {
       final qty = double.tryParse(ctrl.qty.text) ?? 1.0;
       final price = double.tryParse(ctrl.price.text) ?? 0.0;
-      final discountPct = double.tryParse(ctrl.discount.text) ?? 0.0;
+      final itemDiscount = double.tryParse(ctrl.discount.text) ?? 0.0;
       final subtotal = qty * price;
-      sum += subtotal * (1 - discountPct / 100.0);
+      sum += (subtotal - itemDiscount).clamp(0.0, double.infinity);
     }
     return sum;
   }
@@ -171,7 +173,9 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
             }
 
             for (final item in selectedItems) {
-              final newCtrl = _ItemControllers();
+              final newCtrl = _ItemControllers(
+                purchasePrice: item.product.purchasePrice,
+              );
               newCtrl.desc.text = item.product.name;
               newCtrl.price.text = item.product.sellingPrice.toSmartAmount();
               newCtrl.qty.text = item.quantity.toSmartAmount();
@@ -221,7 +225,13 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
 
     final items = validItems.asMap().entries.map((entry) {
       final ctrl = entry.value;
-      final discountPct = double.tryParse(ctrl.discount.text) ?? 0.0;
+      final price = double.tryParse(ctrl.price.text) ?? 0.0;
+      final qty = double.tryParse(ctrl.qty.text) ?? 1.0;
+      final itemDiscount = double.tryParse(ctrl.discount.text) ?? 0.0;
+      final subtotal = price * qty;
+      final discountRate =
+          subtotal > 0 ? (itemDiscount / subtotal).clamp(0.0, 1.0) : 0.0;
+
       return InvoiceItem(
         id: _isEditMode
             ? (widget.invoiceToEdit!.items.length > entry.key
@@ -229,9 +239,10 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                   : 'item_${entry.key}')
             : 'item_${entry.key}',
         description: ctrl.desc.text.trim(),
-        unitPrice: double.tryParse(ctrl.price.text) ?? 0.0,
-        quantity: double.tryParse(ctrl.qty.text) ?? 1.0,
-        discountRate: (discountPct / 100.0).clamp(0.0, 1.0),
+        unitPrice: price,
+        quantity: qty,
+        discountRate: discountRate,
+        purchasePrice: ctrl.purchasePrice,
       );
     }).toList();
 
@@ -485,6 +496,8 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                                 qtyController: _itemControllers[i].qty,
                                 discountController:
                                     _itemControllers[i].discount,
+                                purchasePrice:
+                                    _itemControllers[i].purchasePrice,
                                 onRemove: () => _removeItem(i),
                                 onChanged: () => setState(() {}),
                               ),

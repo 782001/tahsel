@@ -1356,4 +1356,5 @@ class AppStrings {
   static const String confirmPayDebtTitle = "confirm_pay_debt_title";
   static const String confirmPayDebtMsg = "confirm_pay_debt_msg";
   static const String confirmPayDebtBtn = "confirm_pay_debt_btn";
+  static const String sellingBelowCostWarning = "selling_below_cost_warning";
 }

@@ -12,6 +12,7 @@ class InvoiceItemRow extends StatefulWidget {
   final TextEditingController priceController;
   final TextEditingController qtyController;
   final TextEditingController discountController;
+  final double? purchasePrice;
   final VoidCallback onRemove;
   final VoidCallback onChanged;
 
@@ -22,6 +23,7 @@ class InvoiceItemRow extends StatefulWidget {
     required this.priceController,
     required this.qtyController,
     required this.discountController,
+    this.purchasePrice,
     required this.onRemove,
     required this.onChanged,
   });
@@ -35,10 +37,18 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
   Widget build(BuildContext context) {
     final qty = double.tryParse(widget.qtyController.text) ?? 1.0;
     final price = double.tryParse(widget.priceController.text) ?? 0.0;
-    final discountPct = double.tryParse(widget.discountController.text) ?? 0.0;
+    final discountAmount =
+        double.tryParse(widget.discountController.text) ?? 0.0;
     final subtotal = qty * price;
-    final discountAmount = subtotal * (discountPct / 100.0);
-    final lineTotal = subtotal - discountAmount;
+    final lineTotal = (subtotal - discountAmount).clamp(0.0, double.infinity);
+
+    final effectiveUnitPrice =
+        qty > 0 ? ((qty * price) - discountAmount) / qty : (price - discountAmount);
+    final hasPurchasePrice =
+        widget.purchasePrice != null && widget.purchasePrice! > 0;
+    final isBelowCost = hasPurchasePrice &&
+        (effectiveUnitPrice < widget.purchasePrice! ||
+            lineTotal < (qty * widget.purchasePrice!));
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -106,7 +116,7 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
 
               // Quantity field
               SizedBox(
-                width: 90,
+                width: 85,
                 child: _ItemField(
                   controller: widget.qtyController,
                   hint: '1',
@@ -120,15 +130,15 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
               ),
               const SizedBox(width: 10),
 
-              // Discount % field
+              // Discount amount field (in Currency)
               SizedBox(
-                width: 80,
+                width: 95,
                 child: _ItemField(
                   controller: widget.discountController,
                   hint: '0',
                   label: AppStrings.invoiceItemDiscount.tr(),
                   isNumber: true,
-                  suffix: '%',
+                  suffix: AppStrings.currencyEgp.tr(),
                   onChanged: (_) {
                     setState(() {});
                     widget.onChanged();
@@ -138,6 +148,47 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
             ],
           ),
           const SizedBox(height: 8),
+
+          // Warning if selling price after discount is below purchase cost
+          if (isBelowCost) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.warning.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: AppColors.warning.withValues(alpha: 0.4),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: AppColors.warning,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      AppStrings.sellingBelowCostWarning
+                          .tr()
+                          .replaceAll(
+                            '{cost}',
+                            widget.purchasePrice!.toSmartAmount(),
+                          )
+                          .replaceAll('{currency}', AppStrings.currencyEgp.tr()),
+                      style: TextStyles.customStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.warning,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
 
           // Line total (after discount)
           Align(

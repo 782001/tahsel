@@ -15,9 +15,10 @@ class InvoiceItem extends Equatable {
   final double unitPrice;
   final double quantity;
 
-  // Future-proof: tax, discount per item
+  // Future-proof: tax, discount per item, and purchase price
   final double taxRate; // e.g. 0.14 for 14%
   final double discountRate; // e.g. 0.10 for 10%
+  final double? purchasePrice; // Cost / purchase price for margin warning
 
   const InvoiceItem({
     required this.id,
@@ -26,6 +27,7 @@ class InvoiceItem extends Equatable {
     required this.quantity,
     this.taxRate = 0.0,
     this.discountRate = 0.0,
+    this.purchasePrice,
   });
 
   double get subtotal => unitPrice * quantity;
@@ -40,6 +42,7 @@ class InvoiceItem extends Equatable {
     double? quantity,
     double? taxRate,
     double? discountRate,
+    double? purchasePrice,
   }) {
     return InvoiceItem(
       id: id ?? this.id,
@@ -48,6 +51,7 @@ class InvoiceItem extends Equatable {
       quantity: quantity ?? this.quantity,
       taxRate: taxRate ?? this.taxRate,
       discountRate: discountRate ?? this.discountRate,
+      purchasePrice: purchasePrice ?? this.purchasePrice,
     );
   }
 
@@ -59,6 +63,7 @@ class InvoiceItem extends Equatable {
     quantity,
     taxRate,
     discountRate,
+    purchasePrice,
   ];
 }
 

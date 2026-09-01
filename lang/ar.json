@@ -1189,5 +1189,6 @@
   "confirm_full_settlement_btn": "تأكيد التسويه",
   "confirm_pay_debt_title": "تأكيد سداد الدين",
   "confirm_pay_debt_msg": "هل أنت متأكد من تسجيل سداد هذا الدين ({item}) بمبلغ {amount} {currency}؟",
-  "confirm_pay_debt_btn": "تأكيد السداد"
+  "confirm_pay_debt_btn": "تأكيد السداد",
+  "selling_below_cost_warning": "تنبيه: سعر البيع بعد الخصم أقل من سعر الشراء ({cost} {currency})"
 }
