@@ -7,6 +7,7 @@ import 'package:tahsel/core/utils/date_formatter.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_cubit.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_state.dart';
+import 'package:tahsel/shared/widgets/quick_due_date_selector.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 
@@ -36,6 +37,7 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
   String _selectedType = AppStrings.shop;
   String? _errorText;
   DateTime? _selectedDate;
+  DateTime? _dueDate;
 
   Future<void> _pickDate() async {
     final DateTime minDate = DateTime(2000);
@@ -126,6 +128,7 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
         operationType: _selectedType,
         ledgerNumber: widget.ledgerNumber,
         timestamp: _selectedDate,
+        dueDate: _dueDate,
       );
     }
   }
@@ -463,6 +466,16 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
                           ],
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    QuickDueDateSelector(
+                      selectedDate: _dueDate,
+                      onDateChanged: (date) {
+                        setState(() {
+                          _dueDate = date;
+                        });
+                      },
                     ),
                     const SizedBox(height: 24),
 

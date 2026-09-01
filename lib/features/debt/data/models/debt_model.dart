@@ -17,6 +17,8 @@ class DebtModel extends DebtEntity {
     super.phoneNumber,
     super.isPaid,
     super.ledgerNumber,
+    super.dueDate,
+    super.lastReminderSentAt,
   });
 
   factory DebtModel.fromJson(Map<String, dynamic> json, String id) {
@@ -33,14 +35,28 @@ class DebtModel extends DebtEntity {
       productOrSessionDetails: json['productOrSessionDetails'],
       operationType: json['operationType'] ?? 'shop',
       timestamp: json['timestamp'] != null
-          ? (json['timestamp'] as Timestamp).toDate()
+          ? (json['timestamp'] is Timestamp
+              ? (json['timestamp'] as Timestamp).toDate()
+              : DateTime.tryParse(json['timestamp'].toString()))
           : null,
       lastUpdatedAt: json['lastUpdatedAt'] != null
-          ? (json['lastUpdatedAt'] as Timestamp).toDate()
+          ? (json['lastUpdatedAt'] is Timestamp
+              ? (json['lastUpdatedAt'] as Timestamp).toDate()
+              : DateTime.tryParse(json['lastUpdatedAt'].toString()))
           : null,
       phoneNumber: json['phoneNumber'],
       isPaid: json['isPaid'] ?? false,
       ledgerNumber: json['ledgerNumber'],
+      dueDate: json['dueDate'] != null
+          ? (json['dueDate'] is Timestamp
+              ? (json['dueDate'] as Timestamp).toDate()
+              : DateTime.tryParse(json['dueDate'].toString()))
+          : null,
+      lastReminderSentAt: json['lastReminderSentAt'] != null
+          ? (json['lastReminderSentAt'] is Timestamp
+              ? (json['lastReminderSentAt'] as Timestamp).toDate()
+              : DateTime.tryParse(json['lastReminderSentAt'].toString()))
+          : null,
     );
   }
 
@@ -63,6 +79,9 @@ class DebtModel extends DebtEntity {
       'phoneNumber': phoneNumber,
       'isPaid': isPaid,
       'ledgerNumber': ledgerNumber,
+      if (dueDate != null) 'dueDate': Timestamp.fromDate(dueDate!),
+      if (lastReminderSentAt != null)
+        'lastReminderSentAt': Timestamp.fromDate(lastReminderSentAt!),
     };
   }
 
@@ -82,6 +101,8 @@ class DebtModel extends DebtEntity {
       phoneNumber: entity.phoneNumber,
       isPaid: entity.isPaid,
       ledgerNumber: entity.ledgerNumber,
+      dueDate: entity.dueDate,
+      lastReminderSentAt: entity.lastReminderSentAt,
     );
   }
 }

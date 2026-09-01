@@ -89,12 +89,47 @@ class InvoiceStatusCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            _formatDate(invoice.createdAt),
-            style: TextStyles.customStyle(
-              fontSize: 12,
-              color: Colors.white.withValues(alpha: 0.8),
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                _formatDate(invoice.createdAt),
+                style: TextStyles.customStyle(
+                  fontSize: 12,
+                  color: Colors.white.withValues(alpha: 0.8),
+                ),
+              ),
+              if (invoice.dueDate != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.event_available_rounded,
+                        size: 14,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${AppStrings.paymentDueDate.tr()}: ${_formatDate(invoice.dueDate!)}',
+                        style: TextStyles.customStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
           ),
         ],
       ),

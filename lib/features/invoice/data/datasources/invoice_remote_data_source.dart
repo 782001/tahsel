@@ -51,6 +51,11 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
     if (invoice.lastUpdatedAt != null) {
       payload['lastUpdatedAt'] = Timestamp.fromDate(invoice.lastUpdatedAt!);
     }
+    if (invoice.dueDate != null) {
+      payload['dueDate'] = Timestamp.fromDate(invoice.dueDate!);
+    } else {
+      payload['dueDate'] = null;
+    }
     payload['syncedAt'] = FieldValue.serverTimestamp();
 
     await firestore
@@ -305,6 +310,10 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
           'totalAmount': newTotalAmount,
           'remainingAmount': debtRemaining,
           'isPaid': debtRemaining <= 0,
+          'dueDate': invoice.dueDate != null
+              ? Timestamp.fromDate(invoice.dueDate!)
+              : null,
+          'lastReminderSentAt': null,
           'lastUpdatedAt': FieldValue.serverTimestamp(),
           if (invoice.customerName != null)
             'customerName': (invoice.customerName ?? '')
@@ -319,6 +328,9 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
           txn.update(opRef, {
             'totalAmount': newTotalAmount,
             'remainingDebt': debtRemaining,
+            'dueDate': invoice.dueDate != null
+                ? Timestamp.fromDate(invoice.dueDate!)
+                : null,
             if (invoice.customerName != null)
               'customerName': (invoice.customerName ?? '')
                   .replaceAll('/', ' ')
@@ -382,6 +394,9 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
         'discountAmount': invoice.discountAmount,
         'status': newStatus,
         'syncedTotalPaid': totalPaid,
+        'dueDate': invoice.dueDate != null
+            ? Timestamp.fromDate(invoice.dueDate!)
+            : null,
         'lastUpdatedAt': FieldValue.serverTimestamp(),
       });
     });
@@ -554,6 +569,11 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
           .toDate()
           .toIso8601String();
     }
+    if (data['dueDate'] is Timestamp) {
+      data['dueDate'] = (data['dueDate'] as Timestamp)
+          .toDate()
+          .toIso8601String();
+    }
     // Normalize paidAt inside each payment entry.
     // Payments added from the Debt module store paidAt as a Firestore Timestamp.
     if (data['payments'] is List) {
@@ -578,6 +598,11 @@ Map<String, dynamic> invoicePayloadToFirestoreMap(String payloadJson) {
   if (map['lastUpdatedAt'] is String && map['lastUpdatedAt'] != null) {
     map['lastUpdatedAt'] = Timestamp.fromDate(
       DateTime.parse(map['lastUpdatedAt'] as String),
+    );
+  }
+  if (map['dueDate'] is String && map['dueDate'] != null) {
+    map['dueDate'] = Timestamp.fromDate(
+      DateTime.parse(map['dueDate'] as String),
     );
   }
   map['syncedAt'] = FieldValue.serverTimestamp();

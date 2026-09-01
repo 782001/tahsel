@@ -16,6 +16,7 @@ import 'package:tahsel/features/invoice/presentation/cubit/invoice_state.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/invoice_item_row.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/multi_inventory_picker_bottom_sheet.dart';
 import 'package:tahsel/shared/widgets/buttons/quick_action_button.dart';
+import 'package:tahsel/shared/widgets/quick_due_date_selector.dart';
 
 class _ItemControllers {
   final TextEditingController desc;
@@ -68,6 +69,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
   final _ledgerController = TextEditingController();
   final _notesController = TextEditingController();
   final _overallDiscountController = TextEditingController();
+  DateTime? _dueDate;
 
   // ── Line items ─────────────────────────────────────────────────────────────
   final List<_ItemControllers> _itemControllers = [];
@@ -107,6 +109,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
       _overallDiscountController.text = inv.discountAmount > 0
           ? inv.discountAmount.toSmartAmount()
           : '';
+      _dueDate = inv.dueDate;
       for (final item in inv.items) {
         _itemControllers.add(_ItemControllers.fromItem(item));
       }
@@ -251,6 +254,8 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
             : null,
         discountAmount: overallDiscount,
         lastUpdatedAt: DateTime.now(),
+        dueDate: _dueDate,
+        clearDueDate: _dueDate == null,
       );
       context.read<InvoiceCubit>().updateInvoice(
         updated,
@@ -275,6 +280,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
         discountAmount: overallDiscount,
         createdAt: DateTime.now(),
         lastUpdatedAt: DateTime.now(),
+        dueDate: _dueDate,
       );
 
       _pendingInvoice = invoice;
@@ -517,7 +523,23 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                               discountAmount: _overallDiscount,
                               grandTotal: _grandTotal,
                             ),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 20),
+
+                            // ── Payment Due Date ─────────────────────────────
+                            if (!(_isEditMode &&
+                                    widget.invoiceToEdit!.status ==
+                                        InvoiceStatus.paid) &&
+                                _grandTotal > 0) ...[
+                              QuickDueDateSelector(
+                                selectedDate: _dueDate,
+                                onDateChanged: (date) {
+                                  setState(() {
+                                    _dueDate = date;
+                                  });
+                                },
+                              ),
+                              const SizedBox(height: 24),
+                            ],
 
                             // ── Notes ────────────────────────────────────────
                             _SectionHeader(

@@ -5,6 +5,8 @@ import 'package:tahsel/features/debt/domain/usecases/get_debt_by_id_usecase.dart
 import 'package:tahsel/features/debt/domain/usecases/get_debt_transactions_future_use_case.dart';
 import 'package:tahsel/features/debt/domain/usecases/update_payment_usecase.dart';
 import 'package:tahsel/features/debt/domain/usecases/get_monthly_collected_amounts_usecase.dart';
+import 'package:tahsel/features/debt/domain/usecases/record_reminder_sent_usecase.dart';
+import 'package:tahsel/features/debt/domain/usecases/update_debt_due_date_usecase.dart';
 import 'package:tahsel/features/debt/presentation/cubit/monthly_collected/monthly_collected_cubit.dart';
 
 import '../data/datasources/debt_remote_data_source.dart';
@@ -47,6 +49,8 @@ Future<void> initDebt() async {
       deleteCustomerDebtUseCase: sl(),
       deleteDebtItemUseCase: sl(),
       getCustomerDebtsUseCase: sl(),
+      recordReminderSentUseCase: sl(),
+      updateDebtDueDateUseCase: sl(),
     ),
   );
 
@@ -98,6 +102,8 @@ Future<void> initDebt() async {
   sl.registerLazySingleton(() => GetMonthlyCollectedAmountsUseCase(sl()));
   sl.registerLazySingleton(() => GetCustomerDebtsUseCase(repository: sl()));
   sl.registerLazySingleton(() => GetDebtSummaryUseCase(repository: sl()));
+  sl.registerLazySingleton(() => RecordReminderSentUseCase(repository: sl()));
+  sl.registerLazySingleton(() => UpdateDebtDueDateUseCase(repository: sl()));
 
   // Repository
   sl.registerLazySingleton<DebtRepository>(

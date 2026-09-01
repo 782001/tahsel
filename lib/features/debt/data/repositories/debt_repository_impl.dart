@@ -424,4 +424,40 @@ class DebtRepositoryImpl implements DebtRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, void>> recordReminderSent({
+    required String uid,
+    required String customerName,
+    List<String>? debtIds,
+  }) async {
+    try {
+      await remoteDataSource.recordReminderSent(
+        uid: uid,
+        customerName: customerName,
+        debtIds: debtIds,
+      );
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updateDebtDueDate({
+    required String uid,
+    required String debtId,
+    required DateTime? dueDate,
+  }) async {
+    try {
+      await remoteDataSource.updateDebtDueDate(
+        uid: uid,
+        debtId: debtId,
+        dueDate: dueDate,
+      );
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }

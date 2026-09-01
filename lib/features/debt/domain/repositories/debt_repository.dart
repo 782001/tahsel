@@ -109,4 +109,14 @@ abstract class DebtRepository {
   });
 
   Future<Either<Failure, TotalDebtsResult>> getDebtSummary(String uid);
+  Future<Either<Failure, void>> recordReminderSent({
+    required String uid,
+    required String customerName,
+    List<String>? debtIds,
+  });
+  Future<Either<Failure, void>> updateDebtDueDate({
+    required String uid,
+    required String debtId,
+    required DateTime? dueDate,
+  });
 }

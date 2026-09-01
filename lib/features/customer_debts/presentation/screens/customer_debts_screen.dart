@@ -33,6 +33,7 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen>
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   String _searchQuery = '';
+  String _selectedFilter = 'all';
 
   @override
   void initState() {
@@ -181,8 +182,51 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen>
                           ),
                         ),
                       ),
-                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                      CustomerDebtsList(searchQuery: _searchQuery),
+                      const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(),
+                            child: Row(
+                              children: [
+                                _buildFilterChip(
+                                  label: AppStrings.filterAll.tr(),
+                                  isSelected: _selectedFilter == 'all',
+                                  onTap: () =>
+                                      setState(() => _selectedFilter = 'all'),
+                                ),
+                                const SizedBox(width: 8),
+                                _buildFilterChip(
+                                  label: AppStrings.filterOverdue.tr(),
+                                  icon: Icons.error_outline_rounded,
+                                  color: AppColors.error,
+                                  isSelected: _selectedFilter == 'overdue',
+                                  onTap: () => setState(
+                                    () => _selectedFilter = 'overdue',
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                _buildFilterChip(
+                                  label: AppStrings.filterDueSoon.tr(),
+                                  icon: Icons.schedule_rounded,
+                                  color: AppColors.warning,
+                                  isSelected: _selectedFilter == 'due_soon',
+                                  onTap: () => setState(
+                                    () => _selectedFilter = 'due_soon',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                      CustomerDebtsList(
+                        searchQuery: _searchQuery,
+                        filter: _selectedFilter,
+                      ),
                     ] else
                       SliverFillRemaining(
                         child: NoInternetView(
@@ -198,6 +242,55 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen>
               );
             },
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+    IconData? icon,
+    Color? color,
+  }) {
+    final activeColor = color ?? AppColors.primaryColor;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20.r),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? activeColor : activeColor.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(20.r),
+          border: Border.all(
+            color: isSelected
+                ? activeColor
+                : activeColor.withValues(alpha: 0.25),
+            width: 1.2,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 14,
+                color: isSelected ? Colors.white : activeColor,
+              ),
+              const SizedBox(width: 4),
+            ],
+            Text(
+              label,
+              style: TextStyles.customStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected ? Colors.white : activeColor,
+              ),
+            ),
+          ],
         ),
       ),
     );

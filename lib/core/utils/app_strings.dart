@@ -1318,4 +1318,35 @@ class AppStrings {
   static const String transactionUpdatedSuccess = "transaction_updated_success";
   static const String transactionDeletedSuccess = "transaction_deleted_success";
   static const String vaultDeficit = "vault_deficit";
+  static const String paymentDueDate = "payment_due_date";
+  static const String setPaymentDueDate = "set_payment_due_date";
+  static const String optionalPaymentDueDate = "optional_payment_due_date";
+  static const String dueDateOverdueBanner = "due_date_overdue_banner";
+  static const String dueDateTodayBanner = "due_date_today_banner";
+  static const String dueDateTomorrowBanner = "due_date_tomorrow_banner";
+  static const String dueDateUpcomingBanner = "due_date_upcoming_banner";
+  static const String dueDateOverdueBannerMultiple =
+      "due_date_overdue_banner_multiple";
+  static const String dueDateTodayBannerMultiple =
+      "due_date_today_banner_multiple";
+  static const String dueDateTomorrowBannerMultiple =
+      "due_date_tomorrow_banner_multiple";
+  static const String dueDateUpcomingBannerMultiple =
+      "due_date_upcoming_banner_multiple";
+  static const String remindPayment = "remind_payment";
+  static const String paymentDueDateBadge = "payment_due_date_badge";
+  static const String after3Days = "after_3_days";
+  static const String after1Week = "after_1_week";
+  static const String after2Weeks = "after_2_weeks";
+  static const String endOfMonth = "end_of_month";
+  static const String customDate = "custom_date";
+  static const String filterOverdue = "filter_overdue";
+  static const String filterDueSoon = "filter_due_soon";
+  static const String rescheduleDueDate = "reschedule_due_date";
+  static const String dueDateUpdatedSuccess = "due_date_updated_success";
+  static const String globalDueBannerSingle = "global_due_banner_single";
+  static const String globalDueBannerMultiple = "global_due_banner_multiple";
+  static const String viewAndRemind = "view_and_remind";
+  static const String dismissBanner = "dismiss_banner";
+  static const String clear = "clear";
 }

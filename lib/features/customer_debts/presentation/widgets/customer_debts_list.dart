@@ -20,7 +20,12 @@ import '../../../debt/presentation/cubit/debt_state.dart';
 
 class CustomerDebtsList extends StatefulWidget {
   final String searchQuery;
-  const CustomerDebtsList({super.key, this.searchQuery = ''});
+  final String filter;
+  const CustomerDebtsList({
+    super.key,
+    this.searchQuery = '',
+    this.filter = 'all',
+  });
 
   @override
   State<CustomerDebtsList> createState() => _CustomerDebtsListState();
@@ -203,8 +208,22 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
       }
     }
 
+    final String filter = params['filter'] ?? 'all';
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final in3Days = today.add(const Duration(days: 3));
+
     final List<CustomerDebtDetail> results = groupedMap.entries.map((entry) {
       return CustomerDebtDetail.fromEntities(entry.key, entry.value);
+    }).where((detail) {
+      if (filter == 'all') return true;
+
+      if (filter == 'overdue') {
+        return detail.items.any((i) => i.isUnremindedOverdue(today));
+      } else if (filter == 'due_soon') {
+        return detail.items.any((i) => i.isUnremindedDueSoon(today, in3Days));
+      }
+      return true;
     }).toList();
 
     return results..sort((a, b) => b.lastActivity.compareTo(a.lastActivity));
@@ -267,6 +286,7 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
           final customers = _filterAndGroupDebts({
             'debts': state.debts,
             'query': widget.searchQuery,
+            'filter': widget.filter,
           });
 
           if (customers.isEmpty) {

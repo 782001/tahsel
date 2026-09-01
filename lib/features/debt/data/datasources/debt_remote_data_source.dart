@@ -97,12 +97,111 @@ abstract class DebtRemoteDataSource {
     required double creditAmount,
     String? note,
   });
+  Future<void> recordReminderSent({
+    required String uid,
+    required String customerName,
+    List<String>? debtIds,
+  });
+  Future<void> updateDebtDueDate({
+    required String uid,
+    required String debtId,
+    required DateTime? dueDate,
+  });
 }
 
 class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
   final FirebaseFirestore firestore;
 
   DebtRemoteDataSourceImpl({required this.firestore});
+
+  @override
+  Future<void> updateDebtDueDate({
+    required String uid,
+    required String debtId,
+    required DateTime? dueDate,
+  }) async {
+    try {
+      final userRef = firestore.collection('users').doc(uid);
+      final debtRef = userRef.collection('debts').doc(debtId);
+      final opRef = userRef.collection('operations').doc(debtId);
+
+      final dueDateTimestamp =
+          dueDate != null ? Timestamp.fromDate(dueDate) : null;
+
+      final batch = firestore.batch();
+
+      batch.set(
+        debtRef,
+        {
+          'dueDate': dueDateTimestamp,
+          'lastReminderSentAt': null,
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+
+      batch.set(
+        opRef,
+        {
+          'dueDate': dueDateTimestamp,
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+
+      // If this debt is linked to an invoice (debt_inv_<invoiceId>)
+      if (debtId.startsWith('debt_inv_')) {
+        final invoiceId = debtId.substring('debt_inv_'.length);
+        final invRef = userRef.collection('invoices').doc(invoiceId);
+        batch.set(
+          invRef,
+          {
+            'dueDate': dueDateTimestamp,
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      }
+
+      await batch.commit();
+    } catch (_) {}
+  }
+
+  @override
+  Future<void> recordReminderSent({
+    required String uid,
+    required String customerName,
+    List<String>? debtIds,
+  }) async {
+    try {
+      final userRef = firestore.collection('users').doc(uid);
+      final batch = firestore.batch();
+
+      if (debtIds != null && debtIds.isNotEmpty) {
+        for (final id in debtIds) {
+          final docRef = userRef.collection('debts').doc(id);
+          batch.update(docRef, {
+            'lastReminderSentAt': FieldValue.serverTimestamp(),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+      } else {
+        final debtsQuery = await userRef
+            .collection('debts')
+            .where('customerName', isEqualTo: customerName)
+            .where('isPaid', isEqualTo: false)
+            .get();
+
+        for (final doc in debtsQuery.docs) {
+          batch.update(doc.reference, {
+            'lastReminderSentAt': FieldValue.serverTimestamp(),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+      }
+      await batch.commit();
+    } catch (_) {}
+  }
 
   @override
   Future<void> settleCustomerCredit({

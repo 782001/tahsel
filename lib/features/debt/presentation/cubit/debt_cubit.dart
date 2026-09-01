@@ -13,6 +13,8 @@ import 'package:tahsel/features/debt/domain/usecases/mark_customer_as_paid_useca
 import 'package:tahsel/features/debt/domain/usecases/mark_item_as_paid_usecase.dart';
 import 'package:tahsel/features/debt/domain/usecases/pay_debt_usecase.dart';
 import 'package:tahsel/features/debt/domain/usecases/pay_item_debt_usecase.dart';
+import 'package:tahsel/features/debt/domain/usecases/record_reminder_sent_usecase.dart';
+import 'package:tahsel/features/debt/domain/usecases/update_debt_due_date_usecase.dart';
 import 'debt_state.dart';
 
 class DebtCubit extends Cubit<DebtState> {
@@ -26,6 +28,8 @@ class DebtCubit extends Cubit<DebtState> {
   final DeleteCustomerDebtUseCase deleteCustomerDebtUseCase;
   final DeleteDebtItemUseCase deleteDebtItemUseCase;
   final GetCustomerDebtsUseCase getCustomerDebtsUseCase;
+  final RecordReminderSentUseCase recordReminderSentUseCase;
+  final UpdateDebtDueDateUseCase updateDebtDueDateUseCase;
 
   DebtCubit({
     required this.addDebtUseCase,
@@ -38,7 +42,24 @@ class DebtCubit extends Cubit<DebtState> {
     required this.deleteCustomerDebtUseCase,
     required this.deleteDebtItemUseCase,
     required this.getCustomerDebtsUseCase,
+    required this.recordReminderSentUseCase,
+    required this.updateDebtDueDateUseCase,
   }) : super(DebtInitial());
+
+  Future<void> updateDebtDueDate({
+    required String uid,
+    required String debtId,
+    required DateTime? dueDate,
+  }) async {
+    await updateDebtDueDateUseCase(
+      UpdateDebtDueDateParams(
+        uid: uid,
+        debtId: debtId,
+        dueDate: dueDate,
+      ),
+    );
+    getDebts(uid, forceRefresh: true);
+  }
 
   Future<void> addDebt({
     required String uid,
@@ -50,6 +71,7 @@ class DebtCubit extends Cubit<DebtState> {
     required String? ledgerNumber,
     String? operationId,
     DateTime? timestamp,
+    DateTime? dueDate,
   }) async {
     if (state is DebtLoading) return;
     final sanitizedName = customerName.replaceAll('/', ' ').trim();
@@ -68,6 +90,7 @@ class DebtCubit extends Cubit<DebtState> {
         ledgerNumber: ledgerNumber,
         operationId: operationId,
         now: now,
+        dueDate: dueDate,
       ),
     );
 
@@ -78,6 +101,21 @@ class DebtCubit extends Cubit<DebtState> {
       emit(DebtAddSuccess(debtId: debtId));
       getDebts(uid, forceRefresh: true);
     });
+  }
+
+  Future<void> recordReminderSent({
+    required String uid,
+    required String customerName,
+    List<String>? debtIds,
+  }) async {
+    final sanitizedName = customerName.replaceAll('/', ' ').trim();
+    await recordReminderSentUseCase(
+      RecordReminderSentParams(
+        uid: uid,
+        customerName: sanitizedName,
+        debtIds: debtIds,
+      ),
+    );
   }
 
   Future<void> getDebts(String uid, {bool forceRefresh = false}) async {
@@ -314,6 +352,7 @@ class _AddCustomerDebtParams {
   final String? ledgerNumber;
   final String? operationId;
   final DateTime now;
+  final DateTime? dueDate;
 
   _AddCustomerDebtParams({
     required this.uid,
@@ -325,6 +364,7 @@ class _AddCustomerDebtParams {
     required this.ledgerNumber,
     this.operationId,
     required this.now,
+    this.dueDate,
   });
 }
 
@@ -350,5 +390,6 @@ DebtEntity _createCustomerDebtEntity(_AddCustomerDebtParams params) {
     timestamp: params.now,
     isPaid: remainingAmount <= 0,
     ledgerNumber: params.ledgerNumber,
+    dueDate: params.dueDate,
   );
 }

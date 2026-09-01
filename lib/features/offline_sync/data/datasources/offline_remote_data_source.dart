@@ -261,6 +261,9 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
 
     final batch = firestore.batch();
 
+    if (payload['dueDate'] is String && (payload['dueDate'] as String).isNotEmpty) {
+      payload['dueDate'] = Timestamp.fromDate(DateTime.parse(payload['dueDate'] as String));
+    }
     payload['timestamp'] = timestamp;
     payload['lastUpdatedAt'] = FieldValue.serverTimestamp();
     payload['syncedAt'] = FieldValue.serverTimestamp();
@@ -451,6 +454,9 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
     }
     if (payload['lastUpdatedAt'] is String) {
       payload['lastUpdatedAt'] = Timestamp.fromDate(DateTime.parse(payload['lastUpdatedAt']));
+    }
+    if (payload['dueDate'] is String && (payload['dueDate'] as String).isNotEmpty) {
+      payload['dueDate'] = Timestamp.fromDate(DateTime.parse(payload['dueDate'] as String));
     }
 
     payload['syncedAt'] = FieldValue.serverTimestamp();

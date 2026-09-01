@@ -427,6 +427,7 @@ class InvoiceCubit extends Cubit<InvoiceState> {
             isPaid: false,
             phoneNumber: invoice.customerPhone,
             ledgerNumber: invoiceId,
+            dueDate: invoice.dueDate,
           );
 
           final debtResult = await addDebtUseCase(AddDebtParams(debt: debt));

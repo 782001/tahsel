@@ -123,6 +123,8 @@ class InvoiceEntity extends Equatable {
   /// Indicates if the paid amount of this voided invoice was refunded to customer and deducted from vault.
   final bool isRefundedToCustomer;
 
+  final DateTime? dueDate;
+
   const InvoiceEntity({
     required this.id,
     required this.uid,
@@ -140,6 +142,7 @@ class InvoiceEntity extends Equatable {
     this.syncedTotalPaid,
     this.discountAmount = 0.0,
     this.isRefundedToCustomer = false,
+    this.dueDate,
   });
 
   double get subtotalAmount => items.fold(0.0, (sum, item) => sum + item.total);
@@ -178,6 +181,8 @@ class InvoiceEntity extends Equatable {
     double? syncedTotalPaid,
     double? discountAmount,
     bool? isRefundedToCustomer,
+    DateTime? dueDate,
+    bool clearDueDate = false,
   }) {
     return InvoiceEntity(
       id: id ?? this.id,
@@ -196,6 +201,7 @@ class InvoiceEntity extends Equatable {
       syncedTotalPaid: syncedTotalPaid ?? this.syncedTotalPaid,
       discountAmount: discountAmount ?? this.discountAmount,
       isRefundedToCustomer: isRefundedToCustomer ?? this.isRefundedToCustomer,
+      dueDate: clearDueDate ? null : (dueDate ?? this.dueDate),
     );
   }
 
@@ -217,5 +223,6 @@ class InvoiceEntity extends Equatable {
     syncedTotalPaid,
     discountAmount,
     isRefundedToCustomer,
+    dueDate,
   ];
 }

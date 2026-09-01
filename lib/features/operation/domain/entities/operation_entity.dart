@@ -17,6 +17,7 @@ class OperationEntity extends Equatable {
   final int? turnCount;
   final double? rate;
   final String? ledgerNumber;
+  final DateTime? dueDate;
 
   const OperationEntity({
     this.id,
@@ -35,6 +36,7 @@ class OperationEntity extends Equatable {
     this.turnCount,
     this.rate,
     this.ledgerNumber,
+    this.dueDate,
   });
 
   @override
@@ -55,5 +57,6 @@ class OperationEntity extends Equatable {
     turnCount,
     rate,
     ledgerNumber,
+    dueDate,
   ];
 }

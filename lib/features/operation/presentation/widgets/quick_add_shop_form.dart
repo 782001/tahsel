@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:tahsel/core/extensions/extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/customer/presentation/widgets/customer_autocomplete_field.dart';
+import 'package:tahsel/features/invoice/presentation/widgets/multi_inventory_picker_bottom_sheet.dart';
 import 'package:tahsel/features/product/presentation/widgets/product_autocomplete_field.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
-
-import 'package:tahsel/core/extensions/extensions.dart';
-import 'package:tahsel/features/invoice/presentation/widgets/multi_inventory_picker_bottom_sheet.dart';
+import 'package:tahsel/shared/widgets/quick_due_date_selector.dart';
 
 class QuickAddShopForm extends StatelessWidget {
   final TextEditingController totalAmountController;
@@ -32,6 +32,8 @@ class QuickAddShopForm extends StatelessWidget {
   final TextInputAction debtInputAction;
   final ValueChanged<String>? onDebtSubmitted;
   final VoidCallback? onContactPickerPressed;
+  final DateTime? dueDate;
+  final ValueChanged<DateTime?>? onDueDateChanged;
 
   const QuickAddShopForm({
     super.key,
@@ -57,6 +59,8 @@ class QuickAddShopForm extends StatelessWidget {
     this.debtInputAction = TextInputAction.done,
     this.onDebtSubmitted,
     this.onContactPickerPressed,
+    this.dueDate,
+    this.onDueDateChanged,
   });
 
   void _openInventoryPicker(BuildContext context) {
@@ -69,13 +73,15 @@ class QuickAddShopForm extends StatelessWidget {
         onItemsConfirmed: (selectedItems) {
           if (selectedItems.isEmpty) return;
 
-          final productNames = selectedItems.map((item) {
-            final qtyStr = item.quantity.toSmartAmount();
-            final priceStr = item.product.sellingPrice.toSmartAmount();
-            return item.quantity > 1
-                ? '${item.product.name} ($qtyStr × $priceStr)'
-                : item.product.name;
-          }).join(' + ');
+          final productNames = selectedItems
+              .map((item) {
+                final qtyStr = item.quantity.toSmartAmount();
+                final priceStr = item.product.sellingPrice.toSmartAmount();
+                return item.quantity > 1
+                    ? '${item.product.name} ($qtyStr × $priceStr)'
+                    : item.product.name;
+              })
+              .join(' + ');
 
           productController.text = productNames;
 
@@ -307,49 +313,59 @@ class QuickAddShopForm extends StatelessWidget {
               ],
             ],
           ),
-          if (isShop) const SizedBox(height: 12),
-          if (isShop)
-            ValueListenableBuilder<TextEditingValue>(
-              valueListenable: debtController,
-              builder: (context, value, child) {
-                final debt = double.tryParse(value.text) ?? 0.0;
-                if (debt <= 0) return const SizedBox.shrink();
-                return FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryColor.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          size: 14,
-                          color: AppColors.primaryColor,
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: debtController,
+            builder: (context, value, child) {
+              final debt = double.tryParse(value.text) ?? 0.0;
+              if (debt <= 0) return const SizedBox.shrink();
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 12),
+                  if (isShop)
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          "${AppStrings.remainingDebt.tr()}: ${value.text} ${AppStrings.currencyEgp.tr()}",
-                          style: TextStyles.customStyle(
-                            color: AppColors.primaryColor,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryColor.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                      ],
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              size: 14,
+                              color: AppColors.primaryColor,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              "${AppStrings.remainingDebt.tr()}: ${value.text} ${AppStrings.currencyEgp.tr()}",
+                              style: TextStyles.customStyle(
+                                color: AppColors.primaryColor,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
+                  const SizedBox(height: 8),
+                  QuickDueDateSelector(
+                    selectedDate: dueDate,
+                    onDateChanged: (date) => onDueDateChanged?.call(date),
                   ),
-                );
-              },
-            ),
+                ],
+              );
+            },
+          ),
         ],
       ),
     );

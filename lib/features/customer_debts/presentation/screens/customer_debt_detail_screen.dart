@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -10,6 +11,7 @@ import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/customer/presentation/widgets/notification_dialog.dart';
 import 'package:tahsel/features/customer_debts/data/models/debt_item_model.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/add_debt_dialog.dart';
+import 'package:tahsel/features/customer_debts/presentation/widgets/debt_due_date_warning_banner.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/debt_item_card.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/header_banner.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/notification_preference_toggle.dart';
@@ -44,6 +46,7 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
   late CustomerDebtDetail currentDetail;
   bool _isLoading = true;
   bool _hasChanged = false;
+  bool _isDueDateBannerDismissed = false;
 
   @override
   void initState() {
@@ -167,6 +170,100 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
         ),
       ),
     ).then((_) => _fetchDebts());
+  }
+
+  Future<void> _triggerPaymentReminder(
+    BuildContext context,
+    CustomerDebtDetail currentDetail, {
+    DebtItem? specificDebt,
+  }) async {
+    final uid = AppStrings.userToken;
+    if (uid.isEmpty) return;
+
+    if (context.read<ConnectivityCubit>().state
+        is ConnectivityDisconnected) {
+      showfailureToast(
+        AppStrings.noInternetConnection.tr(),
+      );
+      return;
+    }
+
+    final double reminderAmount;
+    final String? reminderNote;
+    final DateTime? reminderDate = specificDebt?.dueDate;
+
+    if (specificDebt?.dueDate != null) {
+      final sameDayDebts = currentDetail.debtsDueOn(specificDebt!.dueDate!);
+      if (sameDayDebts.length > 1) {
+        reminderAmount = sameDayDebts.fold<double>(
+          0.0,
+          (sum, d) => sum + (d.remainingDebt > 0 ? d.remainingDebt : 0.0),
+        );
+        final isArabic = AppStrings.currentLang == 'ar';
+        final header = isArabic
+            ? 'عدد ${sameDayDebts.length} عمليات مستحقة السداد:'
+            : '${sameDayDebts.length} operations due for payment:';
+        final currency = AppStrings.currencyEgp.tr();
+        final itemsBreakdown = sameDayDebts.map((d) {
+          final desc = d.itemDescription.trim().isNotEmpty
+              ? d.itemDescription.trim()
+              : (isArabic ? 'دين' : 'Debt');
+          return '• $desc (${d.remainingDebt.toSmartAmount()} $currency)';
+        }).join('\n');
+        reminderNote = '$header\n$itemsBreakdown';
+      } else {
+        reminderAmount = specificDebt.remainingDebt;
+        reminderNote = specificDebt.itemDescription.trim().isNotEmpty
+            ? specificDebt.itemDescription.trim()
+            : AppStrings.customerDebts.tr();
+      }
+    } else {
+      reminderAmount = currentDetail.totalDebt;
+      reminderNote = AppStrings.customerDebts.tr();
+    }
+
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (_) => PaymentReminderDialog(
+        customerName: currentDetail.customerName,
+        totalRemaining: reminderAmount,
+        defaultNote: reminderNote,
+        defaultDate: reminderDate,
+      ),
+    );
+
+    if (result != null && context.mounted) {
+      final List<String> remindedDebtIds = [];
+      if (specificDebt?.dueDate != null) {
+        final sameDayDebts = currentDetail.debtsDueOn(specificDebt!.dueDate!);
+        for (final d in sameDayDebts) {
+          if (d.entity.id != null && d.entity.id!.isNotEmpty) {
+            remindedDebtIds.add(d.entity.id!);
+          }
+        }
+      } else if (specificDebt?.entity.id != null &&
+          specificDebt!.entity.id!.isNotEmpty) {
+        remindedDebtIds.add(specificDebt.entity.id!);
+      }
+
+      context.read<DebtCubit>().recordReminderSent(
+            uid: uid,
+            customerName: currentDetail.customerName,
+            debtIds: remindedDebtIds.isNotEmpty ? remindedDebtIds : null,
+          );
+      _fetchDebts();
+
+      NotificationDialog.show(
+        context: context,
+        customerName: currentDetail.customerName,
+        amountPaid: result['amount'],
+        remainingBalance: currentDetail.totalDebt,
+        totalDebt: currentDetail.totalDebt,
+        note: result['note'],
+        operationType: 'reminder',
+        targetDate: result['targetDate'],
+      );
+    }
   }
 
   @override
@@ -387,19 +484,28 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                 flexibleSpace: FlexibleSpaceBar(
                   background: HeaderBanner(detail: currentDetail),
                 ),
-                // bottom: PreferredSize(
-                //   preferredSize: const Size.fromHeight(0),
-                //   child: Container(
-                //     height: 20.h,
-                //     decoration: BoxDecoration(
-                //       color: AppColors.scafoldBackGround,
-                //       borderRadius: BorderRadius.vertical(
-                //         top: Radius.circular(24.r),
-                //       ),
-                //     ),
-                //   ),
-                // ),
               ),
+
+              // ── Due Date Warning Banner ─────────────────────────────────────
+              if (currentDetail.activeDueDebt != null && !_isDueDateBannerDismissed)
+                SliverToBoxAdapter(
+                  child: DebtDueDateWarningBanner(
+                    debtItem: currentDetail.activeDueDebt!,
+                    dueDebtsCount: currentDetail
+                        .debtsDueOn(currentDetail.activeDueDebt!.dueDate!)
+                        .length,
+                    onRemindTap: () => _triggerPaymentReminder(
+                      context,
+                      currentDetail,
+                      specificDebt: currentDetail.activeDueDebt,
+                    ),
+                    onDismiss: () {
+                      setState(() {
+                        _isDueDateBannerDismissed = true;
+                      });
+                    },
+                  ),
+                ),
 
               // ── Summary Cards ───────────────────────────────────────────────
               SliverToBoxAdapter(
@@ -521,37 +627,10 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                             SizedBox(
                               width: double.infinity,
                               child: OutlinedButton.icon(
-                                onPressed: () async {
-                                  if (context.read<ConnectivityCubit>().state
-                                      is ConnectivityDisconnected) {
-                                    showfailureToast(
-                                      AppStrings.noInternetConnection.tr(),
-                                    );
-                                    return;
-                                  }
-                                  final result =
-                                      await showDialog<Map<String, dynamic>>(
-                                        context: context,
-                                        builder: (_) => PaymentReminderDialog(
-                                          customerName:
-                                              currentDetail.customerName,
-                                          totalRemaining:
-                                              currentDetail.totalDebt,
-                                        ),
-                                      );
-                                  if (result != null && context.mounted) {
-                                    NotificationDialog.show(
-                                      context: context,
-                                      customerName: currentDetail.customerName,
-                                      amountPaid: result['amount'],
-                                      remainingBalance: currentDetail.totalDebt,
-                                      totalDebt: currentDetail.totalDebt,
-                                      note: result['note'],
-                                      operationType: 'reminder',
-                                      targetDate: result['targetDate'],
-                                    );
-                                  }
-                                },
+                                onPressed: () => _triggerPaymentReminder(
+                                  context,
+                                  currentDetail,
+                                ),
                                 icon: const Icon(
                                   Icons.notifications_active_rounded,
                                   size: 18,

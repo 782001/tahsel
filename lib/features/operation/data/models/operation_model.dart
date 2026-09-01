@@ -19,6 +19,7 @@ class OperationModel extends OperationEntity {
     super.turnCount,
     super.rate,
     super.ledgerNumber,
+    super.dueDate,
   });
 
   factory OperationModel.fromJson(Map<String, dynamic> json, String id) {
@@ -33,12 +34,25 @@ class OperationModel extends OperationEntity {
       totalAmount: (json['totalAmount'] ?? 0).toDouble(),
       paidAmount: (json['paidAmount'] ?? 0).toDouble(),
       remainingDebt: (json['remainingDebt'] ?? 0).toDouble(),
-      timestamp: (json['timestamp'] as Timestamp?)?.toDate(),
-      lastUpdatedAt: (json['lastUpdatedAt'] as Timestamp?)?.toDate(),
+      timestamp: json['timestamp'] != null
+          ? (json['timestamp'] is Timestamp
+              ? (json['timestamp'] as Timestamp).toDate()
+              : DateTime.tryParse(json['timestamp'].toString()))
+          : null,
+      lastUpdatedAt: json['lastUpdatedAt'] != null
+          ? (json['lastUpdatedAt'] is Timestamp
+              ? (json['lastUpdatedAt'] as Timestamp).toDate()
+              : DateTime.tryParse(json['lastUpdatedAt'].toString()))
+          : null,
       durationMinutes: json['durationMinutes'],
       turnCount: json['turnCount'],
       rate: json['rate']?.toDouble(),
       ledgerNumber: json['ledgerNumber'] as String?,
+      dueDate: json['dueDate'] != null
+          ? (json['dueDate'] is Timestamp
+              ? (json['dueDate'] as Timestamp).toDate()
+              : DateTime.tryParse(json['dueDate'].toString()))
+          : null,
     );
   }
 
@@ -63,6 +77,7 @@ class OperationModel extends OperationEntity {
       'turnCount': turnCount,
       'rate': rate,
       if (ledgerNumber != null) 'ledgerNumber': ledgerNumber,
+      if (dueDate != null) 'dueDate': Timestamp.fromDate(dueDate!),
     };
   }
 
@@ -84,6 +99,7 @@ class OperationModel extends OperationEntity {
       turnCount: entity.turnCount,
       rate: entity.rate,
       ledgerNumber: entity.ledgerNumber,
+      dueDate: entity.dueDate,
     );
   }
 }

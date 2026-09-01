@@ -11,11 +11,15 @@ import 'package:tahsel/features/standard_features/no-internet/logic/connectivity
 class PaymentReminderDialog extends StatefulWidget {
   final String customerName;
   final double totalRemaining;
+  final String? defaultNote;
+  final DateTime? defaultDate;
 
   const PaymentReminderDialog({
     super.key,
     required this.customerName,
     required this.totalRemaining,
+    this.defaultNote,
+    this.defaultDate,
   });
 
   @override
@@ -24,7 +28,7 @@ class PaymentReminderDialog extends StatefulWidget {
 
 class _PaymentReminderDialogState extends State<PaymentReminderDialog> {
   late TextEditingController _amountController;
-  final TextEditingController _noteController = TextEditingController();
+  late TextEditingController _noteController;
   String? _errorText;
   DateTime? _selectedDate;
   bool _isLoading = false;
@@ -34,7 +38,8 @@ class _PaymentReminderDialogState extends State<PaymentReminderDialog> {
     super.initState();
     _amountController =
         TextEditingController(text: widget.totalRemaining.toStringAsFixed(1));
-    _selectedDate = DateTime.now();
+    _noteController = TextEditingController(text: widget.defaultNote ?? '');
+    _selectedDate = widget.defaultDate ?? DateTime.now();
   }
 
   @override
@@ -104,7 +109,9 @@ class _PaymentReminderDialogState extends State<PaymentReminderDialog> {
       'amount': amount,
       'note': _noteController.text.trim().isNotEmpty
           ? _noteController.text.trim()
-          : AppStrings.customerDebts.tr(),
+          : (widget.defaultNote?.isNotEmpty == true
+              ? widget.defaultNote!
+              : AppStrings.customerDebts.tr()),
       'targetDate': _selectedDate,
     });
   }

@@ -84,6 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _durationMinutes = 60; // Default to 60 mins (1 hour)
   String? _customerError;
   String? _selectedPhoneNumber;
+  DateTime? _dueDate;
 
   void _onContactPickerPressed() async {
     final result = await ContactService.pickContact(context);
@@ -211,6 +212,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _durationMinutes = 60;
       _customerError = null;
       _selectedPhoneNumber = null;
+      _dueDate = null;
     });
   }
 
@@ -388,6 +390,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ? _ledgerController.text.trim()
             : null,
         lastUpdatedAt: DateTime.now(),
+        dueDate: _dueDate,
       );
     } else {
       if (_psSubMode == PlayStationMode.time) return;
@@ -431,6 +434,7 @@ class _HomeScreenState extends State<HomeScreen> {
         turnCount: _matchCount,
         rate: double.tryParse(_turnRateController.text),
         lastUpdatedAt: DateTime.now(),
+        dueDate: _dueDate,
       );
     }
 
@@ -742,6 +746,12 @@ class _HomeScreenState extends State<HomeScreen> {
                             debtFocus: _debtFocus,
                             onDebtSubmitted: (_) => _submitOperation(context),
                             onContactPickerPressed: _onContactPickerPressed,
+                            dueDate: _dueDate,
+                            onDueDateChanged: (date) {
+                              setState(() {
+                                _dueDate = date;
+                              });
+                            },
                           ),
                         ],
 

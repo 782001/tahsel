@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart' as di;
@@ -1120,6 +1121,13 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                                 icon: Icons.link_rounded,
                                                 label:
                                                     '${AppStrings.invoiceLinkedToDebt.tr()}: ${_invoice.linkedDebtId}',
+                                              ),
+                                            if (_invoice.dueDate != null)
+                                              InvoiceInfoRow(
+                                                icon: Icons
+                                                    .event_available_rounded,
+                                                label:
+                                                    '${AppStrings.paymentDueDate.tr()}: ${DateFormat('yyyy/MM/dd').format(_invoice.dueDate!)}',
                                               ),
                                           ],
                                         ),
