@@ -139,18 +139,185 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
       showfailureToast(AppStrings.noInternetConnection.tr());
       return;
     }
-    final uid = AppStrings.userToken;
-    if (uid.isNotEmpty) {
-      context
-          .read<DebtCubit>()
-          .markAsPaid(
-            uid: uid,
-            customerName: customerName,
-            totalAmount: totalDebt,
-            note: AppStrings.fullSettlement.tr(),
-          )
-          .then((_) => _fetchDebts());
+    final currency = AppStrings.currencyEgp.tr();
+    showDialog(
+      context: context,
+      builder: (ctx) => Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+            title: Row(
+              children: [
+                Icon(
+                  Icons.check_circle_outline,
+                  color: AppColors.primaryColor,
+                  size: 24.r,
+                ),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Text(
+                    AppStrings.confirmFullSettlementTitle.tr(),
+                    style: TextStyles.customStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              AppStrings.confirmFullSettlementMsg
+                  .tr()
+                  .replaceAll('{customer}', customerName)
+                  .replaceAll('{amount}', totalDebt.toSmartAmount())
+                  .replaceAll('{currency}', currency),
+              style: TextStyles.customStyle(
+                fontSize: 14,
+                color: AppColors.textColor,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: Text(
+                  AppStrings.cancel.tr(),
+                  style: TextStyles.customStyle(
+                    color: AppColors.grey,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  final uid = AppStrings.userToken;
+                  if (uid.isNotEmpty) {
+                    context
+                        .read<DebtCubit>()
+                        .markAsPaid(
+                          uid: uid,
+                          customerName: customerName,
+                          totalAmount: totalDebt,
+                          note: AppStrings.fullSettlement.tr(),
+                        )
+                        .then((_) => _fetchDebts());
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryColor,
+                  foregroundColor: AppColors.whiteColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                ),
+                child: Text(
+                  AppStrings.confirmFullSettlementBtn.tr(),
+                  style: TextStyles.customStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _confirmPaySingleDebt(BuildContext context, DebtItem item) {
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      showfailureToast(AppStrings.noInternetConnection.tr());
+      return;
     }
+    final currency = AppStrings.currencyEgp.tr();
+    final itemDesc = item.itemDescription.trim().isNotEmpty
+        ? item.itemDescription.trim()
+        : AppStrings.customerDebts.tr();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+            title: Row(
+              children: [
+                Icon(
+                  Icons.check_circle_outline,
+                  color: AppColors.primaryColor,
+                  size: 24.r,
+                ),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Text(
+                    AppStrings.confirmPayDebtTitle.tr(),
+                    style: TextStyles.customStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              AppStrings.confirmPayDebtMsg
+                  .tr()
+                  .replaceAll('{item}', itemDesc)
+                  .replaceAll('{amount}', item.remainingDebt.toSmartAmount())
+                  .replaceAll('{currency}', currency),
+              style: TextStyles.customStyle(
+                fontSize: 14,
+                color: AppColors.textColor,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: Text(
+                  AppStrings.cancel.tr(),
+                  style: TextStyles.customStyle(
+                    color: AppColors.grey,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  context.read<DebtCubit>().markItemAsPaid(
+                    debt: item.entity,
+                    totalRemainingBefore: currentDetail.totalDebt,
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryColor,
+                  foregroundColor: AppColors.whiteColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                ),
+                child: Text(
+                  AppStrings.confirmPayDebtBtn.tr(),
+                  style: TextStyles.customStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _onAddNewDebt(BuildContext context, String customerName) {
@@ -761,12 +928,7 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                             ),
                           );
                         },
-                        onPayFull: (item) {
-                          context.read<DebtCubit>().markItemAsPaid(
-                            debt: item.entity,
-                            totalRemainingBefore: currentDetail.totalDebt,
-                          );
-                        },
+                        onPayFull: (item) => _confirmPaySingleDebt(context, item),
                         onRefresh: _fetchDebts,
                       );
                     }, childCount: currentDetail.items.length),
@@ -796,12 +958,7 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                             ),
                           );
                         },
-                        onPayFull: (item) {
-                          context.read<DebtCubit>().markItemAsPaid(
-                            debt: item.entity,
-                            totalRemainingBefore: currentDetail.totalDebt,
-                          );
-                        },
+                        onPayFull: (item) => _confirmPaySingleDebt(context, item),
                         onRefresh: _fetchDebts,
                       ),
                     );

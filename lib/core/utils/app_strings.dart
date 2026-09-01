@@ -1349,4 +1349,11 @@ class AppStrings {
   static const String viewAndRemind = "view_and_remind";
   static const String dismissBanner = "dismiss_banner";
   static const String clear = "clear";
+  static const String confirmFullSettlementTitle =
+      "confirm_full_settlement_title";
+  static const String confirmFullSettlementMsg = "confirm_full_settlement_msg";
+  static const String confirmFullSettlementBtn = "confirm_full_settlement_btn";
+  static const String confirmPayDebtTitle = "confirm_pay_debt_title";
+  static const String confirmPayDebtMsg = "confirm_pay_debt_msg";
+  static const String confirmPayDebtBtn = "confirm_pay_debt_btn";
 }

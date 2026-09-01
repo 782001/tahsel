@@ -1180,5 +1180,11 @@
   "global_due_banner_multiple": "Alert: You have {count} customers with payments due totaling {amount} EGP",
   "view_and_remind": "View & Remind",
   "dismiss_banner": "Dismiss",
-  "clear": "Clear"
+  "clear": "Clear",
+  "confirm_full_settlement_title": "Confirm Full Settlement",
+  "confirm_full_settlement_msg": "Are you sure you want to fully settle all debts for ({customer}) with total amount of {amount} {currency}?",
+  "confirm_full_settlement_btn": "Confirm Settlement",
+  "confirm_pay_debt_title": "Confirm Debt Payment",
+  "confirm_pay_debt_msg": "Are you sure you want to mark this debt ({item}) as paid with amount {amount} {currency}?",
+  "confirm_pay_debt_btn": "Confirm Payment"
 }

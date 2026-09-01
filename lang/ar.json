@@ -1183,5 +1183,11 @@
   "global_due_banner_multiple": "تنبيه: لديك {count} عملاء مستحق سداد ديونهم بمبلغ إجمالي {amount} ج.م",
   "view_and_remind": "عرض وتذكير",
   "dismiss_banner": "إخفاء",
-  "clear": "مسح"
+  "clear": "مسح",
+  "confirm_full_settlement_title": "تأكيد التسويه الكاملة",
+  "confirm_full_settlement_msg": "هل أنت متأكد من تسوية جميع ديون العميل ({customer}) بمبلغ إجمالي {amount} {currency}؟",
+  "confirm_full_settlement_btn": "تأكيد التسويه",
+  "confirm_pay_debt_title": "تأكيد سداد الدين",
+  "confirm_pay_debt_msg": "هل أنت متأكد من تسجيل سداد هذا الدين ({item}) بمبلغ {amount} {currency}؟",
+  "confirm_pay_debt_btn": "تأكيد السداد"
 }
