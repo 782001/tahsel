@@ -99,27 +99,39 @@ class OperationRepositoryImpl implements OperationRepository {
     try {
       if (!GetIt.I.isRegistered<InventoryRepository>()) return;
 
-      String name = rawProductName;
-      double quantity = 1.0;
-      final match = RegExp(
-        r'^(.*?)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*×.*?\))?$',
-      ).firstMatch(rawProductName);
-      if (match != null) {
-        final extractedName = match.group(1)?.trim();
-        if (extractedName != null && extractedName.isNotEmpty) {
-          name = extractedName;
+      final items = <Map<String, dynamic>>[];
+      final parts = rawProductName.split(RegExp(r'[\+,\n،]'));
+
+      for (final part in parts) {
+        final clean = part.trim();
+        if (clean.isEmpty) continue;
+
+        String name = clean;
+        double quantity = 1.0;
+        final match = RegExp(
+          r'^(.*?)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*×.*?\))?$',
+        ).firstMatch(clean);
+        if (match != null) {
+          final extractedName = match.group(1)?.trim();
+          if (extractedName != null && extractedName.isNotEmpty) {
+            name = extractedName;
+          }
+          if (match.group(2) != null) {
+            quantity = double.tryParse(match.group(2)!) ?? 1.0;
+          }
         }
-        if (match.group(2) != null) {
-          quantity = double.tryParse(match.group(2)!) ?? 1.0;
+
+        if (name.isNotEmpty) {
+          items.add({'name': name, 'quantity': quantity});
         }
       }
+
+      if (items.isEmpty) return;
 
       final inventoryRepo = GetIt.I<InventoryRepository>();
       await inventoryRepo.processInvoiceStockChange(
         invoiceId: localId,
-        items: [
-          {'name': name, 'quantity': quantity},
-        ],
+        items: items,
         type: StockMovementType.invoiceSale,
       );
     } catch (_) {}

@@ -425,24 +425,48 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                                 ),
                                 if (AppStrings.isVip &&
                                     AppStrings.userType == AppStrings.shop)
-                                  TextButton.icon(
-                                    onPressed: _openMultiInventoryPicker,
-                                    icon: Icon(
-                                      Icons.storefront_outlined,
-                                      color: AppColors.primaryColor,
-                                      size: 18,
-                                    ),
-                                    label: Text(
-                                      AppStrings.selectFromInventory.tr(),
-                                      style: TextStyles.customStyle(
-                                        color: AppColors.primaryColor,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
+                                  InkWell(
+                                    onTap: () => _openMultiInventoryPicker(),
+                                    borderRadius: BorderRadius.circular(10),
+
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primaryColor
+                                            .withValues(alpha: 0.08),
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: AppColors.primaryColor
+                                              .withValues(alpha: 0.25),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.storefront_outlined,
+                                            size: 18,
+                                            color: AppColors.primaryColor,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            AppStrings.selectFromInventory.tr(),
+                                            style: TextStyles.customStyle(
+                                              color: AppColors.primaryColor,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
                               ],
                             ),
+
                             const SizedBox(height: 12),
 
                             // Line item rows

@@ -27,10 +27,12 @@ class SelectedInventoryItem {
 
 class MultiInventoryPickerBottomSheet extends StatefulWidget {
   final Function(List<SelectedInventoryItem> selectedItems) onItemsConfirmed;
+  final String? confirmButtonText;
 
   const MultiInventoryPickerBottomSheet({
     super.key,
     required this.onItemsConfirmed,
+    this.confirmButtonText,
   });
 
   @override
@@ -758,7 +760,8 @@ class _MultiInventoryPickerBottomSheetState
                         color: Colors.white,
                       ),
                       label: Text(
-                        AppStrings.addSelectedItemsToInvoice.tr(),
+                        widget.confirmButtonText ??
+                            AppStrings.addSelectedItemsToInvoice.tr(),
                         style: TextStyles.customStyle(
                           fontSize: isDesktop ? 15 : 15,
                           fontWeight: FontWeight.bold,

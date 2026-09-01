@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -7,7 +6,8 @@ import 'package:tahsel/features/customer/presentation/widgets/customer_autocompl
 import 'package:tahsel/features/product/presentation/widgets/product_autocomplete_field.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 
-import 'quick_inventory_picker_bottom_sheet.dart';
+import 'package:tahsel/core/extensions/extensions.dart';
+import 'package:tahsel/features/invoice/presentation/widgets/multi_inventory_picker_bottom_sheet.dart';
 
 class QuickAddShopForm extends StatelessWidget {
   final TextEditingController totalAmountController;
@@ -64,22 +64,32 @@ class QuickAddShopForm extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => QuickInventoryPickerBottomSheet(
-        onProductSelected: (product, quantity, totalPrice) {
-          productController.text = quantity > 1
-              ? '${product.name} (${quantity.toInt()} × ${product.sellingPrice})'
-              : product.name;
+      builder: (ctx) => MultiInventoryPickerBottomSheet(
+        confirmButtonText: AppStrings.confirmSelection.tr(),
+        onItemsConfirmed: (selectedItems) {
+          if (selectedItems.isEmpty) return;
 
-          final formattedTotal = totalPrice % 1 == 0
-              ? totalPrice.toInt().toString()
-              : totalPrice.toStringAsFixed(2);
+          final productNames = selectedItems.map((item) {
+            final qtyStr = item.quantity.toSmartAmount();
+            final priceStr = item.product.sellingPrice.toSmartAmount();
+            return item.quantity > 1
+                ? '${item.product.name} ($qtyStr × $priceStr)'
+                : item.product.name;
+          }).join(' + ');
+
+          productController.text = productNames;
+
+          double totalPrice = 0.0;
+          for (final item in selectedItems) {
+            totalPrice += item.totalPrice;
+          }
+
+          final formattedTotal = totalPrice.toSmartAmount();
           totalAmountController.text = formattedTotal;
 
           final paid = double.tryParse(paidController.text) ?? 0.0;
           final debt = (totalPrice - paid).clamp(0.0, double.infinity);
-          debtController.text = debt % 1 == 0
-              ? debt.toInt().toString()
-              : debt.toStringAsFixed(2);
+          debtController.text = debt.toSmartAmount();
         },
       ),
     );

@@ -25,41 +25,49 @@ class ProductCubit extends Cubit<ProductState> {
   }
 
   Future<void> saveProduct(String uid, String name) async {
-    String cleanName = name.trim();
-    final match =
-        RegExp(r'^(.*?)(?:\s*\(\s*\d+.*?\))?$').firstMatch(cleanName);
-    if (match != null) {
-      final extracted = match.group(1)?.trim();
-      if (extracted != null && extracted.isNotEmpty) {
-        cleanName = extracted;
+    final cleanNames = _extractProductNames(name);
+    if (cleanNames.isEmpty) return;
+
+    for (final cleanName in cleanNames) {
+      final product =
+          ProductEntity(name: cleanName, lastUsedAt: DateTime.now());
+      await saveProductUseCase(
+        SaveProductParams(uid: uid, product: product),
+      );
+    }
+    fetchProducts(uid);
+  }
+
+  static List<String> _extractProductNames(String input) {
+    if (input.trim().isEmpty) return [];
+    final parts = input.split(RegExp(r'[\+,\n،]'));
+    final Set<String> cleanNames = {};
+    final qtyPattern = RegExp(r'^(.*?)(?:\s*\(\s*\d+(?:\.\d+)?.*?\))?$');
+
+    for (final part in parts) {
+      String clean = part.trim();
+      final match = qtyPattern.firstMatch(clean);
+      if (match != null) {
+        final extracted = match.group(1)?.trim();
+        if (extracted != null && extracted.isNotEmpty) {
+          clean = extracted;
+        }
+      }
+      if (clean.isNotEmpty) {
+        cleanNames.add(clean);
       }
     }
-
-    if (cleanName.isEmpty) return;
-
-    final product = ProductEntity(name: cleanName, lastUsedAt: DateTime.now());
-
-    // We don't await this if we want to be fast, but usually UI expects some feedback or just quiet update
-    final result = await saveProductUseCase(
-      SaveProductParams(uid: uid, product: product),
-    );
-    result.fold(
-      (failure) => null, // Silently fail for now or log
-      (_) {
-        // Refresh local list
-        fetchProducts(uid);
-      },
-    );
+    return cleanNames.toList();
   }
 
   List<ProductEntity> getSuggestions(String query) {
     final Set<String> seenNames = {};
     final List<ProductEntity> result = [];
+    final qtyPattern = RegExp(r'^(.*?)(?:\s*\(\s*\d+(?:\.\d+)?.*?\))?$');
 
     for (final p in _allProducts) {
       String cleanName = p.name.trim();
-      final match =
-          RegExp(r'^(.*?)(?:\s*\(\s*\d+.*?\))?$').firstMatch(cleanName);
+      final match = qtyPattern.firstMatch(cleanName);
       if (match != null) {
         final extracted = match.group(1)?.trim();
         if (extracted != null && extracted.isNotEmpty) {
