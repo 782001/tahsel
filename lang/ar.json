@@ -1198,5 +1198,7 @@
   "expenses_equal_compared": "مصاريف هذا الشهر متطابقة تماماً مع الشهر السابق ({amount} {currency}) دون أي تغيير",
   "reorder_purchase_invoice": "إعادة طلب نفس الفاتورة",
   "view_supplier_details": "عرض التفاصيل والفواتير",
-  "added_on": "تاريخ الإضافة"
+  "added_on": "تاريخ الإضافة",
+  "low_stock_filter": "كمية منخفضة",
+  "adequate_stock_filter": "كميات مناسبة"
 }

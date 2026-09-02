@@ -1367,4 +1367,6 @@ class AppStrings {
   static const String reorderPurchaseInvoice = "reorder_purchase_invoice";
   static const String viewSupplierDetails = "view_supplier_details";
   static const String addedOn = "added_on";
+  static const String lowStockFilter = "low_stock_filter";
+  static const String adequateStockFilter = "adequate_stock_filter";
 }

@@ -41,6 +41,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
   String? _selectedCategory;
   String? _selectedSupplier;
   bool _showLowStockOnly = false;
+  bool _showAdequateStockOnly = false;
   bool _showBestSellersOnly = false;
 
   @override
@@ -352,6 +353,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       physics: const BouncingScrollPhysics(),
                       child: Row(
                         children: [
+                          // 1. Best Sellers Filter Chip
                           ChoiceChip(
                             showCheckmark: false,
                             selected: _showBestSellersOnly,
@@ -360,7 +362,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
                               children: [
                                 Icon(
                                   Icons.local_fire_department_rounded,
-                                  color: AppColors.blackLight,
+                                  color: _showBestSellersOnly
+                                      ? Colors.white
+                                      : AppColors.bestSellerStart,
                                   size: 14,
                                 ),
                                 SizedBox(width: isDesktop ? 4 : 4.w),
@@ -381,7 +385,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                 .withValues(alpha: 0.1),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(
-                                isDesktop ? 20 : 20.r,
+                                isDesktop ? 10 : 10.r,
                               ),
                               side: BorderSide(
                                 color: _showBestSellersOnly
@@ -393,6 +397,110 @@ class _ProductsScreenState extends State<ProductsScreen> {
                             ),
                             onSelected: (selected) {
                               setState(() => _showBestSellersOnly = selected);
+                            },
+                          ),
+                          SizedBox(width: isDesktop ? 8 : 8.w),
+
+                          // 2. Low Stock Filter Chip
+                          ChoiceChip(
+                            showCheckmark: false,
+                            selected: _showLowStockOnly,
+                            label: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.warning_amber_rounded,
+                                  color: _showLowStockOnly
+                                      ? Colors.white
+                                      : AppColors.warning,
+                                  size: 14,
+                                ),
+                                SizedBox(width: isDesktop ? 4 : 4.w),
+                                Text(
+                                  AppStrings.lowStockFilter.tr(),
+                                  style: TextStyles.customStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: _showLowStockOnly
+                                        ? Colors.white
+                                        : AppColors.warning,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            selectedColor: AppColors.warning,
+                            backgroundColor: AppColors.warning.withValues(
+                              alpha: 0.1,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                isDesktop ? 10 : 10.r,
+                              ),
+                              side: BorderSide(
+                                color: _showLowStockOnly
+                                    ? AppColors.warning
+                                    : AppColors.warning.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            onSelected: (selected) {
+                              setState(() {
+                                _showLowStockOnly = selected;
+                                if (selected) {
+                                  _showAdequateStockOnly = false;
+                                }
+                              });
+                            },
+                          ),
+                          SizedBox(width: isDesktop ? 8 : 8.w),
+
+                          // 3. Adequate Stock Filter Chip
+                          ChoiceChip(
+                            showCheckmark: false,
+                            selected: _showAdequateStockOnly,
+                            label: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.check_circle_outline_rounded,
+                                  color: _showAdequateStockOnly
+                                      ? Colors.white
+                                      : AppColors.green,
+                                  size: 14,
+                                ),
+                                SizedBox(width: isDesktop ? 4 : 4.w),
+                                Text(
+                                  AppStrings.adequateStockFilter.tr(),
+                                  style: TextStyles.customStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: _showAdequateStockOnly
+                                        ? Colors.white
+                                        : AppColors.green,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            selectedColor: AppColors.green,
+                            backgroundColor: AppColors.green.withValues(
+                              alpha: 0.1,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                isDesktop ? 10 : 10.r,
+                              ),
+                              side: BorderSide(
+                                color: _showAdequateStockOnly
+                                    ? AppColors.green
+                                    : AppColors.green.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            onSelected: (selected) {
+                              setState(() {
+                                _showAdequateStockOnly = selected;
+                                if (selected) {
+                                  _showLowStockOnly = false;
+                                }
+                              });
                             },
                           ),
                         ],
@@ -428,6 +536,13 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                       .where(
                                         (p) =>
                                             p.currentQuantity <= p.minQuantity,
+                                      )
+                                      .toList();
+                                } else if (_showAdequateStockOnly) {
+                                  products = products
+                                      .where(
+                                        (p) =>
+                                            p.currentQuantity > p.minQuantity,
                                       )
                                       .toList();
                                 }

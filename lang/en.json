@@ -1195,5 +1195,7 @@
   "expenses_equal_compared": "This month's expenses are identical to last month ({amount} {currency}) with no change",
   "reorder_purchase_invoice": "Reorder this invoice",
   "view_supplier_details": "View Details & Invoices",
-  "added_on": "Added on"
+  "added_on": "Added on",
+  "low_stock_filter": "Low Stock",
+  "adequate_stock_filter": "Adequate Stock"
 }
