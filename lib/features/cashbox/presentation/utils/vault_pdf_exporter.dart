@@ -8,6 +8,8 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/assets.dart';
 
 import '../../domain/entities/vault_summary_entity.dart';
@@ -246,7 +248,7 @@ class VaultPdfExporter {
     required List<VaultTransactionEntity> transactions,
     required bool isArabic,
   }) {
-    final currency = isArabic ? 'ج.م' : 'EGP';
+    final currency = AppStrings.currencyEgp.tr();
 
     return pw.Row(
       children: [

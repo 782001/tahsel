@@ -112,6 +112,7 @@ class DebtRepositoryImpl implements DebtRepository {
     int limit = 15,
     DocumentSnapshot? lastDocument,
     bool forceRefresh = false,
+    String filter = 'all',
   }) async {
     try {
       final result = await remoteDataSource.getDebtsPaginated(
@@ -119,6 +120,7 @@ class DebtRepositoryImpl implements DebtRepository {
         limit: limit,
         lastDocument: lastDocument,
         forceRefresh: forceRefresh,
+        filter: filter,
       );
       return Right(result);
     } catch (e) {

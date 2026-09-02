@@ -194,8 +194,16 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen>
                                 _buildFilterChip(
                                   label: AppStrings.filterAll.tr(),
                                   isSelected: _selectedFilter == 'all',
-                                  onTap: () =>
-                                      setState(() => _selectedFilter = 'all'),
+                                  onTap: () {
+                                    if (_selectedFilter != 'all') {
+                                      setState(() => _selectedFilter = 'all');
+                                      context.read<DebtCubit>().getDebts(
+                                        AppStrings.userToken,
+                                        forceRefresh: true,
+                                        filter: 'all',
+                                      );
+                                    }
+                                  },
                                 ),
                                 const SizedBox(width: 8),
                                 _buildFilterChip(
@@ -203,9 +211,18 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen>
                                   icon: Icons.error_outline_rounded,
                                   color: AppColors.error,
                                   isSelected: _selectedFilter == 'overdue',
-                                  onTap: () => setState(
-                                    () => _selectedFilter = 'overdue',
-                                  ),
+                                  onTap: () {
+                                    if (_selectedFilter != 'overdue') {
+                                      setState(
+                                        () => _selectedFilter = 'overdue',
+                                      );
+                                      context.read<DebtCubit>().getDebts(
+                                        AppStrings.userToken,
+                                        forceRefresh: true,
+                                        filter: 'overdue',
+                                      );
+                                    }
+                                  },
                                 ),
                                 const SizedBox(width: 8),
                                 _buildFilterChip(
@@ -213,9 +230,18 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen>
                                   icon: Icons.schedule_rounded,
                                   color: AppColors.warning,
                                   isSelected: _selectedFilter == 'due_soon',
-                                  onTap: () => setState(
-                                    () => _selectedFilter = 'due_soon',
-                                  ),
+                                  onTap: () {
+                                    if (_selectedFilter != 'due_soon') {
+                                      setState(
+                                        () => _selectedFilter = 'due_soon',
+                                      );
+                                      context.read<DebtCubit>().getDebts(
+                                        AppStrings.userToken,
+                                        forceRefresh: true,
+                                        filter: 'due_soon',
+                                      );
+                                    }
+                                  },
                                 ),
                               ],
                             ),

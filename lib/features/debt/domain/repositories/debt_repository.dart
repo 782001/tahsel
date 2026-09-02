@@ -24,6 +24,7 @@ abstract class DebtRepository {
     int limit = 15,
     DocumentSnapshot? lastDocument,
     bool forceRefresh = false,
+    String filter = 'all',
   });
 
   Future<Either<Failure, void>> payDebt(DebtEntity debt, PaymentEntity payment);

@@ -15,12 +15,14 @@ class GetDebtsPaginatedUseCase {
     int limit = 15,
     DocumentSnapshot? lastDocument,
     bool forceRefresh = false,
+    String filter = 'all',
   }) async {
     return await repository.getDebtsPaginated(
       uid,
       limit: limit,
       lastDocument: lastDocument,
       forceRefresh: forceRefresh,
+      filter: filter,
     );
   }
 }

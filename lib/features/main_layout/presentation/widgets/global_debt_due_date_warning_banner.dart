@@ -27,12 +27,20 @@ class _GlobalDebtDueDateWarningBannerState
     final String uid = AppStrings.userToken;
     if (uid.isEmpty || _isDismissed) return const SizedBox.shrink();
 
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final alertThreshold = today.add(const Duration(days: 4)); // In the next 3 days (inclusive)
+
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
           .collection('debts')
-          .where('isSettled', isEqualTo: false)
+          .where('isPaid', isEqualTo: false)
+          .where(
+            'dueDate',
+            isLessThanOrEqualTo: Timestamp.fromDate(alertThreshold),
+          )
           .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData ||
@@ -41,10 +49,6 @@ class _GlobalDebtDueDateWarningBannerState
           return const SizedBox.shrink();
         }
 
-        final now = DateTime.now();
-        final today = DateTime(now.year, now.month, now.day);
-        final alertThreshold = today.add(const Duration(days: 4)); // In the next 3 days (inclusive)
-
         // Map customer name -> list of due debts
         final Map<String, List<Map<String, dynamic>>> dueDebtsByCustomer = {};
         bool hasOverdue = false;
@@ -52,21 +56,32 @@ class _GlobalDebtDueDateWarningBannerState
 
         for (final doc in snapshot.data!.docs) {
           final data = doc.data();
-          final remaining = (data['remainingDebt'] ?? data['remainingAmount'] ?? 0.0) as num;
+          final remaining = (data['remainingAmount'] ?? data['remainingDebt'] ?? 0.0) as num;
           if (remaining <= 0) continue;
 
+          DateTime? dueDate;
           final dueDateRaw = data['dueDate'];
-          if (dueDateRaw == null || dueDateRaw is! Timestamp) continue;
+          if (dueDateRaw is Timestamp) {
+            dueDate = dueDateRaw.toDate();
+          } else if (dueDateRaw is String) {
+            dueDate = DateTime.tryParse(dueDateRaw);
+          }
+          if (dueDate == null) continue;
 
-          final dueDate = dueDateRaw.toDate();
           final dueNormalized = DateTime(dueDate.year, dueDate.month, dueDate.day);
 
           if (!dueNormalized.isBefore(alertThreshold)) continue;
 
           // Check if already reminded in this cycle
+          DateTime? lastReminder;
           final lastReminderRaw = data['lastReminderSentAt'];
           if (lastReminderRaw is Timestamp) {
-            final lastReminder = lastReminderRaw.toDate();
+            lastReminder = lastReminderRaw.toDate();
+          } else if (lastReminderRaw is String) {
+            lastReminder = DateTime.tryParse(lastReminderRaw);
+          }
+
+          if (lastReminder != null) {
             final alertWindowStart =
                 dueNormalized.subtract(const Duration(days: 3));
             if (lastReminder.isAfter(alertWindowStart)) {

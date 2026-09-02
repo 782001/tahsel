@@ -118,7 +118,15 @@ class DebtCubit extends Cubit<DebtState> {
     );
   }
 
-  Future<void> getDebts(String uid, {bool forceRefresh = false}) async {
+  String _currentFilter = 'all';
+  String get currentFilter => _currentFilter;
+
+  Future<void> getDebts(
+    String uid, {
+    bool forceRefresh = false,
+    String filter = 'all',
+  }) async {
+    _currentFilter = filter;
     if (!forceRefresh &&
         state is DebtsFetchSuccess &&
         (state as DebtsFetchSuccess).debts.isNotEmpty &&
@@ -132,6 +140,7 @@ class DebtCubit extends Cubit<DebtState> {
       uid: uid,
       limit: 15,
       forceRefresh: forceRefresh,
+      filter: filter,
     );
 
     result.fold(
@@ -160,6 +169,7 @@ class DebtCubit extends Cubit<DebtState> {
       uid: uid,
       limit: 15,
       lastDocument: currentState.lastDocument,
+      filter: _currentFilter,
     );
 
     result.fold(

@@ -65,6 +65,7 @@ abstract class DebtRemoteDataSource {
     int limit = 15,
     DocumentSnapshot? lastDocument,
     bool forceRefresh = false,
+    String filter = 'all',
   });
 
   Future<PaginatedResult<PaymentModel>> getDebtTransactionsPaginated(
@@ -2413,14 +2414,34 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
     int limit = 15,
     DocumentSnapshot? lastDocument,
     bool forceRefresh = false,
+    String filter = 'all',
   }) async {
     try {
-      var query = firestore
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final in3Days = today.add(const Duration(days: 4)); // Next 3 days (inclusive)
+
+      Query<Map<String, dynamic>> query = firestore
           .collection('users')
           .doc(uid)
-          .collection('debts')
-          .orderBy('lastUpdatedAt', descending: true)
-          .limit(limit);
+          .collection('debts');
+
+      if (filter == 'overdue') {
+        query = query
+            .where('isPaid', isEqualTo: false)
+            .where('dueDate', isLessThan: Timestamp.fromDate(today))
+            .orderBy('dueDate', descending: false);
+      } else if (filter == 'due_soon') {
+        query = query
+            .where('isPaid', isEqualTo: false)
+            .where('dueDate', isGreaterThanOrEqualTo: Timestamp.fromDate(today))
+            .where('dueDate', isLessThan: Timestamp.fromDate(in3Days))
+            .orderBy('dueDate', descending: false);
+      } else {
+        query = query.orderBy('lastUpdatedAt', descending: true);
+      }
+
+      query = query.limit(limit);
 
       if (lastDocument != null) {
         query = query.startAfterDocument(lastDocument);
