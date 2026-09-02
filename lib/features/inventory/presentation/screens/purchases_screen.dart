@@ -128,6 +128,30 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
     }
   }
 
+  void _reorderPurchase(InventoryPurchaseEntity pur) {
+    final purchasesCubit = context.read<InventoryPurchasesCubit>();
+    final productsCubit = context.read<InventoryProductsCubit>();
+    final suppliersCubit = context.read<InventorySuppliersCubit>();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: purchasesCubit),
+            BlocProvider.value(value: productsCubit),
+            BlocProvider.value(value: suppliersCubit),
+          ],
+          child: CreatePurchaseScreen(initialPurchase: pur, isReorder: true),
+        ),
+      ),
+    );
+    if (mounted) {
+      purchasesCubit.fetchPurchases();
+      productsCubit.fetchProducts();
+    }
+  }
+
   void _navigateToCreatePurchase() {
     final purchasesCubit = context.read<InventoryPurchasesCubit>();
     final productsCubit = context.read<InventoryProductsCubit>();
@@ -446,6 +470,8 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                                   _sharePurchasePdf(pur),
                                               onDownloadPdf: () =>
                                                   _downloadPurchasePdf(pur),
+                                              onReorder: () =>
+                                                  _reorderPurchase(pur),
                                               onEdit: () => _editPurchase(pur),
                                               onDelete: () =>
                                                   _confirmDeletePurchase(pur),

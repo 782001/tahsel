@@ -15,6 +15,7 @@ class PurchaseCardItem extends StatefulWidget {
   final InventoryPurchaseEntity purchase;
   final VoidCallback onSharePdf;
   final VoidCallback onDownloadPdf;
+  final VoidCallback onReorder;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -23,6 +24,7 @@ class PurchaseCardItem extends StatefulWidget {
     required this.purchase,
     required this.onSharePdf,
     required this.onDownloadPdf,
+    required this.onReorder,
     required this.onEdit,
     required this.onDelete,
   });
@@ -195,6 +197,8 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
                         widget.onSharePdf();
                       } else if (val == 'download') {
                         widget.onDownloadPdf();
+                      } else if (val == 'reorder') {
+                        widget.onReorder();
                       } else if (val == 'edit') {
                         widget.onEdit();
                       } else if (val == 'delete') {
@@ -238,6 +242,23 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
                         ),
                       ),
                       const PopupMenuDivider(),
+                      PopupMenuItem(
+                        value: 'reorder',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.replay_rounded,
+                              color: AppColors.actionButton,
+                              size: 18,
+                            ),
+                            SizedBox(width: 8.w),
+                            Text(
+                              AppStrings.reorderPurchaseInvoice.tr(),
+                              style: TextStyles.customStyle(fontSize: 13),
+                            ),
+                          ],
+                        ),
+                      ),
                       PopupMenuItem(
                         value: 'edit',
                         child: Row(

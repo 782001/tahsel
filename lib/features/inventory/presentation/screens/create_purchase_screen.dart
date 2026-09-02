@@ -23,7 +23,12 @@ import '../widgets/searchable_dropdown_field.dart';
 
 class CreatePurchaseScreen extends StatefulWidget {
   final InventoryPurchaseEntity? initialPurchase;
-  const CreatePurchaseScreen({super.key, this.initialPurchase});
+  final bool isReorder;
+  const CreatePurchaseScreen({
+    super.key,
+    this.initialPurchase,
+    this.isReorder = false,
+  });
 
   @override
   State<CreatePurchaseScreen> createState() => _CreatePurchaseScreenState();
@@ -47,8 +52,9 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
       _selectedItems.addAll(widget.initialPurchase!.items);
       _notesController.text = widget.initialPurchase!.notes ?? '';
       _selectedPaymentMethod = widget.initialPurchase!.paymentMethod;
-      _paidAmountController.text = widget.initialPurchase!.paidAmount
-          .toSmartAmount();
+      _paidAmountController.text = widget.isReorder
+          ? '0'
+          : widget.initialPurchase!.paidAmount.toSmartAmount();
     } else {
       _paidAmountController.text = '0';
     }
@@ -125,7 +131,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
       }
 
       // Parse paid amount
-      final bool isEdit = widget.initialPurchase != null;
+      final bool isEdit = widget.initialPurchase != null && !widget.isReorder;
       final double actualPaidAmount;
       if (isEdit) {
         if (widget.initialPurchase!.paymentMethod == 'debt') {
@@ -274,7 +280,9 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
           centerTitle: true,
           title: Text(
             widget.initialPurchase != null
-                ? '${AppStrings.edit.tr()} ${AppStrings.purchaseInvoiceNum.tr()} #${widget.initialPurchase!.id.replaceAll("pur_", "")}'
+                ? (widget.isReorder
+                      ? '${AppStrings.reorderPurchaseInvoice.tr()} (#${widget.initialPurchase!.id.replaceAll("pur_", "")})'
+                      : '${AppStrings.edit.tr()} ${AppStrings.purchaseInvoiceNum.tr()} #${widget.initialPurchase!.id.replaceAll("pur_", "")}')
                 : AppStrings.newPurchase.tr(),
             style: TextStyles.customStyle(
               fontSize: widget.initialPurchase != null ? 15 : 22,
@@ -513,7 +521,8 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                             ],
                           ),
                           SizedBox(height: isDesktop ? 14 : 14.h),
-                          if (widget.initialPurchase == null) ...[
+                          if (widget.initialPurchase == null ||
+                              widget.isReorder) ...[
                             const Divider(),
                             SizedBox(height: isDesktop ? 10 : 10.h),
                             _buildPaymentMethodSection(isDesktop),
@@ -1117,7 +1126,8 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                   child: Text(
                     AppStrings.paymentCash.tr(),
                     style: TextStyles.customStyle(
-                      fontSize: 13,
+                      fontSize: isDesktop ? 13 : 11,
+
                       fontWeight: FontWeight.bold,
                       color: _selectedPaymentMethod == 'cash'
                           ? Colors.white
@@ -1141,11 +1151,13 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
             Expanded(
               child: ChoiceChip(
                 showCheckmark: false,
+
                 label: Center(
                   child: Text(
                     AppStrings.paymentCard.tr(),
                     style: TextStyles.customStyle(
-                      fontSize: 13,
+                      fontSize: isDesktop ? 13 : 11,
+
                       fontWeight: FontWeight.bold,
                       color: _selectedPaymentMethod == 'card'
                           ? Colors.white
@@ -1173,7 +1185,8 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                   child: Text(
                     AppStrings.paymentDebt.tr(),
                     style: TextStyles.customStyle(
-                      fontSize: 13,
+                      fontSize: isDesktop ? 13 : 11,
+
                       fontWeight: FontWeight.bold,
                       color: _selectedPaymentMethod == 'debt'
                           ? Colors.white

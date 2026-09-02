@@ -1364,4 +1364,5 @@ class AppStrings {
   static const String expensesComparisonExplLower =
       "expenses_comparison_expl_lower";
   static const String expensesEqualCompared = "expenses_equal_compared";
+  static const String reorderPurchaseInvoice = "reorder_purchase_invoice";
 }
