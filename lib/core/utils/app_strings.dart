@@ -1365,4 +1365,6 @@ class AppStrings {
       "expenses_comparison_expl_lower";
   static const String expensesEqualCompared = "expenses_equal_compared";
   static const String reorderPurchaseInvoice = "reorder_purchase_invoice";
+  static const String viewSupplierDetails = "view_supplier_details";
+  static const String addedOn = "added_on";
 }

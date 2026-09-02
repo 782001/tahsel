@@ -13,6 +13,7 @@ import '../cubits/inventory_suppliers_cubit.dart';
 import '../widgets/add_edit_supplier_dialog.dart';
 import '../widgets/inventory_empty_state.dart';
 import 'supplier_details_screen.dart';
+import 'package:tahsel/core/utils/date_formatter.dart';
 
 class SuppliersScreen extends StatefulWidget {
   const SuppliersScreen({super.key});
@@ -216,118 +217,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
                                 SizedBox(height: isDesktop ? 12 : 12.h),
                             itemBuilder: (context, index) {
                               final sup = suppliers[index];
-                              return Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => BlocProvider(
-                                          create: (_) =>
-                                              sl<InventorySuppliersCubit>(),
-                                          child: SupplierDetailsScreen(
-                                            supplier: sup,
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  borderRadius: BorderRadius.circular(
-                                    isDesktop ? 14 : 14.r,
-                                  ),
-                                  child: Container(
-                                    padding: EdgeInsets.all(
-                                      isDesktop ? 16 : 16.w,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.surface,
-                                      borderRadius: BorderRadius.circular(
-                                        isDesktop ? 14 : 14.r,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        CircleAvatar(
-                                          backgroundColor: AppColors
-                                              .inventorySupplierTeal
-                                              .withValues(alpha: 0.12),
-                                          radius: isDesktop ? 22 : 22.r,
-                                          child: Icon(
-                                            Icons.local_shipping_rounded,
-                                            color:
-                                                AppColors.inventorySupplierTeal,
-                                          ),
-                                        ),
-                                        SizedBox(width: isDesktop ? 16 : 16.w),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                sup.name,
-                                                style: TextStyles.customStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: AppColors.blackReal,
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                height: isDesktop ? 4 : 4.h,
-                                              ),
-                                              Row(
-                                                children: [
-                                                  Icon(
-                                                    Icons.phone,
-                                                    size: 14,
-                                                    color: AppColors.sandText,
-                                                  ),
-                                                  SizedBox(
-                                                    width: isDesktop ? 4 : 4.w,
-                                                  ),
-                                                  Text(
-                                                    sup.phone.isNotEmpty
-                                                        ? sup.phone
-                                                        : AppStrings.noPhone.tr(),
-                                                    style: TextStyles.customStyle(
-                                                      fontSize: 13,
-                                                      color: AppColors.sandText,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        IconButton(
-                                          icon: Icon(
-                                            Icons.edit_rounded,
-                                            color: AppColors.primaryColor,
-                                          ),
-                                          onPressed: () =>
-                                              _openAddEditSupplierDialog(sup),
-                                        ),
-                                        IconButton(
-                                          icon: Icon(
-                                            Icons.delete_outline_rounded,
-                                            color: AppColors.deleteRed,
-                                          ),
-                                          onPressed: () => _confirmDeleteSupplier(
-                                            context,
-                                            sup,
-                                          ),
-                                        ),
-                                        Icon(
-                                          Icons.arrow_forward_ios_rounded,
-                                          size: 16,
-                                          color: AppColors.sandText,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
+                              return _buildSupplierCard(context, sup, isDesktop);
                             },
                           ),
                         );
@@ -338,6 +228,306 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSupplierCard(
+    BuildContext context,
+    InventorySupplierEntity sup,
+    bool isDesktop,
+  ) {
+    final initial = sup.name.trim().isNotEmpty
+        ? sup.name.trim().substring(0, 1).toUpperCase()
+        : 'S';
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => BlocProvider(
+                create: (_) => sl<InventorySuppliersCubit>(),
+                child: SupplierDetailsScreen(supplier: sup),
+              ),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(isDesktop ? 16 : 16.r),
+        child: Container(
+          padding: EdgeInsets.all(isDesktop ? 16 : 14.w),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(isDesktop ? 16 : 16.r),
+            border: Border.all(
+              color: AppColors.dividerColor.withValues(alpha: 0.7),
+            ),
+            boxShadow: const [AppColors.shadow],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header: Avatar + Names + Actions
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: isDesktop ? 44 : 44.r,
+                    height: isDesktop ? 44 : 44.r,
+                    decoration: BoxDecoration(
+                      color: AppColors.inventorySupplierTeal.withValues(
+                        alpha: 0.12,
+                      ),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      initial,
+                      style: TextStyles.customStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.inventorySupplierTeal,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: isDesktop ? 12 : 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          sup.name,
+                          style: TextStyles.customStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.blackReal,
+                          ),
+                        ),
+                        if (sup.companyName != null &&
+                            sup.companyName!.trim().isNotEmpty) ...[
+                          SizedBox(height: 2.h),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.business_rounded,
+                                size: 13.r,
+                                color: AppColors.blackLight,
+                              ),
+                              SizedBox(width: 4.w),
+                              Expanded(
+                                child: Text(
+                                  sup.companyName!.trim(),
+                                  style: TextStyles.customStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.blackLight,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  // Action buttons
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        icon: Icon(
+                          Icons.edit_rounded,
+                          color: AppColors.primaryColor,
+                          size: 20,
+                        ),
+                        onPressed: () => _openAddEditSupplierDialog(sup),
+                      ),
+                      SizedBox(width: 14.w),
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        icon: Icon(
+                          Icons.delete_outline_rounded,
+                          color: AppColors.deleteRed,
+                          size: 20,
+                        ),
+                        onPressed: () => _confirmDeleteSupplier(context, sup),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              SizedBox(height: isDesktop ? 12 : 10.h),
+
+              // Badges / Info Chips Wrap
+              Wrap(
+                spacing: 8.w,
+                runSpacing: 6.h,
+                children: [
+                  // Phone Chip
+                  _buildInfoChip(
+                    icon: Icons.phone_rounded,
+                    label: sup.phone.isNotEmpty
+                        ? sup.phone
+                        : AppStrings.noPhone.tr(),
+                    color: AppColors.inventorySupplierTeal,
+                  ),
+                  // Address Chip
+                  if (sup.address.trim().isNotEmpty)
+                    _buildInfoChip(
+                      icon: Icons.location_on_rounded,
+                      label: sup.address.trim(),
+                      color: AppColors.blackLight,
+                    ),
+                  // Tax Number Chip
+                  if (sup.taxNumber != null &&
+                      sup.taxNumber!.trim().isNotEmpty)
+                    _buildInfoChip(
+                      icon: Icons.receipt_long_rounded,
+                      label:
+                          '${AppStrings.taxNumber.tr()}: ${sup.taxNumber!.trim()}',
+                      color: AppColors.warning,
+                    ),
+                  // Email Chip
+                  if (sup.email != null && sup.email!.trim().isNotEmpty)
+                    _buildInfoChip(
+                      icon: Icons.email_outlined,
+                      label: sup.email!.trim(),
+                      color: AppColors.primaryColor,
+                    ),
+                ],
+              ),
+
+              // Notes section (if exists)
+              if (sup.notes != null && sup.notes!.trim().isNotEmpty) ...[
+                SizedBox(height: isDesktop ? 10 : 8.h),
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 6.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.scafoldBackGround,
+                    borderRadius: BorderRadius.circular(8.r),
+                    border: Border.all(
+                      color: AppColors.dividerColor.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.notes_rounded,
+                        size: 14.r,
+                        color: AppColors.blackLight,
+                      ),
+                      SizedBox(width: 6.w),
+                      Expanded(
+                        child: Text(
+                          sup.notes!.trim(),
+                          style: TextStyles.customStyle(
+                            fontSize: 11,
+                            color: AppColors.blackLight,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              // Card Footer: Added Date + View Details Link
+              SizedBox(height: isDesktop ? 10 : 8.h),
+              Divider(
+                height: 1,
+                color: AppColors.dividerColor.withValues(alpha: 0.4),
+              ),
+              SizedBox(height: isDesktop ? 8 : 6.h),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today_outlined,
+                        size: 12.r,
+                        color: AppColors.sandText,
+                      ),
+                      SizedBox(width: 4.w),
+                      Text(
+                        '${AppStrings.addedOn.tr()}: ${DateFormatter.formatNumericDate(sup.createdAt)}',
+                        style: TextStyles.customStyle(
+                          fontSize: 11,
+                          color: AppColors.sandText,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Text(
+                        AppStrings.viewSupplierDetails.tr(),
+                        style: TextStyles.customStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryColor,
+                        ),
+                      ),
+                      SizedBox(width: 2.w),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 11.r,
+                        color: AppColors.primaryColor,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoChip({
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12.r, color: color),
+          SizedBox(width: 4.w),
+          Text(
+            label,
+            style: TextStyles.customStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }

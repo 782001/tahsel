@@ -1193,5 +1193,7 @@
   "expenses_comparison_expl_higher": "This month's expenses ({current} {currency}) are higher than last month ({prev} {currency}) by {diff} {currency}",
   "expenses_comparison_expl_lower": "You saved {diff} {currency} this month compared to last month ({prev} {currency})",
   "expenses_equal_compared": "This month's expenses are identical to last month ({amount} {currency}) with no change",
-  "reorder_purchase_invoice": "Reorder this invoice"
+  "reorder_purchase_invoice": "Reorder this invoice",
+  "view_supplier_details": "View Details & Invoices",
+  "added_on": "Added on"
 }

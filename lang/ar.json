@@ -1196,5 +1196,7 @@
   "expenses_comparison_expl_higher": "مصاريف هذا الشهر ({current} {currency}) أعلى من الشهر السابق ({prev} {currency}) بمقدار {diff} {currency}",
   "expenses_comparison_expl_lower": "وفرت {diff} {currency} هذا الشهر مقارنة بمصاريف الشهر السابق ({prev} {currency})",
   "expenses_equal_compared": "مصاريف هذا الشهر متطابقة تماماً مع الشهر السابق ({amount} {currency}) دون أي تغيير",
-  "reorder_purchase_invoice": "إعادة طلب نفس الفاتورة"
+  "reorder_purchase_invoice": "إعادة طلب نفس الفاتورة",
+  "view_supplier_details": "عرض التفاصيل والفواتير",
+  "added_on": "تاريخ الإضافة"
 }
