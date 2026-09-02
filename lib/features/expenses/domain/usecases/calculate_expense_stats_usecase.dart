@@ -63,6 +63,7 @@ class CalculateExpenseStatsUseCase {
 
     return ExpenseStats(
       totalAmount: totalAmount,
+      previousMonthAmount: prevMonthTotal,
       percentageChange: percentageChange,
       isIncrease: isIncrease,
     );

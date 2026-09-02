@@ -1357,4 +1357,11 @@ class AppStrings {
   static const String confirmPayDebtMsg = "confirm_pay_debt_msg";
   static const String confirmPayDebtBtn = "confirm_pay_debt_btn";
   static const String sellingBelowCostWarning = "selling_below_cost_warning";
+  static const String previousMonthLabel = "previous_month_label";
+  static const String currentMonthLabel = "current_month_label";
+  static const String expensesComparisonExplHigher =
+      "expenses_comparison_expl_higher";
+  static const String expensesComparisonExplLower =
+      "expenses_comparison_expl_lower";
+  static const String expensesEqualCompared = "expenses_equal_compared";
 }

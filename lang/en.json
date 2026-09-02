@@ -1187,5 +1187,10 @@
   "confirm_pay_debt_title": "Confirm Debt Payment",
   "confirm_pay_debt_msg": "Are you sure you want to mark this debt ({item}) as paid with amount {amount} {currency}?",
   "confirm_pay_debt_btn": "Confirm Payment",
-  "selling_below_cost_warning": "Warning: Selling price after discount is below purchase cost ({cost} {currency})"
+  "selling_below_cost_warning": "Warning: Selling price after discount is below purchase cost ({cost} {currency})",
+  "previous_month_label": "Last Month",
+  "current_month_label": "This Month",
+  "expenses_comparison_expl_higher": "This month's expenses ({current} {currency}) are higher than last month ({prev} {currency}) by {diff} {currency}",
+  "expenses_comparison_expl_lower": "You saved {diff} {currency} this month compared to last month ({prev} {currency})",
+  "expenses_equal_compared": "This month's expenses are identical to last month ({amount} {currency}) with no change"
 }

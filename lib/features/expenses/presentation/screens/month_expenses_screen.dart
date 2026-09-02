@@ -139,12 +139,32 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
           child: BlocBuilder<ExpenseCubit, ExpenseState>(
             builder: (context, state) {
               if (state is ExpenseLoading) {
-                return ListView.builder(
-                  padding: EdgeInsets.symmetric(vertical: 24.h),
-                  itemCount: 8,
-                  itemBuilder: (context, index) =>
-                      const CustomerDebtCardSkeleton(),
-                );
+                final isDesktop = ResponsiveLayout.isDesktop(context);
+                return isDesktop
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 16,
+                        ),
+                        child: GridView.builder(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisExtent: 220,
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
+                              ),
+                          itemBuilder: (context, index) =>
+                              const CustomerDebtCardSkeleton(),
+                          itemCount: 16,
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: EdgeInsets.all(16.w),
+                        itemBuilder: (context, index) =>
+                            const CustomerDebtCardSkeleton(),
+                        itemCount: 8,
+                      );
               } else if (state is ExpenseFailure) {
                 return Center(child: Text(state.message));
               } else if (state is ExpenseMonthDetailsSuccess) {

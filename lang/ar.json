@@ -1190,5 +1190,10 @@
   "confirm_pay_debt_title": "تأكيد سداد الدين",
   "confirm_pay_debt_msg": "هل أنت متأكد من تسجيل سداد هذا الدين ({item}) بمبلغ {amount} {currency}؟",
   "confirm_pay_debt_btn": "تأكيد السداد",
-  "selling_below_cost_warning": "تنبيه: سعر البيع بعد الخصم أقل من سعر الشراء ({cost} {currency})"
+  "selling_below_cost_warning": "تنبيه: سعر البيع بعد الخصم أقل من سعر الشراء ({cost} {currency})",
+  "previous_month_label": "الشهر السابق",
+  "current_month_label": "الشهر الحالي",
+  "expenses_comparison_expl_higher": "مصاريف هذا الشهر ({current} {currency}) أعلى من الشهر السابق ({prev} {currency}) بمقدار {diff} {currency}",
+  "expenses_comparison_expl_lower": "وفرت {diff} {currency} هذا الشهر مقارنة بمصاريف الشهر السابق ({prev} {currency})",
+  "expenses_equal_compared": "مصاريف هذا الشهر متطابقة تماماً مع الشهر السابق ({amount} {currency}) دون أي تغيير"
 }

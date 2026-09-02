@@ -204,6 +204,15 @@ class ExpenseCubit extends Cubit<ExpenseState> {
   }
 
   ExpenseStats _calculateStats(List<MonthlyExpenseGroup> mergedMonths) {
+    if (mergedMonths.isEmpty) {
+      return const ExpenseStats(
+        totalAmount: 0.0,
+        previousMonthAmount: 0.0,
+        percentageChange: 0.0,
+        isIncrease: false,
+      );
+    }
+
     final now = DateTime.now();
     final thisMonthKeyStr = DateFormatter.formatNumericMonth(now);
 
@@ -215,19 +224,28 @@ class ExpenseCubit extends Cubit<ExpenseState> {
     double currentTotal = 0.0;
     double prevTotal = 0.0;
 
-    try {
-      final thisMonthGroup = mergedMonths.firstWhere(
-        (m) => m.monthKey == thisMonthKeyStr,
-      );
-      currentTotal = thisMonthGroup.totalAmount;
-    } catch (_) {}
+    final thisMonthIndex = mergedMonths.indexWhere(
+      (m) => m.monthKey == thisMonthKeyStr,
+    );
 
-    try {
-      final prevMonthGroup = mergedMonths.firstWhere(
+    if (thisMonthIndex != -1) {
+      currentTotal = mergedMonths[thisMonthIndex].totalAmount;
+      final prevMonthIndex = mergedMonths.indexWhere(
         (m) => m.monthKey == lastMonthKeyStr,
       );
-      prevTotal = prevMonthGroup.totalAmount;
-    } catch (_) {}
+      if (prevMonthIndex != -1) {
+        prevTotal = mergedMonths[prevMonthIndex].totalAmount;
+      } else if (mergedMonths.length > 1 && thisMonthIndex == 0) {
+        // Fallback to the next recorded month in chronological descending list
+        prevTotal = mergedMonths[1].totalAmount;
+      }
+    } else {
+      // If current calendar month is not recorded yet, use the latest recorded month
+      currentTotal = mergedMonths.first.totalAmount;
+      if (mergedMonths.length > 1) {
+        prevTotal = mergedMonths[1].totalAmount;
+      }
+    }
 
     double percentage = 0.0;
     bool isUp = false;
@@ -244,6 +262,7 @@ class ExpenseCubit extends Cubit<ExpenseState> {
 
     return ExpenseStats(
       totalAmount: currentTotal,
+      previousMonthAmount: prevTotal,
       percentageChange: percentage,
       isIncrease: isUp,
     );
