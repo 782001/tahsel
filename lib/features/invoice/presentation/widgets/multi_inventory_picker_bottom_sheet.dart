@@ -477,7 +477,6 @@ class _MultiInventoryPickerBottomSheetState
 
                       return Container(
                         margin: EdgeInsets.only(bottom: isDesktop ? 10 : 10.h),
-                        padding: EdgeInsets.all(isDesktop ? 12 : 12.r),
                         decoration: BoxDecoration(
                           color: isSelected
                               ? AppColors.primaryColor.withValues(alpha: 0.05)
@@ -490,220 +489,274 @@ class _MultiInventoryPickerBottomSheetState
                             width: isSelected ? 1.5 : 1.0,
                           ),
                         ),
-                        child: Column(
-                          children: [
-                            Row(
-                              children: [
-                                Checkbox(
-                                  value: isSelected,
-                                  activeColor: AppColors.primaryColor,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(4.r),
-                                  ),
-                                  onChanged: (_) =>
-                                      _toggleProductSelection(product),
-                                ),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              product.name,
-                                              style: TextStyles.customStyle(
-                                                fontSize: isDesktop ? 15 : 15,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppColors.black,
-                                              ),
-                                            ),
-                                          ),
-                                          if (isBestSeller) ...[
-                                            SizedBox(
-                                              width: isDesktop ? 6 : 6.w,
-                                            ),
-                                            Transform.rotate(
-                                              angle: -0.10,
-                                              child: Container(
-                                                padding: EdgeInsets.symmetric(
-                                                  horizontal: isDesktop
-                                                      ? 7
-                                                      : 7.w,
-                                                  vertical: isDesktop ? 3 : 3.h,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  gradient:
-                                                      const LinearGradient(
-                                                        colors: [
-                                                          AppColors
-                                                              .bestSellerStart,
-                                                          AppColors
-                                                              .bestSellerEnd,
-                                                        ],
-                                                      ),
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                        isDesktop ? 6 : 6.r,
-                                                      ),
-                                                  boxShadow: [
-                                                    BoxShadow(
-                                                      color: AppColors
-                                                          .bestSellerStart
-                                                          .withValues(
-                                                            alpha: 0.35,
-                                                          ),
-                                                      blurRadius: 6,
-                                                      offset: const Offset(
-                                                        0,
-                                                        2,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                child: Row(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    Icon(
-                                                      Icons
-                                                          .local_fire_department_rounded,
-                                                      color: Colors.white,
-                                                      size: isDesktop ? 11 : 11,
-                                                    ),
-                                                    SizedBox(
-                                                      width: isDesktop
-                                                          ? 2
-                                                          : 2.w,
-                                                    ),
-                                                    Text(
-                                                      AppStrings.bestSeller
-                                                          .tr(),
-                                                      style:
-                                                          TextStyles.customStyle(
-                                                            fontSize: 9,
-                                                            color: Colors.white,
-                                                            fontWeight:
-                                                                FontWeight.w900,
-                                                          ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                      SizedBox(height: isDesktop ? 4 : 4.h),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            '${product.sellingPrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-                                            style: TextStyles.customStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w600,
-                                              color: AppColors.primaryColor,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Container(
-                                            padding: EdgeInsets.symmetric(
-                                              horizontal: isDesktop ? 8 : 8.w,
-                                              vertical: isDesktop ? 2 : 2.h,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: AppColors.success
-                                                  .withValues(alpha: 0.1),
-                                              borderRadius:
-                                                  BorderRadius.circular(8.r),
-                                            ),
-                                            child: Text(
-                                              '${AppStrings.availableInStock.tr()}: ${maxQty.toSmartAmount()}',
-                                              style: TextStyles.customStyle(
-                                                fontSize: 11,
-                                                color: AppColors.success,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                            // Quantity Controls if selected
-                            if (isSelected) ...[
-                              SizedBox(height: isDesktop ? 10 : 10.h),
-                              const Divider(height: 1),
-                              SizedBox(height: isDesktop ? 8 : 8.h),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                        child: Material(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(16.r),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(16.r),
+                            onTap: () => _toggleProductSelection(product),
+                            child: Padding(
+                              padding: EdgeInsets.all(isDesktop ? 12 : 12.r),
+                              child: Column(
                                 children: [
-                                  Text(
-                                    AppStrings.requestedQuantity.tr(),
-                                    style: TextStyles.customStyle(
-                                      fontSize: isDesktop ? 13 : 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.blackLight,
-                                    ),
-                                  ),
                                   Row(
                                     children: [
-                                      IconButton(
-                                        onPressed: () =>
-                                            _updateQuantity(product, -1),
-                                        icon: Icon(
-                                          Icons.remove_circle_outline,
-                                          color: AppColors.error,
-                                          size: isDesktop ? 22 : 22,
-                                        ),
-                                      ),
-                                      Container(
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: 14.w,
-                                          vertical: 4.h,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.surface,
+                                      Checkbox(
+                                        value: isSelected,
+                                        activeColor: AppColors.primaryColor,
+                                        shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(
-                                            8.r,
-                                          ),
-                                          border: Border.all(
-                                            color: AppColors.dividerColor,
+                                            4.r,
                                           ),
                                         ),
-                                        child: Text(
-                                          selectedQty.toSmartAmount(),
-                                          style: TextStyles.customStyle(
-                                            fontSize: isDesktop ? 15 : 15,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.black,
-                                          ),
-                                        ),
+                                        onChanged: (_) =>
+                                            _toggleProductSelection(product),
                                       ),
-                                      IconButton(
-                                        onPressed: selectedQty >= maxQty
-                                            ? null
-                                            : () => _updateQuantity(product, 1),
-                                        icon: Icon(
-                                          Icons.add_circle_outline,
-                                          color: selectedQty >= maxQty
-                                              ? AppColors.disabledColor
-                                              : AppColors.primaryColor,
-                                          size: isDesktop ? 22 : 22,
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Text(
+                                                    product.name,
+                                                    style: TextStyles.customStyle(
+                                                      fontSize:
+                                                          isDesktop ? 15 : 15,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: AppColors.black,
+                                                    ),
+                                                  ),
+                                                ),
+                                                if (isBestSeller) ...[
+                                                  SizedBox(
+                                                    width: isDesktop ? 6 : 6.w,
+                                                  ),
+                                                  Transform.rotate(
+                                                    angle: -0.10,
+                                                    child: Container(
+                                                      padding:
+                                                          EdgeInsets.symmetric(
+                                                            horizontal:
+                                                                isDesktop
+                                                                    ? 7
+                                                                    : 7.w,
+                                                            vertical:
+                                                                isDesktop
+                                                                    ? 3
+                                                                    : 3.h,
+                                                          ),
+                                                      decoration: BoxDecoration(
+                                                        gradient:
+                                                            const LinearGradient(
+                                                              colors: [
+                                                                AppColors
+                                                                    .bestSellerStart,
+                                                                AppColors
+                                                                    .bestSellerEnd,
+                                                              ],
+                                                            ),
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              isDesktop
+                                                                  ? 6
+                                                                  : 6.r,
+                                                            ),
+                                                        boxShadow: [
+                                                          BoxShadow(
+                                                            color: AppColors
+                                                                .bestSellerStart
+                                                                .withValues(
+                                                                  alpha: 0.35,
+                                                                ),
+                                                            blurRadius: 6,
+                                                            offset:
+                                                                const Offset(
+                                                                  0,
+                                                                  2,
+                                                                ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      child: Row(
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        children: [
+                                                          Icon(
+                                                            Icons
+                                                                .local_fire_department_rounded,
+                                                            color: Colors.white,
+                                                            size:
+                                                                isDesktop
+                                                                    ? 11
+                                                                    : 11,
+                                                          ),
+                                                          SizedBox(
+                                                            width:
+                                                                isDesktop
+                                                                    ? 2
+                                                                    : 2.w,
+                                                          ),
+                                                          Text(
+                                                            AppStrings
+                                                                .bestSeller
+                                                                .tr(),
+                                                            style:
+                                                                TextStyles.customStyle(
+                                                                  fontSize: 9,
+                                                                  color:
+                                                                      Colors
+                                                                          .white,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w900,
+                                                                ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ],
+                                            ),
+                                            SizedBox(
+                                              height: isDesktop ? 4 : 4.h,
+                                            ),
+                                            Row(
+                                              children: [
+                                                Text(
+                                                  '${product.sellingPrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                                                  style: TextStyles.customStyle(
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                    color:
+                                                        AppColors.primaryColor,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 12),
+                                                Container(
+                                                  padding: EdgeInsets.symmetric(
+                                                    horizontal:
+                                                        isDesktop ? 8 : 8.w,
+                                                    vertical:
+                                                        isDesktop ? 2 : 2.h,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: AppColors.success
+                                                        .withValues(alpha: 0.1),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          8.r,
+                                                        ),
+                                                  ),
+                                                  child: Text(
+                                                    '${AppStrings.availableInStock.tr()}: ${maxQty.toSmartAmount()}',
+                                                    style:
+                                                        TextStyles.customStyle(
+                                                          fontSize: 11,
+                                                          color:
+                                                              AppColors.success,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                        ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],
                                   ),
+
+                                  // Quantity Controls if selected
+                                  if (isSelected) ...[
+                                    SizedBox(height: isDesktop ? 10 : 10.h),
+                                    const Divider(height: 1),
+                                    SizedBox(height: isDesktop ? 8 : 8.h),
+                                    GestureDetector(
+                                      behavior: HitTestBehavior.opaque,
+                                      onTap: () {}, // Prevent deselecting when interacting with quantity row
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            AppStrings.requestedQuantity.tr(),
+                                            style: TextStyles.customStyle(
+                                              fontSize: isDesktop ? 13 : 13,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.blackLight,
+                                            ),
+                                          ),
+                                          Row(
+                                            children: [
+                                              IconButton(
+                                                onPressed: () =>
+                                                    _updateQuantity(
+                                                      product,
+                                                      -1,
+                                                    ),
+                                                icon: Icon(
+                                                  Icons.remove_circle_outline,
+                                                  color: AppColors.error,
+                                                  size: isDesktop ? 22 : 22,
+                                                ),
+                                              ),
+                                              Container(
+                                                padding: EdgeInsets.symmetric(
+                                                  horizontal: 14.w,
+                                                  vertical: 4.h,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.surface,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        8.r,
+                                                      ),
+                                                  border: Border.all(
+                                                    color:
+                                                        AppColors.dividerColor,
+                                                  ),
+                                                ),
+                                                child: Text(
+                                                  selectedQty.toSmartAmount(),
+                                                  style: TextStyles.customStyle(
+                                                    fontSize:
+                                                        isDesktop ? 15 : 15,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: AppColors.black,
+                                                  ),
+                                                ),
+                                              ),
+                                              IconButton(
+                                                onPressed: selectedQty >= maxQty
+                                                    ? null
+                                                    : () => _updateQuantity(
+                                                        product,
+                                                        1,
+                                                      ),
+                                                icon: Icon(
+                                                  Icons.add_circle_outline,
+                                                  color: selectedQty >= maxQty
+                                                      ? AppColors.disabledColor
+                                                      : AppColors.primaryColor,
+                                                  size: isDesktop ? 22 : 22,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ],
                               ),
-                            ],
-                          ],
+                            ),
+                          ),
                         ),
                       );
                     },
