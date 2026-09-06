@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:tahsel/core/utils/app_logger.dart';
 import '../../utils/app_strings.dart';
 import 'data/world_currencies.dart';
 import 'domain/entities/currency_entity.dart';
@@ -70,7 +71,7 @@ class CurrencyService {
         }
       });
     } catch (e) {
-      debugPrint('CurrencyService init error: $e');
+      AppLogger.printMessage('CurrencyService init error: $e');
     }
   }
 
@@ -118,7 +119,7 @@ class CurrencyService {
         }
       }
     }, onError: (err) {
-      debugPrint('CurrencyService user snapshot error: $err');
+      AppLogger.printMessage('CurrencyService user snapshot error: $err');
     });
   }
 
@@ -139,7 +140,7 @@ class CurrencyService {
             .doc(uid)
             .set({'currency': newCurrency.toMap()}, SetOptions(merge: true));
       } catch (e) {
-        debugPrint('CurrencyService Firebase sync error (saved locally): $e');
+        AppLogger.printMessage('CurrencyService Firebase sync error (saved locally): $e');
       }
     }
   }
@@ -149,7 +150,7 @@ class CurrencyService {
       final jsonStr = jsonEncode(currency.toMap());
       await _box?.put(_activeCurrencyKey, jsonStr);
     } catch (e) {
-      debugPrint('CurrencyService Hive save error: $e');
+      AppLogger.printMessage('CurrencyService Hive save error: $e');
     }
   }
 
