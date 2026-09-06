@@ -120,11 +120,16 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
           product: product,
           categories: categories,
           suppliers: suppliers,
-          onSave: (updated) {
+          onSave: (updated) async {
             if (productsCubit != null) {
-              productsCubit.saveProduct(updated);
+              await productsCubit.saveProduct(updated);
             } else if (GetIt.I.isRegistered<InventoryRepository>()) {
-              GetIt.I<InventoryRepository>().saveProduct(updated);
+              await GetIt.I<InventoryRepository>().saveProduct(updated);
+            }
+            if (mounted) {
+              try {
+                context.read<InventoryProductsCubit>().fetchProducts();
+              } catch (_) {}
             }
           },
         );

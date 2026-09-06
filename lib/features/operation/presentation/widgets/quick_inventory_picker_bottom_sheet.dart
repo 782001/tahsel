@@ -64,7 +64,7 @@ class _QuickInventoryPickerBottomSheetState
 
       final products = models
           .map((m) => m as InventoryProductEntity)
-          .where((p) => p.currentQuantity > 0)
+          .where((p) => p.isAvailable && p.currentQuantity > 0)
           .toList();
       products.sort((a, b) => a.name.compareTo(b.name));
 
@@ -94,6 +94,7 @@ class _QuickInventoryPickerBottomSheetState
     final q = _searchController.text.trim().toLowerCase();
     setState(() {
       _filteredProducts = _allProducts.where((p) {
+        final isAvailable = p.isAvailable;
         final hasStock = p.currentQuantity > 0;
         final matchesQuery =
             q.isEmpty ||
@@ -104,7 +105,7 @@ class _QuickInventoryPickerBottomSheetState
         final matchesCategory =
             _selectedCategory == null || p.categoryName == _selectedCategory;
 
-        return hasStock && matchesQuery && matchesCategory;
+        return isAvailable && hasStock && matchesQuery && matchesCategory;
       }).toList();
     });
   }

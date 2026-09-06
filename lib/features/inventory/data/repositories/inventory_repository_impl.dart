@@ -105,7 +105,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
                   await localDataSource.deleteProduct(p.id);
                 } else {
                   final existing = await localDataSource.getProductById(p.id);
-                  if (existing == null || existing.isSynced) {
+                  if (existing == null ||
+                      p.updatedAt.isAfter(existing.updatedAt)) {
                     final double highestSold =
                         (existing != null && existing.totalSoldQuantity > p.totalSoldQuantity)
                             ? existing.totalSoldQuantity

@@ -71,7 +71,7 @@ class _MultiInventoryPickerBottomSheetState
 
       final products = models
           .map((m) => m as InventoryProductEntity)
-          .where((p) => p.currentQuantity > 0)
+          .where((p) => p.isAvailable && p.currentQuantity > 0)
           .toList();
       products.sort((a, b) => a.name.compareTo(b.name));
 
@@ -105,6 +105,7 @@ class _MultiInventoryPickerBottomSheetState
 
     setState(() {
       _filteredProducts = _allProducts.where((p) {
+        final isAvailable = p.isAvailable;
         final hasStock = p.currentQuantity > 0;
         final matchesQuery =
             q.isEmpty ||
@@ -118,7 +119,11 @@ class _MultiInventoryPickerBottomSheetState
         final matchesBestSeller =
             !_showBestSellersOnly || top20Ids.contains(p.id);
 
-        return hasStock && matchesQuery && matchesCategory && matchesBestSeller;
+        return isAvailable &&
+            hasStock &&
+            matchesQuery &&
+            matchesCategory &&
+            matchesBestSeller;
       }).toList();
     });
   }

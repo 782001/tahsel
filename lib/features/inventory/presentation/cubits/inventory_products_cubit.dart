@@ -75,6 +75,7 @@ class InventoryProductsCubit extends Cubit<InventoryProductsState> {
     _currentLimit = 15;
     _hasMore = true;
     _isFetchingMore = false;
+    if (isClosed) return;
     emit(InventoryProductsLoading());
     final result = await getProductsUseCase(
       query: query,
@@ -82,18 +83,23 @@ class InventoryProductsCubit extends Cubit<InventoryProductsState> {
       supplierId: supplierId,
       limit: _currentLimit,
     );
+    if (isClosed) return;
     result.fold(
-      (failure) => emit(InventoryProductsError(failure.message)),
+      (failure) {
+        if (!isClosed) emit(InventoryProductsError(failure.message));
+      },
       (products) {
         _allProducts = products;
         _hasMore = _allProducts.length > _currentLimit;
-        emit(
-          InventoryProductsLoaded(
-            _allProducts.take(_currentLimit).toList(),
-            hasMore: _hasMore,
-            isPaginationLoading: false,
-          ),
-        );
+        if (!isClosed) {
+          emit(
+            InventoryProductsLoaded(
+              _allProducts.take(_currentLimit).toList(),
+              hasMore: _hasMore,
+              isPaginationLoading: false,
+            ),
+          );
+        }
       },
     );
   }
@@ -105,7 +111,7 @@ class InventoryProductsCubit extends Cubit<InventoryProductsState> {
   }) async {
     final currentState = state;
     if (currentState is! InventoryProductsLoaded) return;
-    if (_isFetchingMore || !_hasMore) return;
+    if (_isFetchingMore || !_hasMore || isClosed) return;
 
     _isFetchingMore = true;
     emit(currentState.copyWith(isPaginationLoading: true));
@@ -114,24 +120,28 @@ class InventoryProductsCubit extends Cubit<InventoryProductsState> {
     _hasMore = _allProducts.length > _currentLimit;
     _isFetchingMore = false;
 
-    emit(
-      InventoryProductsLoaded(
-        _allProducts.take(_currentLimit).toList(),
-        hasMore: _hasMore,
-        isPaginationLoading: false,
-      ),
-    );
+    if (!isClosed) {
+      emit(
+        InventoryProductsLoaded(
+          _allProducts.take(_currentLimit).toList(),
+          hasMore: _hasMore,
+          isPaginationLoading: false,
+        ),
+      );
+    }
   }
 
   Future<bool> saveProduct(InventoryProductEntity product) async {
     final result = await saveProductUseCase(product);
     return result.fold(
       (failure) {
-        emit(InventoryProductsError(failure.message));
+        if (!isClosed) emit(InventoryProductsError(failure.message));
         return false;
       },
       (_) {
-        fetchProducts();
+        if (!isClosed) {
+          fetchProducts();
+        }
         return true;
       },
     );
@@ -141,11 +151,13 @@ class InventoryProductsCubit extends Cubit<InventoryProductsState> {
     final result = await deleteProductUseCase(id);
     return result.fold(
       (failure) {
-        emit(InventoryProductsError(failure.message));
+        if (!isClosed) emit(InventoryProductsError(failure.message));
         return false;
       },
       (_) {
-        fetchProducts();
+        if (!isClosed) {
+          fetchProducts();
+        }
         return true;
       },
     );
