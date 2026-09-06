@@ -1200,5 +1200,12 @@
   "view_supplier_details": "عرض التفاصيل والفواتير",
   "added_on": "تاريخ الإضافة",
   "low_stock_filter": "كمية منخفضة",
-  "adequate_stock_filter": "كميات مناسبة"
+  "adequate_stock_filter": "كميات مناسبة",
+  "unavailable_for_sale_filter": "غير متاح للبيع",
+  "print_invoice": "طباعة الفاتورة",
+  "print_report": "طباعة التقرير",
+  "print_vault_report": "طباعة تقرير الخزنة",
+  "print_preview": "معاينة وطباعة",
+  "direct_print": "طباعة مباشرة",
+  "print_document": "طباعة المستند"
 }

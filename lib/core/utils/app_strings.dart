@@ -1062,6 +1062,12 @@ class AppStrings {
   static const String invoiceNum = "invoice_num";
   static const String invoiceSavedSuccessfully = "invoice_saved_successfully";
   static const String savePdfToDevice = "save_pdf_to_device";
+  static const String printInvoice = "print_invoice";
+  static const String printReport = "print_report";
+  static const String printVaultReport = "print_vault_report";
+  static const String printPreview = "print_preview";
+  static const String directPrint = "direct_print";
+  static const String printDocument = "print_document";
   static const String availableProduct = "available_product";
   static const String newProduct = "new_product";
   static const String skuCodeOptional = "sku_code_optional";
@@ -1369,4 +1375,5 @@ class AppStrings {
   static const String addedOn = "added_on";
   static const String lowStockFilter = "low_stock_filter";
   static const String adequateStockFilter = "adequate_stock_filter";
+  static const String unavailableForSaleFilter = "unavailable_for_sale_filter";
 }

@@ -43,6 +43,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
   bool _showLowStockOnly = false;
   bool _showAdequateStockOnly = false;
   bool _showBestSellersOnly = false;
+  bool _showUnavailableOnly = false;
 
   @override
   void initState() {
@@ -396,7 +397,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
                               ),
                             ),
                             onSelected: (selected) {
-                              setState(() => _showBestSellersOnly = selected);
+                              setState(() {
+                                _showBestSellersOnly = selected;
+                                if (selected) {
+                                  _showUnavailableOnly = false;
+                                }
+                              });
                             },
                           ),
                           SizedBox(width: isDesktop ? 8 : 8.w),
@@ -447,6 +453,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                 _showLowStockOnly = selected;
                                 if (selected) {
                                   _showAdequateStockOnly = false;
+                                  _showUnavailableOnly = false;
                                 }
                               });
                             },
@@ -499,6 +506,61 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                 _showAdequateStockOnly = selected;
                                 if (selected) {
                                   _showLowStockOnly = false;
+                                  _showUnavailableOnly = false;
+                                }
+                              });
+                            },
+                          ),
+                          SizedBox(width: isDesktop ? 8 : 8.w),
+
+                          // 4. Unavailable For Sale Filter Chip
+                          ChoiceChip(
+                            showCheckmark: false,
+                            selected: _showUnavailableOnly,
+                            label: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.block_rounded,
+                                  color: _showUnavailableOnly
+                                      ? Colors.white
+                                      : AppColors.error,
+                                  size: 14,
+                                ),
+                                SizedBox(width: isDesktop ? 4 : 4.w),
+                                Text(
+                                  AppStrings.unavailableForSaleFilter.tr(),
+                                  style: TextStyles.customStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: _showUnavailableOnly
+                                        ? Colors.white
+                                        : AppColors.error,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            selectedColor: AppColors.error,
+                            backgroundColor: AppColors.error.withValues(
+                              alpha: 0.1,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                isDesktop ? 10 : 10.r,
+                              ),
+                              side: BorderSide(
+                                color: _showUnavailableOnly
+                                    ? AppColors.error
+                                    : AppColors.error.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            onSelected: (selected) {
+                              setState(() {
+                                _showUnavailableOnly = selected;
+                                if (selected) {
+                                  _showLowStockOnly = false;
+                                  _showAdequateStockOnly = false;
+                                  _showBestSellersOnly = false;
                                 }
                               });
                             },
@@ -531,7 +593,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                       state.products,
                                     );
 
-                                if (_showLowStockOnly) {
+                                if (_showUnavailableOnly) {
+                                  products = products
+                                      .where((p) => !p.isAvailable)
+                                      .toList();
+                                } else if (_showLowStockOnly) {
                                   products = products
                                       .where(
                                         (p) =>
