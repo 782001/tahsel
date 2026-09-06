@@ -1,13 +1,16 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:tahsel/core/extensions/extensions.dart';
+import 'package:tahsel/core/services/tahsel_print_service.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/inventory/domain/entities/inventory_purchase_entity.dart';
 import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
@@ -104,12 +107,30 @@ class InvoicePdfService {
         filePath: [shareFile.path],
         text: subject,
       );
+    } else if (!kIsWeb && Platform.isWindows) {
+      try {
+        await Process.run('cmd', ['/c', 'start', '', shareFile.path]);
+      } catch (_) {
+        try {
+          await Process.run('explorer.exe', ['/select,', shareFile.path]);
+        } catch (_) {}
+      }
     } else {
-      await Share.shareXFiles(
-        [XFile(shareFile.path, mimeType: 'application/pdf')],
-        text: subject,
-        subject: subject,
-      );
+      try {
+        await Share.shareXFiles(
+          [XFile(shareFile.path, mimeType: 'application/pdf')],
+          text: subject,
+          subject: subject,
+        );
+      } catch (_) {
+        try {
+          await Printing.sharePdf(
+            bytes: pdfBytes,
+            filename: filename,
+            subject: subject,
+          );
+        } catch (_) {}
+      }
     }
 
     return shareFile;
@@ -124,6 +145,46 @@ class InvoicePdfService {
     final file = File('${dir.path}/invoice_${invoice.id}.pdf');
     await file.writeAsBytes(pdfBytes);
     return file;
+  }
+
+  static Future<Uint8List> getInvoicePdfBytes({
+    required InvoiceEntity invoice,
+    required bool isArabic,
+  }) async {
+    return await _buildPdf(invoice, isArabic);
+  }
+
+  /// Print sales invoice directly or open Tahsel themed print preview
+  static Future<void> printInvoice(
+    BuildContext context,
+    InvoiceEntity invoice, {
+    required bool isArabic,
+    bool direct = false,
+  }) async {
+    final cleanId = invoice.id.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+    final shortId = invoice.id.length > 8
+        ? invoice.id.substring(0, 8).toUpperCase()
+        : invoice.id.toUpperCase();
+    final filename = 'Fatoora_$cleanId.pdf';
+    final title = isArabic ? 'طباعة فاتورة #$shortId' : 'Print Invoice #$shortId';
+
+    if (direct) {
+      final bytes = await getInvoicePdfBytes(
+        invoice: invoice,
+        isArabic: isArabic,
+      );
+      await TahselPrintService.directPrint(
+        bytes: bytes,
+        jobName: title,
+      );
+    } else {
+      await TahselPrintService.openPrintPreview(
+        context: context,
+        title: title,
+        buildPdf: (format) => _buildPdf(invoice, isArabic),
+        pdfFileName: filename,
+      );
+    }
   }
 
   static Future<Uint8List> _buildPdf(
@@ -603,13 +664,72 @@ class InvoicePdfService {
         ? 'فاتورة شراء رقم #$idShort'
         : 'Purchase Invoice #$idShort';
 
-    await Share.shareXFiles(
-      [XFile(shareFile.path, mimeType: 'application/pdf')],
-      text: subject,
-      subject: subject,
-    );
+    if (!kIsWeb && Platform.isWindows) {
+      try {
+        await Process.run('cmd', ['/c', 'start', '', shareFile.path]);
+      } catch (_) {
+        try {
+          await Process.run('explorer.exe', ['/select,', shareFile.path]);
+        } catch (_) {}
+      }
+    } else {
+      try {
+        await Share.shareXFiles(
+          [XFile(shareFile.path, mimeType: 'application/pdf')],
+          text: subject,
+          subject: subject,
+        );
+      } catch (_) {
+        try {
+          await Printing.sharePdf(
+            bytes: pdfBytes,
+            filename: filename,
+            subject: subject,
+          );
+        } catch (_) {}
+      }
+    }
 
     return shareFile;
+  }
+
+  static Future<Uint8List> getPurchasePdfBytes({
+    required InventoryPurchaseEntity purchase,
+    required bool isArabic,
+  }) async {
+    return await _buildPurchasePdf(purchase, isArabic);
+  }
+
+  /// Print purchase invoice directly or open Tahsel themed print preview
+  static Future<void> printPurchaseInvoice(
+    BuildContext context,
+    InventoryPurchaseEntity purchase, {
+    required bool isArabic,
+    bool direct = false,
+  }) async {
+    final cleanId = purchase.id.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+    final shortId = purchase.id.replaceAll('pur_', '');
+    final filename = 'Purchase_Fatoora_$cleanId.pdf';
+    final title =
+        isArabic ? 'طباعة فاتورة شراء #$shortId' : 'Print Purchase Invoice #$shortId';
+
+    if (direct) {
+      final bytes = await getPurchasePdfBytes(
+        purchase: purchase,
+        isArabic: isArabic,
+      );
+      await TahselPrintService.directPrint(
+        bytes: bytes,
+        jobName: title,
+      );
+    } else {
+      await TahselPrintService.openPrintPreview(
+        context: context,
+        title: title,
+        buildPdf: (format) => _buildPurchasePdf(purchase, isArabic),
+        pdfFileName: filename,
+      );
+    }
   }
 
   static Future<Uint8List> _buildPurchasePdf(

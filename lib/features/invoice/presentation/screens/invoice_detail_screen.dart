@@ -896,7 +896,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
               title: Text(
                 AppStrings.invoiceDetail.tr(),
                 style: TextStyles.customStyle(
-                  fontSize: 20,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: AppColors.primaryColor,
                 ),
@@ -910,6 +910,33 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                 onPressed: () => Navigator.of(context).pop(),
               ),
               actions: [
+                // Print Invoice
+                IconButton(
+                  icon: Icon(
+                    Icons.print_rounded,
+                    color: AppColors.primaryColor,
+                  ),
+                  tooltip: AppStrings.printInvoice.tr(),
+                  onPressed: () async {
+                    try {
+                      final isArabic = AppStrings.currentLang == 'ar';
+                      await InvoicePdfService.printInvoice(
+                        context,
+                        _invoice,
+                        isArabic: isArabic,
+                      );
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(e.toString()),
+                            backgroundColor: AppColors.error,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                ),
                 // Share as PDF
                 IconButton(
                   icon: Icon(
@@ -961,30 +988,17 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                     }
 
                     try {
-                      // showDialog(
-                      //   // ignore: use_build_context_synchronously
-                      //   context: context,
-                      //   barrierDismissible: false,
-                      //   builder: (context) =>  Center(
-                      //     child: CircularProgressIndicator(color: AppColors.primaryColor,
-                      //     strokeWidth: 4,
-                      //     ),
-                      //   ),
-                      // );
-
                       final isArabic = AppStrings.currentLang == 'ar';
                       await InvoicePdfService.generateAndShareInvoice(
                         _invoice,
                         isArabic: isArabic,
                         phoneNumber: phone,
                       );
-
-                      if (context.mounted) {
-                        Navigator.of(context).pop();
-                      }
                     } catch (e) {
                       if (context.mounted) {
-                        Navigator.of(context).pop();
+                        AppLogger.printMessage(
+                          'Failed to generate and share invoice: $e',
+                        );
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(e.toString()),
