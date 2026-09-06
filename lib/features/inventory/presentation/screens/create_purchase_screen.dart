@@ -82,17 +82,200 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
 
   void _addItem(InventoryProductEntity product, double qty, double price) {
     setState(() {
-      _selectedItems.add(
-        InventoryPurchaseItemEntity(
-          productId: product.id,
-          productName: product.name,
-          quantity: qty,
-          purchasePrice: price,
-          totalPrice: qty * price,
-          unit: product.unit.isNotEmpty ? product.unit : null,
-        ),
+      final existingIndex = _selectedItems.indexWhere(
+        (item) =>
+            (product.id.isNotEmpty && item.productId == product.id) ||
+            item.productName.trim().toLowerCase() ==
+                product.name.trim().toLowerCase(),
       );
+
+      if (existingIndex != -1) {
+        final existingItem = _selectedItems[existingIndex];
+        final newTotalQty = existingItem.quantity + qty;
+        final effectivePrice = price > 0 ? price : existingItem.purchasePrice;
+        _selectedItems[existingIndex] = existingItem.copyWith(
+          productId: existingItem.productId.isNotEmpty
+              ? existingItem.productId
+              : product.id,
+          quantity: newTotalQty,
+          purchasePrice: effectivePrice,
+          totalPrice: newTotalQty * effectivePrice,
+          unit: product.unit.isNotEmpty ? product.unit : existingItem.unit,
+        );
+      } else {
+        _selectedItems.add(
+          InventoryPurchaseItemEntity(
+            productId: product.id,
+            productName: product.name,
+            quantity: qty,
+            purchasePrice: price,
+            totalPrice: qty * price,
+            unit: product.unit.isNotEmpty ? product.unit : null,
+          ),
+        );
+      }
     });
+  }
+
+  Future<void> _showEditItemDialog(int index) async {
+    final item = _selectedItems[index];
+    final isDesktop = ResponsiveLayout.isDesktop(context);
+    final qtyController = TextEditingController(
+      text: item.quantity.toSmartAmount(),
+    );
+    final priceController = TextEditingController(
+      text: item.purchasePrice.toSmartAmount(),
+    );
+    final unitController = TextEditingController(
+      text: item.unit ?? '',
+    );
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(isDesktop ? 16 : 16.r),
+        ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Padding(
+            padding: EdgeInsets.all(isDesktop ? 20 : 20.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${AppStrings.edit.tr()}: ${item.productName}',
+                        style: TextStyles.customStyle(
+                          fontSize: isDesktop ? 17 : 17,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.blackReal,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(ctx).pop(),
+                    ),
+                  ],
+                ),
+                SizedBox(height: isDesktop ? 16 : 16.h),
+                Text(
+                  AppStrings.quantity.tr(),
+                  style: TextStyles.customStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.blackReal,
+                  ),
+                ),
+                SizedBox(height: isDesktop ? 6 : 6.h),
+                QuickAddTextField(
+                  controller: qtyController,
+                  isNumber: true,
+                  hint: AppStrings.quantity.tr(),
+                ),
+                SizedBox(height: isDesktop ? 12 : 12.h),
+                Text(
+                  AppStrings.purchasePrice.tr(),
+                  style: TextStyles.customStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.blackReal,
+                  ),
+                ),
+                SizedBox(height: isDesktop ? 6 : 6.h),
+                QuickAddTextField(
+                  controller: priceController,
+                  isNumber: true,
+                  hint: AppStrings.purchasePrice.tr(),
+                ),
+                SizedBox(height: isDesktop ? 12 : 12.h),
+                Text(
+                  AppStrings.unit.tr(),
+                  style: TextStyles.customStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.blackReal,
+                  ),
+                ),
+                SizedBox(height: isDesktop ? 6 : 6.h),
+                QuickAddTextField(
+                  controller: unitController,
+                  hint: AppStrings.unitPlaceholder.tr(),
+                ),
+                SizedBox(height: isDesktop ? 20 : 20.h),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: Text(
+                        AppStrings.cancel.tr(),
+                        style: TextStyles.customStyle(
+                          color: AppColors.blackLight,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: isDesktop ? 8 : 8.w),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryColor,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isDesktop ? 20 : 16.w,
+                          vertical: isDesktop ? 10 : 10.h,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            isDesktop ? 10 : 10.r,
+                          ),
+                        ),
+                      ),
+                      onPressed: () {
+                        final newQty =
+                            double.tryParse(qtyController.text.trim()) ??
+                            item.quantity;
+                        final newPrice =
+                            double.tryParse(priceController.text.trim()) ??
+                            item.purchasePrice;
+                        final newUnit = unitController.text.trim();
+                        if (newQty <= 0) {
+                          _removeItem(index);
+                        } else {
+                          setState(() {
+                            _selectedItems[index] = item.copyWith(
+                              quantity: newQty,
+                              purchasePrice: newPrice,
+                              totalPrice: newQty * newPrice,
+                              unit: newUnit.isNotEmpty ? newUnit : item.unit,
+                            );
+                          });
+                        }
+                        Navigator.of(ctx).pop();
+                      },
+                      child: Text(
+                        AppStrings.save.tr(),
+                        style: TextStyles.customStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void _removeItem(int index) {
@@ -375,9 +558,6 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                               itemBuilder: (context, index) {
                                 final item = _selectedItems[index];
                                 return Container(
-                                  padding: EdgeInsets.all(
-                                    isDesktop ? 12 : 12.w,
-                                  ),
                                   decoration: BoxDecoration(
                                     color: AppColors.surface,
                                     borderRadius: BorderRadius.circular(
@@ -387,103 +567,156 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                       color: AppColors.dividerColor,
                                     ),
                                   ),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    borderRadius: BorderRadius.circular(
+                                      isDesktop ? 12 : 12.r,
+                                    ),
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(
+                                        isDesktop ? 12 : 12.r,
+                                      ),
+                                      onTap: () => _showEditItemDialog(index),
+                                      child: Padding(
+                                        padding: EdgeInsets.all(
+                                          isDesktop ? 12 : 12.w,
+                                        ),
+                                        child: Row(
                                           children: [
-                                            Text(
-                                              item.productName,
-                                              style: TextStyles.customStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppColors.blackReal,
-                                              ),
-                                            ),
-                                            SizedBox(
-                                              height: isDesktop ? 4 : 4.h,
-                                            ),
-                                            Wrap(
-                                              spacing: 6,
-                                              runSpacing: 4,
-                                              crossAxisAlignment:
-                                                  WrapCrossAlignment.center,
-                                              children: [
-                                                Container(
-                                                  padding: EdgeInsets.symmetric(
-                                                    horizontal: isDesktop
-                                                        ? 6
-                                                        : 6.w,
-                                                    vertical: isDesktop
-                                                        ? 2
-                                                        : 2.h,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    color: AppColors
-                                                        .primaryColor
-                                                        .withValues(alpha: 0.1),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          4.r,
-                                                        ),
-                                                  ),
-                                                  child: Text(
-                                                    '${AppStrings.quantity.tr()}: ${item.quantity.toSmartAmount()}',
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    item.productName,
                                                     style:
                                                         TextStyles.customStyle(
-                                                          fontSize: 12,
+                                                          fontSize: 15,
                                                           fontWeight:
                                                               FontWeight.bold,
-                                                          color: AppColors
-                                                              .primaryColor,
+                                                          color:
+                                                              AppColors
+                                                                  .blackReal,
                                                         ),
                                                   ),
-                                                ),
-                                                Text(
-                                                  '×',
-                                                  style: TextStyles.customStyle(
-                                                    fontSize: 13,
-                                                    color: AppColors.sandText,
+                                                  SizedBox(
+                                                    height: isDesktop ? 4 : 4.h,
                                                   ),
-                                                ),
-                                                Text(
-                                                  '${item.purchasePrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-                                                  style: TextStyles.customStyle(
-                                                    fontSize: 13,
-                                                    color: AppColors.sandText,
+                                                  Wrap(
+                                                    spacing: 6,
+                                                    runSpacing: 4,
+                                                    crossAxisAlignment:
+                                                        WrapCrossAlignment
+                                                            .center,
+                                                    children: [
+                                                      Container(
+                                                        padding:
+                                                            EdgeInsets.symmetric(
+                                                              horizontal:
+                                                                  isDesktop
+                                                                      ? 6
+                                                                      : 6.w,
+                                                              vertical:
+                                                                  isDesktop
+                                                                      ? 2
+                                                                      : 2.h,
+                                                            ),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                              color: AppColors
+                                                                  .primaryColor
+                                                                  .withValues(
+                                                                    alpha: 0.1,
+                                                                  ),
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                        4.r,
+                                                                      ),
+                                                            ),
+                                                        child: Text(
+                                                          '${AppStrings.quantity.tr()}: ${item.quantity.toSmartAmount()}',
+                                                          style: TextStyles
+                                                              .customStyle(
+                                                                fontSize: 12,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                color: AppColors
+                                                                    .primaryColor,
+                                                              ),
+                                                        ),
+                                                      ),
+                                                      Text(
+                                                        '×',
+                                                        style: TextStyles
+                                                            .customStyle(
+                                                              fontSize: 13,
+                                                              color: AppColors
+                                                                  .sandText,
+                                                            ),
+                                                      ),
+                                                      Text(
+                                                        '${item.purchasePrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                                                        style: TextStyles
+                                                            .customStyle(
+                                                              fontSize: 13,
+                                                              color: AppColors
+                                                                  .sandText,
+                                                            ),
+                                                      ),
+                                                      Text(
+                                                        '=',
+                                                        style: TextStyles
+                                                            .customStyle(
+                                                              fontSize: 13,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              color: AppColors
+                                                                  .blackReal,
+                                                            ),
+                                                      ),
+                                                      Text(
+                                                        '${item.totalPrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                                                        style: TextStyles
+                                                            .customStyle(
+                                                              fontSize: 14,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              color: AppColors
+                                                                  .success,
+                                                            ),
+                                                      ),
+                                                    ],
                                                   ),
-                                                ),
-                                                Text(
-                                                  '=',
-                                                  style: TextStyles.customStyle(
-                                                    fontSize: 13,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: AppColors.blackReal,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  '${item.totalPrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-                                                  style: TextStyles.customStyle(
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: AppColors.success,
-                                                  ),
-                                                ),
-                                              ],
+                                                ],
+                                              ),
+                                            ),
+                                            IconButton(
+                                              icon: Icon(
+                                                Icons.edit_outlined,
+                                                color: AppColors.primaryColor,
+                                                size: isDesktop ? 20 : 20,
+                                              ),
+                                              onPressed: () =>
+                                                  _showEditItemDialog(index),
+                                            ),
+                                            IconButton(
+                                              icon: Icon(
+                                                Icons.delete_outline,
+                                                color: AppColors.deleteRed,
+                                                size: isDesktop ? 20 : 20,
+                                              ),
+                                              onPressed: () =>
+                                                  _removeItem(index),
                                             ),
                                           ],
                                         ),
                                       ),
-                                      IconButton(
-                                        icon: Icon(
-                                          Icons.delete_outline,
-                                          color: AppColors.deleteRed,
-                                        ),
-                                        onPressed: () => _removeItem(index),
-                                      ),
-                                    ],
+                                    ),
                                   ),
                                 );
                               },
@@ -757,7 +990,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  if (selectedProd != null)
+                                  if (selectedProd != null) ...[
                                     SearchableDropdownField<
                                       InventoryProductEntity
                                     >(
@@ -775,6 +1008,78 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                       },
                                       onCleared: () {},
                                     ),
+                                    Builder(
+                                      builder: (context) {
+                                        final existingSelectedItem =
+                                            _selectedItems.where(
+                                              (item) =>
+                                                  item.productId ==
+                                                      selectedProd!.id ||
+                                                  item.productName
+                                                          .trim()
+                                                          .toLowerCase() ==
+                                                      selectedProd!.name
+                                                          .trim()
+                                                          .toLowerCase(),
+                                            ).firstOrNull;
+
+                                        if (existingSelectedItem == null) {
+                                          return const SizedBox.shrink();
+                                        }
+
+                                        return Container(
+                                          margin: EdgeInsets.only(
+                                            top: isDesktop ? 10 : 10.h,
+                                          ),
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: isDesktop ? 10 : 10.w,
+                                            vertical: isDesktop ? 6 : 6.h,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.info.withValues(
+                                              alpha: 0.08,
+                                            ),
+                                            borderRadius:
+                                                BorderRadius.circular(
+                                                  isDesktop ? 8 : 8.r,
+                                                ),
+                                            border: Border.all(
+                                              color: AppColors.info.withValues(
+                                                alpha: 0.3,
+                                              ),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.info_outline,
+                                                size: isDesktop ? 16 : 16,
+                                                color: AppColors.info,
+                                              ),
+                                              SizedBox(
+                                                width: isDesktop ? 6 : 6.w,
+                                              ),
+                                              Expanded(
+                                                child: Text(
+                                                  '${AppStrings.itemAlreadyInPurchase.tr(namedArgs: {'qty': existingSelectedItem.quantity.toSmartAmount(), 'unit': existingSelectedItem.unit ?? AppStrings.piece.tr()})}\n${AppStrings.qtyWillBeAdded.tr()}',
+                                                  style:
+                                                      TextStyles.customStyle(
+                                                        fontSize:
+                                                            isDesktop
+                                                                ? 11.5
+                                                                : 11.5,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color: AppColors.info,
+                                                      ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
                                   SizedBox(height: isDesktop ? 12 : 12.h),
                                   Text(
                                     AppStrings.quantity.tr(),
@@ -1071,6 +1376,71 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                     ) ??
                                     1.0;
                                 final unit = newUnitController.text.trim();
+                                final barcode =
+                                    newBarcodeController.text.trim();
+
+                                // 1. Check if product already exists in inventory by name or barcode
+                                final existingProductInInventory =
+                                    _allProducts.where((p) {
+                                      if (p.name.trim().toLowerCase() ==
+                                          name.toLowerCase()) {
+                                        return true;
+                                      }
+                                      if (barcode.isNotEmpty &&
+                                          p.barcode != null &&
+                                          p.barcode!.trim().toLowerCase() ==
+                                              barcode.toLowerCase()) {
+                                        return true;
+                                      }
+                                      return false;
+                                    }).firstOrNull;
+
+                                if (existingProductInInventory != null) {
+                                  _addItem(
+                                    existingProductInInventory,
+                                    qty,
+                                    purchasePrice > 0
+                                        ? purchasePrice
+                                        : existingProductInInventory
+                                            .purchasePrice,
+                                  );
+                                  Navigator.of(ctx).pop();
+                                  return;
+                                }
+
+                                // 2. Check if this product was already added to _selectedItems during this session
+                                final existingSelectedItemIndex =
+                                    _selectedItems.indexWhere(
+                                      (item) =>
+                                          item.productName
+                                              .trim()
+                                              .toLowerCase() ==
+                                          name.toLowerCase(),
+                                    );
+
+                                if (existingSelectedItemIndex != -1) {
+                                  final existingItem =
+                                      _selectedItems[existingSelectedItemIndex];
+                                  final newTotalQty =
+                                      existingItem.quantity + qty;
+                                  final effectivePrice = purchasePrice > 0
+                                      ? purchasePrice
+                                      : existingItem.purchasePrice;
+                                  setState(() {
+                                    _selectedItems[existingSelectedItemIndex] =
+                                        existingItem.copyWith(
+                                          quantity: newTotalQty,
+                                          purchasePrice: effectivePrice,
+                                          totalPrice:
+                                              newTotalQty * effectivePrice,
+                                          unit: unit.isNotEmpty
+                                              ? unit
+                                              : existingItem.unit,
+                                        );
+                                  });
+                                  Navigator.of(ctx).pop();
+                                  return;
+                                }
 
                                 final newProduct = InventoryProductEntity(
                                   id: 'prod_${DateTime.now().millisecondsSinceEpoch}',

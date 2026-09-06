@@ -1034,6 +1034,8 @@ class AppStrings {
   static const String deletedSuccessfully = "deleted_successfully";
   static const String selectProduct = "select_product";
   static const String addPurchaseItem = "add_purchase_item";
+  static const String itemAlreadyInPurchase = "item_already_in_purchase";
+  static const String qtyWillBeAdded = "qty_will_be_added";
   static const String noProductsFound = "no_products_found";
   static const String noCategoriesFound = "no_categories_found";
   static const String noSuppliersFound = "no_suppliers_found";

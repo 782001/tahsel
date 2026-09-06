@@ -19,6 +19,24 @@ class InventoryPurchaseItemEntity extends Equatable {
 
   double get subtotal => totalPrice;
 
+  InventoryPurchaseItemEntity copyWith({
+    String? productId,
+    String? productName,
+    double? quantity,
+    double? purchasePrice,
+    double? totalPrice,
+    String? unit,
+  }) {
+    return InventoryPurchaseItemEntity(
+      productId: productId ?? this.productId,
+      productName: productName ?? this.productName,
+      quantity: quantity ?? this.quantity,
+      purchasePrice: purchasePrice ?? this.purchasePrice,
+      totalPrice: totalPrice ?? this.totalPrice,
+      unit: unit ?? this.unit,
+    );
+  }
+
   @override
   List<Object?> get props => [
     productId,

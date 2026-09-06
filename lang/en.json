@@ -807,6 +807,8 @@
   "deleted_successfully": "Deleted successfully",
   "select_product": "Select Product",
   "add_purchase_item": "Add Purchase Item",
+  "item_already_in_purchase": "Item already in invoice ({qty} {unit})",
+  "qty_will_be_added": "New quantity will be added to the existing quantity",
   "no_products_found": "No products registered",
   "no_categories_found": "No categories registered",
   "no_suppliers_found": "No suppliers registered",
