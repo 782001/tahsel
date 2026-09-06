@@ -8,6 +8,7 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/features/debt/presentation/cubit/debt_cubit.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 
 class GlobalDebtDueDateWarningBanner extends StatefulWidget {
@@ -173,8 +174,10 @@ class _GlobalDebtDueDateWarningBannerState
                 InkWell(
                   borderRadius: BorderRadius.circular(isDesktop ? 12 : 20.r),
                   onTap: () {
+                    final targetFilter = hasOverdue ? 'overdue' : 'due_soon';
                     // Navigate to debts tab in main layout
                     context.read<MainLayoutCubit>().changeBottomNav(2);
+                    context.read<DebtCubit>().setFilter(targetFilter);
                   },
                   child: Container(
                     padding: EdgeInsets.symmetric(

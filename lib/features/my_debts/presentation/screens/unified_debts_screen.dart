@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/customer_debts/presentation/screens/customer_debts_screen.dart';
+import 'package:tahsel/features/debt/presentation/cubit/debt_state.dart';
 import 'package:tahsel/features/my_debts/presentation/widgets/debts_tab_selector.dart';
 import 'package:tahsel/features/my_debts/presentation/widgets/my_debts_tab_view.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -52,17 +53,29 @@ class _UnifiedDebtsScreenState extends State<UnifiedDebtsScreen>
         BlocProvider.value(value: sl<MyDebtsSummaryCubit>()),
         BlocProvider.value(value: sl<TotalDebtsCubit>()),
       ],
-      child: BlocListener<OfflineSyncCubit, OfflineSyncState>(
-        listener: (context, state) {
-          if (state is OfflineSyncSuccess) {
-            final uid = AppStrings.userToken;
-            if (uid.isNotEmpty) {
-              context.read<DebtCubit>().getDebts(uid, forceRefresh: true);
-              context.read<MyDebtsCubit>().loadPersons(uid, forceRefresh: true);
-              context.read<MyDebtsSummaryCubit>().refreshSummary(uid);
-            }
-          }
-        },
+      child: MultiBlocListener(
+        listeners: [
+          BlocListener<OfflineSyncCubit, OfflineSyncState>(
+            listener: (context, state) {
+              if (state is OfflineSyncSuccess) {
+                final uid = AppStrings.userToken;
+                if (uid.isNotEmpty) {
+                  context.read<DebtCubit>().getDebts(uid, forceRefresh: true);
+                  context.read<MyDebtsCubit>().loadPersons(uid, forceRefresh: true);
+                  context.read<MyDebtsSummaryCubit>().refreshSummary(uid);
+                }
+              }
+            },
+          ),
+          BlocListener<DebtCubit, DebtState>(
+            listener: (context, state) {
+              final filter = context.read<DebtCubit>().currentFilter;
+              if (filter != 'all' && _tabController.index != 0) {
+                _tabController.animateTo(0);
+              }
+            },
+          ),
+        ],
         child: Scaffold(
           backgroundColor: AppColors.scafoldBackGround,
           appBar: AppBar(

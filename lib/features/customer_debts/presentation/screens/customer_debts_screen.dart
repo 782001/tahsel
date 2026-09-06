@@ -38,6 +38,7 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen>
   @override
   void initState() {
     super.initState();
+    _selectedFilter = context.read<DebtCubit>().currentFilter;
     _scrollController.addListener(_onScroll);
   }
 
@@ -72,6 +73,12 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen>
       body: SafeArea(
         child: BlocListener<DebtCubit, DebtState>(
           listener: (context, state) {
+            final cubitFilter = context.read<DebtCubit>().currentFilter;
+            if (_selectedFilter != cubitFilter) {
+              setState(() {
+                _selectedFilter = cubitFilter;
+              });
+            }
             // When DebtCubit refreshes debts after any operation,
             // fetch latest global totals from summary
             if (state is DebtsFetchSuccess) {
@@ -197,11 +204,7 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen>
                                   onTap: () {
                                     if (_selectedFilter != 'all') {
                                       setState(() => _selectedFilter = 'all');
-                                      context.read<DebtCubit>().getDebts(
-                                        AppStrings.userToken,
-                                        forceRefresh: true,
-                                        filter: 'all',
-                                      );
+                                      context.read<DebtCubit>().setFilter('all');
                                     }
                                   },
                                 ),
@@ -216,11 +219,7 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen>
                                       setState(
                                         () => _selectedFilter = 'overdue',
                                       );
-                                      context.read<DebtCubit>().getDebts(
-                                        AppStrings.userToken,
-                                        forceRefresh: true,
-                                        filter: 'overdue',
-                                      );
+                                      context.read<DebtCubit>().setFilter('overdue');
                                     }
                                   },
                                 ),
@@ -235,11 +234,7 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen>
                                       setState(
                                         () => _selectedFilter = 'due_soon',
                                       );
-                                      context.read<DebtCubit>().getDebts(
-                                        AppStrings.userToken,
-                                        forceRefresh: true,
-                                        filter: 'due_soon',
-                                      );
+                                      context.read<DebtCubit>().setFilter('due_soon');
                                     }
                                   },
                                 ),
