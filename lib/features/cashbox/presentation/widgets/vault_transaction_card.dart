@@ -26,10 +26,10 @@ class VaultTransactionCard extends StatelessWidget {
           transaction: transaction,
           onSubmit: (newAmount, newDescription) {
             context.read<VaultCubit>().editManualTransaction(
-                  transaction: transaction,
-                  newAmount: newAmount,
-                  newDescription: newDescription,
-                );
+              transaction: transaction,
+              newAmount: newAmount,
+              newDescription: newDescription,
+            );
           },
         ),
       );
@@ -102,7 +102,8 @@ class VaultTransactionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
     final isIn = transaction.direction == VaultTransactionDirection.inFlow;
-    final isManual = transaction.source == VaultTransactionSource.manualDeposit ||
+    final isManual =
+        transaction.source == VaultTransactionSource.manualDeposit ||
         transaction.source == VaultTransactionSource.manualWithdrawal;
 
     final IconData sourceIcon = _getSourceIcon(transaction.source);
@@ -172,7 +173,7 @@ class VaultTransactionCard extends StatelessWidget {
                 SizedBox(height: isDesktop ? 6 : 4.h),
                 Text(
                   transaction.description,
-                  maxLines: 2,
+                  maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyles.customStyle(
                     color: AppColors.textColor,
