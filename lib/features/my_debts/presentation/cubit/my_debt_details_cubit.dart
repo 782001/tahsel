@@ -82,6 +82,7 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
 
     // 1. Fetch pending records first
     final pendingResult = await getPendingMyDebtsUseCase(const NoParams());
+    if (isClosed) return;
     final List<OfflineRecord> pendingRecords = pendingResult.fold(
       (_) => [],
       (records) => records,
@@ -130,9 +131,11 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
     final itemsResult = await getItemsUseCase(
       GetMyDebtItemsParams(uid: uid, personName: personName),
     );
+    if (isClosed) return;
     final opsResult = await getOperationsUseCase(
       GetMyDebtPersonOperationsParams(uid: uid, personName: personName),
     );
+    if (isClosed) return;
 
     itemsResult.fold(
       (f) {
@@ -153,6 +156,7 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
     List<MyDebtItemEntity> items,
     List<MyDebtOperationEntity> ops,
   ) {
+    if (isClosed) return;
     double totalOwed = 0;
     double totalPaid = 0;
     DateTime? earliestDate;
@@ -204,6 +208,7 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
       note: note,
       paymentDate: paymentDate,
     );
+    if (isClosed) return;
 
     result.fold(
       (f) => emit(
@@ -255,6 +260,7 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
     );
 
     final result = await addDebtUseCase(debt);
+    if (isClosed) return;
 
     result.fold(
       (f) => emit(
@@ -280,6 +286,7 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
       note: note,
       paymentDate: paymentDate,
     );
+    if (isClosed) return;
 
     result.fold(
       (f) => emit(
@@ -306,12 +313,20 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
     if (state.status == MyDebtDetailsStatus.loading) return;
     emit(state.copyWith(status: MyDebtDetailsStatus.loading));
     final result = await deleteItemUseCase(uid, debtId);
+    if (isClosed) return;
     result.fold(
       (f) => emit(
         state.copyWith(status: MyDebtDetailsStatus.error, message: f.message),
       ),
       (_) => loadDetails(uid, personName),
     );
+  }
+
+  @override
+  void emit(MyDebtDetailsState state) {
+    if (!isClosed) {
+      super.emit(state);
+    }
   }
 
   @override

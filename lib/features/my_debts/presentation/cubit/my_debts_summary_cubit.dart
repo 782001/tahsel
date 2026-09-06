@@ -16,20 +16,25 @@ class MyDebtsSummaryCubit extends Cubit<MyDebtsSummaryState> {
     emit(MyDebtsSummaryLoading());
 
     final result = await getMyDebtSummaryUseCase(uid);
+    if (isClosed) return;
 
-    result.fold((failure) => emit(MyDebtsSummaryError(failure.message)), (
-      summary,
-    ) {
-      if (!isClosed) {
-        emit(
-          MyDebtsSummaryLoaded(
-            totalOwed: summary.totalRemainingDebt,
-            totalPaid: summary.totalPaid,
-            totalPeople: summary.peopleCount,
-          ),
-        );
-      }
-    });
+    result.fold(
+      (failure) => emit(MyDebtsSummaryError(failure.message)),
+      (summary) => emit(
+        MyDebtsSummaryLoaded(
+          totalOwed: summary.totalRemainingDebt,
+          totalPaid: summary.totalPaid,
+          totalPeople: summary.peopleCount,
+        ),
+      ),
+    );
+  }
+
+  @override
+  void emit(MyDebtsSummaryState state) {
+    if (!isClosed) {
+      super.emit(state);
+    }
   }
 
   /// Called after any mutation (add debt, pay, etc.) to refresh the summary.

@@ -50,6 +50,7 @@ class DebtDetailsCubit extends Cubit<DebtDetailsState> {
         forceRefresh: forceRefresh,
       ),
     );
+    if (isClosed) return;
 
     // Also fetch the debt itself to ensure we have the latest description/name
     DebtEntity? currentDebt;
@@ -60,6 +61,7 @@ class DebtDetailsCubit extends Cubit<DebtDetailsState> {
         debtId,
         forceRefresh: forceRefresh,
       );
+      if (isClosed) return;
       debtResult.fold((_) => null, (debt) => currentDebt = debt);
     }
 
@@ -70,12 +72,16 @@ class DebtDetailsCubit extends Cubit<DebtDetailsState> {
     }
 
     await result.fold(
-      (failure) async => emit(DebtDetailsError(failure.message)),
+      (failure) async {
+        if (isClosed) return;
+        emit(DebtDetailsError(failure.message));
+      },
       (transactions) async {
         final sortedTransactions = await compute(
           _processTransactions,
           transactions,
         );
+        if (isClosed) return;
 
         double totalAmount = 0;
         double totalPaid = 0;
@@ -155,7 +161,10 @@ class DebtDetailsCubit extends Cubit<DebtDetailsState> {
     );
 
     await result.fold(
-      (failure) async => emit(DebtDetailsError(failure.message)),
+      (failure) async {
+        if (isClosed) return;
+        emit(DebtDetailsError(failure.message));
+      },
       (_) async {
         // Trigger global refreshes
         sl<TotalDebtsCubit>().getTotalDebts(uid, forceRefresh: true);
@@ -163,6 +172,7 @@ class DebtDetailsCubit extends Cubit<DebtDetailsState> {
 
         // Reload current transactions to get fresh totals
         await loadTransactions(uid, debtId, forceRefresh: true);
+        if (isClosed) return;
 
         if (state is DebtDetailsLoaded) {
           final loadedState = state as DebtDetailsLoaded;
@@ -195,9 +205,13 @@ class DebtDetailsCubit extends Cubit<DebtDetailsState> {
     final result = await deletePaymentUseCase(
       DeletePaymentParams(uid: uid, debtId: debtId, paymentId: paymentId),
     );
+    if (isClosed) return;
 
     await result.fold(
-      (failure) async => emit(DebtDetailsError(failure.message)),
+      (failure) async {
+        if (isClosed) return;
+        emit(DebtDetailsError(failure.message));
+      },
       (_) async {
         // Trigger global refreshes
         sl<TotalDebtsCubit>().getTotalDebts(uid, forceRefresh: true);
@@ -205,6 +219,7 @@ class DebtDetailsCubit extends Cubit<DebtDetailsState> {
 
         // Reload current transactions
         await loadTransactions(uid, debtId, forceRefresh: true);
+        if (isClosed) return;
 
         if (state is DebtDetailsLoaded) {
           final loadedState = state as DebtDetailsLoaded;
@@ -241,9 +256,11 @@ class DebtDetailsCubit extends Cubit<DebtDetailsState> {
       creditAmount: creditAmount,
       note: note,
     );
+    if (isClosed) return false;
 
     return await result.fold(
       (failure) async {
+        if (isClosed) return false;
         if (prevState is DebtDetailsLoaded) {
           emit(prevState);
         }
@@ -260,6 +277,13 @@ class DebtDetailsCubit extends Cubit<DebtDetailsState> {
         return true;
       },
     );
+  }
+
+  @override
+  void emit(DebtDetailsState state) {
+    if (!isClosed) {
+      super.emit(state);
+    }
   }
 
   static List<PaymentEntity> _processTransactions(

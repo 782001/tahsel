@@ -83,7 +83,7 @@ class MyDebtCard extends StatelessWidget {
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
                                       ),
-                                      maxLines: 1,
+                                      maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),

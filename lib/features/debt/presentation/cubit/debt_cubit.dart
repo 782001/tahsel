@@ -358,6 +358,13 @@ class DebtCubit extends Cubit<DebtState> {
     });
   }
 
+  @override
+  void emit(DebtState state) {
+    if (!isClosed) {
+      super.emit(state);
+    }
+  }
+
   void clearData() {
     emit(DebtInitial());
   }

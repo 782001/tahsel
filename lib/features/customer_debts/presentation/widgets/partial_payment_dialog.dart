@@ -70,7 +70,7 @@ class _PartialPaymentDialogState extends State<PartialPaymentDialog> {
         );
       },
     );
-    if (picked != null) {
+    if (picked != null && mounted) {
       setState(() {
         _selectedDate = picked;
       });

@@ -72,7 +72,7 @@ class _PaymentReminderDialogState extends State<PaymentReminderDialog> {
         );
       },
     );
-    if (picked != null) {
+    if (picked != null && mounted) {
       setState(() {
         _selectedDate = picked;
       });

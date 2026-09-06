@@ -66,7 +66,7 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
         );
       },
     );
-    if (picked != null) {
+    if (picked != null && mounted) {
       setState(() {
         _selectedDate = picked;
       });

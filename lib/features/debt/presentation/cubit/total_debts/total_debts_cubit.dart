@@ -20,17 +20,24 @@ class TotalDebtsCubit extends Cubit<TotalDebtsState> {
     emit(TotalDebtsLoading());
 
     final result = await getDebtSummaryUseCase(uid);
+    if (isClosed) return;
 
-    result.fold((failure) => emit(TotalDebtsError(failure.message)), (summary) {
-      if (!isClosed) {
-        emit(
-          TotalDebtsLoaded(
-            totalAmount: summary.totalAmount,
-            customerCount: summary.customerCount,
-          ),
-        );
-      }
-    });
+    result.fold(
+      (failure) => emit(TotalDebtsError(failure.message)),
+      (summary) => emit(
+        TotalDebtsLoaded(
+          totalAmount: summary.totalAmount,
+          customerCount: summary.customerCount,
+        ),
+      ),
+    );
+  }
+
+  @override
+  void emit(TotalDebtsState state) {
+    if (!isClosed) {
+      super.emit(state);
+    }
   }
 
   /// Called when DebtCubit refreshes the debts list after any mutation.

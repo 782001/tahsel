@@ -426,6 +426,13 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
   }
 
   @override
+  void emit(MyDebtsState state) {
+    if (!isClosed) {
+      super.emit(state);
+    }
+  }
+
+  @override
   Future<void> close() {
     _searchDebounce?.cancel();
     _connectivitySubscription?.cancel();

@@ -73,19 +73,19 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
       widget.detail.customerName,
       forceRefresh: forceRefresh,
     );
-    if (mounted) {
-      if (!isInitial) {
-        _hasChanged = true;
-      }
-      final processedDetail = await compute(_processDebtsOnIsolate, {
-        'name': widget.detail.customerName,
-        'entities': debts,
-      });
-      setState(() {
-        currentDetail = processedDetail;
-        _isLoading = false;
-      });
+    if (!mounted) return;
+    if (!isInitial) {
+      _hasChanged = true;
     }
+    final processedDetail = await compute(_processDebtsOnIsolate, {
+      'name': widget.detail.customerName,
+      'entities': debts,
+    });
+    if (!mounted) return;
+    setState(() {
+      currentDetail = processedDetail;
+      _isLoading = false;
+    });
   }
 
   void _updateLocalItem(DebtEntity updatedDebt) {
@@ -93,6 +93,7 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
       return item.entity.id == updatedDebt.id ? updatedDebt : item.entity;
     }).toList();
 
+    if (!mounted) return;
     setState(() {
       currentDetail = CustomerDebtDetail.fromEntities(
         currentDetail.customerName,
