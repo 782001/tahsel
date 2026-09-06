@@ -23,7 +23,7 @@ class PaymentSummaryCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          if (invoice.discountAmount > 0) ...[
+          if (invoice.totalDiscountAmount > 0) ...[
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -35,7 +35,7 @@ class PaymentSummaryCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${invoice.subtotalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                  '${invoice.rawSubtotalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                   style: TextStyles.customStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -57,7 +57,7 @@ class PaymentSummaryCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '-${invoice.discountAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                  '-${invoice.totalDiscountAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                   style: TextStyles.customStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,

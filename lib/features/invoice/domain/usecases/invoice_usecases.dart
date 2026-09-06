@@ -138,8 +138,12 @@ class VoidInvoiceUseCase {
 
   VoidInvoiceUseCase(this.repository);
 
-  Future<Either<Failure, void>> call(String uid, String invoiceId) {
-    return repository.voidInvoice(uid, invoiceId);
+  Future<Either<Failure, void>> call(
+    String uid,
+    String invoiceId, {
+    InvoiceEntity? invoice,
+  }) {
+    return repository.voidInvoice(uid, invoiceId, invoice: invoice);
   }
 }
 

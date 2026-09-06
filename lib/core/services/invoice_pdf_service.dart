@@ -68,7 +68,8 @@ class InvoicePdfService {
   }) async {
     final pdfBytes = await _buildPdf(invoice, isArabic);
     final cleanId = invoice.id.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
-    final filename = 'Fatoora_$cleanId.pdf';
+    final prefix = invoice.isQuotation ? 'Ard_Seer' : 'Fatoora';
+    final filename = '${prefix}_$cleanId.pdf';
 
     final storageDir = await _getPublicStorageDirectory();
     final savedFile = File('${storageDir.path}/$filename');
@@ -83,7 +84,8 @@ class InvoicePdfService {
   }) async {
     final pdfBytes = await _buildPdf(invoice, isArabic);
     final cleanId = invoice.id.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
-    final filename = 'Fatoora_$cleanId.pdf';
+    final prefix = invoice.isQuotation ? 'Ard_Seer' : 'Fatoora';
+    final filename = '${prefix}_$cleanId.pdf';
 
     final dir = await getTemporaryDirectory();
     final shareFile = File('${dir.path}/$filename');
@@ -92,7 +94,9 @@ class InvoicePdfService {
     final idShort = invoice.id.length > 8
         ? invoice.id.substring(0, 8)
         : invoice.id;
-    final subject = isArabic ? 'فاتورة رقم $idShort' : 'Invoice #$idShort';
+    final subject = invoice.isQuotation
+        ? (isArabic ? 'عرض سعر رقم $idShort' : 'Quotation #$idShort')
+        : (isArabic ? 'فاتورة رقم $idShort' : 'Invoice #$idShort');
 
     if (!kIsWeb &&
         Platform.isAndroid &&
@@ -241,6 +245,10 @@ class InvoicePdfService {
       isArabic ? "ar" : "en",
     ).format(invoice.createdAt);
 
+    final titleText = invoice.isQuotation
+        ? (isArabic ? "عرض سعر" : "QUOTATION")
+        : (isArabic ? "فاتورة" : "INVOICE");
+
     return pw.Column(
       children: [
         pw.Row(
@@ -251,7 +259,7 @@ class InvoicePdfService {
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 pw.Text(
-                  isArabic ? "فاتورة" : "INVOICE",
+                  titleText,
                   style: pw.TextStyle(
                     fontSize: 40,
                     fontWeight: pw.FontWeight.bold,
@@ -374,6 +382,10 @@ class InvoicePdfService {
         text = isArabic ? "معلقة" : "Pending";
         color = _info;
         break;
+      case InvoiceStatus.quotation:
+        text = isArabic ? "عرض سعر" : "Quotation";
+        color = _primary;
+        break;
     }
 
     return pw.Container(
@@ -486,42 +498,53 @@ class InvoicePdfService {
         child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            _buildSummaryRow(
-              isArabic ? "الإجمالي قبل الخصم:" : "Subtotal:",
-              "${invoice.subtotalAmount.toSmartAmount()} $currency",
-              isBold: false,
-            ),
-            if (invoice.discountAmount > 0) ...[
+            if (invoice.totalDiscountAmount > 0) ...[
+              _buildSummaryRow(
+                isArabic ? "الإجمالي قبل الخصم:" : "Subtotal:",
+                "${invoice.rawSubtotalAmount.toSmartAmount()} $currency",
+                isBold: false,
+              ),
               pw.SizedBox(height: 8),
               _buildSummaryRow(
-                isArabic ? "الخصم الإجمالي:" : "Overall Discount:",
-                "-${invoice.discountAmount.toSmartAmount()} $currency",
+                isArabic ? "الخصم الإجمالي:" : "Total Discount:",
+                "-${invoice.totalDiscountAmount.toSmartAmount()} $currency",
                 isBold: false,
                 color: _error,
               ),
+              pw.SizedBox(height: 8),
             ],
-            pw.SizedBox(height: 8),
-            _buildSummaryRow(
-              isArabic ? "المبلغ الإجمالي:" : "Total Amount:",
-              "${invoice.totalAmount.toSmartAmount()} $currency",
-              isBold: true,
-            ),
-            pw.SizedBox(height: 8),
-            _buildSummaryRow(
-              isArabic ? "المدفوع:" : "Paid:",
-              "${invoice.totalPaid.toSmartAmount()} $currency",
-              isBold: false,
-              color: _success,
-            ),
-            pw.SizedBox(height: 8),
-            pw.Divider(color: PdfColors.grey400),
-            pw.SizedBox(height: 8),
-            _buildSummaryRow(
-              isArabic ? "المتبقي:" : "Remaining:",
-              "${invoice.remainingAmount.toSmartAmount()} $currency",
-              isBold: true,
-              color: invoice.remainingAmount <= 0.01 ? _success : _error,
-            ),
+            if (invoice.isQuotation) ...[
+              pw.Divider(color: PdfColors.grey400),
+              pw.SizedBox(height: 8),
+              _buildSummaryRow(
+                isArabic ? "إجمالي عرض السعر:" : "Quotation Total:",
+                "${invoice.totalAmount.toSmartAmount()} $currency",
+                isBold: true,
+                color: _primary,
+              ),
+            ] else ...[
+              _buildSummaryRow(
+                isArabic ? "المبلغ الإجمالي:" : "Total Amount:",
+                "${invoice.totalAmount.toSmartAmount()} $currency",
+                isBold: true,
+              ),
+              pw.SizedBox(height: 8),
+              _buildSummaryRow(
+                isArabic ? "المدفوع:" : "Paid:",
+                "${invoice.totalPaid.toSmartAmount()} $currency",
+                isBold: false,
+                color: _success,
+              ),
+              pw.SizedBox(height: 8),
+              pw.Divider(color: PdfColors.grey400),
+              pw.SizedBox(height: 8),
+              _buildSummaryRow(
+                isArabic ? "المتبقي:" : "Remaining:",
+                "${invoice.remainingAmount.toSmartAmount()} $currency",
+                isBold: true,
+                color: invoice.remainingAmount <= 0.01 ? _success : _error,
+              ),
+            ],
           ],
         ),
       ),

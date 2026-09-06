@@ -18,7 +18,6 @@ import 'package:tahsel/features/offline_sync/presentation/cubit/offline_sync_cub
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/routes/app_routes.dart';
-import 'package:tahsel/shared/widgets/buttons/quick_action_button.dart';
 
 class InvoicesScreen extends StatefulWidget {
   const InvoicesScreen({super.key});
@@ -268,40 +267,82 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                     ),
                   ),
 
-                  // ── Create Button ────────────────────────────────────────────
+                  // ── Create Buttons (Invoice & Quotation) ───────────────────────
                   Padding(
                     padding: EdgeInsets.symmetric(
-                      horizontal: 20.w,
-                      vertical: 16.h,
+                      horizontal: 16.w,
+                      vertical: 14.h,
                     ),
-                    child: QuickActionButton(
-                      label: AppStrings.createInvoice.tr(),
-                      icon: Icons.receipt_long_rounded,
-                      onPressed: () async {
-                        final cubit = context.read<InvoiceCubit>();
-                        final result = await Navigator.of(
-                          context,
-                        ).pushNamed(AppRoutes.createInvoice);
-
-                        if (!mounted) return;
-
-                        if (result is Map<String, dynamic> &&
-                            result.containsKey('invoice')) {
-                          // ignore: use_build_context_synchronously
-                          await Navigator.of(context).pushNamed(
-                            AppRoutes.invoiceDetail,
-                            arguments: result,
-                          );
-                        }
-
-                        // Refresh list after returning from create or detail screen
-                        if (!mounted) return;
-                        _clearFilters();
-                        cubit.fetchInvoices(
-                          AppStrings.userToken,
-                          forceRefresh: true,
-                        );
-                      },
+                    child: Row(
+                      children: [
+                        // Create Invoice Button
+                        Expanded(
+                          child: SizedBox(
+                            height: 56.h,
+                            child: ElevatedButton.icon(
+                              onPressed: () => _handleCreate(isQuotation: false),
+                              icon:  Icon(
+                                Icons.receipt_long_rounded,
+                                color: AppColors.whiteColor,
+                                size: 20,
+                              ),
+                              label: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  AppStrings.createInvoice.tr(),
+                                  style: TextStyles.customStyle(
+                                    color: AppColors.whiteColor,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryColor,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16.r),
+                                ),
+                                elevation: 0,
+                                padding: EdgeInsets.symmetric(horizontal: 8.w),
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        // Create Quotation Button
+                        Expanded(
+                          child: SizedBox(
+                            height: 56.h,
+                            child: ElevatedButton.icon(
+                              onPressed: () => _handleCreate(isQuotation: true),
+                              icon:  Icon(
+                                Icons.request_quote_rounded,
+                                color: AppColors.whiteColor,
+                                size: 20,
+                              ),
+                              label: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  AppStrings.createQuotation.tr(),
+                                  style: TextStyles.customStyle(
+                                    color: AppColors.whiteColor,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.movementInvoiceReturn,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16.r),
+                                ),
+                                elevation: 0,
+                                padding: EdgeInsets.symmetric(horizontal: 8.w),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -310,6 +351,32 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
           },
         ),
       ),
+    );
+  }
+
+  Future<void> _handleCreate({required bool isQuotation}) async {
+    final cubit = context.read<InvoiceCubit>();
+    final result = await Navigator.of(context).pushNamed(
+      AppRoutes.createInvoice,
+      arguments: {'isQuotation': isQuotation},
+    );
+
+    if (!mounted) return;
+
+    if (result is Map<String, dynamic> && result.containsKey('invoice')) {
+      // ignore: use_build_context_synchronously
+      await Navigator.of(context).pushNamed(
+        AppRoutes.invoiceDetail,
+        arguments: result,
+      );
+    }
+
+    // Refresh list after returning from create or detail screen
+    if (!mounted) return;
+    _clearFilters();
+    cubit.fetchInvoices(
+      AppStrings.userToken,
+      forceRefresh: true,
     );
   }
 

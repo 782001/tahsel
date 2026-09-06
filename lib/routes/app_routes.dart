@@ -220,10 +220,17 @@ class AppRoutes {
           ),
         );
       case createInvoice:
+        final bool isQuotation = settings.arguments is Map<String, dynamic>
+            ? ((settings.arguments as Map<String, dynamic>)['isQuotation']
+                    as bool? ??
+                false)
+            : (settings.arguments is bool
+                ? settings.arguments as bool
+                : false);
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: di.sl<InvoiceCubit>(),
-            child: const CreateInvoiceScreen(),
+            child: CreateInvoiceScreen(isQuotation: isQuotation),
           ),
         );
       case editInvoice:

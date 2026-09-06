@@ -6,6 +6,7 @@ enum InvoiceStatus {
   partial, // Partially paid → debt exists
   paid, // Fully settled
   voided, // Cancelled / reversed
+  quotation, // Price offer / quotation - purely for display & pricing, no financial impact
 }
 
 /// A single line-item in an invoice.
@@ -150,6 +151,17 @@ class InvoiceEntity extends Equatable {
     this.dueDate,
   });
 
+  /// Raw subtotal of all items before ANY discounts (sum of qty * unitPrice).
+  double get rawSubtotalAmount =>
+      items.fold(0.0, (sum, item) => sum + item.subtotal);
+
+  /// Sum of all discounts applied individually to line items.
+  double get itemsDiscountAmount =>
+      items.fold(0.0, (sum, item) => sum + item.discountAmount);
+
+  /// Total combined discount (item-level discounts + overall invoice discount).
+  double get totalDiscountAmount => itemsDiscountAmount + discountAmount;
+
   double get subtotalAmount => items.fold(0.0, (sum, item) => sum + item.total);
 
   double get totalAmount {
@@ -168,6 +180,8 @@ class InvoiceEntity extends Equatable {
   }
 
   bool get isFullyPaid => remainingAmount == 0;
+
+  bool get isQuotation => status == InvoiceStatus.quotation;
 
   InvoiceEntity copyWith({
     String? id,

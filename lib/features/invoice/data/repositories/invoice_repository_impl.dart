@@ -43,8 +43,8 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
 
       await remoteDataSource.createInvoice(modelWithId);
 
-      // Deduct inventory stock automatically if VIP subscription is active
-      if (AppStrings.isVip) {
+      // Deduct inventory stock automatically if VIP subscription is active (never for quotation)
+      if (AppStrings.isVip && !invoice.isQuotation) {
         _deductInventoryStockForInvoice(invoiceId, modelWithId.items);
       }
 
@@ -154,7 +154,7 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
 
       await remoteDataSource.updateInvoice(model);
 
-      if (AppStrings.isVip) {
+      if (AppStrings.isVip && !invoice.isQuotation) {
         if (oldInvoice != null) {
           _reconcileInvoiceStockDeltas(
             invoiceId: model.id,
@@ -175,10 +175,26 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
   @override
   Future<Either<Failure, void>> voidInvoice(
     String uid,
-    String invoiceId,
-  ) async {
+    String invoiceId, {
+    InvoiceEntity? invoice,
+  }) async {
     try {
+      InvoiceEntity? invoiceToVoid = invoice;
+      if (invoiceToVoid == null && AppStrings.isVip) {
+        final existingRes = await getInvoiceById(uid, invoiceId);
+        invoiceToVoid = existingRes.fold((_) => null, (inv) => inv);
+      }
+
       await remoteDataSource.voidInvoice(uid, invoiceId);
+
+      // Return items back to inventory if VIP subscription is active
+      if (AppStrings.isVip &&
+          invoiceToVoid != null &&
+          !invoiceToVoid.isQuotation &&
+          invoiceToVoid.status != InvoiceStatus.voided) {
+        await _returnInventoryStockForInvoice(invoiceId, invoiceToVoid.items);
+      }
+
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -294,6 +310,56 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
         invoiceId: invoiceId,
         items: itemsMap,
         type: StockMovementType.invoiceSale,
+      );
+    } catch (_) {}
+  }
+
+  Future<void> _returnInventoryStockForInvoice(
+    String invoiceId,
+    List<InvoiceItem> items,
+  ) async {
+    try {
+      if (!AppStrings.isVip) return;
+      if (!GetIt.I.isRegistered<InventoryRepository>()) return;
+
+      final inventoryRepo = GetIt.I<InventoryRepository>();
+
+      String cleanName(String raw) {
+        String name = raw.trim();
+        final match = RegExp(r'^(.*?)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*×.*?\))?$')
+            .firstMatch(name);
+        if (match != null && match.group(1)?.trim().isNotEmpty == true) {
+          name = match.group(1)!.trim();
+        }
+        return name.toLowerCase();
+      }
+
+      final Map<String, _ProductQty> grouped = {};
+      for (final item in items) {
+        final key = cleanName(item.description);
+        grouped[key] = _ProductQty(
+          name: item.description,
+          qty: (grouped[key]?.qty ?? 0) + item.quantity,
+        );
+      }
+
+      final itemsMap = grouped.values.map((p) {
+        String name = p.name.trim();
+        final match = RegExp(r'^(.*?)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*×.*?\))?$')
+            .firstMatch(name);
+        if (match != null && match.group(1)?.trim().isNotEmpty == true) {
+          name = match.group(1)!.trim();
+        }
+        return {
+          'name': name,
+          'quantity': p.qty,
+        };
+      }).toList();
+
+      await inventoryRepo.processInvoiceStockChange(
+        invoiceId: invoiceId,
+        items: itemsMap,
+        type: StockMovementType.invoiceReturn,
       );
     } catch (_) {}
   }

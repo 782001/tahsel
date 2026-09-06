@@ -801,6 +801,16 @@ class AppStrings {
   static const String invoiceStatusPartial = "invoice_status_partial";
   static const String invoiceStatusPaid = "invoice_status_paid";
   static const String invoiceStatusVoided = "invoice_status_voided";
+  static const String invoiceStatusQuotation = "invoice_status_quotation";
+  static const String createQuotation = "create_quotation";
+  static const String quotationDetails = "quotation_details";
+  static const String editQuotation = "edit_quotation";
+  static const String saveQuotation = "save_quotation";
+  static const String quotationCreatedSuccess = "quotation_created_success";
+  static const String quotationTotal = "quotation_total";
+  static const String printQuotation = "print_quotation";
+  static const String shareQuotationPdf = "share_quotation_pdf";
+  static const String quotationsEmpty = "quotations_empty";
 
   // Invoice detail & payment
   static const String invoiceDetail = "invoice_detail";

@@ -88,8 +88,9 @@ class InvoiceCubit extends Cubit<InvoiceState> {
       if (failed != null) continue; // Try again next sync
 
       // 2. Apply payment logic directly (without emitting state)
-      // Even if paymentAmount == 0, we need to create the baseline debt if totalAmount > 0
-      if (paymentAmount > 0 || invoice.totalAmount > 0) {
+      // Even if paymentAmount == 0, we need to create the baseline debt if totalAmount > 0 (never for quotations)
+      if (!invoice.isQuotation &&
+          (paymentAmount > 0 || invoice.totalAmount > 0)) {
         await _processPaymentInternally(
           uid: invoice.uid,
           invoiceId: invoiceId,
@@ -137,8 +138,8 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     if (failure != null) {
       emit(InvoiceFailure(failure.message));
     } else if (invoiceId != null) {
-      // Automatically create baseline debt if amount > 0
-      if (invoice.totalAmount > 0) {
+      // Automatically create baseline debt if amount > 0 (only for actual invoices, never for quotations)
+      if (!invoice.isQuotation && invoice.totalAmount > 0) {
          await _processPaymentInternally(
            uid: invoice.uid,
            invoiceId: invoiceId,
@@ -378,6 +379,9 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     String? note,
     bool skipInvoicePayment = false,
   }) async {
+    // Quotation invoices must never have payments recorded or linked debts created
+    if (invoice.isQuotation) return null;
+
     // ── Step 1: append to the invoice's own payment ledger ───────────────────
     if (paidNow > 0 && !skipInvoicePayment) {
       final payment = InvoicePayment(
@@ -534,9 +538,13 @@ class InvoiceCubit extends Cubit<InvoiceState> {
   // ── Void Invoice ────────────────────────────────────────────────────────────
 
   /// Irreversibly voids an invoice.
-  Future<void> voidInvoice(String uid, String invoiceId) async {
+  Future<void> voidInvoice(
+    String uid,
+    String invoiceId, {
+    InvoiceEntity? invoice,
+  }) async {
     emit(InvoiceLoading());
-    final result = await voidInvoiceUseCase(uid, invoiceId);
+    final result = await voidInvoiceUseCase(uid, invoiceId, invoice: invoice);
     result.fold(
       (failure) => emit(InvoiceFailure(failure.message)),
       (_) => emit(InvoiceVoidSuccess()),

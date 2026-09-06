@@ -42,5 +42,9 @@ abstract class InvoiceRepository {
       {InvoiceEntity? previous});
 
   /// Irreversibly voids an invoice. Status becomes [InvoiceStatus.voided].
-  Future<Either<Failure, void>> voidInvoice(String uid, String invoiceId);
+  Future<Either<Failure, void>> voidInvoice(
+    String uid,
+    String invoiceId, {
+    InvoiceEntity? invoice,
+  });
 }

@@ -54,8 +54,13 @@ class _ItemControllers {
 class CreateInvoiceScreen extends StatefulWidget {
   /// If non-null, the screen opens in edit mode pre-filled with this invoice.
   final InvoiceEntity? invoiceToEdit;
+  final bool isQuotation;
 
-  const CreateInvoiceScreen({super.key, this.invoiceToEdit});
+  const CreateInvoiceScreen({
+    super.key,
+    this.invoiceToEdit,
+    this.isQuotation = false,
+  });
 
   @override
   State<CreateInvoiceScreen> createState() => _CreateInvoiceScreenState();
@@ -76,15 +81,27 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
   // ── Line items ─────────────────────────────────────────────────────────────
   final List<_ItemControllers> _itemControllers = [];
 
-  // ── Derived total ──────────────────────────────────────────────────────────
-  double get _subtotal {
+  // ── Derived totals ─────────────────────────────────────────────────────────
+  /// Raw subtotal of all items before ANY discounts (sum of qty * price).
+  double get _rawSubtotal {
+    double sum = 0;
+    for (final ctrl in _itemControllers) {
+      final qty = double.tryParse(ctrl.qty.text) ?? 1.0;
+      final price = double.tryParse(ctrl.price.text) ?? 0.0;
+      sum += (qty * price);
+    }
+    return sum;
+  }
+
+  /// Sum of all discounts applied individually to line items.
+  double get _itemsDiscount {
     double sum = 0;
     for (final ctrl in _itemControllers) {
       final qty = double.tryParse(ctrl.qty.text) ?? 1.0;
       final price = double.tryParse(ctrl.price.text) ?? 0.0;
       final itemDiscount = double.tryParse(ctrl.discount.text) ?? 0.0;
-      final subtotal = qty * price;
-      sum += (subtotal - itemDiscount).clamp(0.0, double.infinity);
+      final itemSubtotal = qty * price;
+      sum += itemDiscount.clamp(0.0, itemSubtotal);
     }
     return sum;
   }
@@ -92,12 +109,17 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
   double get _overallDiscount =>
       double.tryParse(_overallDiscountController.text) ?? 0.0;
 
+  /// Combined total discount (item discounts + overall discount).
+  double get _totalDiscount => _itemsDiscount + _overallDiscount;
+
   double get _grandTotal {
-    final net = _subtotal - _overallDiscount;
+    final net = _rawSubtotal - _totalDiscount;
     return net > 0 ? net : 0.0;
   }
 
   bool get _isEditMode => widget.invoiceToEdit != null;
+  bool get _isQuotation =>
+      widget.isQuotation || (widget.invoiceToEdit?.isQuotation ?? false);
 
   @override
   void initState() {
@@ -265,8 +287,8 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
             : null,
         discountAmount: overallDiscount,
         lastUpdatedAt: DateTime.now(),
-        dueDate: _dueDate,
-        clearDueDate: _dueDate == null,
+        dueDate: _isQuotation ? null : _dueDate,
+        clearDueDate: _isQuotation || _dueDate == null,
       );
       context.read<InvoiceCubit>().updateInvoice(
         updated,
@@ -285,13 +307,14 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
             ? _ledgerController.text.trim()
             : null,
         items: items,
+        status: _isQuotation ? InvoiceStatus.quotation : InvoiceStatus.pending,
         notes: _notesController.text.trim().isNotEmpty
             ? _notesController.text.trim()
             : null,
         discountAmount: overallDiscount,
         createdAt: DateTime.now(),
         lastUpdatedAt: DateTime.now(),
-        dueDate: _dueDate,
+        dueDate: _isQuotation ? null : _dueDate,
       );
 
       _pendingInvoice = invoice;
@@ -326,14 +349,23 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppStrings.invoiceCreateSuccess.tr()),
+              content: Text(
+                _isQuotation
+                    ? AppStrings.quotationCreatedSuccess.tr()
+                    : AppStrings.invoiceCreateSuccess.tr(),
+              ),
               backgroundColor: AppColors.success,
             ),
           );
           if (_pendingInvoice != null) {
             Navigator.of(context).pop({
-              'invoice': _pendingInvoice!.copyWith(id: state.invoiceId),
-              'showPaymentImmediately': true,
+              'invoice': _pendingInvoice!.copyWith(
+                id: state.invoiceId,
+                status: _isQuotation
+                    ? InvoiceStatus.quotation
+                    : InvoiceStatus.pending,
+              ),
+              'showPaymentImmediately': !_isQuotation,
             });
           } else {
             Navigator.of(context).pop(true);
@@ -363,8 +395,12 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
           elevation: 0,
           title: Text(
             _isEditMode
-                ? AppStrings.invoiceEditTitle.tr()
-                : AppStrings.createInvoice.tr(),
+                ? (_isQuotation
+                    ? AppStrings.editQuotation.tr()
+                    : AppStrings.invoiceEditTitle.tr())
+                : (_isQuotation
+                    ? AppStrings.createQuotation.tr()
+                    : AppStrings.createInvoice.tr()),
             style: TextStyles.customStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -440,32 +476,30 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                                 _SectionHeader(
                                   title: AppStrings.invoiceItemsSection.tr(),
                                 ),
-                                if (AppStrings.isVip &&
-                                    AppStrings.userType == AppStrings.shop)
+                                if (AppStrings.isVip)
                                   InkWell(
-                                    onTap: () => _openMultiInventoryPicker(),
-                                    borderRadius: BorderRadius.circular(10),
-
+                                    onTap: _openMultiInventoryPicker,
+                                    borderRadius: BorderRadius.circular(8),
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 10,
-                                        vertical: 4,
+                                        vertical: 6,
                                       ),
                                       decoration: BoxDecoration(
                                         color: AppColors.primaryColor
                                             .withValues(alpha: 0.08),
-                                        borderRadius: BorderRadius.circular(10),
+                                        borderRadius: BorderRadius.circular(8),
                                         border: Border.all(
                                           color: AppColors.primaryColor
-                                              .withValues(alpha: 0.25),
+                                              .withValues(alpha: 0.2),
                                         ),
                                       ),
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Icon(
-                                            Icons.storefront_outlined,
-                                            size: 18,
+                                            Icons.inventory_2_rounded,
+                                            size: 16,
                                             color: AppColors.primaryColor,
                                           ),
                                           const SizedBox(width: 4),
@@ -532,14 +566,15 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
 
                             // ── Grand Total ──────────────────────────────────
                             _TotalCard(
-                              subtotal: _subtotal,
-                              discountAmount: _overallDiscount,
+                              rawSubtotal: _rawSubtotal,
+                              totalDiscount: _totalDiscount,
                               grandTotal: _grandTotal,
                             ),
                             const SizedBox(height: 20),
 
-                            // ── Payment Due Date ─────────────────────────────
-                            if (!(_isEditMode &&
+                            // ── Payment Due Date (Hidden for Quotation) ───────
+                            if (!_isQuotation &&
+                                !(_isEditMode &&
                                     widget.invoiceToEdit!.status ==
                                         InvoiceStatus.paid) &&
                                 _grandTotal > 0) ...[
@@ -566,10 +601,14 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                             QuickActionButton(
                               label: _isEditMode
                                   ? AppStrings.invoiceSaveEdit.tr()
-                                  : AppStrings.invoiceSubmit.tr(),
+                                  : (_isQuotation
+                                      ? AppStrings.saveQuotation.tr()
+                                      : AppStrings.invoiceSubmit.tr()),
                               icon: _isEditMode
                                   ? Icons.save_rounded
-                                  : Icons.receipt_long_rounded,
+                                  : (_isQuotation
+                                      ? Icons.request_quote_rounded
+                                      : Icons.receipt_long_rounded),
                               onPressed: isLoading
                                   ? null
                                   : () => _submit(context),
@@ -759,13 +798,13 @@ class _NotesField extends StatelessWidget {
 }
 
 class _TotalCard extends StatelessWidget {
-  final double subtotal;
-  final double discountAmount;
+  final double rawSubtotal;
+  final double totalDiscount;
   final double grandTotal;
 
   const _TotalCard({
-    required this.subtotal,
-    required this.discountAmount,
+    required this.rawSubtotal,
+    required this.totalDiscount,
     required this.grandTotal,
   });
 
@@ -794,7 +833,7 @@ class _TotalCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          if (discountAmount > 0) ...[
+          if (totalDiscount > 0) ...[
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -806,7 +845,7 @@ class _TotalCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${subtotal.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                  '${rawSubtotal.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                   style: TextStyles.customStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -827,7 +866,7 @@ class _TotalCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '-${discountAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                  '-${totalDiscount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                   style: TextStyles.customStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,

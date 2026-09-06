@@ -76,8 +76,13 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
         isPeriodStart = true;
       }
 
-      // 1. Try Optimized Summary Cache First
-      if (isPeriodStart && !forceRefresh) {
+      final now = DateTime.now();
+      // Ongoing/current periods (such as today, current week, current month, all-time) must always compute fresh
+      // to capture real-time updates and never serve a stale or tainted summary.
+      final bool isOngoing = end.isAfter(now);
+
+      // 1. Try Optimized Summary Cache First (only for completed historical periods, unless forceRefresh is requested)
+      if (isPeriodStart && !forceRefresh && !isOngoing) {
         final summary = await getSummary(uid, summaryKey);
 
         // If summary has been fully synced/calculated, return it
@@ -204,11 +209,11 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
           .where('createdAt', isLessThan: endTimestamp)
           .get();
 
+      int invoiceCount = 0;
       double invoiceIncome = 0;
       double invoiceTotalDebts = 0;
       double invoicePaidDebts = 0;
       double invoiceUnpaidDebts = 0;
-      int invoiceCount = invoicesSnapshot.docs.length;
 
       double invoiceValue = 0;
       double invoiceCollected = 0;
@@ -220,10 +225,12 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
       for (var doc in invoicesSnapshot.docs) {
         final data = doc.data();
         final statusStr = data['status'] as String? ?? 'pending';
-        if (statusStr == 'voided') {
-          invoiceCount--;
+        // Explicitly exclude voided invoices and quotations from all reports, summaries, income, and debts!
+        if (statusStr == 'voided' || statusStr == 'quotation') {
           continue;
         }
+
+        invoiceCount++;
 
         // Parse payments
         final payments = data['payments'] as List<dynamic>? ?? [];
@@ -336,7 +343,7 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
       final uid = AppStrings.userToken;
       if (uid.isEmpty) return {};
 
-      // Try summary first
+      // 1. Try Optimized Summary Cache First (O(1) read to save quota and load instantly)
       if (!forceRefresh) {
         final summary = await getSummary(uid, SummaryHelper.getAllTimeKey());
         if (summary.isSynced) {
@@ -362,7 +369,7 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
         }
       }
 
-      // Fallback
+      // 2. Fallback to calculation if not cached yet or when user triggers pull-to-refresh
       return await getPeriodData(
         DateTime(2000, 1, 1),
         DateTime(2100, 1, 1),

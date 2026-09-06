@@ -28,6 +28,8 @@ class InvoiceCard extends StatelessWidget {
         return AppColors.error;
       case InvoiceStatus.pending:
         return AppColors.info;
+      case InvoiceStatus.quotation:
+        return AppColors.primaryColor;
     }
   }
 
@@ -41,6 +43,8 @@ class InvoiceCard extends StatelessWidget {
         return AppStrings.invoiceStatusVoided.tr();
       case InvoiceStatus.pending:
         return AppStrings.invoiceStatusPending.tr();
+      case InvoiceStatus.quotation:
+        return AppStrings.invoiceStatusQuotation.tr();
     }
   }
 
@@ -116,28 +120,58 @@ class InvoiceCard extends StatelessWidget {
               const SizedBox(height: 12),
 
               // ── Amount Row ──────────────────────────────────────────
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  AmountColumn(
-                    label: AppStrings.totalDueLabel.tr(),
-                    value: invoice.totalAmount,
-                    color: AppColors.black,
-                  ),
-                  AmountColumn(
-                    label: AppStrings.paidAmount.tr(),
-                    value: invoice.totalPaid,
-                    color: AppColors.success,
-                  ),
-                  AmountColumn(
-                    label: AppStrings.remainingDebt.tr(),
-                    value: invoice.remainingAmount,
-                    color: invoice.remainingAmount > 0
-                        ? AppColors.error
-                        : AppColors.success,
-                  ),
-                ],
-              ),
+              if (invoice.isQuotation)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    AmountColumn(
+                      label: AppStrings.quotationTotal.tr(),
+                      value: invoice.totalAmount,
+                      color: AppColors.primaryColor,
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryColor.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${invoice.items.length} ${AppStrings.invoiceItem.tr()}',
+                        style: TextStyles.customStyle(
+                          fontSize: 12,
+                          color: AppColors.primaryColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              else
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    AmountColumn(
+                      label: AppStrings.totalDueLabel.tr(),
+                      value: invoice.totalAmount,
+                      color: AppColors.black,
+                    ),
+                    AmountColumn(
+                      label: AppStrings.paidAmount.tr(),
+                      value: invoice.totalPaid,
+                      color: AppColors.success,
+                    ),
+                    AmountColumn(
+                      label: AppStrings.remainingDebt.tr(),
+                      value: invoice.remainingAmount,
+                      color: invoice.remainingAmount > 0
+                          ? AppColors.error
+                          : AppColors.success,
+                    ),
+                  ],
+                ),
 
               const SizedBox(height: 12),
 

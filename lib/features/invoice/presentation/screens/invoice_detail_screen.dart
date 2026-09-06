@@ -763,6 +763,8 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
         return AppColors.error;
       case InvoiceStatus.pending:
         return AppColors.info;
+      case InvoiceStatus.quotation:
+        return AppColors.primaryColor;
     }
   }
 
@@ -776,6 +778,8 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
         return AppStrings.invoiceStatusVoided.tr();
       case InvoiceStatus.pending:
         return AppStrings.invoiceStatusPending.tr();
+      case InvoiceStatus.quotation:
+        return AppStrings.invoiceStatusQuotation.tr();
     }
   }
 
@@ -832,7 +836,11 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
       ),
     );
     if (confirmed == true && mounted) {
-      cubit.voidInvoice(AppStrings.userToken, _invoice.id);
+      cubit.voidInvoice(
+        AppStrings.userToken,
+        _invoice.id,
+        invoice: _invoice,
+      );
     }
   }
 
@@ -894,7 +902,9 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
               backgroundColor: AppColors.surface,
               elevation: 0,
               title: Text(
-                AppStrings.invoiceDetail.tr(),
+                _invoice.isQuotation
+                    ? AppStrings.quotationDetails.tr()
+                    : AppStrings.invoiceDetail.tr(),
                 style: TextStyles.customStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -910,13 +920,15 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                 onPressed: () => Navigator.of(context).pop(),
               ),
               actions: [
-                // Print Invoice
+                // Print Invoice / Quotation
                 IconButton(
                   icon: Icon(
                     Icons.print_rounded,
                     color: AppColors.primaryColor,
                   ),
-                  tooltip: AppStrings.printInvoice.tr(),
+                  tooltip: _invoice.isQuotation
+                      ? AppStrings.printQuotation.tr()
+                      : AppStrings.printInvoice.tr(),
                   onPressed: () async {
                     try {
                       final isArabic = AppStrings.currentLang == 'ar';
@@ -945,7 +957,9 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                         ? AppColors.disabledColor
                         : AppColors.primaryColor,
                   ),
-                  tooltip: AppStrings.invoiceSharePdf.tr(),
+                  tooltip: _invoice.isQuotation
+                      ? AppStrings.shareQuotationPdf.tr()
+                      : AppStrings.invoiceSharePdf.tr(),
                   onPressed: () async {
                     if (isDisconnected) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -1018,7 +1032,9 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                           ? AppColors.disabledColor
                           : AppColors.primaryColor,
                     ),
-                    tooltip: AppStrings.invoiceEditTitle.tr(),
+                    tooltip: _invoice.isQuotation
+                        ? AppStrings.editQuotation.tr()
+                        : AppStrings.invoiceEditTitle.tr(),
                     onPressed: () async {
                       if (isDisconnected) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -1038,9 +1054,10 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                       }
                     },
                   ),
-                // Void — only for pending/partial invoices
-                if (_invoice.status == InvoiceStatus.pending ||
-                    _invoice.status == InvoiceStatus.partial)
+                // Void — only for pending/partial invoices (never quotations)
+                if (!_invoice.isQuotation &&
+                    (_invoice.status == InvoiceStatus.pending ||
+                        _invoice.status == InvoiceStatus.partial))
                   IconButton(
                     icon: Icon(
                       Icons.cancel_presentation,
@@ -1159,7 +1176,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                       const SizedBox(height: 20),
 
                                       // ── Overall Cash Discount Card ─────────────
-                                      if (_invoice.discountAmount > 0) ...[
+                                      if (_invoice.totalDiscountAmount > 0) ...[
                                         Container(
                                           padding: const EdgeInsets.symmetric(
                                             horizontal: 16,
@@ -1217,7 +1234,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                                 ],
                                               ),
                                               Text(
-                                                '-${_invoice.discountAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                                                '-${_invoice.totalDiscountAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                                                 style: TextStyles.customStyle(
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.bold,
@@ -1231,9 +1248,12 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                       ],
 
                                       // ── Payment Summary ────────────────────────────────
-                                      PaymentSummaryCard(invoice: _invoice),
-                                      const SizedBox(height: 20),
-                                      if (_invoice.status ==
+                                      if (!_invoice.isQuotation) ...[
+                                        PaymentSummaryCard(invoice: _invoice),
+                                        const SizedBox(height: 20),
+                                      ],
+                                      if (!_invoice.isQuotation &&
+                                          _invoice.status ==
                                               InvoiceStatus.paid &&
                                           _invoice.totalPaid >
                                               _invoice.totalAmount)
@@ -1370,9 +1390,10 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                             ),
                                           ),
                                         ),
-                                      const SizedBox(height: 20),
-                                      if (_invoice.status ==
-                                          InvoiceStatus.voided)
+                                      if (!_invoice.isQuotation &&
+                                          _invoice.status ==
+                                              InvoiceStatus.voided &&
+                                          _invoice.totalPaid > 0)
                                         Padding(
                                           padding: const EdgeInsets.only(
                                             bottom: 16,
@@ -1402,46 +1423,38 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                                     Icon(
                                                       Icons
                                                           .info_outline_rounded,
-                                                      size: 16,
+                                                      size: 18,
                                                       color: AppColors.info,
                                                     ),
                                                     const SizedBox(width: 8),
                                                     Expanded(
                                                       child: Text(
-                                                        "${AppStrings.invoiceVoidNotice.tr()}   ${_invoice.totalPaid.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
+                                                        AppStrings
+                                                            .invoiceVoidNotice
+                                                            .tr(),
                                                         style:
                                                             TextStyles.customStyle(
-                                                              fontSize: 13,
+                                                              fontSize: 12,
                                                               color: AppColors
                                                                   .info,
                                                               fontWeight:
                                                                   FontWeight
-                                                                      .bold,
+                                                                      .w600,
                                                             ),
                                                       ),
                                                     ),
                                                   ],
                                                 ),
                                                 if (_invoice.totalPaid > 0) ...[
-                                                  SizedBox(
-                                                    height: isDesktop
-                                                        ? 12
-                                                        : 12.h,
-                                                  ),
+                                                  const SizedBox(height: 10),
                                                   _invoice.isRefundedToCustomer
                                                       ? Container(
                                                           width:
                                                               double.infinity,
                                                           padding:
-                                                              EdgeInsets.symmetric(
-                                                                horizontal:
-                                                                    isDesktop
-                                                                    ? 14
-                                                                    : 14.w,
-                                                                vertical:
-                                                                    isDesktop
-                                                                    ? 10
-                                                                    : 10.h,
+                                                              const EdgeInsets.symmetric(
+                                                                vertical: 8,
+                                                                horizontal: 12,
                                                               ),
                                                           decoration: BoxDecoration(
                                                             color: AppColors
@@ -1594,24 +1607,27 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                       const SizedBox(height: 20),
 
                                       // ── Payment History ────────────────────────────────
-                                      InvoiceSectionTitle(
-                                        title: AppStrings.invoicePaymentHistory
-                                            .tr(),
-                                      ),
-                                      const SizedBox(height: 12),
-                                      // If linked to a debt, use debt transactions as the
-                                      // authoritative payment history; otherwise fallback
-                                      // to the invoice's own payments array.
-                                      if (_debtTransactions != null &&
-                                          _debtTransactions!.isNotEmpty)
-                                        DebtPaymentHistoryList(
-                                          transactions: _debtTransactions!,
-                                        )
-                                      else
-                                        InvoicePaymentHistoryList(
-                                          payments: _invoice.payments,
+                                      if (!_invoice.isQuotation) ...[
+                                        InvoiceSectionTitle(
+                                          title: AppStrings
+                                              .invoicePaymentHistory
+                                              .tr(),
                                         ),
-                                      const SizedBox(height: 20),
+                                        const SizedBox(height: 12),
+                                        // If linked to a debt, use debt transactions as the
+                                        // authoritative payment history; otherwise fallback
+                                        // to the invoice's own payments array.
+                                        if (_debtTransactions != null &&
+                                            _debtTransactions!.isNotEmpty)
+                                          DebtPaymentHistoryList(
+                                            transactions: _debtTransactions!,
+                                          )
+                                        else
+                                          InvoicePaymentHistoryList(
+                                            payments: _invoice.payments,
+                                          ),
+                                        const SizedBox(height: 20),
+                                      ],
 
                                       // ── Notes ──────────────────────────────────────────
                                       if (_invoice.notes?.isNotEmpty ==
@@ -1633,7 +1649,8 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                       ],
 
                                       // ── Record Payment Button ──────────────────────────
-                                      if (_invoice.status !=
+                                      if (!_invoice.isQuotation &&
+                                          _invoice.status !=
                                               InvoiceStatus.paid &&
                                           _invoice.status !=
                                               InvoiceStatus.voided)

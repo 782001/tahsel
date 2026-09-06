@@ -169,6 +169,12 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
 
       final existing = InvoiceModel.fromMap(data);
 
+      // Quotations and voided invoices cannot receive payments
+      if (existing.status == InvoiceStatus.quotation ||
+          existing.status == InvoiceStatus.voided) {
+        return;
+      }
+
       // Append the new payment (ledger approach — never overwrites)
       final updatedPayments = [
         ...existing.payments.map(
@@ -265,8 +271,9 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
           .doc(debtId);
       final opSnap = await txn.get(opRef);
 
-      // Do not touch voided invoices — their status must stay 'voided'.
-      if (existing.status == InvoiceStatus.voided) {
+      // Do not recalculate status or touch debts for quotations or voided invoices.
+      if (existing.status == InvoiceStatus.quotation ||
+          existing.status == InvoiceStatus.voided) {
         txn.update(ref, {
           'customerName': invoice.customerName,
           'customerPhone': invoice.customerPhone,
@@ -436,6 +443,10 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
 
     // ── 1. Read the invoice to discover linkedDebtId ──────────────────────────
     final invoiceDoc = await invoiceRef.get();
+    if (!invoiceDoc.exists) return;
+    if (invoiceDoc.data()?['status'] == InvoiceStatus.quotation.name) {
+      return; // Quotations cannot be voided
+    }
     final linkedDebtId =
         (invoiceDoc.data()?['linkedDebtId'] as String?) ??
         'debt_inv_$invoiceId';
