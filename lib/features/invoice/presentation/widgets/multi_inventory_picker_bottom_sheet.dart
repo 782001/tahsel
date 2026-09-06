@@ -28,11 +28,17 @@ class SelectedInventoryItem {
 class MultiInventoryPickerBottomSheet extends StatefulWidget {
   final Function(List<SelectedInventoryItem> selectedItems) onItemsConfirmed;
   final String? confirmButtonText;
+  final List<SelectedInventoryItem>? initialSelectedItems;
+  final Map<String, double>? initialSelectedQuantities;
+  final bool isEditMode;
 
   const MultiInventoryPickerBottomSheet({
     super.key,
     required this.onItemsConfirmed,
     this.confirmButtonText,
+    this.initialSelectedItems,
+    this.initialSelectedQuantities,
+    this.isEditMode = false,
   });
 
   @override
@@ -52,10 +58,27 @@ class _MultiInventoryPickerBottomSheetState
   /// Map of productId -> selected quantity
   final Map<String, double> _selectedQuantities = {};
 
+  /// Map of productId -> initially allocated quantity before opening picker
+  final Map<String, double> _initialAllocatedQuantities = {};
+
+  bool _showBestSellersOnly = false;
+  bool _showSelectedOnly = false;
+
   @override
   void initState() {
     super.initState();
     _loadProducts();
+  }
+
+  double _maxQuantityFor(InventoryProductEntity product) {
+    final initial = _initialAllocatedQuantities[product.id] ?? 0.0;
+    if (widget.isEditMode) {
+      return product.currentQuantity + initial;
+    } else {
+      return product.currentQuantity >= initial
+          ? product.currentQuantity
+          : (initial > 0 ? initial : product.currentQuantity);
+    }
   }
 
   Future<void> _loadProducts() async {
@@ -69,11 +92,61 @@ class _MultiInventoryPickerBottomSheetState
         models = await localDataSource.getProducts();
       }
 
+      final Map<String, double> initialAllocated = {};
+
+      if (widget.initialSelectedItems != null &&
+          widget.initialSelectedItems!.isNotEmpty) {
+        for (final item in widget.initialSelectedItems!) {
+          initialAllocated[item.product.id] = item.quantity;
+        }
+      }
+
+      if (widget.initialSelectedQuantities != null &&
+          widget.initialSelectedQuantities!.isNotEmpty) {
+        for (final entry in widget.initialSelectedQuantities!.entries) {
+          final rawKey = entry.key.trim();
+          final lowerKey = rawKey.toLowerCase();
+          final qty = entry.value;
+          if (qty <= 0) continue;
+
+          for (final m in models) {
+            final p = m as InventoryProductEntity;
+            if (p.id == rawKey || p.name.trim().toLowerCase() == lowerKey) {
+              initialAllocated[p.id] = qty;
+            }
+          }
+        }
+      }
+
+      _initialAllocatedQuantities.clear();
+      _initialAllocatedQuantities.addAll(initialAllocated);
+
       final products = models
           .map((m) => m as InventoryProductEntity)
-          .where((p) => p.isAvailable && p.currentQuantity > 0)
+          .where((p) {
+            if (!p.isAvailable) return false;
+            final hasInitial = initialAllocated.containsKey(p.id);
+            return p.currentQuantity > 0 || hasInitial;
+          })
           .toList();
-      products.sort((a, b) => a.name.compareTo(b.name));
+
+      for (final entry in initialAllocated.entries) {
+        final pList = products.where((p) => p.id == entry.key);
+        if (pList.isNotEmpty) {
+          final p = pList.first;
+          final maxAllowed = _maxQuantityFor(p);
+          _selectedQuantities[p.id] = entry.value.clamp(0.0, maxAllowed);
+        }
+      }
+
+      // Sort: selected items first, then alphabetical
+      products.sort((a, b) {
+        final aSelected = (_selectedQuantities[a.id] ?? 0.0) > 0;
+        final bSelected = (_selectedQuantities[b.id] ?? 0.0) > 0;
+        if (aSelected && !bSelected) return -1;
+        if (!aSelected && bSelected) return 1;
+        return a.name.compareTo(b.name);
+      });
 
       final uniqueCategories = products
           .map((p) => p.categoryName)
@@ -85,7 +158,7 @@ class _MultiInventoryPickerBottomSheetState
       if (mounted) {
         setState(() {
           _allProducts = products;
-          _filteredProducts = products;
+          _filteredProducts = List.from(products);
           _categories = uniqueCategories;
           _isLoading = false;
         });
@@ -97,8 +170,6 @@ class _MultiInventoryPickerBottomSheetState
     }
   }
 
-  bool _showBestSellersOnly = false;
-
   void _applyFilter() {
     final q = _searchController.text.trim().toLowerCase();
     final top20Ids = BestSellerHelper.getTop20BestSellerIds(_allProducts);
@@ -106,7 +177,14 @@ class _MultiInventoryPickerBottomSheetState
     setState(() {
       _filteredProducts = _allProducts.where((p) {
         final isAvailable = p.isAvailable;
-        final hasStock = p.currentQuantity > 0;
+        final initialQty = _initialAllocatedQuantities[p.id] ?? 0.0;
+        final hasStock = p.currentQuantity > 0 || initialQty > 0;
+        final isSelected = (_selectedQuantities[p.id] ?? 0.0) > 0;
+
+        if (_showSelectedOnly && !isSelected) {
+          return false;
+        }
+
         final matchesQuery =
             q.isEmpty ||
             p.name.toLowerCase().contains(q) ||
@@ -137,7 +215,8 @@ class _MultiInventoryPickerBottomSheetState
   void _updateQuantity(InventoryProductEntity product, double delta) {
     setState(() {
       final current = _selectedQuantities[product.id] ?? 0.0;
-      final newQty = (current + delta).clamp(0.0, product.currentQuantity);
+      final maxQty = _maxQuantityFor(product);
+      final newQty = (current + delta).clamp(0.0, maxQty);
       if (newQty <= 0) {
         _selectedQuantities.remove(product.id);
       } else {
@@ -151,7 +230,10 @@ class _MultiInventoryPickerBottomSheetState
       if (_selectedQuantities.containsKey(product.id)) {
         _selectedQuantities.remove(product.id);
       } else {
-        _selectedQuantities[product.id] = 1.0;
+        final initial = _initialAllocatedQuantities[product.id] ?? 1.0;
+        final maxQty = _maxQuantityFor(product);
+        final targetQty = (initial > 0 ? initial : 1.0).clamp(1.0, maxQty > 0 ? maxQty : 1.0);
+        _selectedQuantities[product.id] = targetQty;
       }
     });
   }
@@ -266,7 +348,8 @@ class _MultiInventoryPickerBottomSheetState
                           if ((p.barcode?.trim().toLowerCase() == target) ||
                               (p.sku.trim().toLowerCase() == target)) {
                             final currentQty = _selectedQuantities[p.id] ?? 0;
-                            if (currentQty < p.currentQuantity) {
+                            final maxQty = _maxQuantityFor(p);
+                            if (currentQty < maxQty) {
                               setState(() {
                                 _selectedQuantities[p.id] = currentQty + 1;
                               });
@@ -286,7 +369,8 @@ class _MultiInventoryPickerBottomSheetState
                     if ((p.barcode?.trim().toLowerCase() == target) ||
                         (p.sku.trim().toLowerCase() == target)) {
                       final currentQty = _selectedQuantities[p.id] ?? 0;
-                      if (currentQty < p.currentQuantity) {
+                      final maxQty = _maxQuantityFor(p);
+                      if (currentQty < maxQty) {
                         setState(() {
                           _selectedQuantities[p.id] = currentQty + 1;
                         });
@@ -307,6 +391,63 @@ class _MultiInventoryPickerBottomSheetState
               scrollDirection: Axis.horizontal,
               padding: EdgeInsets.symmetric(horizontal: isDesktop ? 20 : 20.w),
               children: [
+                if (selectedItems.isNotEmpty)
+                  Padding(
+                    padding: EdgeInsets.only(left: isDesktop ? 8 : 8.w),
+                    child: FilterChip(
+                      showCheckmark: false,
+                      selected: _showSelectedOnly,
+                      label: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.check_circle_rounded,
+                            color: _showSelectedOnly
+                                ? Colors.white
+                                : AppColors.primaryColor,
+                            size: 14,
+                          ),
+                          SizedBox(width: isDesktop ? 4 : 4.w),
+                          Text(
+                            AppStrings.selectedItemsCount.tr(
+                              namedArgs: {
+                                'count': selectedItems.length.toString(),
+                              },
+                            ),
+                            style: TextStyles.customStyle(
+                              fontSize: isDesktop ? 13 : 13,
+                              fontWeight: FontWeight.bold,
+                              color: _showSelectedOnly
+                                  ? Colors.white
+                                  : AppColors.primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                      selectedColor: AppColors.primaryColor,
+                      backgroundColor: AppColors.primaryColor.withValues(
+                        alpha: 0.1,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20.r),
+                        side: BorderSide(
+                          color: _showSelectedOnly
+                              ? AppColors.primaryColor
+                              : AppColors.primaryColor.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      onSelected: (selected) {
+                        setState(() {
+                          _showSelectedOnly = selected;
+                          if (selected) {
+                            _selectedCategory = null;
+                            _showBestSellersOnly = false;
+                          }
+                          _applyFilter();
+                        });
+                      },
+                    ),
+                  ),
                 Padding(
                   padding: EdgeInsets.only(left: isDesktop ? 8 : 8.w),
                   child: FilterChip(
@@ -473,7 +614,7 @@ class _MultiInventoryPickerBottomSheetState
                       final selectedQty =
                           _selectedQuantities[product.id] ?? 0.0;
                       final isSelected = selectedQty > 0;
-                      final maxQty = product.currentQuantity;
+                      final maxQty = _maxQuantityFor(product);
 
                       return Container(
                         margin: EdgeInsets.only(bottom: isDesktop ? 10 : 10.h),

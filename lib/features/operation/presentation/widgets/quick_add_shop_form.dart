@@ -9,7 +9,7 @@ import 'package:tahsel/features/product/presentation/widgets/product_autocomplet
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 import 'package:tahsel/shared/widgets/quick_due_date_selector.dart';
 
-class QuickAddShopForm extends StatelessWidget {
+class QuickAddShopForm extends StatefulWidget {
   final TextEditingController totalAmountController;
   final TextEditingController customerController;
   final TextEditingController productController;
@@ -63,15 +63,45 @@ class QuickAddShopForm extends StatelessWidget {
     this.onDueDateChanged,
   });
 
+  @override
+  State<QuickAddShopForm> createState() => _QuickAddShopFormState();
+}
+
+class _QuickAddShopFormState extends State<QuickAddShopForm> {
+  List<SelectedInventoryItem> _selectedInventoryItems = [];
+
   void _openInventoryPicker(BuildContext context) {
+    if (widget.productController.text.trim().isEmpty) {
+      _selectedInventoryItems.clear();
+    }
+
+    final Map<String, double> initialQuantities = {};
+    for (final item in _selectedInventoryItems) {
+      initialQuantities[item.product.id] = item.quantity;
+      initialQuantities[item.product.name] = item.quantity;
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => MultiInventoryPickerBottomSheet(
         confirmButtonText: AppStrings.confirmSelection.tr(),
+        initialSelectedItems:
+            _selectedInventoryItems.isNotEmpty ? _selectedInventoryItems : null,
+        initialSelectedQuantities:
+            initialQuantities.isNotEmpty ? initialQuantities : null,
         onItemsConfirmed: (selectedItems) {
-          if (selectedItems.isEmpty) return;
+          setState(() {
+            _selectedInventoryItems = List.from(selectedItems);
+          });
+
+          if (selectedItems.isEmpty) {
+            widget.productController.text = '';
+            widget.totalAmountController.text = '';
+            widget.debtController.text = '';
+            return;
+          }
 
           final productNames = selectedItems
               .map((item) {
@@ -83,7 +113,7 @@ class QuickAddShopForm extends StatelessWidget {
               })
               .join(' + ');
 
-          productController.text = productNames;
+          widget.productController.text = productNames;
 
           double totalPrice = 0.0;
           for (final item in selectedItems) {
@@ -91,11 +121,11 @@ class QuickAddShopForm extends StatelessWidget {
           }
 
           final formattedTotal = totalPrice.toSmartAmount();
-          totalAmountController.text = formattedTotal;
+          widget.totalAmountController.text = formattedTotal;
 
-          final paid = double.tryParse(paidController.text) ?? 0.0;
+          final paid = double.tryParse(widget.paidController.text) ?? 0.0;
           final debt = (totalPrice - paid).clamp(0.0, double.infinity);
-          debtController.text = debt.toSmartAmount();
+          widget.debtController.text = debt.toSmartAmount();
         },
       ),
     );
@@ -103,6 +133,30 @@ class QuickAddShopForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final customerController = widget.customerController;
+    final customerError = widget.customerError;
+    final onContactPickerPressed = widget.onContactPickerPressed;
+    final customerFocus = widget.customerFocus;
+    final customerInputAction = widget.customerInputAction;
+    final isShop = widget.isShop;
+    final ledgerFocus = widget.ledgerFocus;
+    final totalAmountFocus = widget.totalAmountFocus;
+    final ledgerController = widget.ledgerController;
+    final ledgerInputAction = widget.ledgerInputAction;
+    final productFocus = widget.productFocus;
+    final productController = widget.productController;
+    final totalAmountController = widget.totalAmountController;
+    final totalAmountInputAction = widget.totalAmountInputAction;
+    final paidController = widget.paidController;
+    final paidFocus = widget.paidFocus;
+    final paidInputAction = widget.paidInputAction;
+    final debtFocus = widget.debtFocus;
+    final debtInputAction = widget.debtInputAction;
+    final debtController = widget.debtController;
+    final onDebtSubmitted = widget.onDebtSubmitted;
+    final dueDate = widget.dueDate;
+    final onDueDateChanged = widget.onDueDateChanged;
+    final productInputAction = widget.productInputAction;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(

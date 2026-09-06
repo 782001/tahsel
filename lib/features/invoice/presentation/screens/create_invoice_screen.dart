@@ -19,6 +19,7 @@ import 'package:tahsel/shared/widgets/buttons/quick_action_button.dart';
 import 'package:tahsel/shared/widgets/quick_due_date_selector.dart';
 
 class _ItemControllers {
+  String? productId;
   final TextEditingController desc;
   final TextEditingController price;
   final TextEditingController qty;
@@ -28,9 +29,10 @@ class _ItemControllers {
 
   /// Pre-fill from an existing InvoiceItem (edit mode).
   _ItemControllers.fromItem(InvoiceItem item)
-    : desc = TextEditingController(text: item.description),
-      price = TextEditingController(text: item.unitPrice.toString()),
-      qty = TextEditingController(text: item.quantity.toString()),
+    : productId = null,
+      desc = TextEditingController(text: item.description),
+      price = TextEditingController(text: item.unitPrice.toSmartAmount()),
+      qty = TextEditingController(text: item.quantity.toSmartAmount()),
       unit = TextEditingController(text: item.unit ?? ''),
       discount = TextEditingController(
         text: item.discountAmount > 0
@@ -39,7 +41,7 @@ class _ItemControllers {
       ),
       purchasePrice = item.purchasePrice;
 
-  _ItemControllers({this.purchasePrice, String? initialUnit})
+  _ItemControllers({this.productId, this.purchasePrice, String? initialUnit})
     : desc = TextEditingController(),
       price = TextEditingController(),
       qty = TextEditingController(text: '1'),
@@ -185,28 +187,124 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
   }
 
   void _openMultiInventoryPicker() {
+    final Map<String, double> existingQuantities = {};
+    final Set<String> initialProductIds = {};
+    final Set<String> initialProductNames = {};
+
+    for (final ctrl in _itemControllers) {
+      final name = ctrl.desc.text.trim();
+      final qty = double.tryParse(ctrl.qty.text.trim()) ?? 0.0;
+      if (name.isNotEmpty && qty > 0) {
+        if (ctrl.productId != null && ctrl.productId!.isNotEmpty) {
+          existingQuantities[ctrl.productId!] = qty;
+          initialProductIds.add(ctrl.productId!);
+        }
+        existingQuantities[name] = qty;
+        initialProductNames.add(name.toLowerCase());
+      }
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => MultiInventoryPickerBottomSheet(
+        initialSelectedQuantities:
+            existingQuantities.isNotEmpty ? existingQuantities : null,
+        isEditMode: _isEditMode,
+        confirmButtonText: AppStrings.confirmSelection.tr(),
         onItemsConfirmed: (selectedItems) {
           setState(() {
+            // Remove initial placeholder row if user hasn't typed in it
             if (_itemControllers.length == 1 &&
                 _itemControllers.first.desc.text.trim().isEmpty &&
                 _itemControllers.first.price.text.trim().isEmpty) {
+              _itemControllers.first.dispose();
               _itemControllers.clear();
             }
 
+            final returnedProductIds =
+                selectedItems.map((e) => e.product.id).toSet();
+            final returnedProductNames = selectedItems
+                .map((e) => e.product.name.trim().toLowerCase())
+                .toSet();
+
+            final Map<String, SelectedInventoryItem> itemsByProdId = {
+              for (final item in selectedItems) item.product.id: item,
+            };
+            final Map<String, SelectedInventoryItem> itemsByName = {
+              for (final item in selectedItems)
+                item.product.name.trim().toLowerCase(): item,
+            };
+
+            // Remove inventory items that were previously passed but user deselected them
+            _itemControllers.removeWhere((ctrl) {
+              final isInventoryItem =
+                  (ctrl.productId != null &&
+                      initialProductIds.contains(ctrl.productId)) ||
+                  initialProductNames.contains(
+                    ctrl.desc.text.trim().toLowerCase(),
+                  );
+              if (isInventoryItem) {
+                final stillSelected =
+                    (ctrl.productId != null &&
+                        returnedProductIds.contains(ctrl.productId)) ||
+                    returnedProductNames.contains(
+                      ctrl.desc.text.trim().toLowerCase(),
+                    );
+                if (!stillSelected) {
+                  ctrl.dispose();
+                  return true;
+                }
+              }
+              return false; // Keep custom manual items intact
+            });
+
+            // Update existing matched controllers
+            final matchedProductIds = <String>{};
+            for (final ctrl in _itemControllers) {
+              SelectedInventoryItem? matchedItem;
+              if (ctrl.productId != null &&
+                  itemsByProdId.containsKey(ctrl.productId)) {
+                matchedItem = itemsByProdId[ctrl.productId];
+              } else if (itemsByName.containsKey(
+                ctrl.desc.text.trim().toLowerCase(),
+              )) {
+                matchedItem =
+                    itemsByName[ctrl.desc.text.trim().toLowerCase()];
+              }
+
+              if (matchedItem != null) {
+                ctrl.productId = matchedItem.product.id;
+                ctrl.qty.text = matchedItem.quantity.toSmartAmount();
+                ctrl.purchasePrice = matchedItem.product.purchasePrice;
+                if (ctrl.price.text.trim().isEmpty ||
+                    ctrl.price.text.trim() == '0') {
+                  ctrl.price.text =
+                      matchedItem.product.sellingPrice.toSmartAmount();
+                }
+                if (ctrl.unit.text.trim().isEmpty &&
+                    matchedItem.product.unit.isNotEmpty) {
+                  ctrl.unit.text = matchedItem.product.unit;
+                }
+                matchedProductIds.add(matchedItem.product.id);
+              }
+            }
+
+            // Add newly selected products
             for (final item in selectedItems) {
-              final newCtrl = _ItemControllers(
-                purchasePrice: item.product.purchasePrice,
-                initialUnit: item.product.unit,
-              );
-              newCtrl.desc.text = item.product.name;
-              newCtrl.price.text = item.product.sellingPrice.toSmartAmount();
-              newCtrl.qty.text = item.quantity.toSmartAmount();
-              _itemControllers.add(newCtrl);
+              if (!matchedProductIds.contains(item.product.id)) {
+                final newCtrl = _ItemControllers(
+                  productId: item.product.id,
+                  purchasePrice: item.product.purchasePrice,
+                  initialUnit: item.product.unit,
+                );
+                newCtrl.desc.text = item.product.name;
+                newCtrl.price.text =
+                    item.product.sellingPrice.toSmartAmount();
+                newCtrl.qty.text = item.quantity.toSmartAmount();
+                _itemControllers.add(newCtrl);
+              }
             }
 
             if (_itemControllers.isEmpty) {
