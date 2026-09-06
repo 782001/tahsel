@@ -59,6 +59,29 @@ extension StringExtensions on String {
     }
     return formattedPhone;
   }
+
+  /// Cleans emojis and unsupported symbols to avoid PDF font missing glyph exceptions
+  String cleanForPdf() {
+    if (isEmpty) return this;
+    final emojiPattern = RegExp(
+      r'[\u{1F600}-\u{1F64F}'
+      r'|\u{1F300}-\u{1F5FF}'
+      r'|\u{1F680}-\u{1F6FF}'
+      r'|\u{1F700}-\u{1F77F}'
+      r'|\u{1F780}-\u{1F7FF}'
+      r'|\u{1F800}-\u{1F8FF}'
+      r'|\u{1F900}-\u{1F9FF}'
+      r'|\u{1FA00}-\u{1FA6F}'
+      r'|\u{1FA70}-\u{1FAFF}'
+      r'|\u{2600}-\u{26FF}'
+      r'|\u{2700}-\u{27BF}'
+      r'|\u{FE00}-\u{FE0F}'
+      r'|\u{1F1E6}-\u{1F1FF}'
+      r']+',
+      unicode: true,
+    );
+    return replaceAll(emojiPattern, '').trim();
+  }
 }
 
 extension NullableStringExtensions on String? {
@@ -69,4 +92,10 @@ extension NullableStringExtensions on String? {
 
   /// Returns true if the string is neither null nor empty.
   bool get isNotNullNorEmpty => this != null && this!.isNotEmpty;
+
+  /// Safely cleans emojis from nullable string for PDF rendering
+  String cleanForPdf([String defaultValue = '']) {
+    if (this == null) return defaultValue;
+    return this!.cleanForPdf();
+  }
 }

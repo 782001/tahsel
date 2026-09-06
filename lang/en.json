@@ -1204,5 +1204,10 @@
   "print_vault_report": "Print Vault Report",
   "print_preview": "Print Preview",
   "direct_print": "Direct Print",
-  "print_document": "Print Document"
+  "print_document": "Print Document",
+  "print_success": "Print job sent successfully",
+  "print_failed": "Failed to send print job",
+  "pdf_error_loading": "Error preparing document",
+  "pdf_saving": "Saving PDF...",
+  "pdf_saved_successfully": "PDF saved successfully"
 }

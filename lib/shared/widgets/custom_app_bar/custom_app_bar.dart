@@ -10,6 +10,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   final Widget? actionIcon;
   final VoidCallback? onActionTap;
+  final List<Widget>? actions;
 
   final String? centerLogo;
   final String? centerTitle;
@@ -22,6 +23,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.onLeadingTap,
     this.actionIcon,
     this.onActionTap,
+    this.actions,
     this.centerLogo,
     this.centerTitle,
     this.backgroundColor,
@@ -59,10 +61,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               fit: BoxFit.fill,
             ),
 
-      /// Action icon
-      actions: actionIcon != null
-          ? [IconButton(icon: actionIcon!, onPressed: onActionTap)]
-          : [],
+      /// Action icons
+      actions: actions ??
+          (actionIcon != null
+              ? [IconButton(icon: actionIcon!, onPressed: onActionTap)]
+              : []),
     );
   }
 }

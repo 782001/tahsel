@@ -7,6 +7,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   connectivity_plus
   firebase_auth
   firebase_core
+  printing
   screen_retriever_windows
   sentry_flutter
   share_plus

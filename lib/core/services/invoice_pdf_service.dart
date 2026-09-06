@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -10,13 +9,12 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:tahsel/core/extensions/extensions.dart';
+import 'package:tahsel/core/services/pdf_asset_cache.dart';
 import 'package:tahsel/core/services/tahsel_print_service.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/inventory/domain/entities/inventory_purchase_entity.dart';
 import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
 import 'package:whatsapp_share2/whatsapp_share2.dart';
-
-import '../utils/assets.dart';
 
 class InvoicePdfService {
   static const PdfColor _primary = PdfColor.fromInt(0xFF1E56A0);
@@ -166,17 +164,16 @@ class InvoicePdfService {
         ? invoice.id.substring(0, 8).toUpperCase()
         : invoice.id.toUpperCase();
     final filename = 'Fatoora_$cleanId.pdf';
-    final title = isArabic ? 'طباعة فاتورة #$shortId' : 'Print Invoice #$shortId';
+    final title = isArabic
+        ? 'طباعة فاتورة #$shortId'
+        : 'Print Invoice #$shortId';
 
     if (direct) {
       final bytes = await getInvoicePdfBytes(
         invoice: invoice,
         isArabic: isArabic,
       );
-      await TahselPrintService.directPrint(
-        bytes: bytes,
-        jobName: title,
-      );
+      await TahselPrintService.directPrint(bytes: bytes, jobName: title);
     } else {
       await TahselPrintService.openPrintPreview(
         context: context,
@@ -193,22 +190,10 @@ class InvoicePdfService {
   ) async {
     final pdf = pw.Document();
 
-    // Load fonts
-    final regularFontData = await rootBundle.load(
-      'assets/fonts/DGAgnadeen-Regular.ttf',
-    );
-    final boldFontData = await rootBundle.load(
-      'assets/fonts/DGAgnadeen-Bold.ttf',
-    );
-    final ttfRegular = pw.Font.ttf(regularFontData);
-    final ttfBold = pw.Font.ttf(boldFontData);
-
-    // Load Logo
-    pw.MemoryImage? logoImage;
-    try {
-      final logoData = await rootBundle.load(Assets.imagesAppLogo);
-      logoImage = pw.MemoryImage(logoData.buffer.asUint8List());
-    } catch (_) {}
+    // Load cached fonts and logo
+    final ttfRegular = await PdfAssetCache.getRegularFont();
+    final ttfBold = await PdfAssetCache.getBoldFont();
+    final logoImage = await PdfAssetCache.getLogoImage();
 
     pdf.addPage(
       pw.MultiPage(
@@ -330,22 +315,15 @@ class InvoicePdfService {
                 ),
               ),
               pw.SizedBox(height: 8),
-              if (invoice.customerName != null)
-                pw.Text(
-                  invoice.customerName!,
-                  style: pw.TextStyle(
-                    fontSize: 18,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                )
-              else
-                pw.Text(
-                  isArabic ? "عميل نقدي" : "Cash Customer",
-                  style: pw.TextStyle(
-                    fontSize: 18,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
+              pw.Text(
+                invoice.customerName.cleanForPdf(
+                  isArabic ? "عميل" : "Customer",
                 ),
+                style: pw.TextStyle(
+                  fontSize: 18,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
               if (invoice.customerPhone != null &&
                   invoice.customerPhone!.isNotEmpty) ...[
                 pw.SizedBox(height: 4),
@@ -430,7 +408,7 @@ class InvoicePdfService {
         pw.TableRow(
           decoration: const pw.BoxDecoration(color: _primary),
           children: [
-            _buildTableHeader(isArabic ? "الوصف" : "Description"),
+            _buildTableHeader(isArabic ? "الصنف" : "Item"),
             _buildTableHeader(isArabic ? "السعر" : "Price"),
             _buildTableHeader(isArabic ? "الكمية" : "Qty"),
             _buildTableHeader(isArabic ? "الإجمالي" : "Total"),
@@ -441,7 +419,10 @@ class InvoicePdfService {
           pw.TableRow(
             decoration: const pw.BoxDecoration(color: PdfColors.white),
             children: [
-              _buildTableCell(item.description, align: pw.TextAlign.left),
+              _buildTableCell(
+                item.description.cleanForPdf(),
+                align: pw.TextAlign.left,
+              ),
               _buildTableCell(
                 item.unitPrice.toSmartAmount(),
                 align: pw.TextAlign.center,
@@ -710,18 +691,16 @@ class InvoicePdfService {
     final cleanId = purchase.id.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
     final shortId = purchase.id.replaceAll('pur_', '');
     final filename = 'Purchase_Fatoora_$cleanId.pdf';
-    final title =
-        isArabic ? 'طباعة فاتورة شراء #$shortId' : 'Print Purchase Invoice #$shortId';
+    final title = isArabic
+        ? 'طباعة فاتورة شراء #$shortId'
+        : 'Print Purchase Invoice #$shortId';
 
     if (direct) {
       final bytes = await getPurchasePdfBytes(
         purchase: purchase,
         isArabic: isArabic,
       );
-      await TahselPrintService.directPrint(
-        bytes: bytes,
-        jobName: title,
-      );
+      await TahselPrintService.directPrint(bytes: bytes, jobName: title);
     } else {
       await TahselPrintService.openPrintPreview(
         context: context,
@@ -738,20 +717,9 @@ class InvoicePdfService {
   ) async {
     final pdf = pw.Document();
 
-    final regularFontData = await rootBundle.load(
-      'assets/fonts/DGAgnadeen-Regular.ttf',
-    );
-    final boldFontData = await rootBundle.load(
-      'assets/fonts/DGAgnadeen-Bold.ttf',
-    );
-    final ttfRegular = pw.Font.ttf(regularFontData);
-    final ttfBold = pw.Font.ttf(boldFontData);
-
-    pw.MemoryImage? logoImage;
-    try {
-      final logoData = await rootBundle.load(Assets.imagesAppLogo);
-      logoImage = pw.MemoryImage(logoData.buffer.asUint8List());
-    } catch (_) {}
+    final ttfRegular = await PdfAssetCache.getRegularFont();
+    final ttfBold = await PdfAssetCache.getBoldFont();
+    final logoImage = await PdfAssetCache.getLogoImage();
 
     pdf.addPage(
       pw.MultiPage(

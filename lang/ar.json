@@ -1207,5 +1207,10 @@
   "print_vault_report": "طباعة تقرير الخزنة",
   "print_preview": "معاينة وطباعة",
   "direct_print": "طباعة مباشرة",
-  "print_document": "طباعة المستند"
+  "print_document": "طباعة المستند",
+  "print_success": "تم إرسال أمر الطباعة بنجاح",
+  "print_failed": "تعذر إرسال أمر الطباعة",
+  "pdf_error_loading": "حدث خطأ أثناء إعداد وتجهيز المستند",
+  "pdf_saving": "جاري حفظ الملف...",
+  "pdf_saved_successfully": "تم حفظ ملف الـ PDF بنجاح"
 }

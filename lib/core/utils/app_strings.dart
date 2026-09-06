@@ -1068,6 +1068,11 @@ class AppStrings {
   static const String printPreview = "print_preview";
   static const String directPrint = "direct_print";
   static const String printDocument = "print_document";
+  static const String printSuccess = "print_success";
+  static const String printFailed = "print_failed";
+  static const String pdfErrorLoading = "pdf_error_loading";
+  static const String pdfSaving = "pdf_saving";
+  static const String pdfSavedSuccessfully = "pdf_saved_successfully";
   static const String availableProduct = "available_product";
   static const String newProduct = "new_product";
   static const String skuCodeOptional = "sku_code_optional";

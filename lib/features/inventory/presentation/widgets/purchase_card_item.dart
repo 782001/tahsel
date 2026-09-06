@@ -15,6 +15,7 @@ class PurchaseCardItem extends StatefulWidget {
   final InventoryPurchaseEntity purchase;
   final VoidCallback onSharePdf;
   final VoidCallback onDownloadPdf;
+  final VoidCallback onPrintPdf;
   final VoidCallback onReorder;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -24,6 +25,7 @@ class PurchaseCardItem extends StatefulWidget {
     required this.purchase,
     required this.onSharePdf,
     required this.onDownloadPdf,
+    required this.onPrintPdf,
     required this.onReorder,
     required this.onEdit,
     required this.onDelete,
@@ -193,7 +195,9 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
                       size: 20,
                     ),
                     onSelected: (val) {
-                      if (val == 'share') {
+                      if (val == 'print') {
+                        widget.onPrintPdf();
+                      } else if (val == 'share') {
                         widget.onSharePdf();
                       } else if (val == 'download') {
                         widget.onDownloadPdf();
@@ -206,6 +210,23 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
                       }
                     },
                     itemBuilder: (ctx) => [
+                      PopupMenuItem(
+                        value: 'print',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.print_rounded,
+                              color: AppColors.inventoryPurchasePurple,
+                              size: 18,
+                            ),
+                            SizedBox(width: 8.w),
+                            Text(
+                              AppStrings.printInvoice.tr(),
+                              style: TextStyles.customStyle(fontSize: 13),
+                            ),
+                          ],
+                        ),
+                      ),
                       if (!Platform.isWindows)
                         PopupMenuItem(
                           value: 'share',

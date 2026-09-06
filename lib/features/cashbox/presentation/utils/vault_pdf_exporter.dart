@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
@@ -9,6 +10,8 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/pdf_asset_cache.dart';
+import 'package:tahsel/core/services/tahsel_print_service.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/assets.dart';
 
@@ -57,6 +60,62 @@ class VaultPdfExporter {
       await tahselDir.create(recursive: true);
     }
     return tahselDir;
+  }
+
+  /// Returns the PDF bytes for vault statement
+  static Future<Uint8List> getVaultPdfBytes({
+    required VaultSummaryEntity summary,
+    required List<VaultTransactionEntity> transactions,
+    required bool isArabic,
+    String? filterName,
+  }) async {
+    return await _buildPdf(
+      summary: summary,
+      transactions: transactions,
+      isArabic: isArabic,
+      filterName: filterName,
+    );
+  }
+
+  /// Print vault statement report directly or open Tahsel themed print preview
+  static Future<void> printVaultStatement(
+    BuildContext context, {
+    required VaultSummaryEntity summary,
+    required List<VaultTransactionEntity> transactions,
+    required bool isArabic,
+    String? filterName,
+    bool direct = false,
+  }) async {
+    final nowStr = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+    final filename = 'Tahsel_Vault_Statement_$nowStr.pdf';
+    final title = isArabic
+        ? 'طباعة تقرير كشف حساب الخزنة'
+        : 'Print Vault Statement Report';
+
+    if (direct) {
+      final bytes = await getVaultPdfBytes(
+        summary: summary,
+        transactions: transactions,
+        isArabic: isArabic,
+        filterName: filterName,
+      );
+      await TahselPrintService.directPrint(
+        bytes: bytes,
+        jobName: title,
+      );
+    } else {
+      await TahselPrintService.openPrintPreview(
+        context: context,
+        title: title,
+        buildPdf: (format) => _buildPdf(
+          summary: summary,
+          transactions: transactions,
+          isArabic: isArabic,
+          filterName: filterName,
+        ),
+        pdfFileName: filename,
+      );
+    }
   }
 
   /// Generates the PDF and presents the system share/save/print sheet
@@ -113,22 +172,10 @@ class VaultPdfExporter {
   }) async {
     final pdf = pw.Document();
 
-    // Load fonts
-    final regularFontData = await rootBundle.load(
-      'assets/fonts/DGAgnadeen-Regular.ttf',
-    );
-    final boldFontData = await rootBundle.load(
-      'assets/fonts/DGAgnadeen-Bold.ttf',
-    );
-    final ttfRegular = pw.Font.ttf(regularFontData);
-    final ttfBold = pw.Font.ttf(boldFontData);
-
-    // Load Logo
-    pw.MemoryImage? logoImage;
-    try {
-      final logoData = await rootBundle.load(Assets.imagesAppLogo);
-      logoImage = pw.MemoryImage(logoData.buffer.asUint8List());
-    } catch (_) {}
+    // Load cached fonts and logo
+    final ttfRegular = await PdfAssetCache.getRegularFont();
+    final ttfBold = await PdfAssetCache.getBoldFont();
+    final logoImage = await PdfAssetCache.getLogoImage();
 
     pdf.addPage(
       pw.MultiPage(
@@ -455,7 +502,7 @@ class VaultPdfExporter {
                     ? pw.Alignment.centerRight
                     : pw.Alignment.centerLeft,
                 child: pw.Text(
-                  tx.description,
+                  tx.description.cleanForPdf(),
                   style: const pw.TextStyle(fontSize: 9, color: _neutralDark),
                 ),
               ),

@@ -57,6 +57,26 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
     super.dispose();
   }
 
+  Future<void> _printPurchasePdf(InventoryPurchaseEntity pur) async {
+    final isArabic = AppStrings.currentLang == 'ar';
+    try {
+      await InvoicePdfService.printPurchaseInvoice(
+        context,
+        pur,
+        isArabic: isArabic,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _sharePurchasePdf(InventoryPurchaseEntity pur) async {
     final isArabic = AppStrings.currentLang == 'ar';
     try {
@@ -466,6 +486,8 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                             ),
                                             child: PurchaseCardItem(
                                               purchase: pur,
+                                              onPrintPdf: () =>
+                                                  _printPurchasePdf(pur),
                                               onSharePdf: () =>
                                                   _sharePurchasePdf(pur),
                                               onDownloadPdf: () =>

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/utils/vault_balance_helper.dart';
@@ -89,6 +90,52 @@ class _VaultScreenState extends State<VaultScreen> {
     );
   }
 
+  Future<void> _printPdf() async {
+    final state = context.read<VaultCubit>().state;
+    if (state is! VaultLoaded) return;
+    if (_isExporting) return;
+
+    setState(() => _isExporting = true);
+    try {
+      final currentLang = context.read<LocaleCubit>().currentLangCode;
+      final isArabic = currentLang == AppStrings.arabicCode;
+
+      // Fetch all matching transactions for a complete statement export
+      final allTransactions = await context
+          .read<VaultCubit>()
+          .getAllTransactionsForExport(sourceFilter: state.selectedSource);
+
+      final transactionsToExport = allTransactions.isNotEmpty
+          ? allTransactions
+          : state.transactions;
+
+      await VaultPdfExporter.printVaultStatement(
+        // ignore: use_build_context_synchronously
+        context,
+        summary: state.summary,
+        transactions: transactionsToExport,
+        isArabic: isArabic,
+        filterName: state.selectedSource != VaultTransactionSource.all
+            ? state.selectedSource.name
+            : null,
+      );
+    } catch (e) {
+      if (mounted) {
+        AppLogger.printMessage('Vault PDF print error: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isExporting = false);
+      }
+    }
+  }
+
   Future<void> _exportPdf() async {
     final state = context.read<VaultCubit>().state;
     if (state is! VaultLoaded) return;
@@ -118,7 +165,7 @@ class _VaultScreenState extends State<VaultScreen> {
       );
     } catch (e) {
       if (mounted) {
-        debugPrint('Vault PDF export error: $e');
+        AppLogger.printMessage('Vault PDF export error: $e');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('فشل في تصدير التقرير: $e'),
@@ -144,19 +191,44 @@ class _VaultScreenState extends State<VaultScreen> {
         leadingIcon: Icon(
           Icons.arrow_back_ios_new_rounded,
           color: AppColors.textColor,
-          size: isDesktop ? 22 : 20.sp,
+          size: isDesktop ? 22 : 20,
         ),
         onLeadingTap: () => Navigator.of(context).pop(),
-        actionIcon: _isExporting
-            ? SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppColors.primaryColor,
+        actions: [
+          if (_isExporting)
+            Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal:isDesktop ? 16 : 16.w),
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.primaryColor,
+                  ),
                 ),
-              )
-            : Container(
+              ),
+            )
+          else ...[
+            IconButton(
+              tooltip: AppStrings.printVaultReport.tr(),
+              icon: Container(
+                padding: EdgeInsets.all(isDesktop ? 8 : 6.w),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryColor.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.print_rounded,
+                  color: AppColors.primaryColor,
+                  size: isDesktop ? 20 : 18.sp,
+                ),
+              ),
+              onPressed: _printPdf,
+            ),
+            IconButton(
+              tooltip: AppStrings.invoiceSharePdf.tr(),
+              icon: Container(
                 padding: EdgeInsets.all(isDesktop ? 8 : 6.w),
                 decoration: BoxDecoration(
                   color: AppColors.primaryColor.withValues(alpha: 0.1),
@@ -168,7 +240,11 @@ class _VaultScreenState extends State<VaultScreen> {
                   size: isDesktop ? 20 : 18.sp,
                 ),
               ),
-        onActionTap: _exportPdf,
+              onPressed: _exportPdf,
+            ),
+            SizedBox(width: 4.w),
+          ],
+        ],
       ),
       body: BlocBuilder<ConnectivityCubit, ConnectivityState>(
         builder: (context, connectivityState) {
