@@ -10,8 +10,10 @@ import 'package:share_plus/share_plus.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/pdf_asset_cache.dart';
+import 'package:tahsel/core/services/profile/business_profile_service.dart';
 import 'package:tahsel/core/services/tahsel_print_service.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/features/settings/data/models/user_profile_model.dart';
 
 import '../../domain/entities/vault_summary_entity.dart';
 import '../../domain/entities/vault_transaction_entity.dart';
@@ -97,10 +99,7 @@ class VaultPdfExporter {
         isArabic: isArabic,
         filterName: filterName,
       );
-      await TahselPrintService.directPrint(
-        bytes: bytes,
-        jobName: title,
-      );
+      await TahselPrintService.directPrint(bytes: bytes, jobName: title);
     } else {
       await TahselPrintService.openPrintPreview(
         context: context,
@@ -170,10 +169,11 @@ class VaultPdfExporter {
   }) async {
     final pdf = pw.Document();
 
-    // Load cached fonts and logo
+    // Load cached fonts and logo and business profile
     final ttfRegular = await PdfAssetCache.getRegularFont();
     final ttfBold = await PdfAssetCache.getBoldFont();
     final logoImage = await PdfAssetCache.getLogoImage();
+    final profile = await BusinessProfileService.instance.getProfile();
 
     pdf.addPage(
       pw.MultiPage(
@@ -188,8 +188,13 @@ class VaultPdfExporter {
           logoImage: logoImage,
           isArabic: isArabic,
           filterName: filterName,
+          profile: profile,
         ),
-        footer: (context) => _buildFooter(context: context, isArabic: isArabic),
+        footer: (context) => _buildFooter(
+          context: context,
+          isArabic: isArabic,
+          profile: profile,
+        ),
         build: (context) => [
           pw.SizedBox(height: 12),
           _buildSummaryCards(
@@ -214,11 +219,15 @@ class VaultPdfExporter {
     pw.MemoryImage? logoImage,
     required bool isArabic,
     String? filterName,
+    UserProfileModel? profile,
   }) {
     final nowStr = DateFormat(
       'yyyy-MM-dd - hh:mm a',
       'en',
     ).format(DateTime.now());
+
+    final projectName = profile?.projectName.trim() ?? '';
+    final hasProject = projectName.isNotEmpty;
 
     return pw.Container(
       padding: const pw.EdgeInsets.only(bottom: 12),
@@ -233,13 +242,20 @@ class VaultPdfExporter {
             children: [
               if (logoImage != null)
                 pw.Container(
-                  width: 42,
-                  height: 42,
+                  width: 46,
+                  height: 46,
                   margin: pw.EdgeInsets.only(
-                    left: isArabic ? 10 : 0,
-                    right: isArabic ? 0 : 10,
+                    left: isArabic ? 12 : 0,
+                    right: isArabic ? 0 : 12,
                   ),
-                  child: pw.Image(logoImage),
+                  decoration: const pw.BoxDecoration(
+                    color: PdfColors.white,
+                  ),
+                  alignment: pw.Alignment.center,
+                  child: pw.Image(
+                    logoImage,
+                    fit: pw.BoxFit.contain,
+                  ),
                 ),
               pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -254,11 +270,20 @@ class VaultPdfExporter {
                       color: _emeraldDark,
                     ),
                   ),
+                  if (hasProject)
+                    pw.Text(
+                      projectName,
+                      style: pw.TextStyle(
+                        fontSize: 12,
+                        fontWeight: pw.FontWeight.bold,
+                        color: _neutralDark,
+                      ),
+                    ),
                   if (filterName != null && filterName.isNotEmpty)
                     pw.Text(
                       isArabic ? 'تصفية: $filterName' : 'Filter: $filterName',
                       style: const pw.TextStyle(
-                        fontSize: 11,
+                        fontSize: 10,
                         color: _emeraldPrimary,
                       ),
                     ),
@@ -281,6 +306,21 @@ class VaultPdfExporter {
                   color: _neutralDark,
                 ),
               ),
+              if (profile != null && profile.phoneNumber.trim().isNotEmpty)
+                pw.Text(
+                  profile.phoneNumber,
+                  style: const pw.TextStyle(fontSize: 9, color: _neutralMuted),
+                ),
+              if (profile != null && profile.vat.trim().isNotEmpty)
+                pw.Text(
+                  '${isArabic ? 'الرقم الضريبي' : 'VAT'}: ${profile.vat}',
+                  style: const pw.TextStyle(fontSize: 9, color: _neutralMuted),
+                ),
+              if (profile != null && profile.crn.trim().isNotEmpty)
+                pw.Text(
+                  '${isArabic ? 'س.ت' : 'CRN'}: ${profile.crn}',
+                  style: const pw.TextStyle(fontSize: 9, color: _neutralMuted),
+                ),
             ],
           ),
         ],
@@ -575,7 +615,13 @@ class VaultPdfExporter {
   static pw.Widget _buildFooter({
     required pw.Context context,
     required bool isArabic,
+    UserProfileModel? profile,
   }) {
+    final businessTitle =
+        (profile != null && profile.projectName.trim().isNotEmpty)
+        ? profile.projectName.trim()
+        : (isArabic ? 'تطبيق تحصيل' : 'Tahsel App');
+
     return pw.Container(
       padding: const pw.EdgeInsets.only(top: 8),
       decoration: const pw.BoxDecoration(
@@ -586,8 +632,8 @@ class VaultPdfExporter {
         children: [
           pw.Text(
             isArabic
-                ? 'تطبيق تحصيل - نظام إدارة الخزينة'
-                : 'Tahsel App - Cash Vault System',
+                ? '$businessTitle -   تطبيق تحصيل - نظام إدارة الخزينة'
+                : '$businessTitle -   Tahsel App - Cash Vault System',
             style: const pw.TextStyle(fontSize: 9, color: _neutralMuted),
           ),
           pw.Text(

@@ -12,6 +12,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:tahsel/core/config/locale/app_localizations_setup.dart';
 import 'package:tahsel/core/services/injection_container.dart' as di;
 import 'package:tahsel/core/services/injection_container.dart';
+import 'package:tahsel/core/services/logo/project_logo_service.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
 import 'package:tahsel/core/services/security_service.dart';
 import 'package:tahsel/core/utils/app_constants.dart';
@@ -80,6 +81,7 @@ void main() async {
 
   SecurityService.isEnabled = false;
   await initDependencies();
+  await ProjectLogoService.instance.init();
 
   // Global Error Handling for UI
   ErrorWidget.builder = (FlutterErrorDetails details) {

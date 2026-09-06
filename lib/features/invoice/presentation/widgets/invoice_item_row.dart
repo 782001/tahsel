@@ -11,6 +11,7 @@ class InvoiceItemRow extends StatefulWidget {
   final TextEditingController descController;
   final TextEditingController priceController;
   final TextEditingController qtyController;
+  final TextEditingController unitController;
   final TextEditingController discountController;
   final double? purchasePrice;
   final VoidCallback onRemove;
@@ -22,6 +23,7 @@ class InvoiceItemRow extends StatefulWidget {
     required this.descController,
     required this.priceController,
     required this.qtyController,
+    required this.unitController,
     required this.discountController,
     this.purchasePrice,
     required this.onRemove,
@@ -116,7 +118,7 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
 
               // Quantity field
               SizedBox(
-                width: 85,
+                width: 80,
                 child: _ItemField(
                   controller: widget.qtyController,
                   hint: '1',
@@ -130,9 +132,28 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
               ),
               const SizedBox(width: 10),
 
-              // Discount amount field (in Currency)
+              // Unit field (e.g. قطعة، كرتونة)
               SizedBox(
-                width: 95,
+                width: 80,
+                child: _ItemField(
+                  controller: widget.unitController,
+                  hint: 'قطعة',
+                  label: AppStrings.unit.tr(),
+                  onChanged: (_) {
+                    setState(() {});
+                    widget.onChanged();
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              // Discount amount field (in Currency)
+              Expanded(
                 child: _ItemField(
                   controller: widget.discountController,
                   hint: '0',
@@ -143,6 +164,33 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
                     setState(() {});
                     widget.onChanged();
                   },
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // Line total (after discount)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      AppStrings.invoiceLineTotal.tr(),
+                      style: TextStyles.customStyle(
+                        fontSize: 11,
+                        color: AppColors.blackLight,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${lineTotal.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                      style: TextStyles.customStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primaryColor,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -189,19 +237,6 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
               ),
             ),
           ],
-
-          // Line total (after discount)
-          Align(
-            alignment: AlignmentDirectional.centerEnd,
-            child: Text(
-              '${AppStrings.invoiceLineTotal.tr()}: ${lineTotal.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-              style: TextStyles.customStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primaryColor,
-              ),
-            ),
-          ),
         ],
       ),
     );

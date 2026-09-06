@@ -22,6 +22,7 @@ class _ItemControllers {
   final TextEditingController desc;
   final TextEditingController price;
   final TextEditingController qty;
+  final TextEditingController unit;
   final TextEditingController discount;
   double? purchasePrice;
 
@@ -30,6 +31,7 @@ class _ItemControllers {
     : desc = TextEditingController(text: item.description),
       price = TextEditingController(text: item.unitPrice.toString()),
       qty = TextEditingController(text: item.quantity.toString()),
+      unit = TextEditingController(text: item.unit ?? ''),
       discount = TextEditingController(
         text: item.discountAmount > 0
             ? item.discountAmount.toSmartAmount()
@@ -37,16 +39,18 @@ class _ItemControllers {
       ),
       purchasePrice = item.purchasePrice;
 
-  _ItemControllers({this.purchasePrice})
+  _ItemControllers({this.purchasePrice, String? initialUnit})
     : desc = TextEditingController(),
       price = TextEditingController(),
       qty = TextEditingController(text: '1'),
+      unit = TextEditingController(text: initialUnit ?? ''),
       discount = TextEditingController(text: '0');
 
   void dispose() {
     desc.dispose();
     price.dispose();
     qty.dispose();
+    unit.dispose();
     discount.dispose();
   }
 }
@@ -197,6 +201,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
             for (final item in selectedItems) {
               final newCtrl = _ItemControllers(
                 purchasePrice: item.product.purchasePrice,
+                initialUnit: item.product.unit,
               );
               newCtrl.desc.text = item.product.name;
               newCtrl.price.text = item.product.sellingPrice.toSmartAmount();
@@ -263,6 +268,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
         description: ctrl.desc.text.trim(),
         unitPrice: price,
         quantity: qty,
+        unit: ctrl.unit.text.trim().isNotEmpty ? ctrl.unit.text.trim() : null,
         discountRate: discountRate,
         purchasePrice: ctrl.purchasePrice,
       );
@@ -528,6 +534,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                                 descController: _itemControllers[i].desc,
                                 priceController: _itemControllers[i].price,
                                 qtyController: _itemControllers[i].qty,
+                                unitController: _itemControllers[i].unit,
                                 discountController:
                                     _itemControllers[i].discount,
                                 purchasePrice:

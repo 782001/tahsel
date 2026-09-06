@@ -29,6 +29,9 @@ class CreateAccountRemoteDataSourceImpl implements CreateAccountRemoteDataSource
     final fullName = (data['fullName'] as String).trim();
     final phoneNumber = data['phoneNumber'] as String?;
     final projectName = (data['projectName'] as String).trim();
+    final crn = (data['crn'] as String?)?.trim() ?? '';
+    final address = (data['address'] as String?)?.trim() ?? '';
+    final vat = (data['vat'] as String?)?.trim() ?? '';
     final days = data['subscriptionDays'] as int? ?? 5;
 
     final credential = await _authService.createAuthUser(
@@ -48,6 +51,9 @@ class CreateAccountRemoteDataSourceImpl implements CreateAccountRemoteDataSource
       'phoneNumber': phoneNumber ?? '',
       'accountStatus': 'active',
       'projectName': projectName,
+      'crn': crn,
+      'address': address,
+      'vat': vat,
       'subscriptionStatus': 'active',
       'subscriptionSuspended': false,
       'subscriptionStart': now,

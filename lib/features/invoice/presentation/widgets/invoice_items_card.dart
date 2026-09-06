@@ -64,7 +64,7 @@ class _InvoiceItemsCardState extends State<InvoiceItemsCard> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '${item.quantity.toSmartAmount()} × ${item.unitPrice.toSmartAmount()}',
+                              '${item.quantity.toSmartAmount()} ${item.unit != null && item.unit!.isNotEmpty ? "${item.unit!} " : ""}× ${item.unitPrice.toSmartAmount()}${item.discountAmount > 0 ? " • ${AppStrings.invoiceItemDiscount.tr()}: ${item.discountAmount.toSmartAmount()}" : ""}',
                               style: TextStyles.customStyle(
                                 fontSize: 12,
                                 color: AppColors.blackLight,

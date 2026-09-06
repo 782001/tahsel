@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:tahsel/core/services/logo/project_logo_service.dart';
 import 'package:tahsel/core/utils/assets.dart';
 
 /// In-memory cache for PDF fonts and assets to ensure sub-millisecond generation
@@ -25,10 +26,15 @@ class PdfAssetCache {
     return _boldFont!;
   }
 
-  /// Loads and caches the Tahsel app logo
+  /// Loads the active project custom logo (if set) or falls back to Tahsel app logo
   static Future<pw.MemoryImage?> getLogoImage() async {
-    if (_logoImage != null) return _logoImage;
     try {
+      final customBytes = await ProjectLogoService.instance.getLogoBytes();
+      if (customBytes != null && customBytes.isNotEmpty) {
+        return pw.MemoryImage(customBytes);
+      }
+
+      if (_logoImage != null) return _logoImage;
       if (_logoBytes == null) {
         final data = await rootBundle.load(Assets.imagesAppLogo);
         _logoBytes = data.buffer.asUint8List();

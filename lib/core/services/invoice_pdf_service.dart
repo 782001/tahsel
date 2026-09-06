@@ -10,10 +10,12 @@ import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:tahsel/core/extensions/extensions.dart';
 import 'package:tahsel/core/services/pdf_asset_cache.dart';
+import 'package:tahsel/core/services/profile/business_profile_service.dart';
 import 'package:tahsel/core/services/tahsel_print_service.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/inventory/domain/entities/inventory_purchase_entity.dart';
 import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
+import 'package:tahsel/features/settings/data/models/user_profile_model.dart';
 import 'package:whatsapp_share2/whatsapp_share2.dart';
 
 class InvoicePdfService {
@@ -27,6 +29,8 @@ class InvoicePdfService {
   static const PdfColor _purchasePrimary = PdfColor.fromInt(0xFF673AB7);
   static const PdfColor _purchasePrimaryDark = PdfColor.fromInt(0xFF512DA8);
   static const PdfColor _purchaseBgLight = PdfColor.fromInt(0xFFEDE7F6);
+  static const PdfColor _purchaseBorder = PdfColor.fromInt(0xFFD1C4E9);
+  static const PdfColor _purchaseBorderMedium = PdfColor.fromInt(0xFFB39DDB);
 
   /// Get the public visible directory on Android, iOS, and Windows
   static Future<Directory> _getPublicStorageDirectory() async {
@@ -194,10 +198,11 @@ class InvoicePdfService {
   ) async {
     final pdf = pw.Document();
 
-    // Load cached fonts and logo
+    // Load cached fonts, logo and active seller profile
     final ttfRegular = await PdfAssetCache.getRegularFont();
     final ttfBold = await PdfAssetCache.getBoldFont();
     final logoImage = await PdfAssetCache.getLogoImage();
+    final sellerProfile = await BusinessProfileService.instance.getProfile();
 
     pdf.addPage(
       pw.MultiPage(
@@ -206,22 +211,23 @@ class InvoicePdfService {
           theme: pw.ThemeData.withFont(base: ttfRegular, bold: ttfBold),
           textDirection: isArabic ? pw.TextDirection.rtl : pw.TextDirection.ltr,
           buildBackground: (context) => _buildBackground(),
-          margin: const pw.EdgeInsets.all(32),
+          margin: const pw.EdgeInsets.symmetric(horizontal: 22, vertical: 18),
         ),
-        header: (context) => _buildHeader(invoice, logoImage, isArabic),
-        footer: (context) =>
-            _buildFooter(isArabic, context.pageNumber, context.pagesCount),
+        header: (context) =>
+            _buildHeader(invoice, logoImage, isArabic, sellerProfile),
+        footer: (context) => _buildFooter(
+          isArabic,
+          context.pageNumber,
+          context.pagesCount,
+          sellerProfile,
+        ),
         build: (context) => [
-          pw.SizedBox(height: 20),
-          _buildCustomerInfo(invoice, isArabic),
-          pw.SizedBox(height: 30),
+          pw.SizedBox(height: 8),
+          _buildBusinessAndCustomerInfo(invoice, sellerProfile, isArabic),
+          pw.SizedBox(height: 10),
           _buildItemsTable(invoice, isArabic),
-          pw.SizedBox(height: 30),
-          _buildSummary(invoice, isArabic),
-          if (invoice.notes != null && invoice.notes!.isNotEmpty) ...[
-            pw.SizedBox(height: 30),
-            _buildNotes(invoice.notes!, isArabic),
-          ],
+          pw.SizedBox(height: 10),
+          _buildBottomSection(invoice, isArabic),
         ],
       ),
     );
@@ -239,6 +245,7 @@ class InvoicePdfService {
     InvoiceEntity invoice,
     pw.MemoryImage? logoImage,
     bool isArabic,
+    UserProfileModel? sellerProfile,
   ) {
     final dateStr = DateFormat(
       isArabic ? "dd MMMM yyyy - hh:mm a" : "MMM dd, yyyy - hh:mm a",
@@ -247,117 +254,265 @@ class InvoicePdfService {
 
     final titleText = invoice.isQuotation
         ? (isArabic ? "عرض سعر" : "QUOTATION")
-        : (isArabic ? "فاتورة" : "INVOICE");
+        : (isArabic ? "فاتورة مبيعات" : "SALES INVOICE");
 
     return pw.Column(
       children: [
         pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          crossAxisAlignment: pw.CrossAxisAlignment.center,
           children: [
+            // Left/Start: Invoice Title & ID & Date
             pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 pw.Text(
                   titleText,
                   style: pw.TextStyle(
-                    fontSize: 40,
+                    fontSize: 22,
                     fontWeight: pw.FontWeight.bold,
                     color: _primary,
                   ),
                 ),
-                pw.SizedBox(height: 8),
-                pw.Text(
-                  '# ${invoice.id.substring(0, 8).toUpperCase()}',
-                  style: const pw.TextStyle(
-                    fontSize: 16,
-                    color: PdfColors.grey700,
-                  ),
-                ),
-                pw.SizedBox(height: 4),
-                pw.Text(
-                  dateStr,
-                  style: const pw.TextStyle(
-                    fontSize: 14,
-                    color: PdfColors.grey600,
-                  ),
+                pw.SizedBox(height: 2),
+                pw.Row(
+                  children: [
+                    pw.Text(
+                      '# ${invoice.id.substring(0, 8).toUpperCase()}',
+                      style: pw.TextStyle(
+                        fontSize: 11,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.grey800,
+                      ),
+                    ),
+                    pw.SizedBox(width: 8),
+                    pw.Text(
+                      dateStr,
+                      style: const pw.TextStyle(
+                        fontSize: 10,
+                        color: PdfColors.grey600,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-            if (logoImage != null)
-              pw.Container(
-                height: 80,
-                width: 80,
-                decoration: pw.BoxDecoration(
-                  shape: pw.BoxShape.circle,
-                  color: _primary,
-                  image: pw.DecorationImage(
-                    image: logoImage,
-                    fit: pw.BoxFit.contain,
+            // Right/End: Project Logo & Project Name
+            pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.center,
+              children: [
+                if (sellerProfile != null &&
+                    sellerProfile.projectName.isNotEmpty) ...[
+                  pw.Column(
+                    crossAxisAlignment: isArabic
+                        ? pw.CrossAxisAlignment.start
+                        : pw.CrossAxisAlignment.end,
+                    children: [
+                      pw.Text(
+                        sellerProfile.projectName,
+                        style: pw.TextStyle(
+                          fontSize: 14,
+                          fontWeight: pw.FontWeight.bold,
+                          color: _primaryDark,
+                        ),
+                      ),
+                      if (sellerProfile.phoneNumber.isNotEmpty) ...[
+                        pw.SizedBox(height: 1),
+                        pw.Text(
+                          sellerProfile.phoneNumber,
+                          style: const pw.TextStyle(
+                            fontSize: 10,
+                            color: PdfColors.grey700,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                ),
-              ),
+                  pw.SizedBox(width: 10),
+                ],
+                if (logoImage != null)
+                  pw.Container(
+                    height: 50,
+                    constraints: const pw.BoxConstraints(maxWidth: 100),
+                    decoration: const pw.BoxDecoration(color: PdfColors.white),
+                    alignment: pw.Alignment.center,
+                    child: pw.Image(logoImage, fit: pw.BoxFit.contain),
+                  ),
+              ],
+            ),
           ],
         ),
-        pw.SizedBox(height: 20),
-        pw.Divider(color: _primary, thickness: 2),
+        pw.SizedBox(height: 6),
+        pw.Divider(color: _primary, thickness: 1.2),
       ],
     );
   }
 
-  static pw.Widget _buildCustomerInfo(InvoiceEntity invoice, bool isArabic) {
+  static pw.Widget _buildBusinessAndCustomerInfo(
+    InvoiceEntity invoice,
+    UserProfileModel? sellerProfile,
+    bool isArabic,
+  ) {
     return pw.Row(
       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
+        // Seller Details Card
         pw.Expanded(
-          child: pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text(
-                isArabic ? "بيانات العميل:" : "Customer Details:",
-                style: pw.TextStyle(
-                  fontSize: 16,
-                  fontWeight: pw.FontWeight.bold,
-                  color: _primaryDark,
-                ),
-              ),
-              pw.SizedBox(height: 8),
-              pw.Text(
-                invoice.customerName.cleanForPdf(
-                  isArabic ? "عميل" : "Customer",
-                ),
-                style: pw.TextStyle(
-                  fontSize: 18,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-              if (invoice.customerPhone != null &&
-                  invoice.customerPhone!.isNotEmpty) ...[
-                pw.SizedBox(height: 4),
+          flex: 5,
+          child: pw.Container(
+            padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            decoration: pw.BoxDecoration(
+              color: PdfColors.grey100,
+              borderRadius: pw.BorderRadius.circular(6),
+              border: pw.Border.all(color: PdfColors.grey300, width: 0.8),
+            ),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
                 pw.Text(
-                  invoice.customerPhone!,
-                  style: const pw.TextStyle(
-                    fontSize: 14,
-                    color: PdfColors.grey800,
+                  isArabic
+                      ? "بيانات المنشأة (البائع):"
+                      : "Seller / Business Details:",
+                  style: pw.TextStyle(
+                    fontSize: 10,
+                    fontWeight: pw.FontWeight.bold,
+                    color: _primaryDark,
                   ),
                 ),
-              ],
-              if (invoice.ledgerNumber != null &&
-                  invoice.ledgerNumber!.isNotEmpty) ...[
-                pw.SizedBox(height: 4),
+                pw.SizedBox(height: 3),
                 pw.Text(
-                  "${isArabic ? 'رقم الدفتر:' : 'Ledger #:'} ${invoice.ledgerNumber}",
-                  style: const pw.TextStyle(
-                    fontSize: 14,
-                    color: PdfColors.grey800,
+                  sellerProfile != null && sellerProfile.projectName.isNotEmpty
+                      ? sellerProfile.projectName
+                      : (isArabic ? "النشاط التجاري" : "Business Name"),
+                  style: pw.TextStyle(
+                    fontSize: 12,
+                    fontWeight: pw.FontWeight.bold,
+                    color: _primary,
                   ),
                 ),
+                if (sellerProfile != null &&
+                    sellerProfile.fullName.isNotEmpty) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    "${isArabic ? 'المسؤول:' : 'Contact:'} ${sellerProfile.fullName}",
+                    style: const pw.TextStyle(
+                      fontSize: 9,
+                      color: PdfColors.grey800,
+                    ),
+                  ),
+                ],
+                if (sellerProfile != null &&
+                    sellerProfile.phoneNumber.isNotEmpty) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    "${isArabic ? 'الهاتف:' : 'Phone:'} ${sellerProfile.phoneNumber}",
+                    style: const pw.TextStyle(
+                      fontSize: 9,
+                      color: PdfColors.grey800,
+                    ),
+                  ),
+                ],
+                if (sellerProfile != null && sellerProfile.crn.isNotEmpty) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    "${isArabic ? 'س.ت:' : 'CRN:'} ${sellerProfile.crn}",
+                    style: const pw.TextStyle(
+                      fontSize: 9,
+                      color: PdfColors.grey800,
+                    ),
+                  ),
+                ],
+                if (sellerProfile != null && sellerProfile.vat.isNotEmpty) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    "${isArabic ? 'الرقم الضريبي:' : 'VAT:'} ${sellerProfile.vat}",
+                    style: const pw.TextStyle(
+                      fontSize: 9,
+                      color: PdfColors.grey800,
+                    ),
+                  ),
+                ],
+                if (sellerProfile != null &&
+                    sellerProfile.address.isNotEmpty) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    "${isArabic ? 'العنوان:' : 'Address:'} ${sellerProfile.address}",
+                    style: const pw.TextStyle(
+                      fontSize: 9,
+                      color: PdfColors.grey800,
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
-        _buildStatusBadge(invoice.status, isArabic),
+        pw.SizedBox(width: 10),
+        // Customer Details Card
+        pw.Expanded(
+          flex: 5,
+          child: pw.Container(
+            padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            decoration: pw.BoxDecoration(
+              color: PdfColors.grey100,
+              borderRadius: pw.BorderRadius.circular(6),
+              border: pw.Border.all(color: PdfColors.grey300, width: 0.8),
+            ),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text(
+                      isArabic ? "بيانات العميل:" : "Customer Details:",
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                        fontWeight: pw.FontWeight.bold,
+                        color: _primaryDark,
+                      ),
+                    ),
+                    _buildStatusBadge(invoice.status, isArabic),
+                  ],
+                ),
+                pw.SizedBox(height: 3),
+                pw.Text(
+                  invoice.customerName.cleanForPdf(
+                    isArabic ? "عميل" : "Customer",
+                  ),
+                  style: pw.TextStyle(
+                    fontSize: 12,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.grey900,
+                  ),
+                ),
+                if (invoice.customerPhone != null &&
+                    invoice.customerPhone!.isNotEmpty) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    "${isArabic ? 'الهاتف:' : 'Phone:'} ${invoice.customerPhone!}",
+                    style: const pw.TextStyle(
+                      fontSize: 9,
+                      color: PdfColors.grey800,
+                    ),
+                  ),
+                ],
+                if (invoice.ledgerNumber != null &&
+                    invoice.ledgerNumber!.isNotEmpty) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    "${isArabic ? 'رقم الدفتر:' : 'Ledger #:'} ${invoice.ledgerNumber}",
+                    style: const pw.TextStyle(
+                      fontSize: 9,
+                      color: PdfColors.grey800,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -389,7 +544,7 @@ class InvoicePdfService {
     }
 
     return pw.Container(
-      padding: const pw.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
       decoration: pw.BoxDecoration(
         color: PdfColor(color.red, color.green, color.blue, 0.1),
         borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
@@ -400,7 +555,7 @@ class InvoicePdfService {
         style: pw.TextStyle(
           color: PdfColors.white,
           fontWeight: pw.FontWeight.bold,
-          fontSize: 18,
+          fontSize: 9,
         ),
       ),
     );
@@ -408,62 +563,97 @@ class InvoicePdfService {
 
   static pw.Widget _buildItemsTable(InvoiceEntity invoice, bool isArabic) {
     return pw.Table(
-      border: pw.TableBorder.all(color: PdfColors.grey300, width: 1),
+      border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.8),
       columnWidths: {
-        0: const pw.FlexColumnWidth(4),
-        1: const pw.FlexColumnWidth(2),
-        2: const pw.FlexColumnWidth(2),
-        3: const pw.FlexColumnWidth(2.5),
+        0: const pw.FlexColumnWidth(0.7), // #
+        1: const pw.FlexColumnWidth(3.6), // Description
+        2: const pw.FlexColumnWidth(1.3), // Unit
+        3: const pw.FlexColumnWidth(1.1), // Quantity
+        4: const pw.FlexColumnWidth(1.5), // Unit Price
+        5: const pw.FlexColumnWidth(1.3), // Discount
+        6: const pw.FlexColumnWidth(1.7), // Total
       },
       children: [
         // Header
         pw.TableRow(
           decoration: const pw.BoxDecoration(color: _primary),
           children: [
-            _buildTableHeader(isArabic ? "الصنف" : "Item"),
-            _buildTableHeader(isArabic ? "السعر" : "Price"),
+            _buildTableHeader("#"),
+            _buildTableHeader(
+              isArabic ? "الصنف" : "Item",
+              align: isArabic ? pw.TextAlign.right : pw.TextAlign.left,
+            ),
+            _buildTableHeader(isArabic ? "الوحدة" : "Unit"),
             _buildTableHeader(isArabic ? "الكمية" : "Qty"),
+            _buildTableHeader(isArabic ? "السعر" : "Price"),
+            _buildTableHeader(isArabic ? "الخصم" : "Discount"),
             _buildTableHeader(isArabic ? "الإجمالي" : "Total"),
           ],
         ),
         // Items
-        for (final item in invoice.items)
-          pw.TableRow(
-            decoration: const pw.BoxDecoration(color: PdfColors.white),
-            children: [
-              _buildTableCell(
-                item.description.cleanForPdf(),
-                align: pw.TextAlign.left,
-              ),
-              _buildTableCell(
-                item.unitPrice.toSmartAmount(),
-                align: pw.TextAlign.center,
-              ),
-              _buildTableCell(
-                item.quantity.toSmartAmount(),
-                align: pw.TextAlign.center,
-              ),
-              _buildTableCell(
-                item.total.toSmartAmount(),
-                align: pw.TextAlign.center,
-              ),
-            ],
-          ),
+        for (int i = 0; i < invoice.items.length; i++) ...[
+          () {
+            final item = invoice.items[i];
+            final rowColor = i.isEven ? PdfColors.white : PdfColors.grey50;
+            final unitText = item.unit != null && item.unit!.trim().isNotEmpty
+                ? item.unit!.trim()
+                : (isArabic ? "قطعة" : "Pcs");
+            final discountText = item.discountAmount > 0
+                ? item.discountAmount.toSmartAmount()
+                : "-";
+
+            return pw.TableRow(
+              decoration: pw.BoxDecoration(color: rowColor),
+              children: [
+                _buildTableCell("${i + 1}", align: pw.TextAlign.center),
+                _buildTableCell(
+                  item.description.cleanForPdf(),
+                  align: isArabic ? pw.TextAlign.right : pw.TextAlign.left,
+                  isBold: true,
+                ),
+                _buildTableCell(unitText, align: pw.TextAlign.center),
+                _buildTableCell(
+                  item.quantity.toSmartAmount(),
+                  align: pw.TextAlign.center,
+                  isBold: true,
+                ),
+                _buildTableCell(
+                  item.unitPrice.toSmartAmount(),
+                  align: pw.TextAlign.center,
+                ),
+                _buildTableCell(
+                  discountText,
+                  align: pw.TextAlign.center,
+                  color: item.discountAmount > 0 ? _error : PdfColors.grey600,
+                ),
+                _buildTableCell(
+                  item.total.toSmartAmount(),
+                  align: pw.TextAlign.center,
+                  isBold: true,
+                  color: _primaryDark,
+                ),
+              ],
+            );
+          }(),
+        ],
       ],
     );
   }
 
-  static pw.Widget _buildTableHeader(String text) {
+  static pw.Widget _buildTableHeader(
+    String text, {
+    pw.TextAlign align = pw.TextAlign.center,
+  }) {
     return pw.Padding(
-      padding: const pw.EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+      padding: const pw.EdgeInsets.symmetric(vertical: 5, horizontal: 4),
       child: pw.Text(
         text,
         style: pw.TextStyle(
           color: PdfColors.white,
           fontWeight: pw.FontWeight.bold,
-          fontSize: 14,
+          fontSize: 10,
         ),
-        textAlign: pw.TextAlign.center,
+        textAlign: align,
       ),
     );
   }
@@ -471,83 +661,205 @@ class InvoicePdfService {
   static pw.Widget _buildTableCell(
     String text, {
     pw.TextAlign align = pw.TextAlign.center,
+    bool isBold = false,
+    PdfColor? color,
   }) {
     return pw.Padding(
-      padding: const pw.EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      padding: const pw.EdgeInsets.symmetric(vertical: 5, horizontal: 4),
       child: pw.Text(
         text,
-        style: const pw.TextStyle(color: PdfColors.black, fontSize: 13),
+        style: pw.TextStyle(
+          color: color ?? PdfColors.black,
+          fontSize: 9.5,
+          fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,
+        ),
         textAlign: align,
       ),
     );
   }
 
-  static pw.Widget _buildSummary(InvoiceEntity invoice, bool isArabic) {
+  static pw.Widget _buildBottomSection(InvoiceEntity invoice, bool isArabic) {
     final currency = AppStrings.currencyEgp.tr();
+    final totalQty = invoice.items.fold<double>(0.0, (s, i) => s + i.quantity);
 
-    return pw.Container(
-      alignment: isArabic ? pw.Alignment.centerLeft : pw.Alignment.centerRight,
-      child: pw.Container(
-        width: 250,
-        decoration: pw.BoxDecoration(
-          color: PdfColors.grey100,
-          borderRadius: const pw.BorderRadius.all(pw.Radius.circular(12)),
-          border: pw.Border.all(color: PdfColors.grey300),
+    return pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+      children: [
+        // Left side: Item & Quantity Statistics + Notes
+        pw.Expanded(
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              // Stats badges box
+              pw.Container(
+                padding: const pw.EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
+                decoration: pw.BoxDecoration(
+                  color: PdfColors.grey50,
+                  borderRadius: pw.BorderRadius.circular(6),
+                  border: pw.Border.all(color: PdfColors.grey300, width: 0.8),
+                ),
+                child: pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
+                  children: [
+                    pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          isArabic ? "عدد الأصناف:" : "Items Count:",
+                          style: const pw.TextStyle(
+                            fontSize: 9,
+                            color: PdfColors.grey700,
+                          ),
+                        ),
+                        pw.SizedBox(height: 2),
+                        pw.Text(
+                          "${invoice.items.length}",
+                          style: pw.TextStyle(
+                            fontSize: 12,
+                            fontWeight: pw.FontWeight.bold,
+                            color: _primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    pw.Container(
+                      width: 1,
+                      height: 24,
+                      color: PdfColors.grey300,
+                    ),
+                    pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          isArabic ? "إجمالي الكمية:" : "Total Qty:",
+                          style: const pw.TextStyle(
+                            fontSize: 9,
+                            color: PdfColors.grey700,
+                          ),
+                        ),
+                        pw.SizedBox(height: 2),
+                        pw.Text(
+                          totalQty.toSmartAmount(),
+                          style: pw.TextStyle(
+                            fontSize: 12,
+                            fontWeight: pw.FontWeight.bold,
+                            color: _primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              if (invoice.notes != null &&
+                  invoice.notes!.trim().isNotEmpty) ...[
+                pw.SizedBox(height: 6),
+                pw.Container(
+                  width: double.infinity,
+                  padding: const pw.EdgeInsets.all(8),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColors.grey50,
+                    borderRadius: pw.BorderRadius.circular(6),
+                    border: pw.Border.all(color: PdfColors.grey200, width: 0.8),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        isArabic ? "ملاحظات:" : "Notes:",
+                        style: pw.TextStyle(
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.grey700,
+                          fontSize: 9,
+                        ),
+                      ),
+                      pw.SizedBox(height: 2),
+                      pw.Text(
+                        invoice.notes!.cleanForPdf(),
+                        style: const pw.TextStyle(
+                          color: PdfColors.grey700,
+                          fontSize: 8.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
-        padding: const pw.EdgeInsets.all(16),
-        child: pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            if (invoice.totalDiscountAmount > 0) ...[
+        pw.SizedBox(width: 16),
+        // Right side: Financial Summary Card
+        pw.Container(
+          width: 240,
+          decoration: pw.BoxDecoration(
+            color: PdfColors.grey100,
+            borderRadius: pw.BorderRadius.circular(8),
+            border: pw.Border.all(color: PdfColors.grey300, width: 0.8),
+          ),
+          padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
               _buildSummaryRow(
                 isArabic ? "الإجمالي قبل الخصم:" : "Subtotal:",
                 "${invoice.rawSubtotalAmount.toSmartAmount()} $currency",
-                isBold: false,
+                fontSize: 9.5,
               ),
-              pw.SizedBox(height: 8),
-              _buildSummaryRow(
-                isArabic ? "الخصم الإجمالي:" : "Total Discount:",
-                "-${invoice.totalDiscountAmount.toSmartAmount()} $currency",
-                isBold: false,
-                color: _error,
-              ),
-              pw.SizedBox(height: 8),
+              if (invoice.totalDiscountAmount > 0) ...[
+                pw.SizedBox(height: 4),
+                _buildSummaryRow(
+                  isArabic ? "الخصم الإجمالي:" : "Total Discount:",
+                  "-${invoice.totalDiscountAmount.toSmartAmount()} $currency",
+                  fontSize: 9.5,
+                  color: _error,
+                ),
+              ],
+              pw.SizedBox(height: 4),
+              pw.Divider(color: PdfColors.grey300, thickness: 0.8),
+              pw.SizedBox(height: 4),
+              if (invoice.isQuotation) ...[
+                _buildSummaryRow(
+                  isArabic ? "إجمالي عرض السعر:" : "Quotation Total:",
+                  "${invoice.totalAmount.toSmartAmount()} $currency",
+                  isBold: true,
+                  fontSize: 11,
+                  color: _primary,
+                ),
+              ] else ...[
+                _buildSummaryRow(
+                  isArabic ? "الصافي الإجمالي:" : "Net Total:",
+                  "${invoice.totalAmount.toSmartAmount()} $currency",
+                  isBold: true,
+                  fontSize: 11,
+                  color: _primaryDark,
+                ),
+                pw.SizedBox(height: 4),
+                _buildSummaryRow(
+                  isArabic ? "المدفوع:" : "Paid:",
+                  "${invoice.totalPaid.toSmartAmount()} $currency",
+                  fontSize: 9.5,
+                  color: _success,
+                ),
+                pw.SizedBox(height: 4),
+                pw.Divider(color: PdfColors.grey300, thickness: 0.8),
+                pw.SizedBox(height: 4),
+                _buildSummaryRow(
+                  isArabic ? "المتبقي:" : "Remaining:",
+                  "${invoice.remainingAmount.toSmartAmount()} $currency",
+                  isBold: true,
+                  fontSize: 11,
+                  color: invoice.remainingAmount <= 0.01 ? _success : _error,
+                ),
+              ],
             ],
-            if (invoice.isQuotation) ...[
-              pw.Divider(color: PdfColors.grey400),
-              pw.SizedBox(height: 8),
-              _buildSummaryRow(
-                isArabic ? "إجمالي عرض السعر:" : "Quotation Total:",
-                "${invoice.totalAmount.toSmartAmount()} $currency",
-                isBold: true,
-                color: _primary,
-              ),
-            ] else ...[
-              _buildSummaryRow(
-                isArabic ? "المبلغ الإجمالي:" : "Total Amount:",
-                "${invoice.totalAmount.toSmartAmount()} $currency",
-                isBold: true,
-              ),
-              pw.SizedBox(height: 8),
-              _buildSummaryRow(
-                isArabic ? "المدفوع:" : "Paid:",
-                "${invoice.totalPaid.toSmartAmount()} $currency",
-                isBold: false,
-                color: _success,
-              ),
-              pw.SizedBox(height: 8),
-              pw.Divider(color: PdfColors.grey400),
-              pw.SizedBox(height: 8),
-              _buildSummaryRow(
-                isArabic ? "المتبقي:" : "Remaining:",
-                "${invoice.remainingAmount.toSmartAmount()} $currency",
-                isBold: true,
-                color: invoice.remainingAmount <= 0.01 ? _success : _error,
-              ),
-            ],
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -555,6 +867,7 @@ class InvoicePdfService {
     String label,
     String value, {
     bool isBold = false,
+    double fontSize = 10,
     PdfColor? color,
   }) {
     return pw.Row(
@@ -563,7 +876,7 @@ class InvoicePdfService {
         pw.Text(
           label,
           style: pw.TextStyle(
-            fontSize: isBold ? 16 : 14,
+            fontSize: fontSize,
             fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,
             color: PdfColors.grey800,
           ),
@@ -571,7 +884,7 @@ class InvoicePdfService {
         pw.Text(
           value,
           style: pw.TextStyle(
-            fontSize: isBold ? 18 : 14,
+            fontSize: isBold ? fontSize + 1 : fontSize,
             fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,
             color: color ?? PdfColors.black,
           ),
@@ -583,12 +896,11 @@ class InvoicePdfService {
   static pw.Widget _buildNotes(String notes, bool isArabic) {
     return pw.Container(
       width: double.infinity,
-      padding: const pw.EdgeInsets.all(12),
-      decoration: const pw.BoxDecoration(
-        color: PdfColor.fromInt(
-          0x0C0288D1,
-        ), // _info.withOpacity(0.05) approximated
-        border: pw.Border(left: pw.BorderSide(color: _info, width: 4)),
+      padding: const pw.EdgeInsets.all(10),
+      decoration: pw.BoxDecoration(
+        color: PdfColors.grey50,
+        borderRadius: pw.BorderRadius.circular(6),
+        border: pw.Border.all(color: PdfColors.grey200, width: 0.8),
       ),
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -597,25 +909,30 @@ class InvoicePdfService {
             isArabic ? "ملاحظات:" : "Notes:",
             style: pw.TextStyle(
               fontWeight: pw.FontWeight.bold,
-              fontSize: 14,
-              color: _info,
+              fontSize: 10,
+              color: PdfColors.grey700,
             ),
           ),
-          pw.SizedBox(height: 4),
+          pw.SizedBox(height: 3),
           pw.Text(
-            notes,
-            style: const pw.TextStyle(fontSize: 12, color: PdfColors.black),
+            notes.cleanForPdf(),
+            style: const pw.TextStyle(fontSize: 9, color: PdfColors.black),
           ),
         ],
       ),
     );
   }
 
-  static pw.Widget _buildFooter(bool isArabic, int page, int pages) {
+  static pw.Widget _buildFooter(
+    bool isArabic,
+    int page,
+    int pages, [
+    UserProfileModel? profile,
+  ]) {
     return pw.Column(
       children: [
         pw.Divider(color: PdfColors.grey300),
-        pw.SizedBox(height: 8),
+        pw.SizedBox(height: 6),
         pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
@@ -627,7 +944,7 @@ class InvoicePdfService {
             ),
             pw.Text(
               "$page / $pages",
-              style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey500),
+              style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey500),
             ),
           ],
         ),
@@ -743,6 +1060,7 @@ class InvoicePdfService {
     final ttfRegular = await PdfAssetCache.getRegularFont();
     final ttfBold = await PdfAssetCache.getBoldFont();
     final logoImage = await PdfAssetCache.getLogoImage();
+    final buyerProfile = await BusinessProfileService.instance.getProfile();
 
     pdf.addPage(
       pw.MultiPage(
@@ -751,23 +1069,23 @@ class InvoicePdfService {
           theme: pw.ThemeData.withFont(base: ttfRegular, bold: ttfBold),
           textDirection: isArabic ? pw.TextDirection.rtl : pw.TextDirection.ltr,
           buildBackground: (context) => pw.Container(color: PdfColors.white),
-          margin: const pw.EdgeInsets.all(32),
+          margin: const pw.EdgeInsets.symmetric(horizontal: 22, vertical: 18),
         ),
         header: (context) =>
-            _buildPurchaseHeader(purchase, logoImage, isArabic),
-        footer: (context) =>
-            _buildFooter(isArabic, context.pageNumber, context.pagesCount),
+            _buildPurchaseHeader(purchase, logoImage, isArabic, buyerProfile),
+        footer: (context) => _buildFooter(
+          isArabic,
+          context.pageNumber,
+          context.pagesCount,
+          buyerProfile,
+        ),
         build: (context) => [
-          pw.SizedBox(height: 20),
-          _buildSupplierInfo(purchase, isArabic),
-          pw.SizedBox(height: 25),
+          pw.SizedBox(height: 8),
+          _buildPurchaseBuyerAndSupplierInfo(purchase, buyerProfile, isArabic),
+          pw.SizedBox(height: 10),
           _buildPurchaseItemsTable(purchase, isArabic),
-          pw.SizedBox(height: 25),
-          _buildPurchaseSummary(purchase, isArabic),
-          if (purchase.notes != null && purchase.notes!.isNotEmpty) ...[
-            pw.SizedBox(height: 25),
-            _buildNotes(purchase.notes!, isArabic),
-          ],
+          pw.SizedBox(height: 10),
+          _buildPurchaseBottomSection(purchase, isArabic),
         ],
       ),
     );
@@ -778,8 +1096,9 @@ class InvoicePdfService {
   static pw.Widget _buildPurchaseHeader(
     InventoryPurchaseEntity purchase,
     pw.MemoryImage? logoImage,
-    bool isArabic,
-  ) {
+    bool isArabic, [
+    UserProfileModel? buyerProfile,
+  ]) {
     final dateStr = DateFormat(
       isArabic ? "dd MMMM yyyy - hh:mm a" : "MMM dd, yyyy - hh:mm a",
       isArabic ? "ar" : "en",
@@ -789,7 +1108,7 @@ class InvoicePdfService {
       children: [
         pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          crossAxisAlignment: pw.CrossAxisAlignment.center,
           children: [
             pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -797,86 +1116,272 @@ class InvoicePdfService {
                 pw.Text(
                   isArabic ? "فاتورة شراء مخزون" : "PURCHASE INVOICE",
                   style: pw.TextStyle(
-                    fontSize: 30,
+                    fontSize: 22,
                     fontWeight: pw.FontWeight.bold,
                     color: _purchasePrimary,
                   ),
                 ),
-                pw.SizedBox(height: 8),
-                pw.Container(
-                  padding: const pw.EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: pw.BoxDecoration(
-                    color: _purchaseBgLight,
-                    borderRadius: pw.BorderRadius.circular(6),
-                  ),
-                  child: pw.Text(
-                    '# ${purchase.id.replaceAll("pur_", "")}',
-                    style: pw.TextStyle(
-                      fontSize: 14,
-                      fontWeight: pw.FontWeight.bold,
-                      color: _purchasePrimaryDark,
+                pw.SizedBox(height: 2),
+                pw.Row(
+                  children: [
+                    pw.Text(
+                      '# ${purchase.id.replaceAll("pur_", "").toUpperCase()}',
+                      style: pw.TextStyle(
+                        fontSize: 11,
+                        fontWeight: pw.FontWeight.bold,
+                        color: _purchasePrimaryDark,
+                      ),
                     ),
-                  ),
-                ),
-                pw.SizedBox(height: 6),
-                pw.Text(
-                  dateStr,
-                  style: const pw.TextStyle(
-                    fontSize: 12,
-                    color: PdfColors.grey700,
-                  ),
+                    pw.SizedBox(width: 8),
+                    pw.Text(
+                      dateStr,
+                      style: const pw.TextStyle(
+                        fontSize: 10,
+                        color: PdfColors.grey600,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-            if (logoImage != null)
-              pw.Container(height: 65, width: 65, child: pw.Image(logoImage)),
+            pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.center,
+              children: [
+                if (buyerProfile != null &&
+                    buyerProfile.projectName.isNotEmpty) ...[
+                  pw.Column(
+                    crossAxisAlignment: isArabic
+                        ? pw.CrossAxisAlignment.start
+                        : pw.CrossAxisAlignment.end,
+                    children: [
+                      pw.Text(
+                        buyerProfile.projectName,
+                        style: pw.TextStyle(
+                          fontSize: 14,
+                          fontWeight: pw.FontWeight.bold,
+                          color: _purchasePrimaryDark,
+                        ),
+                      ),
+                      if (buyerProfile.phoneNumber.isNotEmpty) ...[
+                        pw.SizedBox(height: 1),
+                        pw.Text(
+                          buyerProfile.phoneNumber,
+                          style: const pw.TextStyle(
+                            fontSize: 10,
+                            color: PdfColors.grey700,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  pw.SizedBox(width: 10),
+                ],
+                if (logoImage != null)
+                  pw.Container(
+                    height: 50,
+                    constraints: const pw.BoxConstraints(maxWidth: 100),
+                    decoration: const pw.BoxDecoration(color: PdfColors.white),
+                    alignment: pw.Alignment.center,
+                    child: pw.Image(logoImage, fit: pw.BoxFit.contain),
+                  ),
+              ],
+            ),
           ],
         ),
-        pw.SizedBox(height: 15),
-        pw.Divider(color: _purchaseBgLight, thickness: 2),
+        pw.SizedBox(height: 6),
+        pw.Divider(color: _purchasePrimary, thickness: 1.2),
       ],
     );
   }
 
-  static pw.Widget _buildSupplierInfo(
+  static pw.Widget _buildPurchaseBuyerAndSupplierInfo(
     InventoryPurchaseEntity purchase,
+    UserProfileModel? buyerProfile,
     bool isArabic,
   ) {
-    return pw.Container(
-      padding: const pw.EdgeInsets.all(16),
-      decoration: pw.BoxDecoration(
-        color: _purchaseBgLight,
-        borderRadius: pw.BorderRadius.circular(10),
-      ),
-      child: pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-        children: [
-          pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text(
-                isArabic ? "بيانات المورد:" : "Supplier Details:",
-                style: pw.TextStyle(
-                  fontSize: 12,
-                  color: PdfColors.grey700,
-                  fontWeight: pw.FontWeight.bold,
+    return pw.Row(
+      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        // Buyer Info (The Business)
+        pw.Expanded(
+          flex: 5,
+          child: pw.Container(
+            padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            decoration: pw.BoxDecoration(
+              color: _purchaseBgLight,
+              borderRadius: pw.BorderRadius.circular(6),
+              border: pw.Border.all(color: _purchaseBorder, width: 0.8),
+            ),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  isArabic
+                      ? "بيانات المشتري (المنشأة):"
+                      : "Buyer (Business Details):",
+                  style: pw.TextStyle(
+                    fontSize: 10,
+                    color: _purchasePrimaryDark,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
                 ),
-              ),
-              pw.SizedBox(height: 4),
-              pw.Text(
-                purchase.supplierName,
-                style: pw.TextStyle(
-                  fontSize: 16,
-                  fontWeight: pw.FontWeight.bold,
-                  color: _purchasePrimaryDark,
+                pw.SizedBox(height: 3),
+                pw.Text(
+                  buyerProfile != null && buyerProfile.projectName.isNotEmpty
+                      ? buyerProfile.projectName
+                      : (isArabic ? "النشاط التجاري" : "Business Name"),
+                  style: pw.TextStyle(
+                    fontSize: 12,
+                    fontWeight: pw.FontWeight.bold,
+                    color: _purchasePrimary,
+                  ),
                 ),
-              ),
-            ],
+                if (buyerProfile != null &&
+                    buyerProfile.fullName.isNotEmpty) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    "${isArabic ? 'المسؤول:' : 'Contact:'} ${buyerProfile.fullName}",
+                    style: const pw.TextStyle(
+                      fontSize: 9,
+                      color: PdfColors.grey800,
+                    ),
+                  ),
+                ],
+                if (buyerProfile != null &&
+                    buyerProfile.phoneNumber.isNotEmpty) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    "${isArabic ? 'الهاتف:' : 'Phone:'} ${buyerProfile.phoneNumber}",
+                    style: const pw.TextStyle(
+                      fontSize: 9,
+                      color: PdfColors.grey800,
+                    ),
+                  ),
+                ],
+                if (buyerProfile != null && buyerProfile.crn.isNotEmpty) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    "${isArabic ? 'س.ت:' : 'CRN:'} ${buyerProfile.crn}",
+                    style: const pw.TextStyle(
+                      fontSize: 9,
+                      color: PdfColors.grey800,
+                    ),
+                  ),
+                ],
+                if (buyerProfile != null && buyerProfile.vat.isNotEmpty) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    "${isArabic ? 'الرقم الضريبي:' : 'VAT:'} ${buyerProfile.vat}",
+                    style: const pw.TextStyle(
+                      fontSize: 9,
+                      color: PdfColors.grey800,
+                    ),
+                  ),
+                ],
+                if (buyerProfile != null &&
+                    buyerProfile.address.isNotEmpty) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    "${isArabic ? 'العنوان:' : 'Address:'} ${buyerProfile.address}",
+                    style: const pw.TextStyle(
+                      fontSize: 9,
+                      color: PdfColors.grey800,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
-        ],
+        ),
+        pw.SizedBox(width: 10),
+        // Supplier Info
+        pw.Expanded(
+          flex: 5,
+          child: pw.Container(
+            padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            decoration: pw.BoxDecoration(
+              color: _purchaseBgLight,
+              borderRadius: pw.BorderRadius.circular(6),
+              border: pw.Border.all(color: _purchaseBorder, width: 0.8),
+            ),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text(
+                      isArabic ? "بيانات المورد:" : "Supplier Details:",
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                        color: _purchasePrimaryDark,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    _buildPurchasePaymentBadge(
+                      purchase.paymentMethod,
+                      isArabic,
+                    ),
+                  ],
+                ),
+                pw.SizedBox(height: 3),
+                pw.Text(
+                  purchase.supplierName.cleanForPdf(
+                    isArabic ? "مورد عام" : "General Supplier",
+                  ),
+                  style: pw.TextStyle(
+                    fontSize: 12,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.grey900,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  static pw.Widget _buildPurchasePaymentBadge(
+    String paymentMethod,
+    bool isArabic,
+  ) {
+    String text;
+    PdfColor color;
+    switch (paymentMethod) {
+      case 'cash':
+        text = isArabic ? "مسدد نقداً" : "Paid Cash";
+        color = _success;
+        break;
+      case 'card':
+        text = isArabic ? "مسدد بالبطاقة" : "Paid Card";
+        color = _info;
+        break;
+      case 'debt':
+        text = isArabic ? "شراء آجل" : "Credit (Debt)";
+        color = _warning;
+        break;
+      default:
+        text = paymentMethod;
+        color = _purchasePrimary;
+    }
+
+    return pw.Container(
+      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+      decoration: pw.BoxDecoration(
+        color: PdfColor(color.red, color.green, color.blue, 0.12),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+        border: pw.Border.all(color: color, width: 1),
+      ),
+      child: pw.Text(
+        text,
+        style: pw.TextStyle(
+          color: PdfColors.white,
+          fontWeight: pw.FontWeight.bold,
+          fontSize: 9,
+        ),
       ),
     );
   }
@@ -885,83 +1390,230 @@ class InvoicePdfService {
     InventoryPurchaseEntity purchase,
     bool isArabic,
   ) {
-    final headers = isArabic
-        ? ['#', 'المنتج', 'الكمية', 'سعر الشراء', 'الإجمالي']
-        : ['#', 'Product', 'Quantity', 'Unit Price', 'Total'];
-
-    final data = purchase.items.asMap().entries.map((entry) {
-      final idx = entry.key + 1;
-      final item = entry.value;
-      return [
-        '$idx',
-        item.productName,
-        item.quantity.toSmartAmount(),
-        '${item.purchasePrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-        '${item.totalPrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-      ];
-    }).toList();
-
-    return pw.TableHelper.fromTextArray(
-      headers: headers,
-      data: data,
-      border: null,
-      headerStyle: pw.TextStyle(
-        color: PdfColors.white,
-        fontWeight: pw.FontWeight.bold,
-        fontSize: 12,
-      ),
-      headerDecoration: pw.BoxDecoration(
-        color: _purchasePrimary,
-        borderRadius: pw.BorderRadius.circular(6),
-      ),
-      cellStyle: const pw.TextStyle(fontSize: 11),
-      cellAlignment: pw.Alignment.center,
-      headerAlignment: pw.Alignment.center,
-      cellPadding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      rowDecoration: const pw.BoxDecoration(
-        border: pw.Border(
-          bottom: pw.BorderSide(color: PdfColors.grey200, width: 0.8),
+    return pw.Table(
+      border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.8),
+      columnWidths: {
+        0: const pw.FlexColumnWidth(0.7), // #
+        1: const pw.FlexColumnWidth(4.2), // Product Name
+        2: const pw.FlexColumnWidth(1.4), // Unit
+        3: const pw.FlexColumnWidth(1.2), // Quantity
+        4: const pw.FlexColumnWidth(1.7), // Purchase Price
+        5: const pw.FlexColumnWidth(1.9), // Total Price
+      },
+      children: [
+        // Header
+        pw.TableRow(
+          decoration: const pw.BoxDecoration(color: _purchasePrimary),
+          children: [
+            _buildTableHeader("#"),
+            _buildTableHeader(
+              isArabic ? "المنتج / الصنف" : "Product",
+              align: isArabic ? pw.TextAlign.right : pw.TextAlign.left,
+            ),
+            _buildTableHeader(isArabic ? "الوحدة" : "Unit"),
+            _buildTableHeader(isArabic ? "الكمية" : "Qty"),
+            _buildTableHeader(isArabic ? "سعر الشراء" : "Unit Price"),
+            _buildTableHeader(isArabic ? "الإجمالي" : "Total"),
+          ],
         ),
-      ),
+        // Items
+        for (int i = 0; i < purchase.items.length; i++) ...[
+          () {
+            final item = purchase.items[i];
+            final rowColor = i.isEven ? PdfColors.white : PdfColors.grey50;
+            final unitText = item.unit != null && item.unit!.trim().isNotEmpty
+                ? item.unit!.trim()
+                : (isArabic ? "قطعة" : "Pcs");
+
+            return pw.TableRow(
+              decoration: pw.BoxDecoration(color: rowColor),
+              children: [
+                _buildTableCell("${i + 1}", align: pw.TextAlign.center),
+                _buildTableCell(
+                  item.productName.cleanForPdf(),
+                  align: isArabic ? pw.TextAlign.right : pw.TextAlign.left,
+                  isBold: true,
+                ),
+                _buildTableCell(unitText, align: pw.TextAlign.center),
+                _buildTableCell(
+                  item.quantity.toSmartAmount(),
+                  align: pw.TextAlign.center,
+                  isBold: true,
+                ),
+                _buildTableCell(
+                  item.purchasePrice.toSmartAmount(),
+                  align: pw.TextAlign.center,
+                ),
+                _buildTableCell(
+                  item.totalPrice.toSmartAmount(),
+                  align: pw.TextAlign.center,
+                  isBold: true,
+                  color: _purchasePrimaryDark,
+                ),
+              ],
+            );
+          }(),
+        ],
+      ],
     );
   }
 
-  static pw.Widget _buildPurchaseSummary(
+  static pw.Widget _buildPurchaseBottomSection(
     InventoryPurchaseEntity purchase,
     bool isArabic,
   ) {
     final currency = AppStrings.currencyEgp.tr();
+    final totalQty = purchase.items.fold<double>(0.0, (s, i) => s + i.quantity);
 
     return pw.Row(
-      mainAxisAlignment: pw.MainAxisAlignment.end,
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
       children: [
+        // Left side: Items stats + Notes
+        pw.Expanded(
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              // Stats badges box
+              pw.Container(
+                padding: const pw.EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
+                decoration: pw.BoxDecoration(
+                  color: PdfColors.grey50,
+                  borderRadius: pw.BorderRadius.circular(6),
+                  border: pw.Border.all(color: PdfColors.grey300, width: 0.8),
+                ),
+                child: pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
+                  children: [
+                    pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          isArabic ? "عدد الأصناف:" : "Items Count:",
+                          style: const pw.TextStyle(
+                            fontSize: 9,
+                            color: PdfColors.grey700,
+                          ),
+                        ),
+                        pw.SizedBox(height: 2),
+                        pw.Text(
+                          "${purchase.items.length}",
+                          style: pw.TextStyle(
+                            fontSize: 12,
+                            fontWeight: pw.FontWeight.bold,
+                            color: _purchasePrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    pw.Container(
+                      width: 1,
+                      height: 24,
+                      color: PdfColors.grey300,
+                    ),
+                    pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          isArabic ? "إجمالي الكمية:" : "Total Qty:",
+                          style: const pw.TextStyle(
+                            fontSize: 9,
+                            color: PdfColors.grey700,
+                          ),
+                        ),
+                        pw.SizedBox(height: 2),
+                        pw.Text(
+                          totalQty.toSmartAmount(),
+                          style: pw.TextStyle(
+                            fontSize: 12,
+                            fontWeight: pw.FontWeight.bold,
+                            color: _purchasePrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              if (purchase.notes != null &&
+                  purchase.notes!.trim().isNotEmpty) ...[
+                pw.SizedBox(height: 6),
+                pw.Container(
+                  width: double.infinity,
+                  padding: const pw.EdgeInsets.all(8),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColors.grey50,
+                    borderRadius: pw.BorderRadius.circular(6),
+                    border: pw.Border.all(color: PdfColors.grey200, width: 0.8),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        isArabic ? "ملاحظات:" : "Notes:",
+                        style: pw.TextStyle(
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.grey700,
+                          fontSize: 9,
+                        ),
+                      ),
+                      pw.SizedBox(height: 2),
+                      pw.Text(
+                        purchase.notes!.cleanForPdf(),
+                        style: const pw.TextStyle(
+                          color: PdfColors.grey700,
+                          fontSize: 8.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        pw.SizedBox(width: 16),
+        // Right side: Financial Summary Card
         pw.Container(
           width: 240,
-          padding: const pw.EdgeInsets.all(14),
           decoration: pw.BoxDecoration(
             color: _purchaseBgLight,
-            borderRadius: pw.BorderRadius.circular(10),
-            border: pw.Border.all(color: _purchasePrimary, width: 1.5),
+            borderRadius: pw.BorderRadius.circular(8),
+            border: pw.Border.all(color: _purchaseBorderMedium, width: 1),
           ),
-          child: pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Text(
+              _buildSummaryRow(
                 isArabic ? "إجمالي الفاتورة:" : "Total Amount:",
-                style: pw.TextStyle(
-                  fontSize: 14,
-                  fontWeight: pw.FontWeight.bold,
-                  color: PdfColors.grey900,
-                ),
+                "${purchase.totalAmount.toSmartAmount()} $currency",
+                isBold: true,
+                fontSize: 11,
+                color: _purchasePrimaryDark,
               ),
-              pw.Text(
-                '${purchase.totalAmount.toSmartAmount()} $currency',
-                style: pw.TextStyle(
-                  fontSize: 16,
-                  fontWeight: pw.FontWeight.bold,
-                  color: _purchasePrimaryDark,
+              if (purchase.paymentMethod == 'debt') ...[
+                pw.SizedBox(height: 4),
+                _buildSummaryRow(
+                  isArabic ? "المدفوع:" : "Paid:",
+                  "${purchase.paidAmount.toSmartAmount()} $currency",
+                  fontSize: 9.5,
+                  color: _success,
                 ),
-              ),
+                pw.SizedBox(height: 4),
+                pw.Divider(color: _purchaseBorder, thickness: 0.8),
+                pw.SizedBox(height: 4),
+                _buildSummaryRow(
+                  isArabic ? "المتبقي للمورد:" : "Remaining Debt:",
+                  "${purchase.remainingDebt.toSmartAmount()} $currency",
+                  isBold: true,
+                  fontSize: 11,
+                  color: purchase.remainingDebt <= 0.01 ? _success : _error,
+                ),
+              ],
             ],
           ),
         ),

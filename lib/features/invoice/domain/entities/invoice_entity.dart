@@ -15,6 +15,7 @@ class InvoiceItem extends Equatable {
   final String description;
   final double unitPrice;
   final double quantity;
+  final String? unit;
 
   // Future-proof: tax, discount per item, and purchase price
   final double taxRate; // e.g. 0.14 for 14%
@@ -26,6 +27,7 @@ class InvoiceItem extends Equatable {
     required this.description,
     required this.unitPrice,
     required this.quantity,
+    this.unit,
     this.taxRate = 0.0,
     this.discountRate = 0.0,
     this.purchasePrice,
@@ -41,6 +43,7 @@ class InvoiceItem extends Equatable {
     String? description,
     double? unitPrice,
     double? quantity,
+    String? unit,
     double? taxRate,
     double? discountRate,
     double? purchasePrice,
@@ -50,6 +53,7 @@ class InvoiceItem extends Equatable {
       description: description ?? this.description,
       unitPrice: unitPrice ?? this.unitPrice,
       quantity: quantity ?? this.quantity,
+      unit: unit ?? this.unit,
       taxRate: taxRate ?? this.taxRate,
       discountRate: discountRate ?? this.discountRate,
       purchasePrice: purchasePrice ?? this.purchasePrice,
@@ -62,6 +66,7 @@ class InvoiceItem extends Equatable {
     description,
     unitPrice,
     quantity,
+    unit,
     taxRate,
     discountRate,
     purchasePrice,

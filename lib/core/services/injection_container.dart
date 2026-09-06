@@ -42,6 +42,7 @@ import '../../features/standard_features/no-internet/logic/connectivity_cubit.da
 import '../../features/standard_features/theme/presentation/cubit/theme_cubit.dart';
 
 import 'package:tahsel/core/services/currency/currency_service.dart';
+import 'package:tahsel/features/settings/presentation/cubit/profile_cubit.dart';
 
 final sl = GetIt.instance;
 
@@ -91,6 +92,11 @@ Future<void> initDependencies() async {
 
   // theme
   sl.registerFactory<ThemeCubit>(() => ThemeCubit(cashHelper: sl()));
+
+  // profile
+  sl.registerFactory<ProfileCubit>(
+    () => ProfileCubit(firestore: sl(), firebaseAuth: sl()),
+  );
 
 
   // main layout

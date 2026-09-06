@@ -10,7 +10,9 @@ import 'package:tahsel/features/standard_features/no-internet/logic/connectivity
 import 'package:tahsel/core/base_usecase/base_usecase.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
+import 'package:tahsel/core/services/profile/business_profile_service.dart';
 import 'package:tahsel/core/services/security_service.dart';
+import 'package:tahsel/features/settings/data/models/user_profile_model.dart';
 import 'package:tahsel/core/storage/secure_storage_helper.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -140,6 +142,16 @@ class _SplashScreenState extends State<SplashScreen>
         key: AppStrings.isVipKey,
         value: isVip.toString(),
       );
+
+      // Cache business profile locally for instant offline PDF & UI access
+      try {
+        final profile = UserProfileModel.fromMap(
+          data,
+          uid: user.uid,
+          fallbackEmail: user.email,
+        );
+        BusinessProfileService.instance.saveProfileToCache(profile);
+      } catch (_) {}
 
       // ── 1. Account status gate ────────────────────────────────────────
       final accountStatus = (data['accountStatus'] as String?) ?? 'active';

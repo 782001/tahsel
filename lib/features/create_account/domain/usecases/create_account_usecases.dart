@@ -23,6 +23,9 @@ class CreateUserParams {
   final String platformType;
   final bool isVip;
   final Map<String, dynamic>? currency;
+  final String? crn;
+  final String? address;
+  final String? vat;
 
   CreateUserParams({
     required this.email,
@@ -35,6 +38,9 @@ class CreateUserParams {
     this.platformType = 'mobile',
     this.isVip = false,
     this.currency,
+    this.crn,
+    this.address,
+    this.vat,
   });
 
   Map<String, dynamic> toMap() => {
@@ -48,5 +54,8 @@ class CreateUserParams {
     'platformType': platformType,
     'isVip': isVip,
     if (currency != null) 'currency': currency,
+    if (crn != null) 'crn': crn,
+    if (address != null) 'address': address,
+    if (vat != null) 'vat': vat,
   };
 }

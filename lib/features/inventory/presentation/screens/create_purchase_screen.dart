@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -19,6 +21,7 @@ import '../../domain/entities/inventory_supplier_entity.dart';
 import '../cubits/inventory_products_cubit.dart';
 import '../cubits/inventory_purchases_cubit.dart';
 import '../cubits/inventory_suppliers_cubit.dart';
+import '../widgets/barcode_scanner_dialog.dart';
 import '../widgets/searchable_dropdown_field.dart';
 
 class CreatePurchaseScreen extends StatefulWidget {
@@ -86,6 +89,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
           quantity: qty,
           purchasePrice: price,
           totalPrice: qty * price,
+          unit: product.unit.isNotEmpty ? product.unit : null,
         ),
       );
     });
@@ -599,6 +603,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
 
     // Controllers for new product
     final newProductNameController = TextEditingController();
+    final newBarcodeController = TextEditingController();
     final newSkuController = TextEditingController();
     final newPurchasePriceController = TextEditingController();
     final newSellingPriceController = TextEditingController();
@@ -820,6 +825,39 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                     hint: AppStrings.productName.tr(),
                                   ),
                                   SizedBox(height: isDesktop ? 10 : 10.h),
+                                  // Barcode
+                                  Text(
+                                    AppStrings.barcode.tr(),
+                                    style: TextStyles.customStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.blackReal,
+                                    ),
+                                  ),
+                                  SizedBox(height: isDesktop ? 6 : 6.h),
+                                  QuickAddTextField(
+                                    controller: newBarcodeController,
+                                    hint: AppStrings.barcode.tr(),
+                                    suffixIcon: (!kIsWeb && Platform.isWindows)
+                                        ? null
+                                        : Icons.qr_code_scanner_rounded,
+                                    onSuffixIconPressed: (!kIsWeb && Platform.isWindows)
+                                        ? null
+                                        : () async {
+                                            final scannedCode =
+                                                await BarcodeScannerDialog.scan(
+                                                  context,
+                                                );
+                                            if (scannedCode != null &&
+                                                scannedCode.isNotEmpty) {
+                                              setDialogState(() {
+                                                newBarcodeController.text =
+                                                    scannedCode;
+                                              });
+                                            }
+                                          },
+                                  ),
+                                  SizedBox(height: isDesktop ? 10 : 10.h),
                                   SearchableDropdownField<
                                     InventoryCategoryEntity
                                   >(
@@ -1037,6 +1075,9 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                 final newProduct = InventoryProductEntity(
                                   id: 'prod_${DateTime.now().millisecondsSinceEpoch}',
                                   sku: newSkuController.text.trim(),
+                                  barcode: newBarcodeController.text.trim().isNotEmpty
+                                      ? newBarcodeController.text.trim()
+                                      : null,
                                   name: name,
                                   categoryId: newSelectedCategoryId ?? '',
                                   categoryName: newSelectedCategoryName,
@@ -1066,6 +1107,9 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                       quantity: qty,
                                       purchasePrice: purchasePrice,
                                       totalPrice: qty * purchasePrice,
+                                      unit: newProduct.unit.isNotEmpty
+                                          ? newProduct.unit
+                                          : null,
                                     ),
                                   );
                                 });

@@ -9,6 +9,12 @@ class UserEntity extends Equatable {
   final String platformType;
   final bool isVip;
 
+  final String? projectName;
+  final String? phoneNumber;
+  final String? crn;
+  final String? address;
+  final String? vat;
+
   const UserEntity({
     required this.uid,
     required this.email,
@@ -17,6 +23,11 @@ class UserEntity extends Equatable {
     this.accountStatus = 'active',
     this.platformType = 'mobile',
     this.isVip = false,
+    this.projectName,
+    this.phoneNumber,
+    this.crn,
+    this.address,
+    this.vat,
   });
 
   @override
@@ -28,5 +39,10 @@ class UserEntity extends Equatable {
     accountStatus,
     platformType,
     isVip,
+    projectName,
+    phoneNumber,
+    crn,
+    address,
+    vat,
   ];
 }

@@ -421,7 +421,7 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
               Row(
                 children: [
                   Text(
-                    '${item.quantity.toSmartAmount()} ${AppStrings.unit.tr()} × ${item.purchasePrice.toSmartAmount()}',
+                    '${item.quantity.toSmartAmount()} ${item.unit != null && item.unit!.isNotEmpty ? item.unit! : AppStrings.unit.tr()} × ${item.purchasePrice.toSmartAmount()}',
                     style: TextStyles.customStyle(
                       fontSize: 12,
                       color: AppColors.sandText,

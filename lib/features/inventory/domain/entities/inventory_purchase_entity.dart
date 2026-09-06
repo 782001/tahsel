@@ -6,6 +6,7 @@ class InventoryPurchaseItemEntity extends Equatable {
   final double quantity;
   final double purchasePrice;
   final double totalPrice;
+  final String? unit;
 
   const InventoryPurchaseItemEntity({
     required this.productId,
@@ -13,12 +14,20 @@ class InventoryPurchaseItemEntity extends Equatable {
     required this.quantity,
     required this.purchasePrice,
     required this.totalPrice,
+    this.unit,
   });
 
   double get subtotal => totalPrice;
 
   @override
-  List<Object?> get props => [productId, productName, quantity, purchasePrice, totalPrice];
+  List<Object?> get props => [
+    productId,
+    productName,
+    quantity,
+    purchasePrice,
+    totalPrice,
+    unit,
+  ];
 }
 
 class InventoryPurchaseEntity extends Equatable {

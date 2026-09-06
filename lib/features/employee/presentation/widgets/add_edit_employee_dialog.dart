@@ -206,7 +206,7 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
 
                   // Phone
                   Text(
-                    AppStrings.customerPhone.tr(),
+                    AppStrings.phone.tr(),
                     style: TextStyles.customStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,

@@ -18,6 +18,9 @@ import 'package:tahsel/features/create_account/presentation/cubit/create_account
 import 'package:tahsel/features/offline_sync/presentation/widgets/offline_banner.dart';
 import 'package:tahsel/features/settings/presentation/widgets/currency_selection_bottom_sheet.dart';
 import 'package:tahsel/routes/app_routes.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 import 'package:tahsel/shared/widgets/text_fields/custom_text_form_field.dart';
 
 class CreateAccountScreen extends StatefulWidget {
@@ -32,6 +35,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   final _projectNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _crnController = TextEditingController();
+  final _vatController = TextEditingController();
+  final _addressController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
@@ -49,6 +55,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     _projectNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _crnController.dispose();
+    _vatController.dispose();
+    _addressController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -404,7 +413,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
                                       // Phone Field
                                       CustomTextFormField(
-                                        labelText: AppStrings.customerPhone
+                                        labelText: AppStrings.phone
                                             .tr(),
                                         controller: _phoneController,
                                         keyboardType: TextInputType.phone,
@@ -418,6 +427,45 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                           }
                                           return null;
                                         },
+                                      ),
+                                      SizedBox(height: isDesktop ? 24 : 24.h),
+
+                                      // Commercial Registration (CRN) Field - Optional
+                                      CustomTextFormField(
+                                        labelText:
+                                            '${AppStrings.commercialRegistration.tr()} (${AppStrings.optional.tr()})',
+                                        controller: _crnController,
+                                        keyboardType: TextInputType.text,
+                                        hintText: AppStrings
+                                            .commercialRegistrationHint
+                                            .tr(),
+                                        prefixIcon: Icons.badge_outlined,
+                                      ),
+                                      SizedBox(height: isDesktop ? 24 : 24.h),
+
+                                      // VAT Number Field - Optional
+                                      CustomTextFormField(
+                                        labelText:
+                                            '${AppStrings.vatNumber.tr()} (${AppStrings.optional.tr()})',
+                                        controller: _vatController,
+                                        keyboardType: TextInputType.text,
+                                        hintText:
+                                            AppStrings.vatNumberHint.tr(),
+                                        prefixIcon: Icons.receipt_long_outlined,
+                                      ),
+                                      SizedBox(height: isDesktop ? 24 : 24.h),
+
+                                      // Address Field - Optional
+                                      CustomTextFormField(
+                                        labelText:
+                                            '${AppStrings.businessAddress.tr()} (${AppStrings.optional.tr()})',
+                                        controller: _addressController,
+                                        keyboardType:
+                                            TextInputType.streetAddress,
+                                        hintText: AppStrings
+                                            .businessAddressHint
+                                            .tr(),
+                                        prefixIcon: Icons.location_on_outlined,
                                       ),
                                       SizedBox(height: isDesktop ? 24 : 24.h),
 
@@ -722,6 +770,19 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
                                                 if (_formKey.currentState!
                                                     .validate()) {
+                                                  final isOffline = context
+                                                      .read<ConnectivityCubit>()
+                                                      .state
+                                                      is ConnectivityDisconnected;
+                                                  if (isOffline) {
+                                                    showfailureToast(
+                                                      AppStrings
+                                                          .noInternetConnection
+                                                          .tr(),
+                                                    );
+                                                    return;
+                                                  }
+
                                                   var days = _days == 0
                                                       ? 5
                                                       : _days;
@@ -774,6 +835,31 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                                           currency:
                                                               _selectedCurrency
                                                                   .toMap(),
+                                                          crn: _crnController
+                                                                  .text
+                                                                  .trim()
+                                                                  .isEmpty
+                                                              ? null
+                                                              : _crnController
+                                                                    .text
+                                                                    .trim(),
+                                                          vat: _vatController
+                                                                  .text
+                                                                  .trim()
+                                                                  .isEmpty
+                                                              ? null
+                                                              : _vatController
+                                                                    .text
+                                                                    .trim(),
+                                                          address:
+                                                              _addressController
+                                                                      .text
+                                                                      .trim()
+                                                                      .isEmpty
+                                                                  ? null
+                                                                  : _addressController
+                                                                        .text
+                                                                        .trim(),
                                                         ),
                                                       );
 

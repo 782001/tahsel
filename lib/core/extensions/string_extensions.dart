@@ -61,8 +61,8 @@ extension StringExtensions on String {
   }
 
   /// Cleans emojis and unsupported symbols to avoid PDF font missing glyph exceptions
-  String cleanForPdf() {
-    if (isEmpty) return this;
+  String cleanForPdf([String defaultValue = '']) {
+    if (trim().isEmpty) return defaultValue;
     final emojiPattern = RegExp(
       r'[\u{1F600}-\u{1F64F}'
       r'|\u{1F300}-\u{1F5FF}'
@@ -80,7 +80,8 @@ extension StringExtensions on String {
       r']+',
       unicode: true,
     );
-    return replaceAll(emojiPattern, '').trim();
+    final cleaned = replaceAll(emojiPattern, '').trim();
+    return cleaned.isEmpty ? defaultValue : cleaned;
   }
 }
 
@@ -95,7 +96,7 @@ extension NullableStringExtensions on String? {
 
   /// Safely cleans emojis from nullable string for PDF rendering
   String cleanForPdf([String defaultValue = '']) {
-    if (this == null) return defaultValue;
-    return this!.cleanForPdf();
+    if (this == null || this!.trim().isEmpty) return defaultValue;
+    return this!.cleanForPdf(defaultValue);
   }
 }

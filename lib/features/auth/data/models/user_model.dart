@@ -11,6 +11,11 @@ class UserModel extends UserEntity {
     super.accountStatus = 'active',
     super.platformType = 'mobile',
     super.isVip = false,
+    super.projectName,
+    super.phoneNumber,
+    super.crn,
+    super.address,
+    super.vat,
   });
 
   factory UserModel.fromFirebaseUser(
@@ -19,6 +24,11 @@ class UserModel extends UserEntity {
     String? accountStatus,
     String? platformType,
     bool? isVip,
+    String? projectName,
+    String? phoneNumber,
+    String? crn,
+    String? address,
+    String? vat,
   }) {
     return UserModel(
       uid: user.uid,
@@ -28,6 +38,11 @@ class UserModel extends UserEntity {
       accountStatus: accountStatus ?? 'active',
       platformType: platformType ?? 'mobile',
       isVip: isVip ?? false,
+      projectName: projectName,
+      phoneNumber: phoneNumber,
+      crn: crn,
+      address: address,
+      vat: vat,
     );
   }
 }

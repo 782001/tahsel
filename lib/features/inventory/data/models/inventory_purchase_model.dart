@@ -7,6 +7,7 @@ class InventoryPurchaseItemModel extends InventoryPurchaseItemEntity {
     required super.quantity,
     required super.purchasePrice,
     required super.totalPrice,
+    super.unit,
   });
 
   factory InventoryPurchaseItemModel.fromEntity(InventoryPurchaseItemEntity entity) {
@@ -16,6 +17,7 @@ class InventoryPurchaseItemModel extends InventoryPurchaseItemEntity {
       quantity: entity.quantity,
       purchasePrice: entity.purchasePrice,
       totalPrice: entity.totalPrice,
+      unit: entity.unit,
     );
   }
 
@@ -26,6 +28,7 @@ class InventoryPurchaseItemModel extends InventoryPurchaseItemEntity {
       quantity: (map['quantity'] as num?)?.toDouble() ?? 0.0,
       purchasePrice: (map['purchasePrice'] as num?)?.toDouble() ?? 0.0,
       totalPrice: (map['totalPrice'] as num?)?.toDouble() ?? 0.0,
+      unit: map['unit'] as String?,
     );
   }
 
@@ -36,6 +39,7 @@ class InventoryPurchaseItemModel extends InventoryPurchaseItemEntity {
       'quantity': quantity,
       'purchasePrice': purchasePrice,
       'totalPrice': totalPrice,
+      if (unit != null && unit!.isNotEmpty) 'unit': unit,
     };
   }
 }
