@@ -123,6 +123,139 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
                   ],
                 ),
               ),
+              SizedBox(width: isDesktop ? 2 : 2.w),
+              PopupMenuButton<String>(
+                padding: EdgeInsets.zero,
+                icon: Icon(
+                  Icons.more_vert_rounded,
+                  color: AppColors.blackLight,
+                  size: 20,
+                ),
+                onSelected: (val) {
+                  if (val == 'print') {
+                    widget.onPrintPdf();
+                  } else if (val == 'share') {
+                    widget.onSharePdf();
+                  } else if (val == 'download') {
+                    widget.onDownloadPdf();
+                  } else if (val == 'reorder') {
+                    widget.onReorder();
+                  } else if (val == 'edit') {
+                    widget.onEdit();
+                  } else if (val == 'delete') {
+                    widget.onDelete();
+                  }
+                },
+                itemBuilder: (ctx) => [
+                  PopupMenuItem(
+                    value: 'print',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.print_rounded,
+                          color: AppColors.inventoryPurchasePurple,
+                          size: 18,
+                        ),
+                        SizedBox(width: 8.w),
+                        Text(
+                          AppStrings.printInvoice.tr(),
+                          style: TextStyles.customStyle(fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (!Platform.isWindows)
+                    PopupMenuItem(
+                      value: 'share',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.picture_as_pdf_rounded,
+                            color: AppColors.inventoryPurchasePurple,
+                            size: 18,
+                          ),
+                          SizedBox(width: 8.w),
+                          Text(
+                            AppStrings.invoiceSharePdf.tr(),
+                            style: TextStyles.customStyle(fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ),
+                  PopupMenuItem(
+                    value: 'download',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.download_rounded,
+                          color: AppColors.primaryColor,
+                          size: 18,
+                        ),
+                        SizedBox(width: 8.w),
+                        Text(
+                          AppStrings.savePdfToDevice.tr(),
+                          style: TextStyles.customStyle(fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuDivider(),
+                  PopupMenuItem(
+                    value: 'reorder',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.replay_rounded,
+                          color: AppColors.actionButton,
+                          size: 18,
+                        ),
+                        SizedBox(width: 8.w),
+                        Text(
+                          AppStrings.reorderPurchaseInvoice.tr(),
+                          style: TextStyles.customStyle(fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.edit_note,
+                          color: AppColors.primaryColor,
+                          size: 18,
+                        ),
+                        SizedBox(width: 8.w),
+                        Text(
+                          AppStrings.edit.tr(),
+                          style: TextStyles.customStyle(fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.delete_outline_rounded,
+                          color: AppColors.error,
+                          size: 18,
+                        ),
+                        SizedBox(width: 8.w),
+                        Text(
+                          AppStrings.confirmDelete.tr(),
+                          style: TextStyles.customStyle(
+                            fontSize: 13,
+                            color: AppColors.error,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
           Row(
@@ -178,148 +311,13 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
                 ),
               ),
               SizedBox(width: isDesktop ? 8 : 8.w),
-              Row(
-                children: [
-                  Text(
-                    '${widget.purchase.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-                    style: TextStyles.customStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primaryColor,
-                    ),
-                  ),
-                  PopupMenuButton<String>(
-                    icon: Icon(
-                      Icons.more_vert_rounded,
-                      color: AppColors.blackLight,
-                      size: 20,
-                    ),
-                    onSelected: (val) {
-                      if (val == 'print') {
-                        widget.onPrintPdf();
-                      } else if (val == 'share') {
-                        widget.onSharePdf();
-                      } else if (val == 'download') {
-                        widget.onDownloadPdf();
-                      } else if (val == 'reorder') {
-                        widget.onReorder();
-                      } else if (val == 'edit') {
-                        widget.onEdit();
-                      } else if (val == 'delete') {
-                        widget.onDelete();
-                      }
-                    },
-                    itemBuilder: (ctx) => [
-                      PopupMenuItem(
-                        value: 'print',
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.print_rounded,
-                              color: AppColors.inventoryPurchasePurple,
-                              size: 18,
-                            ),
-                            SizedBox(width: 8.w),
-                            Text(
-                              AppStrings.printInvoice.tr(),
-                              style: TextStyles.customStyle(fontSize: 13),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (!Platform.isWindows)
-                        PopupMenuItem(
-                          value: 'share',
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.picture_as_pdf_rounded,
-                                color: AppColors.inventoryPurchasePurple,
-                                size: 18,
-                              ),
-                              SizedBox(width: 8.w),
-                              Text(
-                                AppStrings.invoiceSharePdf.tr(),
-                                style: TextStyles.customStyle(fontSize: 13),
-                              ),
-                            ],
-                          ),
-                        ),
-                      PopupMenuItem(
-                        value: 'download',
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.download_rounded,
-                              color: AppColors.primaryColor,
-                              size: 18,
-                            ),
-                            SizedBox(width: 8.w),
-                            Text(
-                              AppStrings.savePdfToDevice.tr(),
-                              style: TextStyles.customStyle(fontSize: 13),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const PopupMenuDivider(),
-                      PopupMenuItem(
-                        value: 'reorder',
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.replay_rounded,
-                              color: AppColors.actionButton,
-                              size: 18,
-                            ),
-                            SizedBox(width: 8.w),
-                            Text(
-                              AppStrings.reorderPurchaseInvoice.tr(),
-                              style: TextStyles.customStyle(fontSize: 13),
-                            ),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: 'edit',
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.edit_note,
-                              color: AppColors.primaryColor,
-                              size: 18,
-                            ),
-                            SizedBox(width: 8.w),
-                            Text(
-                              AppStrings.edit.tr(),
-                              style: TextStyles.customStyle(fontSize: 13),
-                            ),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.delete_outline_rounded,
-                              color: AppColors.error,
-                              size: 18,
-                            ),
-                            SizedBox(width: 8.w),
-                            Text(
-                              AppStrings.confirmDelete.tr(),
-                              style: TextStyles.customStyle(
-                                fontSize: 13,
-                                color: AppColors.error,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+              Text(
+                '${widget.purchase.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                style: TextStyles.customStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primaryColor,
+                ),
               ),
             ],
           ),
