@@ -893,6 +893,7 @@ class InvoicePdfService {
     );
   }
 
+  // ignore: unused_element
   static pw.Widget _buildNotes(String notes, bool isArabic) {
     return pw.Container(
       width: double.infinity,
