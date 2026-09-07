@@ -320,27 +320,6 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
-      appBar: AppBar(
-        scrolledUnderElevation: 0,
-        backgroundColor: AppColors.scafoldBackGround,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: AppColors.primaryColor,
-          ),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        centerTitle: true,
-        title: Text(
-          AppStrings.inventoryPurchases.tr(),
-          style: TextStyles.customStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: AppColors.primaryColor,
-          ),
-        ),
-      ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppColors.primaryColor,
         onPressed: _navigateToCreatePurchase,
@@ -363,59 +342,30 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                 constraints: BoxConstraints(
                   maxWidth: isDesktop ? 1000 : double.infinity,
                 ),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isDesktop ? 24 : 16.w,
-                    vertical: isDesktop ? 20 : 16.h,
-                  ),
-                  child: BlocBuilder<InventoryPurchasesCubit, InventoryPurchasesState>(
+                child: RefreshIndicator(
+                  color: AppColors.primaryColor,
+                  onRefresh: () async {
+                    _clearFilters();
+                    await context
+                        .read<InventoryPurchasesCubit>()
+                        .fetchPurchases();
+                  },
+                  child: BlocBuilder<InventoryPurchasesCubit,
+                      InventoryPurchasesState>(
                     builder: (context, state) {
-                      if (state is InventoryPurchasesLoading) {
-                        return ListView.builder(
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: 6,
-                          itemBuilder: (_, __) => const PurchaseCardSkeleton(),
-                        );
-                      }
+                      // Apply Search & Date Filters
+                      final query = _searchController.text.trim().toLowerCase();
+                      final isFiltering =
+                          query.isNotEmpty || _selectedDateRange != null;
 
-                      if (state is InventoryPurchasesError) {
-                        return InventoryEmptyState(
-                          icon: Icons.error_outline_rounded,
-                          title: AppStrings.noResults.tr(),
-                          description: state.message,
-                          actionLabel: AppStrings.tryAgain.tr(),
-                          onAction: () => context
-                              .read<InventoryPurchasesCubit>()
-                              .fetchPurchases(),
-                        );
-                      }
-
+                      List<InventoryPurchaseEntity> filteredPurchases = [];
                       if (state is InventoryPurchasesLoaded) {
-                        if (state.purchases.isEmpty) {
-                          return InventoryEmptyState(
-                            icon: Icons.shopping_bag_outlined,
-                            title: AppStrings.noPurchasesFound.tr(),
-                            description: AppStrings.emptyPurchasesDesc.tr(),
-                            actionLabel: AppStrings.newPurchase.tr(),
-                            onAction: _navigateToCreatePurchase,
-                          );
-                        }
-
-                        // Apply Search & Date Filters
-                        final query = _searchController.text
-                            .trim()
-                            .toLowerCase();
-                        final isFiltering =
-                            query.isNotEmpty || _selectedDateRange != null;
-
-                        // Search across all cached purchases when filtering, otherwise use current page
                         final sourceList = isFiltering
                             ? state.allPurchases
                             : state.purchases;
 
-                        final filteredPurchases = sourceList.where((p) {
-                          final matchesSearch =
-                              query.isEmpty ||
+                        filteredPurchases = sourceList.where((p) {
+                          final matchesSearch = query.isEmpty ||
                               p.supplierName.toLowerCase().contains(query) ||
                               p.id.toLowerCase().contains(query) ||
                               p.items.any(
@@ -423,8 +373,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                     i.productName.toLowerCase().contains(query),
                               );
 
-                          final matchesDate =
-                              _selectedDateRange == null ||
+                          final matchesDate = _selectedDateRange == null ||
                               (p.createdAt.isAfter(
                                     _selectedDateRange!.start.subtract(
                                       const Duration(days: 1),
@@ -438,83 +387,158 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
 
                           return matchesSearch && matchesDate;
                         }).toList();
-
-                        return Column(
-                          children: [
-                            
-
-                            // Search and Date Filter Bar Component
-                            PurchaseSearchBar(
-                              searchController: _searchController,
-                              selectedDateRange: _selectedDateRange,
-                              onSelectDateRange: () => _pickDateRange(context),
-                              onClearFilters: _clearFilters,
-                            ),
-                            SizedBox(height: 14.h),
-
-                            // Filtered Invoices List with Infinite Scroll Pagination
-                            Expanded(
-                              child: filteredPurchases.isEmpty
-                                  ? InventoryEmptyState(
-                                      icon: Icons.search_off_rounded,
-                                      title: AppStrings.noResults.tr(),
-                                      description: AppStrings.noPurchasesFound
-                                          .tr(),
-                                      actionLabel: AppStrings.tryAgain.tr(),
-                                      onAction: _clearFilters,
-                                    )
-                                  : RefreshIndicator(
-                                      color: AppColors.primaryColor,
-                                      onRefresh: () async {
-                                        await context
-                                            .read<InventoryPurchasesCubit>()
-                                            .fetchPurchases();
-                                      },
-                                      child: ListView.builder(
-                                        controller: _scrollController,
-                                        physics:
-                                            const AlwaysScrollableScrollPhysics(
-                                              parent: BouncingScrollPhysics(),
-                                            ),
-                                        itemCount:
-                                            filteredPurchases.length +
-                                            (!isFiltering &&
-                                                    state.isPaginationLoading
-                                                ? 1
-                                                : 0),
-                                        itemBuilder: (context, index) {
-                                          if (index ==
-                                              filteredPurchases.length) {
-                                            return const PurchaseCardSkeleton();
-                                          }
-                                          final pur = filteredPurchases[index];
-                                          return Padding(
-                                            padding: EdgeInsets.only(
-                                              bottom: isDesktop ? 12 : 12.h,
-                                            ),
-                                            child: PurchaseCardItem(
-                                              purchase: pur,
-                                              onPrintPdf: () =>
-                                                  _printPurchasePdf(pur),
-                                              onSharePdf: () =>
-                                                  _sharePurchasePdf(pur),
-                                              onDownloadPdf: () =>
-                                                  _downloadPurchasePdf(pur),
-                                              onReorder: () =>
-                                                  _reorderPurchase(pur),
-                                              onEdit: () => _editPurchase(pur),
-                                              onDelete: () =>
-                                                  _confirmDeletePurchase(pur),
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                            ),
-                          ],
-                        );
                       }
-                      return const SizedBox.shrink();
+
+                      return CustomScrollView(
+                        controller: _scrollController,
+                        keyboardDismissBehavior:
+                            ScrollViewKeyboardDismissBehavior.onDrag,
+                        physics: const AlwaysScrollableScrollPhysics(
+                          parent: BouncingScrollPhysics(),
+                        ),
+                        slivers: [
+                          // ── Floating & Snapping App Bar with SearchBar ──────
+                          SliverAppBar(
+                            floating: true,
+                            snap: true,
+                            elevation: 0,
+                            scrolledUnderElevation: 0,
+                            backgroundColor: AppColors.scafoldBackGround,
+                            automaticallyImplyLeading: false,
+                            leading: IconButton(
+                              icon: Icon(
+                                Icons.arrow_back_ios_new_rounded,
+                                color: AppColors.primaryColor,
+                              ),
+                              onPressed: () => Navigator.of(context).pop(),
+                            ),
+                            centerTitle: true,
+                            title: Text(
+                              AppStrings.inventoryPurchases.tr(),
+                              style: TextStyles.customStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primaryColor,
+                              ),
+                            ),
+                            bottom: PreferredSize(
+                              preferredSize: Size.fromHeight(60.h),
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isDesktop ? 24 : 16.w,
+                                  vertical: isDesktop ? 8 : 6.h,
+                                ),
+                                child: PurchaseSearchBar(
+                                  searchController: _searchController,
+                                  selectedDateRange: _selectedDateRange,
+                                  onSelectDateRange: () =>
+                                      _pickDateRange(context),
+                                  onClearFilters: _clearFilters,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // ── Body Content ──────────────────────────────────
+                          if (state is InventoryPurchasesLoading)
+                            SliverPadding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isDesktop ? 24 : 16.w,
+                                vertical: 12.h,
+                              ),
+                              sliver: SliverList(
+                                delegate: SliverChildBuilderDelegate(
+                                  (_, __) => const PurchaseCardSkeleton(),
+                                  childCount: 6,
+                                ),
+                              ),
+                            )
+                          else if (state is InventoryPurchasesError)
+                            SliverFillRemaining(
+                              hasScrollBody: false,
+                              child: InventoryEmptyState(
+                                icon: Icons.error_outline_rounded,
+                                title: AppStrings.noResults.tr(),
+                                description: state.message,
+                                actionLabel: AppStrings.tryAgain.tr(),
+                                onAction: () => context
+                                    .read<InventoryPurchasesCubit>()
+                                    .fetchPurchases(),
+                              ),
+                            )
+                          else if (state is InventoryPurchasesLoaded &&
+                              state.purchases.isEmpty)
+                            SliverFillRemaining(
+                              hasScrollBody: false,
+                              child: InventoryEmptyState(
+                                icon: Icons.shopping_bag_outlined,
+                                title: AppStrings.noPurchasesFound.tr(),
+                                description: AppStrings.emptyPurchasesDesc.tr(),
+                                actionLabel: AppStrings.newPurchase.tr(),
+                                onAction: _navigateToCreatePurchase,
+                              ),
+                            )
+                          else if (state is InventoryPurchasesLoaded &&
+                              filteredPurchases.isEmpty)
+                            SliverFillRemaining(
+                              hasScrollBody: false,
+                              child: InventoryEmptyState(
+                                icon: Icons.search_off_rounded,
+                                title: AppStrings.noResults.tr(),
+                                description: AppStrings.noPurchasesFound.tr(),
+                                actionLabel: AppStrings.tryAgain.tr(),
+                                onAction: _clearFilters,
+                              ),
+                            )
+                          else if (state is InventoryPurchasesLoaded)
+                            SliverPadding(
+                              padding: EdgeInsets.only(
+                                left: isDesktop ? 24 : 16.w,
+                                right: isDesktop ? 24 : 16.w,
+                                top: 12.h,
+                                bottom: 80.h,
+                              ),
+                              sliver: SliverList(
+                                delegate: SliverChildBuilderDelegate(
+                                  (context, index) {
+                                    if (index == filteredPurchases.length) {
+                                      return const PurchaseCardSkeleton();
+                                    }
+                                    final pur = filteredPurchases[index];
+                                    return Padding(
+                                      padding: EdgeInsets.only(
+                                        bottom: isDesktop ? 12 : 12.h,
+                                      ),
+                                      child: PurchaseCardItem(
+                                        purchase: pur,
+                                        onPrintPdf: () =>
+                                            _printPurchasePdf(pur),
+                                        onSharePdf: () =>
+                                            _sharePurchasePdf(pur),
+                                        onDownloadPdf: () =>
+                                            _downloadPurchasePdf(pur),
+                                        onReorder: () =>
+                                            _reorderPurchase(pur),
+                                        onEdit: () => _editPurchase(pur),
+                                        onDelete: () =>
+                                            _confirmDeletePurchase(pur),
+                                      ),
+                                    );
+                                  },
+                                  childCount: filteredPurchases.length +
+                                      (!isFiltering &&
+                                              state.isPaginationLoading
+                                          ? 1
+                                          : 0),
+                                ),
+                              ),
+                            )
+                          else
+                            const SliverToBoxAdapter(
+                              child: SizedBox.shrink(),
+                            ),
+                        ],
+                      );
                     },
                   ),
                 ),

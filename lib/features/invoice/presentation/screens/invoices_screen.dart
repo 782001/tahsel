@@ -13,7 +13,6 @@ import 'package:tahsel/features/invoice/presentation/widgets/empty_invoices_view
 import 'package:tahsel/features/invoice/presentation/widgets/invoice_card.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/invoice_card_skeleton.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/invoice_search_bar.dart';
-import 'package:tahsel/features/invoice/presentation/widgets/invoices_app_bar.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/offline_empty_invoices_view.dart';
 import 'package:tahsel/features/offline_sync/presentation/cubit/offline_sync_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
@@ -98,6 +97,10 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
   }
 
   void _onScroll() {
+    if (_searchController.text.trim().isNotEmpty ||
+        _selectedDateRange != null) {
+      return;
+    }
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       _loadMore();
@@ -128,56 +131,22 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
           builder: (context, connectivityState) {
             final isDisconnected =
                 connectivityState is ConnectivityDisconnected;
-            return RefreshIndicator(
-              color: AppColors.primaryColor,
-              onRefresh: () async {
-                _clearFilters();
-                await context.read<InvoiceCubit>().fetchInvoices(
-                  AppStrings.userToken,
-                  forceRefresh: true,
-                );
-              },
-              child: Column(
-                children: [
-                  // ── App Bar ─────────────────────────────────────────────────
-                  const InvoicesAppBar(),
-
-                  // ── Unified Search & Date Filter Bar ────────────────────────
-                  InvoiceSearchBar(
-                    controller: _searchController,
-                    onChanged: (q) => context.read<InvoiceCubit>().search(q),
-                    selectedDateRange: _selectedDateRange,
-                    onSelectDateRange: () => _pickDateRange(context),
-                    onClearFilters: _clearFilters,
-                  ),
-                  SizedBox(height: 4.h),
-
-                  // ── Body ────────────────────────────────────────────────────
-                  Expanded(
+            return Column(
+              children: [
+                Expanded(
+                  child: RefreshIndicator(
+                    color: AppColors.primaryColor,
+                    onRefresh: () async {
+                      _clearFilters();
+                      await context.read<InvoiceCubit>().fetchInvoices(
+                        AppStrings.userToken,
+                        forceRefresh: true,
+                      );
+                    },
                     child: BlocBuilder<InvoiceCubit, InvoiceState>(
                       builder: (context, state) {
-                        if (state is InvoiceLoading) {
-                          return ListView.builder(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: 6,
-                            itemBuilder: (_, __) => const InvoiceCardSkeleton(),
-                          );
-                        }
-
                         if (state is InvoiceFailure) {
                           AppLogger.printMessage(state.message);
-                          return Center(
-                            child: Text(
-                              state.message,
-                              style: TextStyles.customStyle(
-                                color: AppColors.error,
-                              ),
-                            ),
-                          );
                         }
 
                         final rawInvoices = state is InvoiceListLoaded
@@ -211,140 +180,258 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                               );
                         }).toList();
 
+                        final isFiltering =
+                            _searchController.text.trim().isNotEmpty ||
+                            _selectedDateRange != null;
                         final hasMore =
                             state is InvoiceListLoaded && state.hasMore;
                         final isPaginationLoading =
                             state is InvoiceListLoaded &&
                             state.isPaginationLoading;
 
-                        if (invoices.isEmpty) {
-                          return ListView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            children: [
-                              SizedBox(
-                                height:
-                                    MediaQuery.of(context).size.height * 0.6,
-                                child: isDisconnected
-                                    ? const OfflineEmptyInvoicesView()
-                                    : const EmptyInvoicesView(),
-                              ),
-                            ],
-                          );
-                        }
-
-                        return ListView.builder(
+                        return CustomScrollView(
                           controller: _scrollController,
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16.w,
-                            vertical: 12.h,
+                          keyboardDismissBehavior:
+                              ScrollViewKeyboardDismissBehavior.onDrag,
+                          physics: const AlwaysScrollableScrollPhysics(
+                            parent: BouncingScrollPhysics(),
                           ),
-                          itemCount:
-                              invoices.length +
-                              (hasMore || isPaginationLoading ? 1 : 0),
-                          itemBuilder: (context, index) {
-                            if (index == invoices.length) {
-                              return const InvoiceCardSkeleton();
-                            }
-                            final isPending =
-                                state is InvoiceListLoaded &&
-                                state.pendingSyncIds.contains(
-                                  invoices[index].id,
-                                );
+                          slivers: [
+                            // ── Floating & Snapping App Bar + Search Bar ──────
+                            SliverAppBar(
+                              floating: true,
+                              snap: true,
+                              elevation: 0,
+                              scrolledUnderElevation: 0,
+                              backgroundColor: AppColors.scafoldBackGround,
+                              automaticallyImplyLeading: false,
+                              title: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    AppStrings.invoices.tr(),
+                                    style: TextStyles.customStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.primaryColor,
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.receipt_long_rounded,
+                                    color: AppColors.primaryColor,
+                                    size: 26,
+                                  ),
+                                ],
+                              ),
+                              bottom: PreferredSize(
+                                preferredSize: Size.fromHeight(60.h),
+                                child: InvoiceSearchBar(
+                                  controller: _searchController,
+                                  onChanged: (q) =>
+                                      context.read<InvoiceCubit>().search(q),
+                                  selectedDateRange: _selectedDateRange,
+                                  onSelectDateRange: () =>
+                                      _pickDateRange(context),
+                                  onClearFilters: _clearFilters,
+                                ),
+                              ),
+                            ),
 
-                            return InvoiceCard(
-                              invoice: invoices[index],
-                              isPendingSync: isPending,
-                              onTap: () =>
-                                  _openDetail(context, invoices[index]),
-                            );
-                          },
+                            // ── Body Slivers ───────────────────────────────────
+                            if (state is InvoiceLoading)
+                              SliverPadding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 16.w,
+                                  vertical: 12.h,
+                                ),
+                                sliver: SliverList(
+                                  delegate: SliverChildBuilderDelegate(
+                                    (_, __) => const InvoiceCardSkeleton(),
+                                    childCount: 6,
+                                  ),
+                                ),
+                              )
+                            else if (state is InvoiceFailure)
+                              SliverFillRemaining(
+                                hasScrollBody: false,
+                                child: Center(
+                                  child: Text(
+                                    state.message,
+                                    style: TextStyles.customStyle(
+                                      color: AppColors.error,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            else if (invoices.isEmpty)
+                              SliverFillRemaining(
+                                hasScrollBody: false,
+                                child: Center(
+                                  child: isDisconnected
+                                      ? const OfflineEmptyInvoicesView()
+                                      : (isFiltering
+                                            ? Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.search_off_rounded,
+                                                    size: 64.r,
+                                                    color:
+                                                        AppColors.disabledColor,
+                                                  ),
+                                                  SizedBox(height: 12.h),
+                                                  Text(
+                                                    AppStrings.noResults.tr(),
+                                                    style:
+                                                        TextStyles.customStyle(
+                                                          fontSize: 16,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: AppColors
+                                                              .blackLight,
+                                                        ),
+                                                  ),
+                                                  SizedBox(height: 6.h),
+                                                  Text(
+                                                    AppStrings.noPurchasesFound
+                                                        .tr(),
+                                                    style:
+                                                        TextStyles.customStyle(
+                                                          fontSize: 13,
+                                                          color: AppColors
+                                                              .disabledColor,
+                                                        ),
+                                                  ),
+                                                  SizedBox(height: 14.h),
+                                                ],
+                                              )
+                                            : const EmptyInvoicesView()),
+                                ),
+                              )
+                            else
+                              SliverPadding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 16.w,
+                                  vertical: 12.h,
+                                ),
+                                sliver: SliverList(
+                                  delegate: SliverChildBuilderDelegate(
+                                    (context, index) {
+                                      if (index == invoices.length) {
+                                        return const InvoiceCardSkeleton();
+                                      }
+                                      final isPending =
+                                          state is InvoiceListLoaded &&
+                                          state.pendingSyncIds.contains(
+                                            invoices[index].id,
+                                          );
+
+                                      return InvoiceCard(
+                                        invoice: invoices[index],
+                                        isPendingSync: isPending,
+                                        onTap: () => _openDetail(
+                                          context,
+                                          invoices[index],
+                                        ),
+                                      );
+                                    },
+                                    childCount:
+                                        invoices.length +
+                                        (!isFiltering &&
+                                                (hasMore || isPaginationLoading)
+                                            ? 1
+                                            : 0),
+                                  ),
+                                ),
+                              ),
+                          ],
                         );
                       },
                     ),
                   ),
+                ),
 
-                  // ── Create Buttons (Invoice & Quotation) ───────────────────────
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 14.h,
-                    ),
-                    child: Row(
-                      children: [
-                        // Create Invoice Button
-                        Expanded(
-                          child: SizedBox(
-                            height: 56.h,
-                            child: ElevatedButton.icon(
-                              onPressed: () =>
-                                  _handleCreate(isQuotation: false),
-                              icon: Icon(
-                                Icons.receipt_long_rounded,
-                                color: AppColors.whiteColor,
-                                size: 20,
-                              ),
-                              label: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  AppStrings.createInvoice.tr(),
-                                  style: TextStyles.customStyle(
-                                    color: AppColors.whiteColor,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primaryColor,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16.r),
-                                ),
-                                elevation: 0,
-                                padding: EdgeInsets.symmetric(horizontal: 8.w),
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 12.w),
-                        // Create Quotation Button
-                        Expanded(
-                          child: SizedBox(
-                            height: 56.h,
-                            child: ElevatedButton.icon(
-                              onPressed: () => _handleCreate(isQuotation: true),
-                              icon: Icon(
-                                Icons.request_quote_rounded,
-                                color: AppColors.whiteColor,
-                                size: 20,
-                              ),
-                              label: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  AppStrings.createQuotation.tr(),
-                                  style: TextStyles.customStyle(
-                                    color: AppColors.whiteColor,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    AppColors.movementInvoiceReturn,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16.r),
-                                ),
-                                elevation: 0,
-                                padding: EdgeInsets.symmetric(horizontal: 8.w),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                // ── Create Buttons (Invoice & Quotation) ───────────────────────
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 14.h,
                   ),
-                ],
-              ),
+                  child: Row(
+                    children: [
+                      // Create Invoice Button
+                      Expanded(
+                        child: SizedBox(
+                          height: 56.h,
+                          child: ElevatedButton.icon(
+                            onPressed: () => _handleCreate(isQuotation: false),
+                            icon: Icon(
+                              Icons.receipt_long_rounded,
+                              color: AppColors.whiteColor,
+                              size: 20,
+                            ),
+                            label: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                AppStrings.createInvoice.tr(),
+                                style: TextStyles.customStyle(
+                                  color: AppColors.whiteColor,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryColor,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16.r),
+                              ),
+                              elevation: 0,
+                              padding: EdgeInsets.symmetric(horizontal: 8.w),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 12.w),
+                      // Create Quotation Button
+                      Expanded(
+                        child: SizedBox(
+                          height: 56.h,
+                          child: ElevatedButton.icon(
+                            onPressed: () => _handleCreate(isQuotation: true),
+                            icon: Icon(
+                              Icons.request_quote_rounded,
+                              color: AppColors.whiteColor,
+                              size: 20,
+                            ),
+                            label: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                AppStrings.createQuotation.tr(),
+                                style: TextStyles.customStyle(
+                                  color: AppColors.whiteColor,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.movementInvoiceReturn,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16.r),
+                              ),
+                              elevation: 0,
+                              padding: EdgeInsets.symmetric(horizontal: 8.w),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             );
           },
         ),

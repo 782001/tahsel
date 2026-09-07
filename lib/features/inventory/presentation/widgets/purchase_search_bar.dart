@@ -43,10 +43,8 @@ class PurchaseSearchBar extends StatelessWidget {
       ),
       child: TextField(
         controller: searchController,
-        style: TextStyles.customStyle(
-          fontSize: 13,
-          color: AppColors.textColor,
-        ),
+        style: TextStyles.customStyle(fontSize: 13, color: AppColors.textColor),
+        cursorColor: AppColors.primaryColor,
         decoration: InputDecoration(
           hintText: AppStrings.searchInvoiceHint.tr(),
           hintStyle: TextStyles.customStyle(
@@ -69,7 +67,9 @@ class PurchaseSearchBar extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8.r),
                 child: Container(
                   padding: EdgeInsets.symmetric(
-                    horizontal: hasDate ? (isDesktop ? 10 : 8.w) : (isDesktop ? 8 : 6.w),
+                    horizontal: hasDate
+                        ? (isDesktop ? 10 : 8.w)
+                        : (isDesktop ? 8 : 6.w),
                     vertical: isDesktop ? 8 : 6.h,
                   ),
                   margin: EdgeInsets.symmetric(horizontal: isDesktop ? 6 : 4.w),
@@ -80,7 +80,9 @@ class PurchaseSearchBar extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8.r),
                     border: hasDate
                         ? Border.all(
-                            color: AppColors.primaryColor.withValues(alpha: 0.3),
+                            color: AppColors.primaryColor.withValues(
+                              alpha: 0.3,
+                            ),
                             width: 1,
                           )
                         : null,
@@ -149,10 +151,7 @@ class PurchaseSearchBar extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.r),
-            borderSide: BorderSide(
-              color: AppColors.primaryColor,
-              width: 1.5,
-            ),
+            borderSide: BorderSide(color: AppColors.primaryColor, width: 1.5),
           ),
         ),
       ),

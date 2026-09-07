@@ -118,6 +118,11 @@ class DebtCubit extends Cubit<DebtState> {
     );
   }
 
+  List<DebtEntity> _paginatedDebts = [];
+  bool _lastHasMore = false;
+  List<DebtEntity>? _serverAllDebts;
+  Timer? _searchDebounce;
+
   String _currentFilter = 'all';
   String get currentFilter => _currentFilter;
 
@@ -156,13 +161,18 @@ class DebtCubit extends Cubit<DebtState> {
 
     result.fold(
       (failure) => emit(DebtFailure(message: failure.message)),
-      (paginatedResult) => emit(
-        DebtsFetchSuccess(
-          debts: paginatedResult.items,
-          lastDocument: paginatedResult.lastDocument,
-          hasMore: paginatedResult.hasMore,
-        ),
-      ),
+      (paginatedResult) {
+        _paginatedDebts = paginatedResult.items;
+        _lastHasMore = paginatedResult.hasMore;
+        _serverAllDebts = null;
+        emit(
+          DebtsFetchSuccess(
+            debts: paginatedResult.items,
+            lastDocument: paginatedResult.lastDocument,
+            hasMore: paginatedResult.hasMore,
+          ),
+        );
+      },
     );
   }
 
@@ -191,6 +201,8 @@ class DebtCubit extends Cubit<DebtState> {
       (paginatedResult) {
         final List<DebtEntity> updatedDebts = List.from(currentState.debts)
           ..addAll(paginatedResult.items);
+        _paginatedDebts = updatedDebts;
+        _lastHasMore = paginatedResult.hasMore;
         emit(
           DebtsFetchSuccess(
             debts: updatedDebts,
@@ -201,6 +213,78 @@ class DebtCubit extends Cubit<DebtState> {
         );
       },
     );
+  }
+
+  // ── Search (Server-backed & debounced) ──────────────────────────────────────
+
+  void searchDebts(String query) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () async {
+      if (isClosed) return;
+      final q = query.trim().toLowerCase();
+      final currentState = state;
+      if (currentState is! DebtsFetchSuccess && currentState is! DebtLoading) {
+        return;
+      }
+
+      if (q.isEmpty) {
+        emit(
+          DebtsFetchSuccess(
+            debts: _paginatedDebts,
+            lastDocument: currentState is DebtsFetchSuccess
+                ? currentState.lastDocument
+                : null,
+            hasMore: _lastHasMore,
+            isPaginationLoading: false,
+          ),
+        );
+        return;
+      }
+
+      // Fetch all debts from server for exhaustive search across entire collection
+      List<DebtEntity> sourceDebts = _serverAllDebts ?? [];
+      if (_serverAllDebts == null) {
+        final uid = AppStrings.userToken;
+        if (uid.isNotEmpty) {
+          final result = await getDebtsUseCase(
+            GetDebtsParams(uid: uid, forceRefresh: true),
+          );
+          result.fold(
+            (_) {},
+            (debts) {
+              _serverAllDebts = debts;
+              sourceDebts = debts;
+            },
+          );
+        }
+      }
+
+      if (sourceDebts.isEmpty) {
+        sourceDebts = _paginatedDebts;
+      }
+
+      final filtered = sourceDebts.where((debt) {
+        final name = (debt.customerName ?? '').toLowerCase();
+        final ledger = (debt.ledgerNumber ?? '').toLowerCase();
+        final details = (debt.productOrSessionDetails ?? '').toLowerCase();
+        final phone = (debt.phoneNumber ?? '').toLowerCase();
+
+        return name.contains(q) ||
+            ledger.contains(q) ||
+            details.contains(q) ||
+            phone.contains(q);
+      }).toList();
+
+      if (isClosed) return;
+      emit(
+        DebtsFetchSuccess(
+          debts: filtered,
+          lastDocument: null,
+          hasMore: false, // In search mode, all server matches are present; no trailing pagination!
+          isPaginationLoading: false,
+        ),
+      );
+    });
   }
 
   Future<List<DebtEntity>> fetchCustomerDebts(

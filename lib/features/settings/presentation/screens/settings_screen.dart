@@ -197,7 +197,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 // Profile & Business Info Card
                                 const ProfileInfoCard(),
 
-                                SizedBox(height: isDesktop ? 24 : 20.h),
 
                                 // Vault / Cash Register (VIP + Shop) Section
                                 if ((!Platform.isIOS && isShop) ||

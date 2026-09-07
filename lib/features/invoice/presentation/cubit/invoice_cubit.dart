@@ -41,6 +41,8 @@ class InvoiceCubit extends Cubit<InvoiceState> {
   // ── Search debounce ──────────────────────────────────────────────────────
   Timer? _debounce;
   List<InvoiceEntity> _allInvoices = [];
+  bool _lastHasMore = false;
+  List<InvoiceEntity>? _serverAllInvoices;
 
   InvoiceCubit({
     required this.createInvoiceUseCase,
@@ -147,7 +149,8 @@ class InvoiceCubit extends Cubit<InvoiceState> {
            paidNow: 0, // Just create the debt baseline
          );
       }
-      emit(InvoiceCreateSuccess(invoiceId));
+       _serverAllInvoices = null;
+       emit(InvoiceCreateSuccess(invoiceId));
     }
   }
 
@@ -193,6 +196,8 @@ class InvoiceCubit extends Cubit<InvoiceState> {
       final filteredRemote = paginated.items.where((i) => !pendingIds.contains(i.id)).toList();
 
       _allInvoices = [...pendingInvoices, ...filteredRemote];
+      _lastHasMore = paginated.hasMore;
+      _serverAllInvoices = null;
       
       emit(
         InvoiceListLoaded(
@@ -231,6 +236,7 @@ class InvoiceCubit extends Cubit<InvoiceState> {
         final filteredRemote = paginated.items.where((i) => !pendingIds.contains(i.id)).toList();
         
         _allInvoices = List.from(_allInvoices)..addAll(filteredRemote);
+        _lastHasMore = paginated.hasMore;
         emit(
           currentState.copyWith(
             invoices: _allInvoices,
@@ -248,30 +254,75 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     );
   }
 
-  // ── Search (debounced) ─────────────────────────────────────────────────────
+  // ── Search (Server-backed & debounced) ──────────────────────────────────────
 
   void search(String query) {
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 350), () {
+    _debounce = Timer(const Duration(milliseconds: 350), () async {
       if (isClosed) return;
       final q = query.trim().toLowerCase();
       final currentState = state;
       if (currentState is! InvoiceListLoaded) return;
 
       if (q.isEmpty) {
-        emit(currentState.copyWith(filtered: _allInvoices, searchQuery: ''));
+        emit(
+          currentState.copyWith(
+            filtered: _allInvoices,
+            searchQuery: '',
+            hasMore: _lastHasMore,
+            isPaginationLoading: false,
+          ),
+        );
         return;
       }
-      final filtered = _allInvoices.where((inv) {
+
+      // Fetch all user invoices directly from server for exhaustive search across entire collection
+      List<InvoiceEntity> sourceInvoices = _serverAllInvoices ?? [];
+      if (_serverAllInvoices == null) {
+        final uid = AppStrings.userToken;
+        if (uid.isNotEmpty) {
+          final result = await getInvoicesUseCase(uid);
+          result.fold(
+            (_) {},
+            (invoices) {
+              _serverAllInvoices = invoices;
+              sourceInvoices = invoices;
+            },
+          );
+        }
+      }
+
+      if (sourceInvoices.isEmpty) {
+        sourceInvoices = _allInvoices;
+      }
+
+      final filtered = sourceInvoices.where((inv) {
         final name = inv.customerName?.toLowerCase() ?? '';
         final ledger = inv.ledgerNumber?.toLowerCase() ?? '';
         final id = inv.id.toLowerCase();
+        final phone = inv.customerPhone?.toLowerCase() ?? '';
+        final ref = inv.referenceNumber?.toLowerCase() ?? '';
+        final hasItem = inv.items.any(
+          (item) => item.description.toLowerCase().contains(q),
+        );
             
         return name.contains(q) ||
             ledger.contains(q) ||
-            id.contains(q);
+            id.contains(q) ||
+            phone.contains(q) ||
+            ref.contains(q) ||
+            hasItem;
       }).toList();
-      emit(currentState.copyWith(filtered: filtered, searchQuery: query));
+
+      if (isClosed) return;
+      emit(
+        currentState.copyWith(
+          filtered: filtered,
+          searchQuery: query,
+          hasMore: false, // During search, full server results are loaded; no trailing pagination skeleton!
+          isPaginationLoading: false,
+        ),
+      );
     });
   }
 
@@ -367,6 +418,7 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     if (failure != null) {
       emit(InvoiceFailure(failure.message));
     } else {
+      _serverAllInvoices = null;
       emit(InvoicePaymentSuccess());
     }
   }
@@ -529,6 +581,7 @@ class InvoiceCubit extends Cubit<InvoiceState> {
             );
           }
         }
+        _serverAllInvoices = null;
         emit(InvoiceUpdateSuccess());
       },
     );
@@ -547,7 +600,10 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     final result = await voidInvoiceUseCase(uid, invoiceId, invoice: invoice);
     result.fold(
       (failure) => emit(InvoiceFailure(failure.message)),
-      (_) => emit(InvoiceVoidSuccess()),
+      (_) {
+        _serverAllInvoices = null;
+        emit(InvoiceVoidSuccess());
+      },
     );
   }
 }
