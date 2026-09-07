@@ -43,6 +43,11 @@ abstract class InventoryRemoteDataSource {
     String uid, {
     int limit = 15,
   });
+  Future<List<InventoryPurchaseModel>> fetchAllPurchasesFromRemote(String uid);
+  Future<List<InventoryPurchaseModel>> fetchPurchasesDeltaFromRemote(
+    String uid,
+    int sinceTimestamp,
+  );
   Future<void> deletePurchaseFromRemote(String uid, String purchaseId);
 
   Future<void> syncStockMovements(String uid, List<StockMovementModel> movements);
@@ -233,6 +238,35 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
     final snapshot = await _getCol(uid, 'inventory_purchases')
         .orderBy('createdAt', descending: true)
         .limit(limit)
+        .get();
+    return snapshot.docs.map((doc) {
+      final map = doc.data() as Map<String, dynamic>;
+      map['id'] = doc.id;
+      return InventoryPurchaseModel.fromMap(map);
+    }).toList();
+  }
+
+  @override
+  Future<List<InventoryPurchaseModel>> fetchAllPurchasesFromRemote(
+    String uid,
+  ) async {
+    final snapshot = await _getCol(uid, 'inventory_purchases')
+        .orderBy('createdAt', descending: true)
+        .get();
+    return snapshot.docs.map((doc) {
+      final map = doc.data() as Map<String, dynamic>;
+      map['id'] = doc.id;
+      return InventoryPurchaseModel.fromMap(map);
+    }).toList();
+  }
+
+  @override
+  Future<List<InventoryPurchaseModel>> fetchPurchasesDeltaFromRemote(
+    String uid,
+    int sinceTimestamp,
+  ) async {
+    final snapshot = await _getCol(uid, 'inventory_purchases')
+        .where('updatedAt', isGreaterThan: sinceTimestamp)
         .get();
     return snapshot.docs.map((doc) {
       final map = doc.data() as Map<String, dynamic>;

@@ -55,6 +55,7 @@ class InventoryPurchaseModel extends InventoryPurchaseEntity {
     required super.totalAmount,
     super.notes,
     required super.createdAt,
+    super.updatedAt,
     super.isSynced,
     super.paymentMethod = 'cash',
     super.paidAmount = 0.0,
@@ -70,6 +71,7 @@ class InventoryPurchaseModel extends InventoryPurchaseEntity {
       totalAmount: entity.totalAmount,
       notes: entity.notes,
       createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
       isSynced: entity.isSynced,
       paymentMethod: entity.paymentMethod,
       paidAmount: entity.paidAmount,
@@ -93,6 +95,17 @@ class InventoryPurchaseModel extends InventoryPurchaseEntity {
       }
     }
 
+    DateTime? parsedUpdatedAt;
+    if (map['updatedAt'] != null) {
+      if (map['updatedAt'] is int) {
+        parsedUpdatedAt = DateTime.fromMillisecondsSinceEpoch(map['updatedAt'] as int);
+      } else {
+        try {
+          parsedUpdatedAt = DateTime.parse(map['updatedAt'].toString());
+        } catch (_) {}
+      }
+    }
+
     return InventoryPurchaseModel(
       id: map['id'] as String? ?? '',
       supplierId: map['supplierId'] as String? ?? '',
@@ -101,6 +114,7 @@ class InventoryPurchaseModel extends InventoryPurchaseEntity {
       totalAmount: (map['totalAmount'] as num?)?.toDouble() ?? 0.0,
       notes: map['notes'] as String?,
       createdAt: parsedDate,
+      updatedAt: parsedUpdatedAt,
       isSynced: map['isSynced'] as bool? ?? false,
       paymentMethod: map['paymentMethod'] as String? ?? 'cash',
       paidAmount: (map['paidAmount'] as num?)?.toDouble() ?? 0.0,
@@ -117,6 +131,7 @@ class InventoryPurchaseModel extends InventoryPurchaseEntity {
       'totalAmount': totalAmount,
       'notes': notes,
       'createdAt': createdAt.millisecondsSinceEpoch,
+      'updatedAt': (updatedAt ?? createdAt).millisecondsSinceEpoch,
       'isSynced': isSynced,
       'paymentMethod': paymentMethod,
       'paidAmount': paidAmount,
@@ -126,6 +141,7 @@ class InventoryPurchaseModel extends InventoryPurchaseEntity {
   Map<String, dynamic> toRemoteMap() {
     final map = toMap();
     map['isSynced'] = true;
+    map['updatedAt'] = (updatedAt ?? DateTime.now()).millisecondsSinceEpoch;
     return map;
   }
 }

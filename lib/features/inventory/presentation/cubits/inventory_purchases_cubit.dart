@@ -15,29 +15,33 @@ class InventoryPurchasesLoading extends InventoryPurchasesState {}
 
 class InventoryPurchasesLoaded extends InventoryPurchasesState {
   final List<InventoryPurchaseEntity> purchases;
+  final List<InventoryPurchaseEntity> allPurchases;
   final bool hasMore;
   final bool isPaginationLoading;
 
   const InventoryPurchasesLoaded(
     this.purchases, {
+    this.allPurchases = const [],
     this.hasMore = true,
     this.isPaginationLoading = false,
   });
 
   InventoryPurchasesLoaded copyWith({
     List<InventoryPurchaseEntity>? purchases,
+    List<InventoryPurchaseEntity>? allPurchases,
     bool? hasMore,
     bool? isPaginationLoading,
   }) {
     return InventoryPurchasesLoaded(
       purchases ?? this.purchases,
+      allPurchases: allPurchases ?? this.allPurchases,
       hasMore: hasMore ?? this.hasMore,
       isPaginationLoading: isPaginationLoading ?? this.isPaginationLoading,
     );
   }
 
   @override
-  List<Object?> get props => [purchases, hasMore, isPaginationLoading];
+  List<Object?> get props => [purchases, allPurchases, hasMore, isPaginationLoading];
 }
 
 class InventoryPurchasesError extends InventoryPurchasesState {
@@ -72,7 +76,6 @@ class InventoryPurchasesCubit extends Cubit<InventoryPurchasesState> {
     emit(InventoryPurchasesLoading());
     final result = await getPurchasesUseCase(
       supplierId: supplierId,
-      limit: _currentLimit,
     );
     result.fold(
       (failure) => emit(InventoryPurchasesError(failure.message)),
@@ -82,6 +85,7 @@ class InventoryPurchasesCubit extends Cubit<InventoryPurchasesState> {
         emit(
           InventoryPurchasesLoaded(
             _allPurchases.take(_currentLimit).toList(),
+            allPurchases: _allPurchases,
             hasMore: _hasMore,
             isPaginationLoading: false,
           ),
@@ -98,6 +102,9 @@ class InventoryPurchasesCubit extends Cubit<InventoryPurchasesState> {
     _isFetchingMore = true;
     emit(currentState.copyWith(isPaginationLoading: true));
 
+    // Brief smooth delay for natural scrolling UX
+    await Future.delayed(const Duration(milliseconds: 300));
+
     _currentLimit += 15;
     _hasMore = _allPurchases.length > _currentLimit;
     _isFetchingMore = false;
@@ -105,6 +112,7 @@ class InventoryPurchasesCubit extends Cubit<InventoryPurchasesState> {
     emit(
       InventoryPurchasesLoaded(
         _allPurchases.take(_currentLimit).toList(),
+        allPurchases: _allPurchases,
         hasMore: _hasMore,
         isPaginationLoading: false,
       ),

@@ -56,6 +56,7 @@ class InventoryPurchaseEntity extends Equatable {
   final double totalAmount;
   final String? notes;
   final DateTime createdAt;
+  final DateTime? updatedAt;
   final bool isSynced;
   final String paymentMethod; // 'cash', 'card', 'debt'
   final double paidAmount;
@@ -68,6 +69,7 @@ class InventoryPurchaseEntity extends Equatable {
     required this.totalAmount,
     this.notes,
     required this.createdAt,
+    this.updatedAt,
     this.isSynced = false,
     this.paymentMethod = 'cash',
     this.paidAmount = 0.0,
@@ -84,6 +86,7 @@ class InventoryPurchaseEntity extends Equatable {
     double? totalAmount,
     String? notes,
     DateTime? createdAt,
+    DateTime? updatedAt,
     bool? isSynced,
     String? paymentMethod,
     double? paidAmount,
@@ -96,6 +99,7 @@ class InventoryPurchaseEntity extends Equatable {
       totalAmount: totalAmount ?? this.totalAmount,
       notes: notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
       isSynced: isSynced ?? this.isSynced,
       paymentMethod: paymentMethod ?? this.paymentMethod,
       paidAmount: paidAmount ?? this.paidAmount,
@@ -111,6 +115,7 @@ class InventoryPurchaseEntity extends Equatable {
         totalAmount,
         notes,
         createdAt,
+        updatedAt,
         isSynced,
         paymentMethod,
         paidAmount,

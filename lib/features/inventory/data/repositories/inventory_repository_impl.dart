@@ -533,31 +533,66 @@ class InventoryRepositoryImpl implements InventoryRepository {
     try {
       List<InventoryPurchaseModel> purchases =
           await localDataSource.getPurchases();
-      if (await connectionChecker.hasConnection && _currentUid != null) {
-        try {
-          final remotePurchases = await remoteDataSource
-              .fetchPurchasesFromRemote(_currentUid!, limit: limit);
-          final remoteIds = remotePurchases.where((p) => !p.isDeleted).map((p) => p.id).toSet();
+      final bool hasConn = await connectionChecker.hasConnection;
 
-          for (final p in remotePurchases) {
-            if (p.isDeleted) {
-              await localDataSource.deletePurchase(p.id);
-            } else {
-              final matches = purchases.where((x) => x.id == p.id);
-              final localItem = matches.isNotEmpty ? matches.first : null;
-              if (localItem == null || localItem.isSynced) {
-                await localDataSource.savePurchase(p);
+      if (hasConn && _currentUid != null) {
+        try {
+          final lastSync =
+              await localDataSource.getLastPurchasesSyncTimestamp();
+          if (purchases.isEmpty || lastSync == null) {
+            final now = DateTime.now().millisecondsSinceEpoch;
+            final remotePurchases = await remoteDataSource
+                .fetchAllPurchasesFromRemote(_currentUid!);
+            final remoteIds = remotePurchases
+                .where((p) => !p.isDeleted)
+                .map((p) => p.id)
+                .toSet();
+
+            for (final p in remotePurchases) {
+              if (p.isDeleted) {
+                await localDataSource.deletePurchase(p.id);
+              } else {
+                final matches = purchases.where((x) => x.id == p.id);
+                final localItem = matches.isNotEmpty ? matches.first : null;
+                if (localItem == null || localItem.isSynced) {
+                  await localDataSource.savePurchase(p);
+                }
               }
             }
-          }
 
-          for (final localP in purchases) {
-            if (localP.isSynced && !remoteIds.contains(localP.id)) {
-              await localDataSource.deletePurchase(localP.id);
+            for (final localP in purchases) {
+              if (localP.isSynced && !remoteIds.contains(localP.id)) {
+                await localDataSource.deletePurchase(localP.id);
+              }
             }
-          }
 
-          purchases = await localDataSource.getPurchases();
+            await localDataSource.saveLastPurchasesSyncTimestamp(now);
+            purchases = await localDataSource.getPurchases();
+          } else {
+            final now = DateTime.now().millisecondsSinceEpoch;
+            final safeTimestamp =
+                (lastSync > 60000) ? (lastSync - 60000) : lastSync;
+            final deltaPurchases =
+                await remoteDataSource.fetchPurchasesDeltaFromRemote(
+              _currentUid!,
+              safeTimestamp,
+            );
+            if (deltaPurchases.isNotEmpty) {
+              for (final p in deltaPurchases) {
+                if (p.isDeleted) {
+                  await localDataSource.deletePurchase(p.id);
+                } else {
+                  final matches = purchases.where((x) => x.id == p.id);
+                  final localItem = matches.isNotEmpty ? matches.first : null;
+                  if (localItem == null || localItem.isSynced) {
+                    await localDataSource.savePurchase(p);
+                  }
+                }
+              }
+              purchases = await localDataSource.getPurchases();
+            }
+            await localDataSource.saveLastPurchasesSyncTimestamp(now);
+          }
         } catch (_) {}
       }
 
@@ -836,7 +871,10 @@ class InventoryRepositoryImpl implements InventoryRepository {
 
       // 2. Save Purchase Record locally
       final purchaseModel = InventoryPurchaseModel.fromEntity(
-        purchase.copyWith(isSynced: hasConnection),
+        purchase.copyWith(
+          isSynced: hasConnection,
+          updatedAt: DateTime.now(),
+        ),
       );
       await localDataSource.savePurchase(purchaseModel);
 
@@ -1020,7 +1058,10 @@ class InventoryRepositoryImpl implements InventoryRepository {
 
       // 1. Save updated purchase model locally
       final model = InventoryPurchaseModel.fromEntity(
-        newPurchase.copyWith(isSynced: hasConnection),
+        newPurchase.copyWith(
+          isSynced: hasConnection,
+          updatedAt: DateTime.now(),
+        ),
       );
       await localDataSource.savePurchase(model);
 
@@ -1357,9 +1398,17 @@ class InventoryRepositoryImpl implements InventoryRepository {
             await _syncPurchaseToMyDebts(p);
           } catch (_) {}
           await localDataSource.savePurchase(
-            InventoryPurchaseModel.fromEntity(p.copyWith(isSynced: true)),
+            InventoryPurchaseModel.fromEntity(
+              p.copyWith(
+                isSynced: true,
+                updatedAt: DateTime.now(),
+              ),
+            ),
           );
         }
+        await localDataSource.saveLastPurchasesSyncTimestamp(
+          DateTime.now().millisecondsSinceEpoch,
+        );
       }
 
       // Sync Unsynced Stock Movements

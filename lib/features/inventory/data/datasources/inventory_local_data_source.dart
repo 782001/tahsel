@@ -40,6 +40,8 @@ abstract class InventoryLocalDataSource {
   // Sync Metadata
   Future<int?> getLastProductsSyncTimestamp();
   Future<void> saveLastProductsSyncTimestamp(int timestamp);
+  Future<int?> getLastPurchasesSyncTimestamp();
+  Future<void> saveLastPurchasesSyncTimestamp(int timestamp);
 }
 
 class InventoryLocalDataSourceImpl implements InventoryLocalDataSource {
@@ -234,5 +236,19 @@ class InventoryLocalDataSourceImpl implements InventoryLocalDataSource {
   Future<void> saveLastProductsSyncTimestamp(int timestamp) async {
     final box = await _getBox(metaBoxName);
     await box.put('last_products_sync_timestamp', timestamp.toString());
+  }
+
+  @override
+  Future<int?> getLastPurchasesSyncTimestamp() async {
+    final box = await _getBox(metaBoxName);
+    final val = box.get('last_purchases_sync_timestamp');
+    if (val == null || val.isEmpty) return null;
+    return int.tryParse(val);
+  }
+
+  @override
+  Future<void> saveLastPurchasesSyncTimestamp(int timestamp) async {
+    final box = await _getBox(metaBoxName);
+    await box.put('last_purchases_sync_timestamp', timestamp.toString());
   }
 }

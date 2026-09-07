@@ -44,6 +44,8 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
   }
 
   void _onScroll() {
+    final query = _searchController.text.trim();
+    if (query.isNotEmpty || _selectedDateRange != null) return;
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       context.read<InventoryPurchasesCubit>().fetchMorePurchases();
@@ -401,7 +403,12 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
 
                         // Apply Search & Date Filters
                         final query = _searchController.text.trim().toLowerCase();
-                        final filteredPurchases = state.purchases.where((p) {
+                        final isFiltering = query.isNotEmpty || _selectedDateRange != null;
+
+                        // Search across all cached purchases when filtering, otherwise use current page
+                        final sourceList = isFiltering ? state.allPurchases : state.purchases;
+
+                        final filteredPurchases = sourceList.where((p) {
                           final matchesSearch =
                               query.isEmpty ||
                               p.supplierName.toLowerCase().contains(query) ||
@@ -464,7 +471,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                         ),
                                         itemCount:
                                             filteredPurchases.length +
-                                            (state.isPaginationLoading ? 1 : 0),
+                                            (!isFiltering && state.isPaginationLoading ? 1 : 0),
                                         itemBuilder: (context, index) {
                                           if (index == filteredPurchases.length) {
                                             return const PurchaseCardSkeleton();
