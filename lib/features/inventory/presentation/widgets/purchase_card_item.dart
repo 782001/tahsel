@@ -45,11 +45,11 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
       'yyyy/MM/dd - hh:mm a',
     ).format(widget.purchase.createdAt);
 
-    final itemsToDisplay = (_isExpanded || widget.purchase.items.length <= 2)
+    final itemsToDisplay = (_isExpanded || widget.purchase.items.length <= 1)
         ? widget.purchase.items
-        : widget.purchase.items.take(2).toList();
+        : widget.purchase.items.take(1).toList();
 
-    final hasMoreItems = widget.purchase.items.length > 2;
+    final hasMoreItems = widget.purchase.items.length > 1;
 
     final method = widget.purchase.paymentMethod;
     final Color methodColor = method == 'debt'
@@ -352,7 +352,7 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
                         Text(
                           _isExpanded
                               ? AppStrings.showLess.tr()
-                              : '${AppStrings.showMore.tr()} (+${widget.purchase.items.length - 2})',
+                              : '${AppStrings.showMore.tr()} (+${widget.purchase.items.length - 1})',
                           style: TextStyles.customStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,

@@ -402,11 +402,16 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                         }
 
                         // Apply Search & Date Filters
-                        final query = _searchController.text.trim().toLowerCase();
-                        final isFiltering = query.isNotEmpty || _selectedDateRange != null;
+                        final query = _searchController.text
+                            .trim()
+                            .toLowerCase();
+                        final isFiltering =
+                            query.isNotEmpty || _selectedDateRange != null;
 
                         // Search across all cached purchases when filtering, otherwise use current page
-                        final sourceList = isFiltering ? state.allPurchases : state.purchases;
+                        final sourceList = isFiltering
+                            ? state.allPurchases
+                            : state.purchases;
 
                         final filteredPurchases = sourceList.where((p) {
                           final matchesSearch =
@@ -414,7 +419,8 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                               p.supplierName.toLowerCase().contains(query) ||
                               p.id.toLowerCase().contains(query) ||
                               p.items.any(
-                                (i) => i.productName.toLowerCase().contains(query),
+                                (i) =>
+                                    i.productName.toLowerCase().contains(query),
                               );
 
                           final matchesDate =
@@ -435,7 +441,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
 
                         return Column(
                           children: [
-                            SizedBox(height: 14.h),
+                            
 
                             // Search and Date Filter Bar Component
                             PurchaseSearchBar(
@@ -452,7 +458,8 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                   ? InventoryEmptyState(
                                       icon: Icons.search_off_rounded,
                                       title: AppStrings.noResults.tr(),
-                                      description: AppStrings.noPurchasesFound.tr(),
+                                      description: AppStrings.noPurchasesFound
+                                          .tr(),
                                       actionLabel: AppStrings.tryAgain.tr(),
                                       onAction: _clearFilters,
                                     )
@@ -467,13 +474,17 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                         controller: _scrollController,
                                         physics:
                                             const AlwaysScrollableScrollPhysics(
-                                          parent: BouncingScrollPhysics(),
-                                        ),
+                                              parent: BouncingScrollPhysics(),
+                                            ),
                                         itemCount:
                                             filteredPurchases.length +
-                                            (!isFiltering && state.isPaginationLoading ? 1 : 0),
+                                            (!isFiltering &&
+                                                    state.isPaginationLoading
+                                                ? 1
+                                                : 0),
                                         itemBuilder: (context, index) {
-                                          if (index == filteredPurchases.length) {
+                                          if (index ==
+                                              filteredPurchases.length) {
                                             return const PurchaseCardSkeleton();
                                           }
                                           final pur = filteredPurchases[index];
