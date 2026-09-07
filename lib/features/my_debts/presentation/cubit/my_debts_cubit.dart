@@ -75,6 +75,8 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
 
   List<MyDebtPersonEntity> _allPersons = [];
   List<MyDebtPersonEntity> _remotePersons = [];
+  bool _lastHasMore = false;
+  List<MyDebtPersonEntity>? _serverAllPersons;
   Timer? _searchDebounce;
 
   Future<void> loadPersons(String uid, {bool forceRefresh = false}) async {
@@ -110,22 +112,29 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
         _remotePersons = [];
         final merged = _mergePendingRecords([], pendingRecords);
         _allPersons = merged;
+        _lastHasMore = false;
+        _serverAllPersons = null;
         _emitLoaded(
           merged,
           status: MyDebtsStatus.offlineLoaded,
           lastDocument: null,
+          clearLastDocument: true,
           hasMore: false,
+          isPaginationLoading: false,
         );
       },
       (paginated) {
         _remotePersons = List.from(paginated.items);
         final merged = _mergePendingRecords(_remotePersons, pendingRecords);
         _allPersons = merged;
+        _lastHasMore = paginated.hasMore;
+        _serverAllPersons = null;
         _emitLoaded(
           merged,
           status: MyDebtsStatus.loaded,
           lastDocument: paginated.lastDocument,
           hasMore: paginated.hasMore,
+          isPaginationLoading: false,
         );
       },
     );
@@ -165,6 +174,8 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
         _remotePersons.addAll(paginated.items);
         final merged = _mergePendingRecords(_remotePersons, pendingRecords);
         _allPersons = merged;
+        _lastHasMore = paginated.hasMore;
+        _serverAllPersons = null;
         _emitLoaded(
           merged,
           status: MyDebtsStatus.loaded,
@@ -241,6 +252,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
     DocumentSnapshot? lastDocument,
     bool? hasMore,
     bool? isPaginationLoading,
+    bool clearLastDocument = false,
   }) {
     double totalOwed = 0;
     double totalPaid = 0;
@@ -258,6 +270,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
         totalPaid: totalPaid,
         totalPeople: persons.length,
         lastDocument: lastDocument,
+        clearLastDocument: clearLastDocument,
         hasMore: hasMore,
         isPaginationLoading: isPaginationLoading,
       ),
@@ -398,19 +411,65 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
   }
 
   void search(String query) {
-    if (_searchDebounce?.isActive ?? false) _searchDebounce!.cancel();
-    _searchDebounce = Timer(const Duration(milliseconds: 500), () {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () async {
       if (isClosed) return;
-      final filtered = query.isEmpty
-          ? _allPersons
-          : _allPersons
-                .where(
-                  (p) =>
-                      p.name.toLowerCase().contains(query.toLowerCase()) ||
-                      (p.phoneNumber?.contains(query) ?? false),
-                )
-                .toList();
-      _emitLoaded(filtered);
+      final q = query.trim().toLowerCase();
+      if (q.isEmpty) {
+        _emitLoaded(
+          _allPersons,
+          status: MyDebtsStatus.loaded,
+          lastDocument: state.lastDocument,
+          hasMore: _lastHasMore,
+          isPaginationLoading: false,
+        );
+        return;
+      }
+
+      // Fetch all persons from server for exhaustive search across entire collection
+      List<MyDebtPersonEntity> sourcePersons = _serverAllPersons ?? [];
+      if (_serverAllPersons == null) {
+        final uid = AppStrings.userToken;
+        if (uid.isNotEmpty) {
+          final result = await getPersonsUseCase(
+            GetMyDebtPersonsParams(uid: uid, forceRefresh: true),
+          );
+          final pendingResult = await getPendingMyDebtsUseCase(const NoParams());
+          final List<OfflineRecord> pendingRecords = pendingResult.fold(
+            (_) => [],
+            (records) => records,
+          );
+
+          result.fold(
+            (_) {},
+            (persons) {
+              final merged = _mergePendingRecords(persons, pendingRecords);
+              _serverAllPersons = merged;
+              sourcePersons = merged;
+            },
+          );
+        }
+      }
+
+      if (sourcePersons.isEmpty) {
+        sourcePersons = _allPersons;
+      }
+
+      final filtered = sourcePersons.where((p) {
+        final nameMatches = p.name.toLowerCase().contains(q);
+        final phoneMatches = (p.phoneNumber ?? '').contains(q);
+        return nameMatches || phoneMatches;
+      }).toList();
+
+      if (isClosed) return;
+      _emitLoaded(
+        filtered,
+        status: MyDebtsStatus.loaded,
+        lastDocument: null,
+        clearLastDocument: true,
+        hasMore: false,
+        isPaginationLoading: false,
+      );
     });
   }
 
@@ -442,6 +501,9 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
 
   void clearData() {
     _allPersons.clear();
+    _remotePersons.clear();
+    _serverAllPersons = null;
+    _lastHasMore = false;
     emit(const MyDebtsState());
   }
 }

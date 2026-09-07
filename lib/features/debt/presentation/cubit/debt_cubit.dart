@@ -449,6 +449,12 @@ class DebtCubit extends Cubit<DebtState> {
     }
   }
 
+  @override
+  Future<void> close() {
+    _searchDebounce?.cancel();
+    return super.close();
+  }
+
   void clearData() {
     emit(DebtInitial());
   }

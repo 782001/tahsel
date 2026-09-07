@@ -50,6 +50,7 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen>
   }
 
   void _onScroll() {
+    if (_searchController.text.trim().isNotEmpty) return;
     if (_isBottom) {
       final uid = AppStrings.userToken;
       if (uid.isNotEmpty) {
@@ -185,6 +186,7 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen>
                               setState(() {
                                 _searchQuery = val;
                               });
+                              context.read<DebtCubit>().searchDebts(val);
                             },
                           ),
                         ),

@@ -371,11 +371,27 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
           });
 
           if (customers.isEmpty) {
+            final isSearching = widget.searchQuery.trim().isNotEmpty;
             return SliverFillRemaining(
               child: Center(
-                child: Text(
-                  AppStrings.noCustomerDebts.tr(),
-                  style: TextStyles.customStyle(color: AppColors.grey),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      isSearching
+                          ? Icons.search_off_rounded
+                          : Icons.account_balance_wallet_outlined,
+                      size: 64.r,
+                      color: AppColors.grey,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      isSearching
+                          ? AppStrings.noResults.tr()
+                          : AppStrings.noCustomerDebts.tr(),
+                      style: TextStyles.customStyle(color: AppColors.grey),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -458,6 +474,9 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
   }
 
   Widget _buildFooter(DebtsFetchSuccess state) {
+    if (widget.searchQuery.trim().isNotEmpty) {
+      return const SizedBox(height: 100);
+    }
     if (state.isPaginationLoading) {
       return Padding(
         padding: EdgeInsets.symmetric(vertical: 32.h),

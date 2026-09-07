@@ -46,6 +46,7 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView>
   }
 
   void _onScroll() {
+    if (_searchController.text.trim().isNotEmpty) return;
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       final uid = AppStrings.userToken;
@@ -172,12 +173,27 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView>
                     SliverFillRemaining(
                       hasScrollBody: false,
                       child: Center(
-                        child: Text(
-                          AppStrings.noData.tr(),
-                          style: TextStyles.customStyle(
-                            color: AppColors.subTitleColor,
-                            fontSize: 16,
-                          ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              _searchController.text.trim().isNotEmpty
+                                  ? Icons.search_off_rounded
+                                  : Icons.people_outline_rounded,
+                              size: 64,
+                              color: AppColors.subTitleColor,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              _searchController.text.trim().isNotEmpty
+                                  ? AppStrings.noResults.tr()
+                                  : AppStrings.noData.tr(),
+                              style: TextStyles.customStyle(
+                                color: AppColors.subTitleColor,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     )
@@ -206,7 +222,8 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView>
                                 return MyDebtCard(person: person);
                               },
                             ),
-                            if (state.isPaginationLoading)
+                            if (state.isPaginationLoading &&
+                                _searchController.text.trim().isEmpty)
                               Padding(
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 32,
@@ -230,7 +247,8 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView>
                       sliver: SliverList(
                         delegate: SliverChildBuilderDelegate((context, index) {
                           if (index == state.filteredPersons.length) {
-                            if (state.isPaginationLoading) {
+                            if (state.isPaginationLoading &&
+                                _searchController.text.trim().isEmpty) {
                               return Padding(
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 16,
