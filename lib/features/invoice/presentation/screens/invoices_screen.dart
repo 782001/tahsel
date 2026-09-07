@@ -11,6 +11,7 @@ import 'package:tahsel/features/invoice/presentation/cubit/invoice_cubit.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_state.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/empty_invoices_view.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/invoice_card.dart';
+import 'package:tahsel/features/invoice/presentation/widgets/invoice_card_skeleton.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/invoice_search_bar.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/invoices_app_bar.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/offline_empty_invoices_view.dart';
@@ -60,7 +61,8 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
       context: context,
       firstDate: DateTime(2000),
       lastDate: DateTime(now.year + 5),
-      initialDateRange: _selectedDateRange ??
+      initialDateRange:
+          _selectedDateRange ??
           DateTimeRange(
             start: now.subtract(const Duration(days: 30)),
             end: now,
@@ -155,10 +157,14 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                     child: BlocBuilder<InvoiceCubit, InvoiceState>(
                       builder: (context, state) {
                         if (state is InvoiceLoading) {
-                          return Center(
-                            child: CircularProgressIndicator(
-                              color: AppColors.primaryColor,
+                          return ListView.builder(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
                             ),
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: 6,
+                            itemBuilder: (_, __) => const InvoiceCardSkeleton(),
                           );
                         }
 
@@ -237,17 +243,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                               (hasMore || isPaginationLoading ? 1 : 0),
                           itemBuilder: (context, index) {
                             if (index == invoices.length) {
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    color: AppColors.primaryColor,
-                                    strokeWidth: 3,
-                                  ),
-                                ),
-                              );
+                              return const InvoiceCardSkeleton();
                             }
                             final isPending =
                                 state is InvoiceListLoaded &&
@@ -280,8 +276,9 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                           child: SizedBox(
                             height: 56.h,
                             child: ElevatedButton.icon(
-                              onPressed: () => _handleCreate(isQuotation: false),
-                              icon:  Icon(
+                              onPressed: () =>
+                                  _handleCreate(isQuotation: false),
+                              icon: Icon(
                                 Icons.receipt_long_rounded,
                                 color: AppColors.whiteColor,
                                 size: 20,
@@ -315,7 +312,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                             height: 56.h,
                             child: ElevatedButton.icon(
                               onPressed: () => _handleCreate(isQuotation: true),
-                              icon:  Icon(
+                              icon: Icon(
                                 Icons.request_quote_rounded,
                                 color: AppColors.whiteColor,
                                 size: 20,
@@ -332,7 +329,8 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                                 ),
                               ),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.movementInvoiceReturn,
+                                backgroundColor:
+                                    AppColors.movementInvoiceReturn,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16.r),
                                 ),
@@ -365,19 +363,15 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
 
     if (result is Map<String, dynamic> && result.containsKey('invoice')) {
       // ignore: use_build_context_synchronously
-      await Navigator.of(context).pushNamed(
-        AppRoutes.invoiceDetail,
-        arguments: result,
-      );
+      await Navigator.of(
+        context,
+      ).pushNamed(AppRoutes.invoiceDetail, arguments: result);
     }
 
     // Refresh list after returning from create or detail screen
     if (!mounted) return;
     _clearFilters();
-    cubit.fetchInvoices(
-      AppStrings.userToken,
-      forceRefresh: true,
-    );
+    cubit.fetchInvoices(AppStrings.userToken, forceRefresh: true);
   }
 
   void _openDetail(BuildContext context, InvoiceEntity invoice) async {

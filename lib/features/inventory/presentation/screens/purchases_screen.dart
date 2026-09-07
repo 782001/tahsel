@@ -14,6 +14,7 @@ import '../cubits/inventory_purchases_cubit.dart';
 import '../cubits/inventory_suppliers_cubit.dart';
 import '../widgets/inventory_empty_state.dart';
 import '../widgets/purchase_card_item.dart';
+import '../widgets/purchase_card_skeleton.dart';
 import '../widgets/purchase_search_bar.dart';
 import 'create_purchase_screen.dart';
 
@@ -368,11 +369,10 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                   child: BlocBuilder<InventoryPurchasesCubit, InventoryPurchasesState>(
                     builder: (context, state) {
                       if (state is InventoryPurchasesLoading) {
-                        return Center(
-                          child: CircularProgressIndicator(
-                            strokeWidth: 4,
-                            color: AppColors.primaryColor,
-                          ),
+                        return ListView.builder(
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: 6,
+                          itemBuilder: (_, __) => const PurchaseCardSkeleton(),
                         );
                       }
 
@@ -467,17 +467,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                             (state.isPaginationLoading ? 1 : 0),
                                         itemBuilder: (context, index) {
                                           if (index == filteredPurchases.length) {
-                                            return Padding(
-                                              padding: EdgeInsets.symmetric(
-                                                vertical: isDesktop ? 16 : 16.h,
-                                              ),
-                                              child: Center(
-                                                child: CircularProgressIndicator(
-                                                  strokeWidth: 4,
-                                                  color: AppColors.primaryColor,
-                                                ),
-                                              ),
-                                            );
+                                            return const PurchaseCardSkeleton();
                                           }
                                           final pur = filteredPurchases[index];
                                           return Padding(
