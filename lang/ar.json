@@ -1246,5 +1246,9 @@
   "remove_logo": "إزالة الشعار",
   "upload_logo": "إضافة شعار",
   "logo_updated_successfully": "تم تحديث الشعار بنجاح",
-  "logo_removed_successfully": "تم إزالة الشعار بنجاح"
+  "logo_removed_successfully": "تم إزالة الشعار بنجاح",
+  "profile_offline_notice": "ستُعرض بيانات المنشأة في وضع الاتصال فقط",
+  "offline_mode": "وضع عدم الاتصال",
+  "crn_short": "سجل",
+  "vat_short": "ضريبي"
 }

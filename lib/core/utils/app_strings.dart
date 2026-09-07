@@ -93,6 +93,10 @@ class AppStrings {
   static const String changeLogo = 'change_logo';
   static const String removeLogo = 'remove_logo';
   static const String uploadLogo = 'upload_logo';
+  static const String profileOfflineNotice = 'profile_offline_notice';
+  static const String offlineMode = 'offline_mode';
+  static const String crnShort = 'crn_short';
+  static const String vatShort = 'vat_short';
   static const String logoUpdatedSuccessfully = 'logo_updated_successfully';
   static const String logoRemovedSuccessfully = 'logo_removed_successfully';
   static String userCreatedSuccessfully = 'user_created_successfully';

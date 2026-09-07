@@ -1243,5 +1243,9 @@
   "remove_logo": "Remove Logo",
   "upload_logo": "Upload Logo",
   "logo_updated_successfully": "Logo updated successfully",
-  "logo_removed_successfully": "Logo removed successfully"
+  "logo_removed_successfully": "Logo removed successfully",
+  "profile_offline_notice": "Business profile data will be displayed in online mode only",
+  "offline_mode": "Offline Mode",
+  "crn_short": "CRN",
+  "vat_short": "VAT"
 }
