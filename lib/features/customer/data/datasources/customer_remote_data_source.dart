@@ -40,8 +40,11 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
           .collection('users')
           .doc(uid)
           .collection('customers')
-          .orderBy('lastUsedAt', descending: true)
-          .limit(limit);
+          .orderBy('lastUsedAt', descending: true);
+
+      if (limit > 0) {
+        query = query.limit(limit);
+      }
 
       if (lastDoc != null) {
         query = query.startAfterDocument(lastDoc);

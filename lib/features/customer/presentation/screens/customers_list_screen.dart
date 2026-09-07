@@ -74,6 +74,7 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
   }
 
   void _onScroll() {
+    if (_searchController.text.trim().isNotEmpty) return;
     if (_isBottom) {
       context.read<CustomerReportsCubit>().fetchMoreCustomers(widget.uid);
     }
@@ -133,7 +134,8 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
                                 _searchController.clear();
                                 context
                                     .read<CustomerReportsCubit>()
-                                    .searchCustomers('');
+                                    .searchCustomers('', immediate: true);
+                                if (mounted) setState(() {});
                               },
                             )
                           : null,
@@ -192,19 +194,24 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
                   final customers = state.filteredCustomers;
 
                   if (customers.isEmpty && !state.isFetchingMore) {
+                    final isSearching = _searchController.text.trim().isNotEmpty;
                     return SliverFillRemaining(
                       child: Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              Icons.search_off,
+                              isSearching
+                                  ? Icons.search_off_rounded
+                                  : Icons.people_outline_rounded,
                               size: 64,
                               color: AppColors.blackLight.withAlpha(100),
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              AppStrings.noData.tr(),
+                              isSearching
+                                  ? AppStrings.noResults.tr()
+                                  : AppStrings.noData.tr(),
                               style: TextStyles.customStyle(
                                 color: AppColors.blackLight,
                                 fontSize: 16,
@@ -215,6 +222,9 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
                       ),
                     );
                   }
+
+                  final bool showLoadingFooter = state.isFetchingMore &&
+                      _searchController.text.trim().isEmpty;
 
                   return SliverPadding(
                     padding: const EdgeInsets.all(16),
@@ -230,17 +240,20 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
                             delegate: SliverChildBuilderDelegate(
                               (context, index) {
                                 if (index >= customers.length) {
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 32,
-                                    ),
-                                    child: Center(
-                                      child: CircularProgressIndicator(
-                                        color: AppColors.primaryColor,
-                                        strokeWidth: 2,
+                                  if (showLoadingFooter) {
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 32,
                                       ),
-                                    ),
-                                  );
+                                      child: Center(
+                                        child: CircularProgressIndicator(
+                                          color: AppColors.primaryColor,
+                                          strokeWidth: 2,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  return const SizedBox.shrink();
                                 }
                                 final customer = customers[index];
                                 return CustomerListCard(
@@ -250,24 +263,27 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
                               },
                               childCount:
                                   customers.length +
-                                  (state.isFetchingMore ? 1 : 0),
+                                  (showLoadingFooter ? 1 : 0),
                             ),
                           )
                         : SliverList(
                             delegate: SliverChildBuilderDelegate(
                               (context, index) {
                                 if (index >= customers.length) {
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 32,
-                                    ),
-                                    child: Center(
-                                      child: CircularProgressIndicator(
-                                        color: AppColors.primaryColor,
-                                        strokeWidth: 2,
+                                  if (showLoadingFooter) {
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 32,
                                       ),
-                                    ),
-                                  );
+                                      child: Center(
+                                        child: CircularProgressIndicator(
+                                          color: AppColors.primaryColor,
+                                          strokeWidth: 2,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  return const SizedBox.shrink();
                                 }
                                 final customer = customers[index];
                                 return CustomerListCard(
@@ -277,7 +293,7 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
                               },
                               childCount:
                                   customers.length +
-                                  (state.isFetchingMore ? 1 : 0),
+                                  (showLoadingFooter ? 1 : 0),
                             ),
                           ),
                   );
