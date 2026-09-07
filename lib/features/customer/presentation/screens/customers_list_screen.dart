@@ -7,6 +7,7 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/customer/presentation/widgets/customer_list_card.dart';
+import 'package:tahsel/features/customer/presentation/widgets/skeletons/customer_card_skeleton.dart';
 
 import '../../../../core/services/injection_container.dart';
 import '../cubit/customer_reports/customer_reports_cubit.dart';
@@ -174,12 +175,28 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
             BlocBuilder<CustomerReportsCubit, CustomerReportsState>(
               builder: (context, state) {
                 if (state is CustomerReportsLoading) {
-                  return SliverFillRemaining(
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primaryColor,
-                      ),
-                    ),
+                  return SliverPadding(
+                    padding: const EdgeInsets.all(16),
+                    sliver: isDesktop
+                        ? SliverGrid(
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  mainAxisExtent: 105,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 16,
+                                ),
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) => const CustomerCardSkeleton(),
+                              childCount: 8,
+                            ),
+                          )
+                        : SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) => const CustomerCardSkeleton(),
+                              childCount: 6,
+                            ),
+                          ),
                   );
                 }
 
@@ -241,17 +258,7 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
                               (context, index) {
                                 if (index >= customers.length) {
                                   if (showLoadingFooter) {
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 32,
-                                      ),
-                                      child: Center(
-                                        child: CircularProgressIndicator(
-                                          color: AppColors.primaryColor,
-                                          strokeWidth: 2,
-                                        ),
-                                      ),
-                                    );
+                                    return const CustomerCardSkeleton();
                                   }
                                   return const SizedBox.shrink();
                                 }
@@ -271,17 +278,7 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
                               (context, index) {
                                 if (index >= customers.length) {
                                   if (showLoadingFooter) {
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 32,
-                                      ),
-                                      child: Center(
-                                        child: CircularProgressIndicator(
-                                          color: AppColors.primaryColor,
-                                          strokeWidth: 2,
-                                        ),
-                                      ),
-                                    );
+                                    return const CustomerCardSkeleton();
                                   }
                                   return const SizedBox.shrink();
                                 }

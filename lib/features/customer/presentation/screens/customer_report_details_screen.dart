@@ -7,6 +7,7 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/customer/presentation/widgets/customer_operation_tile.dart';
 import 'package:tahsel/features/customer/presentation/widgets/customer_summary_card.dart';
+import 'package:tahsel/features/customer/presentation/widgets/skeletons/customer_operation_skeleton.dart';
 
 import '../../../../core/services/injection_container.dart';
 import '../cubit/customer_details/customer_details_cubit.dart';
@@ -104,9 +105,46 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
       builder: (context, state) {
         if (state is CustomerDetailsLoading) {
           return Center(
-            child: CircularProgressIndicator(
-              color: AppColors.primaryColor,
-              strokeWidth: 2,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: isDesktop ? 800 : double.infinity,
+              ),
+              child: CustomScrollView(
+                slivers: [
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: CustomerSummarySkeleton(),
+                    ),
+                  ),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    sliver: isDesktop
+                        ? SliverGrid(
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  mainAxisExtent: 85,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 16,
+                                ),
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) =>
+                                  const CustomerOperationTileSkeleton(),
+                              childCount: 6,
+                            ),
+                          )
+                        : SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) =>
+                                  const CustomerOperationTileSkeleton(),
+                              childCount: 6,
+                            ),
+                          ),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 32)),
+                ],
+              ),
             ),
           );
         }
@@ -148,17 +186,7 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
                             delegate: SliverChildBuilderDelegate(
                               (context, index) {
                                 if (index >= state.operations.length) {
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 32,
-                                    ),
-                                    child: Center(
-                                      child: CircularProgressIndicator(
-                                        color: AppColors.primaryColor,
-                                        strokeWidth: 2,
-                                      ),
-                                    ),
-                                  );
+                                  return const CustomerOperationTileSkeleton();
                                 }
                                 final op = state.operations[index];
                                 return CustomerOperationTile(operation: op);
@@ -172,17 +200,7 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
                             delegate: SliverChildBuilderDelegate(
                               (context, index) {
                                 if (index >= state.operations.length) {
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 32,
-                                    ),
-                                    child: Center(
-                                      child: CircularProgressIndicator(
-                                        color: AppColors.primaryColor,
-                                        strokeWidth: 2,
-                                      ),
-                                    ),
-                                  );
+                                  return const CustomerOperationTileSkeleton();
                                 }
                                 final op = state.operations[index];
                                 return CustomerOperationTile(operation: op);
