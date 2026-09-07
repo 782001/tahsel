@@ -20,15 +20,36 @@ class EmployeeFetchSuccess extends EmployeeState {
   final List<EmployeeEntity> employees;
   final Object? lastDoc;
   final bool hasReachedMax;
+  final bool isPaginationLoading;
 
   const EmployeeFetchSuccess({
     required this.employees,
     this.lastDoc,
     this.hasReachedMax = false,
+    this.isPaginationLoading = false,
   });
 
+  EmployeeFetchSuccess copyWith({
+    List<EmployeeEntity>? employees,
+    Object? lastDoc,
+    bool? hasReachedMax,
+    bool? isPaginationLoading,
+  }) {
+    return EmployeeFetchSuccess(
+      employees: employees ?? this.employees,
+      lastDoc: lastDoc ?? this.lastDoc,
+      hasReachedMax: hasReachedMax ?? this.hasReachedMax,
+      isPaginationLoading: isPaginationLoading ?? this.isPaginationLoading,
+    );
+  }
+
   @override
-  List<Object?> get props => [employees, lastDoc, hasReachedMax];
+  List<Object?> get props => [
+    employees,
+    lastDoc,
+    hasReachedMax,
+    isPaginationLoading,
+  ];
 }
 
 class EmployeeActionSuccess extends EmployeeState {

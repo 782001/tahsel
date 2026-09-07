@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -44,6 +45,12 @@ class EmployeeCubit extends Cubit<EmployeeState> {
     required this.getEmployeeUseCase,
   }) : super(EmployeeInitial());
 
+  List<EmployeeEntity> _paginatedEmployees = [];
+  Object? _lastDoc;
+  bool _lastHasReachedMax = false;
+  List<EmployeeEntity>? _serverAllEmployees;
+  Timer? _searchDebounce;
+
   Future<void> fetchEmployees(String uid, {bool forceRefresh = false}) async {
     if (!forceRefresh && state is EmployeeFetchSuccess) {
       return;
@@ -60,11 +67,17 @@ class EmployeeCubit extends Cubit<EmployeeState> {
         emit(EmployeeFailure(failure.message));
       },
       (paginatedList) {
+        _paginatedEmployees = paginatedList.employees;
+        _lastDoc = paginatedList.lastDoc;
+        _lastHasReachedMax = paginatedList.employees.length < 15;
+        _serverAllEmployees = null;
+
         emit(
           EmployeeFetchSuccess(
             employees: paginatedList.employees,
             lastDoc: paginatedList.lastDoc,
-            hasReachedMax: paginatedList.employees.length < 15,
+            hasReachedMax: _lastHasReachedMax,
+            isPaginationLoading: false,
           ),
         );
       },
@@ -73,30 +86,44 @@ class EmployeeCubit extends Cubit<EmployeeState> {
 
   Future<void> loadMoreEmployees(String uid) async {
     final currentState = state;
-    if (currentState is! EmployeeFetchSuccess || currentState.hasReachedMax) {
+    if (currentState is! EmployeeFetchSuccess ||
+        currentState.hasReachedMax ||
+        currentState.isPaginationLoading) {
       return;
     }
+
+    emit(currentState.copyWith(isPaginationLoading: true));
 
     final result = await getEmployeesUseCase(
       GetEmployeesParams(uid: uid, limit: 15, lastDoc: currentState.lastDoc),
     );
 
-    result.fold((_) => null, (paginatedList) {
-      final combined = [...currentState.employees, ...paginatedList.employees];
-      final unique = <String, EmployeeEntity>{};
+    result.fold(
+      (_) => emit(currentState.copyWith(isPaginationLoading: false)),
+      (paginatedList) {
+        final combined = [..._paginatedEmployees, ...paginatedList.employees];
+        final unique = <String, EmployeeEntity>{};
 
-      for (var e in combined) {
-        unique[e.id ?? ''] = e;
-      }
+        for (var e in combined) {
+          unique[e.id ?? ''] = e;
+        }
 
-      emit(
-        EmployeeFetchSuccess(
-          employees: unique.values.toList(),
-          lastDoc: paginatedList.lastDoc,
-          hasReachedMax: paginatedList.employees.length < 15,
-        ),
-      );
-    });
+        final updatedList = unique.values.toList();
+        _paginatedEmployees = updatedList;
+        _lastDoc = paginatedList.lastDoc;
+        _lastHasReachedMax = paginatedList.employees.length < 15;
+        _serverAllEmployees = null;
+
+        emit(
+          EmployeeFetchSuccess(
+            employees: updatedList,
+            lastDoc: paginatedList.lastDoc,
+            hasReachedMax: _lastHasReachedMax,
+            isPaginationLoading: false,
+          ),
+        );
+      },
+    );
   }
 
   Future<void> addEmployee(EmployeeEntity employee) async {
@@ -104,6 +131,7 @@ class EmployeeCubit extends Cubit<EmployeeState> {
     final result = await addEmployeeUseCase(employee);
     result.fold((failure) => emit(EmployeeFailure(failure.message)), (id) {
       emit(EmployeeActionSuccess(AppStrings.employeeAddedSuccess.tr()));
+      _serverAllEmployees = null;
       fetchEmployees(employee.uid, forceRefresh: true);
     });
   }
@@ -113,24 +141,65 @@ class EmployeeCubit extends Cubit<EmployeeState> {
     final result = await editEmployeeUseCase(employee);
     result.fold((failure) => emit(EmployeeFailure(failure.message)), (_) {
       emit(EmployeeActionSuccess(AppStrings.employeeEditedSuccess.tr()));
+      _serverAllEmployees = null;
       fetchEmployees(employee.uid, forceRefresh: true);
     });
   }
 
-  Future<void> search(String uid, String query) async {
-    if (query.isEmpty) {
-      fetchEmployees(uid, forceRefresh: true);
-      return;
-    }
-    emit(EmployeeLoading());
-    final result = await searchEmployeesUseCase(
-      SearchEmployeesParams(uid: uid, query: query),
-    );
-    result.fold(
-      (failure) => emit(EmployeeFailure(failure.message)),
-      (employees) =>
-          emit(EmployeeFetchSuccess(employees: employees, hasReachedMax: true)),
-    );
+  void search(String uid, String query) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () async {
+      if (isClosed) return;
+      final q = query.trim().toLowerCase();
+
+      if (q.isEmpty) {
+        emit(
+          EmployeeFetchSuccess(
+            employees: _paginatedEmployees,
+            lastDoc: _lastDoc,
+            hasReachedMax: _lastHasReachedMax,
+            isPaginationLoading: false,
+          ),
+        );
+        return;
+      }
+
+      // Fetch all employees from server for exhaustive search across entire collection
+      List<EmployeeEntity> sourceEmployees = _serverAllEmployees ?? [];
+      if (_serverAllEmployees == null) {
+        final activeUid = uid.isNotEmpty ? uid : AppStrings.userToken;
+        if (activeUid.isNotEmpty) {
+          final result = await getEmployeesUseCase(
+            GetEmployeesParams(uid: activeUid, limit: 0),
+          );
+          result.fold((_) {}, (paginatedList) {
+            _serverAllEmployees = paginatedList.employees;
+            sourceEmployees = paginatedList.employees;
+          });
+        }
+      }
+
+      if (sourceEmployees.isEmpty) {
+        sourceEmployees = _paginatedEmployees;
+      }
+
+      final filtered = sourceEmployees.where((emp) {
+        final name = emp.name.toLowerCase();
+        final role = emp.role.toLowerCase();
+        final phone = emp.phone.toLowerCase();
+        return name.contains(q) || role.contains(q) || phone.contains(q);
+      }).toList();
+
+      if (isClosed) return;
+      emit(
+        EmployeeFetchSuccess(
+          employees: filtered,
+          lastDoc: null,
+          hasReachedMax: true, // In search mode, all server matches are present; no trailing pagination
+          isPaginationLoading: false,
+        ),
+      );
+    });
   }
 
   Future<void> checkIn(AttendanceEntity attendance) async {
@@ -568,5 +637,11 @@ class EmployeeCubit extends Cubit<EmployeeState> {
     } catch (e) {
       emit(EmployeeFailure(e.toString()));
     }
+  }
+
+  @override
+  Future<void> close() {
+    _searchDebounce?.cancel();
+    return super.close();
   }
 }

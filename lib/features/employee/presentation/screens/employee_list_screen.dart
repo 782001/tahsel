@@ -26,20 +26,36 @@ class EmployeeListScreen extends StatefulWidget {
 
 class _EmployeeListScreenState extends State<EmployeeListScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   String _selectedStatusFilter = 'all';
   List<EmployeeEntity> _cachedEmployees = [];
 
   @override
   void initState() {
     super.initState();
-    // Trigger initial fetch of employees
+    _scrollController.addListener(_onScroll);
     context.read<EmployeeCubit>().fetchEmployees(AppStrings.userToken);
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (_searchController.text.trim().isNotEmpty) return;
+    if (_isBottom) {
+      context.read<EmployeeCubit>().loadMoreEmployees(AppStrings.userToken);
+    }
+  }
+
+  bool get _isBottom {
+    if (!_scrollController.hasClients) return false;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.offset;
+    return currentScroll >= (maxScroll * 0.9);
   }
 
   @override
@@ -149,6 +165,11 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                     return matchQuery && matchStatus;
                   }).toList();
 
+                  final bool showPaginationLoading =
+                      state is EmployeeFetchSuccess &&
+                      state.isPaginationLoading &&
+                      _searchController.text.trim().isEmpty;
+
                   return RefreshIndicator(
                     color: AppColors.primaryColor,
                     onRefresh: () async {
@@ -158,6 +179,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                       );
                     },
                     child: CustomScrollView(
+                      controller: _scrollController,
                       physics: const AlwaysScrollableScrollPhysics(),
                       slivers: [
                         SliverToBoxAdapter(child: _buildHeader(isDesktop)),
@@ -213,7 +235,9 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(
-                                      Icons.people_outline_rounded,
+                                      _searchController.text.trim().isNotEmpty
+                                          ? Icons.search_off_rounded
+                                          : Icons.people_outline_rounded,
                                       size: isDesktop ? 80 : 64,
                                       color: AppColors.blackLight.withValues(
                                         alpha: 0.4,
@@ -221,7 +245,9 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                                     ),
                                     SizedBox(height: 16.h),
                                     Text(
-                                      AppStrings.noEmployeesFound.tr(),
+                                      _searchController.text.trim().isNotEmpty
+                                          ? AppStrings.noResults.tr()
+                                          : AppStrings.noEmployeesFound.tr(),
                                       style: TextStyles.customStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
@@ -253,22 +279,68 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                                         context,
                                         idx,
                                       ) {
+                                        if (idx >= filteredList.length) {
+                                          if (showPaginationLoading) {
+                                            return Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 24,
+                                                  ),
+                                              child: Center(
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      color:
+                                                          AppColors.primaryColor,
+                                                      strokeWidth: 2,
+                                                    ),
+                                              ),
+                                            );
+                                          }
+                                          return const SizedBox.shrink();
+                                        }
                                         return _buildEmployeeCard(
                                           filteredList[idx],
                                           isDesktop,
                                         );
-                                      }, childCount: filteredList.length),
+                                      },
+                                      childCount:
+                                          filteredList.length +
+                                          (showPaginationLoading ? 1 : 0),
+                                    ),
                                     )
                                   : SliverList(
                                       delegate: SliverChildBuilderDelegate((
                                         context,
                                         idx,
                                       ) {
+                                        if (idx >= filteredList.length) {
+                                          if (showPaginationLoading) {
+                                            return Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 24,
+                                                  ),
+                                              child: Center(
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      color:
+                                                          AppColors.primaryColor,
+                                                      strokeWidth: 2,
+                                                    ),
+                                              ),
+                                            );
+                                          }
+                                          return const SizedBox.shrink();
+                                        }
                                         return _buildEmployeeCard(
                                           filteredList[idx],
                                           isDesktop,
                                         );
-                                      }, childCount: filteredList.length),
+                                      },
+                                      childCount:
+                                          filteredList.length +
+                                          (showPaginationLoading ? 1 : 0),
+                                    ),
                                     ),
                             ),
                           ],
@@ -316,6 +388,10 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                       setState(() {
                         _searchController.clear();
                       });
+                      context.read<EmployeeCubit>().search(
+                        AppStrings.userToken,
+                        '',
+                      );
                     },
                   )
                 : null,
@@ -326,6 +402,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
           ),
           onChanged: (val) {
             setState(() {});
+            context.read<EmployeeCubit>().search(AppStrings.userToken, val);
           },
         ),
       ),

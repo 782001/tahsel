@@ -159,8 +159,11 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
           .collection('users')
           .doc(uid)
           .collection('employees')
-          .orderBy('createdAt', descending: true)
-          .limit(limit);
+          .orderBy('createdAt', descending: true);
+
+      if (limit > 0) {
+        query = query.limit(limit);
+      }
 
       if (lastDoc != null) {
         query = query.startAfterDocument(lastDoc);
