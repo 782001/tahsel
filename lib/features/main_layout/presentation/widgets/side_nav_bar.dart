@@ -176,8 +176,8 @@ class SideNavBar extends StatelessWidget {
                 _buildSectionHeader(context, AppStrings.other.tr()),
                 _NavTile(
                   index: 5,
-                  icon: Icons.settings_rounded,
-                  label: AppStrings.settings.tr(),
+                  icon: Icons.grid_view_rounded,
+                  label: AppStrings.more.tr(),
                   isSelected: cubit.currentIndex == 5,
                   onTap: () => cubit.changeBottomNav(5),
                 ),

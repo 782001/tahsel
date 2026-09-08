@@ -21,7 +21,7 @@ import 'package:tahsel/features/employee/presentation/screens/employee_list_scre
 import 'package:tahsel/features/inventory/presentation/cubits/inventory_dashboard_cubit.dart';
 import 'package:tahsel/features/inventory/presentation/screens/inventory_main_screen.dart';
 import 'package:tahsel/features/reports/presentation/screens/reports_screen.dart';
-import 'package:tahsel/features/settings/presentation/screens/settings_screen.dart';
+import 'package:tahsel/features/settings/presentation/screens/more_screen.dart';
 import 'package:tahsel/features/shipping_reconciliation/presentation/screens/shipping_reconciliation_screen.dart';
 
 class MainLayoutCubit extends Cubit<MainLayoutState> {
@@ -94,7 +94,7 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
       child: const InvoicesScreen(),
     ),
     const ReportsScreen(),
-    const SettingsScreen(),
+    const MoreScreen(),
     CustomersListScreen(uid: AppStrings.userToken),
     BlocProvider(
       create: (_) => sl<VaultCubit>(),

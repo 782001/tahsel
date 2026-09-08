@@ -38,14 +38,14 @@ import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+class MoreScreen extends StatefulWidget {
+  const MoreScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  State<MoreScreen> createState() => _MoreScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _MoreScreenState extends State<MoreScreen> {
   String userEmail = '';
 
   @override
@@ -99,7 +99,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
             child: Text(
-              'حسناً',
+              AppStrings.ok.tr(),
               style: TextStyles.customStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,

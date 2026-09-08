@@ -190,8 +190,12 @@ class AppStrings {
   static const String errorScreenDetailsLabel = "error_screen_details_label";
   static const String errorScreenGoBackButton = "error_screen_go_back_button";
 
-  // Settings Screen
+  // Settings / More Screen
   static const String settings = "settings";
+  static const String more = "more";
+  static const String businessTools = "business_tools";
+  static const String appSettingsAndPreferences = "app_settings_and_preferences";
+  static const String ok = "ok";
   static const String changeLanguage = "change_language";
   static const String changeLanguageDesc = "change_language_desc";
   static const String arabic = "arabic";

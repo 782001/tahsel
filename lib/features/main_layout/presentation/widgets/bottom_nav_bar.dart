@@ -11,7 +11,7 @@ import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit
 ///   2 → Debts
 ///   3 → Invoices  (shop only)
 ///   4 → Reports
-///   5 → Settings
+///   5 → More (Business Tools & App Settings)
 class BottomNavBar extends StatelessWidget {
   final MainLayoutCubit cubit;
   final bool isShop;
@@ -75,8 +75,8 @@ class BottomNavBar extends StatelessWidget {
         ),
 
         BottomNavigationBarItem(
-          icon: const Icon(Icons.settings_rounded),
-          label: AppStrings.settings.tr(),
+          icon: const Icon(Icons.grid_view_rounded),
+          label: AppStrings.more.tr(),
         ),
       ],
     );
