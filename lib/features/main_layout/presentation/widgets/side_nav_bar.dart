@@ -141,21 +141,6 @@ class SideNavBar extends StatelessWidget {
                   isSelected: cubit.currentIndex == 4,
                   onTap: () => cubit.changeBottomNav(4),
                 ),
-                const SizedBox(height: 8),
-                SideNavBarActionNavTile(
-                  icon: Icons.people_alt_rounded,
-                  label: AppStrings.myCustomers.tr(),
-                  onTap: () {
-                    final uid = AppStrings.userToken;
-                    if (uid.isNotEmpty) {
-                      Navigator.pushNamed(
-                        context,
-                        AppRoutes.customersList,
-                        arguments: uid,
-                      );
-                    }
-                  },
-                ),
                 if ((!Platform.isIOS && isShop) ||
                     (AppStrings.isVip && isShop)) ...[
                   const SizedBox(height: 16),
@@ -187,6 +172,30 @@ class SideNavBar extends StatelessWidget {
                   ),
                 ],
 
+                const SizedBox(height: 16),
+                _buildSectionHeader(context, AppStrings.other.tr()),
+                _NavTile(
+                  index: 5,
+                  icon: Icons.settings_rounded,
+                  label: AppStrings.settings.tr(),
+                  isSelected: cubit.currentIndex == 5,
+                  onTap: () => cubit.changeBottomNav(5),
+                ),
+                const SizedBox(height: 8),
+                SideNavBarActionNavTile(
+                  icon: Icons.people_alt_rounded,
+                  label: AppStrings.myCustomers.tr(),
+                  onTap: () {
+                    final uid = AppStrings.userToken;
+                    if (uid.isNotEmpty) {
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.customersList,
+                        arguments: uid,
+                      );
+                    }
+                  },
+                ),
                 if (isShop) const SizedBox(height: 8),
                 if (isShop)
                   SideNavBarActionNavTile(
@@ -198,15 +207,6 @@ class SideNavBar extends StatelessWidget {
                     ),
                   ),
 
-                const SizedBox(height: 16),
-                _buildSectionHeader(context, AppStrings.other.tr()),
-                _NavTile(
-                  index: 5,
-                  icon: Icons.settings_rounded,
-                  label: AppStrings.settings.tr(),
-                  isSelected: cubit.currentIndex == 5,
-                  onTap: () => cubit.changeBottomNav(5),
-                ),
                 const SizedBox(height: 16),
               ],
             ),
