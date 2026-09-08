@@ -31,7 +31,7 @@ class _InvoiceItemsCardState extends State<InvoiceItemsCard> {
     final displayedItems = (!_isExpanded && hasMoreItems)
         ? widget.items.take(3).toList()
         : widget.items;
-    final hasTax = widget.taxRate > 0 && !widget.isQuotation;
+    final hasTax = widget.taxRate > 0;
 
     return Container(
       decoration: BoxDecoration(
@@ -85,7 +85,10 @@ class _InvoiceItemsCardState extends State<InvoiceItemsCard> {
                             ),
                             if (hasTax) ...[
                               const SizedBox(height: 3),
-                              Row(
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 2,
+                                crossAxisAlignment: WrapCrossAlignment.center,
                                 children: [
                                   Text(
                                     '${AppStrings.totalBeforeTax.tr()}: ${itemBeforeTax.toSmartAmount()}',
@@ -94,7 +97,6 @@ class _InvoiceItemsCardState extends State<InvoiceItemsCard> {
                                       color: AppColors.subTitleColor,
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
                                   Text(
                                     '• ${AppStrings.vatAmount.tr()}: ${itemTax.toSmartAmount()}',
                                     style: TextStyles.customStyle(

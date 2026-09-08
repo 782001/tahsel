@@ -570,7 +570,7 @@ class InvoicePdfService {
   ]) {
     final effectiveTaxRate =
         invoice.taxRate ?? sellerProfile?.taxRate ?? invoice.effectiveTaxRate;
-    final hasTax = effectiveTaxRate > 0 && !invoice.isQuotation;
+    final hasTax = effectiveTaxRate > 0;
 
     if (hasTax) {
       return pw.Table(
@@ -814,7 +814,7 @@ class InvoicePdfService {
     final totalQty = invoice.items.fold<double>(0.0, (s, i) => s + i.quantity);
     final effectiveTaxRate =
         invoice.taxRate ?? sellerProfile?.taxRate ?? invoice.effectiveTaxRate;
-    final hasTax = effectiveTaxRate > 0 && !invoice.isQuotation;
+    final hasTax = effectiveTaxRate > 0;
     final taxAmount = hasTax
         ? invoice.totalAmount * (effectiveTaxRate / 100.0)
         : 0.0;
@@ -828,26 +828,120 @@ class InvoicePdfService {
     final columnWidths = <int, pw.TableColumnWidth>{};
 
     if (invoice.isQuotation) {
-      if (invoice.totalDiscountAmount > 0) {
-        headers.addAll([
-          isArabic ? "قبل الخصم" : "Subtotal",
-          isArabic ? "الخصم" : "Discount",
-          isArabic ? "إجمالي عرض السعر" : "Quotation Total",
-        ]);
-        values.addAll([
-          _buildTableCell("${invoice.rawSubtotalAmount.toSmartAmount()} $currency", fontSize: 9),
-          _buildTableCell("-${invoice.totalDiscountAmount.toSmartAmount()} $currency", color: _error, isBold: true, fontSize: 9),
-          _buildTableCell("${invoice.totalAmount.toSmartAmount()} $currency", isBold: true, color: _primary, fontSize: 10),
-        ]);
-        columnWidths[0] = const pw.FlexColumnWidth(1.2);
-        columnWidths[1] = const pw.FlexColumnWidth(1.2);
-        columnWidths[2] = const pw.FlexColumnWidth(1.6);
+      if (hasTax) {
+        if (invoice.totalDiscountAmount > 0) {
+          headers.addAll([
+            isArabic ? "قبل الخصم" : "Subtotal",
+            isArabic ? "الخصم" : "Discount",
+            isArabic ? "قبل الضريبة" : "Before Tax",
+            isArabic
+                ? "ضريبة (${effectiveTaxRate.toSmartAmount()}%)"
+                : "VAT (${effectiveTaxRate.toSmartAmount()}%)",
+            isArabic ? "الإجمالي بعد الضريبة" : "Total After Tax",
+          ]);
+          values.addAll([
+            _buildTableCell(
+              "${invoice.rawSubtotalAmount.toSmartAmount()} $currency",
+              fontSize: 8.5,
+            ),
+            _buildTableCell(
+              "-${invoice.totalDiscountAmount.toSmartAmount()} $currency",
+              color: _error,
+              isBold: true,
+              fontSize: 8.5,
+            ),
+            _buildTableCell(
+              "${totalBeforeTax.toSmartAmount()} $currency",
+              fontSize: 8.5,
+            ),
+            _buildTableCell(
+              "${taxAmount.toSmartAmount()} $currency",
+              color: _primary,
+              isBold: true,
+              fontSize: 8.5,
+            ),
+            _buildTableCell(
+              "${invoice.totalAmount.toSmartAmount()} $currency",
+              isBold: true,
+              color: _primary,
+              fontSize: 9.5,
+            ),
+          ]);
+          columnWidths[0] = const pw.FlexColumnWidth(1.2);
+          columnWidths[1] = const pw.FlexColumnWidth(1.1);
+          columnWidths[2] = const pw.FlexColumnWidth(1.3);
+          columnWidths[3] = const pw.FlexColumnWidth(1.2);
+          columnWidths[4] = const pw.FlexColumnWidth(1.5);
+        } else {
+          headers.addAll([
+            isArabic ? "الإجمالي قبل الضريبة" : "Total Before Tax",
+            isArabic
+                ? "ضريبة القيمة المضافة (${effectiveTaxRate.toSmartAmount()}%)"
+                : "VAT (${effectiveTaxRate.toSmartAmount()}%)",
+            isArabic ? "الإجمالي بعد الضريبة" : "Total After Tax",
+          ]);
+          values.addAll([
+            _buildTableCell(
+              "${totalBeforeTax.toSmartAmount()} $currency",
+              fontSize: 9.5,
+            ),
+            _buildTableCell(
+              "${taxAmount.toSmartAmount()} $currency",
+              color: _primary,
+              isBold: true,
+              fontSize: 9.5,
+            ),
+            _buildTableCell(
+              "${invoice.totalAmount.toSmartAmount()} $currency",
+              isBold: true,
+              color: _primary,
+              fontSize: 10.5,
+            ),
+          ]);
+          columnWidths[0] = const pw.FlexColumnWidth(1.4);
+          columnWidths[1] = const pw.FlexColumnWidth(1.4);
+          columnWidths[2] = const pw.FlexColumnWidth(1.6);
+        }
       } else {
-        headers.add(isArabic ? "إجمالي عرض السعر" : "Quotation Total");
-        values.add(
-          _buildTableCell("${invoice.totalAmount.toSmartAmount()} $currency", isBold: true, color: _primary, fontSize: 11),
-        );
-        columnWidths[0] = const pw.FlexColumnWidth(1.0);
+        if (invoice.totalDiscountAmount > 0) {
+          headers.addAll([
+            isArabic ? "قبل الخصم" : "Subtotal",
+            isArabic ? "الخصم" : "Discount",
+            isArabic ? "إجمالي عرض السعر" : "Quotation Total",
+          ]);
+          values.addAll([
+            _buildTableCell(
+              "${invoice.rawSubtotalAmount.toSmartAmount()} $currency",
+              fontSize: 9,
+            ),
+            _buildTableCell(
+              "-${invoice.totalDiscountAmount.toSmartAmount()} $currency",
+              color: _error,
+              isBold: true,
+              fontSize: 9,
+            ),
+            _buildTableCell(
+              "${invoice.totalAmount.toSmartAmount()} $currency",
+              isBold: true,
+              color: _primary,
+              fontSize: 10,
+            ),
+          ]);
+          columnWidths[0] = const pw.FlexColumnWidth(1.2);
+          columnWidths[1] = const pw.FlexColumnWidth(1.2);
+          columnWidths[2] = const pw.FlexColumnWidth(1.6);
+        } else {
+          headers.add(isArabic ? "إجمالي عرض السعر" : "Quotation Total");
+          values.add(
+            _buildTableCell(
+              "${invoice.totalAmount.toSmartAmount()} $currency",
+              isBold: true,
+              color: _primary,
+              fontSize: 11,
+            ),
+          );
+          columnWidths[0] = const pw.FlexColumnWidth(1.0);
+        }
       }
     } else if (hasTax) {
       if (invoice.totalDiscountAmount > 0) {

@@ -47,7 +47,7 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
         double.tryParse(widget.discountController.text) ?? 0.0;
     final subtotal = qty * price;
     final lineTotal = (subtotal - discountAmount).clamp(0.0, double.infinity);
-    final hasTax = widget.taxRate > 0 && !widget.isQuotation;
+    final hasTax = widget.taxRate > 0;
     final itemTax = hasTax ? lineTotal * (widget.taxRate / 100.0) : 0.0;
     final itemBeforeTax = hasTax ? (lineTotal - itemTax) : lineTotal;
 

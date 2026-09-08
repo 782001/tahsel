@@ -422,7 +422,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
         createdAt: DateTime.now(),
         lastUpdatedAt: DateTime.now(),
         dueDate: _isQuotation ? null : _dueDate,
-        taxRate: _isQuotation ? null : profileTaxRate,
+        taxRate: profileTaxRate,
       );
 
       _pendingInvoice = invoice;
@@ -433,13 +433,11 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
-    final effectiveTaxRate = _isQuotation
-        ? 0.0
-        : (_isEditMode
-            ? (widget.invoiceToEdit?.taxRate ??
-                BusinessProfileService.instance.cachedProfile?.taxRate ??
-                0.0)
-            : (BusinessProfileService.instance.cachedProfile?.taxRate ?? 0.0));
+    final effectiveTaxRate = _isEditMode
+        ? (widget.invoiceToEdit?.taxRate ??
+            BusinessProfileService.instance.cachedProfile?.taxRate ??
+            0.0)
+        : (BusinessProfileService.instance.cachedProfile?.taxRate ?? 0.0);
 
     return BlocListener<InvoiceCubit, InvoiceState>(
       listener: (context, state) {
@@ -934,7 +932,7 @@ class _TotalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasTax = taxRate > 0 && !isQuotation;
+    final hasTax = taxRate > 0;
     final taxAmount = hasTax ? grandTotal * (taxRate / 100.0) : 0.0;
     final beforeTax = hasTax ? (grandTotal - taxAmount) : grandTotal;
 
@@ -1053,10 +1051,10 @@ class _TotalCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                isQuotation
-                    ? AppStrings.quotationTotal.tr()
-                    : (hasTax
-                        ? AppStrings.totalAfterTax.tr()
+                hasTax
+                    ? AppStrings.totalAfterTax.tr()
+                    : (isQuotation
+                        ? AppStrings.quotationTotal.tr()
                         : AppStrings.invoiceGrandTotal.tr()),
                 style: TextStyles.customStyle(
                   fontSize: 16,

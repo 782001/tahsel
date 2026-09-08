@@ -1251,11 +1251,9 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                         const SizedBox(height: 20),
                                       ],
 
-                                      // ── Payment Summary ────────────────────────────────
-                                      if (!_invoice.isQuotation) ...[
-                                        PaymentSummaryCard(invoice: _invoice),
-                                        const SizedBox(height: 20),
-                                      ],
+                                      // ── Payment / Financial Summary ────────────────────
+                                      PaymentSummaryCard(invoice: _invoice),
+                                      const SizedBox(height: 20),
                                       if (!_invoice.isQuotation &&
                                           _invoice.status ==
                                               InvoiceStatus.paid &&

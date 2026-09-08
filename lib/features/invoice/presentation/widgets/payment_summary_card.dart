@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:tahsel/core/extensions/extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/invoice_summary_column.dart';
-
-import 'package:tahsel/core/utils/styles.dart';
 
 class PaymentSummaryCard extends StatelessWidget {
   final InvoiceEntity invoice;
@@ -13,7 +12,7 @@ class PaymentSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasTax = invoice.effectiveTaxRate > 0 && !invoice.isQuotation;
+    final hasTax = invoice.effectiveTaxRate > 0;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -115,32 +114,43 @@ class PaymentSummaryCard extends StatelessWidget {
             ),
             Divider(color: AppColors.dividerColor, height: 20),
           ],
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              InvoiceSummaryColumn(
+          if (invoice.isQuotation)
+            Center(
+              child: InvoiceSummaryColumn(
                 label: hasTax
                     ? AppStrings.totalAfterTax.tr()
-                    : AppStrings.totalDueLabel.tr(),
+                    : AppStrings.quotationTotal.tr(),
                 amount: invoice.totalAmount,
-                color: AppColors.black,
+                color: AppColors.primaryColor,
               ),
-              Container(width: 1, height: 40, color: AppColors.dividerColor),
-              InvoiceSummaryColumn(
-                label: AppStrings.invoiceTotalPaid.tr(),
-                amount: invoice.totalPaid,
-                color: AppColors.success,
-              ),
-              Container(width: 1, height: 40, color: AppColors.dividerColor),
-              InvoiceSummaryColumn(
-                label: AppStrings.invoiceRemainingAmount.tr(),
-                amount: invoice.remainingAmount,
-                color: invoice.remainingAmount > 0
-                    ? AppColors.error
-                    : AppColors.success,
-              ),
-            ],
-          ),
+            )
+          else
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                InvoiceSummaryColumn(
+                  label: hasTax
+                      ? AppStrings.totalAfterTax.tr()
+                      : AppStrings.totalDueLabel.tr(),
+                  amount: invoice.totalAmount,
+                  color: AppColors.black,
+                ),
+                Container(width: 1, height: 40, color: AppColors.dividerColor),
+                InvoiceSummaryColumn(
+                  label: AppStrings.invoiceTotalPaid.tr(),
+                  amount: invoice.totalPaid,
+                  color: AppColors.success,
+                ),
+                Container(width: 1, height: 40, color: AppColors.dividerColor),
+                InvoiceSummaryColumn(
+                  label: AppStrings.invoiceRemainingAmount.tr(),
+                  amount: invoice.remainingAmount,
+                  color: invoice.remainingAmount > 0
+                      ? AppColors.error
+                      : AppColors.success,
+                ),
+              ],
+            ),
         ],
       ),
     );
