@@ -26,6 +26,7 @@ import '../widgets/manual_withdrawal_dialog.dart';
 import '../widgets/vault_balance_card.dart';
 import '../widgets/vault_source_filter_chips.dart';
 import '../widgets/vault_transaction_card.dart';
+import '../widgets/skeletons/vault_skeleton.dart';
 
 class VaultScreen extends StatefulWidget {
   final String uid;
@@ -292,12 +293,7 @@ class _VaultScreenState extends State<VaultScreen> {
             },
             builder: (context, state) {
               if (state is VaultLoading) {
-                return Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.primaryColor,
-                    strokeWidth: 4,
-                  ),
-                );
+                return const VaultScreenSkeleton();
               }
 
             if (state is VaultError && state is! VaultLoaded) {
@@ -373,18 +369,8 @@ class _VaultScreenState extends State<VaultScreen> {
                           ),
                           SizedBox(height: isDesktop ? 16 : 14.h),
                           if (state.isFiltering) ...[
-                            SizedBox(height: isDesktop ? 120 : 120.h),
-                            Center(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 24.0,
-                                ),
-                                child: CircularProgressIndicator(
-                                  color: AppColors.primaryColor,
-                                  strokeWidth: 4,
-                                ),
-                              ),
-                            ),
+                            SizedBox(height: isDesktop ? 8 : 6.h),
+                            const VaultTransactionsListSkeleton(count: 3),
                           ] else if (state.transactions.isEmpty) ...[
                             SizedBox(height: isDesktop ? 120 : 120.h),
                             Center(
