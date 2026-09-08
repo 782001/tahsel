@@ -13,7 +13,10 @@ import 'package:tahsel/core/services/pdf_asset_cache.dart';
 import 'package:tahsel/core/services/profile/business_profile_service.dart';
 import 'package:tahsel/core/services/tahsel_print_service.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:get_it/get_it.dart';
+import 'package:tahsel/features/inventory/data/datasources/inventory_local_data_source.dart';
 import 'package:tahsel/features/inventory/domain/entities/inventory_purchase_entity.dart';
+import 'package:tahsel/features/inventory/domain/entities/inventory_supplier_entity.dart';
 import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
 import 'package:tahsel/features/settings/data/models/user_profile_model.dart';
 import 'package:whatsapp_share2/whatsapp_share2.dart';
@@ -1248,8 +1251,9 @@ class InvoicePdfService {
   static Future<File?> savePurchasePdfToStorage({
     required InventoryPurchaseEntity purchase,
     required bool isArabic,
+    InventorySupplierEntity? supplier,
   }) async {
-    final pdfBytes = await _buildPurchasePdf(purchase, isArabic);
+    final pdfBytes = await _buildPurchasePdf(purchase, isArabic, supplier);
     final cleanId = purchase.id.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
     final filename = 'Purchase_Fatoora_$cleanId.pdf';
 
@@ -1263,8 +1267,9 @@ class InvoicePdfService {
   static Future<File> sharePurchaseInvoicePdf(
     InventoryPurchaseEntity purchase, {
     required bool isArabic,
+    InventorySupplierEntity? supplier,
   }) async {
-    final pdfBytes = await _buildPurchasePdf(purchase, isArabic);
+    final pdfBytes = await _buildPurchasePdf(purchase, isArabic, supplier);
     final cleanId = purchase.id.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
     final filename = 'Purchase_Fatoora_$cleanId.pdf';
 
@@ -1314,8 +1319,9 @@ class InvoicePdfService {
   static Future<Uint8List> getPurchasePdfBytes({
     required InventoryPurchaseEntity purchase,
     required bool isArabic,
+    InventorySupplierEntity? supplier,
   }) async {
-    return await _buildPurchasePdf(purchase, isArabic);
+    return await _buildPurchasePdf(purchase, isArabic, supplier);
   }
 
   /// Print purchase invoice directly or open Tahsel themed print preview
@@ -1324,6 +1330,7 @@ class InvoicePdfService {
     InventoryPurchaseEntity purchase, {
     required bool isArabic,
     bool direct = false,
+    InventorySupplierEntity? supplier,
   }) async {
     final cleanId = purchase.id.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
     final shortId = purchase.id.replaceAll('pur_', '');
@@ -1341,13 +1348,14 @@ class InvoicePdfService {
       final bytes = await getPurchasePdfBytes(
         purchase: purchase,
         isArabic: isArabic,
+        supplier: supplier,
       );
       await TahselPrintService.directPrint(bytes: bytes, jobName: title);
     } else {
       await TahselPrintService.openPrintPreview(
         context: context,
         title: title,
-        buildPdf: (format) => _buildPurchasePdf(purchase, isArabic),
+        buildPdf: (format) => _buildPurchasePdf(purchase, isArabic, supplier),
         pdfFileName: filename,
       );
     }
@@ -1355,14 +1363,29 @@ class InvoicePdfService {
 
   static Future<Uint8List> _buildPurchasePdf(
     InventoryPurchaseEntity purchase,
-    bool isArabic,
-  ) async {
+    bool isArabic, [
+    InventorySupplierEntity? supplier,
+  ]) async {
     final pdf = pw.Document();
 
     final ttfRegular = await PdfAssetCache.getRegularFont();
     final ttfBold = await PdfAssetCache.getBoldFont();
     final logoImage = await PdfAssetCache.getLogoImage();
     final buyerProfile = await BusinessProfileService.instance.getProfile();
+
+    if (supplier == null && GetIt.I.isRegistered<InventoryLocalDataSource>()) {
+      try {
+        final sups = await GetIt.I<InventoryLocalDataSource>().getSuppliers();
+        if (purchase.supplierId.isNotEmpty) {
+          supplier = sups.where((s) => s.id == purchase.supplierId).firstOrNull;
+        }
+        if (supplier == null && purchase.supplierName.isNotEmpty) {
+          supplier = sups.where((s) =>
+              s.companyName == purchase.supplierName ||
+              s.name == purchase.supplierName).firstOrNull;
+        }
+      } catch (_) {}
+    }
 
     pdf.addPage(
       pw.MultiPage(
@@ -1383,7 +1406,12 @@ class InvoicePdfService {
         ),
         build: (context) => [
           pw.SizedBox(height: 8),
-          _buildPurchaseBuyerAndSupplierInfo(purchase, buyerProfile, isArabic),
+          _buildPurchaseBuyerAndSupplierInfo(
+            purchase,
+            buyerProfile,
+            isArabic,
+            supplier,
+          ),
           pw.SizedBox(height: 10),
           _buildPurchaseItemsTable(purchase, isArabic, buyerProfile),
           pw.SizedBox(height: 10),
@@ -1507,8 +1535,29 @@ class InvoicePdfService {
   static pw.Widget _buildPurchaseBuyerAndSupplierInfo(
     InventoryPurchaseEntity purchase,
     UserProfileModel? buyerProfile,
-    bool isArabic,
-  ) {
+    bool isArabic, [
+    InventorySupplierEntity? supplier,
+  ]) {
+    String supplierDisplayName = purchase.supplierName.cleanForPdf(
+      isArabic ? "مورد عام" : "General Supplier",
+    );
+    String? contactPerson;
+
+    if (supplier != null) {
+      final hasCompany =
+          supplier.companyName != null && supplier.companyName!.trim().isNotEmpty;
+      final hasPerson = supplier.name.trim().isNotEmpty;
+
+      if (hasCompany) {
+        supplierDisplayName = supplier.companyName!.trim();
+        if (hasPerson && supplier.name.trim() != supplier.companyName!.trim()) {
+          contactPerson = supplier.name.trim();
+        }
+      } else if (hasPerson) {
+        supplierDisplayName = supplier.name.trim();
+      }
+    }
+
     return pw.Row(
       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -1528,7 +1577,7 @@ class InvoicePdfService {
               children: [
                 pw.Text(
                   isArabic
-                      ? "بيانات المشترى أوالمنشأة:"
+                      ? "بيانات المشتري أو المنشأة:"
                       : "Buyer (Business Details):",
                   style: pw.TextStyle(
                     fontSize: 10,
@@ -1637,15 +1686,68 @@ class InvoicePdfService {
                 ),
                 pw.SizedBox(height: 3),
                 pw.Text(
-                  purchase.supplierName.cleanForPdf(
-                    isArabic ? "مورد عام" : "General Supplier",
-                  ),
+                  supplierDisplayName,
                   style: pw.TextStyle(
                     fontSize: 12,
                     fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.grey900,
+                    color: _purchasePrimary,
                   ),
                 ),
+                if (contactPerson != null && contactPerson.isNotEmpty) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    "${isArabic ? 'المسؤول:' : 'Contact:'} $contactPerson",
+                    style: const pw.TextStyle(
+                      fontSize: 9,
+                      color: PdfColors.grey800,
+                    ),
+                  ),
+                ],
+                if (supplier != null && supplier.phone.trim().isNotEmpty) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    "${isArabic ? 'الهاتف:' : 'Phone:'} ${supplier.phone.trim()}",
+                    style: const pw.TextStyle(
+                      fontSize: 9,
+                      color: PdfColors.grey800,
+                    ),
+                  ),
+                ],
+                if (supplier != null &&
+                    supplier.taxNumber != null &&
+                    supplier.taxNumber!.trim().isNotEmpty) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    "${isArabic ? 'الرقم الضريبي:' : 'VAT:'} ${supplier.taxNumber!.trim()}",
+                    style: const pw.TextStyle(
+                      fontSize: 9,
+                      color: PdfColors.grey800,
+                    ),
+                  ),
+                ],
+                if (supplier != null &&
+                    supplier.address.trim().isNotEmpty) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    "${isArabic ? 'العنوان:' : 'Address:'} ${supplier.address.trim()}",
+                    style: const pw.TextStyle(
+                      fontSize: 9,
+                      color: PdfColors.grey800,
+                    ),
+                  ),
+                ],
+                if (supplier != null &&
+                    supplier.email != null &&
+                    supplier.email!.trim().isNotEmpty) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    "${isArabic ? 'البريد:' : 'Email:'} ${supplier.email!.trim()}",
+                    style: const pw.TextStyle(
+                      fontSize: 9,
+                      color: PdfColors.grey800,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
