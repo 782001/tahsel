@@ -131,76 +131,66 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
         child: CustomScrollView(
           controller: _scrollController,
           slivers: [
-            SliverAppBar(
-              floating: false,
-              pinned: true,
-              elevation: 0,
-              scrolledUnderElevation: 0,
-              backgroundColor: AppColors.scafoldBackGround,
-
-              leading: const SizedBox.shrink(),
-              bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(80),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  child: TextField(
-                    controller: _searchController,
-                    style: TextStyles.customStyle(
-                      color: AppColors.black,
-                      fontSize: 16,
-                    ),
-                    cursorColor: AppColors.primaryColor,
-                    decoration: InputDecoration(
-                      hintText: AppStrings.searchByNameOrPhone.tr(),
-                      hintStyle: TextStyles.customStyle(
-                        color: AppColors.blackLight,
-                        fontSize: 14,
-                      ),
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: AppColors.primaryColor,
-                      ),
-                      suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear),
-                              onPressed: () {
-                                _searchController.clear();
-                                context
-                                    .read<CustomerReportsCubit>()
-                                    .searchCustomers('', immediate: true);
-                                if (mounted) setState(() {});
-                              },
-                            )
-                          : null,
-                      filled: true,
-                      fillColor: AppColors.surface,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(
-                          color: AppColors.primaryColor,
-                          width: 1,
-                        ),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                    ),
-                    onChanged: (value) {
-                      context.read<CustomerReportsCubit>().searchCustomers(
-                        value,
-                      );
-                      if (mounted) setState(() {});
-                    },
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+                child: TextField(
+                  controller: _searchController,
+                  style: TextStyles.customStyle(
+                    color: AppColors.black,
+                    fontSize: 16,
                   ),
+                  cursorColor: AppColors.primaryColor,
+                  decoration: InputDecoration(
+                    hintText: AppStrings.searchByNameOrPhone.tr(),
+                    hintStyle: TextStyles.customStyle(
+                      color: AppColors.blackLight,
+                      fontSize: 14,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: AppColors.primaryColor,
+                    ),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              context
+                                  .read<CustomerReportsCubit>()
+                                  .searchCustomers('', immediate: true);
+                              if (mounted) setState(() {});
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: AppColors.surface,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: AppColors.primaryColor,
+                        width: 1,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
+                  onChanged: (value) {
+                    context.read<CustomerReportsCubit>().searchCustomers(
+                      value,
+                    );
+                    if (mounted) setState(() {});
+                  },
                 ),
               ),
             ),
