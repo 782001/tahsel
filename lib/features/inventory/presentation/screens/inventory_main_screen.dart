@@ -28,6 +28,8 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
+    final isPushed = !(ModalRoute.of(context)?.isFirst ?? true);
+    final showBackButton = isPushed || !isDesktop;
 
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
@@ -36,9 +38,8 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
         backgroundColor: AppColors.scafoldBackGround,
         elevation: 0,
         automaticallyImplyLeading: false,
-        leading: isDesktop
-            ? null
-            : IconButton(
+        leading: showBackButton
+            ? IconButton(
                 icon: Icon(
                   Icons.arrow_back_ios_new_rounded,
                   color: AppColors.primaryColor,
@@ -52,7 +53,8 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                     } catch (_) {}
                   }
                 },
-              ),
+              )
+            : null,
         centerTitle: true,
         title: Text(
           AppStrings.inventoryManagementVIP.tr(),

@@ -37,6 +37,8 @@ class CustomersListScreen extends StatelessWidget {
       child: Builder(
         builder: (context) {
           final isDesktop = ResponsiveLayout.isDesktop(context);
+          final isPushed = !(ModalRoute.of(context)?.isFirst ?? true);
+          final showBackButton = isPushed || !isDesktop;
           return Scaffold(
             backgroundColor: AppColors.scafoldBackGround,
             appBar: AppBar(
@@ -51,9 +53,8 @@ class CustomersListScreen extends StatelessWidget {
                   fontSize: 20,
                 ),
               ),
-              leading: isDesktop
-                  ? null
-                  : IconButton(
+              leading: showBackButton
+                  ? IconButton(
                       icon: Icon(
                         Icons.arrow_back_ios_new_rounded,
                         color: AppColors.black,
@@ -67,7 +68,8 @@ class CustomersListScreen extends StatelessWidget {
                           } catch (_) {}
                         }
                       },
-                    ),
+                    )
+                  : null,
             ),
             floatingActionButton: FloatingActionButton.extended(
               onPressed: () => _showAddCustomerDialog(context),

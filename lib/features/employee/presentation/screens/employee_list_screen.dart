@@ -62,15 +62,16 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
+    final isPushed = !(ModalRoute.of(context)?.isFirst ?? true);
+    final showBackButton = isPushed || !isDesktop;
 
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
       appBar: AppBar(
         scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
-        leading: isDesktop
-            ? null
-            : IconButton(
+        leading: showBackButton
+            ? IconButton(
                 icon: const Icon(
                   Icons.arrow_back_ios_new_rounded,
                   color: Colors.white,
@@ -84,7 +85,8 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                     } catch (_) {}
                   }
                 },
-              ),
+              )
+            : null,
         title: Text(
           AppStrings.employeeList.tr(),
           style: TextStyles.customStyle(

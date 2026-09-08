@@ -185,21 +185,22 @@ class _VaultScreenState extends State<VaultScreen> {
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
+    final isPushed = !(ModalRoute.of(context)?.isFirst ?? true);
+    final showBackButton = isPushed || !isDesktop;
 
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
       appBar: CustomAppBar(
         centerTitle: AppStrings.vaultTitle.tr(),
-        leadingIcon: isDesktop
-            ? null
-            : Icon(
+        leadingIcon: showBackButton
+            ? Icon(
                 Icons.arrow_back_ios_new_rounded,
                 color: AppColors.textColor,
                 size: 20,
-              ),
-        onLeadingTap: isDesktop
-            ? null
-            : () {
+              )
+            : null,
+        onLeadingTap: showBackButton
+            ? () {
                 if (Navigator.of(context).canPop()) {
                   Navigator.of(context).pop();
                 } else {
@@ -207,7 +208,8 @@ class _VaultScreenState extends State<VaultScreen> {
                     context.read<MainLayoutCubit>().changeBottomNav(0);
                   } catch (_) {}
                 }
-              },
+              }
+            : null,
         actions: [
           if (_isExporting)
             Center(

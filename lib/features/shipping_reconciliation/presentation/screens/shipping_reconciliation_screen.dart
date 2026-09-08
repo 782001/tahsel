@@ -78,6 +78,7 @@ class _ShippingReconciliationScreenContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
+    final isPushed = !(ModalRoute.of(context)?.isFirst ?? true);
 
     return BlocConsumer<
       ShippingReconciliationCubit,
@@ -96,6 +97,10 @@ class _ShippingReconciliationScreenContent extends StatelessWidget {
       },
       builder: (context, state) {
         final currentStep = _getCurrentStep(state);
+        final hasFiles = state is ShippingReconciliationFilesLoaded &&
+            (state.internalFile != null || state.shippingFile != null);
+        final showBackButton =
+            currentStep > 1 || hasFiles || isPushed || !isDesktop;
 
         return PopScope(
           canPop: false,
@@ -110,15 +115,15 @@ class _ShippingReconciliationScreenContent extends StatelessWidget {
               backgroundColor: AppColors.scafoldBackGround,
               elevation: 0,
               automaticallyImplyLeading: false,
-              leading: (isDesktop && currentStep == 1)
-                  ? null
-                  : IconButton(
+              leading: showBackButton
+                  ? IconButton(
                       icon: Icon(
                         Icons.arrow_back_ios_new_rounded,
                         color: AppColors.primaryColor,
                       ),
                       onPressed: () => _handleBack(context, state),
-                    ),
+                    )
+                  : null,
               title: Column(
                 children: [
                   Text(
