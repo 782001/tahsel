@@ -1199,6 +1199,7 @@
   "clear": "مسح",
   "confirm_full_settlement_title": "تأكيد التسويه الكاملة",
   "confirm_full_settlement_msg": "هل أنت متأكد من تسوية جميع ديون العميل ({customer}) بمبلغ إجمالي {amount} {currency}؟",
+  "confirm_my_debt_full_settlement_msg": "هل أنت متأكد من تسوية جميع الديون المستحقة لـ ({person}) بمبلغ إجمالي {amount} {currency}؟",
   "confirm_full_settlement_btn": "تأكيد التسويه",
   "confirm_pay_debt_title": "تأكيد سداد الدين",
   "confirm_pay_debt_msg": "هل أنت متأكد من تسجيل سداد هذا الدين ({item}) بمبلغ {amount} {currency}؟",

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
@@ -95,15 +96,91 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
       );
       return;
     }
-    final uid = AppStrings.userToken;
-    if (uid.isNotEmpty) {
-      context.read<MyDebtDetailsCubit>().payDebt(
-        uid: uid,
-        personName: widget.person.name,
-        amount: totalRemaining,
-        note: AppStrings.fullSettlement.tr(),
-      );
-    }
+    final currency = AppStrings.currencyEgp.tr();
+    showDialog(
+      context: context,
+      builder: (ctx) => Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+            title: Row(
+              children: [
+                Icon(
+                  Icons.check_circle_outline,
+                  color: AppColors.primaryColor,
+                  size: 24.r,
+                ),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Text(
+                    AppStrings.confirmFullSettlementTitle.tr(),
+                    style: TextStyles.customStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              AppStrings.confirmMyDebtFullSettlementMsg
+                  .tr()
+                  .replaceAll('{person}', widget.person.name)
+                  .replaceAll('{amount}', totalRemaining.toSmartAmount())
+                  .replaceAll('{currency}', currency),
+              style: TextStyles.customStyle(
+                fontSize: 14,
+                color: AppColors.textColor,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: Text(
+                  AppStrings.cancel.tr(),
+                  style: TextStyles.customStyle(
+                    color: AppColors.grey,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  final uid = AppStrings.userToken;
+                  if (uid.isNotEmpty) {
+                    context.read<MyDebtDetailsCubit>().payDebt(
+                          uid: uid,
+                          personName: widget.person.name,
+                          amount: totalRemaining,
+                          note: AppStrings.fullSettlement.tr(),
+                        );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryColor,
+                  foregroundColor: AppColors.whiteColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                ),
+                child: Text(
+                  AppStrings.confirmFullSettlementBtn.tr(),
+                  style: TextStyles.customStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _onPayItemPartial(BuildContext context, MyDebtItemEntity item) {
@@ -145,16 +222,96 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
       );
       return;
     }
-    final uid = AppStrings.userToken;
-    if (uid.isNotEmpty && item.id != null) {
-      context.read<MyDebtDetailsCubit>().payItem(
-        uid: uid,
-        debtId: item.id!,
-        amount: item.remainingAmount,
-        personName: widget.person.name,
-        note: AppStrings.fullSettlement.tr(),
-      );
-    }
+    final currency = AppStrings.currencyEgp.tr();
+    final itemDesc = item.details?.trim().isNotEmpty == true
+        ? item.details!.trim()
+        : AppStrings.noDescription.tr();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+            title: Row(
+              children: [
+                Icon(
+                  Icons.check_circle_outline,
+                  color: AppColors.primaryColor,
+                  size: 24.r,
+                ),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Text(
+                    AppStrings.confirmPayDebtTitle.tr(),
+                    style: TextStyles.customStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              AppStrings.confirmPayDebtMsg
+                  .tr()
+                  .replaceAll('{item}', itemDesc)
+                  .replaceAll('{amount}', item.remainingAmount.toSmartAmount())
+                  .replaceAll('{currency}', currency),
+              style: TextStyles.customStyle(
+                fontSize: 14,
+                color: AppColors.textColor,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: Text(
+                  AppStrings.cancel.tr(),
+                  style: TextStyles.customStyle(
+                    color: AppColors.grey,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  final uid = AppStrings.userToken;
+                  if (uid.isNotEmpty && item.id != null) {
+                    context.read<MyDebtDetailsCubit>().payItem(
+                          uid: uid,
+                          debtId: item.id!,
+                          amount: item.remainingAmount,
+                          personName: widget.person.name,
+                          note: AppStrings.fullSettlement.tr(),
+                        );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryColor,
+                  foregroundColor: AppColors.whiteColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                ),
+                child: Text(
+                  AppStrings.confirmPayDebtBtn.tr(),
+                  style: TextStyles.customStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _onAddNewDebt(BuildContext context) {

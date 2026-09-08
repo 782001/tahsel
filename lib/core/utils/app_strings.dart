@@ -1410,6 +1410,8 @@ class AppStrings {
   static const String confirmFullSettlementTitle =
       "confirm_full_settlement_title";
   static const String confirmFullSettlementMsg = "confirm_full_settlement_msg";
+  static const String confirmMyDebtFullSettlementMsg =
+      "confirm_my_debt_full_settlement_msg";
   static const String confirmFullSettlementBtn = "confirm_full_settlement_btn";
   static const String confirmPayDebtTitle = "confirm_pay_debt_title";
   static const String confirmPayDebtMsg = "confirm_pay_debt_msg";

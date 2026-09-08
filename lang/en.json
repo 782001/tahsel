@@ -1196,6 +1196,7 @@
   "clear": "Clear",
   "confirm_full_settlement_title": "Confirm Full Settlement",
   "confirm_full_settlement_msg": "Are you sure you want to fully settle all debts for ({customer}) with total amount of {amount} {currency}?",
+  "confirm_my_debt_full_settlement_msg": "Are you sure you want to fully settle all debts owed to ({person}) with total amount of {amount} {currency}?",
   "confirm_full_settlement_btn": "Confirm Settlement",
   "confirm_pay_debt_title": "Confirm Debt Payment",
   "confirm_pay_debt_msg": "Are you sure you want to mark this debt ({item}) as paid with amount {amount} {currency}?",
