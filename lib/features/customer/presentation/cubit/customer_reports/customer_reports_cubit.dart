@@ -1,13 +1,18 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import '../../../domain/usecases/get_customers_usecase.dart';
+import '../../../domain/usecases/save_customer_usecase.dart';
+import '../../../domain/usecases/update_customer_usecase.dart';
 import 'customer_reports_state.dart';
 import '../../../domain/entities/customer_entity.dart';
 
 class CustomerReportsCubit extends Cubit<CustomerReportsState> {
   final GetCustomersUseCase getCustomersUseCase;
+  final SaveCustomerUseCase? saveCustomerUseCase;
+  final UpdateCustomerUseCase? updateCustomerUseCase;
   Timer? _debounce;
   static const int _pageSize = 15;
 
@@ -17,8 +22,11 @@ class CustomerReportsCubit extends Cubit<CustomerReportsState> {
   List<CustomerEntity>? _serverAllCustomers;
   String? _uid;
 
-  CustomerReportsCubit({required this.getCustomersUseCase})
-    : super(CustomerReportsInitial());
+  CustomerReportsCubit({
+    required this.getCustomersUseCase,
+    this.saveCustomerUseCase,
+    this.updateCustomerUseCase,
+  }) : super(CustomerReportsInitial());
 
   Future<void> fetchCustomers(String uid, {bool isRefresh = false}) async {
     _uid = uid;
@@ -172,7 +180,13 @@ class CustomerReportsCubit extends Cubit<CustomerReportsState> {
         final name = c.name.toLowerCase();
         final phone = (c.phoneNumber ?? '').toLowerCase();
         final ledger = (c.ledgerNumber ?? '').toLowerCase();
-        return name.contains(q) || phone.contains(q) || ledger.contains(q);
+        final tax = (c.taxNumber ?? '').toLowerCase();
+        final cr = (c.commercialRegistration ?? '').toLowerCase();
+        return name.contains(q) ||
+            phone.contains(q) ||
+            ledger.contains(q) ||
+            tax.contains(q) ||
+            cr.contains(q);
       }).toList();
 
       if (isClosed) return;
@@ -191,6 +205,82 @@ class CustomerReportsCubit extends Cubit<CustomerReportsState> {
     } else {
       _debounce = Timer(const Duration(milliseconds: 350), performSearch);
     }
+  }
+
+  Future<bool> addCustomer({
+    required String uid,
+    required String name,
+    String? phoneNumber,
+    String? ledgerNumber,
+    String? taxNumber,
+    String? commercialRegistration,
+  }) async {
+    final customer = CustomerEntity(
+      name: name.trim(),
+      phoneNumber: phoneNumber?.trim().isNotEmpty == true ? phoneNumber!.trim() : null,
+      ledgerNumber: ledgerNumber?.trim().isNotEmpty == true ? ledgerNumber!.trim() : null,
+      taxNumber: taxNumber?.trim().isNotEmpty == true ? taxNumber!.trim() : null,
+      commercialRegistration: commercialRegistration?.trim().isNotEmpty == true
+          ? commercialRegistration!.trim()
+          : null,
+      lastUsedAt: DateTime.now(),
+      totalTransactions: 0,
+      notificationPreference: 'none',
+    );
+
+    final useCase = saveCustomerUseCase ?? sl<SaveCustomerUseCase>();
+    final result = await useCase(
+      SaveCustomerParams(uid: uid, customer: customer),
+    );
+
+    return result.fold(
+      (failure) => false,
+      (_) {
+        _serverAllCustomers = null;
+        fetchCustomers(uid, isRefresh: true);
+        return true;
+      },
+    );
+  }
+
+  Future<bool> updateCustomerDetails({
+    required String uid,
+    String? customerId,
+    required String name,
+    String? phoneNumber,
+    String? ledgerNumber,
+    String? taxNumber,
+    String? commercialRegistration,
+  }) async {
+    final useCase = updateCustomerUseCase ?? sl<UpdateCustomerUseCase>();
+    final result = await useCase(
+      UpdateCustomerParams(
+        uid: uid,
+        customerId: customerId,
+        name: name,
+        phoneNumber: phoneNumber?.trim().isNotEmpty == true
+            ? phoneNumber!.trim()
+            : null,
+        ledgerNumber: ledgerNumber?.trim().isNotEmpty == true
+            ? ledgerNumber!.trim()
+            : null,
+        taxNumber: taxNumber?.trim().isNotEmpty == true
+            ? taxNumber!.trim()
+            : null,
+        commercialRegistration: commercialRegistration?.trim().isNotEmpty == true
+            ? commercialRegistration!.trim()
+            : null,
+      ),
+    );
+
+    return result.fold(
+      (failure) => false,
+      (_) {
+        _serverAllCustomers = null;
+        fetchCustomers(uid, isRefresh: true);
+        return true;
+      },
+    );
   }
 
   @override

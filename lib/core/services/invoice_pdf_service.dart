@@ -1,3 +1,5 @@
+// ignore_for_file: unused_element, unused_field
+
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -1187,7 +1189,6 @@ class InvoicePdfService {
     );
   }
 
-  // ignore: unused_element
   static pw.Widget _buildNotes(String notes, bool isArabic) {
     return pw.Container(
       width: double.infinity,

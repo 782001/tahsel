@@ -6,6 +6,7 @@ import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/features/customer/presentation/widgets/add_customer_dialog.dart';
 import 'package:tahsel/features/customer/presentation/widgets/customer_list_card.dart';
 import 'package:tahsel/features/customer/presentation/widgets/skeletons/customer_card_skeleton.dart';
 
@@ -18,32 +19,63 @@ class CustomersListScreen extends StatelessWidget {
 
   const CustomersListScreen({super.key, required this.uid});
 
+  void _showAddCustomerDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => BlocProvider.value(
+        value: context.read<CustomerReportsCubit>(),
+        child: AddCustomerDialog(uid: uid),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => sl<CustomerReportsCubit>()..fetchCustomers(uid),
-      child: Scaffold(
-        backgroundColor: AppColors.scafoldBackGround,
-        appBar: AppBar(
-          centerTitle: true,
-          scrolledUnderElevation: 0,
-          title: Text(
-            AppStrings.customers.tr(),
-            style: TextStyles.customStyle(
-              color: AppColors.black,
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
+      child: Builder(
+        builder: (context) {
+          return Scaffold(
+            backgroundColor: AppColors.scafoldBackGround,
+            appBar: AppBar(
+              centerTitle: true,
+              scrolledUnderElevation: 0,
+              title: Text(
+                AppStrings.customers.tr(),
+                style: TextStyles.customStyle(
+                  color: AppColors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
+              ),
+              leading: IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: AppColors.black,
+                ),
+                onPressed: () => Navigator.pop(context),
+              ),
             ),
-          ),
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: AppColors.black,
+            floatingActionButton: FloatingActionButton.extended(
+              onPressed: () => _showAddCustomerDialog(context),
+              backgroundColor: AppColors.primaryColor,
+              elevation: 3,
+              icon: const Icon(
+                Icons.person_add_alt_1_rounded,
+                color: Colors.white,
+              ),
+              label: Text(
+                AppStrings.addCustomer.tr(),
+                style: TextStyles.customStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
             ),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ),
-        body: _CustomersListBody(uid: uid),
+            body: _CustomersListBody(uid: uid),
+          );
+        },
       ),
     );
   }
@@ -182,7 +214,7 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
                             gridDelegate:
                                 const SliverGridDelegateWithFixedCrossAxisCount(
                                   crossAxisCount: 2,
-                                  mainAxisExtent: 105,
+                                  mainAxisExtent: 195,
                                   crossAxisSpacing: 16,
                                   mainAxisSpacing: 16,
                                 ),
@@ -211,7 +243,9 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
                   final customers = state.filteredCustomers;
 
                   if (customers.isEmpty && !state.isFetchingMore) {
-                    final isSearching = _searchController.text.trim().isNotEmpty;
+                    final isSearching = _searchController.text
+                        .trim()
+                        .isNotEmpty;
                     return SliverFillRemaining(
                       child: Center(
                         child: Column(
@@ -234,13 +268,51 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
                                 fontSize: 16,
                               ),
                             ),
+                            if (!isSearching) ...[
+                              const SizedBox(height: 16),
+                              ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primaryColor,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 10,
+                                  ),
+                                ),
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (dialogCtx) => BlocProvider.value(
+                                      value: context
+                                          .read<CustomerReportsCubit>(),
+                                      child: AddCustomerDialog(uid: widget.uid),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(
+                                  Icons.person_add_alt_1_rounded,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                                label: Text(
+                                  AppStrings.addCustomer.tr(),
+                                  style: TextStyles.customStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
                     );
                   }
 
-                  final bool showLoadingFooter = state.isFetchingMore &&
+                  final bool showLoadingFooter =
+                      state.isFetchingMore &&
                       _searchController.text.trim().isEmpty;
 
                   return SliverPadding(
@@ -250,7 +322,7 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
                             gridDelegate:
                                 const SliverGridDelegateWithFixedCrossAxisCount(
                                   crossAxisCount: 2,
-                                  mainAxisExtent: 105,
+                                  mainAxisExtent: 195,
                                   crossAxisSpacing: 16,
                                   mainAxisSpacing: 16,
                                 ),

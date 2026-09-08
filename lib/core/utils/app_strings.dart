@@ -240,6 +240,11 @@ class AppStrings {
   static const String totalDebts = "total_debts";
   static const String customers = "customers";
   static const String myCustomers = "my_customers";
+  static const String addCustomer = "add_customer";
+  static const String editCustomer = "edit_customer";
+  static const String customerAddedSuccess = "customer_added_success";
+  static const String customerUpdatedSuccess = "customer_updated_success";
+  static const String customerNameLockedHint = "customer_name_locked_hint";
   static const String customerDebtsDesc = "customer_debts_desc";
   static const String searchCustomer = "search_customer";
   static const String partialPayment = "partial_payment";

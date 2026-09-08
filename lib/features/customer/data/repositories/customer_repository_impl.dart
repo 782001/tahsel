@@ -75,6 +75,32 @@ class CustomerRepositoryImpl implements CustomerRepository {
   }
 
   @override
+  Future<Either<Failure, void>> updateCustomerDetails(
+    String uid, {
+    String? customerId,
+    required String name,
+    String? phoneNumber,
+    String? ledgerNumber,
+    String? taxNumber,
+    String? commercialRegistration,
+  }) async {
+    try {
+      await remoteDataSource.updateCustomerDetails(
+        uid,
+        customerId: customerId,
+        name: name,
+        phoneNumber: phoneNumber,
+        ledgerNumber: ledgerNumber,
+        taxNumber: taxNumber,
+        commercialRegistration: commercialRegistration,
+      );
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<
     Either<
       Failure,

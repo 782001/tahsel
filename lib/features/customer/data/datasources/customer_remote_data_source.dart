@@ -16,6 +16,15 @@ abstract class CustomerRemoteDataSource {
     String name,
     String preference,
   );
+  Future<void> updateCustomerDetails(
+    String uid, {
+    String? customerId,
+    required String name,
+    String? phoneNumber,
+    String? ledgerNumber,
+    String? taxNumber,
+    String? commercialRegistration,
+  });
   Future<Map<String, dynamic>> getCustomerOperations(
     String uid,
     String customerName, {
@@ -86,10 +95,27 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
       if (existing.docs.isNotEmpty) {
         final doc = existing.docs.first;
         final currentTotal = doc.data()['totalTransactions'] as int? ?? 0;
-        await doc.reference.update({
+        final updateData = <String, dynamic>{
           'lastUsedAt': Timestamp.fromDate(DateTime.now()),
-          'totalTransactions': currentTotal + 1,
-        });
+        };
+        if (customer.totalTransactions > 0) {
+          updateData['totalTransactions'] = currentTotal + customer.totalTransactions;
+        }
+        if (customer.phoneNumber != null && customer.phoneNumber!.trim().isNotEmpty) {
+          updateData['phoneNumber'] = customer.phoneNumber!.trim();
+        }
+        if (customer.taxNumber != null && customer.taxNumber!.trim().isNotEmpty) {
+          updateData['taxNumber'] = customer.taxNumber!.trim();
+        }
+        if (customer.commercialRegistration != null &&
+            customer.commercialRegistration!.trim().isNotEmpty) {
+          updateData['commercialRegistration'] =
+              customer.commercialRegistration!.trim();
+        }
+        if (customer.ledgerNumber != null && customer.ledgerNumber!.trim().isNotEmpty) {
+          updateData['ledgerNumber'] = customer.ledgerNumber!.trim();
+        }
+        await doc.reference.update(updateData);
       } else {
         await collection.add(customer.toJson());
       }
@@ -157,6 +183,75 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
           'lastUsedAt': Timestamp.now(),
           'totalTransactions': 0,
           'phoneNumber': null,
+        });
+      }
+    } catch (e) {
+      FirebaseErrorHandler.handle(e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> updateCustomerDetails(
+    String uid, {
+    String? customerId,
+    required String name,
+    String? phoneNumber,
+    String? ledgerNumber,
+    String? taxNumber,
+    String? commercialRegistration,
+  }) async {
+    try {
+      final collection = firestore
+          .collection('users')
+          .doc(uid)
+          .collection('customers');
+
+      DocumentReference? docRef;
+      if (customerId != null && customerId.isNotEmpty) {
+        final candidateRef = collection.doc(customerId);
+        final docSnap = await candidateRef.get();
+        if (docSnap.exists) {
+          docRef = candidateRef;
+        }
+      }
+
+      if (docRef == null) {
+        final normalizedName = name.trim();
+        final existing = await collection
+            .where('name', isEqualTo: normalizedName)
+            .limit(1)
+            .get();
+        if (existing.docs.isNotEmpty) {
+          docRef = existing.docs.first.reference;
+        }
+      }
+
+      final updateData = <String, dynamic>{
+        'phoneNumber': (phoneNumber != null && phoneNumber.trim().isNotEmpty)
+            ? phoneNumber.trim()
+            : null,
+        'ledgerNumber': (ledgerNumber != null && ledgerNumber.trim().isNotEmpty)
+            ? ledgerNumber.trim()
+            : null,
+        'taxNumber': (taxNumber != null && taxNumber.trim().isNotEmpty)
+            ? taxNumber.trim()
+            : null,
+        'commercialRegistration': (commercialRegistration != null &&
+                commercialRegistration.trim().isNotEmpty)
+            ? commercialRegistration.trim()
+            : null,
+      };
+
+      if (docRef != null) {
+        await docRef.update(updateData);
+      } else {
+        await collection.add({
+          'name': name.trim(),
+          'lastUsedAt': Timestamp.now(),
+          'totalTransactions': 0,
+          'notificationPreference': 'none',
+          ...updateData,
         });
       }
     } catch (e) {

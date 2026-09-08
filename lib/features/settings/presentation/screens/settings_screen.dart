@@ -197,6 +197,92 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 // Profile & Business Info Card
                                 const ProfileInfoCard(),
 
+                                SizedBox(height: isDesktop ? 20 : 16.h),
+                                SectionHeader(
+                                  title: AppStrings.myCustomers.tr(),
+                                ),
+                                SizedBox(height: isDesktop ? 6 : 6.h),
+                                InkWell(
+                                  onTap: () {
+                                    final uid = AppStrings.userToken;
+                                    if (uid.isNotEmpty) {
+                                      Navigator.pushNamed(
+                                        context,
+                                        AppRoutes.customersList,
+                                        arguments: uid,
+                                      );
+                                    }
+                                  },
+                                  borderRadius: BorderRadius.circular(16.r),
+                                  child: Container(
+                                    padding: EdgeInsets.all(
+                                      isDesktop ? 16 : 16.w,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primaryColor,
+                                      borderRadius: BorderRadius.circular(16.r),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppColors.primaryColor
+                                              .withValues(alpha: 0.3),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          padding: EdgeInsets.all(
+                                            isDesktop ? 10 : 10.w,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.whiteOpacity(0.2),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.people_alt_rounded,
+                                            color: Colors.white,
+                                            size: 24,
+                                          ),
+                                        ),
+                                        SizedBox(width: isDesktop ? 16 : 16.w),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                AppStrings.myCustomers.tr(),
+                                                style: TextStyles.customStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              Text(
+                                                AppStrings.customersReportDesc
+                                                    .tr(),
+                                                style: TextStyles.customStyle(
+                                                  color: AppColors.whiteOpacity(
+                                                    0.8,
+                                                  ),
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const Icon(
+                                          Icons.arrow_forward_ios_rounded,
+                                          color: Colors.white,
+                                          size: 16,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+
 
                                 // Vault / Cash Register (VIP + Shop) Section
                                 if ((!Platform.isIOS && isShop) ||

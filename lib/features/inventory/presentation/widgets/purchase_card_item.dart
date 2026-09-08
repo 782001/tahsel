@@ -478,6 +478,7 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
     double taxRate,
   ) {
     final itemTax = hasTax ? item.subtotal * (taxRate / 100.0) : 0.0;
+    // ignore: unused_local_variable
     final itemBeforeTax = hasTax ? item.subtotal - itemTax : item.subtotal;
 
     return Container(

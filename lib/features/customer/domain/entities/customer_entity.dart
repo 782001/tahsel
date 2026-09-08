@@ -9,6 +9,8 @@ class CustomerEntity extends Equatable {
   final int totalTransactions;
   final String? ledgerNumber;
   final DateTime? firstDate;
+  final String? taxNumber;
+  final String? commercialRegistration;
 
   const CustomerEntity({
     this.id,
@@ -19,6 +21,8 @@ class CustomerEntity extends Equatable {
     this.totalTransactions = 1,
     this.ledgerNumber,
     this.firstDate,
+    this.taxNumber,
+    this.commercialRegistration,
   });
 
   CustomerEntity copyWith({
@@ -30,6 +34,8 @@ class CustomerEntity extends Equatable {
     int? totalTransactions,
     String? ledgerNumber,
     DateTime? firstDate,
+    String? taxNumber,
+    String? commercialRegistration,
   }) {
     return CustomerEntity(
       id: id ?? this.id,
@@ -41,6 +47,9 @@ class CustomerEntity extends Equatable {
       totalTransactions: totalTransactions ?? this.totalTransactions,
       ledgerNumber: ledgerNumber ?? this.ledgerNumber,
       firstDate: firstDate ?? this.firstDate,
+      taxNumber: taxNumber ?? this.taxNumber,
+      commercialRegistration:
+          commercialRegistration ?? this.commercialRegistration,
     );
   }
 
@@ -54,5 +63,7 @@ class CustomerEntity extends Equatable {
     totalTransactions,
     ledgerNumber,
     firstDate,
+    taxNumber,
+    commercialRegistration,
   ];
 }

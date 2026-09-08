@@ -141,6 +141,21 @@ class SideNavBar extends StatelessWidget {
                   isSelected: cubit.currentIndex == 4,
                   onTap: () => cubit.changeBottomNav(4),
                 ),
+                const SizedBox(height: 8),
+                SideNavBarActionNavTile(
+                  icon: Icons.people_alt_rounded,
+                  label: AppStrings.myCustomers.tr(),
+                  onTap: () {
+                    final uid = AppStrings.userToken;
+                    if (uid.isNotEmpty) {
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.customersList,
+                        arguments: uid,
+                      );
+                    }
+                  },
+                ),
                 if ((!Platform.isIOS && isShop) ||
                     (AppStrings.isVip && isShop)) ...[
                   const SizedBox(height: 16),

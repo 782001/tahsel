@@ -22,6 +22,15 @@ abstract class CustomerRepository {
     String name,
     String preference,
   );
+  Future<Either<Failure, void>> updateCustomerDetails(
+    String uid, {
+    String? customerId,
+    required String name,
+    String? phoneNumber,
+    String? ledgerNumber,
+    String? taxNumber,
+    String? commercialRegistration,
+  });
   Future<
     Either<
       Failure,

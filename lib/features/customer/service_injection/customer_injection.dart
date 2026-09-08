@@ -5,6 +5,7 @@ import '../domain/repositories/customer_repository.dart';
 import '../domain/usecases/get_customer_operations_usecase.dart';
 import '../domain/usecases/get_customers_usecase.dart';
 import '../domain/usecases/save_customer_usecase.dart';
+import '../domain/usecases/update_customer_usecase.dart';
 import '../domain/usecases/update_customer_phone_usecase.dart';
 import '../domain/usecases/update_customer_preference_usecase.dart';
 import '../presentation/cubit/customer_cubit.dart';
@@ -22,7 +23,13 @@ void initCustomerInjection() {
     ),
   );
 
-  sl.registerFactory(() => CustomerReportsCubit(getCustomersUseCase: sl()));
+  sl.registerFactory(
+    () => CustomerReportsCubit(
+      getCustomersUseCase: sl(),
+      saveCustomerUseCase: sl(),
+      updateCustomerUseCase: sl(),
+    ),
+  );
 
   sl.registerFactory(
     () => CustomerDetailsCubit(getCustomerOperationsUseCase: sl()),
@@ -31,6 +38,7 @@ void initCustomerInjection() {
   // Use cases
   sl.registerLazySingleton(() => GetCustomersUseCase(sl()));
   sl.registerLazySingleton(() => SaveCustomerUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateCustomerUseCase(sl()));
   sl.registerLazySingleton(() => UpdateCustomerPhoneUseCase(sl()));
   sl.registerLazySingleton(() => UpdateCustomerPreferenceUseCase(sl()));
   sl.registerLazySingleton(() => GetCustomerOperationsUseCase(sl()));

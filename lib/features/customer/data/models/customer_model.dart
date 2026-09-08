@@ -11,6 +11,8 @@ class CustomerModel extends CustomerEntity {
     super.totalTransactions = 1,
     super.ledgerNumber,
     super.firstDate,
+    super.taxNumber,
+    super.commercialRegistration,
   });
 
   factory CustomerModel.fromJson(Map<String, dynamic> json, {String? id}) {
@@ -45,18 +47,24 @@ class CustomerModel extends CustomerEntity {
       totalTransactions: (json['totalTransactions'] as num?)?.toInt() ?? 0,
       ledgerNumber: json['ledgerNumber']?.toString(),
       firstDate: parseNullableDate(json['firstDate']),
+      taxNumber: (json['taxNumber'] ?? json['vat'])?.toString(),
+      commercialRegistration:
+          (json['commercialRegistration'] ?? json['cr'])?.toString(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'name': name,
-      'phoneNumber': phoneNumber,
+      if (phoneNumber != null && phoneNumber!.isNotEmpty) 'phoneNumber': phoneNumber,
       'notificationPreference': notificationPreference,
       'lastUsedAt': Timestamp.fromDate(lastUsedAt),
       'totalTransactions': totalTransactions,
-      if (ledgerNumber != null) 'ledgerNumber': ledgerNumber,
+      if (ledgerNumber != null && ledgerNumber!.isNotEmpty) 'ledgerNumber': ledgerNumber,
       if (firstDate != null) 'firstDate': Timestamp.fromDate(firstDate!),
+      if (taxNumber != null && taxNumber!.isNotEmpty) 'taxNumber': taxNumber,
+      if (commercialRegistration != null && commercialRegistration!.isNotEmpty)
+        'commercialRegistration': commercialRegistration,
     };
   }
 
@@ -70,6 +78,8 @@ class CustomerModel extends CustomerEntity {
       totalTransactions: entity.totalTransactions,
       ledgerNumber: entity.ledgerNumber,
       firstDate: entity.firstDate,
+      taxNumber: entity.taxNumber,
+      commercialRegistration: entity.commercialRegistration,
     );
   }
 }

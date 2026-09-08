@@ -158,7 +158,7 @@ class QuickAddTextField extends StatelessWidget {
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (hasText)
+            if (hasText && !readOnly)
               IconButton(
                 icon: Icon(
                   Icons.clear_rounded,
