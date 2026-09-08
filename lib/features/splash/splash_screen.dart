@@ -84,6 +84,7 @@ class _SplashScreenState extends State<SplashScreen>
         AppStrings.isVip = isVipStr == 'true';
 
         // 4. Navigate IMMEDIATELY to Main Layout (Offline-first)
+        BusinessProfileService.instance.getProfile();
         nav().pushNamedAndRemoveUntil(AppRoutes.mainLayout);
 
         // 5. BACKGROUND: Verify with Firebase if online (Optional/Non-blocking)

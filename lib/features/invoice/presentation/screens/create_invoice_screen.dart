@@ -131,6 +131,13 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
   @override
   void initState() {
     super.initState();
+    if (BusinessProfileService.instance.cachedProfile == null) {
+      BusinessProfileService.instance.getProfile().then((profile) {
+        if (mounted && profile != null) {
+          setState(() {});
+        }
+      });
+    }
     if (_isEditMode) {
       final inv = widget.invoiceToEdit!;
       _customerController.text = inv.customerName ?? '';

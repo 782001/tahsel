@@ -1121,6 +1121,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   }
 
   /// قسم وبطاقة الحساب المميز VIP التفاعلية
+  // ignore: unused_element
   Widget _buildVipAccountSection(bool isDesktop) {
     const Color goldStart = AppColors.vipGoldStart;
     const Color goldEnd = AppColors.vipGoldEnd;
