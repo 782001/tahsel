@@ -37,6 +37,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   final _phoneController = TextEditingController();
   final _crnController = TextEditingController();
   final _vatController = TextEditingController();
+  final _taxRateController = TextEditingController();
   final _addressController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -57,6 +58,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     _phoneController.dispose();
     _crnController.dispose();
     _vatController.dispose();
+    _taxRateController.dispose();
     _addressController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -455,6 +457,50 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                       ),
                                       SizedBox(height: isDesktop ? 24 : 24.h),
 
+                                      // Tax Rate Field - Optional
+                                      CustomTextFormField(
+                                        labelText:
+                                            '${AppStrings.taxRate.tr()} (${AppStrings.optional.tr()})',
+                                        controller: _taxRateController,
+                                        keyboardType:
+                                            const TextInputType.numberWithOptions(
+                                          decimal: true,
+                                        ),
+                                        hintText: AppStrings.taxRateHint.tr(),
+                                        prefixIcon: Icons.percent_rounded,
+                                        suffixIcon: Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 14.w,
+                                          ),
+                                          child: Center(
+                                            widthFactor: 1,
+                                            child: Text(
+                                              '%',
+                                              style: TextStyles.customStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.primaryColor,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        validator: (value) {
+                                          if (value != null &&
+                                              value.trim().isNotEmpty) {
+                                            final parsed =
+                                                double.tryParse(value.trim());
+                                            if (parsed == null ||
+                                                parsed < 0 ||
+                                                parsed > 100) {
+                                              return AppStrings.invalidTaxRate
+                                                  .tr();
+                                            }
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                      SizedBox(height: isDesktop ? 24 : 24.h),
+
                                       // Address Field - Optional
                                       CustomTextFormField(
                                         labelText:
@@ -749,7 +795,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                       SizedBox(height: isDesktop ? 24 : 24.h),
 
                                       // VIP Account Section
-                                      _buildVipAccountSection(isDesktop),
+                                      // _buildVipAccountSection(isDesktop),
                                       SizedBox(height: isDesktop ? 24 : 24.h),
 
                                       // Create Account / Submit Action Button
@@ -851,6 +897,17 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                                               : _vatController
                                                                     .text
                                                                     .trim(),
+                                                          taxRate:
+                                                              _taxRateController
+                                                                      .text
+                                                                      .trim()
+                                                                      .isEmpty
+                                                                  ? null
+                                                                  : double.tryParse(
+                                                                      _taxRateController
+                                                                          .text
+                                                                          .trim(),
+                                                                    ),
                                                           address:
                                                               _addressController
                                                                       .text

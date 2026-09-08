@@ -1219,7 +1219,7 @@ class InvoicePdfService {
               children: [
                 pw.Text(
                   isArabic
-                      ? "بيانات المشتري (المنشأة):"
+                      ? "بيانات المشترى أوالمنشأة:"
                       : "Buyer (Business Details):",
                   style: pw.TextStyle(
                     fontSize: 10,

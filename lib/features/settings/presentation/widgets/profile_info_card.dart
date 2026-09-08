@@ -287,7 +287,8 @@ class ProfileInfoCard extends StatelessWidget {
     final hasPhone = profile.phoneNumber.trim().isNotEmpty;
     final hasCrn = profile.crn.trim().isNotEmpty;
     final hasVat = profile.vat.trim().isNotEmpty;
-    final hasExtraInfo = hasPhone || hasCrn || hasVat;
+    final hasTaxRate = profile.taxRate != null && profile.taxRate! > 0;
+    final hasExtraInfo = hasPhone || hasCrn || hasVat || hasTaxRate;
 
     return Container(
       width: double.infinity,
@@ -523,6 +524,14 @@ class ProfileInfoCard extends StatelessWidget {
                     context: context,
                     icon: Icons.receipt_long_outlined,
                     text: '${AppStrings.vatShort.tr()}: ${profile.vat}',
+                    isDesktop: isDesktop,
+                  ),
+                if (hasTaxRate)
+                  _buildCompactBadge(
+                    context: context,
+                    icon: Icons.percent_rounded,
+                    text:
+                        '${AppStrings.taxRate.tr()}: ${profile.taxRate! % 1 == 0 ? profile.taxRate!.toInt() : profile.taxRate}%',
                     isDesktop: isDesktop,
                   ),
               ],

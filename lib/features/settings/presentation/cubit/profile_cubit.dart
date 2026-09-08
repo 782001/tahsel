@@ -64,6 +64,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     String? crn,
     String? address,
     String? vat,
+    double? taxRate,
   }) async {
     final currentState = state;
     UserProfileModel currentProfile;
@@ -97,13 +98,14 @@ class ProfileCubit extends Cubit<ProfileState> {
       final trimmedAddress = (address ?? '').trim();
       final trimmedVat = (vat ?? '').trim();
 
-      final updates = {
+      final updates = <String, dynamic>{
         'fullName': trimmedFullName,
         'projectName': trimmedProjectName,
         'phoneNumber': trimmedPhone,
         'crn': trimmedCrn,
         'address': trimmedAddress,
         'vat': trimmedVat,
+        'taxRate': taxRate,
         'searchKeywords': SearchKeywordsBuilder.build(
           uid: uid,
           fullName: trimmedFullName,
@@ -126,6 +128,8 @@ class ProfileCubit extends Cubit<ProfileState> {
         crn: trimmedCrn,
         address: trimmedAddress,
         vat: trimmedVat,
+        taxRate: taxRate,
+        clearTaxRate: taxRate == null,
       );
 
       await BusinessProfileService.instance.saveProfileToCache(updatedProfile);

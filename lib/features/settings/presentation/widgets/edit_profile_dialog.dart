@@ -50,6 +50,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
   late final TextEditingController _phoneController;
   late final TextEditingController _crnController;
   late final TextEditingController _vatController;
+  late final TextEditingController _taxRateController;
   late final TextEditingController _addressController;
 
   @override
@@ -60,6 +61,14 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
     _phoneController = TextEditingController(text: widget.profile.phoneNumber);
     _crnController = TextEditingController(text: widget.profile.crn);
     _vatController = TextEditingController(text: widget.profile.vat);
+    final currentTaxRate = widget.profile.taxRate;
+    _taxRateController = TextEditingController(
+      text: (currentTaxRate != null && currentTaxRate > 0)
+          ? (currentTaxRate % 1 == 0
+              ? currentTaxRate.toInt().toString()
+              : currentTaxRate.toString())
+          : '',
+    );
     _addressController = TextEditingController(text: widget.profile.address);
   }
 
@@ -70,6 +79,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
     _phoneController.dispose();
     _crnController.dispose();
     _vatController.dispose();
+    _taxRateController.dispose();
     _addressController.dispose();
     super.dispose();
   }
@@ -111,6 +121,10 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
     }
 
     final navigator = Navigator.of(context);
+    final taxRateText = _taxRateController.text.trim();
+    final double? taxRate =
+        taxRateText.isNotEmpty ? double.tryParse(taxRateText) : null;
+
     final success = await context.read<ProfileCubit>().updateProfile(
       fullName: _fullNameController.text,
       projectName: _projectNameController.text,
@@ -118,6 +132,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
       crn: _crnController.text,
       address: _addressController.text,
       vat: _vatController.text,
+      taxRate: taxRate,
     );
 
     if (!mounted) return;
@@ -235,6 +250,44 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                             keyboardType: TextInputType.text,
                             hintText: AppStrings.vatNumberHint.tr(),
                             prefixIcon: Icons.receipt_long_outlined,
+                          ),
+                          SizedBox(height: isDesktop ? 18 : 16.h),
+
+                          // Tax Rate (Percentage)
+                          CustomTextFormField(
+                            labelText:
+                                '${AppStrings.taxRate.tr()} (${AppStrings.optional.tr()})',
+                            controller: _taxRateController,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            hintText: AppStrings.taxRateHint.tr(),
+                            prefixIcon: Icons.percent_rounded,
+                            suffixIcon: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 14.w),
+                              child: Center(
+                                widthFactor: 1,
+                                child: Text(
+                                  '%',
+                                  style: TextStyles.customStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primaryColor,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value != null && value.trim().isNotEmpty) {
+                                final parsed = double.tryParse(value.trim());
+                                if (parsed == null ||
+                                    parsed < 0 ||
+                                    parsed > 100) {
+                                  return AppStrings.invalidTaxRate.tr();
+                                }
+                              }
+                              return null;
+                            },
                           ),
                           SizedBox(height: isDesktop ? 18 : 16.h),
 

@@ -77,6 +77,9 @@ class AppStrings {
   static const String commercialRegistrationHint = 'commercial_registration_hint';
   static const String vatNumber = 'tax_number_or_vat';
   static const String vatNumberHint = 'tax_number_hint';
+  static const String taxRate = 'tax_rate';
+  static const String taxRateHint = 'tax_rate_hint';
+  static const String invalidTaxRate = 'invalid_tax_rate';
   static const String businessAddress = 'business_address';
   static const String businessAddressHint = 'business_address_hint';
   static const String optional = 'optional';

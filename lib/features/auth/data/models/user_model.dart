@@ -16,6 +16,7 @@ class UserModel extends UserEntity {
     super.crn,
     super.address,
     super.vat,
+    super.taxRate,
   });
 
   factory UserModel.fromFirebaseUser(
@@ -29,6 +30,7 @@ class UserModel extends UserEntity {
     String? crn,
     String? address,
     String? vat,
+    double? taxRate,
   }) {
     return UserModel(
       uid: user.uid,
@@ -43,6 +45,7 @@ class UserModel extends UserEntity {
       crn: crn,
       address: address,
       vat: vat,
+      taxRate: taxRate,
     );
   }
 }

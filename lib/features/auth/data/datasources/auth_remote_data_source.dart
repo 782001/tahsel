@@ -92,6 +92,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSourceBase {
             ? data['userType'] as String
             : 'cafe';
         final isVip = (data['isVip'] as bool?) ?? false;
+        final projectName = data['projectName'] as String?;
+        final phoneNumber = data['phoneNumber'] as String?;
+        final crn = data['crn'] as String?;
+        final address = data['address'] as String?;
+        final vat = data['vat'] as String?;
+        final taxRate = (data['taxRate'] as num?)?.toDouble();
 
         return UserModel.fromFirebaseUser(
           userCredential.user!,
@@ -99,6 +105,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSourceBase {
           accountStatus: accountStatus,
           platformType: platformType,
           isVip: isVip,
+          projectName: projectName,
+          phoneNumber: phoneNumber,
+          crn: crn,
+          address: address,
+          vat: vat,
+          taxRate: taxRate,
         );
       } else {
         throw Exception('User not found');

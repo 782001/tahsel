@@ -9,6 +9,7 @@ class UserProfileModel extends Equatable {
   final String crn;
   final String address;
   final String vat;
+  final double? taxRate;
   final String userType;
   final String platformType;
   final bool isVip;
@@ -23,6 +24,7 @@ class UserProfileModel extends Equatable {
     this.crn = '',
     this.address = '',
     this.vat = '',
+    this.taxRate,
     this.userType = 'cafe',
     this.platformType = 'mobile',
     this.isVip = false,
@@ -39,6 +41,7 @@ class UserProfileModel extends Equatable {
       crn: (map['crn'] as String?) ?? '',
       address: (map['address'] as String?) ?? '',
       vat: (map['vat'] as String?) ?? (map['taxNumber'] as String?) ?? '',
+      taxRate: (map['taxRate'] as num?)?.toDouble(),
       userType: (map['userType'] as String?) ?? 'cafe',
       platformType: (map['platformType'] as String?) ?? 'mobile',
       isVip: (map['isVip'] as bool?) ?? false,
@@ -53,6 +56,8 @@ class UserProfileModel extends Equatable {
     String? crn,
     String? address,
     String? vat,
+    double? taxRate,
+    bool clearTaxRate = false,
     String? userType,
     bool? isVip,
     String? accountStatus,
@@ -66,6 +71,7 @@ class UserProfileModel extends Equatable {
       crn: crn ?? this.crn,
       address: address ?? this.address,
       vat: vat ?? this.vat,
+      taxRate: clearTaxRate ? null : (taxRate ?? this.taxRate),
       userType: userType ?? this.userType,
       platformType: platformType,
       isVip: isVip ?? this.isVip,
@@ -83,6 +89,7 @@ class UserProfileModel extends Equatable {
       'crn': crn,
       'address': address,
       'vat': vat,
+      'taxRate': taxRate,
       'userType': userType,
       'platformType': platformType,
       'isVip': isVip,
@@ -98,6 +105,7 @@ class UserProfileModel extends Equatable {
       'crn': crn.trim(),
       'address': address.trim(),
       'vat': vat.trim(),
+      'taxRate': taxRate,
     };
   }
 
@@ -111,6 +119,7 @@ class UserProfileModel extends Equatable {
     crn,
     address,
     vat,
+    taxRate,
     userType,
     platformType,
     isVip,

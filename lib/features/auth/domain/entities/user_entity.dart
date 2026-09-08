@@ -14,6 +14,7 @@ class UserEntity extends Equatable {
   final String? crn;
   final String? address;
   final String? vat;
+  final double? taxRate;
 
   const UserEntity({
     required this.uid,
@@ -28,6 +29,7 @@ class UserEntity extends Equatable {
     this.crn,
     this.address,
     this.vat,
+    this.taxRate,
   });
 
   @override
@@ -44,5 +46,6 @@ class UserEntity extends Equatable {
     crn,
     address,
     vat,
+    taxRate,
   ];
 }

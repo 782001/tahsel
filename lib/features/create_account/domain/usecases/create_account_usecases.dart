@@ -26,6 +26,7 @@ class CreateUserParams {
   final String? crn;
   final String? address;
   final String? vat;
+  final double? taxRate;
 
   CreateUserParams({
     required this.email,
@@ -41,6 +42,7 @@ class CreateUserParams {
     this.crn,
     this.address,
     this.vat,
+    this.taxRate,
   });
 
   Map<String, dynamic> toMap() => {
@@ -57,5 +59,6 @@ class CreateUserParams {
     if (crn != null) 'crn': crn,
     if (address != null) 'address': address,
     if (vat != null) 'vat': vat,
+    if (taxRate != null) 'taxRate': taxRate,
   };
 }
