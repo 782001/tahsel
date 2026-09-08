@@ -14,6 +14,7 @@ import 'package:tahsel/features/employee/presentation/widgets/add_edit_employee_
 
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/no_internet_view.dart';
 
@@ -66,13 +67,24 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
       backgroundColor: AppColors.scafoldBackGround,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: Colors.white,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
+        leading: isDesktop
+            ? null
+            : IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: Colors.white,
+                ),
+                onPressed: () {
+                  if (Navigator.of(context).canPop()) {
+                    Navigator.of(context).pop();
+                  } else {
+                    try {
+                      context.read<MainLayoutCubit>().changeBottomNav(0);
+                    } catch (_) {}
+                  }
+                },
+              ),
         title: Text(
           AppStrings.employeeList.tr(),
           style: TextStyles.customStyle(
@@ -263,8 +275,8 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                           else ...[
                             SliverPadding(
                               padding: EdgeInsets.symmetric(
-                                horizontal: isDesktop ? 24.w : 16.w,
-                                vertical: isDesktop ? 16.h : 12.h,
+                                horizontal: isDesktop ? 24 : 16.w,
+                                vertical: isDesktop ? 16 : 12.h,
                               ),
                               sliver: isDesktop
                                   ? SliverGrid(
@@ -275,72 +287,68 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                                             mainAxisSpacing: 16,
                                             childAspectRatio: 1.8,
                                           ),
-                                      delegate: SliverChildBuilderDelegate((
-                                        context,
-                                        idx,
-                                      ) {
-                                        if (idx >= filteredList.length) {
-                                          if (showPaginationLoading) {
-                                            return Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    vertical: 24,
-                                                  ),
-                                              child: Center(
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      color:
-                                                          AppColors.primaryColor,
-                                                      strokeWidth: 2,
+                                      delegate: SliverChildBuilderDelegate(
+                                        (context, idx) {
+                                          if (idx >= filteredList.length) {
+                                            if (showPaginationLoading) {
+                                              return Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 24,
                                                     ),
-                                              ),
-                                            );
+                                                child: Center(
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        color: AppColors
+                                                            .primaryColor,
+                                                        strokeWidth: 2,
+                                                      ),
+                                                ),
+                                              );
+                                            }
+                                            return const SizedBox.shrink();
                                           }
-                                          return const SizedBox.shrink();
-                                        }
-                                        return _buildEmployeeCard(
-                                          filteredList[idx],
-                                          isDesktop,
-                                        );
-                                      },
-                                      childCount:
-                                          filteredList.length +
-                                          (showPaginationLoading ? 1 : 0),
-                                    ),
+                                          return _buildEmployeeCard(
+                                            filteredList[idx],
+                                            isDesktop,
+                                          );
+                                        },
+                                        childCount:
+                                            filteredList.length +
+                                            (showPaginationLoading ? 1 : 0),
+                                      ),
                                     )
                                   : SliverList(
-                                      delegate: SliverChildBuilderDelegate((
-                                        context,
-                                        idx,
-                                      ) {
-                                        if (idx >= filteredList.length) {
-                                          if (showPaginationLoading) {
-                                            return Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    vertical: 24,
-                                                  ),
-                                              child: Center(
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      color:
-                                                          AppColors.primaryColor,
-                                                      strokeWidth: 2,
+                                      delegate: SliverChildBuilderDelegate(
+                                        (context, idx) {
+                                          if (idx >= filteredList.length) {
+                                            if (showPaginationLoading) {
+                                              return Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 24,
                                                     ),
-                                              ),
-                                            );
+                                                child: Center(
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        color: AppColors
+                                                            .primaryColor,
+                                                        strokeWidth: 2,
+                                                      ),
+                                                ),
+                                              );
+                                            }
+                                            return const SizedBox.shrink();
                                           }
-                                          return const SizedBox.shrink();
-                                        }
-                                        return _buildEmployeeCard(
-                                          filteredList[idx],
-                                          isDesktop,
-                                        );
-                                      },
-                                      childCount:
-                                          filteredList.length +
-                                          (showPaginationLoading ? 1 : 0),
-                                    ),
+                                          return _buildEmployeeCard(
+                                            filteredList[idx],
+                                            isDesktop,
+                                          );
+                                        },
+                                        childCount:
+                                            filteredList.length +
+                                            (showPaginationLoading ? 1 : 0),
+                                      ),
                                     ),
                             ),
                           ],
@@ -560,7 +568,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                       ),
                     ),
                   ),
-                  SizedBox(width: 12.w),
+                  SizedBox(width: isDesktop ? 12 : 12.w),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -575,7 +583,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                             color: AppColors.blackReal,
                           ),
                         ),
-                        SizedBox(height: 4.h),
+                        SizedBox(height: isDesktop ? 4 : 4.h),
                         Text(
                           employee.role,
                           maxLines: 1,
@@ -590,12 +598,14 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                   ),
                   Container(
                     padding: EdgeInsets.symmetric(
-                      horizontal: 10.w,
-                      vertical: 4.h,
+                      horizontal: isDesktop ? 10 : 10.w,
+                      vertical: isDesktop ? 4 : 4.h,
                     ),
                     decoration: BoxDecoration(
                       color: statusColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(20.r),
+                      borderRadius: BorderRadius.circular(
+                        isDesktop ? 20 : 20.r,
+                      ),
                     ),
                     child: Text(
                       employee.status.tr(),
@@ -606,7 +616,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                       ),
                     ),
                   ),
-                  SizedBox(width: 8.w),
+                  SizedBox(width: isDesktop ? 8 : 8.w),
                   Icon(
                     Icons.arrow_forward_ios_rounded,
                     size: 14,

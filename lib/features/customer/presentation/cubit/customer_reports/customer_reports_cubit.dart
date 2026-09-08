@@ -28,6 +28,12 @@ class CustomerReportsCubit extends Cubit<CustomerReportsState> {
     this.updateCustomerUseCase,
   }) : super(CustomerReportsInitial());
 
+  @override
+  void emit(CustomerReportsState state) {
+    if (isClosed) return;
+    super.emit(state);
+  }
+
   Future<void> fetchCustomers(String uid, {bool isRefresh = false}) async {
     _uid = uid;
     if (isRefresh) {

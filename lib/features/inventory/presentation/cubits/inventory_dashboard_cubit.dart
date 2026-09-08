@@ -54,6 +54,12 @@ class InventoryDashboardCubit extends Cubit<InventoryDashboardState> {
     required this.fetchAllProductsFromRemoteUseCase,
   }) : super(InventoryDashboardInitial());
 
+  @override
+  void emit(InventoryDashboardState state) {
+    if (isClosed) return;
+    super.emit(state);
+  }
+
   Future<void> loadDashboardMetrics() async {
     emit(InventoryDashboardLoading());
     var productsResult = await getProductsUseCase();

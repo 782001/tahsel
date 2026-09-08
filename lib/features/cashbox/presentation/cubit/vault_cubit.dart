@@ -32,6 +32,12 @@ class VaultCubit extends Cubit<VaultState> {
     required this.deleteManualVaultUseCase,
   }) : super(VaultInitial());
 
+  @override
+  void emit(VaultState state) {
+    if (isClosed) return;
+    super.emit(state);
+  }
+
   Future<void> loadVaultData(String uid, {VaultTransactionSource? sourceFilter}) async {
     _uid = uid;
     if (state is! VaultLoaded) {

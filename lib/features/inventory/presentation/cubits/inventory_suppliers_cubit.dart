@@ -61,6 +61,12 @@ class InventorySuppliersCubit extends Cubit<InventorySuppliersState> {
     required this.getProductsUseCase,
   }) : super(InventorySuppliersInitial());
 
+  @override
+  void emit(InventorySuppliersState state) {
+    if (isClosed) return;
+    super.emit(state);
+  }
+
   Future<void> fetchSuppliers() async {
     emit(InventorySuppliersLoading());
     final result = await getSuppliersUseCase();

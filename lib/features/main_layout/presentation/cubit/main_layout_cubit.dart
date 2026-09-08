@@ -13,8 +13,16 @@ import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_state
 import 'package:tahsel/features/my_debts/presentation/screens/unified_debts_screen.dart';
 import 'package:tahsel/features/operation/presentation/screens/home_screen.dart';
 import 'package:tahsel/features/reports/domain/usecases/cleanup_old_reports_usecase.dart';
+import 'package:tahsel/features/cashbox/presentation/cubit/vault_cubit.dart';
+import 'package:tahsel/features/cashbox/presentation/screens/vault_screen.dart';
+import 'package:tahsel/features/customer/presentation/screens/customers_list_screen.dart';
+import 'package:tahsel/features/employee/presentation/cubit/employee_cubit.dart';
+import 'package:tahsel/features/employee/presentation/screens/employee_list_screen.dart';
+import 'package:tahsel/features/inventory/presentation/cubits/inventory_dashboard_cubit.dart';
+import 'package:tahsel/features/inventory/presentation/screens/inventory_main_screen.dart';
 import 'package:tahsel/features/reports/presentation/screens/reports_screen.dart';
 import 'package:tahsel/features/settings/presentation/screens/settings_screen.dart';
+import 'package:tahsel/features/shipping_reconciliation/presentation/screens/shipping_reconciliation_screen.dart';
 
 class MainLayoutCubit extends Cubit<MainLayoutState> {
   final CleanupOldReportsUseCase cleanupOldReportsUseCase;
@@ -86,8 +94,21 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
       child: const InvoicesScreen(),
     ),
     const ReportsScreen(),
-
     const SettingsScreen(),
+    CustomersListScreen(uid: AppStrings.userToken),
+    BlocProvider(
+      create: (_) => sl<VaultCubit>(),
+      child: VaultScreen(uid: AppStrings.userToken),
+    ),
+    BlocProvider(
+      create: (_) => sl<InventoryDashboardCubit>(),
+      child: const InventoryMainScreen(),
+    ),
+    BlocProvider.value(
+      value: sl<EmployeeCubit>(),
+      child: const EmployeeListScreen(),
+    ),
+    const ShippingReconciliationScreen(),
   ];
 
   void changeBottomNav(int index) {

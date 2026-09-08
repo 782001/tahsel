@@ -21,6 +21,12 @@ class CustomerCubit extends Cubit<CustomerState> {
     required this.updateCustomerPreferenceUseCase,
   }) : super(CustomerInitial());
 
+  @override
+  void emit(CustomerState state) {
+    if (isClosed) return;
+    super.emit(state);
+  }
+
   Future<void> fetchCustomers(String uid) async {
     emit(CustomerLoading());
     final result = await getCustomersUseCase(

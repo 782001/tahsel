@@ -45,6 +45,12 @@ class EmployeeCubit extends Cubit<EmployeeState> {
     required this.getEmployeeUseCase,
   }) : super(EmployeeInitial());
 
+  @override
+  void emit(EmployeeState state) {
+    if (isClosed) return;
+    super.emit(state);
+  }
+
   List<EmployeeEntity> _paginatedEmployees = [];
   Object? _lastDoc;
   bool _lastHasReachedMax = false;

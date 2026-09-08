@@ -58,6 +58,15 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
                 listener: (context, state) {},
                 builder: (context, state) {
                   var cubit = BlocProvider.of<MainLayoutCubit>(context);
+                  final isDesktop = ResponsiveLayout.isDesktop(context);
+
+                  if (!isDesktop && cubit.currentIndex >= 6) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (cubit.currentIndex >= 6) {
+                        cubit.changeBottomNav(0);
+                      }
+                    });
+                  }
 
                   return PopScope(
                     canPop: false,

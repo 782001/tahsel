@@ -60,6 +60,12 @@ class InventoryStockMovementsCubit extends Cubit<InventoryStockMovementsState> {
     required this.createManualAdjustmentUseCase,
   }) : super(InventoryStockMovementsInitial());
 
+  @override
+  void emit(InventoryStockMovementsState state) {
+    if (isClosed) return;
+    super.emit(state);
+  }
+
   Future<void> fetchStockMovements({String? productId}) async {
     _currentLimit = 15;
     _hasMore = true;

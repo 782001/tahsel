@@ -10,6 +10,12 @@ class CustomerDetailsCubit extends Cubit<CustomerDetailsState> {
   CustomerDetailsCubit({required this.getCustomerOperationsUseCase})
     : super(CustomerDetailsInitial());
 
+  @override
+  void emit(CustomerDetailsState state) {
+    if (isClosed) return;
+    super.emit(state);
+  }
+
   Future<void> fetchOperations(String uid, String customerName) async {
     emit(CustomerDetailsLoading());
 

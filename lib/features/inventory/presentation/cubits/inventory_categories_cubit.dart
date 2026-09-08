@@ -38,6 +38,12 @@ class InventoryCategoriesCubit extends Cubit<InventoryCategoriesState> {
     required this.deleteCategoryUseCase,
   }) : super(InventoryCategoriesInitial());
 
+  @override
+  void emit(InventoryCategoriesState state) {
+    if (isClosed) return;
+    super.emit(state);
+  }
+
   Future<void> fetchCategories() async {
     emit(InventoryCategoriesLoading());
     final result = await getCategoriesUseCase();

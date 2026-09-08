@@ -7,6 +7,7 @@ class SideNavBarActionNavTile extends StatefulWidget {
   final IconData icon;
   final String label;
   final String? tag;
+  final bool isSelected;
   final VoidCallback onTap;
 
   const SideNavBarActionNavTile({
@@ -14,6 +15,7 @@ class SideNavBarActionNavTile extends StatefulWidget {
     required this.icon,
     required this.label,
     this.tag,
+    this.isSelected = false,
     required this.onTap,
   });
 
@@ -45,22 +47,32 @@ class SideNavBarActionNavTileState extends State<SideNavBarActionNavTile> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
           decoration: BoxDecoration(
-            color: _isHovered
-                ? activeColor.withValues(alpha: 0.05)
-                : Colors.transparent,
+            color: widget.isSelected
+                ? activeColor.withValues(alpha: 0.1)
+                : (_isHovered
+                    ? activeColor.withValues(alpha: 0.05)
+                    : Colors.transparent),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
             children: [
-              Icon(widget.icon, color: AppColors.blackLight, size: 24),
+              Icon(
+                widget.icon,
+                color: widget.isSelected ? activeColor : AppColors.blackLight,
+                size: 24,
+              ),
               const SizedBox(width: 16),
               Expanded(
                 child: Text(
                   widget.label,
                   style: TextStyles.customStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.blackLight,
+                    fontWeight: widget.isSelected
+                        ? FontWeight.bold
+                        : FontWeight.w500,
+                    color: widget.isSelected
+                        ? activeColor
+                        : AppColors.blackLight,
                   ),
                 ),
               ),
@@ -83,7 +95,17 @@ class SideNavBarActionNavTileState extends State<SideNavBarActionNavTile> {
                     ),
                   ),
                 ),
+                if (widget.isSelected) const SizedBox(width: 8),
               ],
+              if (widget.isSelected)
+                Container(
+                  width: 4,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    color: activeColor,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
             ],
           ),
         ),

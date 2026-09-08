@@ -67,6 +67,12 @@ class InventoryProductsCubit extends Cubit<InventoryProductsState> {
     required this.deleteProductUseCase,
   }) : super(InventoryProductsInitial());
 
+  @override
+  void emit(InventoryProductsState state) {
+    if (isClosed) return;
+    super.emit(state);
+  }
+
   Future<void> fetchProducts({
     String? query,
     String? categoryId,

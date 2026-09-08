@@ -8,6 +8,7 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/utils/vault_balance_helper.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:tahsel/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
@@ -188,12 +189,24 @@ class _VaultScreenState extends State<VaultScreen> {
       backgroundColor: AppColors.scafoldBackGround,
       appBar: CustomAppBar(
         centerTitle: AppStrings.vaultTitle.tr(),
-        leadingIcon: Icon(
-          Icons.arrow_back_ios_new_rounded,
-          color: AppColors.textColor,
-          size: isDesktop ? 22 : 20,
-        ),
-        onLeadingTap: () => Navigator.of(context).pop(),
+        leadingIcon: isDesktop
+            ? null
+            : Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: AppColors.textColor,
+                size: 20,
+              ),
+        onLeadingTap: isDesktop
+            ? null
+            : () {
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                } else {
+                  try {
+                    context.read<MainLayoutCubit>().changeBottomNav(0);
+                  } catch (_) {}
+                }
+              },
         actions: [
           if (_isExporting)
             Center(

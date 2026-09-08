@@ -9,6 +9,7 @@ import '../../../../core/utils/app_colors.dart';
 import '../../../../core/utils/app_strings.dart';
 import '../../../../core/utils/styles.dart';
 import '../../../../core/widgets/responsive_layout.dart';
+import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import '../cubit/shipping_reconciliation_cubit.dart';
 import '../cubit/shipping_reconciliation_state.dart';
 import '../widgets/column_mapping_step.dart';
@@ -44,8 +45,14 @@ class _ShippingReconciliationScreenContent extends StatelessWidget {
       // Step 1 with files -> reset files
       cubit.resetSession();
     } else {
-      // Initial state / Empty -> Exit to Settings
-      Navigator.of(context).pop();
+      // Initial state / Empty -> Exit
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      } else {
+        try {
+          context.read<MainLayoutCubit>().changeBottomNav(0);
+        } catch (_) {}
+      }
     }
   }
 
@@ -102,13 +109,16 @@ class _ShippingReconciliationScreenContent extends StatelessWidget {
               scrolledUnderElevation: 0,
               backgroundColor: AppColors.scafoldBackGround,
               elevation: 0,
-              leading: IconButton(
-                icon: Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: AppColors.primaryColor,
-                ),
-                onPressed: () => _handleBack(context, state),
-              ),
+              automaticallyImplyLeading: false,
+              leading: (isDesktop && currentStep == 1)
+                  ? null
+                  : IconButton(
+                      icon: Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: AppColors.primaryColor,
+                      ),
+                      onPressed: () => _handleBack(context, state),
+                    ),
               title: Column(
                 children: [
                   Text(

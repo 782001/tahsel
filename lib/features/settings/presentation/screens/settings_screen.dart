@@ -206,11 +206,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   onTap: () {
                                     final uid = AppStrings.userToken;
                                     if (uid.isNotEmpty) {
-                                      Navigator.pushNamed(
-                                        context,
-                                        AppRoutes.customersList,
-                                        arguments: uid,
-                                      );
+                                      if (isDesktop) {
+                                        context
+                                            .read<MainLayoutCubit>()
+                                            .changeBottomNav(6);
+                                      } else {
+                                        Navigator.pushNamed(
+                                          context,
+                                          AppRoutes.customersList,
+                                          arguments: uid,
+                                        );
+                                      }
                                     }
                                   },
                                   borderRadius: BorderRadius.circular(16.r),
@@ -283,7 +289,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   ),
                                 ),
 
-
                                 // Vault / Cash Register (VIP + Shop) Section
                                 if ((!Platform.isIOS && isShop) ||
                                     (AppStrings.isVip && isShop)) ...[
@@ -298,10 +303,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                         _showVipNoticeDialog(context);
                                         return;
                                       }
-                                      Navigator.pushNamed(
-                                        context,
-                                        AppRoutes.vault,
-                                      );
+                                      if (isDesktop) {
+                                        context
+                                            .read<MainLayoutCubit>()
+                                            .changeBottomNav(7);
+                                      } else {
+                                        Navigator.pushNamed(
+                                          context,
+                                          AppRoutes.vault,
+                                        );
+                                      }
                                     },
                                     borderRadius: BorderRadius.circular(20.r),
                                     child: Container(
@@ -559,10 +570,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                         _showVipNoticeDialog(context);
                                         return;
                                       }
-                                      Navigator.pushNamed(
-                                        context,
-                                        AppRoutes.inventoryMain,
-                                      );
+                                      if (isDesktop) {
+                                        context
+                                            .read<MainLayoutCubit>()
+                                            .changeBottomNav(8);
+                                      } else {
+                                        Navigator.pushNamed(
+                                          context,
+                                          AppRoutes.inventoryMain,
+                                        );
+                                      }
                                     },
                                     borderRadius: BorderRadius.circular(20.r),
                                     child: Container(
@@ -1133,10 +1150,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 if (isShop)
                                   InkWell(
                                     onTap: () {
-                                      Navigator.pushNamed(
-                                        context,
-                                        AppRoutes.shippingReconciliation,
-                                      );
+                                      if (isDesktop) {
+                                        context
+                                            .read<MainLayoutCubit>()
+                                            .changeBottomNav(10);
+                                      } else {
+                                        Navigator.pushNamed(
+                                          context,
+                                          AppRoutes.shippingReconciliation,
+                                        );
+                                      }
                                     },
                                     borderRadius: BorderRadius.circular(16.r),
                                     child: Container(

@@ -17,6 +17,12 @@ class ShippingReconciliationCubit
   })  : _repository = repository,
         super(ShippingReconciliationInitial());
 
+  @override
+  void emit(ShippingReconciliationState state) {
+    if (isClosed) return;
+    super.emit(state);
+  }
+
   RawFileData? _internalFile;
   FileColumnMappingEntity? _internalMapping;
   RawFileData? _shippingFile;

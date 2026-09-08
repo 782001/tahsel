@@ -10,6 +10,7 @@ import 'package:tahsel/features/customer/presentation/widgets/add_customer_dialo
 import 'package:tahsel/features/customer/presentation/widgets/customer_list_card.dart';
 import 'package:tahsel/features/customer/presentation/widgets/skeletons/customer_card_skeleton.dart';
 
+import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import '../../../../core/services/injection_container.dart';
 import '../cubit/customer_reports/customer_reports_cubit.dart';
 import '../cubit/customer_reports/customer_reports_state.dart';
@@ -35,11 +36,13 @@ class CustomersListScreen extends StatelessWidget {
       create: (context) => sl<CustomerReportsCubit>()..fetchCustomers(uid),
       child: Builder(
         builder: (context) {
+          final isDesktop = ResponsiveLayout.isDesktop(context);
           return Scaffold(
             backgroundColor: AppColors.scafoldBackGround,
             appBar: AppBar(
               centerTitle: true,
               scrolledUnderElevation: 0,
+              automaticallyImplyLeading: false,
               title: Text(
                 AppStrings.customers.tr(),
                 style: TextStyles.customStyle(
@@ -48,13 +51,23 @@ class CustomersListScreen extends StatelessWidget {
                   fontSize: 20,
                 ),
               ),
-              leading: IconButton(
-                icon: Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: AppColors.black,
-                ),
-                onPressed: () => Navigator.pop(context),
-              ),
+              leading: isDesktop
+                  ? null
+                  : IconButton(
+                      icon: Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: AppColors.black,
+                      ),
+                      onPressed: () {
+                        if (Navigator.of(context).canPop()) {
+                          Navigator.of(context).pop();
+                        } else {
+                          try {
+                            context.read<MainLayoutCubit>().changeBottomNav(0);
+                          } catch (_) {}
+                        }
+                      },
+                    ),
             ),
             floatingActionButton: FloatingActionButton.extended(
               onPressed: () => _showAddCustomerDialog(context),
@@ -126,7 +139,7 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
     return Center(
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: isDesktop ? 800 : double.infinity,
+          maxWidth: isDesktop ? 900 : double.infinity,
         ),
         child: CustomScrollView(
           controller: _scrollController,
@@ -186,9 +199,7 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
                     ),
                   ),
                   onChanged: (value) {
-                    context.read<CustomerReportsCubit>().searchCustomers(
-                      value,
-                    );
+                    context.read<CustomerReportsCubit>().searchCustomers(value);
                     if (mounted) setState(() {});
                   },
                 ),

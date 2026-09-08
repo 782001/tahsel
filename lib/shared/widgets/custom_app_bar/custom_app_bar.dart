@@ -40,6 +40,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: true,
+      automaticallyImplyLeading: false,
 
       /// Leading icon
       leading: leadingIcon != null

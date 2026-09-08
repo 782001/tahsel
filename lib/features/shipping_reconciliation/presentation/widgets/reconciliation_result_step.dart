@@ -588,7 +588,7 @@ class _ReconciliationResultStepState extends State<ReconciliationResultStep> {
         selectedColor: AppColors.primaryColor,
         backgroundColor: AppColors.scafoldBackGround,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10.r),
+          borderRadius: BorderRadius.circular(5.r),
           side: BorderSide(
             color: isSelected
                 ? AppColors.primaryColor

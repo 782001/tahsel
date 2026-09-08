@@ -6,6 +6,7 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:tahsel/routes/app_routes.dart';
 
 import '../cubits/inventory_dashboard_cubit.dart';
@@ -34,13 +35,24 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
         scrolledUnderElevation: 0,
         backgroundColor: AppColors.scafoldBackGround,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: AppColors.primaryColor,
-          ),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: isDesktop
+            ? null
+            : IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: AppColors.primaryColor,
+                ),
+                onPressed: () {
+                  if (Navigator.of(context).canPop()) {
+                    Navigator.of(context).pop();
+                  } else {
+                    try {
+                      context.read<MainLayoutCubit>().changeBottomNav(0);
+                    } catch (_) {}
+                  }
+                },
+              ),
         centerTitle: true,
         title: Text(
           AppStrings.inventoryManagementVIP.tr(),
@@ -120,10 +132,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Tahsel Primary Theme Hero Card
-                    _buildTahselHeroCard(
-                      context,
-                      isDesktop: isDesktop,
-                    ),
+                    _buildTahselHeroCard(context, isDesktop: isDesktop),
 
                     SizedBox(height: isDesktop ? 24 : 20.h),
 
@@ -213,74 +222,9 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                     ),
                     SizedBox(height: isDesktop ? 16 : 16.h),
 
-                    // Sub-modules Navigation Grid/List with Tahsel AppColors
-                    GridView.count(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: isDesktop ? 3 : 2,
-                        mainAxisSpacing: isDesktop ? 16 : 12.h,
-                        crossAxisSpacing: isDesktop ? 16 : 12.w,
-                        childAspectRatio: isDesktop ? 1.35 : 1.0,
-                        children: [
-                          _buildTahselModuleTile(
-                            context,
-                            title: AppStrings.inventoryProducts.tr(),
-                            subtitle: AppStrings.inventoryManagementVIPDesc
-                                .tr(),
-                            icon: Icons.shopping_bag_rounded,
-                            color: AppColors.primaryColor,
-                            route: AppRoutes.inventoryProducts,
-                            isDesktop: isDesktop,
-                          ),
-                          _buildTahselModuleTile(
-                            context,
-                            title: AppStrings.inventoryCategories.tr(),
-                            subtitle: AppStrings.categoryDescription.tr(),
-                            icon: Icons.category_rounded,
-                            color: AppColors.inventoryCategoryBrown,
-                            route: AppRoutes.inventoryCategories,
-                            isDesktop: isDesktop,
-                          ),
-                          _buildTahselModuleTile(
-                            context,
-                            title: AppStrings.inventorySuppliers.tr(),
-                            subtitle: AppStrings.supplierDetails.tr(),
-                            icon: Icons.local_shipping_rounded,
-                            color: AppColors.inventorySupplierTeal,
-                            route: AppRoutes.inventorySuppliers,
-                            isDesktop: isDesktop,
-                          ),
-                          _buildTahselModuleTile(
-                            context,
-                            title: AppStrings.inventoryPurchases.tr(),
-                            subtitle: AppStrings.purchaseHistory.tr(),
-                            icon: Icons.receipt_long_rounded,
-                            color: AppColors.inventoryPurchasePurple,
-                            route: AppRoutes.inventoryPurchases,
-                            isDesktop: isDesktop,
-                          ),
-                          _buildTahselModuleTile(
-                            context,
-                            title: AppStrings.inventoryStockMovements.tr(),
-                            subtitle: AppStrings.stockMovementsHistory.tr(),
-                            icon: Icons.history_rounded,
-                            color: AppColors.error,
-                            route: AppRoutes.inventoryStockMovements,
-                            isDesktop: isDesktop,
-                          ),
-                          _buildTahselModuleTile(
-                            context,
-                            title: AppStrings.inventoryAnalytics.tr(),
-                            subtitle: AppStrings.inventoryAnalyticsDesc.tr(),
-                            icon: Icons.analytics_rounded,
-                            color: AppColors.creditAmberStart,
-                            route: AppRoutes.inventoryAnalytics,
-                            isDesktop: isDesktop,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                    _buildModulesGrid(context, isDesktop),
+                  ],
+                ),
               ),
             ),
           ),
@@ -505,6 +449,95 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
     );
   }
 
+  Widget _buildModulesGrid(BuildContext context, bool isDesktop) {
+    final modules = [
+      _InventoryModuleItem(
+        title: AppStrings.inventoryProducts.tr(),
+        subtitle: AppStrings.inventoryManagementVIPDesc.tr(),
+        icon: Icons.shopping_bag_rounded,
+        color: AppColors.primaryColor,
+        route: AppRoutes.inventoryProducts,
+      ),
+      _InventoryModuleItem(
+        title: AppStrings.inventoryCategories.tr(),
+        subtitle: AppStrings.categoryDescription.tr(),
+        icon: Icons.category_rounded,
+        color: AppColors.inventoryCategoryBrown,
+        route: AppRoutes.inventoryCategories,
+      ),
+      _InventoryModuleItem(
+        title: AppStrings.inventorySuppliers.tr(),
+        subtitle: AppStrings.supplierDetails.tr(),
+        icon: Icons.local_shipping_rounded,
+        color: AppColors.inventorySupplierTeal,
+        route: AppRoutes.inventorySuppliers,
+      ),
+      _InventoryModuleItem(
+        title: AppStrings.inventoryPurchases.tr(),
+        subtitle: AppStrings.purchaseHistory.tr(),
+        icon: Icons.receipt_long_rounded,
+        color: AppColors.inventoryPurchasePurple,
+        route: AppRoutes.inventoryPurchases,
+      ),
+      _InventoryModuleItem(
+        title: AppStrings.inventoryStockMovements.tr(),
+        subtitle: AppStrings.stockMovementsHistory.tr(),
+        icon: Icons.history_rounded,
+        color: AppColors.error,
+        route: AppRoutes.inventoryStockMovements,
+      ),
+      _InventoryModuleItem(
+        title: AppStrings.inventoryAnalytics.tr(),
+        subtitle: AppStrings.inventoryAnalyticsDesc.tr(),
+        icon: Icons.analytics_rounded,
+        color: AppColors.creditAmberStart,
+        route: AppRoutes.inventoryAnalytics,
+      ),
+    ];
+
+    final int columns = isDesktop ? 3 : 2;
+    final List<Widget> rows = [];
+
+    for (int i = 0; i < modules.length; i += columns) {
+      final end = (i + columns < modules.length) ? i + columns : modules.length;
+      final rowItems = modules.sublist(i, end);
+
+      rows.add(
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (int j = 0; j < rowItems.length; j++) ...[
+                if (j > 0) SizedBox(width: isDesktop ? 16 : 12.w),
+                Expanded(
+                  child: _buildTahselModuleTile(
+                    context,
+                    title: rowItems[j].title,
+                    subtitle: rowItems[j].subtitle,
+                    icon: rowItems[j].icon,
+                    color: rowItems[j].color,
+                    route: rowItems[j].route,
+                    isDesktop: isDesktop,
+                  ),
+                ),
+              ],
+              for (int k = 0; k < columns - rowItems.length; k++) ...[
+                SizedBox(width: isDesktop ? 16 : 12.w),
+                const Expanded(child: SizedBox.shrink()),
+              ],
+            ],
+          ),
+        ),
+      );
+
+      if (i + columns < modules.length) {
+        rows.add(SizedBox(height: isDesktop ? 16 : 12.h));
+      }
+    }
+
+    return Column(children: rows);
+  }
+
   Widget _buildTahselModuleTile(
     BuildContext context, {
     required String title,
@@ -520,7 +553,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
         onTap: () => Navigator.pushNamed(context, route),
         borderRadius: BorderRadius.circular(18.r),
         child: Container(
-          padding: EdgeInsets.all(isDesktop ? 16 : 12.w),
+          padding: EdgeInsets.all(isDesktop ? 16 : 14.w),
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(18.r),
@@ -534,7 +567,6 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -551,33 +583,22 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                   ),
                 ],
               ),
-              SizedBox(height: 6.h),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyles.customStyle(
-                        fontSize: isDesktop ? 15 : 14,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.blackReal,
-                      ),
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      subtitle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyles.customStyle(
-                        fontSize: isDesktop ? 11 : 10.5,
-                        color: AppColors.sandText,
-                      ),
-                    ),
-                  ],
+              SizedBox(height: isDesktop ? 12 : 8.h),
+              Text(
+                title,
+                style: TextStyles.customStyle(
+                  fontSize: isDesktop ? 15 : 13.5,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.blackReal,
+                ),
+              ),
+              SizedBox(height: 4.h),
+              Text(
+                subtitle,
+                style: TextStyles.customStyle(
+                  fontSize: isDesktop ? 11.5 : 10.5,
+                  color: AppColors.sandText,
+                  height: 1.35,
                 ),
               ),
             ],
@@ -586,4 +607,20 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
       ),
     );
   }
+}
+
+class _InventoryModuleItem {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+  final String route;
+
+  const _InventoryModuleItem({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+    required this.route,
+  });
 }

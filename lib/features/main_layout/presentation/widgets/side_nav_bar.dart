@@ -9,7 +9,6 @@ import 'package:tahsel/core/utils/assets.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:tahsel/features/main_layout/presentation/widgets/side_nav_bar_action_nav_tile.dart';
-import 'package:tahsel/routes/app_routes.dart';
 
 class SideNavBar extends StatelessWidget {
   final MainLayoutCubit cubit;
@@ -149,14 +148,15 @@ class SideNavBar extends StatelessWidget {
                     icon: Icons.account_balance_wallet_rounded,
                     label: AppStrings.vaultTitle.tr(),
                     tag: "VIP ✨",
-                    onTap: () => Navigator.pushNamed(context, AppRoutes.vault),
+                    isSelected: cubit.currentIndex == 7,
+                    onTap: () => cubit.changeBottomNav(7),
                   ),
                   SideNavBarActionNavTile(
                     icon: Icons.inventory_2_rounded,
                     label: AppStrings.inventoryManagementVIP.tr(),
                     tag: "VIP ✨",
-                    onTap: () =>
-                        Navigator.pushNamed(context, AppRoutes.inventoryMain),
+                    isSelected: cubit.currentIndex == 8,
+                    onTap: () => cubit.changeBottomNav(8),
                   ),
                 ],
                 if (!Platform.isIOS || (AppStrings.isVip)) ...[
@@ -167,8 +167,8 @@ class SideNavBar extends StatelessWidget {
                     icon: Icons.badge_rounded,
                     label: AppStrings.employeeManagement.tr(),
                     tag: "VIP ✨",
-                    onTap: () =>
-                        Navigator.pushNamed(context, AppRoutes.employeeList),
+                    isSelected: cubit.currentIndex == 9,
+                    onTap: () => cubit.changeBottomNav(9),
                   ),
                 ],
 
@@ -185,26 +185,16 @@ class SideNavBar extends StatelessWidget {
                 SideNavBarActionNavTile(
                   icon: Icons.people_alt_rounded,
                   label: AppStrings.myCustomers.tr(),
-                  onTap: () {
-                    final uid = AppStrings.userToken;
-                    if (uid.isNotEmpty) {
-                      Navigator.pushNamed(
-                        context,
-                        AppRoutes.customersList,
-                        arguments: uid,
-                      );
-                    }
-                  },
+                  isSelected: cubit.currentIndex == 6,
+                  onTap: () => cubit.changeBottomNav(6),
                 ),
                 if (isShop) const SizedBox(height: 8),
                 if (isShop)
                   SideNavBarActionNavTile(
                     icon: Icons.local_shipping_rounded,
                     label: AppStrings.shippingReportsReconciliationOffline.tr(),
-                    onTap: () => Navigator.pushNamed(
-                      context,
-                      AppRoutes.shippingReconciliation,
-                    ),
+                    isSelected: cubit.currentIndex == 10,
+                    onTap: () => cubit.changeBottomNav(10),
                   ),
 
                 const SizedBox(height: 16),

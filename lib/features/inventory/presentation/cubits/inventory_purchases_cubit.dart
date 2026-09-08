@@ -69,6 +69,12 @@ class InventoryPurchasesCubit extends Cubit<InventoryPurchasesState> {
     required this.deletePurchaseUseCase,
   }) : super(InventoryPurchasesInitial());
 
+  @override
+  void emit(InventoryPurchasesState state) {
+    if (isClosed) return;
+    super.emit(state);
+  }
+
   Future<void> fetchPurchases({String? supplierId}) async {
     _currentLimit = 15;
     _hasMore = true;
