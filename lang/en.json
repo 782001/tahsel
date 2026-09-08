@@ -1234,6 +1234,8 @@
   "total_before_tax": "Total Before Tax",
   "total_after_tax": "Total After Tax",
   "vat_amount": "VAT",
+  "items_count": "Items Count",
+  "total_quantity": "Total Quantity",
   "business_address": "Address",
   "business_address_hint": "Branch or office address (Optional)",
   "profile_info": "Business & Account Profile",

@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -6,6 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get_it/get_it.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/profile/business_profile_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -126,9 +128,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
     final priceController = TextEditingController(
       text: item.purchasePrice.toSmartAmount(),
     );
-    final unitController = TextEditingController(
-      text: item.unit ?? '',
-    );
+    final unitController = TextEditingController(text: item.unit ?? '');
 
     showDialog(
       context: context,
@@ -355,6 +355,9 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
 
       // 2. Create or Update the purchase invoice
       bool success = false;
+      final effectiveTax =
+          widget.initialPurchase?.taxRate ??
+          BusinessProfileService.instance.cachedProfile?.taxRate;
 
       if (isEdit) {
         final updatedPurchase = widget.initialPurchase!.copyWith(
@@ -367,6 +370,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
               : null,
           paymentMethod: _selectedPaymentMethod,
           paidAmount: actualPaidAmount,
+          taxRate: effectiveTax,
           isSynced: false,
         );
         success = await purchasesCubit.updatePurchase(
@@ -387,6 +391,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
           isSynced: false,
           paymentMethod: _selectedPaymentMethod,
           paidAmount: actualPaidAmount,
+          taxRate: effectiveTax,
         );
         success = await purchasesCubit.createPurchase(newPurchase);
       }
@@ -422,6 +427,13 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
+    final effectiveTaxRate =
+        widget.initialPurchase?.taxRate ??
+        BusinessProfileService.instance.cachedProfile?.taxRate ??
+        0.0;
+    final hasTax = effectiveTaxRate > 0;
+    final taxAmount = hasTax ? _totalAmount * (effectiveTaxRate / 100.0) : 0.0;
+    final totalBeforeTax = hasTax ? (_totalAmount - taxAmount) : _totalAmount;
 
     return MultiBlocListener(
       listeners: [
@@ -595,9 +607,8 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                                           fontSize: 15,
                                                           fontWeight:
                                                               FontWeight.bold,
-                                                          color:
-                                                              AppColors
-                                                                  .blackReal,
+                                                          color: AppColors
+                                                              .blackReal,
                                                         ),
                                                   ),
                                                   SizedBox(
@@ -615,30 +626,28 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                                             EdgeInsets.symmetric(
                                                               horizontal:
                                                                   isDesktop
-                                                                      ? 6
-                                                                      : 6.w,
+                                                                  ? 6
+                                                                  : 6.w,
                                                               vertical:
                                                                   isDesktop
-                                                                      ? 2
-                                                                      : 2.h,
+                                                                  ? 2
+                                                                  : 2.h,
                                                             ),
-                                                        decoration:
-                                                            BoxDecoration(
-                                                              color: AppColors
-                                                                  .primaryColor
-                                                                  .withValues(
-                                                                    alpha: 0.1,
-                                                                  ),
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                        4.r,
-                                                                      ),
-                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          color: AppColors
+                                                              .primaryColor
+                                                              .withValues(
+                                                                alpha: 0.1,
+                                                              ),
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                4.r,
+                                                              ),
+                                                        ),
                                                         child: Text(
                                                           '${AppStrings.quantity.tr()}: ${item.quantity.toSmartAmount()}',
-                                                          style: TextStyles
-                                                              .customStyle(
+                                                          style:
+                                                              TextStyles.customStyle(
                                                                 fontSize: 12,
                                                                 fontWeight:
                                                                     FontWeight
@@ -650,8 +659,8 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                                       ),
                                                       Text(
                                                         '×',
-                                                        style: TextStyles
-                                                            .customStyle(
+                                                        style:
+                                                            TextStyles.customStyle(
                                                               fontSize: 13,
                                                               color: AppColors
                                                                   .sandText,
@@ -659,8 +668,8 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                                       ),
                                                       Text(
                                                         '${item.purchasePrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-                                                        style: TextStyles
-                                                            .customStyle(
+                                                        style:
+                                                            TextStyles.customStyle(
                                                               fontSize: 13,
                                                               color: AppColors
                                                                   .sandText,
@@ -668,8 +677,8 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                                       ),
                                                       Text(
                                                         '=',
-                                                        style: TextStyles
-                                                            .customStyle(
+                                                        style:
+                                                            TextStyles.customStyle(
                                                               fontSize: 13,
                                                               fontWeight:
                                                                   FontWeight
@@ -680,8 +689,8 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                                       ),
                                                       Text(
                                                         '${item.totalPrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-                                                        style: TextStyles
-                                                            .customStyle(
+                                                        style:
+                                                            TextStyles.customStyle(
                                                               fontSize: 14,
                                                               fontWeight:
                                                                   FontWeight
@@ -736,11 +745,63 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          if (hasTax) ...[
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  AppStrings.totalBeforeTax.tr(),
+                                  style: TextStyles.customStyle(
+                                    fontSize: 14,
+                                    color: AppColors.sandText,
+                                  ),
+                                ),
+                                Text(
+                                  '${totalBeforeTax.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                                  style: TextStyles.customStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.blackReal,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: isDesktop ? 6 : 6.h),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  '${AppStrings.vatAmount.tr()} (${effectiveTaxRate.toSmartAmount()}%)',
+                                  style: TextStyles.customStyle(
+                                    fontSize: 14,
+                                    color: AppColors.sandText,
+                                  ),
+                                ),
+                                Text(
+                                  '${taxAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                                  style: TextStyles.customStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.primaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: isDesktop ? 6 : 6.h),
+                            Divider(
+                              color: AppColors.disabledColor.withValues(
+                                alpha: 0.2,
+                              ),
+                            ),
+                            SizedBox(height: isDesktop ? 6 : 6.h),
+                          ],
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                AppStrings.totalAmount.tr(),
+                                hasTax
+                                    ? AppStrings.totalAfterTax.tr()
+                                    : AppStrings.totalAmount.tr(),
                                 style: TextStyles.customStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -1011,17 +1072,19 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                     Builder(
                                       builder: (context) {
                                         final existingSelectedItem =
-                                            _selectedItems.where(
-                                              (item) =>
-                                                  item.productId ==
-                                                      selectedProd!.id ||
-                                                  item.productName
-                                                          .trim()
-                                                          .toLowerCase() ==
-                                                      selectedProd!.name
-                                                          .trim()
-                                                          .toLowerCase(),
-                                            ).firstOrNull;
+                                            _selectedItems
+                                                .where(
+                                                  (item) =>
+                                                      item.productId ==
+                                                          selectedProd!.id ||
+                                                      item.productName
+                                                              .trim()
+                                                              .toLowerCase() ==
+                                                          selectedProd!.name
+                                                              .trim()
+                                                              .toLowerCase(),
+                                                )
+                                                .firstOrNull;
 
                                         if (existingSelectedItem == null) {
                                           return const SizedBox.shrink();
@@ -1039,10 +1102,9 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                             color: AppColors.info.withValues(
                                               alpha: 0.08,
                                             ),
-                                            borderRadius:
-                                                BorderRadius.circular(
-                                                  isDesktop ? 8 : 8.r,
-                                                ),
+                                            borderRadius: BorderRadius.circular(
+                                              isDesktop ? 8 : 8.r,
+                                            ),
                                             border: Border.all(
                                               color: AppColors.info.withValues(
                                                 alpha: 0.3,
@@ -1062,16 +1124,13 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                               Expanded(
                                                 child: Text(
                                                   '${AppStrings.itemAlreadyInPurchase.tr(namedArgs: {'qty': existingSelectedItem.quantity.toSmartAmount(), 'unit': existingSelectedItem.unit ?? AppStrings.piece.tr()})}\n${AppStrings.qtyWillBeAdded.tr()}',
-                                                  style:
-                                                      TextStyles.customStyle(
-                                                        fontSize:
-                                                            isDesktop
-                                                                ? 11.5
-                                                                : 11.5,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                        color: AppColors.info,
-                                                      ),
+                                                  style: TextStyles.customStyle(
+                                                    fontSize: isDesktop
+                                                        ? 11.5
+                                                        : 11.5,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: AppColors.info,
+                                                  ),
                                                 ),
                                               ),
                                             ],
@@ -1146,7 +1205,8 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                     suffixIcon: (!kIsWeb && Platform.isWindows)
                                         ? null
                                         : Icons.qr_code_scanner_rounded,
-                                    onSuffixIconPressed: (!kIsWeb && Platform.isWindows)
+                                    onSuffixIconPressed:
+                                        (!kIsWeb && Platform.isWindows)
                                         ? null
                                         : () async {
                                             final scannedCode =
@@ -1376,12 +1436,12 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                     ) ??
                                     1.0;
                                 final unit = newUnitController.text.trim();
-                                final barcode =
-                                    newBarcodeController.text.trim();
+                                final barcode = newBarcodeController.text
+                                    .trim();
 
                                 // 1. Check if product already exists in inventory by name or barcode
-                                final existingProductInInventory =
-                                    _allProducts.where((p) {
+                                final existingProductInInventory = _allProducts
+                                    .where((p) {
                                       if (p.name.trim().toLowerCase() ==
                                           name.toLowerCase()) {
                                         return true;
@@ -1393,7 +1453,8 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                         return true;
                                       }
                                       return false;
-                                    }).firstOrNull;
+                                    })
+                                    .firstOrNull;
 
                                 if (existingProductInInventory != null) {
                                   _addItem(
@@ -1402,15 +1463,15 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                     purchasePrice > 0
                                         ? purchasePrice
                                         : existingProductInInventory
-                                            .purchasePrice,
+                                              .purchasePrice,
                                   );
                                   Navigator.of(ctx).pop();
                                   return;
                                 }
 
                                 // 2. Check if this product was already added to _selectedItems during this session
-                                final existingSelectedItemIndex =
-                                    _selectedItems.indexWhere(
+                                final existingSelectedItemIndex = _selectedItems
+                                    .indexWhere(
                                       (item) =>
                                           item.productName
                                               .trim()
@@ -1445,7 +1506,10 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                 final newProduct = InventoryProductEntity(
                                   id: 'prod_${DateTime.now().millisecondsSinceEpoch}',
                                   sku: newSkuController.text.trim(),
-                                  barcode: newBarcodeController.text.trim().isNotEmpty
+                                  barcode:
+                                      newBarcodeController.text
+                                          .trim()
+                                          .isNotEmpty
                                       ? newBarcodeController.text.trim()
                                       : null,
                                   name: name,

@@ -41,6 +41,7 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
+    final hasTax = widget.purchase.effectiveTaxRate > 0;
     final dateStr = DateFormat(
       'yyyy/MM/dd - hh:mm a',
     ).format(widget.purchase.createdAt);
@@ -55,11 +56,14 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
     final Color methodColor = method == 'debt'
         ? AppColors.warning
         : (method == 'card' ? AppColors.primaryColor : AppColors.success);
-    final String methodText = method == 'debt'
-        ? AppStrings.paymentDebt.tr()
+    final String methodText =
+        method == 'debt' && widget.purchase.remainingDebt <= 0.01
+        ? AppStrings.paid.tr()
         : (method == 'card'
               ? AppStrings.paymentCard.tr()
-              : AppStrings.paymentCash.tr());
+              : method == 'cash'
+              ? AppStrings.paymentCash.tr()
+              : AppStrings.paymentDebt.tr());
     final IconData methodIcon = method == 'debt'
         ? Icons.assignment_outlined
         : (method == 'card'
@@ -321,11 +325,94 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
               ),
             ],
           ),
-          SizedBox(height: isDesktop ? 10 : 10.h),
+
+          if (widget.purchase.paymentMethod == 'debt')
+            Divider(color: AppColors.disabledColor.withValues(alpha: 0.1)),
+          if (widget.purchase.paymentMethod == 'debt') ...[
+            Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: isDesktop ? 10 : 10.w,
+                vertical: isDesktop ? 6 : 6.h,
+              ),
+              margin: EdgeInsets.only(bottom: isDesktop ? 8 : 8.h),
+              decoration: BoxDecoration(
+                color: AppColors.scafoldBackGround.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  if (widget.purchase.paymentMethod == 'debt') ...[
+                    if (hasTax)
+                      Expanded(
+                        child: Column(
+                          children: [
+                            Text(
+                              AppStrings.amountPaid.tr(),
+                              style: TextStyles.customStyle(
+                                fontSize: 10.5,
+                                color: AppColors.sandText,
+                              ),
+                            ),
+                            SizedBox(height: 2.h),
+                            Text(
+                              widget.purchase.paidAmount.toSmartAmount(),
+                              style: TextStyles.customStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.success,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    Container(
+                      width: 1,
+                      height: 20.h,
+                      color: AppColors.disabledColor.withValues(alpha: 0.2),
+                    ),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          Text(
+                            AppStrings.remainingDebt.tr(),
+                            style: TextStyles.customStyle(
+                              fontSize: 10.5,
+                              color: widget.purchase.remainingDebt <= 0.01
+                                  ? AppColors.success
+                                  : AppColors.error,
+                            ),
+                          ),
+                          SizedBox(height: 2.h),
+                          Text(
+                            widget.purchase.remainingDebt.toSmartAmount(),
+                            style: TextStyles.customStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: widget.purchase.remainingDebt <= 0.01
+                                  ? AppColors.success
+                                  : AppColors.error,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
           Divider(color: AppColors.disabledColor.withValues(alpha: 0.1)),
           Column(
             children: [
-              ...itemsToDisplay.map((item) => _buildItemRow(item, isDesktop)),
+              ...itemsToDisplay.map(
+                (item) => _buildItemRow(
+                  item,
+                  isDesktop,
+                  hasTax,
+                  widget.purchase.effectiveTaxRate,
+                ),
+              ),
               if (hasMoreItems) ...[
                 SizedBox(height: isDesktop ? 6 : 6.h),
                 InkWell(
@@ -379,7 +466,15 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
     );
   }
 
-  Widget _buildItemRow(InventoryPurchaseItemEntity item, bool isDesktop) {
+  Widget _buildItemRow(
+    InventoryPurchaseItemEntity item,
+    bool isDesktop,
+    bool hasTax,
+    double taxRate,
+  ) {
+    final itemTax = hasTax ? item.subtotal * (taxRate / 100.0) : 0.0;
+    final itemBeforeTax = hasTax ? item.subtotal - itemTax : item.subtotal;
+
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: isDesktop ? 10 : 10.w,
@@ -401,52 +496,54 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
             ),
           ),
           SizedBox(width: isDesktop ? 8 : 8.w),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                item.productName,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyles.customStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.blackReal,
-                ),
-              ),
-              SizedBox(height: isDesktop ? 1 : 1.h),
-              Row(
-                children: [
-                  Text(
-                    '${item.quantity.toSmartAmount()} ${item.unit != null && item.unit!.isNotEmpty ? item.unit! : AppStrings.unit.tr()} × ${item.purchasePrice.toSmartAmount()}',
-                    style: TextStyles.customStyle(
-                      fontSize: 12,
-                      color: AppColors.sandText,
-                    ),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.productName,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyles.customStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.blackReal,
                   ),
-                  SizedBox(width: isDesktop ? 8 : 8.w),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isDesktop ? 6 : 6.w,
-                      vertical: isDesktop ? 2 : 2.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.success.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(4.r),
-                    ),
-                    child: Text(
-                      '${item.subtotal.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                ),
+                SizedBox(height: isDesktop ? 1 : 1.h),
+                Row(
+                  children: [
+                    Text(
+                      '${item.quantity.toSmartAmount()} ${item.unit != null && item.unit!.isNotEmpty ? item.unit! : AppStrings.unit.tr()} × ${item.purchasePrice.toSmartAmount()}',
                       style: TextStyles.customStyle(
                         fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.success,
+                        color: AppColors.sandText,
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                    SizedBox(width: isDesktop ? 8 : 8.w),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isDesktop ? 6 : 6.w,
+                        vertical: isDesktop ? 2 : 2.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.success.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(4.r),
+                      ),
+                      child: Text(
+                        '${item.subtotal.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                        style: TextStyles.customStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.success,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),

@@ -59,6 +59,7 @@ class InventoryPurchaseModel extends InventoryPurchaseEntity {
     super.isSynced,
     super.paymentMethod = 'cash',
     super.paidAmount = 0.0,
+    super.taxRate,
     this.isDeleted = false,
   });
 
@@ -75,6 +76,7 @@ class InventoryPurchaseModel extends InventoryPurchaseEntity {
       isSynced: entity.isSynced,
       paymentMethod: entity.paymentMethod,
       paidAmount: entity.paidAmount,
+      taxRate: entity.taxRate,
     );
   }
 
@@ -118,6 +120,7 @@ class InventoryPurchaseModel extends InventoryPurchaseEntity {
       isSynced: map['isSynced'] as bool? ?? false,
       paymentMethod: map['paymentMethod'] as String? ?? 'cash',
       paidAmount: (map['paidAmount'] as num?)?.toDouble() ?? 0.0,
+      taxRate: (map['taxRate'] as num?)?.toDouble(),
       isDeleted: map['isDeleted'] as bool? ?? false,
     );
   }
@@ -135,6 +138,7 @@ class InventoryPurchaseModel extends InventoryPurchaseEntity {
       'isSynced': isSynced,
       'paymentMethod': paymentMethod,
       'paidAmount': paidAmount,
+      'taxRate': taxRate,
     };
   }
 

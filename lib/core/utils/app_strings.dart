@@ -84,6 +84,8 @@ class AppStrings {
   static const String totalBeforeTax = 'total_before_tax';
   static const String totalAfterTax = 'total_after_tax';
   static const String vatAmount = 'vat_amount';
+  static const String itemsCount = 'items_count';
+  static const String totalQuantity = 'total_quantity';
   static const String businessAddress = 'business_address';
   static const String businessAddressHint = 'business_address_hint';
   static const String optional = 'optional';
