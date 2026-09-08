@@ -183,7 +183,7 @@ class _MoreScreenState extends State<MoreScreen> {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      AppStrings.settings.tr(),
+                                      AppStrings.more.tr(),
                                       style: TextStyles.customStyle(
                                         fontSize: 32,
                                         fontWeight: FontWeight.bold,
@@ -197,7 +197,15 @@ class _MoreScreenState extends State<MoreScreen> {
                                 // Profile & Business Info Card
                                 const ProfileInfoCard(),
 
-                                SizedBox(height: isDesktop ? 20 : 16.h),
+                                // Group 1: Business Tools & Services
+                                _buildCategoryGroupHeader(
+                                  context: context,
+                                  title: AppStrings.businessTools.tr(),
+                                  icon: Icons.business_center_rounded,
+                                  color: AppColors.primaryColor,
+                                  isDesktop: isDesktop,
+                                ),
+
                                 SectionHeader(
                                   title: AppStrings.myCustomers.tr(),
                                 ),
@@ -887,10 +895,16 @@ class _MoreScreenState extends State<MoreScreen> {
                                         _showVipNoticeDialog(context);
                                         return;
                                       }
-                                      Navigator.pushNamed(
-                                        context,
-                                        AppRoutes.employeeList,
-                                      );
+                                      if (isDesktop) {
+                                        context
+                                            .read<MainLayoutCubit>()
+                                            .changeBottomNav(9);
+                                      } else {
+                                        Navigator.pushNamed(
+                                          context,
+                                          AppRoutes.employeeList,
+                                        );
+                                      }
                                     },
                                     borderRadius: BorderRadius.circular(20.r),
                                     child: Container(
@@ -1272,6 +1286,15 @@ class _MoreScreenState extends State<MoreScreen> {
                                     ),
                                   ),
                                 SizedBox(height: isDesktop ? 20 : 20.h),
+
+                                // Group 2: App Settings & Account
+                                _buildCategoryGroupHeader(
+                                  context: context,
+                                  title: AppStrings.appSettingsAndPreferences.tr(),
+                                  icon: Icons.tune_rounded,
+                                  color: AppColors.primaryColor,
+                                  isDesktop: isDesktop,
+                                ),
 
                                 // Appearance Section
                                 SectionHeader(
@@ -2077,6 +2100,59 @@ class _MoreScreenState extends State<MoreScreen> {
               fontSize: 11,
               fontWeight: FontWeight.w500,
               color: AppColors.whiteColor.withValues(alpha: 0.95),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryGroupHeader({
+    required BuildContext context,
+    required String title,
+    required IconData icon,
+    required Color color,
+    required bool isDesktop,
+  }) {
+    return Container(
+      margin: EdgeInsets.only(
+        top: isDesktop ? 22 : 18.h,
+        bottom: isDesktop ? 12 : 10.h,
+      ),
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 14 : 12.w,
+        vertical: isDesktop ? 8 : 8.h,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(
+          color: color.withValues(alpha: 0.22),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: EdgeInsets.all(isDesktop ? 6 : 5.w),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            child: Icon(
+              icon,
+              size: isDesktop ? 16 : 15.sp,
+              color: color,
+            ),
+          ),
+          SizedBox(width: isDesktop ? 10 : 8.w),
+          Text(
+            title,
+            style: TextStyles.customStyle(
+              fontSize: isDesktop ? 15 : 14.sp,
+              fontWeight: FontWeight.bold,
+              color: color,
             ),
           ),
         ],
