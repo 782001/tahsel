@@ -1,4 +1,4 @@
-import 'dart:io' show Platform;
+import 'dart:io' show Platform, Process;
 
 import 'package:flutter/foundation.dart';
 import 'package:share_plus/share_plus.dart';
@@ -76,7 +76,7 @@ class WhatsAppService {
     return message;
   }
 
-  static Future<void> sendReceipt({
+  static Future<bool> sendReceipt({
     required String phoneNumber,
     required String message,
     required String customerName,
@@ -97,19 +97,52 @@ class WhatsAppService {
     AppLogger.printMessage(await image.exists() ? "exists" : "not exists");
     AppLogger.printMessage("${await image.length()}");
 
-    if (!kIsWeb && Platform.isAndroid) {
-      String formattedPhone = phoneNumber.toWhatsAppFormat();
-
-      await WhatsappShare.shareFile(
-        phone: formattedPhone,
-        filePath: [image.path],
-        text: message,
+    // On Windows desktop, share_plus does not support file sharing (dev.fluttercommunity.plus/share channel).
+    // Instead, open the generated receipt image and launch WhatsApp with the prefilled message.
+    if (!kIsWeb && Platform.isWindows) {
+      try {
+        await Process.run('cmd', ['/c', 'start', '', image.path]);
+      } catch (_) {
+        try {
+          await Process.run('explorer.exe', ['/select,', image.path]);
+        } catch (_) {}
+      }
+      return await sendMessage(
+        phoneNumber: phoneNumber,
+        message: message,
       );
-    } else {
+    }
+
+    if (!kIsWeb && Platform.isAndroid) {
+      try {
+        String formattedPhone = phoneNumber.toWhatsAppFormat();
+
+        final success = await WhatsappShare.shareFile(
+          phone: formattedPhone,
+          filePath: [image.path],
+          text: message,
+        );
+        if (success == true) {
+          return true;
+        }
+      } catch (e) {
+        AppLogger.printMessage("WhatsappShare error: $e");
+      }
+    }
+
+    // Fallback using Share.shareXFiles
+    try {
       await Share.shareXFiles(
         [XFile(image.path)],
         text: message,
         subject: 'Receipt',
+      );
+      return true;
+    } catch (e) {
+      AppLogger.printMessage("Share.shareXFiles fallback error: $e");
+      return await sendMessage(
+        phoneNumber: phoneNumber,
+        message: message,
       );
     }
   }
