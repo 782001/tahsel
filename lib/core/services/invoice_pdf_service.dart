@@ -1630,7 +1630,7 @@ class InvoicePdfService {
                       ),
                     ),
                     _buildPurchasePaymentBadge(
-                      purchase.paymentMethod,
+                      purchase,
                       isArabic,
                     ),
                   ],
@@ -1655,27 +1655,35 @@ class InvoicePdfService {
   }
 
   static pw.Widget _buildPurchasePaymentBadge(
-    String paymentMethod,
+    InventoryPurchaseEntity purchase,
     bool isArabic,
   ) {
     String text;
     PdfColor color;
-    switch (paymentMethod) {
-      case 'cash':
-        text = isArabic ? "مسدد نقداً" : "Paid Cash";
-        color = _success;
-        break;
-      case 'card':
-        text = isArabic ? "مسدد بالبطاقة" : "Paid Card";
-        color = _info;
-        break;
-      case 'debt':
-        text = isArabic ? "شراء آجل" : "Credit (Debt)";
-        color = _warning;
-        break;
-      default:
-        text = paymentMethod;
-        color = _purchasePrimary;
+    final isSettled =
+        purchase.paymentMethod == 'debt' && purchase.remainingDebt <= 0.01;
+
+    if (isSettled) {
+      text = isArabic ? "مسدد" : "Paid";
+      color = _success;
+    } else {
+      switch (purchase.paymentMethod) {
+        case 'cash':
+          text = isArabic ? "مسدد نقداً" : "Paid Cash";
+          color = _success;
+          break;
+        case 'card':
+          text = isArabic ? "مسدد بالبطاقة" : "Paid Card";
+          color = _info;
+          break;
+        case 'debt':
+          text = isArabic ? "شراء آجل" : "Credit (Debt)";
+          color = _warning;
+          break;
+        default:
+          text = purchase.paymentMethod;
+          color = _purchasePrimary;
+      }
     }
 
     return pw.Container(

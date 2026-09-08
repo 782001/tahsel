@@ -53,22 +53,27 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
     final hasMoreItems = widget.purchase.items.length > 1;
 
     final method = widget.purchase.paymentMethod;
-    final Color methodColor = method == 'debt'
-        ? AppColors.warning
-        : (method == 'card' ? AppColors.primaryColor : AppColors.success);
-    final String methodText =
-        method == 'debt' && widget.purchase.remainingDebt <= 0.01
+    final bool isSettledDebt =
+        method == 'debt' && widget.purchase.remainingDebt <= 0.01;
+    final Color methodColor = isSettledDebt
+        ? AppColors.success
+        : (method == 'debt'
+            ? AppColors.warning
+            : (method == 'card' ? AppColors.primaryColor : AppColors.success));
+    final String methodText = isSettledDebt
         ? AppStrings.paid.tr()
         : (method == 'card'
               ? AppStrings.paymentCard.tr()
               : method == 'cash'
               ? AppStrings.paymentCash.tr()
               : AppStrings.paymentDebt.tr());
-    final IconData methodIcon = method == 'debt'
-        ? Icons.assignment_outlined
-        : (method == 'card'
-              ? Icons.credit_card_rounded
-              : Icons.payments_rounded);
+    final IconData methodIcon = isSettledDebt
+        ? Icons.check_circle_outline_rounded
+        : (method == 'debt'
+            ? Icons.assignment_outlined
+            : (method == 'card'
+                ? Icons.credit_card_rounded
+                : Icons.payments_rounded));
 
     return Container(
       padding: EdgeInsets.all(isDesktop ? 16 : 16.w),
