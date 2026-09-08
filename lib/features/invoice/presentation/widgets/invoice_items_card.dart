@@ -8,7 +8,15 @@ import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
 
 class InvoiceItemsCard extends StatefulWidget {
   final List<InvoiceItem> items;
-  const InvoiceItemsCard({super.key, required this.items});
+  final double taxRate;
+  final bool isQuotation;
+
+  const InvoiceItemsCard({
+    super.key,
+    required this.items,
+    this.taxRate = 0.0,
+    this.isQuotation = false,
+  });
 
   @override
   State<InvoiceItemsCard> createState() => _InvoiceItemsCardState();
@@ -23,6 +31,7 @@ class _InvoiceItemsCardState extends State<InvoiceItemsCard> {
     final displayedItems = (!_isExpanded && hasMoreItems)
         ? widget.items.take(3).toList()
         : widget.items;
+    final hasTax = widget.taxRate > 0 && !widget.isQuotation;
 
     return Container(
       decoration: BoxDecoration(
@@ -46,6 +55,10 @@ class _InvoiceItemsCardState extends State<InvoiceItemsCard> {
                    Divider(height: 1, color: AppColors.dividerColor),
               itemBuilder: (context, i) {
                 final item = displayedItems[i];
+                final itemTotal = item.total;
+                final itemTax = hasTax ? itemTotal * (widget.taxRate / 100.0) : 0.0;
+                final itemBeforeTax = hasTax ? (itemTotal - itemTax) : itemTotal;
+
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Row(
@@ -70,16 +83,52 @@ class _InvoiceItemsCardState extends State<InvoiceItemsCard> {
                                 color: AppColors.blackLight,
                               ),
                             ),
+                            if (hasTax) ...[
+                              const SizedBox(height: 3),
+                              Row(
+                                children: [
+                                  Text(
+                                    '${AppStrings.totalBeforeTax.tr()}: ${itemBeforeTax.toSmartAmount()}',
+                                    style: TextStyles.customStyle(
+                                      fontSize: 11,
+                                      color: AppColors.subTitleColor,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '• ${AppStrings.vatAmount.tr()}: ${itemTax.toSmartAmount()}',
+                                    style: TextStyles.customStyle(
+                                      fontSize: 11,
+                                      color: AppColors.primaryColor,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ],
                         ),
                       ),
-                      Text(
-                        '${item.total.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-                        style: TextStyles.customStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primaryColor,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          if (hasTax)
+                            Text(
+                              AppStrings.totalAfterTax.tr(),
+                              style: TextStyles.customStyle(
+                                fontSize: 10,
+                                color: AppColors.subTitleColor,
+                              ),
+                            ),
+                          Text(
+                            '${itemTotal.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                            style: TextStyles.customStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primaryColor,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

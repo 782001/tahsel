@@ -100,6 +100,7 @@ class InvoiceModel extends InvoiceEntity {
     super.discountAmount,
     super.isRefundedToCustomer,
     super.dueDate,
+    super.taxRate,
   });
 
   factory InvoiceModel.fromEntity(InvoiceEntity e) => InvoiceModel(
@@ -120,6 +121,7 @@ class InvoiceModel extends InvoiceEntity {
     discountAmount: e.discountAmount,
     isRefundedToCustomer: e.isRefundedToCustomer,
     dueDate: e.dueDate,
+    taxRate: e.taxRate,
   );
 
   factory InvoiceModel.fromMap(Map<String, dynamic> map) => InvoiceModel(
@@ -153,6 +155,7 @@ class InvoiceModel extends InvoiceEntity {
         : (map['dueDate'] is DateTime
             ? map['dueDate'] as DateTime
             : DateTime.tryParse(map['dueDate'].toString())),
+    taxRate: (map['taxRate'] as num?)?.toDouble(),
   );
 
   /// Converts the model to a plain JSON-safe Map (no Firestore Timestamps).
@@ -176,6 +179,7 @@ class InvoiceModel extends InvoiceEntity {
     'discountAmount': discountAmount,
     'isRefundedToCustomer': isRefundedToCustomer,
     'dueDate': dueDate?.toIso8601String(),
+    if (taxRate != null) 'taxRate': taxRate,
   };
 
   String toJson() => jsonEncode(toMap());

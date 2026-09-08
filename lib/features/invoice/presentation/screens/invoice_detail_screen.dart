@@ -1172,7 +1172,11 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                             .tr(),
                                       ),
                                       const SizedBox(height: 12),
-                                      InvoiceItemsCard(items: _invoice.items),
+                                       InvoiceItemsCard(
+                                         items: _invoice.items,
+                                         taxRate: _invoice.effectiveTaxRate,
+                                         isQuotation: _invoice.isQuotation,
+                                       ),
                                       const SizedBox(height: 20),
 
                                       // ── Overall Cash Discount Card ─────────────

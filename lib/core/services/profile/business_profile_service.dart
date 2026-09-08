@@ -14,6 +14,9 @@ class BusinessProfileService {
 
   UserProfileModel? _cachedProfile;
 
+  /// Returns the in-memory cached profile if available (synchronous)
+  UserProfileModel? get cachedProfile => _cachedProfile;
+
   /// Returns the current user's UID from FirebaseAuth or AppStrings
   String? get currentUid {
     final authUid = FirebaseAuth.instance.currentUser?.uid;

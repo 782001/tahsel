@@ -13,6 +13,8 @@ class PaymentSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasTax = invoice.effectiveTaxRate > 0 && !invoice.isQuotation;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -68,11 +70,58 @@ class PaymentSummaryCard extends StatelessWidget {
             ),
             Divider(color: AppColors.dividerColor, height: 20),
           ],
+          if (hasTax) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  AppStrings.totalBeforeTax.tr(),
+                  style: TextStyles.customStyle(
+                    fontSize: 13,
+                    color: AppColors.subTitleColor,
+                  ),
+                ),
+                Text(
+                  '${invoice.totalBeforeTaxAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                  style: TextStyles.customStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.black,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${AppStrings.vatAmount.tr()} (${invoice.effectiveTaxRate.toSmartAmount()}%)',
+                  style: TextStyles.customStyle(
+                    fontSize: 13,
+                    color: AppColors.primaryColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  '${invoice.calculatedTaxAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                  style: TextStyles.customStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryColor,
+                  ),
+                ),
+              ],
+            ),
+            Divider(color: AppColors.dividerColor, height: 20),
+          ],
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               InvoiceSummaryColumn(
-                label: AppStrings.totalDueLabel.tr(),
+                label: hasTax
+                    ? AppStrings.totalAfterTax.tr()
+                    : AppStrings.totalDueLabel.tr(),
                 amount: invoice.totalAmount,
                 color: AppColors.black,
               ),

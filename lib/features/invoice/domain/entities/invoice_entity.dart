@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:tahsel/core/services/profile/business_profile_service.dart';
 
 /// Status of an invoice payment lifecycle.
 enum InvoiceStatus {
@@ -135,6 +136,7 @@ class InvoiceEntity extends Equatable {
   final bool isRefundedToCustomer;
 
   final DateTime? dueDate;
+  final double? taxRate;
 
   const InvoiceEntity({
     required this.id,
@@ -154,6 +156,7 @@ class InvoiceEntity extends Equatable {
     this.discountAmount = 0.0,
     this.isRefundedToCustomer = false,
     this.dueDate,
+    this.taxRate,
   });
 
   /// Raw subtotal of all items before ANY discounts (sum of qty * unitPrice).
@@ -172,6 +175,26 @@ class InvoiceEntity extends Equatable {
   double get totalAmount {
     final net = subtotalAmount - discountAmount;
     return net > 0 ? net : 0.0;
+  }
+
+  /// The effective tax rate for this invoice.
+  /// Falls back to the merchant's business profile tax rate if not explicitly set on the invoice.
+  double get effectiveTaxRate =>
+      taxRate ?? BusinessProfileService.instance.cachedProfile?.taxRate ?? 0.0;
+
+  /// Tax amount extracted backwards from totalAmount (which is tax-inclusive).
+  /// Formula: totalAmount * (rate / 100.0)
+  double get calculatedTaxAmount {
+    final rate = effectiveTaxRate;
+    if (rate <= 0) return 0.0;
+    return totalAmount * (rate / 100.0);
+  }
+
+  /// Total before tax = totalAmount - calculatedTaxAmount
+  double get totalBeforeTaxAmount {
+    final tax = calculatedTaxAmount;
+    final b = totalAmount - tax;
+    return b > 0 ? b : 0.0;
   }
 
   /// If the debt-sync has written a `syncedTotalPaid` value, use it as the
@@ -207,6 +230,7 @@ class InvoiceEntity extends Equatable {
     bool? isRefundedToCustomer,
     DateTime? dueDate,
     bool clearDueDate = false,
+    double? taxRate,
   }) {
     return InvoiceEntity(
       id: id ?? this.id,
@@ -226,6 +250,7 @@ class InvoiceEntity extends Equatable {
       discountAmount: discountAmount ?? this.discountAmount,
       isRefundedToCustomer: isRefundedToCustomer ?? this.isRefundedToCustomer,
       dueDate: clearDueDate ? null : (dueDate ?? this.dueDate),
+      taxRate: taxRate ?? this.taxRate,
     );
   }
 
@@ -248,5 +273,6 @@ class InvoiceEntity extends Equatable {
     discountAmount,
     isRefundedToCustomer,
     dueDate,
+    taxRate,
   ];
 }

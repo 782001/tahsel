@@ -14,6 +14,8 @@ class InvoiceItemRow extends StatefulWidget {
   final TextEditingController unitController;
   final TextEditingController discountController;
   final double? purchasePrice;
+  final double taxRate;
+  final bool isQuotation;
   final VoidCallback onRemove;
   final VoidCallback onChanged;
 
@@ -26,6 +28,8 @@ class InvoiceItemRow extends StatefulWidget {
     required this.unitController,
     required this.discountController,
     this.purchasePrice,
+    this.taxRate = 0.0,
+    this.isQuotation = false,
     required this.onRemove,
     required this.onChanged,
   });
@@ -43,6 +47,9 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
         double.tryParse(widget.discountController.text) ?? 0.0;
     final subtotal = qty * price;
     final lineTotal = (subtotal - discountAmount).clamp(0.0, double.infinity);
+    final hasTax = widget.taxRate > 0 && !widget.isQuotation;
+    final itemTax = hasTax ? lineTotal * (widget.taxRate / 100.0) : 0.0;
+    final itemBeforeTax = hasTax ? (lineTotal - itemTax) : lineTotal;
 
     final effectiveUnitPrice =
         qty > 0 ? ((qty * price) - discountAmount) / qty : (price - discountAmount);
@@ -175,7 +182,9 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      AppStrings.invoiceLineTotal.tr(),
+                      hasTax
+                          ? AppStrings.totalAfterTax.tr()
+                          : AppStrings.invoiceLineTotal.tr(),
                       style: TextStyles.customStyle(
                         fontSize: 11,
                         color: AppColors.blackLight,
@@ -190,6 +199,24 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
                         color: AppColors.primaryColor,
                       ),
                     ),
+                    if (hasTax) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        '${AppStrings.totalBeforeTax.tr()}: ${itemBeforeTax.toSmartAmount()}',
+                        style: TextStyles.customStyle(
+                          fontSize: 10,
+                          color: AppColors.subTitleColor,
+                        ),
+                      ),
+                      Text(
+                        '${AppStrings.vatAmount.tr()}: ${itemTax.toSmartAmount()}',
+                        style: TextStyles.customStyle(
+                          fontSize: 10,
+                          color: AppColors.primaryColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/extensions.dart';
 import 'package:tahsel/core/services/contact_service.dart';
+import 'package:tahsel/core/services/profile/business_profile_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -400,6 +401,8 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
       );
     } else {
       // Create mode
+      final profileTaxRate =
+          BusinessProfileService.instance.cachedProfile?.taxRate;
       final invoice = InvoiceEntity(
         id: '',
         uid: uid,
@@ -419,6 +422,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
         createdAt: DateTime.now(),
         lastUpdatedAt: DateTime.now(),
         dueDate: _isQuotation ? null : _dueDate,
+        taxRate: _isQuotation ? null : profileTaxRate,
       );
 
       _pendingInvoice = invoice;
@@ -429,6 +433,13 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
+    final effectiveTaxRate = _isQuotation
+        ? 0.0
+        : (_isEditMode
+            ? (widget.invoiceToEdit?.taxRate ??
+                BusinessProfileService.instance.cachedProfile?.taxRate ??
+                0.0)
+            : (BusinessProfileService.instance.cachedProfile?.taxRate ?? 0.0));
 
     return BlocListener<InvoiceCubit, InvoiceState>(
       listener: (context, state) {
@@ -637,6 +648,8 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                                     _itemControllers[i].discount,
                                 purchasePrice:
                                     _itemControllers[i].purchasePrice,
+                                taxRate: effectiveTaxRate,
+                                isQuotation: _isQuotation,
                                 onRemove: () => _removeItem(i),
                                 onChanged: () => setState(() {}),
                               ),
@@ -674,6 +687,8 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                               rawSubtotal: _rawSubtotal,
                               totalDiscount: _totalDiscount,
                               grandTotal: _grandTotal,
+                              taxRate: effectiveTaxRate,
+                              isQuotation: _isQuotation,
                             ),
                             const SizedBox(height: 20),
 
@@ -906,15 +921,23 @@ class _TotalCard extends StatelessWidget {
   final double rawSubtotal;
   final double totalDiscount;
   final double grandTotal;
+  final double taxRate;
+  final bool isQuotation;
 
   const _TotalCard({
     required this.rawSubtotal,
     required this.totalDiscount,
     required this.grandTotal,
+    this.taxRate = 0.0,
+    this.isQuotation = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final hasTax = taxRate > 0 && !isQuotation;
+    final taxAmount = hasTax ? grandTotal * (taxRate / 100.0) : 0.0;
+    final beforeTax = hasTax ? (grandTotal - taxAmount) : grandTotal;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -982,11 +1005,59 @@ class _TotalCard extends StatelessWidget {
             ),
             const Divider(color: Colors.white24, height: 16),
           ],
+          if (hasTax) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  AppStrings.totalBeforeTax.tr(),
+                  style: TextStyles.customStyle(
+                    fontSize: 13,
+                    color: Colors.white.withValues(alpha: 0.8),
+                  ),
+                ),
+                Text(
+                  '${beforeTax.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                  style: TextStyles.customStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${AppStrings.vatAmount.tr()} (${taxRate.toSmartAmount()}%)',
+                  style: TextStyles.customStyle(
+                    fontSize: 13,
+                    color: Colors.yellowAccent.withValues(alpha: 0.9),
+                  ),
+                ),
+                Text(
+                  '${taxAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                  style: TextStyles.customStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.yellowAccent,
+                  ),
+                ),
+              ],
+            ),
+            const Divider(color: Colors.white24, height: 16),
+          ],
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                AppStrings.invoiceGrandTotal.tr(),
+                isQuotation
+                    ? AppStrings.quotationTotal.tr()
+                    : (hasTax
+                        ? AppStrings.totalAfterTax.tr()
+                        : AppStrings.invoiceGrandTotal.tr()),
                 style: TextStyles.customStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
