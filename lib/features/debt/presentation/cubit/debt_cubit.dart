@@ -378,6 +378,7 @@ class DebtCubit extends Cubit<DebtState> {
         debt: debt,
         amountToPay: amount,
         paymentDate: paymentDate,
+        note: note,
       ),
     );
     result.fold((failure) => emit(DebtFailure(message: failure.message)), (_) {

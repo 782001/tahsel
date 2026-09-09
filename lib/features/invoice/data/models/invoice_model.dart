@@ -124,22 +124,28 @@ class InvoiceModel extends InvoiceEntity {
     taxRate: e.taxRate,
   );
 
-  factory InvoiceModel.fromMap(Map<String, dynamic> map) => InvoiceModel(
-    id: map['id'] as String,
-    uid: map['uid'] as String,
-    customerName: map['customerName'] as String?,
-    customerPhone: map['customerPhone'] as String?,
-    ledgerNumber: map['ledgerNumber'] as String?,
-    items: (map['items'] as List<dynamic>? ?? [])
-        .map((i) => InvoiceItemModel.fromMap(i as Map<String, dynamic>))
-        .toList(),
-    payments: (map['payments'] as List<dynamic>? ?? [])
+  factory InvoiceModel.fromMap(Map<String, dynamic> map) {
+    final rawPayments = (map['payments'] as List<dynamic>? ?? [])
         .map((p) => InvoicePaymentModel.fromMap(p as Map<String, dynamic>))
-        .toList(),
-    status: InvoiceStatus.values.firstWhere(
-      (s) => s.name == (map['status'] as String? ?? 'pending'),
-      orElse: () => InvoiceStatus.pending,
-    ),
+        .toList();
+    final cleanPayments = InvoiceEntity.deduplicatePayments(rawPayments);
+
+    return InvoiceModel(
+      id: map['id'] as String,
+      uid: map['uid'] as String,
+      customerName: map['customerName'] as String?,
+      customerPhone: map['customerPhone'] as String?,
+      ledgerNumber: map['ledgerNumber'] as String?,
+      items: (map['items'] as List<dynamic>? ?? [])
+          .map((i) => InvoiceItemModel.fromMap(i as Map<String, dynamic>))
+          .toList(),
+      payments: cleanPayments
+          .map((p) => InvoicePaymentModel.fromEntity(p))
+          .toList(),
+      status: InvoiceStatus.values.firstWhere(
+        (s) => s.name == (map['status'] as String? ?? 'pending'),
+        orElse: () => InvoiceStatus.pending,
+      ),
     createdAt: DateTime.parse(map['createdAt'] as String),
     lastUpdatedAt: map['lastUpdatedAt'] != null
         ? DateTime.parse(map['lastUpdatedAt'] as String)
@@ -155,8 +161,9 @@ class InvoiceModel extends InvoiceEntity {
         : (map['dueDate'] is DateTime
             ? map['dueDate'] as DateTime
             : DateTime.tryParse(map['dueDate'].toString())),
-    taxRate: (map['taxRate'] as num?)?.toDouble(),
-  );
+      taxRate: (map['taxRate'] as num?)?.toDouble(),
+    );
+  }
 
   /// Converts the model to a plain JSON-safe Map (no Firestore Timestamps).
   Map<String, dynamic> toMap() => {
@@ -167,7 +174,7 @@ class InvoiceModel extends InvoiceEntity {
     'ledgerNumber': ledgerNumber,
     'items': items.map((i) => (i as InvoiceItemModel).toMap()).toList(),
     'payments': payments
-        .map((p) => (p as InvoicePaymentModel).toMap())
+        .map((p) => InvoicePaymentModel.fromEntity(p).toMap())
         .toList(),
     'status': status.name,
     'createdAt': createdAt.toIso8601String(),

@@ -114,6 +114,8 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
       return;
     }
 
+    if (_invoice.isRefundedToCustomer) return;
+
     final amountToRefund = _invoice.totalPaid;
     if (amountToRefund <= 0) return;
 
@@ -380,13 +382,22 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
       await FirebaseFirestore.instance
           .collection('users/$uid/invoices')
           .doc(_invoice.id)
-          .set({'isRefundedToCustomer': true}, SetOptions(merge: true));
+          .set({
+            'isRefundedToCustomer': true,
+            'syncedTotalPaid': 0.0,
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
 
       if (mounted) {
         setState(() {
           _isRefunding = false;
-          _invoice = _invoice.copyWith(isRefundedToCustomer: true);
+          _invoice = _invoice.copyWith(
+            isRefundedToCustomer: true,
+            syncedTotalPaid: 0.0,
+          );
         });
+
+        context.read<InvoiceCubit>().loadInvoice(uid, _invoice.id);
 
         showSuccessToast(AppStrings.refundSuccess.tr());
       }
@@ -836,11 +847,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
       ),
     );
     if (confirmed == true && mounted) {
-      cubit.voidInvoice(
-        AppStrings.userToken,
-        _invoice.id,
-        invoice: _invoice,
-      );
+      cubit.voidInvoice(AppStrings.userToken, _invoice.id, invoice: _invoice);
     }
   }
 
@@ -1172,11 +1179,11 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                             .tr(),
                                       ),
                                       const SizedBox(height: 12),
-                                       InvoiceItemsCard(
-                                         items: _invoice.items,
-                                         taxRate: _invoice.effectiveTaxRate,
-                                         isQuotation: _invoice.isQuotation,
-                                       ),
+                                      InvoiceItemsCard(
+                                        items: _invoice.items,
+                                        taxRate: _invoice.effectiveTaxRate,
+                                        isQuotation: _invoice.isQuotation,
+                                      ),
                                       const SizedBox(height: 20),
 
                                       // ── Overall Cash Discount Card ─────────────
@@ -1395,7 +1402,8 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                       if (!_invoice.isQuotation &&
                                           _invoice.status ==
                                               InvoiceStatus.voided &&
-                                          _invoice.totalPaid > 0)
+                                          (_invoice.historicalPaid > 0 ||
+                                              _invoice.isRefundedToCustomer))
                                         Padding(
                                           padding: const EdgeInsets.only(
                                             bottom: 16,
@@ -1431,9 +1439,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                                     const SizedBox(width: 8),
                                                     Expanded(
                                                       child: Text(
-                                                        AppStrings
-                                                            .invoiceVoidNotice
-                                                            .tr(),
+                                                        "${AppStrings.invoiceVoidNotice.tr()}   ${(_invoice.isRefundedToCustomer ? 0.0 : _invoice.totalPaid).toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
                                                         style:
                                                             TextStyles.customStyle(
                                                               fontSize: 12,
@@ -1447,152 +1453,146 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                                     ),
                                                   ],
                                                 ),
-                                                if (_invoice.totalPaid > 0) ...[
-                                                  const SizedBox(height: 10),
-                                                  _invoice.isRefundedToCustomer
-                                                      ? Container(
-                                                          width:
-                                                              double.infinity,
-                                                          padding:
-                                                              const EdgeInsets.symmetric(
-                                                                vertical: 8,
-                                                                horizontal: 12,
+                                                const SizedBox(height: 10),
+                                                _invoice.isRefundedToCustomer
+                                                    ? Container(
+                                                        width: double.infinity,
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              vertical: 8,
+                                                              horizontal: 12,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          color: AppColors
+                                                              .success
+                                                              .withValues(
+                                                                alpha: 0.1,
                                                               ),
-                                                          decoration: BoxDecoration(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                12.r,
+                                                              ),
+                                                          border: Border.all(
                                                             color: AppColors
                                                                 .success
                                                                 .withValues(
-                                                                  alpha: 0.1,
+                                                                  alpha: 0.4,
                                                                 ),
-                                                            borderRadius:
-                                                                BorderRadius.circular(
-                                                                  12.r,
-                                                                ),
-                                                            border: Border.all(
+                                                          ),
+                                                        ),
+                                                        child: Row(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .center,
+                                                          children: [
+                                                            Icon(
+                                                              Icons
+                                                                  .check_circle_rounded,
                                                               color: AppColors
-                                                                  .success
-                                                                  .withValues(
-                                                                    alpha: 0.4,
-                                                                  ),
+                                                                  .success,
+                                                              size: isDesktop
+                                                                  ? 18
+                                                                  : 18.sp,
                                                             ),
-                                                          ),
-                                                          child: Row(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .center,
-                                                            children: [
-                                                              Icon(
-                                                                Icons
-                                                                    .check_circle_rounded,
-                                                                color: AppColors
-                                                                    .success,
-                                                                size: isDesktop
-                                                                    ? 18
-                                                                    : 18.sp,
-                                                              ),
-                                                              SizedBox(
-                                                                width: isDesktop
-                                                                    ? 8
-                                                                    : 8.w,
-                                                              ),
-                                                              Expanded(
-                                                                child: Text(
-                                                                  AppStrings
-                                                                      .refundAlreadyDone
-                                                                      .tr(),
-                                                                  style: TextStyles.customStyle(
-                                                                    fontSize:
-                                                                        12,
-                                                                    color: AppColors
-                                                                        .success,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold,
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        )
-                                                      : SizedBox(
-                                                          width:
-                                                              double.infinity,
-                                                          child: ElevatedButton.icon(
-                                                            onPressed:
-                                                                _isRefunding
-                                                                ? null
-                                                                : () =>
-                                                                      _handleRefundToCustomer(),
-                                                            style: ElevatedButton.styleFrom(
-                                                              backgroundColor:
-                                                                  AppColors
-                                                                      .error,
-                                                              foregroundColor:
-                                                                  Colors.white,
-                                                              elevation: 2,
-                                                              padding:
-                                                                  EdgeInsets.symmetric(
-                                                                    vertical:
-                                                                        isDesktop
-                                                                        ? 12
-                                                                        : 12.h,
-                                                                    horizontal:
-                                                                        isDesktop
-                                                                        ? 16
-                                                                        : 16.w,
-                                                                  ),
-                                                              shape: RoundedRectangleBorder(
-                                                                borderRadius:
-                                                                    BorderRadius.circular(
-                                                                      12.r,
-                                                                    ),
-                                                              ),
+                                                            SizedBox(
+                                                              width: isDesktop
+                                                                  ? 8
+                                                                  : 8.w,
                                                             ),
-                                                            icon: _isRefunding
-                                                                ? SizedBox(
-                                                                    width:
-                                                                        isDesktop
-                                                                        ? 18
-                                                                        : 18.sp,
-                                                                    height:
-                                                                        isDesktop
-                                                                        ? 18
-                                                                        : 18.sp,
-                                                                    child: const CircularProgressIndicator(
-                                                                      strokeWidth:
-                                                                          2,
-                                                                      color: Colors
-                                                                          .white,
-                                                                    ),
-                                                                  )
-                                                                : Icon(
-                                                                    Icons
-                                                                        .output_rounded,
-                                                                    size:
-                                                                        isDesktop
-                                                                        ? 18
-                                                                        : 18.sp,
-                                                                    color: Colors
-                                                                        .white,
-                                                                  ),
-                                                            label: Center(
+                                                            Expanded(
                                                               child: Text(
                                                                 AppStrings
-                                                                    .refundToCustomer
+                                                                    .refundAlreadyDone
                                                                     .tr(),
                                                                 style: TextStyles.customStyle(
-                                                                  fontSize: 13,
-                                                                  color: Colors
-                                                                      .white,
+                                                                  fontSize: 12,
+                                                                  color: AppColors
+                                                                      .success,
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .bold,
                                                                 ),
                                                               ),
                                                             ),
+                                                          ],
+                                                        ),
+                                                      )
+                                                    : SizedBox(
+                                                        width: double.infinity,
+                                                        child: ElevatedButton.icon(
+                                                          onPressed:
+                                                              _isRefunding
+                                                              ? null
+                                                              : () =>
+                                                                    _handleRefundToCustomer(),
+                                                          style: ElevatedButton.styleFrom(
+                                                            backgroundColor:
+                                                                AppColors.error,
+                                                            foregroundColor:
+                                                                Colors.white,
+                                                            elevation: 2,
+                                                            padding:
+                                                                EdgeInsets.symmetric(
+                                                                  vertical:
+                                                                      isDesktop
+                                                                      ? 12
+                                                                      : 12.h,
+                                                                  horizontal:
+                                                                      isDesktop
+                                                                      ? 16
+                                                                      : 16.w,
+                                                                ),
+                                                            shape: RoundedRectangleBorder(
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    12.r,
+                                                                  ),
+                                                            ),
+                                                          ),
+                                                          icon: _isRefunding
+                                                              ? SizedBox(
+                                                                  width:
+                                                                      isDesktop
+                                                                      ? 18
+                                                                      : 18.sp,
+                                                                  height:
+                                                                      isDesktop
+                                                                      ? 18
+                                                                      : 18.sp,
+                                                                  child: const CircularProgressIndicator(
+                                                                    strokeWidth:
+                                                                        2,
+                                                                    color: Colors
+                                                                        .white,
+                                                                  ),
+                                                                )
+                                                              : Icon(
+                                                                  Icons
+                                                                      .output_rounded,
+                                                                  size:
+                                                                      isDesktop
+                                                                      ? 18
+                                                                      : 18.sp,
+                                                                  color: Colors
+                                                                      .white,
+                                                                ),
+                                                          label: Center(
+                                                            child: Text(
+                                                              AppStrings
+                                                                  .refundToCustomer
+                                                                  .tr(),
+                                                              style: TextStyles.customStyle(
+                                                                fontSize: 13,
+                                                                color: Colors
+                                                                    .white,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                              ),
+                                                            ),
                                                           ),
                                                         ),
-                                                ],
+                                                      ),
                                               ],
                                             ),
                                           ),

@@ -845,6 +845,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           currentTotal,
           paymentAmount: payment.amountPaid,
           debtPaymentId: paymentRef.id,
+          note: payment.activityName,
         );
 
         // Check if customer became fully paid to decrement customer count
@@ -2321,6 +2322,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
     String? debtPaymentIdToEdit,
     double? editedAmount,
     String? debtPaymentIdToRemove,
+    String? note,
   }) {
     if (invoiceSnap == null || !invoiceSnap.exists) return;
 
@@ -2353,7 +2355,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         'debtPaymentId': debtPaymentId,
         'amount': paymentAmount,
         'paidAt': Timestamp.now(),
-        'note': null,
+        'note': note,
       };
       updateData['payments'] = FieldValue.arrayUnion([paymentEntry]);
     }

@@ -434,23 +434,9 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     // Quotation invoices must never have payments recorded or linked debts created
     if (invoice.isQuotation) return null;
 
-    // ── Step 1: append to the invoice's own payment ledger ───────────────────
-    if (paidNow > 0 && !skipInvoicePayment) {
-      final payment = InvoicePayment(
-        id: 'pmt_${DateTime.now().millisecondsSinceEpoch}',
-        amount: paidNow,
-        paidAt: DateTime.now(),
-        note: note,
-      );
-      final payResult = await recordPaymentUseCase(uid, invoiceId, payment);
-      final failed = payResult.fold((f) => f, (_) => null);
-      if (failed != null) {
-        return failed;
-      }
-    }
-
-    // ── Step 2: compute remaining to decide whether a debt is needed ──────────
-    final newTotalPaid = skipInvoicePayment ? invoice.totalPaid : invoice.totalPaid + paidNow;
+    // ── Compute remaining to decide debt requirements ────────────────────────
+    final newTotalPaid =
+        skipInvoicePayment ? invoice.totalPaid : invoice.totalPaid + paidNow;
     final remaining =
         (invoice.totalAmount - newTotalPaid).clamp(0.0, double.infinity);
 
@@ -467,14 +453,28 @@ class InvoiceCubit extends Cubit<InvoiceState> {
       final existingDebt = existingDebtResult.fold((_) => null, (d) => d);
 
       if (existingDebt == null) {
-        // ── FIRST PAYMENT: create the baseline debt + initial payment atomically
+        // ── FIRST PAYMENT / INITIAL: No linked debt exists yet ────────────────
+        if (paidNow > 0 && !skipInvoicePayment) {
+          final payment = InvoicePayment(
+            id: 'pmt_${DateTime.now().millisecondsSinceEpoch}',
+            amount: paidNow,
+            paidAt: DateTime.now(),
+            note: note,
+          );
+          final payResult = await recordPaymentUseCase(uid, invoiceId, payment);
+          final failed = payResult.fold((f) => f, (_) => null);
+          if (failed != null) {
+            return failed;
+          }
+        }
+
         if (remaining > 0) {
           final debt = DebtEntity(
             uid: uid,
             operationId: debtId,
             totalAmount: invoice.totalAmount, // ← FULL amount, NOT pre-subtracted
-            paidAmount: paidNow,             // ← what was paid right now
-            remainingAmount: remaining,       // ← totalAmount - paidNow
+            paidAmount: paidNow, // ← what was paid right now
+            remainingAmount: remaining, // ← totalAmount - paidNow
             customerName:
                 (invoice.customerName ?? '').replaceAll('/', ' ').trim(),
             productOrSessionDetails: 'فاتورة #$invoiceId',
@@ -487,15 +487,14 @@ class InvoiceCubit extends Cubit<InvoiceState> {
           );
 
           final debtResult = await addDebtUseCase(AddDebtParams(debt: debt));
-          final debtFailure = await debtResult.fold(
-            (f) async => f,
-            (createdDebtId) async {
-              if (invoice.linkedDebtId == null) {
-                await linkDebtToInvoiceUseCase(uid, invoiceId, createdDebtId);
-              }
-              return null;
-            },
-          );
+          final debtFailure = await debtResult.fold((f) async => f, (
+            createdDebtId,
+          ) async {
+            if (invoice.linkedDebtId == null) {
+              await linkDebtToInvoiceUseCase(uid, invoiceId, createdDebtId);
+            }
+            return null;
+          });
 
           if (debtFailure != null) {
             return debtFailure;
@@ -504,11 +503,15 @@ class InvoiceCubit extends Cubit<InvoiceState> {
       } else {
         // ── SUBSEQUENT PAYMENT: append to the existing debt record ────────────
         // Only record if there is an actual cash amount being paid.
+        // NOTE: payItemDebtUseCase -> payDebt atomically syncs the payment to the
+        // linked invoice's payments array via _updateLinkedInvoice. We MUST NOT
+        // also call recordPaymentUseCase here, as that would duplicate the payment.
         if (paidNow > 0) {
           final payResult = await payItemDebtUseCase(
             PayItemDebtParams(
               debt: existingDebt,
               amountToPay: paidNow,
+              note: note,
             ),
           );
           final payFailure = payResult.fold((f) => f, (_) => null);

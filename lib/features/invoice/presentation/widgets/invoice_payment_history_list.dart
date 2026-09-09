@@ -19,7 +19,9 @@ class _InvoicePaymentHistoryListState extends State<InvoicePaymentHistoryList> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.payments.isEmpty) {
+    final cleanPayments = InvoiceEntity.deduplicatePayments(widget.payments);
+
+    if (cleanPayments.isEmpty) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(20),
@@ -40,7 +42,7 @@ class _InvoicePaymentHistoryListState extends State<InvoicePaymentHistoryList> {
       );
     }
 
-    final reversedPayments = widget.payments.reversed.toList();
+    final reversedPayments = cleanPayments.reversed.toList();
     final bool hasMoreItems = reversedPayments.length > 3;
     final displayedPayments = (!_isExpanded && hasMoreItems)
         ? reversedPayments.take(3).toList()

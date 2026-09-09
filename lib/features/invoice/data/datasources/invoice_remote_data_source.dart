@@ -456,9 +456,18 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
 
     final batch = firestore.batch();
 
-    // ── 2. Mark invoice as voided ─────────────────────────────────────────────
+    // ── 2. Mark invoice as voided and sanitize payments array ────────────────
+    final rawPayments = (invoiceDoc.data()?['payments'] as List<dynamic>? ?? [])
+        .map((p) => InvoicePaymentModel.fromMap(p as Map<String, dynamic>))
+        .toList();
+    final cleanPayments = InvoiceEntity.deduplicatePayments(rawPayments);
+    final cleanPaymentsPayload = cleanPayments
+        .map((p) => InvoicePaymentModel.fromEntity(p).toMap())
+        .toList();
+
     batch.update(invoiceRef, {
       'status': InvoiceStatus.voided.name,
+      'payments': cleanPaymentsPayload,
       'lastUpdatedAt': FieldValue.serverTimestamp(),
     });
 

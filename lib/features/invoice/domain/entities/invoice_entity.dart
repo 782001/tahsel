@@ -197,12 +197,92 @@ class InvoiceEntity extends Equatable {
     return b > 0 ? b : 0.0;
   }
 
+  /// Deduplicates payment events that may have been recorded redundantly by both
+  /// the InvoiceCubit ledger and the Debt synchronization transaction.
+  static List<InvoicePayment> deduplicatePayments(
+    List<InvoicePayment> rawPayments,
+  ) {
+    if (rawPayments.length <= 1) return rawPayments;
+
+    final List<InvoicePayment> result = [];
+
+    for (final payment in rawPayments) {
+      // 1. Exact ID duplicate
+      final exactIdIndex = result.indexWhere((p) => p.id == payment.id);
+      if (exactIdIndex != -1) {
+        continue;
+      }
+
+      // 2. Dual-write duplicate check (pmt_ paired with debt_pmt_)
+      final isDebtPmt = payment.id.startsWith('debt_pmt_');
+      final isLocalPmt = payment.id.startsWith('pmt_') || !isDebtPmt;
+
+      final pairIndex = result.indexWhere((existing) {
+        final existingIsDebt = existing.id.startsWith('debt_pmt_');
+        final existingIsLocal = existing.id.startsWith('pmt_') || !existingIsDebt;
+
+        final isDualPair =
+            (isDebtPmt && existingIsLocal) || (isLocalPmt && existingIsDebt);
+        if (!isDualPair) return false;
+
+        final sameAmount = (existing.amount - payment.amount).abs() < 0.01;
+        final timeDiff =
+            existing.paidAt.difference(payment.paidAt).inSeconds.abs();
+        return sameAmount && timeDiff <= 120;
+      });
+
+      if (pairIndex != -1) {
+        // Merge them: prefer debt_pmt_ for the ID (maintains link to debt),
+        // but prefer whichever has a non-empty note.
+        final existing = result[pairIndex];
+        final chosenId =
+            existing.id.startsWith('debt_pmt_') ? existing.id : payment.id;
+        final nonNullNote =
+            (existing.note != null && existing.note!.trim().isNotEmpty)
+                ? existing.note
+                : payment.note;
+        final chosenDate = existing.paidAt;
+
+        result[pairIndex] = InvoicePayment(
+          id: chosenId,
+          amount: existing.amount,
+          paidAt: chosenDate,
+          note: nonNullNote,
+        );
+      } else {
+        result.add(payment);
+      }
+    }
+
+    return result;
+  }
+
+  /// If the invoice was voided and the customer was refunded, the net paid balance on this invoice is 0.
   /// If the debt-sync has written a `syncedTotalPaid` value, use it as the
-  /// authoritative paid amount; otherwise fall back to the payments array.
-  double get totalPaid =>
-      syncedTotalPaid ?? payments.fold(0.0, (sum, p) => sum + p.amount);
+  /// authoritative paid amount; otherwise fall back to the deduplicated payments array.
+  double get totalPaid {
+    if (status == InvoiceStatus.voided && isRefundedToCustomer) {
+      return 0.0;
+    }
+    if (syncedTotalPaid != null && syncedTotalPaid! > 0) {
+      return syncedTotalPaid!;
+    }
+    final cleanPayments = deduplicatePayments(payments);
+    return cleanPayments.fold(0.0, (sum, p) => sum + p.amount);
+  }
+
+  /// Total historical amount paid towards this invoice before any void/refund settlement.
+  double get historicalPaid {
+    final cleanPayments = deduplicatePayments(payments);
+    final paymentsSum = cleanPayments.fold(0.0, (sum, p) => sum + p.amount);
+    if (paymentsSum > 0) return paymentsSum;
+    return syncedTotalPaid ?? 0.0;
+  }
 
   double get remainingAmount {
+    if (status == InvoiceStatus.voided) {
+      return 0.0;
+    }
     final r = totalAmount - totalPaid;
     return r > 0 ? r : 0.0;
   }
