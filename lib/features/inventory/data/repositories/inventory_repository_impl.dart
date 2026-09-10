@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:get_it/get_it.dart';
 import 'package:tahsel/core/error/failures.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/date_formatter.dart';
@@ -936,6 +937,28 @@ class InventoryRepositoryImpl implements InventoryRepository {
     InventoryPurchaseEntity purchase,
   ) async {
     try {
+      // 0. Pre-validation: Ensure items have not been sold below purchased quantity
+      final List<String> insufficientProducts = [];
+      for (final item in purchase.items) {
+        final product = await localDataSource.getProductById(item.productId);
+        if (product != null && !product.isDeleted) {
+          if (product.currentQuantity < item.quantity) {
+            final available = product.currentQuantity.toSmartAmount();
+            final invoiceQty = item.quantity.toSmartAmount();
+            insufficientProducts.add(
+              '• ${item.productName} (${AppStrings.currentAvailable.tr()}: $available، ${AppStrings.invoiceQuantity.tr()}: $invoiceQty)',
+            );
+          }
+        }
+      }
+
+      if (insufficientProducts.isNotEmpty) {
+        final details = insufficientProducts.join('\n');
+        return Left(GeneralFailure(
+          '${AppStrings.cannotDeletePurchaseSoldPrefix.tr()}\n\n$details\n\n${AppStrings.cannotDeletePurchaseSoldSuffix.tr()}',
+        ));
+      }
+
       final bool hasConnection = await connectionChecker.hasConnection;
 
       // 1. Delete purchase record locally
@@ -1016,6 +1039,42 @@ class InventoryRepositoryImpl implements InventoryRepository {
     required InventoryPurchaseEntity newPurchase,
   }) async {
     try {
+      // 0. Pre-validation: Check if any reduction in item quantity would push stock below zero
+      final Map<String, double> preDeltaQtyMap = {};
+      for (final oldItem in oldPurchase.items) {
+        preDeltaQtyMap[oldItem.productId] =
+            (preDeltaQtyMap[oldItem.productId] ?? 0.0) - oldItem.quantity;
+      }
+      for (final newItem in newPurchase.items) {
+        preDeltaQtyMap[newItem.productId] =
+            (preDeltaQtyMap[newItem.productId] ?? 0.0) + newItem.quantity;
+      }
+
+      final List<String> insufficientProducts = [];
+      for (final entry in preDeltaQtyMap.entries) {
+        final productId = entry.key;
+        final deltaQty = entry.value;
+        if (deltaQty < 0) {
+          final product = await localDataSource.getProductById(productId);
+          if (product != null && !product.isDeleted) {
+            if (product.currentQuantity + deltaQty < 0) {
+              final available = product.currentQuantity.toSmartAmount();
+              final reduction = deltaQty.abs().toSmartAmount();
+              insufficientProducts.add(
+                '• ${product.name} (${AppStrings.currentAvailable.tr()}: $available، ${AppStrings.requestedReduction.tr()}: $reduction)',
+              );
+            }
+          }
+        }
+      }
+
+      if (insufficientProducts.isNotEmpty) {
+        final details = insufficientProducts.join('\n');
+        return Left(GeneralFailure(
+          '${AppStrings.cannotReducePurchaseQuantitySoldPrefix.tr()}\n\n$details\n\n${AppStrings.cannotReducePurchaseQuantitySoldSuffix.tr()}',
+        ));
+      }
+
       final bool hasConnection = await connectionChecker.hasConnection;
       final double additionalPaid =
           newPurchase.paidAmount - oldPurchase.paidAmount;

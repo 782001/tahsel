@@ -1136,6 +1136,18 @@ class AppStrings {
   static const String pleaseEnterProductName = "please_enter_product_name";
   static const String confirmDeletePurchaseWarning =
       "confirm_delete_purchase_warning";
+  static const String cannotDeletePurchaseTitle = "cannot_delete_purchase_title";
+  static const String cannotDeletePurchaseSoldPrefix =
+      "cannot_delete_purchase_sold_prefix";
+  static const String cannotDeletePurchaseSoldSuffix =
+      "cannot_delete_purchase_sold_suffix";
+  static const String cannotReducePurchaseQuantitySoldPrefix =
+      "cannot_reduce_purchase_quantity_sold_prefix";
+  static const String cannotReducePurchaseQuantitySoldSuffix =
+      "cannot_reduce_purchase_quantity_sold_suffix";
+  static const String currentAvailable = "current_available";
+  static const String invoiceQuantity = "invoice_quantity";
+  static const String requestedReduction = "requested_reduction";
   static const String errorSharingInvoice = "error_sharing_invoice";
   static const String errorSavingInvoice = "error_saving_invoice";
   static const String loading = "loading";

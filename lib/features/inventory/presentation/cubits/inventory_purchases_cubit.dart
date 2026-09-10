@@ -61,6 +61,7 @@ class InventoryPurchasesCubit extends Cubit<InventoryPurchasesState> {
   int _currentLimit = 15;
   bool _hasMore = true;
   bool _isFetchingMore = false;
+  String? lastActionError;
 
   InventoryPurchasesCubit({
     required this.getPurchasesUseCase,
@@ -130,6 +131,7 @@ class InventoryPurchasesCubit extends Cubit<InventoryPurchasesState> {
     final result = await createPurchaseUseCase(purchase);
     return result.fold(
       (failure) {
+        lastActionError = failure.message;
         if (prevState is InventoryPurchasesLoaded) {
           emit(prevState);
         } else {
@@ -138,6 +140,7 @@ class InventoryPurchasesCubit extends Cubit<InventoryPurchasesState> {
         return false;
       },
       (_) {
+        lastActionError = null;
         fetchPurchases();
         return true;
       },
@@ -155,6 +158,7 @@ class InventoryPurchasesCubit extends Cubit<InventoryPurchasesState> {
     );
     return result.fold(
       (failure) {
+        lastActionError = failure.message;
         if (prevState is InventoryPurchasesLoaded) {
           emit(prevState);
         } else {
@@ -163,6 +167,7 @@ class InventoryPurchasesCubit extends Cubit<InventoryPurchasesState> {
         return false;
       },
       (_) {
+        lastActionError = null;
         fetchPurchases();
         return true;
       },
@@ -174,6 +179,7 @@ class InventoryPurchasesCubit extends Cubit<InventoryPurchasesState> {
     final result = await deletePurchaseUseCase(purchase);
     return result.fold(
       (failure) {
+        lastActionError = failure.message;
         if (prevState is InventoryPurchasesLoaded) {
           emit(prevState);
         } else {
@@ -182,6 +188,7 @@ class InventoryPurchasesCubit extends Cubit<InventoryPurchasesState> {
         return false;
       },
       (_) {
+        lastActionError = null;
         fetchPurchases();
         return true;
       },

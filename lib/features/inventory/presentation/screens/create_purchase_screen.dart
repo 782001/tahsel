@@ -408,11 +408,67 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
         );
         navigator.pop();
       } else if (!success && mounted) {
-        final state = purchasesCubit.state;
-        if (state is InventoryPurchasesError &&
-            (state.message.contains(AppStrings.insufficientBalance) ||
-                state.message.contains('insufficient_balance'))) {
-          VaultBalanceHelper.showInsufficientBalanceDialog(context);
+        final errorMsg = purchasesCubit.lastActionError;
+        if (errorMsg != null && errorMsg.isNotEmpty) {
+          if (errorMsg.contains(AppStrings.insufficientBalance) ||
+              errorMsg.contains('insufficient_balance')) {
+            VaultBalanceHelper.showInsufficientBalanceDialog(context);
+          } else {
+            showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16.r),
+                ),
+                title: Row(
+                  children: [
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      color: AppColors.error,
+                      size: 26.sp,
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: Text(
+                        AppStrings.warning.tr(),
+                        style: TextStyles.customStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: AppColors.error,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                content: Text(
+                  errorMsg,
+                  style: TextStyles.customStyle(
+                    fontSize: 13,
+                    height: 1.5,
+                    color: AppColors.blackReal,
+                  ),
+                ),
+                actions: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                    ),
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    child: Text(
+                      AppStrings.confirm.tr(),
+                      style: TextStyles.customStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
         }
       }
     } finally {

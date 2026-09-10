@@ -263,6 +263,64 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
               backgroundColor: AppColors.success,
             ),
           );
+        } else if (!success && mounted) {
+          final errorMsg = purchasesCubit.lastActionError;
+          if (errorMsg != null && errorMsg.isNotEmpty) {
+            showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16.r),
+                ),
+                title: Row(
+                  children: [
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      color: AppColors.error,
+                      size: 26,
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: Text(
+                        AppStrings.cannotDeletePurchaseTitle.tr(),
+                        style: TextStyles.customStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: AppColors.error,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                content: Text(
+                  errorMsg,
+                  style: TextStyles.customStyle(
+                    fontSize: 13,
+                    height: 1.5,
+                    color: AppColors.blackReal,
+                  ),
+                ),
+                actions: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                    ),
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    child: Text(
+                      AppStrings.confirm.tr(),
+                      style: TextStyles.customStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
         }
       } finally {
         if (mounted) {
@@ -320,6 +378,27 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
+      appBar: AppBar(
+        backgroundColor: AppColors.scafoldBackGround,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.primaryColor,
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        centerTitle: true,
+        title: Text(
+          AppStrings.inventoryPurchases.tr(),
+          style: TextStyles.customStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: AppColors.primaryColor,
+          ),
+        ),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppColors.primaryColor,
         onPressed: _navigateToCreatePurchase,
@@ -350,8 +429,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                         .read<InventoryPurchasesCubit>()
                         .fetchPurchases();
                   },
-                  child: BlocBuilder<InventoryPurchasesCubit,
-                      InventoryPurchasesState>(
+                  child: BlocBuilder<InventoryPurchasesCubit, InventoryPurchasesState>(
                     builder: (context, state) {
                       // Apply Search & Date Filters
                       final query = _searchController.text.trim().toLowerCase();
@@ -365,7 +443,8 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                             : state.purchases;
 
                         filteredPurchases = sourceList.where((p) {
-                          final matchesSearch = query.isEmpty ||
+                          final matchesSearch =
+                              query.isEmpty ||
                               p.supplierName.toLowerCase().contains(query) ||
                               p.id.toLowerCase().contains(query) ||
                               p.items.any(
@@ -373,7 +452,8 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                     i.productName.toLowerCase().contains(query),
                               );
 
-                          final matchesDate = _selectedDateRange == null ||
+                          final matchesDate =
+                              _selectedDateRange == null ||
                               (p.createdAt.isAfter(
                                     _selectedDateRange!.start.subtract(
                                       const Duration(days: 1),
@@ -397,44 +477,19 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                           parent: BouncingScrollPhysics(),
                         ),
                         slivers: [
-                          // ── Floating & Snapping App Bar with SearchBar ──────
-                          SliverAppBar(
-                            floating: true,
-                            snap: true,
-                            elevation: 0,
-                            scrolledUnderElevation: 0,
-                            backgroundColor: AppColors.scafoldBackGround,
-                            automaticallyImplyLeading: false,
-                            leading: IconButton(
-                              icon: Icon(
-                                Icons.arrow_back_ios_new_rounded,
-                                color: AppColors.primaryColor,
+                          // ── Search & Filter Bar ──────
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isDesktop ? 24 : 16.w,
+                                vertical: isDesktop ? 8 : 6.h,
                               ),
-                              onPressed: () => Navigator.of(context).pop(),
-                            ),
-                            centerTitle: true,
-                            title: Text(
-                              AppStrings.inventoryPurchases.tr(),
-                              style: TextStyles.customStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primaryColor,
-                              ),
-                            ),
-                            bottom: PreferredSize(
-                              preferredSize: Size.fromHeight(60.h),
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: isDesktop ? 24 : 16.w,
-                                  vertical: isDesktop ? 8 : 6.h,
-                                ),
-                                child: PurchaseSearchBar(
-                                  searchController: _searchController,
-                                  selectedDateRange: _selectedDateRange,
-                                  onSelectDateRange: () =>
-                                      _pickDateRange(context),
-                                  onClearFilters: _clearFilters,
-                                ),
+                              child: PurchaseSearchBar(
+                                searchController: _searchController,
+                                selectedDateRange: _selectedDateRange,
+                                onSelectDateRange: () =>
+                                    _pickDateRange(context),
+                                onClearFilters: _clearFilters,
                               ),
                             ),
                           ),
@@ -517,26 +572,23 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                             _sharePurchasePdf(pur),
                                         onDownloadPdf: () =>
                                             _downloadPurchasePdf(pur),
-                                        onReorder: () =>
-                                            _reorderPurchase(pur),
+                                        onReorder: () => _reorderPurchase(pur),
                                         onEdit: () => _editPurchase(pur),
                                         onDelete: () =>
                                             _confirmDeletePurchase(pur),
                                       ),
                                     );
                                   },
-                                  childCount: filteredPurchases.length +
-                                      (!isFiltering &&
-                                              state.isPaginationLoading
+                                  childCount:
+                                      filteredPurchases.length +
+                                      (!isFiltering && state.isPaginationLoading
                                           ? 1
                                           : 0),
                                 ),
                               ),
                             )
                           else
-                            const SliverToBoxAdapter(
-                              child: SizedBox.shrink(),
-                            ),
+                            const SliverToBoxAdapter(child: SizedBox.shrink()),
                         ],
                       );
                     },
