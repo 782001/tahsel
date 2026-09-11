@@ -13,6 +13,8 @@ import 'package:tahsel/features/inventory/presentation/widgets/supplier_purchase
 import '../../domain/entities/inventory_supplier_entity.dart';
 import '../cubits/inventory_suppliers_cubit.dart';
 import '../widgets/inventory_tab_selector.dart';
+import '../widgets/product_card_skeleton.dart';
+import '../widgets/purchase_card_skeleton.dart';
 
 class SupplierDetailsScreen extends StatefulWidget {
   final InventorySupplierEntity supplier;
@@ -398,11 +400,13 @@ class _SupplierDetailsScreenState extends State<SupplierDetailsScreen> {
                       >(
                         builder: (context, state) {
                           if (state is InventorySuppliersLoading) {
-                            return Center(
-                              child: CircularProgressIndicator(
-                                color: AppColors.primaryColor,
-                                strokeWidth: 4,
-                              ),
+                            return ListView.builder(
+                              padding: EdgeInsets.all(isDesktop ? 16 : 16.w),
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: 4,
+                              itemBuilder: (_, __) => _selectedTabIndex == 0
+                                  ? const PurchaseCardSkeleton()
+                                  : const ProductCardSkeleton(),
                             );
                           }
                           if (state is SupplierDetailsLoaded) {

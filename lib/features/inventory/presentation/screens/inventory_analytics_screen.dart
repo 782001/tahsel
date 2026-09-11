@@ -19,6 +19,7 @@ import '../cubits/inventory_categories_cubit.dart';
 import '../cubits/inventory_products_cubit.dart';
 import '../cubits/inventory_suppliers_cubit.dart';
 import '../widgets/add_edit_product_dialog.dart';
+import '../widgets/inventory_analytics_skeleton.dart';
 import '../widgets/inventory_empty_state.dart';
 import '../widgets/inventory_tab_selector.dart';
 
@@ -181,12 +182,7 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
             child: BlocBuilder<InventoryProductsCubit, InventoryProductsState>(
               builder: (context, state) {
                 if (state is InventoryProductsLoading) {
-                  return Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.primaryColor,
-                      strokeWidth: 4,
-                    ),
-                  );
+                  return const InventoryAnalyticsSkeleton();
                 }
 
                 if (state is InventoryProductsLoaded) {

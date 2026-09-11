@@ -10,6 +10,7 @@ import 'package:tahsel/core/widgets/responsive_layout.dart';
 import '../../domain/entities/inventory_category_entity.dart';
 import '../cubits/inventory_categories_cubit.dart';
 import '../widgets/add_edit_category_dialog.dart';
+import '../widgets/category_card_skeleton.dart';
 import '../widgets/inventory_empty_state.dart';
 
 class CategoriesScreen extends StatefulWidget {
@@ -181,11 +182,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   >(
                     builder: (context, state) {
                       if (state is InventoryCategoriesLoading) {
-                        return Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.primaryColor,
-                            strokeWidth: 4,
-                          ),
+                        return ListView.builder(
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: 6,
+                          itemBuilder: (_, __) => const CategoryCardSkeleton(),
                         );
                       }
                       if (state is InventoryCategoriesLoaded) {

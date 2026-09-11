@@ -23,6 +23,7 @@ import '../widgets/barcode_scanner_dialog.dart';
 import '../widgets/inventory_empty_state.dart';
 import '../widgets/manual_stock_adjustment_dialog.dart';
 import '../widgets/product_card_item.dart';
+import '../widgets/product_card_skeleton.dart';
 import '../widgets/product_details_dialog.dart';
 
 class ProductsScreen extends StatefulWidget {
@@ -579,11 +580,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
                           >(
                             builder: (context, state) {
                               if (state is InventoryProductsLoading) {
-                                return Center(
-                                  child: CircularProgressIndicator(
-                                    color: AppColors.primaryColor,
-                                    strokeWidth: 4,
-                                  ),
+                                return ListView.builder(
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: 6,
+                                  itemBuilder: (_, __) =>
+                                      const ProductCardSkeleton(),
                                 );
                               }
                               if (state is InventoryProductsLoaded) {
@@ -654,17 +655,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                         SizedBox(height: isDesktop ? 12 : 12.h),
                                     itemBuilder: (context, index) {
                                       if (index == products.length) {
-                                        return Padding(
-                                          padding: EdgeInsets.symmetric(
-                                            vertical: isDesktop ? 16 : 16.h,
-                                          ),
-                                          child: Center(
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 4,
-                                              color: AppColors.primaryColor,
-                                            ),
-                                          ),
-                                        );
+                                        return const ProductCardSkeleton();
                                       }
                                       final p = products[index];
                                       return ProductCardItem(

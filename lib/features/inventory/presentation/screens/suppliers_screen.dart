@@ -12,6 +12,7 @@ import '../../domain/entities/inventory_supplier_entity.dart';
 import '../cubits/inventory_suppliers_cubit.dart';
 import '../widgets/add_edit_supplier_dialog.dart';
 import '../widgets/inventory_empty_state.dart';
+import '../widgets/supplier_card_skeleton.dart';
 import 'supplier_details_screen.dart';
 import 'package:tahsel/core/utils/date_formatter.dart';
 
@@ -181,11 +182,10 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
                   BlocBuilder<InventorySuppliersCubit, InventorySuppliersState>(
                     builder: (context, state) {
                       if (state is InventorySuppliersLoading) {
-                        return Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.primaryColor,
-                            strokeWidth: 4,
-                          ),
+                        return ListView.builder(
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: 6,
+                          itemBuilder: (_, __) => const SupplierCardSkeleton(),
                         );
                       }
                       if (state is InventorySuppliersLoaded) {

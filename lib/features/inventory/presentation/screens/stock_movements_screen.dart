@@ -12,6 +12,7 @@ import 'package:tahsel/core/widgets/responsive_layout.dart';
 import '../../domain/entities/stock_movement_entity.dart';
 import '../cubits/inventory_stock_movements_cubit.dart';
 import '../widgets/inventory_empty_state.dart';
+import '../widgets/stock_movement_card_skeleton.dart';
 
 class StockMovementsScreen extends StatefulWidget {
   const StockMovementsScreen({super.key});
@@ -232,11 +233,11 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
                     child: BlocBuilder<InventoryStockMovementsCubit, InventoryStockMovementsState>(
                       builder: (context, state) {
                         if (state is InventoryStockMovementsLoading) {
-                          return Center(
-                            child: CircularProgressIndicator(
-                              color: AppColors.primaryColor,
-                              strokeWidth: 4,
-                            ),
+                          return ListView.builder(
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: 6,
+                            itemBuilder: (_, __) =>
+                                const StockMovementCardSkeleton(),
                           );
                         }
                         if (state is InventoryStockMovementsLoaded) {
@@ -275,17 +276,7 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
                                   SizedBox(height: isDesktop ? 12 : 12.h),
                               itemBuilder: (context, index) {
                                 if (index == movements.length) {
-                                  return Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: isDesktop ? 16 : 16.h,
-                                    ),
-                                    child: Center(
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 4,
-                                        color: AppColors.primaryColor,
-                                      ),
-                                    ),
-                                  );
+                                  return const StockMovementCardSkeleton();
                                 }
                                 final m = movements[index];
                                 final isIncrease = _isMovementIncrease(m);

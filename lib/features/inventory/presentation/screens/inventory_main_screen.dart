@@ -10,6 +10,7 @@ import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit
 import 'package:tahsel/routes/app_routes.dart';
 
 import '../cubits/inventory_dashboard_cubit.dart';
+import 'package:tahsel/shared/widgets/shimmer/shimmer_loading.dart';
 
 class InventoryMainScreen extends StatefulWidget {
   const InventoryMainScreen({super.key});
@@ -144,6 +145,30 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                       InventoryDashboardState
                     >(
                       builder: (context, state) {
+                        if (state is InventoryDashboardLoading) {
+                          return Row(
+                            children: [
+                              Expanded(
+                                child: _buildTahselKpiCardSkeleton(
+                                  isDesktop: isDesktop,
+                                ),
+                              ),
+                              SizedBox(width: isDesktop ? 14 : 10.w),
+                              Expanded(
+                                child: _buildTahselKpiCardSkeleton(
+                                  isDesktop: isDesktop,
+                                ),
+                              ),
+                              SizedBox(width: isDesktop ? 14 : 10.w),
+                              Expanded(
+                                child: _buildTahselKpiCardSkeleton(
+                                  isDesktop: isDesktop,
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+
                         int totalProducts = 0;
                         int lowStockCount = 0;
                         double totalValue = 0.0;
@@ -447,6 +472,41 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTahselKpiCardSkeleton({required bool isDesktop}) {
+    return Container(
+      padding: EdgeInsets.all(isDesktop ? 16 : 12.w),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18.r),
+        boxShadow: const [AppColors.shadow],
+      ),
+      child: ShimmerLoading(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ShimmerPlaceholder(
+              width: isDesktop ? 44.r : 36.r,
+              height: isDesktop ? 44.r : 36.r,
+              shape: BoxShape.circle,
+            ),
+            SizedBox(height: 10.h),
+            ShimmerPlaceholder(
+              width: isDesktop ? 70 : 60.w,
+              height: isDesktop ? 14 : 12,
+              borderRadius: 4,
+            ),
+            SizedBox(height: 6.h),
+            ShimmerPlaceholder(
+              width: isDesktop ? 50 : 40.w,
+              height: isDesktop ? 18 : 16,
+              borderRadius: 4,
+            ),
+          ],
+        ),
       ),
     );
   }
