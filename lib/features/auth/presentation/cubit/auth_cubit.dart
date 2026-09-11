@@ -22,6 +22,13 @@ import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart'
 import 'package:tahsel/features/operation/presentation/cubit/operation_cubit.dart';
 import 'package:tahsel/features/product/presentation/cubit/product_cubit.dart';
 import 'package:tahsel/features/reports/presentation/cubit/reports_cubit/reports_cubit.dart';
+import 'package:tahsel/features/inventory/data/datasources/inventory_local_data_source.dart';
+import 'package:tahsel/features/inventory/presentation/cubits/inventory_categories_cubit.dart';
+import 'package:tahsel/features/inventory/presentation/cubits/inventory_dashboard_cubit.dart';
+import 'package:tahsel/features/inventory/presentation/cubits/inventory_products_cubit.dart';
+import 'package:tahsel/features/inventory/presentation/cubits/inventory_purchases_cubit.dart';
+import 'package:tahsel/features/inventory/presentation/cubits/inventory_stock_movements_cubit.dart';
+import 'package:tahsel/features/inventory/presentation/cubits/inventory_suppliers_cubit.dart';
 import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
@@ -219,6 +226,8 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> _clearSessionData() async {
+    final oldToken = AppStrings.userToken;
+
     // Clear global session strings
     AppStrings.userToken = '';
     AppStrings.userType = AppStrings.cafe;
@@ -239,6 +248,31 @@ class AuthCubit extends Cubit<AuthState> {
     sl<DebtCubit>().clearData();
     sl<MyDebtsCubit>().clearData();
     sl<OperationCubit>().clearData();
+
+    // Clear inventory in-memory cubits
+    if (sl.isRegistered<InventoryProductsCubit>()) {
+      sl<InventoryProductsCubit>().clearData();
+    }
+    if (sl.isRegistered<InventoryPurchasesCubit>()) {
+      sl<InventoryPurchasesCubit>().clearData();
+    }
+    if (sl.isRegistered<InventoryCategoriesCubit>()) {
+      sl<InventoryCategoriesCubit>().clearData();
+    }
+    if (sl.isRegistered<InventorySuppliersCubit>()) {
+      sl<InventorySuppliersCubit>().clearData();
+    }
+    if (sl.isRegistered<InventoryStockMovementsCubit>()) {
+      sl<InventoryStockMovementsCubit>().clearData();
+    }
+    if (sl.isRegistered<InventoryDashboardCubit>()) {
+      sl<InventoryDashboardCubit>().clearData();
+    }
+
+    // Close and isolate inventory Hive boxes
+    if (sl.isRegistered<InventoryLocalDataSource>()) {
+      await sl<InventoryLocalDataSource>().closeUserBoxes(oldToken);
+    }
   }
 
   Future<void> deleteAccount() async {

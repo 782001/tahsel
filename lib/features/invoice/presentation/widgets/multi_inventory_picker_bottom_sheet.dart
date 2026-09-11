@@ -121,14 +121,13 @@ class _MultiInventoryPickerBottomSheetState
       _initialAllocatedQuantities.clear();
       _initialAllocatedQuantities.addAll(initialAllocated);
 
-      final products = models
-          .map((m) => m as InventoryProductEntity)
-          .where((p) {
-            if (!p.isAvailable) return false;
-            final hasInitial = initialAllocated.containsKey(p.id);
-            return p.currentQuantity > 0 || hasInitial;
-          })
-          .toList();
+      final products = models.map((m) => m as InventoryProductEntity).where((
+        p,
+      ) {
+        if (!p.isAvailable) return false;
+        final hasInitial = initialAllocated.containsKey(p.id);
+        return p.currentQuantity > 0 || hasInitial;
+      }).toList();
 
       for (final entry in initialAllocated.entries) {
         final pList = products.where((p) => p.id == entry.key);
@@ -232,7 +231,10 @@ class _MultiInventoryPickerBottomSheetState
       } else {
         final initial = _initialAllocatedQuantities[product.id] ?? 1.0;
         final maxQty = _maxQuantityFor(product);
-        final targetQty = (initial > 0 ? initial : 1.0).clamp(1.0, maxQty > 0 ? maxQty : 1.0);
+        final targetQty = (initial > 0 ? initial : 1.0).clamp(
+          1.0,
+          maxQty > 0 ? maxQty : 1.0,
+        );
         _selectedQuantities[product.id] = targetQty;
       }
     });
@@ -519,7 +521,7 @@ class _MultiInventoryPickerBottomSheetState
                     backgroundColor: AppColors.surface,
                     checkmarkColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20.r),
+                      borderRadius: BorderRadius.circular(10.r),
                       side: BorderSide(
                         color:
                             _selectedCategory == null && !_showBestSellersOnly
@@ -558,7 +560,7 @@ class _MultiInventoryPickerBottomSheetState
                       backgroundColor: AppColors.surface,
                       checkmarkColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20.r),
+                        borderRadius: BorderRadius.circular(10.r),
                         side: BorderSide(
                           color: isSelected
                               ? AppColors.primaryColor
@@ -663,13 +665,16 @@ class _MultiInventoryPickerBottomSheetState
                                                 Expanded(
                                                   child: Text(
                                                     product.name,
-                                                    style: TextStyles.customStyle(
-                                                      fontSize:
-                                                          isDesktop ? 15 : 15,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: AppColors.black,
-                                                    ),
+                                                    style:
+                                                        TextStyles.customStyle(
+                                                          fontSize: isDesktop
+                                                              ? 15
+                                                              : 15,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color:
+                                                              AppColors.black,
+                                                        ),
                                                   ),
                                                 ),
                                                 if (isBestSeller) ...[
@@ -683,23 +688,21 @@ class _MultiInventoryPickerBottomSheetState
                                                           EdgeInsets.symmetric(
                                                             horizontal:
                                                                 isDesktop
-                                                                    ? 7
-                                                                    : 7.w,
-                                                            vertical:
-                                                                isDesktop
-                                                                    ? 3
-                                                                    : 3.h,
+                                                                ? 7
+                                                                : 7.w,
+                                                            vertical: isDesktop
+                                                                ? 3
+                                                                : 3.h,
                                                           ),
                                                       decoration: BoxDecoration(
-                                                        gradient:
-                                                            const LinearGradient(
-                                                              colors: [
-                                                                AppColors
-                                                                    .bestSellerStart,
-                                                                AppColors
-                                                                    .bestSellerEnd,
-                                                              ],
-                                                            ),
+                                                        gradient: const LinearGradient(
+                                                          colors: [
+                                                            AppColors
+                                                                .bestSellerStart,
+                                                            AppColors
+                                                                .bestSellerEnd,
+                                                          ],
+                                                        ),
                                                         borderRadius:
                                                             BorderRadius.circular(
                                                               isDesktop
@@ -730,16 +733,14 @@ class _MultiInventoryPickerBottomSheetState
                                                             Icons
                                                                 .local_fire_department_rounded,
                                                             color: Colors.white,
-                                                            size:
-                                                                isDesktop
-                                                                    ? 11
-                                                                    : 11,
+                                                            size: isDesktop
+                                                                ? 11
+                                                                : 11,
                                                           ),
                                                           SizedBox(
-                                                            width:
-                                                                isDesktop
-                                                                    ? 2
-                                                                    : 2.w,
+                                                            width: isDesktop
+                                                                ? 2
+                                                                : 2.w,
                                                           ),
                                                           Text(
                                                             AppStrings
@@ -748,9 +749,8 @@ class _MultiInventoryPickerBottomSheetState
                                                             style:
                                                                 TextStyles.customStyle(
                                                                   fontSize: 9,
-                                                                  color:
-                                                                      Colors
-                                                                          .white,
+                                                                  color: Colors
+                                                                      .white,
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .w900,
@@ -780,10 +780,12 @@ class _MultiInventoryPickerBottomSheetState
                                                 const SizedBox(width: 12),
                                                 Container(
                                                   padding: EdgeInsets.symmetric(
-                                                    horizontal:
-                                                        isDesktop ? 8 : 8.w,
-                                                    vertical:
-                                                        isDesktop ? 2 : 2.h,
+                                                    horizontal: isDesktop
+                                                        ? 8
+                                                        : 8.w,
+                                                    vertical: isDesktop
+                                                        ? 2
+                                                        : 2.h,
                                                   ),
                                                   decoration: BoxDecoration(
                                                     color: AppColors.success
@@ -820,7 +822,8 @@ class _MultiInventoryPickerBottomSheetState
                                     SizedBox(height: isDesktop ? 8 : 8.h),
                                     GestureDetector(
                                       behavior: HitTestBehavior.opaque,
-                                      onTap: () {}, // Prevent deselecting when interacting with quantity row
+                                      onTap:
+                                          () {}, // Prevent deselecting when interacting with quantity row
                                       child: Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
@@ -866,8 +869,9 @@ class _MultiInventoryPickerBottomSheetState
                                                 child: Text(
                                                   selectedQty.toSmartAmount(),
                                                   style: TextStyles.customStyle(
-                                                    fontSize:
-                                                        isDesktop ? 15 : 15,
+                                                    fontSize: isDesktop
+                                                        ? 15
+                                                        : 15,
                                                     fontWeight: FontWeight.bold,
                                                     color: AppColors.black,
                                                   ),

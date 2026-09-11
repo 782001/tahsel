@@ -6,6 +6,9 @@ import 'package:tahsel/core/error/failures.dart';
 import 'package:tahsel/core/usecases/pagination_params.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 
+import '../../../inventory/data/datasources/inventory_local_data_source.dart';
+import '../../../inventory/data/datasources/inventory_remote_data_source.dart';
+import '../../../inventory/data/models/inventory_product_model.dart';
 import '../../../inventory/domain/entities/stock_movement_entity.dart';
 import '../../../inventory/domain/repositories/inventory_repository.dart';
 import '../../../offline_sync/domain/repositories/offline_sync_repository.dart';
@@ -26,7 +29,10 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
   });
 
   @override
-  Future<Either<Failure, String>> createInvoice(InvoiceEntity invoice) async {
+  Future<Either<Failure, String>> createInvoice(
+    InvoiceEntity invoice, {
+    bool isAlreadyDeductedLocally = false,
+  }) async {
     try {
       final model = InvoiceModel.fromEntity(invoice);
 
@@ -45,7 +51,11 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
 
       // Deduct inventory stock automatically if VIP subscription is active (never for quotation)
       if (AppStrings.isVip && !invoice.isQuotation) {
-        _deductInventoryStockForInvoice(invoiceId, modelWithId.items);
+        if (isAlreadyDeductedLocally) {
+          _syncRemoteStockOnlyForInvoice(model.uid, invoiceId, modelWithId.items);
+        } else {
+          _deductInventoryStockForInvoice(invoiceId, modelWithId.items);
+        }
       }
 
       return Right(invoiceId);
@@ -361,6 +371,63 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
         items: itemsMap,
         type: StockMovementType.invoiceReturn,
       );
+    } catch (_) {}
+  }
+
+  Future<void> _syncRemoteStockOnlyForInvoice(
+    String uid,
+    String invoiceId,
+    List<InvoiceItem> items,
+  ) async {
+    try {
+      if (!AppStrings.isVip) return;
+      if (!GetIt.I.isRegistered<InventoryRemoteDataSource>()) return;
+      if (!GetIt.I.isRegistered<InventoryLocalDataSource>()) return;
+
+      final localDataSource = GetIt.I<InventoryLocalDataSource>();
+      final remoteDataSource = GetIt.I<InventoryRemoteDataSource>();
+      final allProducts = await localDataSource.getProducts();
+
+      for (var i = 0; i < items.length; i++) {
+        final item = items[i];
+        final itemId = item.id;
+        String name = item.description.trim();
+        final match = RegExp(r'^(.*?)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*×.*?\))?$')
+            .firstMatch(name);
+        if (match != null && match.group(1)?.trim().isNotEmpty == true) {
+          name = match.group(1)!.trim();
+        }
+        final itemNameLower = name.toLowerCase();
+        final qtyChange = item.quantity;
+        if (qtyChange <= 0) continue;
+
+        InventoryProductModel? matchingProduct;
+        for (final p in allProducts) {
+          if ((itemId.isNotEmpty && p.id == itemId) ||
+              (p.sku.isNotEmpty && p.sku.toLowerCase() == itemNameLower) ||
+              (p.barcode != null &&
+                  p.barcode!.isNotEmpty &&
+                  p.barcode!.toLowerCase() == itemNameLower) ||
+              (p.name.isNotEmpty && p.name.trim().toLowerCase() == itemNameLower)) {
+            matchingProduct = p;
+            break;
+          }
+        }
+
+        if (matchingProduct != null) {
+          await remoteDataSource.updateProductQuantityInRemote(
+            uid,
+            matchingProduct.id,
+            -qtyChange,
+            deltaSoldQuantity: qtyChange,
+          );
+          // Mark product as synced locally so syncInventoryData won't overwrite remote quantity
+          final syncedProduct = InventoryProductModel.fromEntity(
+            matchingProduct.copyWith(isSynced: true),
+          );
+          await localDataSource.saveProduct(syncedProduct);
+        }
+      }
     } catch (_) {}
   }
 }

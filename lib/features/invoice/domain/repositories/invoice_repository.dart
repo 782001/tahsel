@@ -7,7 +7,10 @@ import 'package:tahsel/core/usecases/pagination_params.dart';
 
 abstract class InvoiceRepository {
   /// Creates a new invoice. Saves locally first, syncs if online.
-  Future<Either<Failure, String>> createInvoice(InvoiceEntity invoice);
+  Future<Either<Failure, String>> createInvoice(
+    InvoiceEntity invoice, {
+    bool isAlreadyDeductedLocally = false,
+  });
 
   /// Fetches all invoices for the authenticated user from Firestore.
   Future<Either<Failure, List<InvoiceEntity>>> getInvoices(String uid);

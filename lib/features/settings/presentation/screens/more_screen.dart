@@ -269,19 +269,18 @@ class _MoreScreenState extends State<MoreScreen> {
                                               Text(
                                                 AppStrings.myCustomers.tr(),
                                                 style: TextStyles.customStyle(
-                                                  color: Colors.white,
                                                   fontSize: 18,
                                                   fontWeight: FontWeight.bold,
+                                                  color: AppColors.whiteColor,
                                                 ),
                                               ),
                                               Text(
                                                 AppStrings.customersReportDesc
                                                     .tr(),
                                                 style: TextStyles.customStyle(
-                                                  color: AppColors.whiteOpacity(
-                                                    0.8,
-                                                  ),
                                                   fontSize: 12,
+                                                  color: AppColors.whiteColor
+                                                      .withValues(alpha: 0.85),
                                                 ),
                                               ),
                                             ],
@@ -1290,7 +1289,8 @@ class _MoreScreenState extends State<MoreScreen> {
                                 // Group 2: App Settings & Account
                                 _buildCategoryGroupHeader(
                                   context: context,
-                                  title: AppStrings.appSettingsAndPreferences.tr(),
+                                  title: AppStrings.appSettingsAndPreferences
+                                      .tr(),
                                   icon: Icons.tune_rounded,
                                   color: AppColors.primaryColor,
                                   isDesktop: isDesktop,
@@ -2126,10 +2126,7 @@ class _MoreScreenState extends State<MoreScreen> {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(
-          color: color.withValues(alpha: 0.22),
-          width: 1,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.22), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -2140,11 +2137,7 @@ class _MoreScreenState extends State<MoreScreen> {
               color: color.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8.r),
             ),
-            child: Icon(
-              icon,
-              size: isDesktop ? 16 : 15.sp,
-              color: color,
-            ),
+            child: Icon(icon, size: isDesktop ? 16 : 15.sp, color: color),
           ),
           SizedBox(width: isDesktop ? 10 : 8.w),
           Text(

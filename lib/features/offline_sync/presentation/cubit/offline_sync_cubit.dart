@@ -9,6 +9,8 @@ import 'package:tahsel/features/inventory/data/datasources/inventory_local_data_
 import 'package:tahsel/features/inventory/domain/repositories/inventory_repository.dart';
 import 'package:tahsel/features/inventory/presentation/cubits/inventory_products_cubit.dart';
 import 'package:tahsel/features/inventory/presentation/cubits/inventory_purchases_cubit.dart';
+import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
+import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
 import 'package:tahsel/features/invoice/data/datasources/offline_invoice_local_data_source.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_cubit.dart';
 
@@ -118,6 +120,14 @@ class OfflineSyncCubit extends Cubit<OfflineSyncState> {
             AppStrings.userToken.isNotEmpty &&
             AppStrings.isVaultEnabled()) {
           sl<VaultCubit>().loadVaultData(AppStrings.userToken);
+        }
+        if (sl.isRegistered<ExpenseCubit>() &&
+            AppStrings.userToken.isNotEmpty) {
+          sl<ExpenseCubit>().fetchMonths(AppStrings.userToken, forceRefresh: true);
+        }
+        if (sl.isRegistered<MyDebtsCubit>() &&
+            AppStrings.userToken.isNotEmpty) {
+          sl<MyDebtsCubit>().loadPersons(AppStrings.userToken, forceRefresh: true);
         }
       } catch (_) {}
     }

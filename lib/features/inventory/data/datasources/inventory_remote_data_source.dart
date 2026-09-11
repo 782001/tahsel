@@ -39,6 +39,10 @@ abstract class InventoryRemoteDataSource {
   Future<void> deleteProductFromRemote(String uid, String productId);
 
   Future<void> syncPurchases(String uid, List<InventoryPurchaseModel> purchases);
+  Future<InventoryPurchaseModel?> getPurchaseByIdFromRemote(
+    String uid,
+    String purchaseId,
+  );
   Future<List<InventoryPurchaseModel>> fetchPurchasesFromRemote(
     String uid, {
     int limit = 15,
@@ -91,12 +95,32 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
   Future<void> syncProducts(String uid, List<InventoryProductModel> products) async {
     if (products.isEmpty) return;
     final col = _getCol(uid, 'inventory_products');
-    await _commitChunked<InventoryProductModel>(
-      col,
-      products,
-      (p) => p.id,
-      (p) => p.toRemoteMap(),
-    );
+
+    const chunkSize = 400;
+    for (var i = 0; i < products.length; i += chunkSize) {
+      final end = (i + chunkSize < products.length) ? i + chunkSize : products.length;
+      final chunk = products.sublist(i, end);
+
+      // Determine which products already exist on Firestore
+      final snapshots = await Future.wait(
+        chunk.map((p) => col.doc(p.id).get()),
+      );
+
+      final batch = firestore.batch();
+      for (var j = 0; j < chunk.length; j++) {
+        final p = chunk[j];
+        final exists = snapshots[j].exists;
+        if (!exists) {
+          // New product created offline: set full data including initial currentQuantity
+          batch.set(col.doc(p.id), p.toRemoteMap(), SetOptions(merge: true));
+        } else {
+          // Existing product on remote: update metadata only without overwriting currentQuantity!
+          // Quantity changes are tracked and synced via stock movements atomically
+          batch.set(col.doc(p.id), p.toRemoteUpdateMap(), SetOptions(merge: true));
+        }
+      }
+      await batch.commit();
+    }
   }
 
   @override
@@ -228,6 +252,19 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
       (p) => p.id,
       (p) => p.toRemoteMap(),
     );
+  }
+
+  @override
+  Future<InventoryPurchaseModel?> getPurchaseByIdFromRemote(
+    String uid,
+    String purchaseId,
+  ) async {
+    final doc =
+        await _getCol(uid, 'inventory_purchases').doc(purchaseId).get();
+    if (!doc.exists || doc.data() == null) return null;
+    final map = doc.data() as Map<String, dynamic>;
+    map['id'] = doc.id;
+    return InventoryPurchaseModel.fromMap(map);
   }
 
   @override

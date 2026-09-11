@@ -60,6 +60,10 @@ class InventoryDashboardCubit extends Cubit<InventoryDashboardState> {
     super.emit(state);
   }
 
+  void clearData() {
+    emit(InventoryDashboardInitial());
+  }
+
   Future<void> loadDashboardMetrics() async {
     emit(InventoryDashboardLoading());
     var productsResult = await getProductsUseCase();

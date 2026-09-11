@@ -66,6 +66,13 @@ class InventoryStockMovementsCubit extends Cubit<InventoryStockMovementsState> {
     super.emit(state);
   }
 
+  void clearData() {
+    _currentLimit = 15;
+    _hasMore = true;
+    _isFetchingMore = false;
+    emit(InventoryStockMovementsInitial());
+  }
+
   Future<void> fetchStockMovements({String? productId}) async {
     _currentLimit = 15;
     _hasMore = true;

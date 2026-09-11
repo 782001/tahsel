@@ -67,6 +67,10 @@ class InventorySuppliersCubit extends Cubit<InventorySuppliersState> {
     super.emit(state);
   }
 
+  void clearData() {
+    emit(InventorySuppliersInitial());
+  }
+
   Future<void> fetchSuppliers() async {
     emit(InventorySuppliersLoading());
     final result = await getSuppliersUseCase();

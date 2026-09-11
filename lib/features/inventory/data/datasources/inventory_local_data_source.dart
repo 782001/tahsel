@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 import '../models/inventory_category_model.dart';
 import '../models/inventory_product_model.dart';
 import '../models/inventory_purchase_model.dart';
@@ -42,6 +44,10 @@ abstract class InventoryLocalDataSource {
   Future<void> saveLastProductsSyncTimestamp(int timestamp);
   Future<int?> getLastPurchasesSyncTimestamp();
   Future<void> saveLastPurchasesSyncTimestamp(int timestamp);
+
+  // Session & Multi-tenant management
+  Future<void> closeUserBoxes([String? explicitUid]);
+  Future<void> clearAllLocalDataForUser(String uid);
 }
 
 class InventoryLocalDataSourceImpl implements InventoryLocalDataSource {
@@ -52,11 +58,44 @@ class InventoryLocalDataSourceImpl implements InventoryLocalDataSource {
   static const String stockMovementsBoxName = 'inventory_stock_movements_box';
   static const String metaBoxName = 'inventory_meta_box';
 
-  Future<Box<String>> _getBox(String name) async {
-    if (!Hive.isBoxOpen(name)) {
-      return await Hive.openBox<String>(name);
+  String get _currentUid {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null && uid.isNotEmpty) return uid;
+    if (AppStrings.userToken.isNotEmpty) return AppStrings.userToken;
+    return 'default_user';
+  }
+
+  Future<Box<String>> _getBox(String baseName) async {
+    final uid = _currentUid;
+    final userBoxName = '${baseName}_$uid';
+
+    // ── One-Time Auto-Migration from legacy un-suffixed box ───────────────────
+    if (!Hive.isBoxOpen(userBoxName) && !await Hive.boxExists(userBoxName)) {
+      if (await Hive.boxExists(baseName)) {
+        try {
+          final legacyBox = await Hive.openBox<String>(baseName);
+          if (legacyBox.isNotEmpty) {
+            final userBox = await Hive.openBox<String>(userBoxName);
+            for (final key in legacyBox.keys) {
+              final val = legacyBox.get(key);
+              if (val != null) {
+                await userBox.put(key, val);
+              }
+            }
+            await legacyBox.clear();
+            await legacyBox.close();
+            return userBox;
+          } else {
+            await legacyBox.close();
+          }
+        } catch (_) {}
+      }
     }
-    return Hive.box<String>(name);
+
+    if (!Hive.isBoxOpen(userBoxName)) {
+      return await Hive.openBox<String>(userBoxName);
+    }
+    return Hive.box<String>(userBoxName);
   }
 
   // --- PRODUCTS ---
@@ -66,8 +105,12 @@ class InventoryLocalDataSourceImpl implements InventoryLocalDataSource {
     final List<InventoryProductModel> result = [];
     for (final item in box.values) {
       if (item.isNotEmpty) {
-        final map = jsonDecode(item) as Map<String, dynamic>;
-        result.add(InventoryProductModel.fromMap(map));
+        try {
+          final map = jsonDecode(item) as Map<String, dynamic>;
+          result.add(InventoryProductModel.fromMap(map));
+        } catch (_) {
+          // Resilience: skip corrupted JSON item so the whole catalog does not crash
+        }
       }
     }
     return result;
@@ -78,9 +121,13 @@ class InventoryLocalDataSourceImpl implements InventoryLocalDataSource {
     final box = await _getBox(productsBoxName);
     final jsonStr = box.get(id);
     if (jsonStr == null || jsonStr.isEmpty) return null;
-    return InventoryProductModel.fromMap(
-      jsonDecode(jsonStr) as Map<String, dynamic>,
-    );
+    try {
+      return InventoryProductModel.fromMap(
+        jsonDecode(jsonStr) as Map<String, dynamic>,
+      );
+    } catch (_) {
+      return null;
+    }
   }
 
   @override
@@ -108,8 +155,12 @@ class InventoryLocalDataSourceImpl implements InventoryLocalDataSource {
     final List<InventoryCategoryModel> result = [];
     for (final item in box.values) {
       if (item.isNotEmpty) {
-        final map = jsonDecode(item) as Map<String, dynamic>;
-        result.add(InventoryCategoryModel.fromMap(map));
+        try {
+          final map = jsonDecode(item) as Map<String, dynamic>;
+          result.add(InventoryCategoryModel.fromMap(map));
+        } catch (_) {
+          // Resilience: skip corrupted JSON item
+        }
       }
     }
     return result;
@@ -140,8 +191,12 @@ class InventoryLocalDataSourceImpl implements InventoryLocalDataSource {
     final List<InventorySupplierModel> result = [];
     for (final item in box.values) {
       if (item.isNotEmpty) {
-        final map = jsonDecode(item) as Map<String, dynamic>;
-        result.add(InventorySupplierModel.fromMap(map));
+        try {
+          final map = jsonDecode(item) as Map<String, dynamic>;
+          result.add(InventorySupplierModel.fromMap(map));
+        } catch (_) {
+          // Resilience: skip corrupted JSON item
+        }
       }
     }
     return result;
@@ -172,8 +227,12 @@ class InventoryLocalDataSourceImpl implements InventoryLocalDataSource {
     final List<InventoryPurchaseModel> result = [];
     for (final item in box.values) {
       if (item.isNotEmpty) {
-        final map = jsonDecode(item) as Map<String, dynamic>;
-        result.add(InventoryPurchaseModel.fromMap(map));
+        try {
+          final map = jsonDecode(item) as Map<String, dynamic>;
+          result.add(InventoryPurchaseModel.fromMap(map));
+        } catch (_) {
+          // Resilience: skip corrupted JSON item
+        }
       }
     }
     return result;
@@ -204,8 +263,12 @@ class InventoryLocalDataSourceImpl implements InventoryLocalDataSource {
     final List<StockMovementModel> result = [];
     for (final item in box.values) {
       if (item.isNotEmpty) {
-        final map = jsonDecode(item) as Map<String, dynamic>;
-        result.add(StockMovementModel.fromMap(map));
+        try {
+          final map = jsonDecode(item) as Map<String, dynamic>;
+          result.add(StockMovementModel.fromMap(map));
+        } catch (_) {
+          // Resilience: skip corrupted JSON item
+        }
       }
     }
     return result;
@@ -250,5 +313,54 @@ class InventoryLocalDataSourceImpl implements InventoryLocalDataSource {
   Future<void> saveLastPurchasesSyncTimestamp(int timestamp) async {
     final box = await _getBox(metaBoxName);
     await box.put('last_purchases_sync_timestamp', timestamp.toString());
+  }
+
+  // --- SESSION & MULTI-TENANT MANAGEMENT ---
+  @override
+  Future<void> closeUserBoxes([String? explicitUid]) async {
+    final uid = (explicitUid != null && explicitUid.isNotEmpty)
+        ? explicitUid
+        : _currentUid;
+    final boxNames = [
+      '${productsBoxName}_$uid',
+      '${categoriesBoxName}_$uid',
+      '${suppliersBoxName}_$uid',
+      '${purchasesBoxName}_$uid',
+      '${stockMovementsBoxName}_$uid',
+      '${metaBoxName}_$uid',
+      productsBoxName,
+      categoriesBoxName,
+      suppliersBoxName,
+      purchasesBoxName,
+      stockMovementsBoxName,
+      metaBoxName,
+    ];
+    for (final name in boxNames) {
+      if (Hive.isBoxOpen(name)) {
+        try {
+          await Hive.box<String>(name).close();
+        } catch (_) {}
+      }
+    }
+  }
+
+  @override
+  Future<void> clearAllLocalDataForUser(String uid) async {
+    final boxNames = [
+      '${productsBoxName}_$uid',
+      '${categoriesBoxName}_$uid',
+      '${suppliersBoxName}_$uid',
+      '${purchasesBoxName}_$uid',
+      '${stockMovementsBoxName}_$uid',
+      '${metaBoxName}_$uid',
+    ];
+    for (final name in boxNames) {
+      try {
+        final box = Hive.isBoxOpen(name)
+            ? Hive.box<String>(name)
+            : await Hive.openBox<String>(name);
+        await box.clear();
+      } catch (_) {}
+    }
   }
 }

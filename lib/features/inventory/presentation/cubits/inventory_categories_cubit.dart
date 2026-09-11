@@ -44,6 +44,10 @@ class InventoryCategoriesCubit extends Cubit<InventoryCategoriesState> {
     super.emit(state);
   }
 
+  void clearData() {
+    emit(InventoryCategoriesInitial());
+  }
+
   Future<void> fetchCategories() async {
     emit(InventoryCategoriesLoading());
     final result = await getCategoriesUseCase();

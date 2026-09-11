@@ -18,7 +18,10 @@ import '../../../standard_features/no-internet/logic/connectivity_cubit.dart';
 import '../../../standard_features/no-internet/logic/connectivity_state.dart';
 import '../../data/models/invoice_model.dart';
 import 'dart:convert';
+import 'package:get_it/get_it.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/features/inventory/domain/entities/stock_movement_entity.dart';
+import 'package:tahsel/features/inventory/domain/repositories/inventory_repository.dart';
 
 class InvoiceCubit extends Cubit<InvoiceState> {
   final CreateInvoiceUseCase createInvoiceUseCase;
@@ -84,8 +87,11 @@ class InvoiceCubit extends Cubit<InvoiceState> {
       final paymentAmount = (p['paymentAmount'] as num).toDouble();
       final note = p['paymentNote'] as String?;
 
-      // 1. Create invoice online
-      final createResult = await createInvoiceUseCase(invoice);
+      // 1. Create invoice online (with isAlreadyDeductedLocally flag)
+      final createResult = await createInvoiceUseCase(
+        invoice,
+        isAlreadyDeductedLocally: true,
+      );
       final failed = createResult.fold((f) => f, (_) => null);
       if (failed != null) continue; // Try again next sync
 
@@ -128,7 +134,32 @@ class InvoiceCubit extends Cubit<InvoiceState> {
 
       final invoiceWithId = invoice.copyWith(id: invoiceId);
       await offlineInvoiceLocalDataSource.saveOfflineInvoice(invoiceWithId);
-      
+
+      // Deduct inventory stock locally immediately if VIP subscription is active (never for quotation)
+      if (AppStrings.isVip && !invoice.isQuotation && GetIt.I.isRegistered<InventoryRepository>()) {
+        try {
+          final itemsMap = invoiceWithId.items.map((item) {
+            String name = item.description.trim();
+            final match = RegExp(r'^(.*?)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*×.*?\))?$')
+                .firstMatch(name);
+            if (match != null && match.group(1)?.trim().isNotEmpty == true) {
+              name = match.group(1)!.trim();
+            }
+            return {
+              'id': item.id,
+              'name': name,
+              'quantity': item.quantity,
+            };
+          }).toList();
+
+          await GetIt.I<InventoryRepository>().processInvoiceStockChange(
+            invoiceId: invoiceId,
+            items: itemsMap,
+            type: StockMovementType.invoiceSale,
+          );
+        } catch (_) {}
+      }
+
       emit(InvoiceCreateSuccess(invoiceId));
       return;
     }

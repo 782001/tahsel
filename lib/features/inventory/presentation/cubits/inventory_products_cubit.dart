@@ -73,6 +73,14 @@ class InventoryProductsCubit extends Cubit<InventoryProductsState> {
     super.emit(state);
   }
 
+  void clearData() {
+    _allProducts.clear();
+    _currentLimit = 15;
+    _hasMore = true;
+    _isFetchingMore = false;
+    emit(InventoryProductsInitial());
+  }
+
   Future<void> fetchProducts({
     String? query,
     String? categoryId,

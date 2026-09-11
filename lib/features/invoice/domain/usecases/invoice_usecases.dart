@@ -11,8 +11,14 @@ class CreateInvoiceUseCase {
 
   CreateInvoiceUseCase(this.repository);
 
-  Future<Either<Failure, String>> call(InvoiceEntity invoice) {
-    return repository.createInvoice(invoice);
+  Future<Either<Failure, String>> call(
+    InvoiceEntity invoice, {
+    bool isAlreadyDeductedLocally = false,
+  }) {
+    return repository.createInvoice(
+      invoice,
+      isAlreadyDeductedLocally: isAlreadyDeductedLocally,
+    );
   }
 }
 

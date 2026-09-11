@@ -5,6 +5,7 @@ import 'package:get_it/get_it.dart';
 import 'package:tahsel/core/error/failures.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/date_formatter.dart';
 import 'package:tahsel/features/expenses/data/datasources/expense_remote_data_source.dart';
@@ -37,6 +38,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
   final ExpenseRepository? expenseRepository;
   final MyDebtRepository? myDebtRepository;
 
+  bool _isSyncing = false;
+
   InventoryRepositoryImpl({
     required this.localDataSource,
     required this.remoteDataSource,
@@ -45,7 +48,12 @@ class InventoryRepositoryImpl implements InventoryRepository {
     this.myDebtRepository,
   });
 
-  String? get _currentUid => FirebaseAuth.instance.currentUser?.uid;
+  String? get _currentUid {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null && uid.isNotEmpty) return uid;
+    if (AppStrings.userToken.isNotEmpty) return AppStrings.userToken;
+    return null;
+  }
 
   // --- PRODUCTS ---
   @override
@@ -96,9 +104,12 @@ class InventoryRepositoryImpl implements InventoryRepository {
             products = await localDataSource.getProducts();
           } else {
             final now = DateTime.now().millisecondsSinceEpoch;
-            final deltaProducts = await remoteDataSource.fetchProductsDeltaFromRemote(
+            final safeTimestamp =
+                (lastSync > 120000) ? (lastSync - 120000) : lastSync;
+            final deltaProducts =
+                await remoteDataSource.fetchProductsDeltaFromRemote(
               _currentUid!,
-              lastSync,
+              safeTimestamp,
             );
             if (deltaProducts.isNotEmpty) {
               for (final p in deltaProducts) {
@@ -106,14 +117,41 @@ class InventoryRepositoryImpl implements InventoryRepository {
                   await localDataSource.deleteProduct(p.id);
                 } else {
                   final existing = await localDataSource.getProductById(p.id);
-                  if (existing == null ||
-                      p.updatedAt.isAfter(existing.updatedAt)) {
+                  if (existing == null) {
+                    await localDataSource.saveProduct(
+                      InventoryProductModel.fromEntity(
+                        p.copyWith(isSynced: true),
+                      ),
+                    );
+                  } else if (existing.isSynced) {
+                    if (p.updatedAt.isAfter(existing.updatedAt)) {
+                      final double highestSold =
+                          (existing.totalSoldQuantity > p.totalSoldQuantity)
+                              ? existing.totalSoldQuantity
+                              : p.totalSoldQuantity;
+                      final mergedProduct = InventoryProductModel.fromEntity(
+                        p.copyWith(
+                          totalSoldQuantity: highestSold,
+                          isSynced: true,
+                        ),
+                      );
+                      await localDataSource.saveProduct(mergedProduct);
+                    }
+                  } else {
+                    // existing is NOT synced (user has pending offline edits):
+                    // Smart merge: preserve user's offline field edits (name, prices, etc.)
+                    // but adopt remote stock changes (currentQuantity & highest sold)
+                    // keep isSynced = false so user's edits will be synced to server!
                     final double highestSold =
-                        (existing != null && existing.totalSoldQuantity > p.totalSoldQuantity)
+                        (existing.totalSoldQuantity > p.totalSoldQuantity)
                             ? existing.totalSoldQuantity
                             : p.totalSoldQuantity;
                     final mergedProduct = InventoryProductModel.fromEntity(
-                      p.copyWith(totalSoldQuantity: highestSold, isSynced: true),
+                      existing.copyWith(
+                        currentQuantity: p.currentQuantity,
+                        totalSoldQuantity: highestSold,
+                        isSynced: false,
+                      ),
                     );
                     await localDataSource.saveProduct(mergedProduct);
                   }
@@ -123,7 +161,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
             }
             await localDataSource.saveLastProductsSyncTimestamp(now);
           }
-        } catch (_) {}
+        } catch (e) {
+          AppLogger.printMessage('Inventory: getProducts remote sync error: $e');
+        }
       }
 
       List<InventoryProductEntity> resultList = products
@@ -572,7 +612,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
           } else {
             final now = DateTime.now().millisecondsSinceEpoch;
             final safeTimestamp =
-                (lastSync > 60000) ? (lastSync - 60000) : lastSync;
+                (lastSync > 120000) ? (lastSync - 120000) : lastSync;
             final deltaPurchases =
                 await remoteDataSource.fetchPurchasesDeltaFromRemote(
               _currentUid!,
@@ -594,7 +634,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
             }
             await localDataSource.saveLastPurchasesSyncTimestamp(now);
           }
-        } catch (_) {}
+        } catch (e) {
+          AppLogger.printMessage('Inventory: getPurchases remote sync error: $e');
+        }
       }
 
       List<InventoryPurchaseEntity> resultList = purchases
@@ -856,6 +898,57 @@ class InventoryRepositoryImpl implements InventoryRepository {
         createdAt: DateTime.now(),
       );
     } catch (_) {}
+  }
+
+  Future<void> _updatePurchaseInVault({
+    required InventoryPurchaseEntity oldPurchase,
+    required InventoryPurchaseEntity newPurchase,
+    bool isOfflineSync = false,
+  }) async {
+    try {
+      final deltaPaid = newPurchase.paidAmount - oldPurchase.paidAmount;
+      if (deltaPaid == 0) return;
+
+      final uid = _currentUid ?? AppStrings.userToken;
+      if (uid.isEmpty) return;
+
+      final cleanId = newPurchase.id.replaceAll('pur_', '');
+
+      if (deltaPaid > 0) {
+        await VaultRemoteDataSourceImpl.syncVaultTransaction(
+          uid: uid,
+          transactionId:
+              'vault_tx_pur_${cleanId}_adj_${DateTime.now().millisecondsSinceEpoch}',
+          amount: deltaPaid,
+          direction: VaultTransactionDirection.outFlow,
+          source: VaultTransactionSource.inventory,
+          type: 'purchase_payment_adjustment',
+          description:
+              'تعديل دفع فاتورة مشتريات #$cleanId - ${newPurchase.supplierName}',
+          relatedEntityId: newPurchase.id,
+          relatedOperationId: newPurchase.id,
+          createdAt: DateTime.now(),
+          allowNegativeBalance: isOfflineSync,
+        );
+      } else {
+        await VaultRemoteDataSourceImpl.syncVaultTransaction(
+          uid: uid,
+          transactionId:
+              'vault_tx_pur_${cleanId}_rev_${DateTime.now().millisecondsSinceEpoch}',
+          amount: deltaPaid.abs(),
+          direction: VaultTransactionDirection.inFlow,
+          source: VaultTransactionSource.inventory,
+          type: 'reversal',
+          description:
+              'تعديل (استرداد) فاتورة مشتريات #$cleanId - ${newPurchase.supplierName}',
+          relatedEntityId: newPurchase.id,
+          relatedOperationId: newPurchase.id,
+          createdAt: DateTime.now(),
+        );
+      }
+    } catch (e) {
+      AppLogger.printMessage('Inventory: _updatePurchaseInVault error: $e');
+    }
   }
 
   @override
@@ -1128,6 +1221,10 @@ class InventoryRepositoryImpl implements InventoryRepository {
       if (hasConnection && _currentUid != null) {
         try {
           await remoteDataSource.syncPurchases(_currentUid!, [model]);
+          await _updatePurchaseInVault(
+            oldPurchase: oldPurchase,
+            newPurchase: newPurchase,
+          );
           await _updatePurchaseInExpenses(
             oldPurchase: oldPurchase,
             newPurchase: newPurchase,
@@ -1136,7 +1233,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
             oldPurchase: oldPurchase,
             newPurchase: newPurchase,
           );
-        } catch (_) {}
+        } catch (e) {
+          AppLogger.printMessage('Inventory: updatePurchase remote sync error: $e');
+        }
       }
 
       // 2. Revert quantities of old items, add quantities of new items
@@ -1344,7 +1443,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
           final double delta = (type == StockMovementType.invoiceSale)
               ? -qtyChange.abs()
               : qtyChange.abs();
-          final double newQty = prevQty + delta;
+          final double newQty = (prevQty + delta).clamp(0.0, double.infinity);
 
           final double deltaSold = (type == StockMovementType.invoiceSale)
               ? qtyChange.abs()
@@ -1407,6 +1506,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
   // --- SYNC ---
   @override
   Future<Either<Failure, void>> syncInventoryData() async {
+    if (_isSyncing) return const Right(null);
+    _isSyncing = true;
     try {
       if (!await connectionChecker.hasConnection || _currentUid == null) {
         return const Right(null);
@@ -1449,13 +1550,40 @@ class InventoryRepositoryImpl implements InventoryRepository {
       // Sync Unsynced Purchases
       final unsyncedPurchases = await localDataSource.getUnsyncedPurchases();
       if (unsyncedPurchases.isNotEmpty) {
-        await remoteDataSource.syncPurchases(uid, unsyncedPurchases);
         for (final p in unsyncedPurchases) {
           try {
-            await _syncPurchaseToVault(p, isOfflineSync: true);
-            await _syncPurchaseToExpenses(p);
-            await _syncPurchaseToMyDebts(p);
-          } catch (_) {}
+            final remotePurchase =
+                await remoteDataSource.getPurchaseByIdFromRemote(uid, p.id);
+            if (remotePurchase == null) {
+              // ── Scenario 1: Newly created purchase while offline ────────────
+              await _syncPurchaseToVault(p, isOfflineSync: true);
+              await _syncPurchaseToExpenses(p);
+              await _syncPurchaseToMyDebts(p);
+            } else {
+              // ── Scenario 2: Updated purchase while offline ──────────────────
+              // Compare with remote state on server to compute and sync exact deltas
+              await _updatePurchaseInVault(
+                oldPurchase: remotePurchase,
+                newPurchase: p,
+                isOfflineSync: true,
+              );
+              await _updatePurchaseInExpenses(
+                oldPurchase: remotePurchase,
+                newPurchase: p,
+              );
+              await _updatePurchaseInMyDebts(
+                oldPurchase: remotePurchase,
+                newPurchase: p,
+              );
+            }
+          } catch (e) {
+            AppLogger.printMessage('Inventory: sync purchase side-effects error: $e');
+          }
+        }
+
+        await remoteDataSource.syncPurchases(uid, unsyncedPurchases);
+
+        for (final p in unsyncedPurchases) {
           await localDataSource.savePurchase(
             InventoryPurchaseModel.fromEntity(
               p.copyWith(
@@ -1474,6 +1602,21 @@ class InventoryRepositoryImpl implements InventoryRepository {
       final unsyncedMovements = await localDataSource
           .getUnsyncedStockMovements();
       if (unsyncedMovements.isNotEmpty) {
+        // Apply manual adjustments made offline directly to remote product quantities:
+        for (final m in unsyncedMovements) {
+          if (m.type == StockMovementType.manualAdjustment) {
+            try {
+              await remoteDataSource.updateProductQuantityInRemote(
+                uid,
+                m.productId,
+                m.quantity,
+              );
+            } catch (e) {
+              AppLogger.printMessage('Inventory: sync manual adjustment stock error: $e');
+            }
+          }
+        }
+
         await remoteDataSource.syncStockMovements(uid, unsyncedMovements);
         for (final m in unsyncedMovements) {
           await localDataSource.saveStockMovement(
@@ -1484,7 +1627,10 @@ class InventoryRepositoryImpl implements InventoryRepository {
 
       return const Right(null);
     } catch (e) {
+      AppLogger.printMessage('Inventory: syncInventoryData failed: $e');
       return Left(ServerFailure(e.toString()));
+    } finally {
+      _isSyncing = false;
     }
   }
 

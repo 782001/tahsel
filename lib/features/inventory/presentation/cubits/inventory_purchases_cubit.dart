@@ -76,6 +76,15 @@ class InventoryPurchasesCubit extends Cubit<InventoryPurchasesState> {
     super.emit(state);
   }
 
+  void clearData() {
+    _allPurchases.clear();
+    _currentLimit = 15;
+    _hasMore = true;
+    _isFetchingMore = false;
+    lastActionError = null;
+    emit(InventoryPurchasesInitial());
+  }
+
   Future<void> fetchPurchases({String? supplierId}) async {
     _currentLimit = 15;
     _hasMore = true;
