@@ -85,9 +85,10 @@ class InventoryProductsCubit extends Cubit<InventoryProductsState> {
     String? query,
     String? categoryId,
     String? supplierId,
+    bool loadAll = false,
   }) async {
-    _currentLimit = 15;
-    _hasMore = true;
+    _currentLimit = loadAll ? 1000000 : 15;
+    _hasMore = !loadAll;
     _isFetchingMore = false;
     if (isClosed) return;
     emit(InventoryProductsLoading());
@@ -104,11 +105,11 @@ class InventoryProductsCubit extends Cubit<InventoryProductsState> {
       },
       (products) {
         _allProducts = products;
-        _hasMore = _allProducts.length > _currentLimit;
+        _hasMore = loadAll ? false : _allProducts.length > _currentLimit;
         if (!isClosed) {
           emit(
             InventoryProductsLoaded(
-              _allProducts.take(_currentLimit).toList(),
+              loadAll ? _allProducts : _allProducts.take(_currentLimit).toList(),
               hasMore: _hasMore,
               isPaginationLoading: false,
             ),

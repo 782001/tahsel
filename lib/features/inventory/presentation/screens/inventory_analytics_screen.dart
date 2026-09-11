@@ -48,7 +48,7 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
         });
       }
     });
-    context.read<InventoryProductsCubit>().fetchProducts();
+    context.read<InventoryProductsCubit>().fetchProducts(loadAll: true);
   }
 
   @override
@@ -238,7 +238,7 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
                     onRefresh: () async {
                       await context
                           .read<InventoryProductsCubit>()
-                          .fetchProducts();
+                          .fetchProducts(loadAll: true);
                     },
                     child: Column(
                       children: [
@@ -296,7 +296,7 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
                               // Smart Animated Tab Selector
                               InventoryTabSelector(
                                 tabs: [
-                                  AppStrings.topProfitableProducts.tr(),
+                                  '${AppStrings.topProfitableProducts.tr()} (${sortedProfitable.length})',
                                   '${AppStrings.deadStock.tr()} (${deadStockProducts.length})',
                                 ],
                                 selectedIndex: _selectedTabIndex,
