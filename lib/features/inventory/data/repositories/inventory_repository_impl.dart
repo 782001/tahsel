@@ -324,7 +324,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
     try {
       final products = await localDataSource.getProducts();
       final lowStock = products
-          .where((p) => p.isLowStock)
+          .where((p) => p.isLowStock && !p.isDeleted && p.isAvailable)
           .map((p) => p as InventoryProductEntity)
           .toList();
       return Right(lowStock);

@@ -55,6 +55,11 @@ class _MoreScreenState extends State<MoreScreen> {
         userEmail = value!;
       });
     });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<MainLayoutCubit>().loadLowStockCount();
+      }
+    });
     super.initState();
   }
 

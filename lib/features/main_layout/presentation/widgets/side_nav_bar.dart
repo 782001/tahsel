@@ -155,6 +155,7 @@ class SideNavBar extends StatelessWidget {
                     icon: Icons.inventory_2_rounded,
                     label: AppStrings.inventoryManagementVIP.tr(),
                     tag: "VIP ✨",
+                    badgeCount: cubit.lowStockCount,
                     isSelected: cubit.currentIndex == 8,
                     onTap: () => cubit.changeBottomNav(8),
                   ),

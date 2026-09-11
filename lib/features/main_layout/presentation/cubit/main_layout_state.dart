@@ -13,3 +13,9 @@ class MainLayoutUserTypeLoaded extends MainLayoutState {
 
   MainLayoutUserTypeLoaded(this.userType);
 }
+
+class MainLayoutLowStockCountLoaded extends MainLayoutState {
+  final int count;
+
+  MainLayoutLowStockCountLoaded(this.count);
+}

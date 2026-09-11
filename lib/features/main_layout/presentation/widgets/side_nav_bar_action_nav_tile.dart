@@ -7,6 +7,7 @@ class SideNavBarActionNavTile extends StatefulWidget {
   final IconData icon;
   final String label;
   final String? tag;
+  final int? badgeCount;
   final bool isSelected;
   final VoidCallback onTap;
 
@@ -15,6 +16,7 @@ class SideNavBarActionNavTile extends StatefulWidget {
     required this.icon,
     required this.label,
     this.tag,
+    this.badgeCount,
     this.isSelected = false,
     required this.onTap,
   });
@@ -76,6 +78,34 @@ class SideNavBarActionNavTileState extends State<SideNavBarActionNavTile> {
                   ),
                 ),
               ),
+              if (widget.badgeCount != null && widget.badgeCount! > 0) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.redColor,
+                    borderRadius: BorderRadius.circular(10.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.redColor.withValues(alpha: 0.35),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    widget.badgeCount! > 99 ? '99+' : '${widget.badgeCount}',
+                    style: TextStyles.customStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
               if (widget.tag != null) ...[
                 Container(
                   padding: const EdgeInsets.symmetric(

@@ -19,6 +19,7 @@ import 'package:tahsel/features/customer/presentation/screens/customers_list_scr
 import 'package:tahsel/features/employee/presentation/cubit/employee_cubit.dart';
 import 'package:tahsel/features/employee/presentation/screens/employee_list_screen.dart';
 import 'package:tahsel/features/inventory/presentation/cubits/inventory_dashboard_cubit.dart';
+import 'package:tahsel/features/inventory/domain/repositories/inventory_repository.dart';
 import 'package:tahsel/features/inventory/presentation/screens/inventory_main_screen.dart';
 import 'package:tahsel/features/reports/presentation/screens/reports_screen.dart';
 import 'package:tahsel/features/settings/presentation/screens/more_screen.dart';
@@ -49,6 +50,21 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
     await _loadUserType();
     if (!isShop) {
       _initCleanup();
+    }
+    loadLowStockCount();
+  }
+
+  int lowStockCount = 0;
+
+  Future<void> loadLowStockCount() async {
+    if (AppStrings.isVip && sl.isRegistered<InventoryRepository>()) {
+      try {
+        final result = await sl<InventoryRepository>().getLowStockProducts();
+        result.fold((_) {}, (products) {
+          lowStockCount = products.length;
+          emit(MainLayoutLowStockCountLoaded(lowStockCount));
+        });
+      } catch (_) {}
     }
   }
 
@@ -114,5 +130,8 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
   void changeBottomNav(int index) {
     currentIndex = index;
     emit(MainLayoutChangeBottomNavIndex(currentIndex));
+    if (index == 5 || index == 8) {
+      loadLowStockCount();
+    }
   }
 }
