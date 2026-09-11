@@ -163,7 +163,7 @@ msix_config:
   publisher_display_name: "Abdullah El-Awadi"
   identity_name: "AbdullahEl-Awadi.Tahsel"
   publisher: "CN=95E8F251-0EAE-4582-944B-1E0030F252D4"
-  msix_version: 1.0.3.0
+  msix_version: 1.0.4.0
   logo_path: assets/images/appLogoIcon.png
   capabilities: internetClient
 
