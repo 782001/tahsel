@@ -8,12 +8,12 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
+import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/custom_app_bar/custom_app_bar.dart';
 
 import '../cubit/team_management_cubit.dart';
 import '../cubit/team_management_state.dart';
-import 'package:tahsel/routes/app_routes.dart';
-import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 
 class TeamManagementScreen extends StatefulWidget {
   const TeamManagementScreen({super.key});
@@ -55,7 +55,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
           ],
         ),
         content: Text(
-          '${AppStrings.deleteEmployeeConfirm.tr()}\n\nالموظف: $employeeName',
+          '${AppStrings.deleteEmployeeConfirm.tr()}\n\n${AppStrings.employeeName.tr()}: $employeeName',
           style: TextStyles.customStyle(
             fontSize: 14,
             color: AppColors.sandText,
@@ -65,7 +65,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
-              'إلغاء',
+              AppStrings.cancel.tr(),
               style: TextStyles.customStyle(
                 fontSize: 14,
                 color: AppColors.sandText,
@@ -84,7 +84,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
               ),
             ),
             child: Text(
-              'حذف نهائي',
+              AppStrings.deleteAccount.tr(),
               style: TextStyles.customStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -583,10 +583,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
                       Navigator.pushNamed(
                         context,
                         AppRoutes.editAppEmployee,
-                        arguments: {
-                          'employee': emp,
-                          'cubit': _cubit,
-                        },
+                        arguments: {'employee': emp, 'cubit': _cubit},
                       );
                     },
                   ),

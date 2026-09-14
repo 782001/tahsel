@@ -51,6 +51,7 @@ class CreateAccountRemoteDataSourceImpl implements CreateAccountRemoteDataSource
       'email': email.toLowerCase(),
       'phoneNumber': phoneNumber ?? '',
       'accountStatus': 'active',
+      'role': 'owner',
       'projectName': projectName,
       'crn': crn,
       'address': address,

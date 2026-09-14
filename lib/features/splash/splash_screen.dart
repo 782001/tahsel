@@ -1,10 +1,11 @@
-import 'dart:io' show Platform;
+﻿import 'dart:io' show Platform;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/core/base_usecase/base_usecase.dart';
@@ -213,6 +214,12 @@ class _SplashScreenState extends State<SplashScreen>
             data = ownerData;
           }
         }
+      } else {
+        PermissionService.instance.init(
+          role: 'owner',
+          permissionsList: [AppPermissions.all],
+        );
+        await PermissionService.instance.saveToStorage(secureStorage);
       }
 
       // Sync store type & VIP status locally
