@@ -203,138 +203,223 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
         body: Center(
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              maxWidth: isDesktop ? 800 : double.infinity,
+              maxWidth: isDesktop ? 860 : double.infinity,
             ),
             child: ListView(
               padding: EdgeInsets.symmetric(
-                horizontal: isDesktop ? 28.w : 16.w,
-                vertical: isDesktop ? 20.h : 16.h,
+                horizontal: isDesktop ? 32 : 16.w,
+                vertical: isDesktop ? 24 : 16.h,
               ),
               physics: const BouncingScrollPhysics(),
               children: [
                 // Employee Profile Summary Card
                 _buildEmployeeProfileCard(isDesktop),
-                SizedBox(height: 16.h),
+                SizedBox(height: isDesktop ? 20 : 16.h),
 
                 // Account Information (ReadOnly fields with QuickAddTextField)
                 _buildSectionCard(
-                  title: 'بيانات الحساب المسجلة',
+                  isDesktop: isDesktop,
+                  title: AppStrings.appEmployeeRegisteredAccountInfo.tr(),
                   icon: Icons.badge_outlined,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        AppStrings.appEmployeeNameField.tr(),
-                        style: TextStyles.customStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.black,
-                        ),
-                      ),
-                      SizedBox(height: 6.h),
-                      QuickAddTextField(
-                        hint: AppStrings.appEmployeeNameHint.tr(),
-                        controller: _nameController,
-                        icon: Icons.person_outline_rounded,
-                        readOnly: true,
-                        suffixIcon: Icons.lock_outline_rounded,
-                      ),
-                      SizedBox(height: 14.h),
-
-                      Text(
-                        AppStrings.employeeEmail.tr(),
-                        style: TextStyles.customStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.black,
-                        ),
-                      ),
-                      SizedBox(height: 6.h),
-                      QuickAddTextField(
-                        hint: 'employee@example.com',
-                        controller: _emailController,
-                        icon: Icons.email_outlined,
-                        readOnly: true,
-                        suffixIcon: Icons.lock_outline_rounded,
-                      ),
-                      SizedBox(height: 6.h),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.info_outline_rounded,
-                            size: 14,
-                            color: AppColors.sandText,
-                          ),
-                          SizedBox(width: 6.w),
-                          Expanded(
-                            child: Text(
-                              'بيانات الحساب (الاسم والبريد) مرتبطة ببيانات الاعتماد المسجلة.',
+                  child: isDesktop
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        AppStrings.appEmployeeNameField.tr(),
+                                        style: TextStyles.customStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.black,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      QuickAddTextField(
+                                        hint: AppStrings.appEmployeeNameHint.tr(),
+                                        controller: _nameController,
+                                        icon: Icons.person_outline_rounded,
+                                        readOnly: true,
+                                        suffixIcon: Icons.lock_outline_rounded,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        AppStrings.employeeEmail.tr(),
+                                        style: TextStyles.customStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.black,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      QuickAddTextField(
+                                        hint: 'employee@example.com',
+                                        controller: _emailController,
+                                        icon: Icons.email_outlined,
+                                        readOnly: true,
+                                        suffixIcon: Icons.lock_outline_rounded,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.info_outline_rounded,
+                                  size: 14,
+                                  color: AppColors.sandText,
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    AppStrings.appEmployeeAccountCredsNote.tr(),
+                                    style: TextStyles.customStyle(
+                                      fontSize: 11,
+                                      color: AppColors.sandText,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        )
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              AppStrings.appEmployeeNameField.tr(),
                               style: TextStyles.customStyle(
-                                fontSize: 11,
-                                color: AppColors.sandText,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.black,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                            SizedBox(height: 6.h),
+                            QuickAddTextField(
+                              hint: AppStrings.appEmployeeNameHint.tr(),
+                              controller: _nameController,
+                              icon: Icons.person_outline_rounded,
+                              readOnly: true,
+                              suffixIcon: Icons.lock_outline_rounded,
+                            ),
+                            SizedBox(height: 14.h),
+                            Text(
+                              AppStrings.employeeEmail.tr(),
+                              style: TextStyles.customStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.black,
+                              ),
+                            ),
+                            SizedBox(height: 6.h),
+                            QuickAddTextField(
+                              hint: 'employee@example.com',
+                              controller: _emailController,
+                              icon: Icons.email_outlined,
+                              readOnly: true,
+                              suffixIcon: Icons.lock_outline_rounded,
+                            ),
+                            SizedBox(height: 6.h),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.info_outline_rounded,
+                                  size: 14,
+                                  color: AppColors.sandText,
+                                ),
+                                SizedBox(width: 6.w),
+                                Expanded(
+                                  child: Text(
+                                    AppStrings.appEmployeeAccountCredsNote.tr(),
+                                    style: TextStyles.customStyle(
+                                      fontSize: 11,
+                                      color: AppColors.sandText,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                 ),
-                SizedBox(height: 16.h),
+                SizedBox(height: isDesktop ? 20 : 16.h),
 
                 // Role Presets Section
                 _buildSectionCard(
+                  isDesktop: isDesktop,
                   title: AppStrings.rolePreset.tr(),
                   icon: Icons.tune_rounded,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'اختر قالب صلاحيات لتطبيقه على هذا الموظف أو اضبط الصلاحيات يدويًا:',
+                        AppStrings.appEmployeeRolePresetEditDesc.tr(),
                         style: TextStyles.customStyle(
                           fontSize: 12,
                           color: AppColors.sandText,
                         ),
                       ),
-                      SizedBox(height: 12.h),
+                      SizedBox(height: isDesktop ? 14 : 12.h),
                       Wrap(
-                        spacing: 8.w,
-                        runSpacing: 8.h,
+                        spacing: isDesktop ? 10 : 8.w,
+                        runSpacing: isDesktop ? 10 : 8.h,
                         children: [
                           _buildPresetChip(
                             AppPermissions.roleCashier,
                             AppStrings.roleCashierLabel.tr(),
                             Icons.point_of_sale_rounded,
+                            isDesktop: isDesktop,
                           ),
                           _buildPresetChip(
                             AppPermissions.roleStorekeeper,
                             AppStrings.roleStorekeeperLabel.tr(),
                             Icons.inventory_2_outlined,
+                            isDesktop: isDesktop,
                           ),
                           _buildPresetChip(
                             AppPermissions.roleAccountant,
                             AppStrings.roleAccountantLabel.tr(),
                             Icons.calculate_outlined,
+                            isDesktop: isDesktop,
                           ),
                           _buildPresetChip(
                             AppPermissions.roleSupervisor,
                             AppStrings.roleSupervisorLabel.tr(),
                             Icons.admin_panel_settings_outlined,
+                            isDesktop: isDesktop,
                           ),
                           _buildPresetChip(
                             AppPermissions.roleCustom,
                             AppStrings.roleCustomLabel.tr(),
                             Icons.tune_rounded,
+                            isDesktop: isDesktop,
                           ),
                         ],
                       ),
                     ],
                   ),
                 ),
-                SizedBox(height: 16.h),
+                SizedBox(height: isDesktop ? 20 : 16.h),
 
                 // Granular Permissions Section
                 _buildSectionCard(
+                  isDesktop: isDesktop,
                   title:
                       '${AppStrings.appEmployeeGrantedPermissions.tr()} (${_selectedPermissions.length})',
                   icon: Icons.security_rounded,
@@ -413,7 +498,7 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                           final isPartial = activeInGroup > 0 && activeInGroup < groupItemsCount;
 
                           return Container(
-                            margin: EdgeInsets.only(bottom: 10.h),
+                            margin: EdgeInsets.only(bottom: isDesktop ? 12 : 10.h),
                             decoration: BoxDecoration(
                               color: AppColors.surface,
                               borderRadius: BorderRadius.circular(14.r),
@@ -438,7 +523,7 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                               ).copyWith(dividerColor: Colors.transparent),
                               child: ExpansionTile(
                                 leading: Container(
-                                  padding: EdgeInsets.all(6.r),
+                                  padding: EdgeInsets.all(isDesktop ? 6 : 6.r),
                                   decoration: BoxDecoration(
                                     color: isFull
                                         ? AppColors.primaryColor.withValues(
@@ -511,7 +596,7 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                                     activeColor: AppColors.primaryColor,
                                     dense: true,
                                     contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 16.w,
+                                      horizontal: isDesktop ? 20 : 16.w,
                                     ),
                                   );
                                 }).toList(),
@@ -522,90 +607,95 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                         .toList(),
                   ),
                 ),
-                SizedBox(height: 24.h),
+                SizedBox(height: isDesktop ? 28 : 24.h),
 
                 // Actions
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: _isLoading
-                            ? null
-                            : () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          padding: EdgeInsets.symmetric(
-                            vertical: isDesktop ? 16.h : 14.h,
-                          ),
-                          side: BorderSide(
-                            color: AppColors.lightGreyColor,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14.r),
-                          ),
-                        ),
-                        child: Text(
-                          AppStrings.cancel.tr(),
-                          style: TextStyles.customStyle(
-                            fontSize: 14,
-                            color: AppColors.sandText,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: isDesktop ? 500 : double.infinity,
                     ),
-                    SizedBox(width: 14.w),
-                    Expanded(
-                      flex: 2,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryColor,
-                          padding: EdgeInsets.symmetric(
-                            vertical: isDesktop ? 16.h : 14.h,
-                          ),
-                          elevation: 2,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14.r),
-                          ),
-                        ),
-                        child: _isLoading
-                            ? SizedBox(
-                                height: 22.h,
-                                width: 22.h,
-                                child: const CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2.2,
-                                ),
-                              )
-                            : FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(
-                                      Icons.save_rounded,
-                                      color: Colors.white,
-                                      size: 18,
-                                    ),
-                                    SizedBox(width: 8.w),
-                                    Text(
-                                      AppStrings.employeeUpdatedSuccess.tr().isEmpty
-                                          ? 'حفظ التعديلات'
-                                          : 'تحديث صلاحيات الموظف',
-                                      style: TextStyles.customStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: _isLoading
+                                ? null
+                                : () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(
+                                vertical: isDesktop ? 16 : 14.h,
                               ),
-                      ),
+                              side: BorderSide(
+                                color: AppColors.lightGreyColor,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                              ),
+                            ),
+                            child: Text(
+                              AppStrings.cancel.tr(),
+                              style: TextStyles.customStyle(
+                                fontSize: 14,
+                                color: AppColors.sandText,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: isDesktop ? 16 : 14.w),
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _submit,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryColor,
+                              padding: EdgeInsets.symmetric(
+                                vertical: isDesktop ? 16 : 14.h,
+                              ),
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                              ),
+                            ),
+                            child: _isLoading
+                                ? SizedBox(
+                                    height: isDesktop ? 22 : 22.h,
+                                    width: isDesktop ? 22 : 22.h,
+                                    child: const CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2.2,
+                                    ),
+                                  )
+                                : FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.save_rounded,
+                                          color: Colors.white,
+                                          size: 18,
+                                        ),
+                                        SizedBox(width: 8.w),
+                                        Text(
+                                          AppStrings.appEmployeeUpdatePermissions.tr(),
+                                          style: TextStyles.customStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-                SizedBox(height: 30.h),
+                SizedBox(height: isDesktop ? 36 : 30.h),
               ],
             ),
           ),
@@ -618,7 +708,7 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
     final isActive = widget.employee.isActive;
 
     return Container(
-      padding: EdgeInsets.all(isDesktop ? 20.r : 16.r),
+      padding: EdgeInsets.all(isDesktop ? 20 : 16.r),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -636,8 +726,8 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
       child: Row(
         children: [
           Container(
-            width: 52.r,
-            height: 52.r,
+            width: isDesktop ? 56 : 52.r,
+            height: isDesktop ? 56 : 52.r,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
@@ -662,14 +752,14 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                     ? widget.employee.name[0].toUpperCase()
                     : '?',
                 style: TextStyles.customStyle(
-                  fontSize: 22,
+                  fontSize: isDesktop ? 24 : 22,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
               ),
             ),
           ),
-          SizedBox(width: 14.w),
+          SizedBox(width: isDesktop ? 16 : 14.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -680,7 +770,7 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                       child: Text(
                         widget.employee.name,
                         style: TextStyles.customStyle(
-                          fontSize: 16,
+                          fontSize: isDesktop ? 17 : 16,
                           fontWeight: FontWeight.bold,
                           color: AppColors.black,
                         ),
@@ -690,8 +780,8 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                     ),
                     Container(
                       padding: EdgeInsets.symmetric(
-                        horizontal: 8.w,
-                        vertical: 3.h,
+                        horizontal: isDesktop ? 10 : 8.w,
+                        vertical: isDesktop ? 4 : 3.h,
                       ),
                       decoration: BoxDecoration(
                         color: isActive
@@ -714,11 +804,11 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                     ),
                   ],
                 ),
-                SizedBox(height: 3.h),
+                SizedBox(height: isDesktop ? 4 : 3.h),
                 Text(
                   widget.employee.email,
                   style: TextStyles.customStyle(
-                    fontSize: 12,
+                    fontSize: isDesktop ? 13 : 12,
                     color: AppColors.sandText,
                   ),
                   maxLines: 1,
@@ -737,9 +827,10 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
     required IconData icon,
     required Widget child,
     Widget? headerTrailing,
+    bool isDesktop = false,
   }) {
     return Container(
-      padding: EdgeInsets.all(16.r),
+      padding: EdgeInsets.all(isDesktop ? 20 : 16.r),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(16.r),
@@ -768,18 +859,18 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      padding: EdgeInsets.all(6.r),
+                      padding: EdgeInsets.all(isDesktop ? 6 : 6.r),
                       decoration: BoxDecoration(
                         color: AppColors.primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8.r),
                       ),
                       child: Icon(icon, size: 18, color: AppColors.primaryColor),
                     ),
-                    SizedBox(width: 10.w),
+                    SizedBox(width: isDesktop ? 10 : 10.w),
                     Text(
                       title,
                       style: TextStyles.customStyle(
-                        fontSize: 15,
+                        fontSize: isDesktop ? 16 : 15,
                         fontWeight: FontWeight.bold,
                         color: AppColors.black,
                       ),
@@ -793,19 +884,19 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
             Row(
               children: [
                 Container(
-                  padding: EdgeInsets.all(6.r),
+                  padding: EdgeInsets.all(isDesktop ? 6 : 6.r),
                   decoration: BoxDecoration(
                     color: AppColors.primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Icon(icon, size: 18, color: AppColors.primaryColor),
                 ),
-                SizedBox(width: 10.w),
+                SizedBox(width: isDesktop ? 10 : 10.w),
                 Expanded(
                   child: Text(
                     title,
                     style: TextStyles.customStyle(
-                      fontSize: 15,
+                      fontSize: isDesktop ? 16 : 15,
                       fontWeight: FontWeight.bold,
                       color: AppColors.black,
                     ),
@@ -814,17 +905,28 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                 ),
               ],
             ),
-          Divider(height: 22.h, color: AppColors.lightGreyColor.withValues(alpha: 0.7)),
+          Divider(
+            height: isDesktop ? 22 : 22.h,
+            color: AppColors.lightGreyColor.withValues(alpha: 0.7),
+          ),
           child,
         ],
       ),
     );
   }
 
-  Widget _buildPresetChip(String presetKey, String label, IconData icon) {
+  Widget _buildPresetChip(
+    String presetKey,
+    String label,
+    IconData icon, {
+    bool isDesktop = false,
+  }) {
     final isSelected = _selectedPreset == presetKey;
     return ChoiceChip(
       showCheckmark: false,
+      padding: isDesktop
+          ? const EdgeInsets.symmetric(horizontal: 10, vertical: 6)
+          : null,
       avatar: Icon(
         icon,
         size: 16,
@@ -833,7 +935,7 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
       label: Text(
         label,
         style: TextStyles.customStyle(
-          fontSize: 12,
+          fontSize: isDesktop ? 13 : 12,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           color: isSelected ? Colors.white : AppColors.black,
         ),

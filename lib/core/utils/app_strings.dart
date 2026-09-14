@@ -1,4 +1,4 @@
-﻿class AppStrings {
+class AppStrings {
   static const String noRouteFound = 'No Route Found';
   static const String cachedRandomQuote = 'CACHED_RANDOM_QUOTE';
   static const String contentType = 'Content-Type';
@@ -1498,6 +1498,14 @@
   static const String appEmployeeSelectAtLeastOnePermission = "app_employee_select_at_least_one_permission";
   static const String appEmployeeGrantedPermissions = "app_employee_granted_permissions";
   static const String appEmployeeSaveAndActivateAccount = "app_employee_save_and_activate_account";
+  static const String appEmployeeBasicInfo = "app_employee_basic_info";
+  static const String appEmployeeRolePresetDesc = "app_employee_role_preset_desc";
+  static const String appEmployeeAddHeroTitle = "app_employee_add_hero_title";
+  static const String appEmployeeAddHeroDesc = "app_employee_add_hero_desc";
+  static const String appEmployeeRegisteredAccountInfo = "app_employee_registered_account_info";
+  static const String appEmployeeAccountCredsNote = "app_employee_account_creds_note";
+  static const String appEmployeeRolePresetEditDesc = "app_employee_role_preset_edit_desc";
+  static const String appEmployeeUpdatePermissions = "app_employee_update_permissions";
 
   // Aliases for compatibility
   static const String employeeNameField = appEmployeeNameField;

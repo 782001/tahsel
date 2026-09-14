@@ -197,168 +197,293 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
         body: Center(
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              maxWidth: isDesktop ? 800 : double.infinity,
+              maxWidth: isDesktop ? 860 : double.infinity,
             ),
             child: Form(
               key: _formKey,
               child: ListView(
                 padding: EdgeInsets.symmetric(
-                  horizontal: isDesktop ? 28.w : 16.w,
-                  vertical: isDesktop ? 20.h : 16.h,
+                  horizontal: isDesktop ? 32 : 16.w,
+                  vertical: isDesktop ? 24 : 16.h,
                 ),
                 physics: const BouncingScrollPhysics(),
                 children: [
                   // Hero Header Card
                   _buildHeroHeader(isDesktop),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: isDesktop ? 20 : 16.h),
 
                   // Basic Info Section
                   _buildSectionCard(
-                    title: 'البيانات الأساسية للموظف',
+                    isDesktop: isDesktop,
+                    title: AppStrings.appEmployeeBasicInfo.tr(),
                     icon: Icons.person_outline_rounded,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${AppStrings.appEmployeeNameField.tr()} *',
-                          style: TextStyles.customStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.black,
+                    child: isDesktop
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          '${AppStrings.appEmployeeNameField.tr()} *',
+                                          style: TextStyles.customStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.black,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        QuickAddTextField(
+                                          hint: AppStrings.appEmployeeNameHint.tr(),
+                                          controller: _nameController,
+                                          icon: Icons.badge_outlined,
+                                          textInputAction: TextInputAction.next,
+                                          validator: (val) {
+                                            if (val == null || val.trim().isEmpty) {
+                                              return AppStrings.appEmployeeNameRequired.tr();
+                                            }
+                                            return null;
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          '${AppStrings.employeeEmail.tr()} *',
+                                          style: TextStyles.customStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.black,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        QuickAddTextField(
+                                          hint: 'employee@example.com',
+                                          controller: _emailController,
+                                          icon: Icons.email_outlined,
+                                          keyboardType: TextInputType.emailAddress,
+                                          textInputAction: TextInputAction.next,
+                                          validator: (val) {
+                                            if (val == null || val.trim().isEmpty) {
+                                              return AppStrings.appEmployeeEmailRequired.tr();
+                                            }
+                                            if (!val.trim().isValidEmail()) {
+                                              return AppStrings.appEmployeeEmailFormatInvalid.tr();
+                                            }
+                                            return null;
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          '${AppStrings.temporaryPassword.tr()} *',
+                                          style: TextStyles.customStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.black,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        QuickAddTextField(
+                                          hint: AppStrings.appEmployeePasswordMinLengthHint.tr(),
+                                          controller: _passwordController,
+                                          icon: Icons.lock_outline_rounded,
+                                          obscureText: _obscurePassword,
+                                          suffixIcon: _obscurePassword
+                                              ? Icons.visibility_off_outlined
+                                              : Icons.visibility_outlined,
+                                          onSuffixIconPressed: () {
+                                            setState(() {
+                                              _obscurePassword = !_obscurePassword;
+                                            });
+                                          },
+                                          validator: (val) {
+                                            if (val == null || val.trim().isEmpty) {
+                                              return AppStrings.appEmployeePasswordRequired.tr();
+                                            }
+                                            if (val.trim().length < 6) {
+                                              return AppStrings.appEmployeePasswordMinLengthHint.tr();
+                                            }
+                                            return null;
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  const Spacer(),
+                                ],
+                              ),
+                            ],
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${AppStrings.appEmployeeNameField.tr()} *',
+                                style: TextStyles.customStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.black,
+                                ),
+                              ),
+                              SizedBox(height: 6.h),
+                              QuickAddTextField(
+                                hint: AppStrings.appEmployeeNameHint.tr(),
+                                controller: _nameController,
+                                icon: Icons.badge_outlined,
+                                textInputAction: TextInputAction.next,
+                                validator: (val) {
+                                  if (val == null || val.trim().isEmpty) {
+                                    return AppStrings.appEmployeeNameRequired.tr();
+                                  }
+                                  return null;
+                                },
+                              ),
+                              SizedBox(height: 14.h),
+                              Text(
+                                '${AppStrings.employeeEmail.tr()} *',
+                                style: TextStyles.customStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.black,
+                                ),
+                              ),
+                              SizedBox(height: 6.h),
+                              QuickAddTextField(
+                                hint: 'employee@example.com',
+                                controller: _emailController,
+                                icon: Icons.email_outlined,
+                                keyboardType: TextInputType.emailAddress,
+                                textInputAction: TextInputAction.next,
+                                validator: (val) {
+                                  if (val == null || val.trim().isEmpty) {
+                                    return AppStrings.appEmployeeEmailRequired.tr();
+                                  }
+                                  if (!val.trim().isValidEmail()) {
+                                    return AppStrings.appEmployeeEmailFormatInvalid.tr();
+                                  }
+                                  return null;
+                                },
+                              ),
+                              SizedBox(height: 14.h),
+                              Text(
+                                '${AppStrings.temporaryPassword.tr()} *',
+                                style: TextStyles.customStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.black,
+                                ),
+                              ),
+                              SizedBox(height: 6.h),
+                              QuickAddTextField(
+                                hint: AppStrings.appEmployeePasswordMinLengthHint.tr(),
+                                controller: _passwordController,
+                                icon: Icons.lock_outline_rounded,
+                                obscureText: _obscurePassword,
+                                suffixIcon: _obscurePassword
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                onSuffixIconPressed: () {
+                                  setState(() {
+                                    _obscurePassword = !_obscurePassword;
+                                  });
+                                },
+                                validator: (val) {
+                                  if (val == null || val.trim().isEmpty) {
+                                    return AppStrings.appEmployeePasswordRequired.tr();
+                                  }
+                                  if (val.trim().length < 6) {
+                                    return AppStrings.appEmployeePasswordMinLengthHint.tr();
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ],
                           ),
-                        ),
-                        SizedBox(height: 6.h),
-                        QuickAddTextField(
-                          hint: AppStrings.appEmployeeNameHint.tr(),
-                          controller: _nameController,
-                          icon: Icons.badge_outlined,
-                          textInputAction: TextInputAction.next,
-                          validator: (val) {
-                            if (val == null || val.trim().isEmpty) {
-                              return AppStrings.appEmployeeNameRequired.tr();
-                            }
-                            return null;
-                          },
-                        ),
-                        SizedBox(height: 14.h),
-
-                        Text(
-                          '${AppStrings.employeeEmail.tr()} *',
-                          style: TextStyles.customStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.black,
-                          ),
-                        ),
-                        SizedBox(height: 6.h),
-                        QuickAddTextField(
-                          hint: 'employee@example.com',
-                          controller: _emailController,
-                          icon: Icons.email_outlined,
-                          keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.next,
-                          validator: (val) {
-                            if (val == null || val.trim().isEmpty) {
-                              return AppStrings.appEmployeeEmailRequired.tr();
-                            }
-                            if (!val.trim().isValidEmail()) {
-                              return AppStrings.appEmployeeEmailFormatInvalid.tr();
-                            }
-                            return null;
-                          },
-                        ),
-                        SizedBox(height: 14.h),
-
-                        Text(
-                          '${AppStrings.temporaryPassword.tr()} *',
-                          style: TextStyles.customStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.black,
-                          ),
-                        ),
-                        SizedBox(height: 6.h),
-                        QuickAddTextField(
-                          hint: AppStrings.appEmployeePasswordMinLengthHint.tr(),
-                          controller: _passwordController,
-                          icon: Icons.lock_outline_rounded,
-                          obscureText: _obscurePassword,
-                          suffixIcon: _obscurePassword
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                          onSuffixIconPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
-                          validator: (val) {
-                            if (val == null || val.trim().isEmpty) {
-                              return AppStrings.appEmployeePasswordRequired.tr();
-                            }
-                            if (val.trim().length < 6) {
-                              return AppStrings.appEmployeePasswordMinLengthHint.tr();
-                            }
-                            return null;
-                          },
-                        ),
-                      ],
-                    ),
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: isDesktop ? 20 : 16.h),
 
                   // Role Presets Section
                   _buildSectionCard(
+                    isDesktop: isDesktop,
                     title: AppStrings.rolePreset.tr(),
                     icon: Icons.tune_rounded,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'اختر قالب صلاحيات جاهز لتطبيقه بنقرة واحدة، أو خصص الصلاحيات كما يناسبك:',
+                          AppStrings.appEmployeeRolePresetDesc.tr(),
                           style: TextStyles.customStyle(
                             fontSize: 12,
                             color: AppColors.sandText,
                           ),
                         ),
-                        SizedBox(height: 12.h),
+                        SizedBox(height: isDesktop ? 14 : 12.h),
                         Wrap(
-                          spacing: 8.w,
-                          runSpacing: 8.h,
+                          spacing: isDesktop ? 10 : 8.w,
+                          runSpacing: isDesktop ? 10 : 8.h,
                           children: [
                             _buildPresetChip(
                               AppPermissions.roleCashier,
                               AppStrings.roleCashierLabel.tr(),
                               Icons.point_of_sale_rounded,
+                              isDesktop: isDesktop,
                             ),
                             _buildPresetChip(
                               AppPermissions.roleStorekeeper,
                               AppStrings.roleStorekeeperLabel.tr(),
                               Icons.inventory_2_outlined,
+                              isDesktop: isDesktop,
                             ),
                             _buildPresetChip(
                               AppPermissions.roleAccountant,
                               AppStrings.roleAccountantLabel.tr(),
                               Icons.calculate_outlined,
+                              isDesktop: isDesktop,
                             ),
                             _buildPresetChip(
                               AppPermissions.roleSupervisor,
                               AppStrings.roleSupervisorLabel.tr(),
                               Icons.admin_panel_settings_outlined,
+                              isDesktop: isDesktop,
                             ),
                             _buildPresetChip(
                               AppPermissions.roleCustom,
                               AppStrings.roleCustomLabel.tr(),
                               Icons.tune_rounded,
+                              isDesktop: isDesktop,
                             ),
                           ],
                         ),
                       ],
                     ),
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: isDesktop ? 20 : 16.h),
 
                   // Granular Permissions Section
                   _buildSectionCard(
+                    isDesktop: isDesktop,
                     title:
                         '${AppStrings.appEmployeeGrantedPermissions.tr()} (${_selectedPermissions.length})',
                     icon: Icons.security_rounded,
@@ -437,7 +562,7 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                             final isPartial = activeInGroup > 0 && activeInGroup < groupItemsCount;
 
                             return Container(
-                              margin: EdgeInsets.only(bottom: 10.h),
+                              margin: EdgeInsets.only(bottom: isDesktop ? 12 : 10.h),
                               decoration: BoxDecoration(
                                 color: AppColors.surface,
                                 borderRadius: BorderRadius.circular(14.r),
@@ -462,7 +587,7 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                 ).copyWith(dividerColor: Colors.transparent),
                                 child: ExpansionTile(
                                   leading: Container(
-                                    padding: EdgeInsets.all(6.r),
+                                    padding: EdgeInsets.all(isDesktop ? 6 : 6.r),
                                     decoration: BoxDecoration(
                                       color: isFull
                                           ? AppColors.primaryColor.withValues(
@@ -535,7 +660,7 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                       activeColor: AppColors.primaryColor,
                                       dense: true,
                                       contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 16.w,
+                                        horizontal: isDesktop ? 20 : 16.w,
                                       ),
                                     );
                                   }).toList(),
@@ -546,88 +671,95 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                           .toList(),
                     ),
                   ),
-                  SizedBox(height: 24.h),
+                  SizedBox(height: isDesktop ? 28 : 24.h),
 
                   // Actions
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _isLoading
-                              ? null
-                              : () => Navigator.pop(context),
-                          style: OutlinedButton.styleFrom(
-                            padding: EdgeInsets.symmetric(
-                              vertical: isDesktop ? 16.h : 14.h,
-                            ),
-                            side: BorderSide(
-                              color: AppColors.lightGreyColor,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14.r),
-                            ),
-                          ),
-                          child: Text(
-                            AppStrings.cancel.tr(),
-                            style: TextStyles.customStyle(
-                              fontSize: 14,
-                              color: AppColors.sandText,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: isDesktop ? 500 : double.infinity,
                       ),
-                      SizedBox(width: 14.w),
-                      Expanded(
-                        flex: 2,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _submit,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryColor,
-                            padding: EdgeInsets.symmetric(
-                              vertical: isDesktop ? 16.h : 14.h,
-                            ),
-                            elevation: 2,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14.r),
-                            ),
-                          ),
-                          child: _isLoading
-                              ? SizedBox(
-                                  height: 22.h,
-                                  width: 22.h,
-                                  child: const CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2.2,
-                                  ),
-                                )
-                              : FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Icon(
-                                        Icons.person_add_alt_1_rounded,
-                                        color: Colors.white,
-                                        size: 18,
-                                      ),
-                                      SizedBox(width: 8.w),
-                                      Text(
-                                        AppStrings.appEmployeeSaveAndActivateAccount.tr(),
-                                        style: TextStyles.customStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: _isLoading
+                                  ? null
+                                  : () => Navigator.pop(context),
+                              style: OutlinedButton.styleFrom(
+                                padding: EdgeInsets.symmetric(
+                                  vertical: isDesktop ? 16 : 14.h,
                                 ),
-                        ),
+                                side: BorderSide(
+                                  color: AppColors.lightGreyColor,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14.r),
+                                ),
+                              ),
+                              child: Text(
+                                AppStrings.cancel.tr(),
+                                style: TextStyles.customStyle(
+                                  fontSize: 14,
+                                  color: AppColors.sandText,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: isDesktop ? 16 : 14.w),
+                          Expanded(
+                            flex: 2,
+                            child: ElevatedButton(
+                              onPressed: _isLoading ? null : _submit,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryColor,
+                                padding: EdgeInsets.symmetric(
+                                  vertical: isDesktop ? 16 : 14.h,
+                                ),
+                                elevation: 2,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14.r),
+                                ),
+                              ),
+                              child: _isLoading
+                                  ? SizedBox(
+                                      height: isDesktop ? 22 : 22.h,
+                                      width: isDesktop ? 22 : 22.h,
+                                      child: const CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2.2,
+                                      ),
+                                    )
+                                  : FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          const Icon(
+                                            Icons.person_add_alt_1_rounded,
+                                            color: Colors.white,
+                                            size: 18,
+                                          ),
+                                          SizedBox(width: 8.w),
+                                          Text(
+                                            AppStrings.appEmployeeSaveAndActivateAccount.tr(),
+                                            style: TextStyles.customStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                  SizedBox(height: 30.h),
+                  SizedBox(height: isDesktop ? 36 : 30.h),
                 ],
               ),
             ),
@@ -639,7 +771,7 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
 
   Widget _buildHeroHeader(bool isDesktop) {
     return Container(
-      padding: EdgeInsets.all(isDesktop ? 20.r : 16.r),
+      padding: EdgeInsets.all(isDesktop ? 20 : 16.r),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -657,7 +789,7 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.all(12.r),
+            padding: EdgeInsets.all(isDesktop ? 12 : 12.r),
             decoration: BoxDecoration(
               color: AppColors.primaryColor.withValues(alpha: 0.12),
               shape: BoxShape.circle,
@@ -668,24 +800,24 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
               size: 26,
             ),
           ),
-          SizedBox(width: 14.w),
+          SizedBox(width: isDesktop ? 16 : 14.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'إضافة عضو جديد لمنظومة العمل',
+                  AppStrings.appEmployeeAddHeroTitle.tr(),
                   style: TextStyles.customStyle(
-                    fontSize: 15,
+                    fontSize: isDesktop ? 16 : 15,
                     fontWeight: FontWeight.bold,
                     color: AppColors.black,
                   ),
                 ),
-                SizedBox(height: 3.h),
+                SizedBox(height: isDesktop ? 4 : 3.h),
                 Text(
-                  'أنشئ حساباً لموظفك مع تحديد الصلاحيات المناسبة لمهامه فوراً وبأمان كامل.',
+                  AppStrings.appEmployeeAddHeroDesc.tr(),
                   style: TextStyles.customStyle(
-                    fontSize: 12,
+                    fontSize: isDesktop ? 13 : 12,
                     color: AppColors.sandText,
                     height: 1.3,
                   ),
@@ -703,9 +835,10 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
     required IconData icon,
     required Widget child,
     Widget? headerTrailing,
+    bool isDesktop = false,
   }) {
     return Container(
-      padding: EdgeInsets.all(16.r),
+      padding: EdgeInsets.all(isDesktop ? 20 : 16.r),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(16.r),
@@ -734,18 +867,18 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      padding: EdgeInsets.all(6.r),
+                      padding: EdgeInsets.all(isDesktop ? 6 : 6.r),
                       decoration: BoxDecoration(
                         color: AppColors.primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8.r),
                       ),
                       child: Icon(icon, size: 18, color: AppColors.primaryColor),
                     ),
-                    SizedBox(width: 10.w),
+                    SizedBox(width: isDesktop ? 10 : 10.w),
                     Text(
                       title,
                       style: TextStyles.customStyle(
-                        fontSize: 15,
+                        fontSize: isDesktop ? 16 : 15,
                         fontWeight: FontWeight.bold,
                         color: AppColors.black,
                       ),
@@ -759,19 +892,19 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
             Row(
               children: [
                 Container(
-                  padding: EdgeInsets.all(6.r),
+                  padding: EdgeInsets.all(isDesktop ? 6 : 6.r),
                   decoration: BoxDecoration(
                     color: AppColors.primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Icon(icon, size: 18, color: AppColors.primaryColor),
                 ),
-                SizedBox(width: 10.w),
+                SizedBox(width: isDesktop ? 10 : 10.w),
                 Expanded(
                   child: Text(
                     title,
                     style: TextStyles.customStyle(
-                      fontSize: 15,
+                      fontSize: isDesktop ? 16 : 15,
                       fontWeight: FontWeight.bold,
                       color: AppColors.black,
                     ),
@@ -780,17 +913,28 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                 ),
               ],
             ),
-          Divider(height: 22.h, color: AppColors.lightGreyColor.withValues(alpha: 0.7)),
+          Divider(
+            height: isDesktop ? 22 : 22.h,
+            color: AppColors.lightGreyColor.withValues(alpha: 0.7),
+          ),
           child,
         ],
       ),
     );
   }
 
-  Widget _buildPresetChip(String presetKey, String label, IconData icon) {
+  Widget _buildPresetChip(
+    String presetKey,
+    String label,
+    IconData icon, {
+    bool isDesktop = false,
+  }) {
     final isSelected = _selectedPreset == presetKey;
     return ChoiceChip(
       showCheckmark: false,
+      padding: isDesktop
+          ? const EdgeInsets.symmetric(horizontal: 10, vertical: 6)
+          : null,
       avatar: Icon(
         icon,
         size: 16,
@@ -799,7 +943,7 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
       label: Text(
         label,
         style: TextStyles.customStyle(
-          fontSize: 12,
+          fontSize: isDesktop ? 13 : 12,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           color: isSelected ? Colors.white : AppColors.black,
         ),
