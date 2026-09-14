@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+﻿import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -497,9 +497,9 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
                                 return;
                               }
                               cubit.updatePayment(
-                                uid:
-                                    FirebaseAuth.instance.currentUser?.uid ??
-                                    '',
+                                uid: AppStrings.userToken.isNotEmpty
+                                    ? AppStrings.userToken
+                                    : (FirebaseAuth.instance.currentUser?.uid ?? ''),
                                 debtId: debtId,
                                 paymentId: transaction.id ?? '',
                                 newAmount: newAmount,
@@ -604,7 +604,9 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
                     return;
                   }
                   cubit.deletePayment(
-                    uid: FirebaseAuth.instance.currentUser?.uid ?? '',
+                    uid: AppStrings.userToken.isNotEmpty
+                        ? AppStrings.userToken
+                        : (FirebaseAuth.instance.currentUser?.uid ?? ''),
                     debtId: debtId,
                     paymentId: transaction.id ?? '',
                     customerName: customerName,

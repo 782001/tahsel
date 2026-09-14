@@ -1,8 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -31,6 +33,15 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
   }
 
   void _openAddEditSupplierDialog([InventorySupplierEntity? supplier]) {
+    if (!PermissionService.instance.hasPermission(AppPermissions.inventoryManageSuppliers)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppStrings.noPermission.tr()),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
     showDialog(
       context: context,
       builder: (ctx) => AddEditSupplierDialog(
@@ -58,6 +69,15 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
     BuildContext context,
     InventorySupplierEntity sup,
   ) {
+    if (!PermissionService.instance.hasPermission(AppPermissions.inventoryManageSuppliers)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppStrings.noPermission.tr()),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
@@ -157,19 +177,21 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primaryColor,
-        onPressed: () => _openAddEditSupplierDialog(),
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: Text(
-          AppStrings.addSupplier.tr(),
-          style: TextStyles.customStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-      ),
+      floatingActionButton: PermissionService.instance.hasPermission(AppPermissions.inventoryManageSuppliers)
+          ? FloatingActionButton.extended(
+              backgroundColor: AppColors.primaryColor,
+              onPressed: () => _openAddEditSupplierDialog(),
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: Text(
+                AppStrings.addSupplier.tr(),
+                style: TextStyles.customStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            )
+          : null,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -181,6 +203,8 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
               child:
                   BlocBuilder<InventorySuppliersCubit, InventorySuppliersState>(
                     builder: (context, state) {
+                      final canManageSuppliers = PermissionService.instance.hasPermission(AppPermissions.inventoryManageSuppliers);
+
                       if (state is InventorySuppliersLoading) {
                         return ListView.builder(
                           physics: const NeverScrollableScrollPhysics(),
@@ -196,8 +220,8 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
                             icon: Icons.local_shipping_outlined,
                             title: AppStrings.noSuppliersFound.tr(),
                             description: AppStrings.emptySuppliersDesc.tr(),
-                            actionLabel: AppStrings.addSupplier.tr(),
-                            onAction: () => _openAddEditSupplierDialog(),
+                            actionLabel: canManageSuppliers ? AppStrings.addSupplier.tr() : null,
+                            onAction: canManageSuppliers ? () => _openAddEditSupplierDialog() : null,
                           );
                         }
 
@@ -237,6 +261,9 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
     InventorySupplierEntity sup,
     bool isDesktop,
   ) {
+    final canManageSuppliers = PermissionService.instance.hasPermission(
+      AppPermissions.inventoryManageSuppliers,
+    );
     final initial = sup.name.trim().isNotEmpty
         ? sup.name.trim().substring(0, 1).toUpperCase()
         : 'S';
@@ -335,34 +362,36 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
                     ),
                   ),
                   // Action buttons
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        visualDensity: VisualDensity.compact,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        icon: Icon(
-                          Icons.edit_rounded,
-                          color: AppColors.primaryColor,
-                          size: 20,
+                  if (canManageSuppliers) ...[
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          icon: Icon(
+                            Icons.edit_rounded,
+                            color: AppColors.primaryColor,
+                            size: 20,
+                          ),
+                          onPressed: () => _openAddEditSupplierDialog(sup),
                         ),
-                        onPressed: () => _openAddEditSupplierDialog(sup),
-                      ),
-                      SizedBox(width: 14.w),
-                      IconButton(
-                        visualDensity: VisualDensity.compact,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        icon: Icon(
-                          Icons.delete_outline_rounded,
-                          color: AppColors.deleteRed,
-                          size: 20,
+                        SizedBox(width: 14.w),
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          icon: Icon(
+                            Icons.delete_outline_rounded,
+                            color: AppColors.deleteRed,
+                            size: 20,
+                          ),
+                          onPressed: () => _confirmDeleteSupplier(context, sup),
                         ),
-                        onPressed: () => _confirmDeleteSupplier(context, sup),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
 

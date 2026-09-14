@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/utils/vault_balance_helper.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
@@ -225,7 +227,8 @@ class _VaultScreenState extends State<VaultScreen> {
                 ),
               ),
             )
-          else ...[
+          else if (PermissionService.instance
+              .hasPermission(AppPermissions.reportsExport)) ...[
             IconButton(
               tooltip: AppStrings.printVaultReport.tr(),
               icon: Container(

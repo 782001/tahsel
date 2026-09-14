@@ -1,9 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 class ReportsOperationalMarginCard extends StatelessWidget {
@@ -18,6 +20,9 @@ class ReportsOperationalMarginCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!PermissionService.instance.hasPermission(AppPermissions.reportsViewNetProfit)) {
+      return const SizedBox.shrink();
+    }
     final isDesktop = ResponsiveLayout.isDesktop(context);
     return Container(
       width: double.infinity,

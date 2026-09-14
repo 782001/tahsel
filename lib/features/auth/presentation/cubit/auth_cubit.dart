@@ -10,6 +10,7 @@ import 'package:tahsel/core/base_usecase/base_usecase.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/storage/secure_storage_helper.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
@@ -114,6 +115,16 @@ class AuthCubit extends Cubit<AuthState> {
               );
             }
           }
+
+          if (PermissionService.instance.isEmployee &&
+              !PermissionService.instance.isRealtimeListenerActive &&
+              AppStrings.employeeAuthUid.isNotEmpty) {
+            PermissionService.instance.startRealtimeListener(
+              employeeUid: AppStrings.employeeAuthUid,
+              storage: sl<SecureStorageHelper>(),
+              onAccountDisabled: () => forceLogout(),
+            );
+          }
         }
       }
     });
@@ -148,7 +159,13 @@ class AuthCubit extends Cubit<AuthState> {
     AppLogger.printMessage(result.toString());
     result.fold((failure) => emit(AuthFailure(failure.message)), (user) async {
       final secureStorage = sl<SecureStorageHelper>();
-      await secureStorage.saveData(key: 'token', value: user.uid);
+
+      // Store workspace token: ownerUid for employee, or user.uid for owner
+      final storeToken = (user.isEmployee && user.ownerUid != null && user.ownerUid!.isNotEmpty)
+          ? user.ownerUid!
+          : user.uid;
+
+      await secureStorage.saveData(key: 'token', value: storeToken);
       await secureStorage.saveData(key: 'email', value: user.email);
       
       await secureStorage.saveData(
@@ -160,13 +177,29 @@ class AuthCubit extends Cubit<AuthState> {
         value: user.isVip.toString(),
       );
 
+      // Save & initialize RBAC permissions
+      PermissionService.instance.init(
+        role: user.role,
+        permissionsList: user.permissions,
+        employeeUid: user.isEmployee ? user.uid : null,
+      );
+      await PermissionService.instance.saveToStorage(secureStorage);
+
+      if (user.isEmployee) {
+        PermissionService.instance.startRealtimeListener(
+          employeeUid: user.uid,
+          storage: secureStorage,
+          onAccountDisabled: () => forceLogout(),
+        );
+      }
+
       // Update global session strings
-      AppStrings.userToken = user.uid;
+      AppStrings.userToken = storeToken;
       AppStrings.userType = user.userType;
       AppStrings.isVip = user.isVip;
 
       AppLogger.printMessage(
-        'User logged in successfully: ${user.uid} (${user.userType}, isVip: ${user.isVip})',
+        'User logged in successfully: ${user.uid} (role: ${user.role}, storeToken: $storeToken, isVip: ${user.isVip})',
       );
 
       emit(AuthSuccess(user));
@@ -239,6 +272,7 @@ class AuthCubit extends Cubit<AuthState> {
     await secureStorage.deleteData(key: 'email');
     await secureStorage.deleteData(key: AppStrings.userTypeKey);
     await secureStorage.deleteData(key: AppStrings.isVipKey);
+    await PermissionService.instance.clear(secureStorage);
 
     // Clear feature caches
     sl<ReportsCubit>().clearCache();
@@ -276,6 +310,10 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> deleteAccount() async {
+    if (!PermissionService.instance.isOwner) {
+      emit(AuthDeleteFailure(AppStrings.noPermissionForAction.tr()));
+      return;
+    }
     _isDeletingAccount = true;
     emit(AuthDeleteLoading());
 

@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -90,7 +90,9 @@ class CurrencyService {
 
   void _setupUserListener() {
     _userSubscription?.cancel();
-    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final uid = AppStrings.userToken.isNotEmpty
+        ? AppStrings.userToken
+        : FirebaseAuth.instance.currentUser?.uid;
     if (uid == null || uid.isEmpty) return;
 
     _userSubscription = FirebaseFirestore.instance
@@ -132,7 +134,9 @@ class CurrencyService {
     await _saveToCache(newCurrency);
 
     // 3. Sync to Firebase Firestore if user is authenticated
-    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final uid = AppStrings.userToken.isNotEmpty
+        ? AppStrings.userToken
+        : FirebaseAuth.instance.currentUser?.uid;
     if (uid != null && uid.isNotEmpty) {
       try {
         await FirebaseFirestore.instance

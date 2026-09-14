@@ -13,6 +13,8 @@ import 'package:tahsel/features/expenses/presentation/widgets/expenses_app_bar.d
 import 'package:tahsel/features/expenses/presentation/widgets/expenses_balance.dart';
 import 'package:tahsel/features/expenses/presentation/widgets/expenses_list.dart';
 import 'package:tahsel/features/offline_sync/presentation/cubit/offline_sync_cubit.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/widgets/permission_guard.dart';
 import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/buttons/quick_action_button.dart';
 
@@ -104,17 +106,20 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                         ),
                       ),
                     ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isDesktop ? 80 : 24.w,
-                        vertical: isDesktop ? 20 : 20.h,
-                      ),
-                      child: QuickActionButton(
-                        label: AppStrings.addExpense.tr(),
-                        icon: Icons.add,
-                        onPressed: () {
-                          nav().pushNamed(AppRoutes.addExpense);
-                        },
+                    PermissionGuard(
+                      permission: AppPermissions.expensesAdd,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isDesktop ? 80 : 24.w,
+                          vertical: isDesktop ? 20 : 20.h,
+                        ),
+                        child: QuickActionButton(
+                          label: AppStrings.addExpense.tr(),
+                          icon: Icons.add,
+                          onPressed: () {
+                            nav().pushNamed(AppRoutes.addExpense);
+                          },
+                        ),
                       ),
                     ),
                   ],

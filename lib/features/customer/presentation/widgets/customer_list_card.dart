@@ -1,10 +1,12 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/widgets/permission_guard.dart';
 import 'package:tahsel/routes/app_routes.dart';
 import '../cubit/customer_reports/customer_reports_cubit.dart';
 import 'add_customer_dialog.dart';
@@ -154,27 +156,30 @@ class CustomerListCard extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.edit_outlined,
-                      size: 20,
-                      color: AppColors.primaryColor,
-                    ),
-                    tooltip: AppStrings.editCustomer.tr(),
-                    visualDensity: VisualDensity.compact,
-                    splashRadius: 20,
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (dialogCtx) => BlocProvider.value(
-                          value: context.read<CustomerReportsCubit>(),
-                          child: AddCustomerDialog(
-                            uid: uid,
-                            customer: customer,
+                  PermissionGuard(
+                    permission: AppPermissions.customersEdit,
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.edit_outlined,
+                        size: 20,
+                        color: AppColors.primaryColor,
+                      ),
+                      tooltip: AppStrings.editCustomer.tr(),
+                      visualDensity: VisualDensity.compact,
+                      splashRadius: 20,
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (dialogCtx) => BlocProvider.value(
+                            value: context.read<CustomerReportsCubit>(),
+                            child: AddCustomerDialog(
+                              uid: uid,
+                              customer: customer,
+                            ),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   ),
                   const SizedBox(width: 4),
                   Icon(

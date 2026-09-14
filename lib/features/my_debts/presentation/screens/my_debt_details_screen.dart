@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -59,6 +61,17 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
   }
 
   void _onPayPartial(BuildContext context, double totalRemaining) {
+    if (!PermissionService.instance.hasPermission(AppPermissions.myDebtsPay)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          content: Text(AppStrings.noPermissionForAction.tr()),
+          backgroundColor: AppColors.orange,
+        ),
+      );
+      return;
+    }
+
     if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -87,6 +100,17 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
   }
 
   void _onPayFull(BuildContext context, double totalRemaining) {
+    if (!PermissionService.instance.hasPermission(AppPermissions.myDebtsPay)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          content: Text(AppStrings.noPermissionForAction.tr()),
+          backgroundColor: AppColors.orange,
+        ),
+      );
+      return;
+    }
+
     if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -184,6 +208,17 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
   }
 
   void _onPayItemPartial(BuildContext context, MyDebtItemEntity item) {
+    if (!PermissionService.instance.hasPermission(AppPermissions.myDebtsPay)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          content: Text(AppStrings.noPermissionForAction.tr()),
+          backgroundColor: AppColors.orange,
+        ),
+      );
+      return;
+    }
+
     if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -213,6 +248,17 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
   }
 
   void _onPayItemFull(BuildContext context, MyDebtItemEntity item) {
+    if (!PermissionService.instance.hasPermission(AppPermissions.myDebtsPay)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          content: Text(AppStrings.noPermissionForAction.tr()),
+          backgroundColor: AppColors.orange,
+        ),
+      );
+      return;
+    }
+
     if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -315,6 +361,17 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
   }
 
   void _onAddNewDebt(BuildContext context) {
+    if (!PermissionService.instance.hasPermission(AppPermissions.myDebtsAdd)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          content: Text(AppStrings.noPermissionForAction.tr()),
+          backgroundColor: AppColors.orange,
+        ),
+      );
+      return;
+    }
+
     if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -343,6 +400,17 @@ class _MyDebtDetailsScreenState extends State<MyDebtDetailsScreen> {
   }
 
   void _onDeleteItem(BuildContext context, MyDebtItemEntity item) {
+    if (!PermissionService.instance.hasPermission(AppPermissions.myDebtsDelete)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          content: Text(AppStrings.noPermissionForAction.tr()),
+          backgroundColor: AppColors.orange,
+        ),
+      );
+      return;
+    }
+
     if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

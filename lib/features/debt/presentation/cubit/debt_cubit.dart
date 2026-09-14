@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/debt/domain/entities/debt_entity.dart';
 import 'package:tahsel/features/debt/domain/usecases/add_debt_usecase.dart';
@@ -419,6 +422,10 @@ class DebtCubit extends Cubit<DebtState> {
   }
 
   Future<void> deleteCustomerDebts(String uid, String customerName) async {
+    if (!PermissionService.instance.hasPermission(AppPermissions.debtsDelete)) {
+      emit(DebtFailure(message: AppStrings.noPermissionForAction.tr()));
+      return;
+    }
     if (state is DebtLoading) return;
     final sanitizedName = customerName.replaceAll('/', ' ').trim();
     emit(DebtLoading());
@@ -432,6 +439,10 @@ class DebtCubit extends Cubit<DebtState> {
   }
 
   Future<void> deleteDebtItem(String uid, String debtId) async {
+    if (!PermissionService.instance.hasPermission(AppPermissions.debtsDelete)) {
+      emit(DebtFailure(message: AppStrings.noPermissionForAction.tr()));
+      return;
+    }
     if (state is DebtLoading) return;
     emit(DebtLoading());
     final result = await deleteDebtItemUseCase(

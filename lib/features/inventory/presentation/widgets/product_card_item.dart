@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
@@ -14,8 +14,8 @@ class ProductCardItem extends StatelessWidget {
   final int index;
   final bool isBestSeller;
   final VoidCallback onTap;
-  final VoidCallback onManualAdjustment;
-  final VoidCallback onEdit;
+  final VoidCallback? onManualAdjustment;
+  final VoidCallback? onEdit;
 
   const ProductCardItem({
     super.key,
@@ -23,8 +23,8 @@ class ProductCardItem extends StatelessWidget {
     required this.index,
     this.isBestSeller = false,
     required this.onTap,
-    required this.onManualAdjustment,
-    required this.onEdit,
+    this.onManualAdjustment,
+    this.onEdit,
   });
 
   @override
@@ -152,20 +152,22 @@ class ProductCardItem extends StatelessWidget {
                       ),
                     ],
                     const Spacer(),
-                    IconButton(
-                      icon: Icon(
-                        Icons.tune_rounded,
-                        color: AppColors.lowStockOrange,
+                    if (onManualAdjustment != null)
+                      IconButton(
+                        icon: Icon(
+                          Icons.tune_rounded,
+                          color: AppColors.lowStockOrange,
+                        ),
+                        onPressed: onManualAdjustment,
                       ),
-                      onPressed: onManualAdjustment,
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        Icons.edit_note,
-                        color: AppColors.primaryColor,
+                    if (onEdit != null)
+                      IconButton(
+                        icon: Icon(
+                          Icons.edit_note,
+                          color: AppColors.primaryColor,
+                        ),
+                        onPressed: onEdit,
                       ),
-                      onPressed: onEdit,
-                    ),
                   ],
                 ),
                 SizedBox(height: isDesktop ? 8 : 8.h),

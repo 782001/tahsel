@@ -17,6 +17,10 @@ class UserModel extends UserEntity {
     super.address,
     super.vat,
     super.taxRate,
+    super.role = 'owner',
+    super.permissions = const ['*'],
+    super.ownerUid,
+    super.isEmployee = false,
   });
 
   factory UserModel.fromFirebaseUser(
@@ -31,6 +35,10 @@ class UserModel extends UserEntity {
     String? address,
     String? vat,
     double? taxRate,
+    String? role,
+    List<String>? permissions,
+    String? ownerUid,
+    bool? isEmployee,
   }) {
     return UserModel(
       uid: user.uid,
@@ -46,6 +54,10 @@ class UserModel extends UserEntity {
       address: address,
       vat: vat,
       taxRate: taxRate,
+      role: role ?? 'owner',
+      permissions: permissions ?? const ['*'],
+      ownerUid: ownerUid,
+      isEmployee: isEmployee ?? (role == 'employee' || (ownerUid != null && ownerUid.isNotEmpty)),
     );
   }
 }

@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -159,9 +159,15 @@ class VaultCubit extends Cubit<VaultState> {
     );
   }
 
+  String? get _resolvedUid =>
+      _uid ??
+      (AppStrings.userToken.isNotEmpty
+          ? AppStrings.userToken
+          : FirebaseAuth.instance.currentUser?.uid);
+
   Future<void> depositManual({required double amount, String? note}) async {
-    _uid ??= FirebaseAuth.instance.currentUser?.uid;
-    if (_uid == null) return;
+    _uid = _resolvedUid;
+    if (_uid == null || _uid!.isEmpty) return;
     if (amount <= 0) {
       emit(const VaultError('Amount must be greater than zero'));
       return;
@@ -183,8 +189,8 @@ class VaultCubit extends Cubit<VaultState> {
   }
 
   Future<void> withdrawManual({required double amount, String? note}) async {
-    _uid ??= FirebaseAuth.instance.currentUser?.uid;
-    if (_uid == null) return;
+    _uid = _resolvedUid;
+    if (_uid == null || _uid!.isEmpty) return;
     if (amount <= 0) {
       emit(const VaultError('Amount must be greater than zero'));
       return;
@@ -218,8 +224,8 @@ class VaultCubit extends Cubit<VaultState> {
     required double newAmount,
     required String newDescription,
   }) async {
-    _uid ??= FirebaseAuth.instance.currentUser?.uid;
-    if (_uid == null) return;
+    _uid = _resolvedUid;
+    if (_uid == null || _uid!.isEmpty) return;
     if (newAmount <= 0) {
       emit(const VaultError(AppStrings.validationAmountGreaterThanZero));
       return;
@@ -242,8 +248,8 @@ class VaultCubit extends Cubit<VaultState> {
   }
 
   Future<void> deleteManualTransaction(VaultTransactionEntity transaction) async {
-    _uid ??= FirebaseAuth.instance.currentUser?.uid;
-    if (_uid == null) return;
+    _uid = _resolvedUid;
+    if (_uid == null || _uid!.isEmpty) return;
 
     final result = await deleteManualVaultUseCase(
       uid: _uid!,
@@ -262,9 +268,7 @@ class VaultCubit extends Cubit<VaultState> {
   Future<List<VaultTransactionEntity>> getAllTransactionsForExport({
     VaultTransactionSource? sourceFilter,
   }) async {
-    final uid = _uid ??
-        FirebaseAuth.instance.currentUser?.uid ??
-        AppStrings.userToken;
+    final uid = _resolvedUid ?? '';
     if (uid.isEmpty) return [];
 
     final selectedSource = sourceFilter ??

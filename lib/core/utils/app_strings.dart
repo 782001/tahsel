@@ -1,4 +1,4 @@
-class AppStrings {
+﻿class AppStrings {
   static const String noRouteFound = 'No Route Found';
   static const String cachedRandomQuote = 'CACHED_RANDOM_QUOTE';
   static const String contentType = 'Content-Type';
@@ -22,6 +22,13 @@ class AppStrings {
   static String userToken = '';
   static String userType = 'cafe';
   static bool isVip = false;
+
+  // ── Role-Based Access Control (RBAC) Session ──
+  static String userRole = 'owner';
+  static bool get isOwner => userRole == 'owner' || userRole.isEmpty;
+  static bool get isEmployee => userRole == 'employee';
+  static String employeeAuthUid = '';
+  static List<String> userPermissions = ['*'];
 
   /// Single Source of Truth for Vault Eligibility
   /// Vault is available ONLY when AppStrings.isVip == true AND isShop == true
@@ -1451,4 +1458,113 @@ class AppStrings {
   static const String lowStockFilter = "low_stock_filter";
   static const String adequateStockFilter = "adequate_stock_filter";
   static const String unavailableForSaleFilter = "unavailable_for_sale_filter";
+
+  // ── Team & Permissions Management Strings ──
+  static const String teamAndPermissions = "team_and_permissions";
+  static const String teamAndPermissionsDesc = "team_and_permissions_desc";
+  static const String addAppEmployee = "add_app_employee";
+  static const String editAppEmployee = "edit_app_employee";
+  static const String employeeEmail = "employee_email";
+  static const String temporaryPassword = "temporary_password";
+  static const String rolePreset = "role_preset";
+  static const String customPermissions = "custom_permissions";
+  static const String activeAccount = "active_account";
+  static const String disabledAccount = "disabled_account";
+  static const String deleteEmployeeAccess = "delete_employee_access";
+  static const String deleteEmployeeConfirm = "delete_employee_confirm";
+  static const String appEmployeeAddedSuccess = "app_employee_added_success";
+  static const String employeeUpdatedSuccess = "employee_updated_success";
+  static const String employeeDeletedSuccess = "employee_deleted_success";
+  static const String appPermissionDenied = "app_permission_denied";
+  static const String roleCashierLabel = "role_cashier_label";
+  static const String roleStorekeeperLabel = "role_storekeeper_label";
+  static const String roleAccountantLabel = "role_accountant_label";
+  static const String roleSupervisorLabel = "role_supervisor_label";
+  static const String roleCustomLabel = "role_custom_label";
+  static const String selectAll = "select_all";
+  static const String deselectAll = "deselect_all";
+  static const String noAppEmployeesYet = "no_app_employees_yet";
+  static const String noAppEmployeesDesc = "no_app_employees_desc";
+  static const String permissionsCount = "permissions_count";
+  static const String selectAtLeastOnePermission = "select_at_least_one_permission";
+  static const String employeeNameField = "employee_name_field";
+  static const String employeeNameHint = "employee_name_hint";
+  static const String employeeNameRequired = "employee_name_required";
+  static const String employeeEmailRequired = "employee_email_required";
+  static const String passwordMinLengthHint = "password_min_length_hint";
+  static const String passwordRequired = "password_required";
+  static const String grantedPermissions = "granted_permissions";
+  static const String saveAndActivateAccount = "save_and_activate_account";
+  static const String registeredSystemEmployees = "registered_system_employees";
+  static const String totalEmployeesStat = "total_employees_stat";
+  static const String activeInService = "active_in_service";
+  static const String temporarilyDisabled = "temporarily_disabled";
+  static const String permanentDelete = "permanent_delete";
+  static const String employeeColon = "employee_colon";
+
+  // Permission Group Titles
+  static const String permGroupPos = "perm_group_pos";
+  static const String permGroupInvoices = "perm_group_invoices";
+  static const String permGroupExpenses = "perm_group_expenses";
+  static const String permGroupCustomers = "perm_group_customers";
+  static const String permGroupMyDebts = "perm_group_my_debts";
+  static const String permGroupVault = "perm_group_vault";
+  static const String permGroupInventory = "perm_group_inventory";
+  static const String permGroupEmployees = "perm_group_employees";
+  static const String permGroupReports = "perm_group_reports";
+  static const String permGroupShipping = "perm_group_shipping";
+  static const String permGroupSettings = "perm_group_settings";
+
+  // Permission Items
+  static const String permPosAccess = "perm_pos_access";
+  static const String permPosQuickSale = "perm_pos_quick_sale";
+  static const String permPosManageSessions = "perm_pos_manage_sessions";
+  static const String permPosAddDebt = "perm_pos_add_debt";
+  static const String permInvoicesView = "perm_invoices_view";
+  static const String permInvoicesCreate = "perm_invoices_create";
+  static const String permInvoicesEdit = "perm_invoices_edit";
+  static const String permInvoicesRecordPayment = "perm_invoices_record_payment";
+  static const String permInvoicesDelete = "perm_invoices_delete";
+  static const String permInvoicesPrintShare = "perm_invoices_print_share";
+  static const String permExpensesView = "perm_expenses_view";
+  static const String permExpensesAdd = "perm_expenses_add";
+  static const String permExpensesDelete = "perm_expenses_delete";
+  static const String permCustomersView = "perm_customers_view";
+  static const String permCustomersAdd = "perm_customers_add";
+  static const String permCustomersSettleDebt = "perm_customers_settle_debt";
+  static const String permCustomersDeleteDebt = "perm_customers_delete_debt";
+  static const String permCustomersSendWhatsapp = "perm_customers_send_whatsapp";
+  static const String permCustomersViewReports = "perm_customers_view_reports";
+  static const String permMyDebtsView = "perm_my_debts_view";
+  static const String permMyDebtsAdd = "perm_my_debts_add";
+  static const String permMyDebtsPay = "perm_my_debts_pay";
+  static const String permMyDebtsDelete = "perm_my_debts_delete";
+  static const String permVaultViewBalance = "perm_vault_view_balance";
+  static const String permVaultDeposit = "perm_vault_deposit";
+  static const String permVaultWithdraw = "perm_vault_withdraw";
+  static const String permVaultViewHistory = "perm_vault_view_history";
+  static const String permInventoryView = "perm_inventory_view";
+  static const String permInventoryManageProducts = "perm_inventory_manage_products";
+  static const String permInventoryManageSuppliers = "perm_inventory_manage_suppliers";
+  static const String permInventoryManagePurchases = "perm_inventory_manage_purchases";
+  static const String permInventoryStockAdjustments = "perm_inventory_stock_adjustments";
+  static const String permInventoryViewAnalytics = "perm_inventory_view_analytics";
+  static const String permEmployeesView = "perm_employees_view";
+  static const String permEmployeesRecordAttendance = "perm_employees_record_attendance";
+  static const String permEmployeesManagePayroll = "perm_employees_manage_payroll";
+  static const String permEmployeesManageAppUsers = "perm_employees_manage_app_users";
+  static const String permReportsViewNetProfit = "perm_reports_view_net_profit";
+  static const String permReportsViewSales = "perm_reports_view_sales";
+  static const String permReportsTax = "perm_reports_tax";
+  static const String permReportsViewTax = "perm_reports_view_tax";
+  static const String permReportsExport = "perm_reports_export";
+  static const String permShippingView = "perm_shipping_view";
+  static const String permSettingsEditProfile = "perm_settings_edit_profile";
+  static const String cannotModifySelf = "cannot_modify_self";
+  static const String cannotDeleteSelf = "cannot_delete_self";
+  static const String noPermission = "no_permission";
+  static const String noPermissionForAction = "no_permission_for_action";
+  static const String emailAlreadyInUse = "email_already_in_use";
+  static const String passwordMin6Chars = "password_min_6_chars";
+  static const String emailFormatInvalid = "email_format_invalid";
 }

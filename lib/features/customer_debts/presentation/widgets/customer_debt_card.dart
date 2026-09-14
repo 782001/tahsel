@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:tahsel/core/extensions/extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -13,9 +13,9 @@ class CustomerDebtCard extends StatelessWidget {
   final Color statusColor;
   final String? ledgerNumber;
   final String? description;
-  final VoidCallback onPartialPayment;
-  final VoidCallback onFullPayment;
-  final VoidCallback onDelete;
+  final VoidCallback? onPartialPayment;
+  final VoidCallback? onFullPayment;
+  final VoidCallback? onDelete;
   final VoidCallback? onTap;
 
   const CustomerDebtCard({
@@ -25,9 +25,9 @@ class CustomerDebtCard extends StatelessWidget {
     required this.amount,
     required this.status,
     required this.statusColor,
-    required this.onPartialPayment,
-    required this.onFullPayment,
-    required this.onDelete,
+    this.onPartialPayment,
+    this.onFullPayment,
+    this.onDelete,
     this.ledgerNumber,
     this.description,
     this.onTap,

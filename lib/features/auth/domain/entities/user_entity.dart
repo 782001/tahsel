@@ -16,6 +16,11 @@ class UserEntity extends Equatable {
   final String? vat;
   final double? taxRate;
 
+  final String role;
+  final List<String> permissions;
+  final String? ownerUid;
+  final bool isEmployee;
+
   const UserEntity({
     required this.uid,
     required this.email,
@@ -30,6 +35,10 @@ class UserEntity extends Equatable {
     this.address,
     this.vat,
     this.taxRate,
+    this.role = 'owner',
+    this.permissions = const ['*'],
+    this.ownerUid,
+    this.isEmployee = false,
   });
 
   @override
@@ -47,5 +56,9 @@ class UserEntity extends Equatable {
     address,
     vat,
     taxRate,
+    role,
+    permissions,
+    ownerUid,
+    isEmployee,
   ];
 }

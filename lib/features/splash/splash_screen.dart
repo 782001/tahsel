@@ -1,4 +1,4 @@
-import 'dart:io' show Platform;
+﻿import 'dart:io' show Platform;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -10,6 +10,7 @@ import 'package:tahsel/features/standard_features/no-internet/logic/connectivity
 import 'package:tahsel/core/base_usecase/base_usecase.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/services/profile/business_profile_service.dart';
 import 'package:tahsel/core/services/security_service.dart';
 import 'package:tahsel/features/settings/data/models/user_profile_model.dart';
@@ -83,6 +84,9 @@ class _SplashScreenState extends State<SplashScreen>
         AppStrings.userType = userType ?? AppStrings.cafe;
         AppStrings.isVip = isVipStr == 'true';
 
+        // 3.1 Load RBAC permissions locally (Offline-first)
+        await PermissionService.instance.loadFromStorage(secureStorage);
+
         // 4. Navigate IMMEDIATELY to Main Layout (Offline-first)
         BusinessProfileService.instance.getProfile();
         nav().pushNamedAndRemoveUntil(AppRoutes.mainLayout);
@@ -128,17 +132,92 @@ class _SplashScreenState extends State<SplashScreen>
         return;
       }
 
-      final data = doc.data();
+      var data = doc.data();
       if (data == null) {
         _handleInvalidSession();
         nav().pushNamedAndRemoveUntil(AppRoutes.login);
         return;
       }
 
+      final secureStorage = sl<SecureStorageHelper>();
+      final isEmployee = data['role'] == 'employee';
+
+      // ── RBAC Sync for Employee ──────────────────────────────────────
+      if (isEmployee) {
+        final employeeStatus = (data['accountStatus'] as String?) ?? 'active';
+        if (employeeStatus == 'deleted' || employeeStatus == 'disabled') {
+          _handleInvalidSession();
+          nav().pushNamedAndRemoveUntil(
+            AppRoutes.accessRestricted,
+            arguments: AccessRestrictionReason.disabled,
+          );
+          return;
+        }
+        if (employeeStatus == 'suspended') {
+          _handleInvalidSession();
+          nav().pushNamedAndRemoveUntil(
+            AppRoutes.accessRestricted,
+            arguments: AccessRestrictionReason.suspended,
+          );
+          return;
+        }
+
+        // Live permissions update from Firestore
+        final perms = List<String>.from(data['permissions'] ?? []);
+        PermissionService.instance.init(
+          role: 'employee',
+          permissionsList: perms,
+          employeeUid: user.uid,
+        );
+        await PermissionService.instance.saveToStorage(secureStorage);
+        PermissionService.instance.startRealtimeListener(
+          employeeUid: user.uid,
+          storage: secureStorage,
+          onAccountDisabled: () {
+            _handleInvalidSession();
+            nav().pushNamedAndRemoveUntil(
+              AppRoutes.accessRestricted,
+              arguments: AccessRestrictionReason.disabled,
+            );
+          },
+        );
+
+        // Fetch owner doc to check subscription & store status
+        final ownerUid = data['ownerUid'] as String?;
+        if (ownerUid != null && ownerUid.isNotEmpty) {
+          final ownerDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(ownerUid)
+              .get();
+          final ownerData = ownerDoc.data();
+          if (ownerData != null) {
+            final ownerStatus = (ownerData['accountStatus'] as String?) ?? 'active';
+            if (ownerStatus == 'deleted' || ownerStatus == 'disabled' || ownerStatus == 'suspended') {
+              _handleInvalidSession();
+              nav().pushNamedAndRemoveUntil(
+                AppRoutes.accessRestricted,
+                arguments: AccessRestrictionReason.disabled,
+              );
+              return;
+            }
+            final ownerSubEnd = ownerData['subscriptionEnd'] != null
+                ? (ownerData['subscriptionEnd'] as Timestamp).toDate()
+                : null;
+            if (ownerSubEnd != null &&
+                DateTime.now().isAfter(ownerSubEnd.add(const Duration(days: 10)))) {
+              _handleInvalidSession();
+              nav().pushNamedAndRemoveUntil(AppRoutes.subscriptionExpired);
+              return;
+            }
+            // Use owner store metadata for profile & VIP
+            data = ownerData;
+          }
+        }
+      }
+
       // Sync VIP status locally
       final bool isVip = (data['isVip'] as bool?) ?? false;
       AppStrings.isVip = isVip;
-      final secureStorage = sl<SecureStorageHelper>();
       await secureStorage.saveData(
         key: AppStrings.isVipKey,
         value: isVip.toString(),
@@ -148,7 +227,7 @@ class _SplashScreenState extends State<SplashScreen>
       try {
         final profile = UserProfileModel.fromMap(
           data,
-          uid: user.uid,
+          uid: isEmployee ? (data['ownerUid'] ?? user.uid) : user.uid,
           fallbackEmail: user.email,
         );
         BusinessProfileService.instance.saveProfileToCache(profile);

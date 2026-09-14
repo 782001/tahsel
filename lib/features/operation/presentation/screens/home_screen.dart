@@ -1,9 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/contact_service.dart';
 import 'package:tahsel/core/services/injection_container.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/storage/cashhelper.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
@@ -217,6 +219,17 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _startPsSession() {
+    if (!PermissionService.instance.hasPermission(AppPermissions.posManageSessions)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          content: Text(AppStrings.noPermissionForAction.tr()),
+          backgroundColor: AppColors.orange,
+        ),
+      );
+      return;
+    }
+
     final uid = AppStrings.userToken;
     if (uid.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -323,6 +336,17 @@ class _HomeScreenState extends State<HomeScreen> {
     final isShopAccount = context.read<MainLayoutCubit>().isShop;
 
     if (_selectedMode == QuickAddMode.shop) {
+      if (!PermissionService.instance.hasPermission(AppPermissions.posQuickSale)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            duration: const Duration(seconds: 2),
+            content: Text(AppStrings.noPermissionForAction.tr()),
+            backgroundColor: AppColors.orange,
+          ),
+        );
+        return;
+      }
+
       String productName = _productController.text.trim();
       final customerName = _customerController.text.trim();
       double totalAmount = 0.0;
@@ -351,6 +375,18 @@ class _HomeScreenState extends State<HomeScreen> {
         if (paidAmount <= 0 && remainingDebt <= 0) {
           validationMsg = AppStrings.validationInvalidAmount.tr();
         }
+      }
+
+      if (remainingDebt > 0 &&
+          !PermissionService.instance.hasPermission(AppPermissions.posAddDebt)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            duration: const Duration(seconds: 2),
+            content: Text(AppStrings.noPermissionForAction.tr()),
+            backgroundColor: AppColors.orange,
+          ),
+        );
+        return;
       }
 
       if (validationMsg == null) {
@@ -395,6 +431,17 @@ class _HomeScreenState extends State<HomeScreen> {
     } else {
       if (_psSubMode == PlayStationMode.time) return;
 
+      if (!PermissionService.instance.hasPermission(AppPermissions.posManageSessions)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            duration: const Duration(seconds: 2),
+            content: Text(AppStrings.noPermissionForAction.tr()),
+            backgroundColor: AppColors.orange,
+          ),
+        );
+        return;
+      }
+
       final customerName = _customerController.text.trim();
       if (totalDue <= 0) {
         validationMsg = AppStrings.validationSessionRequired.tr();
@@ -409,6 +456,19 @@ class _HomeScreenState extends State<HomeScreen> {
           return;
         }
         setState(() => _customerError = null);
+      }
+
+      final remainingPsDebt = (totalDue - paid) > 0 ? (totalDue - paid) : 0.0;
+      if (remainingPsDebt > 0 &&
+          !PermissionService.instance.hasPermission(AppPermissions.posAddDebt)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            duration: const Duration(seconds: 2),
+            content: Text(AppStrings.noPermissionForAction.tr()),
+            backgroundColor: AppColors.orange,
+          ),
+        );
+        return;
       }
 
       if (validationMsg != null) {
@@ -443,6 +503,37 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!PermissionService.instance.hasPermission(AppPermissions.posAccess)) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.error.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.lock_rounded,
+                color: AppColors.error,
+                size: 56,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              AppStrings.noPermissionForAction.tr(),
+              style: TextStyles.customStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.grey,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return MultiBlocListener(
       listeners: [
         BlocListener<MainLayoutCubit, MainLayoutState>(

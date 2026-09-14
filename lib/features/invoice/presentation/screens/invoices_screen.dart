@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
@@ -17,6 +17,8 @@ import 'package:tahsel/features/invoice/presentation/widgets/offline_empty_invoi
 import 'package:tahsel/features/offline_sync/presentation/cubit/offline_sync_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/widgets/permission_guard.dart';
 import 'package:tahsel/routes/app_routes.dart';
 
 class InvoicesScreen extends StatefulWidget {
@@ -354,81 +356,84 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                 ),
 
                 // ── Create Buttons (Invoice & Quotation) ───────────────────────
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 14.h,
-                  ),
-                  child: Row(
-                    children: [
-                      // Create Invoice Button
-                      Expanded(
-                        child: SizedBox(
-                          height: 56.h,
-                          child: ElevatedButton.icon(
-                            onPressed: () => _handleCreate(isQuotation: false),
-                            icon: Icon(
-                              Icons.receipt_long_rounded,
-                              color: AppColors.whiteColor,
-                              size: 20,
-                            ),
-                            label: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                AppStrings.createInvoice.tr(),
-                                style: TextStyles.customStyle(
-                                  color: AppColors.whiteColor,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
+                PermissionGuard(
+                  permission: AppPermissions.invoicesCreate,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 14.h,
+                    ),
+                    child: Row(
+                      children: [
+                        // Create Invoice Button
+                        Expanded(
+                          child: SizedBox(
+                            height: 56.h,
+                            child: ElevatedButton.icon(
+                              onPressed: () => _handleCreate(isQuotation: false),
+                              icon: Icon(
+                                Icons.receipt_long_rounded,
+                                color: AppColors.whiteColor,
+                                size: 20,
+                              ),
+                              label: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  AppStrings.createInvoice.tr(),
+                                  style: TextStyles.customStyle(
+                                    color: AppColors.whiteColor,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primaryColor,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16.r),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryColor,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16.r),
+                                ),
+                                elevation: 0,
+                                padding: EdgeInsets.symmetric(horizontal: 8.w),
                               ),
-                              elevation: 0,
-                              padding: EdgeInsets.symmetric(horizontal: 8.w),
                             ),
                           ),
                         ),
-                      ),
-                      SizedBox(width: 12.w),
-                      // Create Quotation Button
-                      Expanded(
-                        child: SizedBox(
-                          height: 56.h,
-                          child: ElevatedButton.icon(
-                            onPressed: () => _handleCreate(isQuotation: true),
-                            icon: Icon(
-                              Icons.request_quote_rounded,
-                              color: AppColors.whiteColor,
-                              size: 20,
-                            ),
-                            label: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                AppStrings.createQuotation.tr(),
-                                style: TextStyles.customStyle(
-                                  color: AppColors.whiteColor,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
+                        SizedBox(width: 12.w),
+                        // Create Quotation Button
+                        Expanded(
+                          child: SizedBox(
+                            height: 56.h,
+                            child: ElevatedButton.icon(
+                              onPressed: () => _handleCreate(isQuotation: true),
+                              icon: Icon(
+                                Icons.request_quote_rounded,
+                                color: AppColors.whiteColor,
+                                size: 20,
+                              ),
+                              label: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  AppStrings.createQuotation.tr(),
+                                  style: TextStyles.customStyle(
+                                    color: AppColors.whiteColor,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.movementInvoiceReturn,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16.r),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.movementInvoiceReturn,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16.r),
+                                ),
+                                elevation: 0,
+                                padding: EdgeInsets.symmetric(horizontal: 8.w),
                               ),
-                              elevation: 0,
-                              padding: EdgeInsets.symmetric(horizontal: 8.w),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ],

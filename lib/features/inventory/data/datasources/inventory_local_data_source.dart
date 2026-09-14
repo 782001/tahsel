@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -59,9 +59,9 @@ class InventoryLocalDataSourceImpl implements InventoryLocalDataSource {
   static const String metaBoxName = 'inventory_meta_box';
 
   String get _currentUid {
+    if (AppStrings.userToken.isNotEmpty) return AppStrings.userToken;
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null && uid.isNotEmpty) return uid;
-    if (AppStrings.userToken.isNotEmpty) return AppStrings.userToken;
     return 'default_user';
   }
 

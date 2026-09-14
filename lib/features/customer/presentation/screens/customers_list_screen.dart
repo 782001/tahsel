@@ -1,10 +1,12 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/widgets/permission_guard.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/customer/presentation/widgets/add_customer_dialog.dart';
 import 'package:tahsel/features/customer/presentation/widgets/customer_list_card.dart';
@@ -71,20 +73,23 @@ class CustomersListScreen extends StatelessWidget {
                     )
                   : null,
             ),
-            floatingActionButton: FloatingActionButton.extended(
-              onPressed: () => _showAddCustomerDialog(context),
-              backgroundColor: AppColors.primaryColor,
-              elevation: 3,
-              icon: const Icon(
-                Icons.person_add_alt_1_rounded,
-                color: Colors.white,
-              ),
-              label: Text(
-                AppStrings.addCustomer.tr(),
-                style: TextStyles.customStyle(
+            floatingActionButton: PermissionGuard(
+              permission: AppPermissions.customersCreate,
+              child: FloatingActionButton.extended(
+                onPressed: () => _showAddCustomerDialog(context),
+                backgroundColor: AppColors.primaryColor,
+                elevation: 3,
+                icon: const Icon(
+                  Icons.person_add_alt_1_rounded,
                   color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
+                ),
+                label: Text(
+                  AppStrings.addCustomer.tr(),
+                  style: TextStyles.customStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
                 ),
               ),
             ),
@@ -273,37 +278,40 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
                             ),
                             if (!isSearching) ...[
                               const SizedBox(height: 16),
-                              ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primaryColor,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 10,
-                                  ),
-                                ),
-                                onPressed: () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (dialogCtx) => BlocProvider.value(
-                                      value: context
-                                          .read<CustomerReportsCubit>(),
-                                      child: AddCustomerDialog(uid: widget.uid),
+                              PermissionGuard(
+                                permission: AppPermissions.customersCreate,
+                                child: ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primaryColor,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
-                                  );
-                                },
-                                icon: const Icon(
-                                  Icons.person_add_alt_1_rounded,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                                label: Text(
-                                  AppStrings.addCustomer.tr(),
-                                  style: TextStyles.customStyle(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 10,
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (dialogCtx) => BlocProvider.value(
+                                        value: context
+                                            .read<CustomerReportsCubit>(),
+                                        child: AddCustomerDialog(uid: widget.uid),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(
+                                    Icons.person_add_alt_1_rounded,
                                     color: Colors.white,
-                                    fontWeight: FontWeight.bold,
+                                    size: 18,
+                                  ),
+                                  label: Text(
+                                    AppStrings.addCustomer.tr(),
+                                    style: TextStyles.customStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ),

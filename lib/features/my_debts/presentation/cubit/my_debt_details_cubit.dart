@@ -3,7 +3,9 @@ import 'dart:convert';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/base_usecase/base_usecase.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_item_entity.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_operation_entity.dart';
@@ -310,6 +312,13 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
   }
 
   Future<void> deleteItem(String uid, String debtId, String personName) async {
+    if (!PermissionService.instance.hasPermission(AppPermissions.myDebtsDelete)) {
+      emit(state.copyWith(
+        status: MyDebtDetailsStatus.error,
+        message: AppStrings.noPermissionForAction.tr(),
+      ));
+      return;
+    }
     if (state.status == MyDebtDetailsStatus.loading) return;
     emit(state.copyWith(status: MyDebtDetailsStatus.loading));
     final result = await deleteItemUseCase(uid, debtId);

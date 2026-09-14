@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_cubit.dart';
 
@@ -68,6 +68,9 @@ class AppColors {
       isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF6F6F6);
 
   static Color get veryLightGrey =>
+      isDark ? const Color(0xFF303030) : const Color(0xFFF6F6F6);
+
+  static Color get lightGreyColor =>
       isDark ? const Color(0xFF303030) : const Color(0xFFF6F6F6);
 
   static Color get sandText =>

@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/assets.dart';
@@ -18,192 +20,232 @@ class SideNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: MediaQuery.of(context).size.width * 0.25,
-      constraints: const BoxConstraints(minWidth: 240, maxWidth: 500),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: BorderDirectional(
-          end: BorderSide(color: AppColors.dividerColor, width: 1),
-        ),
-      ),
-      child: Column(
-        children: [
-          // Header / Logo Section
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.primaryColor,
-                          AppColors.primaryColor.withValues(alpha: 0.7),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primaryColor.withValues(alpha: 0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
+    return ValueListenableBuilder<int>(
+      valueListenable: PermissionService.instance.changeNotifier,
+      builder: (context, _, __) {
+        final permissions = PermissionService.instance;
+        final canViewHome = permissions.hasPermission(AppPermissions.posAccess);
+        final canViewExpenses = permissions.hasPermission(
+          AppPermissions.expensesView,
+        );
+        final canViewDebts =
+            permissions.hasPermission(AppPermissions.customersView) ||
+            permissions.hasPermission(AppPermissions.myDebtsView);
+        final canViewInvoices =
+            isShop && permissions.hasPermission(AppPermissions.invoicesView);
+        final canViewReports =
+            permissions.hasPermission(AppPermissions.reportsViewSales) ||
+            permissions.hasPermission(AppPermissions.reportsViewNetProfit);
+        final canViewVault = permissions.hasPermission(
+          AppPermissions.vaultAccess,
+        );
+        final canViewInventory = permissions.hasPermission(
+          AppPermissions.inventoryView,
+        );
+        final canManageHREmployees = permissions.hasPermission(
+          AppPermissions.hrEmployeesManage,
+        );
+        final canViewCustomers = permissions.hasPermission(
+          AppPermissions.customersView,
+        );
+        final canViewShipping =
+            isShop &&
+            permissions.hasPermission(
+              AppPermissions.shippingReconciliationView,
+            );
+        final canManageTeam =
+            (!Platform.isIOS || (AppStrings.isVip)) &&
+            (permissions.isOwner ||
+                permissions.hasPermission(AppPermissions.teamManage));
+
+        return Container(
+          width: MediaQuery.of(context).size.width * 0.25,
+          constraints: const BoxConstraints(minWidth: 240, maxWidth: 500),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            border: BorderDirectional(
+              end: BorderSide(color: AppColors.dividerColor, width: 1),
+            ),
+          ),
+          child: Column(
+            children: [
+              // Header / Logo Section
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 48,
+                  horizontal: 24,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColors.primaryColor,
+                              AppColors.primaryColor.withValues(alpha: 0.7),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primaryColor.withValues(
+                                alpha: 0.3,
+                              ),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
+                        child: Image.asset(
+                          Assets.imagesAppLogo,
+                          width: 40.w,
+                          height: 40.w,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24),
+                child: Divider(thickness: 1),
+              ),
+              const SizedBox(height: 24),
+
+              // Navigation Menu
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  children: [
+                    _buildSectionHeader(context, AppStrings.mainMenu.tr()),
+                    if (canViewHome)
+                      _NavTile(
+                        index: 0,
+                        icon: Icons.home_rounded,
+                        label: AppStrings.home.tr(),
+                        isSelected: cubit.currentIndex == 0,
+                        onTap: () => cubit.changeBottomNav(0),
+                      ),
+                    if (canViewExpenses)
+                      _NavTile(
+                        index: 1,
+                        icon: Icons.account_balance_wallet_rounded,
+                        label: AppStrings.allExpenses.tr(),
+                        isSelected: cubit.currentIndex == 1,
+                        onTap: () => cubit.changeBottomNav(1),
+                      ),
+                    if (canViewDebts)
+                      _NavTile(
+                        index: 2,
+                        icon: Icons.people_alt_rounded,
+                        label: AppStrings.totalDebts.tr(),
+                        isSelected: cubit.currentIndex == 2,
+                        onTap: () => cubit.changeBottomNav(2),
+                      ),
+                    if (isShop && canViewInvoices)
+                      _NavTile(
+                        index: 3,
+                        icon: Icons.receipt_long_rounded,
+                        label: AppStrings.invoices.tr(),
+                        isSelected: cubit.currentIndex == 3,
+                        onTap: () => cubit.changeBottomNav(3),
+                      ),
+                    if (canViewReports)
+                      _NavTile(
+                        index: 4,
+                        icon: Icons.bar_chart_rounded,
+                        label: AppStrings.reports.tr(),
+                        isSelected: cubit.currentIndex == 4,
+                        onTap: () => cubit.changeBottomNav(4),
+                      ),
+                    if (!Platform.isIOS || (AppStrings.isVip)) ...[
+                      if ((isShop && canViewVault) ||
+                          (isShop && canViewInventory) ||
+                          canManageHREmployees ||
+                          canManageTeam) ...[
+                        const SizedBox(height: 16),
+                        _buildSectionHeader(
+                          context,
+                          AppStrings.vipAccount.tr(),
+                        ),
+                        if (isShop && canViewVault)
+                          SideNavBarActionNavTile(
+                            icon: Icons.account_balance_wallet_rounded,
+                            label: AppStrings.vaultTitle.tr(),
+                            tag: "VIP ✨",
+                            isSelected: cubit.currentIndex == 7,
+                            onTap: () => cubit.changeBottomNav(7),
+                          ),
+                        if (isShop && canViewInventory)
+                          SideNavBarActionNavTile(
+                            icon: Icons.inventory_2_rounded,
+                            label: AppStrings.inventoryManagementVIP.tr(),
+                            tag: "VIP ✨",
+                            badgeCount: cubit.lowStockCount,
+                            isSelected: cubit.currentIndex == 8,
+                            onTap: () => cubit.changeBottomNav(8),
+                          ),
+                        if (canManageHREmployees)
+                          SideNavBarActionNavTile(
+                            icon: Icons.badge_rounded,
+                            label: AppStrings.employeeManagement.tr(),
+                            tag: "VIP ✨",
+                            isSelected: cubit.currentIndex == 9,
+                            onTap: () => cubit.changeBottomNav(9),
+                          ),
+                        if (canManageTeam)
+                          SideNavBarActionNavTile(
+                            icon: Icons.admin_panel_settings_rounded,
+                            label: AppStrings.teamAndPermissions.tr(),
+                            tag: "VIP ✨",
+                            isSelected: cubit.currentIndex == 11,
+                            onTap: () => cubit.changeBottomNav(11),
+                          ),
                       ],
+                    ],
+
+                    const SizedBox(height: 16),
+                    _buildSectionHeader(context, AppStrings.other.tr()),
+                    _NavTile(
+                      index: 5,
+                      icon: Icons.grid_view_rounded,
+                      label: AppStrings.more.tr(),
+                      isSelected: cubit.currentIndex == 5,
+                      onTap: () => cubit.changeBottomNav(5),
                     ),
-                    child: Image.asset(
-                      Assets.imagesAppLogo,
-                      width: 40.w,
-                      height: 40.w,
-                    ),
-                  ),
-                ),
+                    if (canViewCustomers) ...[
+                      const SizedBox(height: 8),
+                      SideNavBarActionNavTile(
+                        icon: Icons.people_alt_rounded,
+                        label: AppStrings.myCustomers.tr(),
+                        isSelected: cubit.currentIndex == 6,
+                        onTap: () => cubit.changeBottomNav(6),
+                      ),
+                    ],
+                    if (canViewShipping && isShop) ...[
+                      const SizedBox(height: 8),
+                      SideNavBarActionNavTile(
+                        icon: Icons.local_shipping_rounded,
+                        label: AppStrings.shippingReportsReconciliationOffline
+                            .tr(),
+                        isSelected: cubit.currentIndex == 10,
+                        onTap: () => cubit.changeBottomNav(10),
+                      ),
+                    ],
 
-                // const SizedBox(width: 16),
-                // Expanded(
-                //   child: Column(
-                //     crossAxisAlignment: CrossAxisAlignment.start,
-                //     children: [
-                //       Text(
-                //         AppStrings.appName.tr(),
-                //         style: TextStyles.customStyle(
-                //           fontSize: 24,
-                //           fontWeight: FontWeight.bold,
-                //           color: AppColors.primaryColor,
-                //         ),
-                //       ),
-                //       Text(
-                //         "TAHSEL",
-                //         style: TextStyles.customStyle(
-                //           fontSize: 14,
-                //           fontWeight: FontWeight.w500,
-                //           color: AppColors.subTitleColor,
-                //           letterSpacing: 2.0,
-                //         ),
-                //       ),
-                //     ],
-                //   ),
-                // ),
-              ],
-            ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            ],
           ),
-
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
-            child: Divider(thickness: 1),
-          ),
-          const SizedBox(height: 24),
-
-          // Navigation Menu
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                _buildSectionHeader(context, AppStrings.mainMenu.tr()),
-                _NavTile(
-                  index: 0,
-                  icon: Icons.home_rounded,
-                  label: AppStrings.home.tr(),
-                  isSelected: cubit.currentIndex == 0,
-                  onTap: () => cubit.changeBottomNav(0),
-                ),
-                _NavTile(
-                  index: 1,
-                  icon: Icons.account_balance_wallet_rounded,
-                  label: AppStrings.allExpenses.tr(),
-                  isSelected: cubit.currentIndex == 1,
-                  onTap: () => cubit.changeBottomNav(1),
-                ),
-                _NavTile(
-                  index: 2,
-                  icon: Icons.people_alt_rounded,
-                  label: AppStrings.totalDebts.tr(),
-                  isSelected: cubit.currentIndex == 2,
-                  onTap: () => cubit.changeBottomNav(2),
-                ),
-                if (isShop)
-                  _NavTile(
-                    index: 3,
-                    icon: Icons.receipt_long_rounded,
-                    label: AppStrings.invoices.tr(),
-                    isSelected: cubit.currentIndex == 3,
-                    onTap: () => cubit.changeBottomNav(3),
-                  ),
-                _NavTile(
-                  index: 4,
-                  icon: Icons.bar_chart_rounded,
-                  label: AppStrings.reports.tr(),
-                  isSelected: cubit.currentIndex == 4,
-                  onTap: () => cubit.changeBottomNav(4),
-                ),
-                if ((!Platform.isIOS && isShop) ||
-                    (AppStrings.isVip && isShop)) ...[
-                  const SizedBox(height: 16),
-                  _buildSectionHeader(context, AppStrings.vipAccount.tr()),
-                  SideNavBarActionNavTile(
-                    icon: Icons.account_balance_wallet_rounded,
-                    label: AppStrings.vaultTitle.tr(),
-                    tag: "VIP ✨",
-                    isSelected: cubit.currentIndex == 7,
-                    onTap: () => cubit.changeBottomNav(7),
-                  ),
-                  SideNavBarActionNavTile(
-                    icon: Icons.inventory_2_rounded,
-                    label: AppStrings.inventoryManagementVIP.tr(),
-                    tag: "VIP ✨",
-                    badgeCount: cubit.lowStockCount,
-                    isSelected: cubit.currentIndex == 8,
-                    onTap: () => cubit.changeBottomNav(8),
-                  ),
-                ],
-                if (!Platform.isIOS || (AppStrings.isVip)) ...[
-                  if (!isShop) const SizedBox(height: 16),
-                  if (!isShop)
-                    _buildSectionHeader(context, AppStrings.vipAccount.tr()),
-                  SideNavBarActionNavTile(
-                    icon: Icons.badge_rounded,
-                    label: AppStrings.employeeManagement.tr(),
-                    tag: "VIP ✨",
-                    isSelected: cubit.currentIndex == 9,
-                    onTap: () => cubit.changeBottomNav(9),
-                  ),
-                ],
-
-                const SizedBox(height: 16),
-                _buildSectionHeader(context, AppStrings.other.tr()),
-                _NavTile(
-                  index: 5,
-                  icon: Icons.grid_view_rounded,
-                  label: AppStrings.more.tr(),
-                  isSelected: cubit.currentIndex == 5,
-                  onTap: () => cubit.changeBottomNav(5),
-                ),
-                const SizedBox(height: 8),
-                SideNavBarActionNavTile(
-                  icon: Icons.people_alt_rounded,
-                  label: AppStrings.myCustomers.tr(),
-                  isSelected: cubit.currentIndex == 6,
-                  onTap: () => cubit.changeBottomNav(6),
-                ),
-                if (isShop) const SizedBox(height: 8),
-                if (isShop)
-                  SideNavBarActionNavTile(
-                    icon: Icons.local_shipping_rounded,
-                    label: AppStrings.shippingReportsReconciliationOffline.tr(),
-                    isSelected: cubit.currentIndex == 10,
-                    onTap: () => cubit.changeBottomNav(10),
-                  ),
-
-                const SizedBox(height: 16),
-              ],
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 

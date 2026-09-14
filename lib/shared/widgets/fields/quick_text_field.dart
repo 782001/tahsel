@@ -25,6 +25,7 @@ class QuickAddTextField extends StatelessWidget {
   final bool enabled;
   final VoidCallback? onTap;
   final TextInputType? keyboardType;
+  final bool obscureText;
 
   final bool autofocus;
 
@@ -52,6 +53,7 @@ class QuickAddTextField extends StatelessWidget {
     this.enabled = true,
     this.onTap,
     this.keyboardType,
+    this.obscureText = false,
     this.autofocus = false,
   });
 
@@ -59,6 +61,7 @@ class QuickAddTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextFormField(
       autofocus: autofocus,
+      obscureText: obscureText,
       cursorColor: AppColors.primaryColor,
       controller: controller,
       focusNode: focusNode,
@@ -158,7 +161,7 @@ class QuickAddTextField extends StatelessWidget {
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (hasText && !readOnly)
+            if (hasText && !readOnly && !obscureText)
               IconButton(
                 icon: Icon(
                   Icons.clear_rounded,

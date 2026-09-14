@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -48,6 +50,17 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
     double totalRemaining,
     DebtEntity? debt,
   ) {
+    if (!PermissionService.instance.hasPermission(AppPermissions.customersSettleDebt)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          content: Text(AppStrings.noPermissionForAction.tr()),
+          backgroundColor: AppColors.orange,
+        ),
+      );
+      return;
+    }
+
     final cubit = context.read<DebtCubit>();
     showDialog(
       context: context,
@@ -64,6 +77,17 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
   }
 
   void _onPayFull(BuildContext context, DebtEntity debt) {
+    if (!PermissionService.instance.hasPermission(AppPermissions.customersSettleDebt)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          content: Text(AppStrings.noPermissionForAction.tr()),
+          backgroundColor: AppColors.orange,
+        ),
+      );
+      return;
+    }
+
     final currency = AppStrings.currencyEgp.tr();
     final itemDesc = (debt.productOrSessionDetails ?? '').trim().isNotEmpty
         ? debt.productOrSessionDetails!.trim()
@@ -154,6 +178,17 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
   }
 
   void _onDeleteDebt(BuildContext context, DebtEntity debt) {
+    if (!PermissionService.instance.hasPermission(AppPermissions.debtsDelete)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          content: Text(AppStrings.noPermissionForAction.tr()),
+          backgroundColor: AppColors.orange,
+        ),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (ctx) => Center(
@@ -451,6 +486,13 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
     DebtsFetchSuccess state,
   ) {
     final debtEntity = detail.items.first.entity;
+    final canSettle = PermissionService.instance.hasPermission(
+      AppPermissions.customersSettleDebt,
+    );
+    final canDelete = PermissionService.instance.hasPermission(
+      AppPermissions.debtsDelete,
+    );
+
     return CustomerDebtCard(
       customerName: detail.customerName,
       ledgerNumber: detail.ledgerNumber,
@@ -462,14 +504,38 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
       status: detail.status.tr(),
       statusColor: detail.statusColor,
       onTap: () => _navigateToDetail(context, detail),
-      onPartialPayment: () => _showPartialPaymentModal(
-        context,
-        detail.customerName,
-        detail.totalDebt,
-        debtEntity,
-      ),
-      onFullPayment: () => _onPayFull(context, debtEntity),
-      onDelete: () => _onDeleteDebt(context, debtEntity),
+      onPartialPayment: () {
+        if (!canSettle) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppStrings.noPermissionForAction.tr())),
+          );
+          return;
+        }
+        _showPartialPaymentModal(
+          context,
+          detail.customerName,
+          detail.totalDebt,
+          debtEntity,
+        );
+      },
+      onFullPayment: () {
+        if (!canSettle) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppStrings.noPermissionForAction.tr())),
+          );
+          return;
+        }
+        _onPayFull(context, debtEntity);
+      },
+      onDelete: () {
+        if (!canDelete) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppStrings.noPermissionForAction.tr())),
+          );
+          return;
+        }
+        _onDeleteDebt(context, debtEntity);
+      },
     );
   }
 

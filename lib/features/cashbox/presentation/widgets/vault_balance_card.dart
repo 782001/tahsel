@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
@@ -6,6 +6,9 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+
+import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 
 import '../../domain/entities/vault_summary_entity.dart';
 
@@ -23,6 +26,12 @@ class VaultBalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final permissions = PermissionService.instance;
+    final canViewBalance =
+        permissions.hasPermission(AppPermissions.vaultViewBalance);
+    final canDeposit = permissions.hasPermission(AppPermissions.vaultDeposit);
+    final canWithdraw = permissions.hasPermission(AppPermissions.vaultWithdraw);
+
     final isDesktop = ResponsiveLayout.isDesktop(context);
     final isNegative = summary.currentBalance < 0;
 
@@ -202,7 +211,9 @@ class VaultBalanceCard extends StatelessWidget {
                     ],
                     Expanded(
                       child: Text(
-                        '${summary.currentBalance.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                        canViewBalance
+                            ? '${summary.currentBalance.toSmartAmount()} ${AppStrings.currencyEgp.tr()}'
+                            : '••••••',
                         style: TextStyles.customStyle(
                           color: Colors.white,
                           fontSize: isDesktop ? 36 : 30,
@@ -213,69 +224,75 @@ class VaultBalanceCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                SizedBox(height: isDesktop ? 20 : 18.h),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: onDeposit,
-                        icon: Icon(
-                          Icons.add_circle_outline,
-                          color: buttonPrimaryColor,
-                        ),
-                        label: Text(
-                          AppStrings.manualDeposit.tr(),
-                          style: TextStyles.customStyle(
-                            color: buttonPrimaryColor,
-                            fontSize: isDesktop ? 14 : 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          elevation: 2,
-                          padding: EdgeInsets.symmetric(
-                            vertical: isDesktop ? 14 : 12.h,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.r),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: isDesktop ? 12 : 10.w),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: onWithdraw,
-                        icon: const Icon(
-                          Icons.remove_circle_outline,
-                          color: Colors.white,
-                        ),
-                        label: Text(
-                          AppStrings.manualWithdraw.tr(),
-                          style: TextStyles.customStyle(
-                            color: Colors.white,
-                            fontSize: isDesktop ? 14 : 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white.withValues(alpha: 0.25),
-                          elevation: 0,
-                          padding: EdgeInsets.symmetric(
-                            vertical: isDesktop ? 14 : 12.h,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.r),
-                            side: BorderSide(
-                              color: Colors.white.withValues(alpha: 0.4),
+                if (canDeposit || canWithdraw) ...[
+                  SizedBox(height: isDesktop ? 20 : 18.h),
+                  Row(
+                    children: [
+                      if (canDeposit)
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: onDeposit,
+                            icon: Icon(
+                              Icons.add_circle_outline,
+                              color: buttonPrimaryColor,
+                            ),
+                            label: Text(
+                              AppStrings.manualDeposit.tr(),
+                              style: TextStyles.customStyle(
+                                color: buttonPrimaryColor,
+                                fontSize: isDesktop ? 14 : 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              elevation: 2,
+                              padding: EdgeInsets.symmetric(
+                                vertical: isDesktop ? 14 : 12.h,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.r),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                  ],
-                ),
+                      if (canDeposit && canWithdraw)
+                        SizedBox(width: isDesktop ? 12 : 10.w),
+                      if (canWithdraw)
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: onWithdraw,
+                            icon: const Icon(
+                              Icons.remove_circle_outline,
+                              color: Colors.white,
+                            ),
+                            label: Text(
+                              AppStrings.manualWithdraw.tr(),
+                              style: TextStyles.customStyle(
+                                color: Colors.white,
+                                fontSize: isDesktop ? 14 : 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  Colors.white.withValues(alpha: 0.25),
+                              elevation: 0,
+                              padding: EdgeInsets.symmetric(
+                                vertical: isDesktop ? 14 : 12.h,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.r),
+                                side: BorderSide(
+                                  color: Colors.white.withValues(alpha: 0.4),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),

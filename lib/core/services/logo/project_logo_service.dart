@@ -1,10 +1,11 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 
 /// Service for managing the business/project logo locally on device per user account (UID).
 /// It provides zero-cost, instant offline loading without syncing to Firebase Storage.
@@ -33,8 +34,10 @@ class ProjectLogoService {
     });
   }
 
-  /// Get current user UID
-  String? get _currentUid => FirebaseAuth.instance.currentUser?.uid;
+  /// Get current store UID (ownerUid for employee or user.uid for owner)
+  String? get _currentUid => AppStrings.userToken.isNotEmpty
+      ? AppStrings.userToken
+      : FirebaseAuth.instance.currentUser?.uid;
 
   /// Refresh the active logo notifier for the given [uid] or the current user.
   Future<void> refreshCurrentLogo({String? uid}) async {

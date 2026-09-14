@@ -63,7 +63,7 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
                   if (!isDesktop && cubit.currentIndex >= 6) {
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       if (cubit.currentIndex >= 6) {
-                        cubit.changeBottomNav(0);
+                        cubit.changeBottomNav(cubit.firstAllowedIndex);
                       }
                     });
                   }
@@ -73,8 +73,9 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
                     onPopInvokedWithResult: (didPop, result) async {
                       if (didPop) return;
 
-                      if (cubit.currentIndex != 0) {
-                        cubit.changeBottomNav(0);
+                      final defaultLanding = cubit.firstAllowedIndex;
+                      if (cubit.currentIndex != defaultLanding) {
+                        cubit.changeBottomNav(defaultLanding);
                         return;
                       }
 

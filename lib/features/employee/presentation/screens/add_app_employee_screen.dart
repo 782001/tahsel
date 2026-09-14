@@ -1,0 +1,802 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
+import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/shared/widgets/custom_app_bar/custom_app_bar.dart';
+import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
+
+import '../cubit/team_management_cubit.dart';
+
+class AddAppEmployeeScreen extends StatefulWidget {
+  final TeamManagementCubit cubit;
+
+  const AddAppEmployeeScreen({super.key, required this.cubit});
+
+  static Future<void> push(BuildContext context, TeamManagementCubit cubit) {
+    return Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddAppEmployeeScreen(cubit: cubit),
+      ),
+    );
+  }
+
+  @override
+  State<AddAppEmployeeScreen> createState() => _AddAppEmployeeScreenState();
+}
+
+class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  bool _obscurePassword = true;
+  String _selectedPreset = AppPermissions.roleCashier;
+  late final Set<String> _selectedPermissions;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedPermissions = Set.from(
+      AppPermissions.permissionsForPreset(_selectedPreset),
+    );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _applyPreset(String preset) {
+    setState(() {
+      _selectedPreset = preset;
+      if (preset != AppPermissions.roleCustom) {
+        _selectedPermissions.clear();
+        _selectedPermissions.addAll(
+          AppPermissions.permissionsForPreset(preset),
+        );
+      }
+    });
+  }
+
+  void _togglePermission(String key) {
+    setState(() {
+      if (_selectedPermissions.contains(key)) {
+        _selectedPermissions.remove(key);
+      } else {
+        _selectedPermissions.add(key);
+      }
+      _selectedPreset = AppPermissions.roleCustom;
+    });
+  }
+
+  void _selectAll() {
+    setState(() {
+      for (final group in AppPermissions.allGroups) {
+        for (final item in group.items) {
+          if (!PermissionService.instance.isOwner) {
+            if (item.key == AppPermissions.employeesManageAppUsers) continue;
+            if (!PermissionService.instance.hasPermission(item.key)) continue;
+          }
+          _selectedPermissions.add(item.key);
+        }
+      }
+      _selectedPreset = AppPermissions.roleCustom;
+    });
+  }
+
+  void _deselectAll() {
+    setState(() {
+      _selectedPermissions.clear();
+      _selectedPreset = AppPermissions.roleCustom;
+    });
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (_selectedPermissions.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppStrings.selectAtLeastOnePermission.tr(),
+            style: TextStyles.customStyle(color: AppColors.white),
+          ),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final success = await widget.cubit.addEmployee(
+      name: _nameController.text.trim(),
+      email: _emailController.text.trim().toLowerCase(),
+      password: _passwordController.text.trim(),
+      rolePreset: _selectedPreset,
+      permissions: _selectedPermissions.toList(),
+    );
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+      if (success) {
+        Navigator.of(context).pop();
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
+
+    return BlocProvider.value(
+      value: widget.cubit,
+      child: Scaffold(
+        backgroundColor: AppColors.scafoldBackGround,
+        appBar: CustomAppBar(
+          centerTitle: AppStrings.addAppEmployee.tr(),
+          leadingIcon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onLeadingTap: () => Navigator.pop(context),
+          actions: [
+            Padding(
+              padding: EdgeInsetsDirectional.only(end: 14.w),
+              child: Center(
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 9.w,
+                    vertical: 4.h,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [AppColors.vipGoldStart, AppColors.vipGoldEnd],
+                    ),
+                    borderRadius: BorderRadius.circular(12.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.vipGoldStart.withValues(alpha: 0.4),
+                        blurRadius: 6,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.workspace_premium_rounded,
+                        size: 14,
+                        color: Colors.black87,
+                      ),
+                      SizedBox(width: 3.w),
+                      Text(
+                        'VIP',
+                        style: TextStyles.customStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        body: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: isDesktop ? 800 : double.infinity,
+            ),
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isDesktop ? 28.w : 16.w,
+                  vertical: isDesktop ? 20.h : 16.h,
+                ),
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  // Hero Header Card
+                  _buildHeroHeader(isDesktop),
+                  SizedBox(height: 16.h),
+
+                  // Basic Info Section
+                  _buildSectionCard(
+                    title: 'البيانات الأساسية للموظف',
+                    icon: Icons.person_outline_rounded,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${AppStrings.employeeNameField.tr()} *',
+                          style: TextStyles.customStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.black,
+                          ),
+                        ),
+                        SizedBox(height: 6.h),
+                        QuickAddTextField(
+                          hint: AppStrings.employeeNameHint.tr(),
+                          controller: _nameController,
+                          icon: Icons.badge_outlined,
+                          textInputAction: TextInputAction.next,
+                          validator: (val) {
+                            if (val == null || val.trim().isEmpty) {
+                              return AppStrings.employeeNameRequired.tr();
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 14.h),
+
+                        Text(
+                          '${AppStrings.employeeEmail.tr()} *',
+                          style: TextStyles.customStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.black,
+                          ),
+                        ),
+                        SizedBox(height: 6.h),
+                        QuickAddTextField(
+                          hint: 'employee@example.com',
+                          controller: _emailController,
+                          icon: Icons.email_outlined,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          validator: (val) {
+                            if (val == null || val.trim().isEmpty) {
+                              return AppStrings.employeeEmailRequired.tr();
+                            }
+                            if (!val.trim().isValidEmail()) {
+                              return AppStrings.emailFormatInvalid.tr();
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 14.h),
+
+                        Text(
+                          '${AppStrings.temporaryPassword.tr()} *',
+                          style: TextStyles.customStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.black,
+                          ),
+                        ),
+                        SizedBox(height: 6.h),
+                        QuickAddTextField(
+                          hint: AppStrings.passwordMinLengthHint.tr(),
+                          controller: _passwordController,
+                          icon: Icons.lock_outline_rounded,
+                          obscureText: _obscurePassword,
+                          suffixIcon: _obscurePassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          onSuffixIconPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                          validator: (val) {
+                            if (val == null || val.trim().isEmpty) {
+                              return AppStrings.passwordRequired.tr();
+                            }
+                            if (val.trim().length < 6) {
+                              return AppStrings.passwordMinLengthHint.tr();
+                            }
+                            return null;
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+
+                  // Role Presets Section
+                  _buildSectionCard(
+                    title: AppStrings.rolePreset.tr(),
+                    icon: Icons.tune_rounded,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'اختر قالب صلاحيات جاهز لتطبيقه بنقرة واحدة، أو خصص الصلاحيات كما يناسبك:',
+                          style: TextStyles.customStyle(
+                            fontSize: 12,
+                            color: AppColors.sandText,
+                          ),
+                        ),
+                        SizedBox(height: 12.h),
+                        Wrap(
+                          spacing: 8.w,
+                          runSpacing: 8.h,
+                          children: [
+                            _buildPresetChip(
+                              AppPermissions.roleCashier,
+                              AppStrings.roleCashierLabel.tr(),
+                              Icons.point_of_sale_rounded,
+                            ),
+                            _buildPresetChip(
+                              AppPermissions.roleStorekeeper,
+                              AppStrings.roleStorekeeperLabel.tr(),
+                              Icons.inventory_2_outlined,
+                            ),
+                            _buildPresetChip(
+                              AppPermissions.roleAccountant,
+                              AppStrings.roleAccountantLabel.tr(),
+                              Icons.calculate_outlined,
+                            ),
+                            _buildPresetChip(
+                              AppPermissions.roleSupervisor,
+                              AppStrings.roleSupervisorLabel.tr(),
+                              Icons.admin_panel_settings_outlined,
+                            ),
+                            _buildPresetChip(
+                              AppPermissions.roleCustom,
+                              AppStrings.roleCustomLabel.tr(),
+                              Icons.tune_rounded,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+
+                  // Granular Permissions Section
+                  _buildSectionCard(
+                    title:
+                        '${AppStrings.grantedPermissions.tr()} (${_selectedPermissions.length})',
+                    icon: Icons.security_rounded,
+                    headerTrailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextButton(
+                          onPressed: _selectAll,
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isDesktop ? 12 : 8.w,
+                            ),
+                          ),
+                          child: Text(
+                            AppStrings.selectAll.tr(),
+                            style: TextStyles.customStyle(
+                              fontSize: 12,
+                              color: AppColors.primaryColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: _deselectAll,
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isDesktop ? 12 : 8.w,
+                            ),
+                          ),
+                          child: Text(
+                            AppStrings.deselectAll.tr(),
+                            style: TextStyles.customStyle(
+                              fontSize: 12,
+                              color: AppColors.error,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: AppPermissions.allGroups
+                          .where((group) {
+                            if (PermissionService.instance.isOwner) {
+                              return true;
+                            }
+                            return group.items.any(
+                              (item) =>
+                                  item.key !=
+                                      AppPermissions.employeesManageAppUsers &&
+                                  PermissionService.instance.hasPermission(
+                                    item.key,
+                                  ),
+                            );
+                          })
+                          .map((group) {
+                            final visibleItems = group.items.where((item) {
+                              if (PermissionService.instance.isOwner) {
+                                return true;
+                              }
+                              return item.key !=
+                                      AppPermissions.employeesManageAppUsers &&
+                                  PermissionService.instance.hasPermission(
+                                    item.key,
+                                  );
+                            }).toList();
+                            final groupItemsCount = visibleItems.length;
+                            final activeInGroup = visibleItems
+                                .where(
+                                  (item) =>
+                                      _selectedPermissions.contains(item.key),
+                                )
+                                .length;
+
+                            return Container(
+                              margin: EdgeInsets.only(bottom: 10.h),
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                borderRadius: BorderRadius.circular(14.r),
+                                border: Border.all(
+                                  color: activeInGroup > 0
+                                      ? AppColors.primaryColor.withValues(
+                                          alpha: 0.35,
+                                        )
+                                      : AppColors.lightGreyColor.withValues(
+                                          alpha: 0.7,
+                                        ),
+                                  width: activeInGroup > 0 ? 1.5 : 1,
+                                ),
+                              ),
+                              child: Theme(
+                                data: Theme.of(
+                                  context,
+                                ).copyWith(dividerColor: Colors.transparent),
+                                child: ExpansionTile(
+                                  leading: Container(
+                                    padding: EdgeInsets.all(6.r),
+                                    decoration: BoxDecoration(
+                                      color: activeInGroup > 0
+                                          ? AppColors.primaryColor.withValues(
+                                              alpha: 0.12,
+                                            )
+                                          : AppColors.lightGreyColor.withValues(
+                                              alpha: 0.3,
+                                            ),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      activeInGroup > 0
+                                          ? Icons.check_circle_rounded
+                                          : Icons.circle_outlined,
+                                      color: activeInGroup > 0
+                                          ? AppColors.primaryColor
+                                          : AppColors.disabledColor,
+                                      size: 18,
+                                    ),
+                                  ),
+                                  title: Text(
+                                    group.titleKey.tr(),
+                                    style: TextStyles.customStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.black,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    '$activeInGroup / $groupItemsCount ${AppStrings.permissionsCount.tr()}',
+                                    style: TextStyles.customStyle(
+                                      fontSize: 11,
+                                      color: activeInGroup > 0
+                                          ? AppColors.primaryColor
+                                          : AppColors.sandText,
+                                      fontWeight: activeInGroup > 0
+                                          ? FontWeight.w600
+                                          : FontWeight.normal,
+                                    ),
+                                  ),
+                                  children: visibleItems.map((item) {
+                                    final isChecked = _selectedPermissions
+                                        .contains(item.key);
+                                    return CheckboxListTile(
+                                      value: isChecked,
+                                      onChanged: (_) =>
+                                          _togglePermission(item.key),
+                                      title: Text(
+                                        item.labelKey.tr(),
+                                        style: TextStyles.customStyle(
+                                          fontSize: 13,
+                                          fontWeight: isChecked
+                                              ? FontWeight.w600
+                                              : FontWeight.normal,
+                                          color: isChecked
+                                              ? AppColors.black
+                                              : AppColors.blackLight,
+                                        ),
+                                      ),
+                                      activeColor: AppColors.primaryColor,
+                                      dense: true,
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 16.w,
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                            );
+                          })
+                          .toList(),
+                    ),
+                  ),
+                  SizedBox(height: 24.h),
+
+                  // Actions
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _isLoading
+                              ? null
+                              : () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(
+                              vertical: isDesktop ? 16.h : 14.h,
+                            ),
+                            side: BorderSide(
+                              color: AppColors.lightGreyColor,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14.r),
+                            ),
+                          ),
+                          child: Text(
+                            AppStrings.cancel.tr(),
+                            style: TextStyles.customStyle(
+                              fontSize: 14,
+                              color: AppColors.sandText,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 14.w),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _submit,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryColor,
+                            padding: EdgeInsets.symmetric(
+                              vertical: isDesktop ? 16.h : 14.h,
+                            ),
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14.r),
+                            ),
+                          ),
+                          child: _isLoading
+                              ? SizedBox(
+                                  height: 22.h,
+                                  width: 22.h,
+                                  child: const CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2.2,
+                                  ),
+                                )
+                              : FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(
+                                        Icons.person_add_alt_1_rounded,
+                                        color: Colors.white,
+                                        size: 18,
+                                      ),
+                                      SizedBox(width: 8.w),
+                                      Text(
+                                        AppStrings.saveAndActivateAccount.tr(),
+                                        style: TextStyles.customStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 30.h),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeroHeader(bool isDesktop) {
+    return Container(
+      padding: EdgeInsets.all(isDesktop ? 20.r : 16.r),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primaryColor.withValues(alpha: 0.08),
+            AppColors.primaryColor.withValues(alpha: 0.02),
+          ],
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
+        ),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: AppColors.primaryColor.withValues(alpha: 0.15),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(12.r),
+            decoration: BoxDecoration(
+              color: AppColors.primaryColor.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.group_add_rounded,
+              color: AppColors.primaryColor,
+              size: 26,
+            ),
+          ),
+          SizedBox(width: 14.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'إضافة عضو جديد لمنظومة العمل',
+                  style: TextStyles.customStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.black,
+                  ),
+                ),
+                SizedBox(height: 3.h),
+                Text(
+                  'أنشئ حساباً لموظفك مع تحديد الصلاحيات المناسبة لمهامه فوراً وبأمان كامل.',
+                  style: TextStyles.customStyle(
+                    fontSize: 12,
+                    color: AppColors.sandText,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionCard({
+    required String title,
+    required IconData icon,
+    required Widget child,
+    Widget? headerTrailing,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(16.r),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: AppColors.lightGreyColor.withValues(alpha: 0.6),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (headerTrailing != null)
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8.w,
+              runSpacing: 6.h,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(6.r),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Icon(icon, size: 18, color: AppColors.primaryColor),
+                    ),
+                    SizedBox(width: 10.w),
+                    Text(
+                      title,
+                      style: TextStyles.customStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.black,
+                      ),
+                    ),
+                  ],
+                ),
+                headerTrailing,
+              ],
+            )
+          else
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(6.r),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Icon(icon, size: 18, color: AppColors.primaryColor),
+                ),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyles.customStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.black,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          Divider(height: 22.h, color: AppColors.lightGreyColor.withValues(alpha: 0.7)),
+          child,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPresetChip(String presetKey, String label, IconData icon) {
+    final isSelected = _selectedPreset == presetKey;
+    return ChoiceChip(
+      showCheckmark: false,
+      avatar: Icon(
+        icon,
+        size: 16,
+        color: isSelected ? Colors.white : AppColors.primaryColor,
+      ),
+      label: Text(
+        label,
+        style: TextStyles.customStyle(
+          fontSize: 12,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          color: isSelected ? Colors.white : AppColors.black,
+        ),
+      ),
+      selected: isSelected,
+      selectedColor: AppColors.primaryColor,
+      backgroundColor: AppColors.surface,
+      onSelected: (_) => _applyPreset(presetKey),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10.r),
+        side: BorderSide(
+          color: isSelected ? AppColors.primaryColor : AppColors.lightGreyColor,
+        ),
+      ),
+    );
+  }
+}

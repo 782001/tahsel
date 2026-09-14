@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/storage/cashhelper.dart';
 import 'package:tahsel/core/storage/secure_storage_helper.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/expenses/presentation/screens/expenses_screen.dart';
@@ -24,6 +26,8 @@ import 'package:tahsel/features/inventory/presentation/screens/inventory_main_sc
 import 'package:tahsel/features/reports/presentation/screens/reports_screen.dart';
 import 'package:tahsel/features/settings/presentation/screens/more_screen.dart';
 import 'package:tahsel/features/shipping_reconciliation/presentation/screens/shipping_reconciliation_screen.dart';
+import 'package:tahsel/features/employee/presentation/cubit/team_management_cubit.dart';
+import 'package:tahsel/features/employee/presentation/screens/team_management_screen.dart';
 
 class MainLayoutCubit extends Cubit<MainLayoutState> {
   final CleanupOldReportsUseCase cleanupOldReportsUseCase;
@@ -52,6 +56,68 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
       _initCleanup();
     }
     loadLowStockCount();
+    _ensureValidInitialIndex();
+  }
+
+  void _ensureValidInitialIndex() {
+    if (!isIndexAllowed(currentIndex)) {
+      final safeIndex = firstAllowedIndex;
+      currentIndex = safeIndex;
+      emit(MainLayoutChangeBottomNavIndex(currentIndex));
+      AppLogger.printMessage(
+        '[MainLayoutCubit] Initialized landing tab to index $safeIndex based on RBAC permissions.',
+      );
+    }
+  }
+
+  bool isIndexAllowed(int index) {
+    final permissions = PermissionService.instance;
+    if (permissions.isOwner) return true;
+
+    switch (index) {
+      case 0:
+        return permissions.hasPermission(AppPermissions.posAccess);
+      case 1:
+        return permissions.hasPermission(AppPermissions.expensesView);
+      case 2:
+        return permissions.hasPermission(AppPermissions.customersView) ||
+            permissions.hasPermission(AppPermissions.myDebtsView);
+      case 3:
+        return isShop && permissions.hasPermission(AppPermissions.invoicesView);
+      case 4:
+        return permissions.hasPermission(AppPermissions.reportsViewSales) ||
+            permissions.hasPermission(AppPermissions.reportsViewNetProfit);
+      case 5:
+        return true; // MoreScreen / Settings is always accessible
+      case 6:
+        return permissions.hasPermission(AppPermissions.customersView);
+      case 7:
+        return permissions.hasPermission(AppPermissions.vaultAccess);
+      case 8:
+        return permissions.hasPermission(AppPermissions.inventoryView);
+      case 9:
+        return permissions.hasPermission(AppPermissions.hrEmployeesManage);
+      case 10:
+        return isShop &&
+            permissions.hasPermission(AppPermissions.shippingReconciliationView);
+      case 11:
+        return permissions.hasPermission(AppPermissions.teamManage);
+      default:
+        return false;
+    }
+  }
+
+  int get firstAllowedIndex {
+    for (int i = 0; i <= 4; i++) {
+      if (isIndexAllowed(i)) return i;
+    }
+    if (isIndexAllowed(8)) return 8;
+    if (isIndexAllowed(7)) return 7;
+    if (isIndexAllowed(9)) return 9;
+    if (isIndexAllowed(11)) return 11;
+    if (isIndexAllowed(6)) return 6;
+    if (isIndexAllowed(10)) return 10;
+    return 5;
   }
 
   int lowStockCount = 0;
@@ -125,9 +191,19 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
       child: const EmployeeListScreen(),
     ),
     const ShippingReconciliationScreen(),
+    BlocProvider(
+      create: (_) => sl<TeamManagementCubit>(),
+      child: const TeamManagementScreen(),
+    ),
   ];
 
   void changeBottomNav(int index) {
+    if (!isIndexAllowed(index)) {
+      AppLogger.printMessage(
+        '[MainLayoutCubit] Access to tab $index denied by RBAC.',
+      );
+      return;
+    }
     currentIndex = index;
     emit(MainLayoutChangeBottomNavIndex(currentIndex));
     if (index == 5 || index == 8) {

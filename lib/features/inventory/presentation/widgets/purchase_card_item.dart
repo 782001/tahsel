@@ -1,10 +1,12 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -208,61 +210,63 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
                       ],
                     ),
                   ),
-                  const PopupMenuDivider(),
-                  PopupMenuItem(
-                    value: 'reorder',
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.replay_rounded,
-                          color: AppColors.actionButton,
-                          size: 18,
-                        ),
-                        SizedBox(width: 8.w),
-                        Text(
-                          AppStrings.reorderPurchaseInvoice.tr(),
-                          style: TextStyles.customStyle(fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem(
-                    value: 'edit',
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.edit_note,
-                          color: AppColors.primaryColor,
-                          size: 18,
-                        ),
-                        SizedBox(width: 8.w),
-                        Text(
-                          AppStrings.edit.tr(),
-                          style: TextStyles.customStyle(fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.delete_outline_rounded,
-                          color: AppColors.error,
-                          size: 18,
-                        ),
-                        SizedBox(width: 8.w),
-                        Text(
-                          AppStrings.confirmDelete.tr(),
-                          style: TextStyles.customStyle(
-                            fontSize: 13,
-                            color: AppColors.error,
+                  if (PermissionService.instance.hasPermission(AppPermissions.inventoryPurchases)) ...[
+                    const PopupMenuDivider(),
+                    PopupMenuItem(
+                      value: 'reorder',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.replay_rounded,
+                            color: AppColors.actionButton,
+                            size: 18,
                           ),
-                        ),
-                      ],
+                          SizedBox(width: 8.w),
+                          Text(
+                            AppStrings.reorderPurchaseInvoice.tr(),
+                            style: TextStyles.customStyle(fontSize: 13),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                    PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.edit_note,
+                            color: AppColors.primaryColor,
+                            size: 18,
+                          ),
+                          SizedBox(width: 8.w),
+                          Text(
+                            AppStrings.edit.tr(),
+                            style: TextStyles.customStyle(fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.delete_outline_rounded,
+                            color: AppColors.error,
+                            size: 18,
+                          ),
+                          SizedBox(width: 8.w),
+                          Text(
+                            AppStrings.confirmDelete.tr(),
+                            style: TextStyles.customStyle(
+                              fontSize: 13,
+                              color: AppColors.error,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ],

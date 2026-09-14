@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -17,11 +17,11 @@ class BusinessProfileService {
   /// Returns the in-memory cached profile if available (synchronous)
   UserProfileModel? get cachedProfile => _cachedProfile;
 
-  /// Returns the current user's UID from FirebaseAuth or AppStrings
+  /// Returns the current store's UID (ownerUid for employee or user.uid for owner)
   String? get currentUid {
+    if (AppStrings.userToken.isNotEmpty) return AppStrings.userToken;
     final authUid = FirebaseAuth.instance.currentUser?.uid;
     if (authUid != null && authUid.isNotEmpty) return authUid;
-    if (AppStrings.userToken.isNotEmpty) return AppStrings.userToken;
     return null;
   }
 

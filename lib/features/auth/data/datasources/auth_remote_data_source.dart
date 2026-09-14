@@ -98,6 +98,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSourceBase {
         final address = data['address'] as String?;
         final vat = data['vat'] as String?;
         final taxRate = (data['taxRate'] as num?)?.toDouble();
+        final role = (data['role'] as String?) ?? 'owner';
+        final permissions = (data['permissions'] as List?)?.cast<String>() ??
+            (role == 'owner' ? const ['*'] : const <String>[]);
+        final ownerUid = data['ownerUid'] as String?;
+        final isEmployee = (role == 'employee') ||
+            (ownerUid != null && ownerUid.isNotEmpty);
 
         return UserModel.fromFirebaseUser(
           userCredential.user!,
@@ -111,6 +117,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSourceBase {
           address: address,
           vat: vat,
           taxRate: taxRate,
+          role: role,
+          permissions: permissions,
+          ownerUid: ownerUid,
+          isEmployee: isEmployee,
         );
       } else {
         throw Exception('User not found');

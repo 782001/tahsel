@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
@@ -16,6 +16,8 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/utils/summary_helper.dart';
 import 'package:tahsel/core/utils/vault_balance_helper.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/widgets/permission_guard.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/cashbox/data/datasources/vault_remote_data_source.dart';
 import 'package:tahsel/features/cashbox/domain/entities/vault_transaction_entity.dart';
@@ -928,107 +930,113 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
               ),
               actions: [
                 // Print Invoice / Quotation
-                IconButton(
-                  icon: Icon(
-                    Icons.print_rounded,
-                    color: AppColors.primaryColor,
-                  ),
-                  tooltip: _invoice.isQuotation
-                      ? AppStrings.printQuotation.tr()
-                      : AppStrings.printInvoice.tr(),
-                  onPressed: () async {
-                    try {
-                      final isArabic = AppStrings.currentLang == 'ar';
-                      await InvoicePdfService.printInvoice(
-                        context,
-                        _invoice,
-                        isArabic: isArabic,
-                      );
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(e.toString()),
-                            backgroundColor: AppColors.error,
-                          ),
+                PermissionGuard(
+                  permission: AppPermissions.invoicesPrintShare,
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.print_rounded,
+                      color: AppColors.primaryColor,
+                    ),
+                    tooltip: _invoice.isQuotation
+                        ? AppStrings.printQuotation.tr()
+                        : AppStrings.printInvoice.tr(),
+                    onPressed: () async {
+                      try {
+                        final isArabic = AppStrings.currentLang == 'ar';
+                        await InvoicePdfService.printInvoice(
+                          context,
+                          _invoice,
+                          isArabic: isArabic,
                         );
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(e.toString()),
+                              backgroundColor: AppColors.error,
+                            ),
+                          );
+                        }
                       }
-                    }
-                  },
+                    },
+                  ),
                 ),
                 // Share as PDF
-                IconButton(
-                  icon: Icon(
-                    Icons.picture_as_pdf_rounded,
-                    color: isDisconnected
-                        ? AppColors.disabledColor
-                        : AppColors.primaryColor,
-                  ),
-                  tooltip: _invoice.isQuotation
-                      ? AppStrings.shareQuotationPdf.tr()
-                      : AppStrings.invoiceSharePdf.tr(),
-                  onPressed: () async {
-                    if (isDisconnected) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(AppStrings.noInternetConnection.tr()),
-                          backgroundColor: AppColors.error,
-                        ),
-                      );
-                      return;
-                    }
-
-                    String? phone = _invoice.customerPhone;
-                    if (!kIsWeb && Platform.isAndroid) {
-                      if (phone == null || phone.isEmpty) {
-                        final result = await PhoneInputSheet.show(context);
-                        if (result == null) return;
-                        phone = result;
-
-                        if (_invoice.customerName != null) {
-                          try {
-                            di.sl<CustomerCubit>().updateCustomerPhone(
-                              AppStrings.userToken,
-                              _invoice.customerName!,
-                              phone,
-                            );
-                          } catch (e) {
-                            AppLogger.printMessage(
-                              'Failed to update customer phone: $e',
-                            );
-                          }
-                        }
-
-                        // Save the phone number to the invoice document
-                        // ignore: use_build_context_synchronously
-                        context.read<InvoiceCubit>().updateInvoice(
-                          _invoice.copyWith(customerPhone: phone),
-                          previous: _invoice,
-                        );
-                      }
-                    }
-
-                    try {
-                      final isArabic = AppStrings.currentLang == 'ar';
-                      await InvoicePdfService.generateAndShareInvoice(
-                        _invoice,
-                        isArabic: isArabic,
-                        phoneNumber: phone,
-                      );
-                    } catch (e) {
-                      if (context.mounted) {
-                        AppLogger.printMessage(
-                          'Failed to generate and share invoice: $e',
-                        );
+                PermissionGuard(
+                  permission: AppPermissions.invoicesPrintShare,
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.picture_as_pdf_rounded,
+                      color: isDisconnected
+                          ? AppColors.disabledColor
+                          : AppColors.primaryColor,
+                    ),
+                    tooltip: _invoice.isQuotation
+                        ? AppStrings.shareQuotationPdf.tr()
+                        : AppStrings.invoiceSharePdf.tr(),
+                    onPressed: () async {
+                      if (isDisconnected) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(e.toString()),
+                            content: Text(AppStrings.noInternetConnection.tr()),
                             backgroundColor: AppColors.error,
                           ),
                         );
+                        return;
                       }
-                    }
-                  },
+
+                      String? phone = _invoice.customerPhone;
+                      if (!kIsWeb && Platform.isAndroid) {
+                        if (phone == null || phone.isEmpty) {
+                          final result = await PhoneInputSheet.show(context);
+                          if (result == null) return;
+                          phone = result;
+
+                          if (_invoice.customerName != null) {
+                            try {
+                              di.sl<CustomerCubit>().updateCustomerPhone(
+                                AppStrings.userToken,
+                                _invoice.customerName!,
+                                phone,
+                              );
+                            } catch (e) {
+                              AppLogger.printMessage(
+                                'Failed to update customer phone: $e',
+                              );
+                            }
+                          }
+
+                          // Save the phone number to the invoice document
+                          // ignore: use_build_context_synchronously
+                          context.read<InvoiceCubit>().updateInvoice(
+                            _invoice.copyWith(customerPhone: phone),
+                            previous: _invoice,
+                          );
+                        }
+                      }
+
+                      try {
+                        final isArabic = AppStrings.currentLang == 'ar';
+                        await InvoicePdfService.generateAndShareInvoice(
+                          _invoice,
+                          isArabic: isArabic,
+                          phoneNumber: phone,
+                        );
+                      } catch (e) {
+                        if (context.mounted) {
+                          AppLogger.printMessage(
+                            'Failed to generate and share invoice: $e',
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(e.toString()),
+                              backgroundColor: AppColors.error,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  ),
                 ),
                 // Edit — only for non-voided invoices
                 if (_invoice.status != InvoiceStatus.voided)
@@ -1656,13 +1664,17 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                               InvoiceStatus.paid &&
                                           _invoice.status !=
                                               InvoiceStatus.voided)
-                                        RecordPaymentButton(
-                                          onTap: isLoading
-                                              ? null
-                                              : () => _showRecordPaymentSheet(
-                                                  context,
-                                                  true,
-                                                ),
+                                        PermissionGuard(
+                                          permission:
+                                              AppPermissions.invoicesRecordPayment,
+                                          child: RecordPaymentButton(
+                                            onTap: isLoading
+                                                ? null
+                                                : () => _showRecordPaymentSheet(
+                                                    context,
+                                                    true,
+                                                  ),
+                                          ),
                                         ),
 
                                       const SizedBox(height: 40),

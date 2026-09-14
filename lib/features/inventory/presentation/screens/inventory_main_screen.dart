@@ -1,7 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -512,13 +514,14 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
   }
 
   Widget _buildModulesGrid(BuildContext context, bool isDesktop) {
-    final modules = [
+    final allModules = [
       _InventoryModuleItem(
         title: AppStrings.inventoryProducts.tr(),
         subtitle: AppStrings.inventoryManagementVIPDesc.tr(),
         icon: Icons.shopping_bag_rounded,
         color: AppColors.primaryColor,
         route: AppRoutes.inventoryProducts,
+        permission: AppPermissions.inventoryManageProducts,
       ),
       _InventoryModuleItem(
         title: AppStrings.inventoryCategories.tr(),
@@ -526,6 +529,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
         icon: Icons.category_rounded,
         color: AppColors.inventoryCategoryBrown,
         route: AppRoutes.inventoryCategories,
+        permission: AppPermissions.inventoryManageCategories,
       ),
       _InventoryModuleItem(
         title: AppStrings.inventorySuppliers.tr(),
@@ -533,6 +537,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
         icon: Icons.local_shipping_rounded,
         color: AppColors.inventorySupplierTeal,
         route: AppRoutes.inventorySuppliers,
+        permission: AppPermissions.inventoryManageSuppliers,
       ),
       _InventoryModuleItem(
         title: AppStrings.inventoryPurchases.tr(),
@@ -540,6 +545,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
         icon: Icons.receipt_long_rounded,
         color: AppColors.inventoryPurchasePurple,
         route: AppRoutes.inventoryPurchases,
+        permission: AppPermissions.inventoryPurchases,
       ),
       _InventoryModuleItem(
         title: AppStrings.inventoryStockMovements.tr(),
@@ -547,6 +553,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
         icon: Icons.history_rounded,
         color: AppColors.error,
         route: AppRoutes.inventoryStockMovements,
+        permission: AppPermissions.inventoryStockAdjustments,
       ),
       _InventoryModuleItem(
         title: AppStrings.inventoryAnalytics.tr(),
@@ -554,8 +561,27 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
         icon: Icons.analytics_rounded,
         color: AppColors.creditAmberStart,
         route: AppRoutes.inventoryAnalytics,
+        permission: AppPermissions.inventoryAnalytics,
       ),
     ];
+
+    final modules = allModules.where((m) =>
+      m.permission == null || PermissionService.instance.hasPermission(m.permission!)
+    ).toList();
+
+    if (modules.isEmpty) {
+      return Container(
+        padding: EdgeInsets.all(24.r),
+        alignment: Alignment.center,
+        child: Text(
+          AppStrings.noPermission.tr(),
+          style: TextStyles.customStyle(
+            fontSize: 14,
+            color: AppColors.sandText,
+          ),
+        ),
+      );
+    }
 
     final int columns = isDesktop ? 3 : 2;
     final List<Widget> rows = [];
@@ -677,6 +703,7 @@ class _InventoryModuleItem {
   final IconData icon;
   final Color color;
   final String route;
+  final String? permission;
 
   const _InventoryModuleItem({
     required this.title,
@@ -684,5 +711,6 @@ class _InventoryModuleItem {
     required this.icon,
     required this.color,
     required this.route,
+    this.permission,
   });
 }

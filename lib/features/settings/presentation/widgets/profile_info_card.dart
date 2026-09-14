@@ -1,10 +1,12 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/logo/project_logo_service.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -446,55 +448,57 @@ class ProfileInfoCard extends StatelessWidget {
               SizedBox(width: 8.w),
 
               // Compact Edit Button
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    final isOffline =
-                        context.read<ConnectivityCubit>().state
-                            is ConnectivityDisconnected;
-                    if (isOffline) {
-                      showfailureToast(AppStrings.noInternetConnection.tr());
-                      return;
-                    }
-                    EditProfileDialog.show(context, profile);
-                  },
-                  borderRadius: BorderRadius.circular(10.r),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isDesktop ? 10 : 8.w,
-                      vertical: isDesktop ? 6 : 5.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryColor.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(10.r),
-                      border: Border.all(
-                        color: AppColors.primaryColor.withValues(alpha: 0.2),
-                        width: 1,
+              if (PermissionService.instance
+                  .hasPermission(AppPermissions.settingsEditProfile))
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      final isOffline =
+                          context.read<ConnectivityCubit>().state
+                              is ConnectivityDisconnected;
+                      if (isOffline) {
+                        showfailureToast(AppStrings.noInternetConnection.tr());
+                        return;
+                      }
+                      EditProfileDialog.show(context, profile);
+                    },
+                    borderRadius: BorderRadius.circular(10.r),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isDesktop ? 10 : 8.w,
+                        vertical: isDesktop ? 6 : 5.h,
                       ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.edit_rounded,
-                          size: isDesktop ? 14 : 13,
-                          color: AppColors.primaryColor,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryColor.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(10.r),
+                        border: Border.all(
+                          color: AppColors.primaryColor.withValues(alpha: 0.2),
+                          width: 1,
                         ),
-                        SizedBox(width: isDesktop ? 4 : 3.w),
-                        Text(
-                          AppStrings.edit.tr(),
-                          style: TextStyles.customStyle(
-                            fontSize: isDesktop ? 12 : 11.5,
-                            fontWeight: FontWeight.bold,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.edit_rounded,
+                            size: isDesktop ? 14 : 13,
                             color: AppColors.primaryColor,
                           ),
-                        ),
-                      ],
+                          SizedBox(width: isDesktop ? 4 : 3.w),
+                          Text(
+                            AppStrings.edit.tr(),
+                            style: TextStyles.customStyle(
+                              fontSize: isDesktop ? 12 : 11.5,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
             ],
           ),
 

@@ -7,6 +7,9 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
+import 'package:tahsel/core/widgets/permission_guard.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 
@@ -232,16 +235,19 @@ class _ProductsScreenState extends State<ProductsScreen> {
             SizedBox(width: 8.w),
           ],
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          backgroundColor: AppColors.primaryColor,
-          onPressed: () => _openAddEditProductDialog(),
-          icon: const Icon(Icons.add, color: Colors.white),
-          label: Text(
-            AppStrings.addProduct.tr(),
-            style: TextStyles.customStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+        floatingActionButton: PermissionGuard(
+          permission: AppPermissions.inventoryManageProducts,
+          child: FloatingActionButton.extended(
+            backgroundColor: AppColors.primaryColor,
+            onPressed: () => _openAddEditProductDialog(),
+            icon: const Icon(Icons.add, color: Colors.white),
+            label: Text(
+              AppStrings.addProduct.tr(),
+              style: TextStyles.customStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ),
         ),
@@ -621,13 +627,14 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                 }
 
                                 if (products.isEmpty) {
+                                  final canManage = PermissionService.instance.hasPermission(AppPermissions.inventoryManageProducts);
                                   return InventoryEmptyState(
                                     icon: Icons.inventory_2_outlined,
                                     title: AppStrings.noProductsFound.tr(),
                                     description: AppStrings.emptyProductsDesc
                                         .tr(),
-                                    actionLabel: AppStrings.addProduct.tr(),
-                                    onAction: () => _openAddEditProductDialog(),
+                                    actionLabel: canManage ? AppStrings.addProduct.tr() : null,
+                                    onAction: canManage ? () => _openAddEditProductDialog() : null,
                                   );
                                 }
 
@@ -662,12 +669,25 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                         product: p,
                                         index: index,
                                         isBestSeller: top20Ids.contains(p.id),
-                                        onTap: () =>
-                                            _openProductDetailsDialog(p),
-                                        onManualAdjustment: () =>
-                                            _openManualAdjustmentDialog(p),
-                                        onEdit: () =>
-                                            _openAddEditProductDialog(p),
+                                        onTap: () => _openProductDetailsDialog(p),
+                                        onManualAdjustment: () {
+                                          if (!PermissionService.instance.hasPermission(AppPermissions.inventoryStockAdjustments)) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(content: Text(AppStrings.noPermissionForAction.tr())),
+                                            );
+                                            return;
+                                          }
+                                          _openManualAdjustmentDialog(p);
+                                        },
+                                        onEdit: () {
+                                          if (!PermissionService.instance.hasPermission(AppPermissions.inventoryManageProducts)) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(content: Text(AppStrings.noPermissionForAction.tr())),
+                                            );
+                                            return;
+                                          }
+                                          _openAddEditProductDialog(p);
+                                        },
                                       );
                                     },
                                   ),

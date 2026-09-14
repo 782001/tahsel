@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart' as di;
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -24,6 +26,7 @@ import 'package:tahsel/features/employee/presentation/cubit/employee_cubit.dart'
 import 'package:tahsel/features/employee/presentation/screens/employee_details_screen.dart';
 import 'package:tahsel/features/employee/presentation/screens/employee_list_screen.dart';
 import 'package:tahsel/features/employee/presentation/screens/employee_reports_screen.dart';
+import 'package:tahsel/features/employee/presentation/screens/team_management_screen.dart';
 import 'package:tahsel/features/expenses/presentation/screens/add_expense_screen.dart';
 import 'package:tahsel/features/inventory/presentation/cubits/inventory_categories_cubit.dart';
 import 'package:tahsel/features/inventory/presentation/cubits/inventory_dashboard_cubit.dart';
@@ -88,6 +91,7 @@ class AppRoutes {
   static const String employeeList = '/employee-list';
   static const String employeeDetails = '/employee-details';
   static const String employeeReports = '/employee-reports';
+  static const String teamManagement = '/team-management';
   static const String createInvoice = '/create-invoice';
   static const String editInvoice = '/edit-invoice';
   static const String invoiceDetail = '/invoice-detail';
@@ -106,7 +110,18 @@ class AppRoutes {
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
+      case teamManagement:
+        if (!PermissionService.instance.hasPermission(AppPermissions.teamManage)) {
+          return _permissionRestrictedRoute();
+        }
+        if (!AppStrings.isVip) return _vipRestrictedRoute();
+        return MaterialPageRoute(
+          builder: (_) => const TeamManagementScreen(),
+        );
       case vault:
+        if (!PermissionService.instance.hasPermission(AppPermissions.vaultAccess)) {
+          return _permissionRestrictedRoute();
+        }
         if (!AppStrings.isVaultEnabled()) return _vipRestrictedRoute();
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
@@ -115,10 +130,17 @@ class AppRoutes {
           ),
         );
       case shippingReconciliation:
+        if (!PermissionService.instance
+            .hasPermission(AppPermissions.shippingReconciliationView)) {
+          return _permissionRestrictedRoute();
+        }
         return MaterialPageRoute(
           builder: (_) => const ShippingReconciliationScreen(),
         );
       case inventoryMain:
+        if (!PermissionService.instance.hasPermission(AppPermissions.inventoryView)) {
+          return _permissionRestrictedRoute();
+        }
         if (!AppStrings.isVaultEnabled()) return _vipRestrictedRoute();
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
@@ -127,6 +149,10 @@ class AppRoutes {
           ),
         );
       case inventoryProducts:
+        if (!PermissionService.instance.hasPermission(AppPermissions.inventoryManageProducts) &&
+            !PermissionService.instance.hasPermission(AppPermissions.inventoryView)) {
+          return _permissionRestrictedRoute();
+        }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
         final showLowStockOnly = settings.arguments is bool
             ? settings.arguments as bool
@@ -146,6 +172,10 @@ class AppRoutes {
           ),
         );
       case inventoryCategories:
+        if (!PermissionService.instance.hasPermission(AppPermissions.inventoryManageCategories) &&
+            !PermissionService.instance.hasPermission(AppPermissions.inventoryView)) {
+          return _permissionRestrictedRoute();
+        }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
@@ -154,6 +184,9 @@ class AppRoutes {
           ),
         );
       case inventorySuppliers:
+        if (!PermissionService.instance.hasPermission(AppPermissions.inventoryManageSuppliers)) {
+          return _permissionRestrictedRoute();
+        }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
@@ -162,6 +195,9 @@ class AppRoutes {
           ),
         );
       case inventoryPurchases:
+        if (!PermissionService.instance.hasPermission(AppPermissions.inventoryPurchases)) {
+          return _permissionRestrictedRoute();
+        }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
         return MaterialPageRoute(
           builder: (_) => MultiBlocProvider(
@@ -174,6 +210,9 @@ class AppRoutes {
           ),
         );
       case inventoryStockMovements:
+        if (!PermissionService.instance.hasPermission(AppPermissions.inventoryStockAdjustments)) {
+          return _permissionRestrictedRoute();
+        }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
@@ -182,6 +221,9 @@ class AppRoutes {
           ),
         );
       case inventoryAnalytics:
+        if (!PermissionService.instance.hasPermission(AppPermissions.inventoryAnalytics)) {
+          return _permissionRestrictedRoute();
+        }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
         return MaterialPageRoute(
           builder: (_) => MultiBlocProvider(
@@ -195,6 +237,9 @@ class AppRoutes {
           ),
         );
       case employeeList:
+        if (!PermissionService.instance.hasPermission(AppPermissions.hrEmployeesManage)) {
+          return _permissionRestrictedRoute();
+        }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
@@ -203,6 +248,9 @@ class AppRoutes {
           ),
         );
       case employeeDetails:
+        if (!PermissionService.instance.hasPermission(AppPermissions.hrEmployeesManage)) {
+          return _permissionRestrictedRoute();
+        }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
         final employee = settings.arguments as EmployeeEntity;
         return MaterialPageRoute(
@@ -212,6 +260,9 @@ class AppRoutes {
           ),
         );
       case employeeReports:
+        if (!PermissionService.instance.hasPermission(AppPermissions.hrEmployeesManage)) {
+          return _permissionRestrictedRoute();
+        }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
@@ -220,6 +271,9 @@ class AppRoutes {
           ),
         );
       case createInvoice:
+        if (!PermissionService.instance.hasPermission(AppPermissions.invoicesCreate)) {
+          return _permissionRestrictedRoute();
+        }
         final bool isQuotation = settings.arguments is Map<String, dynamic>
             ? ((settings.arguments as Map<String, dynamic>)['isQuotation']
                     as bool? ??
@@ -234,6 +288,9 @@ class AppRoutes {
           ),
         );
       case editInvoice:
+        if (!PermissionService.instance.hasPermission(AppPermissions.invoicesEdit)) {
+          return _permissionRestrictedRoute();
+        }
         final invoiceToEdit = settings.arguments as InvoiceEntity;
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
@@ -242,6 +299,9 @@ class AppRoutes {
           ),
         );
       case invoiceDetail:
+        if (!PermissionService.instance.hasPermission(AppPermissions.invoicesView)) {
+          return _permissionRestrictedRoute();
+        }
         final args = settings.arguments;
         final InvoiceEntity invoice;
         final bool showPaymentImmediately;
@@ -300,8 +360,15 @@ class AppRoutes {
           builder: (_) => SubscriptionExpiredScreen(args: args),
         );
       case addExpense:
+        if (!PermissionService.instance.hasPermission(AppPermissions.expensesAdd)) {
+          return _permissionRestrictedRoute();
+        }
         return MaterialPageRoute(builder: (_) => const AddExpenseScreen());
       case incomeDetails:
+        if (!PermissionService.instance.hasPermission(AppPermissions.reportsViewSales) &&
+            !PermissionService.instance.hasPermission(AppPermissions.reportsViewNetProfit)) {
+          return _permissionRestrictedRoute();
+        }
         final args = settings.arguments as Map<String, dynamic>;
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
@@ -323,6 +390,9 @@ class AppRoutes {
           ),
         );
       case debtDetails:
+        if (!PermissionService.instance.hasPermission(AppPermissions.customersView)) {
+          return _permissionRestrictedRoute();
+        }
         final debtId = settings.arguments as String;
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
@@ -331,6 +401,10 @@ class AppRoutes {
           ),
         );
       case customerGlobalPayments:
+        if (!PermissionService.instance.hasPermission(AppPermissions.customersView) &&
+            !PermissionService.instance.hasPermission(AppPermissions.customersSettleDebt)) {
+          return _permissionRestrictedRoute();
+        }
         final customerDetail = settings.arguments as CustomerDebtDetail;
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
@@ -339,9 +413,15 @@ class AppRoutes {
           ),
         );
       case customersList:
+        if (!PermissionService.instance.hasPermission(AppPermissions.customersView)) {
+          return _permissionRestrictedRoute();
+        }
         final uid = settings.arguments as String;
         return MaterialPageRoute(builder: (_) => CustomersListScreen(uid: uid));
       case customerReportDetails:
+        if (!PermissionService.instance.hasPermission(AppPermissions.customersView)) {
+          return _permissionRestrictedRoute();
+        }
         final args = settings.arguments as Map<String, dynamic>;
         return MaterialPageRoute(
           builder: (_) => CustomerReportDetailsScreen(
@@ -350,8 +430,14 @@ class AppRoutes {
           ),
         );
       case addMyDebt:
+        if (!PermissionService.instance.hasPermission(AppPermissions.debtsAdd)) {
+          return _permissionRestrictedRoute();
+        }
         return MaterialPageRoute(builder: (_) => const AddMyDebtScreen());
       case myDebtDetails:
+        if (!PermissionService.instance.hasPermission(AppPermissions.myDebtsView)) {
+          return _permissionRestrictedRoute();
+        }
         final person = settings.arguments as MyDebtPersonEntity;
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
@@ -360,6 +446,9 @@ class AppRoutes {
           ),
         );
       case myDebtDetailsReport:
+        if (!PermissionService.instance.hasPermission(AppPermissions.myDebtsView)) {
+          return _permissionRestrictedRoute();
+        }
         final debtId = settings.arguments as String;
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
@@ -368,11 +457,17 @@ class AppRoutes {
           ),
         );
       case monthlyCollected:
+        if (!PermissionService.instance.hasPermission(AppPermissions.reportsViewSales)) {
+          return _permissionRestrictedRoute();
+        }
         final uid = settings.arguments as String;
         return MaterialPageRoute(
           builder: (_) => MonthlyCollectedScreen(uid: uid),
         );
       case monthlyCollectedTransactions:
+        if (!PermissionService.instance.hasPermission(AppPermissions.reportsViewSales)) {
+          return _permissionRestrictedRoute();
+        }
         final args = settings.arguments as Map<String, dynamic>;
         final data = args['monthlyData'] as MonthlyCollectedAmount;
         final uid = args['uid'] as String;
@@ -424,6 +519,80 @@ class AppRoutes {
       },
       addExpense: (_) => const AddExpenseScreen(),
     };
+  }
+
+  static Route<dynamic> _permissionRestrictedRoute() {
+    return MaterialPageRoute(
+      builder: (context) => Scaffold(
+        backgroundColor: AppColors.scafoldBackGround,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: AppColors.primaryColor,
+            ),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.lock_rounded,
+                    color: AppColors.error,
+                    size: 64,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  AppStrings.appPermissionDenied.tr(),
+                  textAlign: TextAlign.center,
+                  style: TextStyles.customStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.blackReal,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryColor,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  label: Text(
+                    AppStrings.errorScreenGoBackButton.tr(),
+                    style: TextStyles.customStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   static Route<dynamic> _vipRestrictedRoute() {

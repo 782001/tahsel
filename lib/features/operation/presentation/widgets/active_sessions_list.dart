@@ -1,8 +1,10 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/extensions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -408,6 +410,17 @@ class _ActiveSessionCardState extends State<ActiveSessionCard> {
   }
 
   void _showEndSessionDialog(BuildContext context) {
+    if (!PermissionService.instance.hasPermission(AppPermissions.posManageSessions)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          content: Text(AppStrings.noPermissionForAction.tr()),
+          backgroundColor: AppColors.orange,
+        ),
+      );
+      return;
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -912,9 +925,33 @@ class _EndSessionSheetState extends State<_EndSessionSheet> {
   }
 
   void _submit() {
+    if (!PermissionService.instance.hasPermission(AppPermissions.posManageSessions)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          content: Text(AppStrings.noPermissionForAction.tr()),
+          backgroundColor: AppColors.orange,
+        ),
+      );
+      return;
+    }
+
     // Cap paid at total — never accept overpayment
     final rawPaid = double.tryParse(_paidController.text) ?? 0.0;
     final paid = rawPaid > _totalAmount ? _totalAmount : rawPaid;
+    final remainingDebt = (_totalAmount - paid) > 0 ? (_totalAmount - paid) : 0.0;
+
+    if (remainingDebt > 0 &&
+        !PermissionService.instance.hasPermission(AppPermissions.posAddDebt)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          content: Text(AppStrings.noPermissionForAction.tr()),
+          backgroundColor: AppColors.orange,
+        ),
+      );
+      return;
+    }
 
     final customerName = _customerController.text.trim().isNotEmpty
         ? _customerController.text.trim()

@@ -1,8 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/invoice_pdf_service.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -128,6 +130,15 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
   }
 
   void _editPurchase(InventoryPurchaseEntity pur) {
+    if (!PermissionService.instance.hasPermission(AppPermissions.inventoryPurchases)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppStrings.noPermission.tr()),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
     final purchasesCubit = context.read<InventoryPurchasesCubit>();
     final productsCubit = context.read<InventoryProductsCubit>();
     final suppliersCubit = context.read<InventorySuppliersCubit>();
@@ -152,6 +163,15 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
   }
 
   void _reorderPurchase(InventoryPurchaseEntity pur) {
+    if (!PermissionService.instance.hasPermission(AppPermissions.inventoryPurchases)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppStrings.noPermission.tr()),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
     final purchasesCubit = context.read<InventoryPurchasesCubit>();
     final productsCubit = context.read<InventoryProductsCubit>();
     final suppliersCubit = context.read<InventorySuppliersCubit>();
@@ -176,6 +196,15 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
   }
 
   void _navigateToCreatePurchase() {
+    if (!PermissionService.instance.hasPermission(AppPermissions.inventoryPurchases)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppStrings.noPermission.tr()),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
     final purchasesCubit = context.read<InventoryPurchasesCubit>();
     final productsCubit = context.read<InventoryProductsCubit>();
     final suppliersCubit = context.read<InventorySuppliersCubit>();
@@ -196,6 +225,15 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
   }
 
   Future<void> _confirmDeletePurchase(InventoryPurchaseEntity pur) async {
+    if (!PermissionService.instance.hasPermission(AppPermissions.inventoryPurchases)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppStrings.noPermission.tr()),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -399,19 +437,21 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primaryColor,
-        onPressed: _navigateToCreatePurchase,
-        icon: const Icon(Icons.add_shopping_cart_rounded, color: Colors.white),
-        label: Text(
-          AppStrings.newPurchase.tr(),
-          style: TextStyles.customStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-      ),
+      floatingActionButton: PermissionService.instance.hasPermission(AppPermissions.inventoryPurchases)
+          ? FloatingActionButton.extended(
+              backgroundColor: AppColors.primaryColor,
+              onPressed: _navigateToCreatePurchase,
+              icon: const Icon(Icons.add_shopping_cart_rounded, color: Colors.white),
+              label: Text(
+                AppStrings.newPurchase.tr(),
+                style: TextStyles.customStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            )
+          : null,
       body: Stack(
         children: [
           SafeArea(

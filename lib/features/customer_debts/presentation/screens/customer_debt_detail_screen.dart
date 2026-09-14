@@ -7,6 +7,9 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
+import 'package:tahsel/core/widgets/permission_guard.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/customer/presentation/widgets/notification_dialog.dart';
 import 'package:tahsel/features/customer_debts/data/models/debt_item_model.dart';
@@ -108,6 +111,10 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
     String customerName,
     double totalDebt,
   ) {
+    if (!PermissionService.instance.hasPermission(AppPermissions.customersSettleDebt)) {
+      showfailureToast(AppStrings.appPermissionDenied.tr());
+      return;
+    }
     if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
       showfailureToast(AppStrings.noInternetConnection.tr());
       return;
@@ -136,6 +143,10 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
   }
 
   void _onPayFull(BuildContext context, String customerName, double totalDebt) {
+    if (!PermissionService.instance.hasPermission(AppPermissions.customersSettleDebt)) {
+      showfailureToast(AppStrings.appPermissionDenied.tr());
+      return;
+    }
     if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
       showfailureToast(AppStrings.noInternetConnection.tr());
       return;
@@ -231,6 +242,10 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
   }
 
   void _confirmPaySingleDebt(BuildContext context, DebtItem item) {
+    if (!PermissionService.instance.hasPermission(AppPermissions.customersSettleDebt)) {
+      showfailureToast(AppStrings.appPermissionDenied.tr());
+      return;
+    }
     if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
       showfailureToast(AppStrings.noInternetConnection.tr());
       return;
@@ -322,6 +337,10 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
   }
 
   void _onAddNewDebt(BuildContext context, String customerName) {
+    if (!PermissionService.instance.hasPermission(AppPermissions.debtsAdd)) {
+      showfailureToast(AppStrings.appPermissionDenied.tr());
+      return;
+    }
     if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
       showfailureToast(AppStrings.noInternetConnection.tr());
       return;
@@ -345,6 +364,10 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
     CustomerDebtDetail currentDetail, {
     DebtItem? specificDebt,
   }) async {
+    if (!PermissionService.instance.hasPermission(AppPermissions.customersSendWhatsapp)) {
+      showfailureToast(AppStrings.appPermissionDenied.tr());
+      return;
+    }
     final uid = AppStrings.userToken;
     if (uid.isEmpty) return;
 
@@ -606,19 +629,22 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
 
         return Scaffold(
           backgroundColor: AppColors.scafoldBackGround,
-          floatingActionButton: FloatingActionButton.extended(
-            heroTag: 'add_debt',
-            onPressed: () => _onAddNewDebt(context, currentDetail.customerName),
-            backgroundColor: AppColors.primaryColor,
-            label: Text(
-              AppStrings.addNewDebt.tr(),
-              style: TextStyles.customStyle(
-                color: AppColors.whiteColor,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+          floatingActionButton: PermissionGuard(
+            permission: AppPermissions.debtsAdd,
+            child: FloatingActionButton.extended(
+              heroTag: 'add_debt',
+              onPressed: () => _onAddNewDebt(context, currentDetail.customerName),
+              backgroundColor: AppColors.primaryColor,
+              label: Text(
+                AppStrings.addNewDebt.tr(),
+                style: TextStyles.customStyle(
+                  color: AppColors.whiteColor,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
+              icon: Icon(Icons.add, color: AppColors.whiteColor),
             ),
-            icon: Icon(Icons.add, color: AppColors.whiteColor),
           ),
           body: CustomScrollView(
             physics: const BouncingScrollPhysics(),
@@ -694,126 +720,132 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                           ),
                           SizedBox(height: 20.h),
                           if (currentDetail.totalDebt != 0)
-                            BlocBuilder<DebtCubit, DebtState>(
-                              builder: (context, state) {
-                                final isLoading = state is DebtLoading;
-                                return Row(
-                                  children: [
-                                    Expanded(
-                                      child: ElevatedButton.icon(
-                                        onPressed: isLoading
-                                            ? null
-                                            : () => _onPayPartial(
-                                                context,
-                                                currentDetail.customerName,
-                                                currentDetail.totalDebt,
-                                              ),
-                                        icon: isLoading
-                                            ? SizedBox(
-                                                height: 18,
-                                                width: 18,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                      color: AppColors
-                                                          .primaryColor,
-                                                    ),
-                                              )
-                                            : const Icon(
-                                                Icons.payment_rounded,
-                                                size: 18,
-                                              ),
-                                        label: Text(
-                                          AppStrings.partialPayment.tr(),
-                                        ),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                              AppColors.primaryColor,
-                                          foregroundColor: Colors.white,
-                                          padding: EdgeInsets.symmetric(
-                                            vertical: 12.h,
+                            PermissionGuard(
+                              permission: AppPermissions.customersSettleDebt,
+                              child: BlocBuilder<DebtCubit, DebtState>(
+                                builder: (context, state) {
+                                  final isLoading = state is DebtLoading;
+                                  return Row(
+                                    children: [
+                                      Expanded(
+                                        child: ElevatedButton.icon(
+                                          onPressed: isLoading
+                                              ? null
+                                              : () => _onPayPartial(
+                                                  context,
+                                                  currentDetail.customerName,
+                                                  currentDetail.totalDebt,
+                                                ),
+                                          icon: isLoading
+                                              ? SizedBox(
+                                                  height: 18,
+                                                  width: 18,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                        color: AppColors
+                                                            .primaryColor,
+                                                      ),
+                                                )
+                                              : const Icon(
+                                                  Icons.payment_rounded,
+                                                  size: 18,
+                                                ),
+                                          label: Text(
+                                            AppStrings.partialPayment.tr(),
                                           ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              12.r,
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                AppColors.primaryColor,
+                                            foregroundColor: Colors.white,
+                                            padding: EdgeInsets.symmetric(
+                                              vertical: 12.h,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(
+                                                12.r,
+                                              ),
                                             ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                    SizedBox(width: 12.w),
-                                    Expanded(
-                                      child: OutlinedButton.icon(
-                                        onPressed: isLoading
-                                            ? null
-                                            : () => _onPayFull(
-                                                context,
-                                                currentDetail.customerName,
-                                                currentDetail.totalDebt,
-                                              ),
-                                        icon: isLoading
-                                            ? SizedBox(
-                                                height: 18,
-                                                width: 18,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                      color: AppColors
-                                                          .primaryColor,
-                                                    ),
-                                              )
-                                            : const Icon(
-                                                Icons.check_circle_rounded,
-                                                size: 18,
-                                              ),
-                                        label: Text(
-                                          AppStrings.fullSettlement.tr(),
-                                        ),
-                                        style: OutlinedButton.styleFrom(
-                                          side: BorderSide(
-                                            color: AppColors.primaryColor,
+                                      SizedBox(width: 12.w),
+                                      Expanded(
+                                        child: OutlinedButton.icon(
+                                          onPressed: isLoading
+                                              ? null
+                                              : () => _onPayFull(
+                                                  context,
+                                                  currentDetail.customerName,
+                                                  currentDetail.totalDebt,
+                                                ),
+                                          icon: isLoading
+                                              ? SizedBox(
+                                                  height: 18,
+                                                  width: 18,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                        color: AppColors
+                                                            .primaryColor,
+                                                      ),
+                                                )
+                                              : const Icon(
+                                                  Icons.check_circle_rounded,
+                                                  size: 18,
+                                                ),
+                                          label: Text(
+                                            AppStrings.fullSettlement.tr(),
                                           ),
-                                          foregroundColor:
-                                              AppColors.primaryColor,
-                                          padding: EdgeInsets.symmetric(
-                                            vertical: 12.h,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              12.r,
+                                          style: OutlinedButton.styleFrom(
+                                            side: BorderSide(
+                                              color: AppColors.primaryColor,
+                                            ),
+                                            foregroundColor:
+                                                AppColors.primaryColor,
+                                            padding: EdgeInsets.symmetric(
+                                              vertical: 12.h,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(
+                                                12.r,
+                                              ),
                                             ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                );
-                              },
+                                    ],
+                                  );
+                                },
+                              ),
                             ),
                           if (currentDetail.totalDebt != 0) ...[
                             SizedBox(height: isDesktop ? 12 : 12.h),
-                            SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                onPressed: () => _triggerPaymentReminder(
-                                  context,
-                                  currentDetail,
-                                ),
-                                icon: const Icon(
-                                  Icons.notifications_active_rounded,
-                                  size: 18,
-                                ),
-                                label: Text(AppStrings.paymentReminder.tr()),
-                                style: OutlinedButton.styleFrom(
-                                  side: BorderSide(
-                                    color: AppColors.primaryColor,
+                            PermissionGuard(
+                              permission: AppPermissions.customersSendWhatsapp,
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: () => _triggerPaymentReminder(
+                                    context,
+                                    currentDetail,
                                   ),
-                                  foregroundColor: AppColors.primaryColor,
-                                  padding: EdgeInsets.symmetric(
-                                    vertical: isDesktop ? 12 : 12.h,
+                                  icon: const Icon(
+                                    Icons.notifications_active_rounded,
+                                    size: 18,
                                   ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12.r),
+                                  label: Text(AppStrings.paymentReminder.tr()),
+                                  style: OutlinedButton.styleFrom(
+                                    side: BorderSide(
+                                      color: AppColors.primaryColor,
+                                    ),
+                                    foregroundColor: AppColors.primaryColor,
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: isDesktop ? 12 : 12.h,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12.r),
+                                    ),
                                   ),
                                 ),
                               ),

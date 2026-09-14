@@ -1,16 +1,26 @@
-import 'package:internet_connection_checker/internet_connection_checker.dart';
+﻿import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 
 import '../data/datasources/employee_remote_data_source.dart';
+import '../data/datasources/team_management_remote_data_source.dart';
 import '../data/repositories/employee_repository_impl.dart';
 import '../domain/repositories/employee_repository.dart';
 import '../domain/services/employee_operation_guard.dart';
 import '../domain/usecases/advance_usecases.dart';
 import '../domain/usecases/employee_usecases.dart';
 import '../presentation/cubit/employee_cubit.dart';
+import '../presentation/cubit/team_management_cubit.dart';
 
 class EmployeeInjection {
   static void init() {
+    // Team Management & RBAC
+    sl.registerLazySingleton<TeamManagementRemoteDataSource>(
+      () => TeamManagementRemoteDataSourceImpl(firestore: sl()),
+    );
+    sl.registerFactory(
+      () => TeamManagementCubit(remoteDataSource: sl()),
+    );
+
     // Cubit
     sl.registerLazySingleton(
       () => EmployeeCubit(

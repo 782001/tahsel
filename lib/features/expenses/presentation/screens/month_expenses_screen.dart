@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
@@ -9,12 +9,15 @@ import 'package:tahsel/core/utils/date_formatter.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/utils/vault_balance_helper.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/skeletons/customer_debt_skeleton.dart';
 import 'package:tahsel/features/expenses/domain/entities/expense_entity.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_state.dart';
 import 'package:tahsel/features/expenses/presentation/widgets/expense_card.dart';
 import 'package:tahsel/features/offline_sync/presentation/cubit/offline_sync_cubit.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
 class MonthExpensesScreen extends StatefulWidget {
   final String monthKey;
@@ -362,11 +365,12 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
         date: DateFormatter.formatNumericDate(expense.createdAt),
         expenseId: expense.id,
         onDelete:
-            (expense.id != null &&
-                (expense.id!.startsWith('exp_pur_') ||
-                    expense.id!.startsWith('exp_pay_') ||
-                    expense.id!.startsWith('exp_emp_') ||
-                    expense.id!.startsWith('exp_vault_manual_with_')))
+            (!PermissionService.instance.hasPermission(AppPermissions.expensesDelete) ||
+                (expense.id != null &&
+                    (expense.id!.startsWith('exp_pur_') ||
+                        expense.id!.startsWith('exp_pay_') ||
+                        expense.id!.startsWith('exp_emp_') ||
+                        expense.id!.startsWith('exp_vault_manual_with_'))))
             ? null
             : () => _confirmDelete(context, expense.id ?? ''),
       ),
@@ -374,6 +378,10 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
   }
 
   void _confirmDelete(BuildContext context, String expenseId) {
+    if (!PermissionService.instance.hasPermission(AppPermissions.expensesDelete)) {
+      showfailureToast(AppStrings.appPermissionDenied.tr());
+      return;
+    }
     final expenseCubit = context.read<ExpenseCubit>();
     showDialog(
       context: context,

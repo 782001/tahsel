@@ -1,7 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -28,6 +30,15 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   }
 
   void _openAddEditCategoryDialog([InventoryCategoryEntity? category]) {
+    if (!PermissionService.instance.hasPermission(AppPermissions.inventoryManageCategories)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppStrings.noPermission.tr()),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
     showDialog(
       context: context,
       builder: (ctx) => AddEditCategoryDialog(
@@ -55,6 +66,15 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     BuildContext context,
     InventoryCategoryEntity cat,
   ) {
+    if (!PermissionService.instance.hasPermission(AppPermissions.inventoryManageCategories)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppStrings.noPermission.tr()),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
@@ -154,19 +174,21 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primaryColor,
-        onPressed: () => _openAddEditCategoryDialog(),
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: Text(
-          AppStrings.addCategory.tr(),
-          style: TextStyles.customStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-      ),
+      floatingActionButton: PermissionService.instance.hasPermission(AppPermissions.inventoryManageCategories)
+          ? FloatingActionButton.extended(
+              backgroundColor: AppColors.primaryColor,
+              onPressed: () => _openAddEditCategoryDialog(),
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: Text(
+                AppStrings.addCategory.tr(),
+                style: TextStyles.customStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            )
+          : null,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -181,6 +203,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     InventoryCategoriesState
                   >(
                     builder: (context, state) {
+                      final canManageCategories = PermissionService.instance.hasPermission(AppPermissions.inventoryManageCategories);
+
                       if (state is InventoryCategoriesLoading) {
                         return ListView.builder(
                           physics: const NeverScrollableScrollPhysics(),
@@ -196,8 +220,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                             icon: Icons.category_outlined,
                             title: AppStrings.noCategoriesFound.tr(),
                             description: AppStrings.emptyCategoriesDesc.tr(),
-                            actionLabel: AppStrings.addCategory.tr(),
-                            onAction: () => _openAddEditCategoryDialog(),
+                            actionLabel: canManageCategories ? AppStrings.addCategory.tr() : null,
+                            onAction: canManageCategories ? () => _openAddEditCategoryDialog() : null,
                           );
                         }
 
@@ -265,22 +289,24 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                         ],
                                       ),
                                     ),
-                                    IconButton(
-                                      icon: Icon(
-                                        Icons.edit_rounded,
-                                        color: AppColors.primaryColor,
+                                    if (canManageCategories) ...[
+                                      IconButton(
+                                        icon: Icon(
+                                          Icons.edit_rounded,
+                                          color: AppColors.primaryColor,
+                                        ),
+                                        onPressed: () =>
+                                            _openAddEditCategoryDialog(cat),
                                       ),
-                                      onPressed: () =>
-                                          _openAddEditCategoryDialog(cat),
-                                    ),
-                                    IconButton(
-                                      icon: Icon(
-                                        Icons.delete_outline_rounded,
-                                        color: AppColors.deleteRed,
+                                      IconButton(
+                                        icon: Icon(
+                                          Icons.delete_outline_rounded,
+                                          color: AppColors.deleteRed,
+                                        ),
+                                        onPressed: () =>
+                                            _confirmDeleteCategory(context, cat),
                                       ),
-                                      onPressed: () =>
-                                          _confirmDeleteCategory(context, cat),
-                                    ),
+                                    ],
                                   ],
                                 ),
                               );

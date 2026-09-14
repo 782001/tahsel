@@ -1,11 +1,14 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/permission_guard.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_state.dart';
@@ -57,6 +60,9 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView>
   }
 
   void _loadData({bool forceRefresh = false}) {
+    if (!PermissionService.instance.hasPermission(AppPermissions.myDebtsView)) {
+      return;
+    }
     final uid = AppStrings.userToken;
     if (uid.isNotEmpty) {
       context.read<MyDebtsCubit>().loadPersons(uid, forceRefresh: forceRefresh);
@@ -72,28 +78,51 @@ class _MyDebtsTabViewState extends State<MyDebtsTabView>
     super.build(context);
     final isDesktop = ResponsiveLayout.isDesktop(context);
 
+    if (!PermissionService.instance.hasPermission(AppPermissions.myDebtsView)) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.lock_outline_rounded, size: 48, color: AppColors.grey),
+            const SizedBox(height: 12),
+            Text(
+              AppStrings.noPermissionForAction.tr(),
+              style: TextStyles.customStyle(
+                color: AppColors.grey,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.transparent,
-      floatingActionButton: Builder(
-        builder: (context) => FloatingActionButton.extended(
-          heroTag: 'add_my_debt_fab',
-          backgroundColor: AppColors.primaryColor,
-          onPressed: () {
-            sl<NavigatorService>().pushNamed(AppRoutes.addMyDebt).then((_) {
-              if (context.mounted) {
-                _loadData(forceRefresh: true);
-              }
-            });
-          },
-          label: Text(
-            AppStrings.addNewDebt.tr(),
-            style: TextStyles.customStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppColors.white,
+      floatingActionButton: PermissionGuard(
+        permission: AppPermissions.myDebtsAdd,
+        child: Builder(
+          builder: (context) => FloatingActionButton.extended(
+            heroTag: 'add_my_debt_fab',
+            backgroundColor: AppColors.primaryColor,
+            onPressed: () {
+              sl<NavigatorService>().pushNamed(AppRoutes.addMyDebt).then((_) {
+                if (context.mounted) {
+                  _loadData(forceRefresh: true);
+                }
+              });
+            },
+            label: Text(
+              AppStrings.addNewDebt.tr(),
+              style: TextStyles.customStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.white,
+              ),
             ),
+            icon: Icon(Icons.add, color: AppColors.white),
           ),
-          icon: Icon(Icons.add, color: AppColors.white),
         ),
       ),
       body: BlocListener<MyDebtsCubit, MyDebtsState>(

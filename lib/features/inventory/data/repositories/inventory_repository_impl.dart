@@ -1,4 +1,4 @@
-import 'package:dartz/dartz.dart';
+﻿import 'package:dartz/dartz.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:get_it/get_it.dart';
@@ -49,9 +49,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
   });
 
   String? get _currentUid {
+    if (AppStrings.userToken.isNotEmpty) return AppStrings.userToken;
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null && uid.isNotEmpty) return uid;
-    if (AppStrings.userToken.isNotEmpty) return AppStrings.userToken;
     return null;
   }
 
