@@ -24,6 +24,10 @@ import 'package:tahsel/features/debt/presentation/screens/monthly_collected_tran
 import 'package:tahsel/features/employee/domain/entities/employee_entity.dart';
 import 'package:tahsel/features/employee/presentation/cubit/employee_cubit.dart';
 import 'package:tahsel/features/employee/presentation/screens/employee_details_screen.dart';
+import 'package:tahsel/features/employee/data/models/app_employee_model.dart';
+import 'package:tahsel/features/employee/presentation/cubit/team_management_cubit.dart';
+import 'package:tahsel/features/employee/presentation/screens/add_app_employee_screen.dart';
+import 'package:tahsel/features/employee/presentation/screens/edit_app_employee_screen.dart';
 import 'package:tahsel/features/employee/presentation/screens/employee_list_screen.dart';
 import 'package:tahsel/features/employee/presentation/screens/employee_reports_screen.dart';
 import 'package:tahsel/features/employee/presentation/screens/team_management_screen.dart';
@@ -92,6 +96,8 @@ class AppRoutes {
   static const String employeeDetails = '/employee-details';
   static const String employeeReports = '/employee-reports';
   static const String teamManagement = '/team-management';
+  static const String addAppEmployee = '/add-app-employee';
+  static const String editAppEmployee = '/edit-app-employee';
   static const String createInvoice = '/create-invoice';
   static const String editInvoice = '/edit-invoice';
   static const String invoiceDetail = '/invoice-detail';
@@ -117,6 +123,39 @@ class AppRoutes {
         if (!AppStrings.isVip) return _vipRestrictedRoute();
         return MaterialPageRoute(
           builder: (_) => const TeamManagementScreen(),
+        );
+      case addAppEmployee:
+        if (!PermissionService.instance.hasPermission(AppPermissions.teamManage)) {
+          return _permissionRestrictedRoute();
+        }
+        if (!AppStrings.isVip) return _vipRestrictedRoute();
+        final cubit = settings.arguments is TeamManagementCubit
+            ? settings.arguments as TeamManagementCubit
+            : di.sl<TeamManagementCubit>();
+        return MaterialPageRoute(
+          builder: (_) => AddAppEmployeeScreen(cubit: cubit),
+        );
+      case editAppEmployee:
+        if (!PermissionService.instance.hasPermission(AppPermissions.teamManage)) {
+          return _permissionRestrictedRoute();
+        }
+        if (!AppStrings.isVip) return _vipRestrictedRoute();
+        final args = settings.arguments;
+        if (args is Map) {
+          final employee = args['employee'] as AppEmployeeModel;
+          final cubit = args['cubit'] is TeamManagementCubit
+              ? args['cubit'] as TeamManagementCubit
+              : di.sl<TeamManagementCubit>();
+          return MaterialPageRoute(
+            builder: (_) => EditAppEmployeeScreen(employee: employee, cubit: cubit),
+          );
+        }
+        return MaterialPageRoute(
+          builder: (_) => Scaffold(
+            body: Center(
+              child: TextWidget('Invalid arguments for ${settings.name}'),
+            ),
+          ),
         );
       case vault:
         if (!PermissionService.instance.hasPermission(AppPermissions.vaultAccess)) {

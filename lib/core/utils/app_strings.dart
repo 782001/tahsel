@@ -1486,15 +1486,31 @@
   static const String noAppEmployeesYet = "no_app_employees_yet";
   static const String noAppEmployeesDesc = "no_app_employees_desc";
   static const String permissionsCount = "permissions_count";
-  static const String selectAtLeastOnePermission = "select_at_least_one_permission";
-  static const String employeeNameField = "employee_name_field";
-  static const String employeeNameHint = "employee_name_hint";
-  static const String employeeNameRequired = "employee_name_required";
-  static const String employeeEmailRequired = "employee_email_required";
-  static const String passwordMinLengthHint = "password_min_length_hint";
-  static const String passwordRequired = "password_required";
-  static const String grantedPermissions = "granted_permissions";
-  static const String saveAndActivateAccount = "save_and_activate_account";
+  static const String appEmployeeNameField = "app_employee_name_field";
+  static const String appEmployeeNameHint = "app_employee_name_hint";
+  static const String appEmployeeNameRequired = "app_employee_name_required";
+  static const String appEmployeeEmailRequired = "app_employee_email_required";
+  static const String appEmployeeEmailFormatInvalid = "app_employee_email_format_invalid";
+  static const String appEmployeeEmailAlreadyInUse = "app_employee_email_already_in_use";
+  static const String appEmployeePasswordMinLengthHint = "app_employee_password_min_length_hint";
+  static const String appEmployeePasswordRequired = "app_employee_password_required";
+  static const String appEmployeePasswordMin6Chars = "app_employee_password_min_6_chars";
+  static const String appEmployeeSelectAtLeastOnePermission = "app_employee_select_at_least_one_permission";
+  static const String appEmployeeGrantedPermissions = "app_employee_granted_permissions";
+  static const String appEmployeeSaveAndActivateAccount = "app_employee_save_and_activate_account";
+
+  // Aliases for compatibility
+  static const String employeeNameField = appEmployeeNameField;
+  static const String employeeNameHint = appEmployeeNameHint;
+  static const String employeeNameRequired = appEmployeeNameRequired;
+  static const String employeeEmailRequired = appEmployeeEmailRequired;
+  static const String emailFormatInvalid = appEmployeeEmailFormatInvalid;
+  static const String emailAlreadyInUse = appEmployeeEmailAlreadyInUse;
+  static const String passwordMinLengthHint = appEmployeePasswordMinLengthHint;
+  static const String passwordRequired = appEmployeePasswordRequired;
+  static const String selectAtLeastOnePermission = appEmployeeSelectAtLeastOnePermission;
+  static const String grantedPermissions = appEmployeeGrantedPermissions;
+  static const String saveAndActivateAccount = appEmployeeSaveAndActivateAccount;
   static const String registeredSystemEmployees = "registered_system_employees";
   static const String totalEmployeesStat = "total_employees_stat";
   static const String activeInService = "active_in_service";
@@ -1564,7 +1580,5 @@
   static const String cannotDeleteSelf = "cannot_delete_self";
   static const String noPermission = "no_permission";
   static const String noPermissionForAction = "no_permission_for_action";
-  static const String emailAlreadyInUse = "email_already_in_use";
   static const String passwordMin6Chars = "password_min_6_chars";
-  static const String emailFormatInvalid = "email_format_invalid";
 }

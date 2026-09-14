@@ -47,13 +47,13 @@ class SideNavBarActionNavTileState extends State<SideNavBarActionNavTile> {
         borderRadius: BorderRadius.circular(12),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
           decoration: BoxDecoration(
             color: widget.isSelected
                 ? activeColor.withValues(alpha: 0.1)
                 : (_isHovered
-                    ? activeColor.withValues(alpha: 0.05)
-                    : Colors.transparent),
+                      ? activeColor.withValues(alpha: 0.05)
+                      : Colors.transparent),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
@@ -63,7 +63,7 @@ class SideNavBarActionNavTileState extends State<SideNavBarActionNavTile> {
                 color: widget.isSelected ? activeColor : AppColors.blackLight,
                 size: 24,
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 5),
               Expanded(
                 child: Text(
                   widget.label,

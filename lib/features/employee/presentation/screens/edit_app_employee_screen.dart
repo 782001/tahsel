@@ -10,6 +10,7 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/shared/widgets/custom_app_bar/custom_app_bar.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
+import 'package:tahsel/routes/app_routes.dart';
 
 import '../../data/models/app_employee_model.dart';
 import '../cubit/team_management_cubit.dart';
@@ -29,14 +30,13 @@ class EditAppEmployeeScreen extends StatefulWidget {
     required AppEmployeeModel employee,
     required TeamManagementCubit cubit,
   }) {
-    return Navigator.push(
+    return Navigator.pushNamed(
       context,
-      MaterialPageRoute(
-        builder: (_) => EditAppEmployeeScreen(
-          employee: employee,
-          cubit: cubit,
-        ),
-      ),
+      AppRoutes.editAppEmployee,
+      arguments: {
+        'employee': employee,
+        'cubit': cubit,
+      },
     );
   }
 
@@ -117,7 +117,7 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            AppStrings.selectAtLeastOnePermission.tr(),
+            AppStrings.appEmployeeSelectAtLeastOnePermission.tr(),
             style: TextStyles.customStyle(color: AppColors.white),
           ),
           backgroundColor: AppColors.error,
@@ -224,7 +224,7 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        AppStrings.employeeNameField.tr(),
+                        AppStrings.appEmployeeNameField.tr(),
                         style: TextStyles.customStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
@@ -233,7 +233,7 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                       ),
                       SizedBox(height: 6.h),
                       QuickAddTextField(
-                        hint: AppStrings.employeeNameHint.tr(),
+                        hint: AppStrings.appEmployeeNameHint.tr(),
                         controller: _nameController,
                         icon: Icons.person_outline_rounded,
                         readOnly: true,
@@ -336,7 +336,7 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                 // Granular Permissions Section
                 _buildSectionCard(
                   title:
-                      '${AppStrings.grantedPermissions.tr()} (${_selectedPermissions.length})',
+                      '${AppStrings.appEmployeeGrantedPermissions.tr()} (${_selectedPermissions.length})',
                   icon: Icons.security_rounded,
                   headerTrailing: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -409,20 +409,27 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                               )
                               .length;
 
+                          final isFull = activeInGroup == groupItemsCount && groupItemsCount > 0;
+                          final isPartial = activeInGroup > 0 && activeInGroup < groupItemsCount;
+
                           return Container(
                             margin: EdgeInsets.only(bottom: 10.h),
                             decoration: BoxDecoration(
                               color: AppColors.surface,
                               borderRadius: BorderRadius.circular(14.r),
                               border: Border.all(
-                                color: activeInGroup > 0
+                                color: isFull
                                     ? AppColors.primaryColor.withValues(
-                                        alpha: 0.35,
+                                        alpha: 0.4,
                                       )
-                                    : AppColors.lightGreyColor.withValues(
-                                        alpha: 0.7,
-                                      ),
-                                width: activeInGroup > 0 ? 1.5 : 1,
+                                    : isPartial
+                                        ? AppColors.stitchOrange.withValues(
+                                            alpha: 0.45,
+                                          )
+                                        : AppColors.lightGreyColor.withValues(
+                                            alpha: 0.7,
+                                          ),
+                                width: (isFull || isPartial) ? 1.5 : 1,
                               ),
                             ),
                             child: Theme(
@@ -433,22 +440,30 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                                 leading: Container(
                                   padding: EdgeInsets.all(6.r),
                                   decoration: BoxDecoration(
-                                    color: activeInGroup > 0
+                                    color: isFull
                                         ? AppColors.primaryColor.withValues(
                                             alpha: 0.12,
                                           )
-                                        : AppColors.lightGreyColor.withValues(
-                                            alpha: 0.3,
-                                          ),
+                                        : isPartial
+                                            ? AppColors.stitchOrange.withValues(
+                                                alpha: 0.12,
+                                              )
+                                            : AppColors.lightGreyColor.withValues(
+                                                alpha: 0.3,
+                                              ),
                                     shape: BoxShape.circle,
                                   ),
                                   child: Icon(
-                                    activeInGroup > 0
+                                    isFull
                                         ? Icons.check_circle_rounded
-                                        : Icons.circle_outlined,
-                                    color: activeInGroup > 0
+                                        : isPartial
+                                            ? Icons.remove_circle_rounded
+                                            : Icons.circle_outlined,
+                                    color: isFull
                                         ? AppColors.primaryColor
-                                        : AppColors.disabledColor,
+                                        : isPartial
+                                            ? AppColors.stitchOrange
+                                            : AppColors.disabledColor,
                                     size: 18,
                                   ),
                                 ),
@@ -464,10 +479,12 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                                   '$activeInGroup / $groupItemsCount ${AppStrings.permissionsCount.tr()}',
                                   style: TextStyles.customStyle(
                                     fontSize: 11,
-                                    color: activeInGroup > 0
+                                    color: isFull
                                         ? AppColors.primaryColor
-                                        : AppColors.sandText,
-                                    fontWeight: activeInGroup > 0
+                                        : isPartial
+                                            ? AppColors.stitchOrange
+                                            : AppColors.sandText,
+                                    fontWeight: (isFull || isPartial)
                                         ? FontWeight.w600
                                         : FontWeight.normal,
                                   ),

@@ -12,8 +12,7 @@ import 'package:tahsel/shared/widgets/custom_app_bar/custom_app_bar.dart';
 
 import '../cubit/team_management_cubit.dart';
 import '../cubit/team_management_state.dart';
-import 'add_app_employee_screen.dart';
-import 'edit_app_employee_screen.dart';
+import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 
 class TeamManagementScreen extends StatefulWidget {
@@ -166,7 +165,11 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
           ),
         ),
         floatingActionButton: FloatingActionButton.extended(
-          onPressed: () => AddAppEmployeeScreen.push(context, _cubit),
+          onPressed: () => Navigator.pushNamed(
+            context,
+            AppRoutes.addAppEmployee,
+            arguments: _cubit,
+          ),
           backgroundColor: AppColors.primaryColor,
           icon: const Icon(Icons.person_add_rounded, color: Colors.white),
           label: Text(
@@ -577,10 +580,13 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
                     color: AppColors.primaryColor,
                     tooltip: AppStrings.editAppEmployee.tr(),
                     onPressed: () {
-                      EditAppEmployeeScreen.push(
+                      Navigator.pushNamed(
                         context,
-                        employee: emp,
-                        cubit: _cubit,
+                        AppRoutes.editAppEmployee,
+                        arguments: {
+                          'employee': emp,
+                          'cubit': _cubit,
+                        },
                       );
                     },
                   ),
@@ -684,7 +690,11 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
             ),
             SizedBox(height: 24.h),
             ElevatedButton.icon(
-              onPressed: () => AddAppEmployeeScreen.push(context, _cubit),
+              onPressed: () => Navigator.pushNamed(
+                context,
+                AppRoutes.addAppEmployee,
+                arguments: _cubit,
+              ),
               icon: const Icon(Icons.add, color: Colors.white),
               label: Text(
                 AppStrings.addAppEmployee.tr(),
