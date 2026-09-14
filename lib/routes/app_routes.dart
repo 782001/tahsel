@@ -469,7 +469,7 @@ class AppRoutes {
           ),
         );
       case addMyDebt:
-        if (!PermissionService.instance.hasPermission(AppPermissions.debtsAdd)) {
+        if (!PermissionService.instance.hasPermission(AppPermissions.myDebtsAdd)) {
           return _permissionRestrictedRoute();
         }
         return MaterialPageRoute(builder: (_) => const AddMyDebtScreen());
