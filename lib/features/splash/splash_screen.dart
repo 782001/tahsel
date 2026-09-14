@@ -1,4 +1,4 @@
-﻿import 'dart:io' show Platform;
+import 'dart:io' show Platform;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -215,7 +215,14 @@ class _SplashScreenState extends State<SplashScreen>
         }
       }
 
-      // Sync VIP status locally
+      // Sync store type & VIP status locally
+      final String userType = (data['userType'] as String?) ?? AppStrings.cafe;
+      AppStrings.userType = userType;
+      await secureStorage.saveData(
+        key: AppStrings.userTypeKey,
+        value: userType,
+      );
+
       final bool isVip = (data['isVip'] as bool?) ?? false;
       AppStrings.isVip = isVip;
       await secureStorage.saveData(

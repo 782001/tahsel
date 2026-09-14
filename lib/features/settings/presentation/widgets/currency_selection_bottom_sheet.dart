@@ -8,6 +8,8 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
@@ -82,6 +84,12 @@ class _CurrencySelectionBottomSheetState
       // Pop first to release navigator lock, then invoke callback
       nav.pop(currency);
       widget.onCurrencySelected!(currency);
+      return;
+    }
+
+    if (!PermissionService.instance.isOwner &&
+        !PermissionService.instance.hasPermission(AppPermissions.settingsEditProfile)) {
+      showfailureToast(AppStrings.noPermissionForAction.tr());
       return;
     }
 

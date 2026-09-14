@@ -1,8 +1,9 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:tahsel/core/error/exceptions.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 import '../models/app_employee_model.dart';
 
 abstract class TeamManagementRemoteDataSource {
@@ -72,6 +73,20 @@ class TeamManagementRemoteDataSourceImpl implements TeamManagementRemoteDataSour
       final employeeAuthUid = user.uid;
       final now = DateTime.now();
 
+      // Fetch owner's store profile to inherit userType and metadata
+      String ownerUserType = AppStrings.cafe;
+      String? ownerProjectName;
+      bool ownerIsVip = false;
+      try {
+        final ownerDoc = await firestore.collection('users').doc(ownerUid).get();
+        if (ownerDoc.exists && ownerDoc.data() != null) {
+          final oData = ownerDoc.data()!;
+          ownerUserType = (oData['userType'] as String?) ?? AppStrings.cafe;
+          ownerProjectName = oData['projectName'] as String?;
+          ownerIsVip = (oData['isVip'] as bool?) ?? false;
+        }
+      } catch (_) {}
+
       final batch = firestore.batch();
 
       // 1. Top-level user document for authentication & RBAC resolution
@@ -84,6 +99,9 @@ class TeamManagementRemoteDataSourceImpl implements TeamManagementRemoteDataSour
         'accountStatus': 'active',
         'platformType': 'both',
         'permissions': permissions,
+        'userType': ownerUserType,
+        'projectName': ownerProjectName,
+        'isVip': ownerIsVip,
         'createdAt': FieldValue.serverTimestamp(),
       });
 

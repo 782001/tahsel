@@ -54,9 +54,6 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
 
   void _init() async {
     await _loadUserType();
-    if (!isShop) {
-      _initCleanup();
-    }
     loadLowStockCount();
     _ensureValidInitialIndex();
   }
@@ -138,8 +135,9 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
 
   Future<void> _loadUserType() async {
     final storedType = await secureStorage.getData(key: AppStrings.userTypeKey);
-    if (storedType != null) {
+    if (storedType != null && storedType.isNotEmpty) {
       _userType = storedType;
+      AppStrings.userType = storedType;
       emit(MainLayoutUserTypeLoaded(_userType));
     } else {
       // Fallback: Fetch from Firestore if we have a current token
@@ -148,8 +146,11 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
         try {
           final doc = await firestore.collection('users').doc(uid).get();
           if (doc.exists) {
-            final type = doc.get(AppStrings.userTypeKey) ?? AppStrings.cafe;
+            final data = doc.data();
+            final type =
+                (data?[AppStrings.userTypeKey] as String?) ?? AppStrings.cafe;
             _userType = type;
+            AppStrings.userType = type;
             await secureStorage.saveData(
               key: AppStrings.userTypeKey,
               value: type,
@@ -161,10 +162,6 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
         }
       }
     }
-  }
-
-  void _initCleanup() async {
-    await cleanupOldReportsUseCase();
   }
 
   int currentIndex = 0;

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tahsel/core/error/exceptions.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 
 import '../../domain/usecases/login_usecase.dart';
 import '../models/user_model.dart';
@@ -56,9 +57,34 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSourceBase {
           throw ServerException('account_suspended');
         }
 
-        // ── 2. Subscription / grace-period gate ──────────────────────────
-        final subscriptionEnd = data['subscriptionEnd'] != null
-            ? (data['subscriptionEnd'] as Timestamp).toDate()
+        final role = (data['role'] as String?) ?? 'owner';
+        final ownerUid = data['ownerUid'] as String?;
+        final isEmployee = (role == 'employee') ||
+            (ownerUid != null && ownerUid.isNotEmpty);
+
+        Map<String, dynamic> storeData = data;
+        if (isEmployee && ownerUid != null && ownerUid.isNotEmpty) {
+          final ownerDoc =
+              await firestore.collection('users').doc(ownerUid).get();
+          if (!ownerDoc.exists || ownerDoc.data() == null) {
+            await firebaseAuth.signOut();
+            throw ServerException('owner_not_found');
+          }
+          final ownerData = ownerDoc.data()!;
+          final ownerStatus =
+              (ownerData['accountStatus'] as String?) ?? 'active';
+          if (ownerStatus == 'deleted' ||
+              ownerStatus == 'disabled' ||
+              ownerStatus == 'suspended') {
+            await firebaseAuth.signOut();
+            throw ServerException('account_disabled');
+          }
+          storeData = ownerData;
+        }
+
+        // ── 2. Subscription / grace-period gate (checked on store owner) ──
+        final subscriptionEnd = storeData['subscriptionEnd'] != null
+            ? (storeData['subscriptionEnd'] as Timestamp).toDate()
             : null;
         final now = DateTime.now();
         if (subscriptionEnd != null && now.isAfter(subscriptionEnd)) {
@@ -66,7 +92,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSourceBase {
           final gracePeriodEnd = subscriptionEnd.add(const Duration(days: 10));
           if (now.isAfter(gracePeriodEnd)) {
             // Past grace period → optimistically mark as expired (best-effort)
-            if (accountStatus != 'expired') {
+            if (!isEmployee && storeData['accountStatus'] != 'expired') {
               firestore
                   .collection('users')
                   .doc(userCredential.user!.uid)
@@ -80,7 +106,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSourceBase {
         }
 
         // ── 3. Platform restriction gate ─────────────────────────────────
-        final platformType = (data['platformType'] as String?) ?? 'mobile';
+        final platformType = (data['platformType'] as String?) ??
+            (storeData['platformType'] as String?) ??
+            'mobile';
         final currentPlatform = parameters.currentPlatform;
         if (!_isPlatformAllowed(platformType, currentPlatform)) {
           await firebaseAuth.signOut();
@@ -88,22 +116,17 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSourceBase {
         }
 
         // ── 4. Success ────────────────────────────────────────────────────
-        final userType = data.containsKey('userType')
-            ? data['userType'] as String
-            : 'cafe';
-        final isVip = (data['isVip'] as bool?) ?? false;
-        final projectName = data['projectName'] as String?;
-        final phoneNumber = data['phoneNumber'] as String?;
-        final crn = data['crn'] as String?;
-        final address = data['address'] as String?;
-        final vat = data['vat'] as String?;
-        final taxRate = (data['taxRate'] as num?)?.toDouble();
-        final role = (data['role'] as String?) ?? 'owner';
+        final userType = (storeData['userType'] as String?) ?? AppStrings.cafe;
+        final isVip = (storeData['isVip'] as bool?) ?? false;
+        final projectName = storeData['projectName'] as String?;
+        final phoneNumber = (data['phoneNumber'] as String?) ??
+            (storeData['phoneNumber'] as String?);
+        final crn = storeData['crn'] as String?;
+        final address = storeData['address'] as String?;
+        final vat = storeData['vat'] as String?;
+        final taxRate = (storeData['taxRate'] as num?)?.toDouble();
         final permissions = (data['permissions'] as List?)?.cast<String>() ??
             (role == 'owner' ? const ['*'] : const <String>[]);
-        final ownerUid = data['ownerUid'] as String?;
-        final isEmployee = (role == 'employee') ||
-            (ownerUid != null && ownerUid.isNotEmpty);
 
         return UserModel.fromFirebaseUser(
           userCredential.user!,

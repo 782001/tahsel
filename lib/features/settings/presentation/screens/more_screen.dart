@@ -175,159 +175,218 @@ class _MoreScreenState extends State<MoreScreen> {
                         constraints: BoxConstraints(
                           maxWidth: isDesktop ? 800 : double.infinity,
                         ),
-                        child: SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: isDesktop ? 24 : 24.w,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                SizedBox(height: isDesktop ? 20 : 20.h),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                        child: ValueListenableBuilder<int>(
+                          valueListenable:
+                              PermissionService.instance.changeNotifier,
+                          builder: (context, _, child) {
+                            final canViewCustomers = PermissionService.instance
+                                .hasPermission(AppPermissions.customersView);
+                            final canViewVault = ((!Platform.isIOS && isShop) ||
+                                    (AppStrings.isVip && isShop)) &&
+                                PermissionService.instance.hasPermission(
+                                  AppPermissions.vaultAccess,
+                                );
+                            final canViewInventory = (isShop) &&
+                                PermissionService.instance.hasPermission(
+                                  AppPermissions.inventoryView,
+                                );
+                            final canViewEmployees = (!Platform.isIOS ||
+                                    AppStrings.isVip) &&
+                                PermissionService.instance.hasPermission(
+                                  AppPermissions.employeesView,
+                                );
+                            final canViewTeam = PermissionService.instance.isOwner ||
+                                PermissionService.instance.hasPermission(
+                                  AppPermissions.teamManage,
+                                );
+                            final canViewShipping = isShop &&
+                                PermissionService.instance.hasPermission(
+                                  AppPermissions.shippingView,
+                                );
+
+                            final hasAnyBusinessTool = canViewCustomers ||
+                                canViewVault ||
+                                canViewInventory ||
+                                canViewEmployees ||
+                                canViewTeam ||
+                                canViewShipping;
+
+                            return SingleChildScrollView(
+                              physics: const BouncingScrollPhysics(),
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isDesktop ? 24 : 24.w,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      AppStrings.more.tr(),
-                                      style: TextStyles.customStyle(
-                                        fontSize: 32,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.primaryColor,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: isDesktop ? 20 : 16.h),
-
-                                // Profile & Business Info Card
-                                const ProfileInfoCard(),
-
-                                // Group 1: Business Tools & Services
-                                _buildCategoryGroupHeader(
-                                  context: context,
-                                  title: AppStrings.businessTools.tr(),
-                                  icon: Icons.business_center_rounded,
-                                  color: AppColors.primaryColor,
-                                  isDesktop: isDesktop,
-                                ),
-
-                                SectionHeader(
-                                  title: AppStrings.myCustomers.tr(),
-                                ),
-                                SizedBox(height: isDesktop ? 6 : 6.h),
-                                InkWell(
-                                  onTap: () {
-                                    final uid = AppStrings.userToken;
-                                    if (uid.isNotEmpty) {
-                                      if (isDesktop) {
-                                        context
-                                            .read<MainLayoutCubit>()
-                                            .changeBottomNav(6);
-                                      } else {
-                                        Navigator.pushNamed(
-                                          context,
-                                          AppRoutes.customersList,
-                                          arguments: uid,
-                                        );
-                                      }
-                                    }
-                                  },
-                                  borderRadius: BorderRadius.circular(16.r),
-                                  child: Container(
-                                    padding: EdgeInsets.all(
-                                      isDesktop ? 16 : 16.w,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.primaryColor,
-                                      borderRadius: BorderRadius.circular(16.r),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: AppColors.primaryColor
-                                              .withValues(alpha: 0.3),
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 4),
+                                    SizedBox(height: isDesktop ? 20 : 20.h),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          AppStrings.more.tr(),
+                                          style: TextStyles.customStyle(
+                                            fontSize: 32,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.primaryColor,
+                                          ),
                                         ),
                                       ],
                                     ),
-                                    child: Row(
-                                      children: [
-                                        Container(
+                                    SizedBox(height: isDesktop ? 20 : 16.h),
+
+                                    // Profile & Business Info Card
+                                    const ProfileInfoCard(),
+
+                                    // Group 1: Business Tools & Services
+                                    if (hasAnyBusinessTool)
+                                      _buildCategoryGroupHeader(
+                                        context: context,
+                                        title: AppStrings.businessTools.tr(),
+                                        icon: Icons.business_center_rounded,
+                                        color: AppColors.primaryColor,
+                                        isDesktop: isDesktop,
+                                      ),
+
+                                    if (canViewCustomers) ...[
+                                      SectionHeader(
+                                        title: AppStrings.myCustomers.tr(),
+                                      ),
+                                      SizedBox(height: isDesktop ? 6 : 6.h),
+                                      InkWell(
+                                        onTap: () {
+                                          if (!PermissionService.instance
+                                              .hasPermission(
+                                                AppPermissions.customersView,
+                                              )) {
+                                            showfailureToast(
+                                              AppStrings.noPermissionForAction
+                                                  .tr(),
+                                            );
+                                            return;
+                                          }
+                                          final uid = AppStrings.userToken;
+                                          if (uid.isNotEmpty) {
+                                            if (isDesktop) {
+                                              context
+                                                  .read<MainLayoutCubit>()
+                                                  .changeBottomNav(6);
+                                            } else {
+                                              Navigator.pushNamed(
+                                                context,
+                                                AppRoutes.customersList,
+                                                arguments: uid,
+                                              );
+                                            }
+                                          }
+                                        },
+                                        borderRadius: BorderRadius.circular(16.r),
+                                        child: Container(
                                           padding: EdgeInsets.all(
-                                            isDesktop ? 10 : 10.w,
+                                            isDesktop ? 16 : 16.w,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: AppColors.whiteOpacity(0.2),
-                                            shape: BoxShape.circle,
+                                            color: AppColors.primaryColor,
+                                            borderRadius: BorderRadius.circular(16.r),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: AppColors.primaryColor
+                                                    .withValues(alpha: 0.3),
+                                                blurRadius: 10,
+                                                offset: const Offset(0, 4),
+                                              ),
+                                            ],
                                           ),
-                                          child: const Icon(
-                                            Icons.people_alt_rounded,
-                                            color: Colors.white,
-                                            size: 24,
-                                          ),
-                                        ),
-                                        SizedBox(width: isDesktop ? 16 : 16.w),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
+                                          child: Row(
                                             children: [
-                                              Text(
-                                                AppStrings.myCustomers.tr(),
-                                                style: TextStyles.customStyle(
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: AppColors.whiteColor,
+                                              Container(
+                                                padding: EdgeInsets.all(
+                                                  isDesktop ? 10 : 10.w,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.whiteOpacity(0.2),
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: const Icon(
+                                                  Icons.people_alt_rounded,
+                                                  color: Colors.white,
+                                                  size: 24,
                                                 ),
                                               ),
-                                              Text(
-                                                AppStrings.customersReportDesc
-                                                    .tr(),
-                                                style: TextStyles.customStyle(
-                                                  fontSize: 12,
-                                                  color: AppColors.whiteColor
-                                                      .withValues(alpha: 0.85),
+                                              SizedBox(width: isDesktop ? 16 : 16.w),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      AppStrings.myCustomers.tr(),
+                                                      style: TextStyles.customStyle(
+                                                        fontSize: 18,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: AppColors.whiteColor,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      AppStrings.customersReportDesc
+                                                          .tr(),
+                                                      style: TextStyles.customStyle(
+                                                        fontSize: 12,
+                                                        color: AppColors.whiteColor
+                                                            .withValues(alpha: 0.85),
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
+                                              ),
+                                              const Icon(
+                                                Icons.arrow_forward_ios_rounded,
+                                                color: Colors.white,
+                                                size: 16,
                                               ),
                                             ],
                                           ),
                                         ),
-                                        const Icon(
-                                          Icons.arrow_forward_ios_rounded,
-                                          color: Colors.white,
-                                          size: 16,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
+                                      ),
+                                      SizedBox(height: isDesktop ? 16 : 16.h),
+                                    ],
 
-                                // Vault / Cash Register (VIP + Shop) Section
-                                if ((!Platform.isIOS && isShop) ||
-                                    (AppStrings.isVip && isShop)) ...[
-                                  SizedBox(height: isDesktop ? 16 : 16.h),
-                                  SectionHeader(
-                                    title: AppStrings.vaultTitle.tr(),
-                                  ),
-                                  SizedBox(height: isDesktop ? 5 : 5.h),
-                                  InkWell(
-                                    onTap: () {
-                                      if (!(AppStrings.isVip && isShop)) {
-                                        _showVipNoticeDialog(context);
-                                        return;
-                                      }
-                                      if (isDesktop) {
-                                        context
-                                            .read<MainLayoutCubit>()
-                                            .changeBottomNav(7);
-                                      } else {
-                                        Navigator.pushNamed(
-                                          context,
-                                          AppRoutes.vault,
-                                        );
-                                      }
-                                    },
+                                    // Vault / Cash Register (VIP + Shop) Section
+                                    if (canViewVault) ...[
+                                      SizedBox(height: isDesktop ? 16 : 16.h),
+                                      SectionHeader(
+                                        title: AppStrings.vaultTitle.tr(),
+                                      ),
+                                      SizedBox(height: isDesktop ? 5 : 5.h),
+                                      InkWell(
+                                        onTap: () {
+                                          if (!PermissionService.instance
+                                              .hasPermission(
+                                                AppPermissions.vaultAccess,
+                                              )) {
+                                            showfailureToast(
+                                              AppStrings.noPermissionForAction
+                                                  .tr(),
+                                            );
+                                            return;
+                                          }
+                                          if (!(AppStrings.isVip && isShop)) {
+                                            _showVipNoticeDialog(context);
+                                            return;
+                                          }
+                                          if (isDesktop) {
+                                            context
+                                                .read<MainLayoutCubit>()
+                                                .changeBottomNav(7);
+                                          } else {
+                                            Navigator.pushNamed(
+                                              context,
+                                              AppRoutes.vault,
+                                            );
+                                          }
+                                        },
                                     borderRadius: BorderRadius.circular(20.r),
                                     child: Container(
                                       clipBehavior: Clip.antiAlias,
@@ -571,8 +630,10 @@ class _MoreScreenState extends State<MoreScreen> {
                                     ),
                                   ),
                                   SizedBox(height: isDesktop ? 20 : 20.h),
+                                ],
 
-                                  // Inventory Management (VIP) Section
+                                // Inventory Management (VIP) Section
+                                if (canViewInventory) ...[
                                   SectionHeader(
                                     title: AppStrings.inventoryManagementVIP
                                         .tr(),
@@ -580,6 +641,16 @@ class _MoreScreenState extends State<MoreScreen> {
                                   SizedBox(height: isDesktop ? 5 : 5.h),
                                   InkWell(
                                     onTap: () {
+                                      if (!PermissionService.instance
+                                          .hasPermission(
+                                            AppPermissions.inventoryView,
+                                          )) {
+                                        showfailureToast(
+                                          AppStrings.noPermissionForAction
+                                              .tr(),
+                                        );
+                                        return;
+                                      }
                                       if (!(AppStrings.isVip && isShop)) {
                                         _showVipNoticeDialog(context);
                                         return;
@@ -1447,17 +1518,25 @@ class _MoreScreenState extends State<MoreScreen> {
                                 ],
 
                                 // Shipping Reports Reconciliation Section (Non-VIP)
-                                if (isShop)
+                                if (canViewShipping) ...[
                                   SectionHeader(
                                     title: AppStrings
                                         .shippingReportsReconciliationOffline
                                         .tr(),
                                   ),
-                                if (isShop)
                                   SizedBox(height: isDesktop ? 5 : 5.h),
-                                if (isShop)
                                   InkWell(
                                     onTap: () {
+                                      if (!PermissionService.instance
+                                          .hasPermission(
+                                            AppPermissions.shippingView,
+                                          )) {
+                                        showfailureToast(
+                                          AppStrings.noPermissionForAction
+                                              .tr(),
+                                        );
+                                        return;
+                                      }
                                       if (isDesktop) {
                                         context
                                             .read<MainLayoutCubit>()
@@ -1579,7 +1658,8 @@ class _MoreScreenState extends State<MoreScreen> {
                                       ),
                                     ),
                                   ),
-                                SizedBox(height: isDesktop ? 20 : 20.h),
+                                  SizedBox(height: isDesktop ? 20 : 20.h),
+                                ],
 
                                 // Group 2: App Settings & Account
                                 _buildCategoryGroupHeader(
@@ -1671,43 +1751,64 @@ class _MoreScreenState extends State<MoreScreen> {
                                 ),
                                 SizedBox(height: isDesktop ? 20 : 20.h),
                                 // Subscription Section
-                                if (!Platform.isIOS)
+                                if (!Platform.isIOS &&
+                                    (PermissionService.instance.isOwner ||
+                                        PermissionService.instance.hasPermission(
+                                          AppPermissions
+                                              .settingsManageSubscription,
+                                        ))) ...[
                                   SectionHeader(
                                     title: AppStrings.subscriptionSection.tr(),
                                   ),
-                                if (!Platform.isIOS)
                                   const SubscriptionInfoWidget(),
+                                  SizedBox(height: isDesktop ? 20 : 20.h),
+                                ],
 
-                                SizedBox(height: isDesktop ? 20 : 20.h),
                                 // Currency Section
-                                SectionHeader(
-                                  title: AppStrings.changeCurrency.tr(),
-                                ),
-                                SizedBox(height: isDesktop ? 12 : 12.h),
-                                ValueListenableBuilder<CurrencyEntity>(
-                                  valueListenable:
-                                      CurrencyService.instance.currencyNotifier,
-                                  builder: (context, activeCurrency, child) {
-                                    return InkWell(
-                                      onTap: () async {
-                                        final isOffline =
-                                            context
-                                                    .read<ConnectivityCubit>()
-                                                    .state
-                                                is ConnectivityDisconnected;
-                                        if (isOffline) {
-                                          showfailureToast(
-                                            AppStrings.noInternetConnection
-                                                .tr(),
-                                          );
-                                          return;
-                                        }
-                                        if (context.mounted) {
-                                          CurrencySelectionBottomSheet.show(
-                                            context,
-                                          );
-                                        }
-                                      },
+                                if (PermissionService.instance.isOwner ||
+                                    PermissionService.instance.hasPermission(
+                                      AppPermissions.settingsEditProfile,
+                                    )) ...[
+                                  SectionHeader(
+                                    title: AppStrings.changeCurrency.tr(),
+                                  ),
+                                  SizedBox(height: isDesktop ? 12 : 12.h),
+                                  ValueListenableBuilder<CurrencyEntity>(
+                                    valueListenable:
+                                        CurrencyService.instance.currencyNotifier,
+                                    builder: (context, activeCurrency, child) {
+                                      return InkWell(
+                                        onTap: () async {
+                                          if (!PermissionService.instance.isOwner &&
+                                              !PermissionService.instance
+                                                  .hasPermission(
+                                                    AppPermissions
+                                                        .settingsEditProfile,
+                                                  )) {
+                                            showfailureToast(
+                                              AppStrings.noPermissionForAction
+                                                  .tr(),
+                                            );
+                                            return;
+                                          }
+                                          final isOffline =
+                                              context
+                                                      .read<ConnectivityCubit>()
+                                                      .state
+                                                  is ConnectivityDisconnected;
+                                          if (isOffline) {
+                                            showfailureToast(
+                                              AppStrings.noInternetConnection
+                                                  .tr(),
+                                            );
+                                            return;
+                                          }
+                                          if (context.mounted) {
+                                            CurrencySelectionBottomSheet.show(
+                                              context,
+                                            );
+                                          }
+                                        },
                                       borderRadius: BorderRadius.circular(16.r),
                                       child: Container(
                                         padding: EdgeInsets.all(
@@ -1784,193 +1885,237 @@ class _MoreScreenState extends State<MoreScreen> {
                                     );
                                   },
                                 ),
+                                SizedBox(height: isDesktop ? 20 : 20.h),
+                              ],
 
                                 // Account Section
-                                SectionHeader(title: AppStrings.account.tr()),
-                                InkWell(
-                                  onTap: () {
-                                    final isOffline =
-                                        context.read<ConnectivityCubit>().state
-                                            is ConnectivityDisconnected;
-                                    if (isOffline) {
-                                      showfailureToast(
-                                        AppStrings.noInternetConnection.tr(),
-                                      );
-                                      return;
-                                    }
-                                    final state = context
-                                        .read<ProfileCubit>()
-                                        .state;
-                                    if (state is ProfileLoaded) {
-                                      EditProfileDialog.show(
-                                        context,
-                                        state.profile,
-                                      );
-                                    } else if (state is ProfileUpdating) {
-                                      EditProfileDialog.show(
-                                        context,
-                                        state.currentProfile,
-                                      );
-                                    } else if (state is ProfileUpdateSuccess) {
-                                      EditProfileDialog.show(
-                                        context,
-                                        state.updatedProfile,
-                                      );
-                                    } else {
-                                      context
-                                          .read<ProfileCubit>()
-                                          .loadProfile();
-                                    }
-                                  },
-                                  borderRadius: BorderRadius.circular(12.r),
-                                  child: Container(
-                                    padding: EdgeInsets.all(
-                                      isDesktop ? 16 : 14.w,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.whiteColor,
-                                      borderRadius: BorderRadius.circular(12.r),
-                                      border: Border.all(
-                                        color: AppColors.veryLightGrey,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        CircleAvatar(
-                                          backgroundColor: AppColors
-                                              .primaryColor
-                                              .withValues(alpha: 0.1),
-                                          radius: 20,
-                                          child: Icon(
-                                            Icons.manage_accounts_rounded,
-                                            color: AppColors.primaryColor,
-                                          ),
-                                        ),
-                                        SizedBox(width: isDesktop ? 16 : 16.w),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                AppStrings.editProfileTitle
-                                                    .tr(),
-                                                style: TextStyles.customStyle(
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: AppColors.blackReal,
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                height: isDesktop ? 4 : 4.h,
-                                              ),
-                                              Text(
-                                                AppStrings.profileInfo.tr(),
-                                                style: TextStyles.customStyle(
-                                                  fontSize: 12,
-                                                  color: AppColors.sandText,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        Icon(
-                                          Icons.arrow_forward_ios_rounded,
-                                          size: 16,
-                                          color: AppColors.sandText,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(height: isDesktop ? 12 : 10.h),
-                                InkWell(
-                                  onTap: () async {
-                                    final isOffline =
-                                        context.read<ConnectivityCubit>().state
-                                            is ConnectivityDisconnected;
-                                    if (isOffline) {
-                                      showfailureToast(
-                                        AppStrings.noInternetConnection.tr(),
-                                      );
-                                      return;
-                                    }
-                                    if (!context.mounted) return;
-                                    final shouldDelete = await showDialog<bool>(
-                                      context: context,
-                                      builder: (context) =>
-                                          const DeleteAccountConfirmationDialog(),
-                                    );
-
-                                    if (shouldDelete ?? false) {
-                                      if (context.mounted) {
-                                        context
-                                            .read<AuthCubit>()
-                                            .deleteAccount();
+                                if (PermissionService.instance.isOwner ||
+                                    PermissionService.instance.hasPermission(
+                                      AppPermissions.settingsEditProfile,
+                                    ))
+                                  SectionHeader(title: AppStrings.account.tr()),
+                                if (PermissionService.instance.isOwner ||
+                                    PermissionService.instance.hasPermission(
+                                      AppPermissions.settingsEditProfile,
+                                    )) ...[
+                                  InkWell(
+                                    onTap: () {
+                                      if (!PermissionService.instance.isOwner &&
+                                          !PermissionService.instance
+                                              .hasPermission(
+                                                AppPermissions
+                                                    .settingsEditProfile,
+                                              )) {
+                                        showfailureToast(
+                                          AppStrings.noPermissionForAction.tr(),
+                                        );
+                                        return;
                                       }
-                                    }
-                                  },
-                                  borderRadius: BorderRadius.circular(12.r),
-                                  child: Container(
-                                    padding: EdgeInsets.all(
-                                      isDesktop ? 16 : 14.w,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.whiteColor,
-                                      borderRadius: BorderRadius.circular(12.r),
-                                      border: Border.all(
-                                        color: AppColors.veryLightGrey,
+                                      final isOffline =
+                                          context
+                                                  .read<ConnectivityCubit>()
+                                                  .state
+                                              is ConnectivityDisconnected;
+                                      if (isOffline) {
+                                        showfailureToast(
+                                          AppStrings.noInternetConnection.tr(),
+                                        );
+                                        return;
+                                      }
+                                      final state = context
+                                          .read<ProfileCubit>()
+                                          .state;
+                                      if (state is ProfileLoaded) {
+                                        EditProfileDialog.show(
+                                          context,
+                                          state.profile,
+                                        );
+                                      } else if (state is ProfileUpdating) {
+                                        EditProfileDialog.show(
+                                          context,
+                                          state.currentProfile,
+                                        );
+                                      } else if (state
+                                          is ProfileUpdateSuccess) {
+                                        EditProfileDialog.show(
+                                          context,
+                                          state.updatedProfile,
+                                        );
+                                      } else {
+                                        context
+                                            .read<ProfileCubit>()
+                                            .loadProfile();
+                                      }
+                                    },
+                                    borderRadius: BorderRadius.circular(12.r),
+                                    child: Container(
+                                      padding: EdgeInsets.all(
+                                        isDesktop ? 16 : 14.w,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.whiteColor,
+                                        borderRadius: BorderRadius.circular(
+                                          12.r,
+                                        ),
+                                        border: Border.all(
+                                          color: AppColors.veryLightGrey,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          CircleAvatar(
+                                            backgroundColor: AppColors
+                                                .primaryColor
+                                                .withValues(alpha: 0.1),
+                                            radius: 20,
+                                            child: Icon(
+                                              Icons.manage_accounts_rounded,
+                                              color: AppColors.primaryColor,
+                                            ),
+                                          ),
+                                          SizedBox(
+                                            width: isDesktop ? 16 : 16.w,
+                                          ),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  AppStrings.editProfileTitle
+                                                      .tr(),
+                                                  style: TextStyles.customStyle(
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: AppColors.blackReal,
+                                                  ),
+                                                ),
+                                                SizedBox(
+                                                  height: isDesktop ? 4 : 4.h,
+                                                ),
+                                                Text(
+                                                  AppStrings.profileInfo.tr(),
+                                                  style: TextStyles.customStyle(
+                                                    fontSize: 12,
+                                                    color: AppColors.sandText,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Icon(
+                                            Icons.arrow_forward_ios_rounded,
+                                            size: 16,
+                                            color: AppColors.sandText,
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    child: Row(
-                                      children: [
-                                        CircleAvatar(
-                                          backgroundColor: AppColors.error
-                                              .withValues(alpha: 0.1),
-                                          radius: 20.r,
-                                          child: Icon(
-                                            Icons.person_remove_rounded,
-                                            color: AppColors.error,
+                                  ),
+                                  SizedBox(height: isDesktop ? 12 : 10.h),
+                                ],
+                                if (PermissionService.instance.isOwner) ...[
+                                  InkWell(
+                                    onTap: () async {
+                                      if (!PermissionService.instance.isOwner) {
+                                        showfailureToast(
+                                          AppStrings.noPermissionForAction.tr(),
+                                        );
+                                        return;
+                                      }
+                                      final isOffline =
+                                          context
+                                                  .read<ConnectivityCubit>()
+                                                  .state
+                                              is ConnectivityDisconnected;
+                                      if (isOffline) {
+                                        showfailureToast(
+                                          AppStrings.noInternetConnection.tr(),
+                                        );
+                                        return;
+                                      }
+                                      if (!context.mounted) return;
+                                      final shouldDelete = await showDialog<bool>(
+                                        context: context,
+                                        builder: (context) =>
+                                            const DeleteAccountConfirmationDialog(),
+                                      );
+
+                                      if (shouldDelete ?? false) {
+                                        if (context.mounted) {
+                                          context
+                                              .read<AuthCubit>()
+                                              .deleteAccount();
+                                        }
+                                      }
+                                    },
+                                    borderRadius: BorderRadius.circular(12.r),
+                                    child: Container(
+                                      padding: EdgeInsets.all(
+                                        isDesktop ? 16 : 14.w,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.whiteColor,
+                                        borderRadius: BorderRadius.circular(
+                                          12.r,
+                                        ),
+                                        border: Border.all(
+                                          color: AppColors.veryLightGrey,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          CircleAvatar(
+                                            backgroundColor: AppColors.error
+                                                .withValues(alpha: 0.1),
+                                            radius: 20.r,
+                                            child: Icon(
+                                              Icons.person_remove_rounded,
+                                              color: AppColors.error,
+                                            ),
                                           ),
-                                        ),
-                                        SizedBox(width: isDesktop ? 16 : 16.w),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                AppStrings.deleteAccount.tr(),
-                                                style: TextStyles.customStyle(
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: AppColors.blackReal,
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                height: isDesktop ? 4 : 4.h,
-                                              ),
-                                              Text(
-                                                AppStrings.deleteAccountWarning
-                                                    .tr(),
-                                                style: TextStyles.customStyle(
-                                                  fontSize: 12,
-                                                  color: AppColors.error,
-                                                ),
-                                              ),
-                                            ],
+                                          SizedBox(
+                                            width: isDesktop ? 16 : 16.w,
                                           ),
-                                        ),
-                                        Icon(
-                                          Icons.arrow_forward_ios_rounded,
-                                          size: 16,
-                                          color: AppColors.sandText,
-                                        ),
-                                      ],
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  AppStrings.deleteAccount.tr(),
+                                                  style: TextStyles.customStyle(
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: AppColors.blackReal,
+                                                  ),
+                                                ),
+                                                SizedBox(
+                                                  height: isDesktop ? 4 : 4.h,
+                                                ),
+                                                Text(
+                                                  AppStrings
+                                                      .deleteAccountWarning
+                                                      .tr(),
+                                                  style: TextStyles.customStyle(
+                                                    fontSize: 12,
+                                                    color: AppColors.error,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Icon(
+                                            Icons.arrow_forward_ios_rounded,
+                                            size: 16,
+                                            color: AppColors.sandText,
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                                SizedBox(height: isDesktop ? 20 : 20.h),
+                                  SizedBox(height: isDesktop ? 20 : 20.h),
+                                ],
 
                                 // Official Website Section
                                 if (!Platform.isIOS)
@@ -2359,12 +2504,14 @@ class _MoreScreenState extends State<MoreScreen> {
                               ],
                             ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                   ),
-                ],
+                ),
               ),
+            ],
+          ),
             );
           },
         ),
