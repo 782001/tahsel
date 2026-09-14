@@ -21,13 +21,13 @@ import 'package:tahsel/features/debt/presentation/screens/customer_global_paymen
 import 'package:tahsel/features/debt/presentation/screens/debt_details_report_screen.dart';
 import 'package:tahsel/features/debt/presentation/screens/monthly_collected_screen.dart';
 import 'package:tahsel/features/debt/presentation/screens/monthly_collected_transactions_screen.dart';
+import 'package:tahsel/features/employee/data/models/app_employee_model.dart';
 import 'package:tahsel/features/employee/domain/entities/employee_entity.dart';
 import 'package:tahsel/features/employee/presentation/cubit/employee_cubit.dart';
-import 'package:tahsel/features/employee/presentation/screens/employee_details_screen.dart';
-import 'package:tahsel/features/employee/data/models/app_employee_model.dart';
 import 'package:tahsel/features/employee/presentation/cubit/team_management_cubit.dart';
 import 'package:tahsel/features/employee/presentation/screens/add_app_employee_screen.dart';
 import 'package:tahsel/features/employee/presentation/screens/edit_app_employee_screen.dart';
+import 'package:tahsel/features/employee/presentation/screens/employee_details_screen.dart';
 import 'package:tahsel/features/employee/presentation/screens/employee_list_screen.dart';
 import 'package:tahsel/features/employee/presentation/screens/employee_reports_screen.dart';
 import 'package:tahsel/features/employee/presentation/screens/team_management_screen.dart';
@@ -117,15 +117,17 @@ class AppRoutes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case teamManagement:
-        if (!PermissionService.instance.hasPermission(AppPermissions.teamManage)) {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.teamManage,
+        )) {
           return _permissionRestrictedRoute();
         }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
-        return MaterialPageRoute(
-          builder: (_) => const TeamManagementScreen(),
-        );
+        return MaterialPageRoute(builder: (_) => const TeamManagementScreen());
       case addAppEmployee:
-        if (!PermissionService.instance.hasPermission(AppPermissions.teamManage)) {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.teamManage,
+        )) {
           return _permissionRestrictedRoute();
         }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
@@ -136,7 +138,9 @@ class AppRoutes {
           builder: (_) => AddAppEmployeeScreen(cubit: cubit),
         );
       case editAppEmployee:
-        if (!PermissionService.instance.hasPermission(AppPermissions.teamManage)) {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.teamManage,
+        )) {
           return _permissionRestrictedRoute();
         }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
@@ -147,7 +151,8 @@ class AppRoutes {
               ? args['cubit'] as TeamManagementCubit
               : di.sl<TeamManagementCubit>();
           return MaterialPageRoute(
-            builder: (_) => EditAppEmployeeScreen(employee: employee, cubit: cubit),
+            builder: (_) =>
+                EditAppEmployeeScreen(employee: employee, cubit: cubit),
           );
         }
         return MaterialPageRoute(
@@ -158,7 +163,9 @@ class AppRoutes {
           ),
         );
       case vault:
-        if (!PermissionService.instance.hasPermission(AppPermissions.vaultAccess)) {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.vaultAccess,
+        )) {
           return _permissionRestrictedRoute();
         }
         if (!AppStrings.isVaultEnabled()) return _vipRestrictedRoute();
@@ -169,15 +176,18 @@ class AppRoutes {
           ),
         );
       case shippingReconciliation:
-        if (!PermissionService.instance
-            .hasPermission(AppPermissions.shippingReconciliationView)) {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.shippingReconciliationView,
+        )) {
           return _permissionRestrictedRoute();
         }
         return MaterialPageRoute(
           builder: (_) => const ShippingReconciliationScreen(),
         );
       case inventoryMain:
-        if (!PermissionService.instance.hasPermission(AppPermissions.inventoryView)) {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.inventoryView,
+        )) {
           return _permissionRestrictedRoute();
         }
         if (!AppStrings.isVaultEnabled()) return _vipRestrictedRoute();
@@ -188,8 +198,12 @@ class AppRoutes {
           ),
         );
       case inventoryProducts:
-        if (!PermissionService.instance.hasPermission(AppPermissions.inventoryManageProducts) &&
-            !PermissionService.instance.hasPermission(AppPermissions.inventoryView)) {
+        if (!PermissionService.instance.hasPermission(
+              AppPermissions.inventoryManageProducts,
+            ) &&
+            !PermissionService.instance.hasPermission(
+              AppPermissions.inventoryView,
+            )) {
           return _permissionRestrictedRoute();
         }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
@@ -211,8 +225,12 @@ class AppRoutes {
           ),
         );
       case inventoryCategories:
-        if (!PermissionService.instance.hasPermission(AppPermissions.inventoryManageCategories) &&
-            !PermissionService.instance.hasPermission(AppPermissions.inventoryView)) {
+        if (!PermissionService.instance.hasPermission(
+              AppPermissions.inventoryManageCategories,
+            ) &&
+            !PermissionService.instance.hasPermission(
+              AppPermissions.inventoryView,
+            )) {
           return _permissionRestrictedRoute();
         }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
@@ -223,7 +241,9 @@ class AppRoutes {
           ),
         );
       case inventorySuppliers:
-        if (!PermissionService.instance.hasPermission(AppPermissions.inventoryManageSuppliers)) {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.inventoryManageSuppliers,
+        )) {
           return _permissionRestrictedRoute();
         }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
@@ -234,7 +254,9 @@ class AppRoutes {
           ),
         );
       case inventoryPurchases:
-        if (!PermissionService.instance.hasPermission(AppPermissions.inventoryPurchases)) {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.inventoryPurchases,
+        )) {
           return _permissionRestrictedRoute();
         }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
@@ -249,7 +271,9 @@ class AppRoutes {
           ),
         );
       case inventoryStockMovements:
-        if (!PermissionService.instance.hasPermission(AppPermissions.inventoryStockAdjustments)) {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.inventoryStockAdjustments,
+        )) {
           return _permissionRestrictedRoute();
         }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
@@ -260,7 +284,9 @@ class AppRoutes {
           ),
         );
       case inventoryAnalytics:
-        if (!PermissionService.instance.hasPermission(AppPermissions.inventoryAnalytics)) {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.inventoryAnalytics,
+        )) {
           return _permissionRestrictedRoute();
         }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
@@ -276,7 +302,9 @@ class AppRoutes {
           ),
         );
       case employeeList:
-        if (!PermissionService.instance.hasPermission(AppPermissions.hrEmployeesManage)) {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.hrEmployeesManage,
+        )) {
           return _permissionRestrictedRoute();
         }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
@@ -287,7 +315,9 @@ class AppRoutes {
           ),
         );
       case employeeDetails:
-        if (!PermissionService.instance.hasPermission(AppPermissions.hrEmployeesManage)) {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.hrEmployeesManage,
+        )) {
           return _permissionRestrictedRoute();
         }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
@@ -299,7 +329,9 @@ class AppRoutes {
           ),
         );
       case employeeReports:
-        if (!PermissionService.instance.hasPermission(AppPermissions.hrEmployeesManage)) {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.hrEmployeesManage,
+        )) {
           return _permissionRestrictedRoute();
         }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
@@ -310,16 +342,16 @@ class AppRoutes {
           ),
         );
       case createInvoice:
-        if (!PermissionService.instance.hasPermission(AppPermissions.invoicesCreate)) {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.invoicesCreate,
+        )) {
           return _permissionRestrictedRoute();
         }
         final bool isQuotation = settings.arguments is Map<String, dynamic>
             ? ((settings.arguments as Map<String, dynamic>)['isQuotation']
-                    as bool? ??
-                false)
-            : (settings.arguments is bool
-                ? settings.arguments as bool
-                : false);
+                      as bool? ??
+                  false)
+            : (settings.arguments is bool ? settings.arguments as bool : false);
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: di.sl<InvoiceCubit>(),
@@ -327,7 +359,9 @@ class AppRoutes {
           ),
         );
       case editInvoice:
-        if (!PermissionService.instance.hasPermission(AppPermissions.invoicesEdit)) {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.invoicesEdit,
+        )) {
           return _permissionRestrictedRoute();
         }
         final invoiceToEdit = settings.arguments as InvoiceEntity;
@@ -338,7 +372,9 @@ class AppRoutes {
           ),
         );
       case invoiceDetail:
-        if (!PermissionService.instance.hasPermission(AppPermissions.invoicesView)) {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.invoicesView,
+        )) {
           return _permissionRestrictedRoute();
         }
         final args = settings.arguments;
@@ -399,13 +435,19 @@ class AppRoutes {
           builder: (_) => SubscriptionExpiredScreen(args: args),
         );
       case addExpense:
-        if (!PermissionService.instance.hasPermission(AppPermissions.expensesAdd)) {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.expensesAdd,
+        )) {
           return _permissionRestrictedRoute();
         }
         return MaterialPageRoute(builder: (_) => const AddExpenseScreen());
       case incomeDetails:
-        if (!PermissionService.instance.hasPermission(AppPermissions.reportsViewSales) &&
-            !PermissionService.instance.hasPermission(AppPermissions.reportsViewNetProfit)) {
+        if (!PermissionService.instance.hasPermission(
+              AppPermissions.reportsViewSales,
+            ) &&
+            !PermissionService.instance.hasPermission(
+              AppPermissions.reportsViewNetProfit,
+            )) {
           return _permissionRestrictedRoute();
         }
         final args = settings.arguments as Map<String, dynamic>;
@@ -429,7 +471,9 @@ class AppRoutes {
           ),
         );
       case debtDetails:
-        if (!PermissionService.instance.hasPermission(AppPermissions.customersView)) {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.customersView,
+        )) {
           return _permissionRestrictedRoute();
         }
         final debtId = settings.arguments as String;
@@ -440,8 +484,12 @@ class AppRoutes {
           ),
         );
       case customerGlobalPayments:
-        if (!PermissionService.instance.hasPermission(AppPermissions.customersView) &&
-            !PermissionService.instance.hasPermission(AppPermissions.customersSettleDebt)) {
+        if (!PermissionService.instance.hasPermission(
+              AppPermissions.customersView,
+            ) &&
+            !PermissionService.instance.hasPermission(
+              AppPermissions.customersSettleDebt,
+            )) {
           return _permissionRestrictedRoute();
         }
         final customerDetail = settings.arguments as CustomerDebtDetail;
@@ -452,13 +500,17 @@ class AppRoutes {
           ),
         );
       case customersList:
-        if (!PermissionService.instance.hasPermission(AppPermissions.customersView)) {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.customersView,
+        )) {
           return _permissionRestrictedRoute();
         }
         final uid = settings.arguments as String;
         return MaterialPageRoute(builder: (_) => CustomersListScreen(uid: uid));
       case customerReportDetails:
-        if (!PermissionService.instance.hasPermission(AppPermissions.customersView)) {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.customersView,
+        )) {
           return _permissionRestrictedRoute();
         }
         final args = settings.arguments as Map<String, dynamic>;
@@ -469,12 +521,16 @@ class AppRoutes {
           ),
         );
       case addMyDebt:
-        if (!PermissionService.instance.hasPermission(AppPermissions.myDebtsAdd)) {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.myDebtsAdd,
+        )) {
           return _permissionRestrictedRoute();
         }
         return MaterialPageRoute(builder: (_) => const AddMyDebtScreen());
       case myDebtDetails:
-        if (!PermissionService.instance.hasPermission(AppPermissions.myDebtsView)) {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.myDebtsView,
+        )) {
           return _permissionRestrictedRoute();
         }
         final person = settings.arguments as MyDebtPersonEntity;
@@ -485,7 +541,9 @@ class AppRoutes {
           ),
         );
       case myDebtDetailsReport:
-        if (!PermissionService.instance.hasPermission(AppPermissions.myDebtsView)) {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.myDebtsView,
+        )) {
           return _permissionRestrictedRoute();
         }
         final debtId = settings.arguments as String;
@@ -496,7 +554,9 @@ class AppRoutes {
           ),
         );
       case monthlyCollected:
-        if (!PermissionService.instance.hasPermission(AppPermissions.reportsViewSales)) {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.reportsViewSales,
+        )) {
           return _permissionRestrictedRoute();
         }
         final uid = settings.arguments as String;
@@ -504,7 +564,9 @@ class AppRoutes {
           builder: (_) => MonthlyCollectedScreen(uid: uid),
         );
       case monthlyCollectedTransactions:
-        if (!PermissionService.instance.hasPermission(AppPermissions.reportsViewSales)) {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.reportsViewSales,
+        )) {
           return _permissionRestrictedRoute();
         }
         final args = settings.arguments as Map<String, dynamic>;
