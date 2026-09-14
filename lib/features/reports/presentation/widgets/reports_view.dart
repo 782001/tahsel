@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
@@ -154,6 +156,10 @@ class _ReportsViewState extends State<ReportsView> {
                                     );
                                   } else if (state is ReportsSuccess) {
                                     final data = state.reports;
+                                    final canViewNetProfit =
+                                        PermissionService.instance.hasPermission(
+                                          AppPermissions.reportsViewNetProfit,
+                                        );
                                     final margin = data.totalIncome > 0
                                         ? data.netProfit / data.totalIncome
                                         : 0.0;
@@ -383,23 +389,24 @@ class _ReportsViewState extends State<ReportsView> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         if (isDesktop) ...[
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 24,
-                                              vertical: 8,
-                                            ),
-                                            child: Row(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Expanded(child: netProfitCard),
-                                                if (insightCard != null) ...[
-                                                  const SizedBox(width: 16),
-                                                  Expanded(child: insightCard),
+                                          if (canViewNetProfit)
+                                            Padding(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 24,
+                                                vertical: 8,
+                                              ),
+                                              child: Row(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Expanded(child: netProfitCard),
+                                                  if (insightCard != null) ...[
+                                                    const SizedBox(width: 16),
+                                                    Expanded(child: insightCard),
+                                                  ],
                                                 ],
-                                              ],
+                                              ),
                                             ),
-                                          ),
                                           Padding(
                                             padding: const EdgeInsets.symmetric(
                                               horizontal: 24,
@@ -420,15 +427,17 @@ class _ReportsViewState extends State<ReportsView> {
                                             ),
                                           ),
                                         ] else ...[
-                                          netProfitCard,
-                                          if (insightCard != null)
-                                            Padding(
-                                              padding: EdgeInsets.symmetric(
-                                                horizontal: 24.w,
-                                                vertical: 8.h,
+                                          if (canViewNetProfit) ...[
+                                            netProfitCard,
+                                            if (insightCard != null)
+                                              Padding(
+                                                padding: EdgeInsets.symmetric(
+                                                  horizontal: 24.w,
+                                                  vertical: 8.h,
+                                                ),
+                                                child: insightCard,
                                               ),
-                                              child: insightCard,
-                                            ),
+                                          ],
                                           totalIncomeCard,
                                           totalExpensesCard,
                                         ],
@@ -508,10 +517,12 @@ class _ReportsViewState extends State<ReportsView> {
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.start,
                                               children: [
-                                                Expanded(
-                                                  child: operationalMarginCard,
-                                                ),
-                                                const SizedBox(width: 16),
+                                                if (canViewNetProfit) ...[
+                                                  Expanded(
+                                                    child: operationalMarginCard,
+                                                  ),
+                                                  const SizedBox(width: 16),
+                                                ],
                                                 Expanded(
                                                   child: unpaidDebtsCard,
                                                 ),
@@ -531,13 +542,15 @@ class _ReportsViewState extends State<ReportsView> {
                                           if (showCafeCard) cafeCard!,
                                           if (showPlaystationCard)
                                             playstationCard!,
-                                          operationalMarginCard,
+                                          if (canViewNetProfit)
+                                            operationalMarginCard,
                                           unpaidDebtsCard,
                                           if (invoiceSummaryCard != null)
                                             invoiceSummaryCard,
                                         ],
 
-                                        if (state.insights.length > 1) ...[
+                                        if (canViewNetProfit &&
+                                            state.insights.length > 1) ...[
                                           const SizedBox(height: 32),
                                           Padding(
                                             padding: isDesktop

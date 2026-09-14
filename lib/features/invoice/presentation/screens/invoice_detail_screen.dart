@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
@@ -17,6 +17,7 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/utils/summary_helper.dart';
 import 'package:tahsel/core/utils/vault_balance_helper.dart';
 import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/widgets/permission_guard.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/cashbox/data/datasources/vault_remote_data_source.dart';
@@ -797,6 +798,15 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
   }
 
   Future<void> _confirmVoid(BuildContext context) async {
+    if (!PermissionService.instance.hasPermission(AppPermissions.invoicesDelete)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppStrings.noPermissionForAction.tr()),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
     if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
       return;
     }
@@ -1038,8 +1048,11 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                     },
                   ),
                 ),
-                // Edit — only for non-voided invoices
-                if (_invoice.status != InvoiceStatus.voided)
+                // Edit — only for non-voided invoices with permission
+                if (_invoice.status != InvoiceStatus.voided &&
+                    PermissionService.instance.hasPermission(
+                      AppPermissions.invoicesEdit,
+                    ))
                   IconButton(
                     icon: Icon(
                       Icons.edit_square,
@@ -1069,10 +1082,13 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                       }
                     },
                   ),
-                // Void — only for pending/partial invoices (never quotations)
+                // Void — only for pending/partial invoices with permission
                 if (!_invoice.isQuotation &&
                     (_invoice.status == InvoiceStatus.pending ||
-                        _invoice.status == InvoiceStatus.partial))
+                        _invoice.status == InvoiceStatus.partial) &&
+                    PermissionService.instance.hasPermission(
+                      AppPermissions.invoicesDelete,
+                    ))
                   IconButton(
                     icon: Icon(
                       Icons.cancel_presentation,

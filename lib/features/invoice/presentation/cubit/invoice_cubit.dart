@@ -19,6 +19,9 @@ import '../../../standard_features/no-internet/logic/connectivity_state.dart';
 import '../../data/models/invoice_model.dart';
 import 'dart:convert';
 import 'package:get_it/get_it.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/inventory/domain/entities/stock_movement_entity.dart';
 import 'package:tahsel/features/inventory/domain/repositories/inventory_repository.dart';
@@ -124,6 +127,10 @@ class InvoiceCubit extends Cubit<InvoiceState> {
 
   /// Creates a new invoice. Handles offline-first flow internally.
   Future<void> createInvoice(InvoiceEntity invoice) async {
+    if (!PermissionService.instance.hasPermission(AppPermissions.invoicesCreate)) {
+      emit(InvoiceFailure(AppStrings.noPermissionForAction.tr()));
+      return;
+    }
     emit(InvoiceLoading());
 
     if (connectivityCubit.state is ConnectivityDisconnected) {
@@ -582,6 +589,10 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     InvoiceEntity invoice, {
     InvoiceEntity? previous,
   }) async {
+    if (!PermissionService.instance.hasPermission(AppPermissions.invoicesEdit)) {
+      emit(InvoiceFailure(AppStrings.noPermissionForAction.tr()));
+      return;
+    }
     emit(InvoiceLoading());
 
     // Build the structured params so the use-case contract is explicit.
@@ -630,6 +641,10 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     String invoiceId, {
     InvoiceEntity? invoice,
   }) async {
+    if (!PermissionService.instance.hasPermission(AppPermissions.invoicesDelete)) {
+      emit(InvoiceFailure(AppStrings.noPermissionForAction.tr()));
+      return;
+    }
     emit(InvoiceLoading());
     final result = await voidInvoiceUseCase(uid, invoiceId, invoice: invoice);
     result.fold(

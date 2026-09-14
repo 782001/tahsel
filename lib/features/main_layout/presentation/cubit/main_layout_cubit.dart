@@ -5,9 +5,11 @@ import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/storage/cashhelper.dart';
 import 'package:tahsel/core/storage/secure_storage_helper.dart';
 import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 import 'package:tahsel/features/expenses/presentation/screens/expenses_screen.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_cubit.dart';
 import 'package:tahsel/features/invoice/presentation/screens/invoices_screen.dart';
@@ -202,6 +204,7 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
       AppLogger.printMessage(
         '[MainLayoutCubit] Access to tab $index denied by RBAC.',
       );
+      showfailureToast(AppStrings.noPermissionForAction.tr());
       return;
     }
     currentIndex = index;

@@ -2,8 +2,10 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/error/failures.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 
 import '../../domain/entities/advance_entity.dart';
@@ -209,6 +211,12 @@ class EmployeeCubit extends Cubit<EmployeeState> {
   }
 
   Future<void> checkIn(AttendanceEntity attendance) async {
+    if (!PermissionService.instance.hasPermission(
+          AppPermissions.employeesRecordAttendance,
+        )) {
+      emit(EmployeeFailure(AppStrings.noPermissionForAction.tr()));
+      return;
+    }
     emit(EmployeeLoading());
     final result = await checkInUseCase(attendance);
     result.fold(
@@ -225,6 +233,12 @@ class EmployeeCubit extends Cubit<EmployeeState> {
     required String status,
     required String notes,
   }) async {
+    if (!PermissionService.instance.hasPermission(
+          AppPermissions.employeesRecordAttendance,
+        )) {
+      emit(EmployeeFailure(AppStrings.noPermissionForAction.tr()));
+      return;
+    }
     emit(EmployeeLoading());
     final attendance = AttendanceEntity(
       employeeId: employeeId,
@@ -270,6 +284,12 @@ class EmployeeCubit extends Cubit<EmployeeState> {
     required String status,
     required String notes,
   }) async {
+    if (!PermissionService.instance.hasPermission(
+          AppPermissions.employeesRecordAttendance,
+        )) {
+      emit(EmployeeFailure(AppStrings.noPermissionForAction.tr()));
+      return;
+    }
     // Preserve the current detail state for optimistic UI update
     final previousState = state;
     if (previousState is! EmployeeDetailsFetchSuccess) {
@@ -327,6 +347,12 @@ class EmployeeCubit extends Cubit<EmployeeState> {
     List<String>? advanceIdsToDeduct,
     List<String> attendanceIds = const [],
   }) async {
+    if (!PermissionService.instance.hasPermission(
+          AppPermissions.employeesManagePayroll,
+        )) {
+      emit(EmployeeFailure(AppStrings.noPermissionForAction.tr()));
+      return;
+    }
     emit(EmployeeLoading());
     final result = await paySalaryUseCase(
       payroll,
@@ -525,6 +551,12 @@ class EmployeeCubit extends Cubit<EmployeeState> {
   }
 
   Future<void> requestAdvance(AdvanceEntity advance) async {
+    if (!PermissionService.instance.hasPermission(
+          AppPermissions.employeesManagePayroll,
+        )) {
+      emit(EmployeeFailure(AppStrings.noPermissionForAction.tr()));
+      return;
+    }
     emit(EmployeeLoading());
     final result = await requestAdvanceUseCase(advance);
     result.fold((failure) => emit(EmployeeFailure(failure.message)), (_) {

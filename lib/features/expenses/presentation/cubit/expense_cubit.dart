@@ -16,6 +16,10 @@ import '../../domain/usecases/get_monthly_expenses_usecase.dart';
 import '../../domain/usecases/get_pending_expenses_usecase.dart';
 import '../../domain/usecases/group_expenses_by_day_usecase.dart';
 import 'expense_state.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 
 class ExpenseCubit extends Cubit<ExpenseState> {
   final AddExpenseUseCase addExpenseUseCase;
@@ -439,6 +443,10 @@ class ExpenseCubit extends Cubit<ExpenseState> {
   }
 
   Future<void> addExpense(ExpenseEntity expense) async {
+    if (!PermissionService.instance.hasPermission(AppPermissions.expensesAdd)) {
+      emit(ExpenseFailure(message: AppStrings.noPermissionForAction.tr()));
+      return;
+    }
     emit(const ExpenseLoading());
     final result = await addExpenseUseCase(AddExpenseParams(expense: expense));
     result.fold(
@@ -460,6 +468,10 @@ class ExpenseCubit extends Cubit<ExpenseState> {
     String? monthKey,
     String? monthName,
   }) async {
+    if (!PermissionService.instance.hasPermission(AppPermissions.expensesDelete)) {
+      emit(ExpenseFailure(message: AppStrings.noPermissionForAction.tr()));
+      return;
+    }
     emit(const ExpenseLoading());
     final result = await deleteExpenseUseCase(
       DeleteExpenseParams(uid: uid, expenseId: expenseId),
@@ -478,6 +490,10 @@ class ExpenseCubit extends Cubit<ExpenseState> {
   }
 
   Future<void> deleteMonth(String uid, String monthKey) async {
+    if (!PermissionService.instance.hasPermission(AppPermissions.expensesDelete)) {
+      emit(ExpenseFailure(message: AppStrings.noPermissionForAction.tr()));
+      return;
+    }
     emit(const ExpenseLoading());
     final result = await deleteMonthExpensesUseCase(
       DeleteMonthParams(uid: uid, monthKey: monthKey),

@@ -7,6 +7,9 @@ import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/utils/vault_balance_helper.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
@@ -746,13 +749,19 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
               if (activeCheckIn != null) ...[
                 SizedBox(width: isDesktop ? 12 : 12.w),
                 ElevatedButton.icon(
-                  onPressed: _guard.canCheckOut(employee.status)
-                      ? () => _showCheckInOutDialog(
-                          employee,
-                          activeCheckIn,
-                          attendanceLogs,
-                        )
-                      : () => _showStatusBlockedSnackBar(employee.status),
+                  onPressed: !PermissionService.instance.hasPermission(
+                        AppPermissions.employeesRecordAttendance,
+                      )
+                      ? () => showfailureToast(
+                            AppStrings.noPermissionForAction.tr(),
+                          )
+                      : _guard.canCheckOut(employee.status)
+                          ? () => _showCheckInOutDialog(
+                              employee,
+                              activeCheckIn,
+                              attendanceLogs,
+                            )
+                          : () => _showStatusBlockedSnackBar(employee.status),
                   icon: const Icon(
                     Icons.logout_rounded,
                     color: Colors.white,
@@ -788,13 +797,19 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
               runSpacing: 8,
               children: [
                 ElevatedButton.icon(
-                  onPressed: _guard.canCheckIn(employee.status)
-                      ? () => _showCheckInOutDialog(
-                          employee,
-                          activeCheckIn,
-                          attendanceLogs,
-                        )
-                      : () => _showStatusBlockedSnackBar(employee.status),
+                  onPressed: !PermissionService.instance.hasPermission(
+                        AppPermissions.employeesRecordAttendance,
+                      )
+                      ? () => showfailureToast(
+                            AppStrings.noPermissionForAction.tr(),
+                          )
+                      : _guard.canCheckIn(employee.status)
+                          ? () => _showCheckInOutDialog(
+                              employee,
+                              activeCheckIn,
+                              attendanceLogs,
+                            )
+                          : () => _showStatusBlockedSnackBar(employee.status),
                   icon: const Icon(
                     Icons.login_rounded,
                     color: Colors.white,
@@ -822,13 +837,19 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                 ),
                 if (employee.salaryType == "monthly") ...[
                   OutlinedButton.icon(
-                    onPressed: _guard.canModifyAttendance(employee.status)
-                        ? () => _showMarkExceptionDialog(
-                            context,
-                            employee,
-                            'absent',
-                          )
-                        : () => _showStatusBlockedSnackBar(employee.status),
+                    onPressed: !PermissionService.instance.hasPermission(
+                          AppPermissions.employeesRecordAttendance,
+                        )
+                        ? () => showfailureToast(
+                              AppStrings.noPermissionForAction.tr(),
+                            )
+                        : _guard.canModifyAttendance(employee.status)
+                            ? () => _showMarkExceptionDialog(
+                                context,
+                                employee,
+                                'absent',
+                              )
+                            : () => _showStatusBlockedSnackBar(employee.status),
                     icon: Icon(
                       Icons.cancel_outlined,
                       color: AppColors.error,
@@ -854,13 +875,19 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                     ),
                   ),
                   OutlinedButton.icon(
-                    onPressed: _guard.canModifyAttendance(employee.status)
-                        ? () => _showMarkExceptionDialog(
-                            context,
-                            employee,
-                            'excused',
-                          )
-                        : () => _showStatusBlockedSnackBar(employee.status),
+                    onPressed: !PermissionService.instance.hasPermission(
+                          AppPermissions.employeesRecordAttendance,
+                        )
+                        ? () => showfailureToast(
+                              AppStrings.noPermissionForAction.tr(),
+                            )
+                        : _guard.canModifyAttendance(employee.status)
+                            ? () => _showMarkExceptionDialog(
+                                context,
+                                employee,
+                                'excused',
+                              )
+                            : () => _showStatusBlockedSnackBar(employee.status),
                     icon: Icon(
                       Icons.event_busy_rounded,
                       color: AppColors.blackLight,
@@ -1654,11 +1681,17 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
               ),
             ],
             ElevatedButton.icon(
-              onPressed: !isWithinWindow
-                  ? null
-                  : !_guard.canPaySalary(employee.status)
-                  ? () => _showStatusBlockedSnackBar(employee.status)
-                  : () {
+              onPressed: !PermissionService.instance.hasPermission(
+                    AppPermissions.employeesManagePayroll,
+                  )
+                  ? () => showfailureToast(
+                        AppStrings.noPermissionForAction.tr(),
+                      )
+                  : !isWithinWindow
+                      ? null
+                      : !_guard.canPaySalary(employee.status)
+                      ? () => _showStatusBlockedSnackBar(employee.status)
+                      : () {
                       if (context.read<ConnectivityCubit>().state
                           is ConnectivityDisconnected) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -2293,11 +2326,17 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
             ),
           ),
           ElevatedButton.icon(
-            onPressed: _guard.canRequestAdvance(employee.status)
-                ? () {
-                    _showRequestAdvanceDialog(employee);
-                  }
-                : () => _showStatusBlockedSnackBar(employee.status),
+            onPressed: !PermissionService.instance.hasPermission(
+                  AppPermissions.employeesManagePayroll,
+                )
+                ? () => showfailureToast(
+                      AppStrings.noPermissionForAction.tr(),
+                    )
+                : _guard.canRequestAdvance(employee.status)
+                    ? () {
+                        _showRequestAdvanceDialog(employee);
+                      }
+                    : () => _showStatusBlockedSnackBar(employee.status),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryColor,
               shape: RoundedRectangleBorder(
