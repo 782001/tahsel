@@ -240,7 +240,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
 
                         // List Header
                         Text(
-                          'موظفي النظام المسجلين (${employees.length})',
+                          '${AppStrings.registeredSystemEmployees.tr()} (${employees.length})',
                           style: TextStyles.customStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -421,13 +421,19 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _buildStatColumn(
-                      'إجمالي الموظفين',
+                      AppStrings.totalEmployeesStat.tr(),
                       employees.length.toString(),
                     ),
                     Container(height: 25.h, width: 1, color: Colors.white24),
-                    _buildStatColumn('نشط بالخدمة', activeCount.toString()),
+                    _buildStatColumn(
+                      AppStrings.activeInService.tr(),
+                      activeCount.toString(),
+                    ),
                     Container(height: 25.h, width: 1, color: Colors.white24),
-                    _buildStatColumn('معطل مؤقتاً', disabledCount.toString()),
+                    _buildStatColumn(
+                      AppStrings.temporarilyDisabled.tr(),
+                      disabledCount.toString(),
+                    ),
                   ],
                 ),
               ],

@@ -94,7 +94,7 @@ class _EditAppEmployeeDialogState extends State<EditAppEmployeeDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'يرجى تحديد صلاحية واحدة على الأقل للموظف',
+            AppStrings.appEmployeeSelectAtLeastOnePermission.tr(),
             style: TextStyles.customStyle(color: AppColors.white),
           ),
           backgroundColor: AppColors.error,
@@ -226,7 +226,7 @@ class _EditAppEmployeeDialogState extends State<EditAppEmployeeDialog> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'الصلاحيات الممنوحة (${_selectedPermissions.length})',
+                            '${AppStrings.appEmployeeGrantedPermissions.tr()} (${_selectedPermissions.length})',
                             style: TextStyles.customStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
@@ -376,7 +376,7 @@ class _EditAppEmployeeDialogState extends State<EditAppEmployeeDialog> {
                         ),
                       ),
                       child: Text(
-                        'إلغاء',
+                        AppStrings.cancel.tr(),
                         style: TextStyles.customStyle(
                           fontSize: 14,
                           color: AppColors.sandText,
