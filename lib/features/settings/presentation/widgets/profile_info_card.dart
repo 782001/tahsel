@@ -1,11 +1,11 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/logo/project_logo_service.dart';
-import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -14,8 +14,11 @@ import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/settings/data/models/user_profile_model.dart';
 import 'package:tahsel/features/settings/presentation/cubit/profile_cubit.dart';
 import 'package:tahsel/features/settings/presentation/cubit/profile_state.dart';
+import 'package:tahsel/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_cubit.dart';
+import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_state.dart';
 import 'package:tahsel/shared/widgets/shimmer/shimmer_loading.dart';
 import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
@@ -28,48 +31,56 @@ class ProfileInfoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
 
-    return BlocConsumer<ConnectivityCubit, ConnectivityState>(
-      listenWhen: (previous, current) =>
-          previous is ConnectivityDisconnected &&
-          current is ConnectivityConnected,
-      listener: (context, connectivityState) {
-        // Automatically reload profile data when connection is restored
-        context.read<ProfileCubit>().loadProfile();
-      },
-      builder: (context, connectivityState) {
-        final isOffline = connectivityState is ConnectivityDisconnected;
-
-        if (isOffline) {
-          return _buildOfflineCard(context, isDesktop);
-        }
-
-        return BlocBuilder<ProfileCubit, ProfileState>(
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, themeState) {
+        return BlocBuilder<LocaleCubit, LocaleState>(
           builder: (context, state) {
-            if (state is ProfileLoading || state is ProfileInitial) {
-              return _buildLoadingCard(isDesktop);
-            }
+            return BlocConsumer<ConnectivityCubit, ConnectivityState>(
+              listenWhen: (previous, current) =>
+                  previous is ConnectivityDisconnected &&
+                  current is ConnectivityConnected,
+              listener: (context, connectivityState) {
+                // Automatically reload profile data when connection is restored
+                context.read<ProfileCubit>().loadProfile();
+              },
+              builder: (context, connectivityState) {
+                final isOffline = connectivityState is ConnectivityDisconnected;
 
-            if (state is ProfileError) {
-              if (_isNetworkError(state.message)) {
-                return _buildOfflineCard(context, isDesktop);
-              }
-              return _buildErrorCard(context, state.message, isDesktop);
-            }
+                if (isOffline) {
+                  return _buildOfflineCard(context, isDesktop);
+                }
 
-            UserProfileModel profile;
-            if (state is ProfileLoaded) {
-              profile = state.profile;
-            } else if (state is ProfileUpdating) {
-              profile = state.currentProfile;
-            } else if (state is ProfileUpdateSuccess) {
-              profile = state.updatedProfile;
-            } else if (state is ProfileUpdateError) {
-              profile = state.currentProfile;
-            } else {
-              return const SizedBox.shrink();
-            }
+                return BlocBuilder<ProfileCubit, ProfileState>(
+                  builder: (context, state) {
+                    if (state is ProfileLoading || state is ProfileInitial) {
+                      return _buildLoadingCard(isDesktop);
+                    }
 
-            return _buildContentCard(context, profile, isDesktop);
+                    if (state is ProfileError) {
+                      if (_isNetworkError(state.message)) {
+                        return _buildOfflineCard(context, isDesktop);
+                      }
+                      return _buildErrorCard(context, state.message, isDesktop);
+                    }
+
+                    UserProfileModel profile;
+                    if (state is ProfileLoaded) {
+                      profile = state.profile;
+                    } else if (state is ProfileUpdating) {
+                      profile = state.currentProfile;
+                    } else if (state is ProfileUpdateSuccess) {
+                      profile = state.updatedProfile;
+                    } else if (state is ProfileUpdateError) {
+                      profile = state.currentProfile;
+                    } else {
+                      return const SizedBox.shrink();
+                    }
+
+                    return _buildContentCard(context, profile, isDesktop);
+                  },
+                );
+              },
+            );
           },
         );
       },
@@ -448,8 +459,9 @@ class ProfileInfoCard extends StatelessWidget {
               SizedBox(width: 8.w),
 
               // Compact Edit Button
-              if (PermissionService.instance
-                  .hasPermission(AppPermissions.settingsEditProfile))
+              if (PermissionService.instance.hasPermission(
+                AppPermissions.settingsEditProfile,
+              ))
                 Material(
                   color: Colors.transparent,
                   child: InkWell(

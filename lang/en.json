@@ -1276,7 +1276,7 @@
   "crn_short": "CRN",
   "vat_short": "VAT",
   "team_and_permissions": "Team & Permissions",
-  "team_and_permissions_desc": "Manage employee logins and customize screen and action access",
+  "team_and_permissions_desc": "Manage employee accounts, roles, and permissions accurately",
   "add_app_employee": "Add App Employee",
   "edit_app_employee": "Edit Employee Permissions",
   "employee_email": "Employee Email",

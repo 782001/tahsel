@@ -1279,7 +1279,7 @@
   "crn_short": "سجل",
   "vat_short": "ضريبي",
   "team_and_permissions": "فريق العمل والصلاحيات",
-  "team_and_permissions_desc": "إدارة حسابات الموظفين وتخصيص صلاحيات الشاشات والأزرار",
+  "team_and_permissions_desc": "إدارة حسابات الموظفين، الأدوار، وتوزيع الصلاحيات بدقة",
   "add_app_employee": "إضافة موظف للنظام",
   "edit_app_employee": "تعديل صلاحيات الموظف",
   "employee_email": "البريد الإلكتروني للموظف",
