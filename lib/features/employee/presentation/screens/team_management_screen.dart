@@ -11,6 +11,7 @@ import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/custom_app_bar/custom_app_bar.dart';
+import 'package:tahsel/shared/widgets/shimmer/shimmer_loading.dart';
 
 import '../cubit/team_management_cubit.dart';
 import '../cubit/team_management_state.dart';
@@ -208,7 +209,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
             },
             builder: (context, state) {
               if (state is TeamManagementLoading && _cubit.employees.isEmpty) {
-                return const Center(child: CircularProgressIndicator());
+                return _buildShimmerSkeleton(isDesktop);
               }
 
               final employees = _cubit.employees;
@@ -260,6 +261,137 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
                 ),
               );
             },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShimmerSkeleton(bool isDesktop) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: isDesktop ? 900 : double.infinity,
+        ),
+        child: ShimmerLoading(
+          child: ListView(
+            physics: const NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.symmetric(
+              horizontal: isDesktop ? 24 : 16.w,
+              vertical: 16.h,
+            ),
+            children: [
+              // Overview Banner Skeleton
+              ShimmerPlaceholder(
+                height: 140.h,
+                borderRadius: 18.r,
+              ),
+              SizedBox(height: 16.h),
+
+              // Header Skeleton
+              Row(
+                children: [
+                  ShimmerPlaceholder(
+                    width: 170.w,
+                    height: 18.h,
+                    borderRadius: 6.r,
+                  ),
+                ],
+              ),
+              SizedBox(height: 12.h),
+
+              // Employee Cards Skeleton (3 items)
+              for (int i = 0; i < 3; i++) ...[
+                Container(
+                  margin: EdgeInsets.only(bottom: 12.h),
+                  padding: EdgeInsets.all(14.r),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(16.r),
+                    border: Border.all(
+                      color: AppColors.lightGreyColor.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Top Row: Avatar + Info + Switch
+                      Row(
+                        children: [
+                          ShimmerPlaceholder(
+                            width: 40.r,
+                            height: 40.r,
+                            shape: BoxShape.circle,
+                          ),
+                          SizedBox(width: 12.w),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ShimmerPlaceholder(
+                                  width: 120.w,
+                                  height: 15.h,
+                                  borderRadius: 4.r,
+                                ),
+                                SizedBox(height: 6.h),
+                                ShimmerPlaceholder(
+                                  width: 160.w,
+                                  height: 12.h,
+                                  borderRadius: 4.r,
+                                ),
+                              ],
+                            ),
+                          ),
+                          ShimmerPlaceholder(
+                            width: 38.w,
+                            height: 22.h,
+                            borderRadius: 12.r,
+                          ),
+                        ],
+                      ),
+                      Divider(height: 18.h, color: AppColors.lightGreyColor.withValues(alpha: 0.5)),
+
+                      // Bottom Row: Badges + Actions
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              ShimmerPlaceholder(
+                                width: 65.w,
+                                height: 22.h,
+                                borderRadius: 8.r,
+                              ),
+                              SizedBox(width: 8.w),
+                              ShimmerPlaceholder(
+                                width: 85.w,
+                                height: 22.h,
+                                borderRadius: 8.r,
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              ShimmerPlaceholder(
+                                width: 26.r,
+                                height: 26.r,
+                                borderRadius: 6.r,
+                              ),
+                              SizedBox(width: 8.w),
+                              ShimmerPlaceholder(
+                                width: 26.r,
+                                height: 26.r,
+                                borderRadius: 6.r,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ),

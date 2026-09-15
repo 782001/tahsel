@@ -189,8 +189,12 @@ class PermissionService {
       );
     } catch (e) {
       AppLogger.printMessage('[PermissionService] Error loading from storage: $e');
-      // Fallback safe default: owner full access
-      init(role: 'owner', permissionsList: [AppPermissions.all]);
+      // Secure fallback: never escalate an employee to owner if an error occurs
+      if (AppStrings.userRole == 'employee' || AppStrings.employeeAuthUid.isNotEmpty) {
+        init(role: 'employee', permissionsList: []);
+      } else {
+        init(role: 'owner', permissionsList: [AppPermissions.all]);
+      }
     }
   }
 
