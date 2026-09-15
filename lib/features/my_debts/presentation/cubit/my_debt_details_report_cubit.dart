@@ -1,6 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/debt/domain/entities/payment_entity.dart';
 import 'package:tahsel/features/inventory/presentation/cubits/inventory_purchases_cubit.dart';
@@ -176,6 +178,11 @@ class MyDebtDetailsReportCubit extends Cubit<MyDebtDetailsReportState> {
     required String personName,
     String? note,
   }) async {
+    if (!PermissionService.instance.hasPermission(AppPermissions.myDebtsDelete)) {
+      emit(MyDebtDetailsReportError(message: AppStrings.noPermissionForAction.tr()));
+      return;
+    }
+
     double minAmount = 0;
     double? maxAmount;
     bool isDebtAdded = false;
@@ -259,6 +266,11 @@ class MyDebtDetailsReportCubit extends Cubit<MyDebtDetailsReportState> {
     required String personName,
     required double amountBeingDeleted,
   }) async {
+    if (!PermissionService.instance.hasPermission(AppPermissions.myDebtsDelete)) {
+      emit(MyDebtDetailsReportError(message: AppStrings.noPermissionForAction.tr()));
+      return;
+    }
+
     emit(MyDebtDetailsReportLoading());
     final result = await deleteMyDebtPaymentUseCase(
       DeleteMyDebtPaymentParams(uid: uid, debtId: debtId, paymentId: paymentId),

@@ -484,12 +484,15 @@ class AppRoutes {
           ),
         );
       case customerGlobalPayments:
-        if (!PermissionService.instance.hasPermission(
+        if ((!PermissionService.instance.hasPermission(
+              AppPermissions.customersViewReports,
+            ) &&
+            !PermissionService.instance.hasPermission(
               AppPermissions.customersView,
             ) &&
             !PermissionService.instance.hasPermission(
               AppPermissions.customersSettleDebt,
-            )) {
+            ))) {
           return _permissionRestrictedRoute();
         }
         final customerDetail = settings.arguments as CustomerDebtDetail;

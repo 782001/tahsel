@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/routes/app_routes.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
 import '../../data/models/debt_item_model.dart';
 
@@ -14,11 +19,19 @@ class HeaderBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => Navigator.pushNamed(
-        context,
-        AppRoutes.customerGlobalPayments,
-        arguments: detail,
-      ),
+      onTap: () {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.customersViewReports,
+        )) {
+          showfailureToast(AppStrings.appPermissionDenied.tr());
+          return;
+        }
+        Navigator.pushNamed(
+          context,
+          AppRoutes.customerGlobalPayments,
+          arguments: detail,
+        );
+      },
       child: Container(
         padding: EdgeInsets.fromLTRB(24.w, 60.h, 24.w, 32.h),
 

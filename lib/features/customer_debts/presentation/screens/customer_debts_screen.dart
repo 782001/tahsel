@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/customer_debts/presentation/widgets/customer_debts_header.dart';
@@ -69,6 +71,32 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    if (!PermissionService.instance.hasPermission(
+      AppPermissions.customersView,
+    )) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.lock_outline_rounded,
+              size: 48,
+              color: AppColors.grey,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              AppStrings.noPermissionForAction.tr(),
+              style: TextStyles.customStyle(
+                color: AppColors.grey,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
       body: SafeArea(
@@ -206,7 +234,9 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen>
                                   onTap: () {
                                     if (_selectedFilter != 'all') {
                                       setState(() => _selectedFilter = 'all');
-                                      context.read<DebtCubit>().setFilter('all');
+                                      context.read<DebtCubit>().setFilter(
+                                        'all',
+                                      );
                                     }
                                   },
                                 ),
@@ -221,7 +251,9 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen>
                                       setState(
                                         () => _selectedFilter = 'overdue',
                                       );
-                                      context.read<DebtCubit>().setFilter('overdue');
+                                      context.read<DebtCubit>().setFilter(
+                                        'overdue',
+                                      );
                                     }
                                   },
                                 ),
@@ -236,7 +268,9 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen>
                                       setState(
                                         () => _selectedFilter = 'due_soon',
                                       );
-                                      context.read<DebtCubit>().setFilter('due_soon');
+                                      context.read<DebtCubit>().setFilter(
+                                        'due_soon',
+                                      );
                                     }
                                   },
                                 ),

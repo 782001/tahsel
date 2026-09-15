@@ -82,6 +82,8 @@ class AppPermissions {
   static const String debtsAdd = customersAdd;
   static const String debtsView = customersView;
   static const String debtsDelete = customersDeleteDebt;
+  static const String debtsDeleteOrEdit = customersDeleteDebt;
+  static const String myDebtsDeleteOrEdit = myDebtsDelete;
   static const String vaultAccess = vaultViewBalance;
   static const String hrEmployeesManage = employeesView;
   static const String shippingReconciliationView = shippingView;

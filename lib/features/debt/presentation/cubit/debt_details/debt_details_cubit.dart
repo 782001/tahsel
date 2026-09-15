@@ -14,6 +14,9 @@ import '../../../domain/repositories/debt_repository.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_cubit.dart';
 import 'package:tahsel/features/debt/presentation/cubit/total_debts/total_debts_cubit.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 
 class DebtDetailsCubit extends Cubit<DebtDetailsState> {
@@ -126,6 +129,11 @@ class DebtDetailsCubit extends Cubit<DebtDetailsState> {
     required String customerName,
     String? note,
   }) async {
+    if (!PermissionService.instance.hasPermission(AppPermissions.customersDeleteDebt)) {
+      emit(DebtDetailsError(AppStrings.noPermissionForAction.tr()));
+      return;
+    }
+
     double minAmount = 0;
     double? maxAmount;
     bool isDebtAdded = false;
@@ -201,6 +209,11 @@ class DebtDetailsCubit extends Cubit<DebtDetailsState> {
     required String customerName,
     required double amountBeingDeleted,
   }) async {
+    if (!PermissionService.instance.hasPermission(AppPermissions.customersDeleteDebt)) {
+      emit(DebtDetailsError(AppStrings.noPermissionForAction.tr()));
+      return;
+    }
+
     emit(DebtDetailsLoading());
     final result = await deletePaymentUseCase(
       DeletePaymentParams(uid: uid, debtId: debtId, paymentId: paymentId),

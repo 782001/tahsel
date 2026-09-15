@@ -5,6 +5,8 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -38,6 +40,10 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
     bool canEdit = false;
     bool canDelete = false;
 
+    final bool canModifyMyDebt = PermissionService.instance.hasPermission(
+      AppPermissions.myDebtsDelete,
+    );
+
     List<PaymentEntity>? transactions;
     double? remainingDebt;
     if (state is MyDebtDetailsReportLoaded) {
@@ -51,7 +57,7 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
       remainingDebt = state.remainingAmount;
     }
 
-    if (transactions != null && !isSettlement) {
+    if (transactions != null && !isSettlement && canModifyMyDebt) {
       final index = transactions.indexOf(transaction);
       // Rule 1: Only latest 2 items
       final bool isLatest2 = index >= 0 && index < 2;
@@ -238,6 +244,19 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
   }
 
   void _showEditDialog(BuildContext context) {
+    if (!PermissionService.instance.hasPermission(
+      AppPermissions.myDebtsDelete,
+    )) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          content: Text(AppStrings.noPermissionForAction.tr()),
+          backgroundColor: AppColors.orange,
+        ),
+      );
+      return;
+    }
+
     if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -532,6 +551,19 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
   }
 
   void _showDeleteDialog(BuildContext context) {
+    if (!PermissionService.instance.hasPermission(
+      AppPermissions.myDebtsDelete,
+    )) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          content: Text(AppStrings.noPermissionForAction.tr()),
+          backgroundColor: AppColors.orange,
+        ),
+      );
+      return;
+    }
+
     if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
