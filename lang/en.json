@@ -1361,6 +1361,7 @@
   "perm_my_debts_add": "Add my Debt",
   "perm_my_debts_pay": "Pay my Debt",
   "perm_my_debts_delete": "Delete or Edit my Debts and Payment Records (Sensitive)",
+  "perm_vault_access": "Access Vault & Cash Register",
   "perm_vault_view_balance": "View Current Vault Balance (Confidential)",
   "perm_vault_deposit": "Manual Vault Deposit",
   "perm_vault_withdraw": "Manual Vault Withdrawal",

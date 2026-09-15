@@ -1364,6 +1364,7 @@
   "perm_my_debts_add": "إضافة والتزام دين عليا جديد",
   "perm_my_debts_pay": "تسجيل دفعات سداد عليا",
   "perm_my_debts_delete": "حذف او تعديل ديون عليا وسجلات الدفع (حساس)",
+  "perm_vault_access": "الوصول للخزينة والصندوق النقدي",
   "perm_vault_view_balance": "رؤية رصيد الخزينة الحالي (سري)",
   "perm_vault_deposit": "إيداع نقدي يدوي في الخزينة",
   "perm_vault_withdraw": "سحب نقدي يدوي من الخزينة",

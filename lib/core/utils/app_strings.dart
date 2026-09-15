@@ -1,4 +1,4 @@
-﻿class AppStrings {
+class AppStrings {
   static const String noRouteFound = 'No Route Found';
   static const String cachedRandomQuote = 'CACHED_RANDOM_QUOTE';
   static const String contentType = 'Content-Type';
@@ -1563,6 +1563,7 @@
   static const String permMyDebtsAdd = "perm_my_debts_add";
   static const String permMyDebtsPay = "perm_my_debts_pay";
   static const String permMyDebtsDelete = "perm_my_debts_delete";
+  static const String permVaultAccess = "perm_vault_access";
   static const String permVaultViewBalance = "perm_vault_view_balance";
   static const String permVaultDeposit = "perm_vault_deposit";
   static const String permVaultWithdraw = "perm_vault_withdraw";
