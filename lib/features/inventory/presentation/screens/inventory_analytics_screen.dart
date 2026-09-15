@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get_it/get_it.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/currency/currency_service.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 
-import 'package:get_it/get_it.dart';
 import '../../data/datasources/inventory_local_data_source.dart';
 import '../../domain/entities/inventory_category_entity.dart';
 import '../../domain/entities/inventory_product_entity.dart';
@@ -95,8 +97,11 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
           (catCubit.state as InventoryCategoriesLoaded).categories.isNotEmpty) {
         categories = (catCubit.state as InventoryCategoriesLoaded).categories;
       } else {
-        final catModels = await GetIt.I<InventoryLocalDataSource>().getCategories();
-        categories = catModels.map((c) => c as InventoryCategoryEntity).toList();
+        final catModels = await GetIt.I<InventoryLocalDataSource>()
+            .getCategories();
+        categories = catModels
+            .map((c) => c as InventoryCategoryEntity)
+            .toList();
       }
     } catch (_) {}
 
@@ -106,7 +111,8 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
           (supCubit.state as InventorySuppliersLoaded).suppliers.isNotEmpty) {
         suppliers = (supCubit.state as InventorySuppliersLoaded).suppliers;
       } else {
-        final supModels = await GetIt.I<InventoryLocalDataSource>().getSuppliers();
+        final supModels = await GetIt.I<InventoryLocalDataSource>()
+            .getSuppliers();
         suppliers = supModels.map((s) => s as InventorySupplierEntity).toList();
       }
     } catch (_) {}
@@ -136,10 +142,7 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
         );
 
         if (productsCubit != null) {
-          return BlocProvider.value(
-            value: productsCubit,
-            child: dialogChild,
-          );
+          return BlocProvider.value(value: productsCubit, child: dialogChild);
         }
         return dialogChild;
       },
@@ -251,8 +254,7 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
                                 children: [
                                   Expanded(
                                     child: _buildMetricCard(
-                                      title: AppStrings
-                                          .expectedInventoryProfit
+                                      title: AppStrings.expectedInventoryProfit
                                           .tr(),
                                       value:
                                           '${totalExpectedProfit.toSmartAmount()} ${CurrencyService.instance.currentSymbol}',
@@ -741,7 +743,19 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
               ),
               SizedBox(width: isDesktop ? 8 : 6.w),
               ElevatedButton.icon(
-                onPressed: () => _openEditProductDialog(p),
+                onPressed: () {
+                  if (!PermissionService.instance.hasPermission(
+                    AppPermissions.inventoryManageProducts,
+                  )) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(AppStrings.noPermissionForAction.tr()),
+                      ),
+                    );
+                    return;
+                  }
+                  _openEditProductDialog(p);
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.bestSellerStart.withValues(
                     alpha: 0.12,

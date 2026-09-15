@@ -10,9 +10,9 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:tahsel/routes/app_routes.dart';
+import 'package:tahsel/shared/widgets/shimmer/shimmer_loading.dart';
 
 import '../cubits/inventory_dashboard_cubit.dart';
-import 'package:tahsel/shared/widgets/shimmer/shimmer_loading.dart';
 
 class InventoryMainScreen extends StatefulWidget {
   const InventoryMainScreen({super.key});
@@ -565,20 +565,34 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
       ),
     ];
 
-    final modules = allModules.where((m) =>
-      m.permission == null || PermissionService.instance.hasPermission(m.permission!)
-    ).toList();
+    final modules = allModules
+        .where(
+          (m) =>
+              m.permission == null ||
+              PermissionService.instance.hasPermission(m.permission!),
+        )
+        .toList();
 
     if (modules.isEmpty) {
-      return Container(
-        padding: EdgeInsets.all(24.r),
-        alignment: Alignment.center,
-        child: Text(
-          AppStrings.noPermission.tr(),
-          style: TextStyles.customStyle(
-            fontSize: 14,
-            color: AppColors.sandText,
-          ),
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.lock_outline_rounded,
+              size: 48,
+              color: AppColors.grey,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              AppStrings.noPermission.tr(),
+              style: TextStyles.customStyle(
+                color: AppColors.grey,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
       );
     }

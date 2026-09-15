@@ -122,7 +122,12 @@ class SideNavBar extends StatelessWidget {
                 child: ListView(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   children: [
-                    _buildSectionHeader(context, AppStrings.mainMenu.tr()),
+                    if (canViewHome ||
+                        canViewExpenses ||
+                        canViewDebts ||
+                        canViewInvoices ||
+                        canViewReports)
+                      _buildSectionHeader(context, AppStrings.mainMenu.tr()),
                     if (canViewHome)
                       _NavTile(
                         index: 0,

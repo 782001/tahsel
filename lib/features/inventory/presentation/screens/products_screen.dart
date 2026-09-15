@@ -1,14 +1,15 @@
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
-import 'package:tahsel/core/constants/app_permissions.dart';
-import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/widgets/permission_guard.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
@@ -141,8 +142,29 @@ class _ProductsScreenState extends State<ProductsScreen> {
       context: context,
       builder: (ctx) => ProductDetailsDialog(
         product: product,
-        onEdit: () => _openAddEditProductDialog(product),
-        onAdjustStock: () => _openManualAdjustmentDialog(product),
+
+        onAdjustStock: () {
+          if (!PermissionService.instance.hasPermission(
+            AppPermissions.inventoryStockAdjustments,
+          )) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(AppStrings.noPermissionForAction.tr())),
+            );
+            return;
+          }
+          _openManualAdjustmentDialog(product);
+        },
+        onEdit: () {
+          if (!PermissionService.instance.hasPermission(
+            AppPermissions.inventoryManageProducts,
+          )) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(AppStrings.noPermissionForAction.tr())),
+            );
+            return;
+          }
+          _openAddEditProductDialog(product);
+        },
       ),
     );
   }
@@ -191,8 +213,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
             ),
           ),
           actions: [
-            if (PermissionService.instance
-                .hasPermission(AppPermissions.reportsExport))
+            if (PermissionService.instance.hasPermission(
+              AppPermissions.reportsExport,
+            ))
               IconButton(
                 icon: Icon(
                   Icons.table_chart_rounded,
@@ -201,8 +224,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 ),
                 tooltip: AppStrings.exportToExcel.tr(),
                 onPressed: () async {
-                  if (!PermissionService.instance
-                      .hasPermission(AppPermissions.reportsExport)) {
+                  if (!PermissionService.instance.hasPermission(
+                    AppPermissions.reportsExport,
+                  )) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         duration: const Duration(seconds: 2),
@@ -347,10 +371,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       onSuffixIconPressed: (!kIsWeb && Platform.isWindows)
                           ? null
                           : () async {
-                              final cubit = context.read<InventoryProductsCubit>();
+                              final cubit = context
+                                  .read<InventoryProductsCubit>();
                               final scannedCode =
                                   await BarcodeScannerDialog.scan(context);
-                              if (scannedCode != null && scannedCode.isNotEmpty) {
+                              if (scannedCode != null &&
+                                  scannedCode.isNotEmpty) {
                                 _searchController.text = scannedCode;
                                 cubit.fetchProducts(
                                   query: scannedCode,
@@ -641,14 +667,21 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                 }
 
                                 if (products.isEmpty) {
-                                  final canManage = PermissionService.instance.hasPermission(AppPermissions.inventoryManageProducts);
+                                  final canManage = PermissionService.instance
+                                      .hasPermission(
+                                        AppPermissions.inventoryManageProducts,
+                                      );
                                   return InventoryEmptyState(
                                     icon: Icons.inventory_2_outlined,
                                     title: AppStrings.noProductsFound.tr(),
                                     description: AppStrings.emptyProductsDesc
                                         .tr(),
-                                    actionLabel: canManage ? AppStrings.addProduct.tr() : null,
-                                    onAction: canManage ? () => _openAddEditProductDialog() : null,
+                                    actionLabel: canManage
+                                        ? AppStrings.addProduct.tr()
+                                        : null,
+                                    onAction: canManage
+                                        ? () => _openAddEditProductDialog()
+                                        : null,
                                   );
                                 }
 
@@ -683,20 +716,64 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                         product: p,
                                         index: index,
                                         isBestSeller: top20Ids.contains(p.id),
-                                        onTap: () => _openProductDetailsDialog(p),
+                                        onTap: () {
+                                          if (!PermissionService.instance
+                                              .hasPermission(
+                                                AppPermissions
+                                                    .inventoryManageProducts,
+                                              )) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  AppStrings
+                                                      .noPermissionForAction
+                                                      .tr(),
+                                                ),
+                                              ),
+                                            );
+                                            return;
+                                          }
+                                          _openProductDetailsDialog(p);
+                                        },
                                         onManualAdjustment: () {
-                                          if (!PermissionService.instance.hasPermission(AppPermissions.inventoryStockAdjustments)) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(content: Text(AppStrings.noPermissionForAction.tr())),
+                                          if (!PermissionService.instance
+                                              .hasPermission(
+                                                AppPermissions
+                                                    .inventoryStockAdjustments,
+                                              )) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  AppStrings
+                                                      .noPermissionForAction
+                                                      .tr(),
+                                                ),
+                                              ),
                                             );
                                             return;
                                           }
                                           _openManualAdjustmentDialog(p);
                                         },
                                         onEdit: () {
-                                          if (!PermissionService.instance.hasPermission(AppPermissions.inventoryManageProducts)) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(content: Text(AppStrings.noPermissionForAction.tr())),
+                                          if (!PermissionService.instance
+                                              .hasPermission(
+                                                AppPermissions
+                                                    .inventoryManageProducts,
+                                              )) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  AppStrings
+                                                      .noPermissionForAction
+                                                      .tr(),
+                                                ),
+                                              ),
                                             );
                                             return;
                                           }
