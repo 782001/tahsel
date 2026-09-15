@@ -95,6 +95,17 @@ class _VaultScreenState extends State<VaultScreen> {
   }
 
   Future<void> _printPdf() async {
+    if (!PermissionService.instance
+        .hasPermission(AppPermissions.vaultViewHistory)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          content: Text(AppStrings.noPermissionForAction.tr()),
+          backgroundColor: AppColors.orange,
+        ),
+      );
+      return;
+    }
     final state = context.read<VaultCubit>().state;
     if (state is! VaultLoaded) return;
     if (_isExporting) return;
@@ -141,6 +152,17 @@ class _VaultScreenState extends State<VaultScreen> {
   }
 
   Future<void> _exportPdf() async {
+    if (!PermissionService.instance
+        .hasPermission(AppPermissions.vaultViewHistory)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          content: Text(AppStrings.noPermissionForAction.tr()),
+          backgroundColor: AppColors.orange,
+        ),
+      );
+      return;
+    }
     final state = context.read<VaultCubit>().state;
     if (state is! VaultLoaded) return;
     if (_isExporting) return;
@@ -228,7 +250,9 @@ class _VaultScreenState extends State<VaultScreen> {
               ),
             )
           else if (PermissionService.instance
-              .hasPermission(AppPermissions.reportsExport)) ...[
+                  .hasPermission(AppPermissions.reportsExport) &&
+              PermissionService.instance
+                  .hasPermission(AppPermissions.vaultViewHistory)) ...[
             IconButton(
               tooltip: AppStrings.printVaultReport.tr(),
               icon: Container(
@@ -356,70 +380,73 @@ class _VaultScreenState extends State<VaultScreen> {
                               state.summary.currentBalance,
                             ),
                           ),
-                          SizedBox(height: isDesktop ? 24 : 20.h),
-                          Text(
-                            AppStrings.transactionHistory.tr(),
-                            style: TextStyles.customStyle(
-                              color: AppColors.textColor,
-                              fontSize: isDesktop ? 18 : 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: isDesktop ? 12 : 10.h),
-                          VaultSourceFilterChips(
-                            selectedSource: state.selectedSource,
-                            onSourceSelected: (source) {
-                              context.read<VaultCubit>().filterBySource(source);
-                            },
-                          ),
-                          SizedBox(height: isDesktop ? 16 : 14.h),
-                          if (state.isFiltering) ...[
-                            SizedBox(height: isDesktop ? 8 : 6.h),
-                            const VaultTransactionsListSkeleton(count: 3),
-                          ] else if (state.transactions.isEmpty) ...[
-                            SizedBox(height: isDesktop ? 120 : 120.h),
-                            Center(
-                              child: Column(
-                                children: [
-                                  Icon(
-                                    Icons.receipt_long_outlined,
-                                    color: AppColors.subTitleColor,
-                                    size: isDesktop ? 64 : 54.sp,
-                                  ),
-                                  SizedBox(height: 12.h),
-                                  Text(
-                                    AppStrings.noTransactions.tr(),
-                                    style: TextStyles.customStyle(
-                                      color: AppColors.subTitleColor,
-                                      fontSize: isDesktop ? 15 : 14,
-                                    ),
-                                  ),
-                                ],
+                          if (PermissionService.instance
+                              .hasPermission(AppPermissions.vaultViewHistory)) ...[
+                            SizedBox(height: isDesktop ? 24 : 20.h),
+                            Text(
+                              AppStrings.transactionHistory.tr(),
+                              style: TextStyles.customStyle(
+                                color: AppColors.textColor,
+                                fontSize: isDesktop ? 18 : 16,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                          ] else ...[
-                            ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount:
-                                  state.transactions.length +
-                                  (state.isLoadingMore ? 1 : 0),
-                              itemBuilder: (context, index) {
-                                if (index == state.transactions.length) {
-                                  return Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 16.h),
-                                    child: Center(
-                                      child: CircularProgressIndicator(
-                                        color: AppColors.primaryColor,
-                                        strokeWidth: 4,
-                                      ),
-                                    ),
-                                  );
-                                }
-                                final item = state.transactions[index];
-                                return VaultTransactionCard(transaction: item);
+                            SizedBox(height: isDesktop ? 12 : 10.h),
+                            VaultSourceFilterChips(
+                              selectedSource: state.selectedSource,
+                              onSourceSelected: (source) {
+                                context.read<VaultCubit>().filterBySource(source);
                               },
                             ),
+                            SizedBox(height: isDesktop ? 16 : 14.h),
+                            if (state.isFiltering) ...[
+                              SizedBox(height: isDesktop ? 8 : 6.h),
+                              const VaultTransactionsListSkeleton(count: 3),
+                            ] else if (state.transactions.isEmpty) ...[
+                              SizedBox(height: isDesktop ? 120 : 120.h),
+                              Center(
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      Icons.receipt_long_outlined,
+                                      color: AppColors.subTitleColor,
+                                      size: isDesktop ? 64 : 54.sp,
+                                    ),
+                                    SizedBox(height: 12.h),
+                                    Text(
+                                      AppStrings.noTransactions.tr(),
+                                      style: TextStyles.customStyle(
+                                        color: AppColors.subTitleColor,
+                                        fontSize: isDesktop ? 15 : 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ] else ...[
+                              ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount:
+                                    state.transactions.length +
+                                    (state.isLoadingMore ? 1 : 0),
+                                itemBuilder: (context, index) {
+                                  if (index == state.transactions.length) {
+                                    return Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 16.h),
+                                      child: Center(
+                                        child: CircularProgressIndicator(
+                                          color: AppColors.primaryColor,
+                                          strokeWidth: 4,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  final item = state.transactions[index];
+                                  return VaultTransactionCard(transaction: item);
+                                },
+                              ),
+                            ],
                           ],
                         ],
                       ),
