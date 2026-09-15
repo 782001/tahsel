@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
+import 'package:tahsel/core/utils/app_logger.dart';
 
 import '../../data/datasources/inventory_local_data_source.dart';
 import '../../data/services/inventory_excel_service.dart';
@@ -180,17 +181,52 @@ class InventoryProductsCubit extends Cubit<InventoryProductsState> {
 
   Future<String?> exportAllProductsToExcel() async {
     try {
-      final localDataSource = GetIt.I<InventoryLocalDataSource>();
-      final localModels = await localDataSource.getProducts();
-      if (localModels.isEmpty) return null;
+      List<InventoryProductEntity> products = [];
 
-      final products = localModels
-          .map((m) => m as InventoryProductEntity)
-          .toList();
+      // 1. Try local data source first
+      if (GetIt.I.isRegistered<InventoryLocalDataSource>()) {
+        try {
+          final localDataSource = GetIt.I<InventoryLocalDataSource>();
+          final localModels = await localDataSource.getProducts();
+          if (localModels.isNotEmpty) {
+            products = localModels.cast<InventoryProductEntity>().toList();
+          }
+        } catch (e) {
+          AppLogger.printMessage('LocalDataSource getProducts error: $e');
+        }
+      }
+
+      // 2. If local cache was empty, fall back to in-memory products
+      if (products.isEmpty && _allProducts.isNotEmpty) {
+        products = List.from(_allProducts);
+      }
+
+      // 3. If still empty and state has loaded products, use state
+      if (products.isEmpty && state is InventoryProductsLoaded) {
+        products = List.from((state as InventoryProductsLoaded).products);
+      }
+
+      // 4. If still empty, fetch directly via getProductsUseCase
+      if (products.isEmpty) {
+        final result = await getProductsUseCase(limit: 100000);
+        result.fold(
+          (failure) => AppLogger.printMessage(
+            'getProductsUseCase error: ${failure.message}',
+          ),
+          (fetched) => products = fetched,
+        );
+      }
+
+      if (products.isEmpty) {
+        AppLogger.printMessage('exportAllProductsToExcel: No products available to export');
+        return null;
+      }
+
       products.sort((a, b) => a.name.compareTo(b.name));
 
       return await InventoryExcelService.exportProducts(products);
-    } catch (_) {
+    } catch (e) {
+      AppLogger.printMessage('exportAllProductsToExcel error: $e');
       return null;
     }
   }

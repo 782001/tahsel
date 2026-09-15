@@ -224,6 +224,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       .read<InventoryProductsCubit>()
                       .exportAllProductsToExcel();
                   if (mounted) {
+                    messenger.hideCurrentSnackBar();
                     if (savedPath != null && savedPath.isNotEmpty) {
                       messenger.showSnackBar(
                         SnackBar(

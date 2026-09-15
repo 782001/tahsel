@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 
 import '../../domain/entities/inventory_product_entity.dart';
@@ -46,7 +47,7 @@ class InventoryExcelService {
   }
 
   static String _colorToHex(Color color) {
-    return '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
+    return '#${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
   }
 
   static Future<String?> exportProducts(
@@ -132,7 +133,10 @@ class InventoryExcelService {
       }
 
       final bytes = excel.save();
-      if (bytes == null) return null;
+      if (bytes == null) {
+        AppLogger.printMessage('InventoryExcelService: excel.save() returned null');
+        return null;
+      }
 
       final dir = await _getPublicStorageDirectory();
       final fileName =
@@ -140,13 +144,28 @@ class InventoryExcelService {
       final file = File('${dir.path}/$fileName');
       await file.writeAsBytes(bytes);
 
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: AppStrings.exportSuccess.tr(),
-      );
+      if (!kIsWeb && Platform.isWindows) {
+        try {
+          await Process.run('cmd', ['/c', 'start', '', file.path]);
+        } catch (_) {
+          try {
+            await Process.run('explorer.exe', ['/select,', file.path]);
+          } catch (_) {}
+        }
+      } else {
+        try {
+          await Share.shareXFiles(
+            [XFile(file.path)],
+            text: AppStrings.exportSuccess.tr(),
+          );
+        } catch (e) {
+          AppLogger.printMessage('Share.shareXFiles error: $e');
+        }
+      }
 
       return file.path;
     } catch (e) {
+      AppLogger.printMessage('InventoryExcelService.exportProducts error: $e');
       return null;
     }
   }
