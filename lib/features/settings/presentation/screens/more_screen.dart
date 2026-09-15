@@ -205,10 +205,7 @@ class _MoreScreenState extends State<MoreScreen> {
                                       AppPermissions.employeesView,
                                     );
                                 final canViewTeam =
-                                    PermissionService.instance.isOwner ||
-                                    PermissionService.instance.hasPermission(
-                                      AppPermissions.teamManage,
-                                    );
+                                    PermissionService.instance.isOwner ;
                                 final canViewShipping =
                                     isShop &&
                                     PermissionService.instance.hasPermission(
@@ -1370,11 +1367,7 @@ class _MoreScreenState extends State<MoreScreen> {
                                           // Team Management & Permissions (VIP)
                                           if (PermissionService
                                                   .instance
-                                                  .isOwner ||
-                                              PermissionService.instance
-                                                  .hasPermission(
-                                                    AppPermissions.teamManage,
-                                                  )) ...[
+                                                  .isOwner) ...[
                                             SectionHeader(
                                               title: AppStrings
                                                   .teamAndPermissions
@@ -1387,12 +1380,7 @@ class _MoreScreenState extends State<MoreScreen> {
                                               onTap: () {
                                                 if (!PermissionService
                                                         .instance
-                                                        .isOwner &&
-                                                    !PermissionService.instance
-                                                        .hasPermission(
-                                                          AppPermissions
-                                                              .teamManage,
-                                                        )) {
+                                                        .isOwner) {
                                                   showfailureToast(
                                                     AppStrings
                                                         .noPermissionForAction

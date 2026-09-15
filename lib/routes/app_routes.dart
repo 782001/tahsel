@@ -117,17 +117,13 @@ class AppRoutes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case teamManagement:
-        if (!PermissionService.instance.hasPermission(
-          AppPermissions.teamManage,
-        )) {
+        if (!PermissionService.instance.isOwner) {
           return _permissionRestrictedRoute();
         }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
         return MaterialPageRoute(builder: (_) => const TeamManagementScreen());
       case addAppEmployee:
-        if (!PermissionService.instance.hasPermission(
-          AppPermissions.teamManage,
-        )) {
+        if (!PermissionService.instance.isOwner) {
           return _permissionRestrictedRoute();
         }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
@@ -138,9 +134,7 @@ class AppRoutes {
           builder: (_) => AddAppEmployeeScreen(cubit: cubit),
         );
       case editAppEmployee:
-        if (!PermissionService.instance.hasPermission(
-          AppPermissions.teamManage,
-        )) {
+        if (!PermissionService.instance.isOwner) {
           return _permissionRestrictedRoute();
         }
         if (!AppStrings.isVip) return _vipRestrictedRoute();

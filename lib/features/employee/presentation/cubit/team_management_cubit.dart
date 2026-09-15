@@ -21,7 +21,7 @@ class TeamManagementCubit extends Cubit<TeamManagementState> {
     final ownerUid = AppStrings.userToken;
     if (ownerUid.isEmpty) return;
 
-    if (!PermissionService.instance.hasPermission(AppPermissions.teamManage)) {
+    if (!PermissionService.instance.isOwner) {
       emit(TeamManagementFailure(AppStrings.noPermissionForAction.tr()));
       return;
     }
@@ -45,7 +45,7 @@ class TeamManagementCubit extends Cubit<TeamManagementState> {
     final ownerUid = AppStrings.userToken;
     if (ownerUid.isEmpty) return false;
 
-    if (!PermissionService.instance.hasPermission(AppPermissions.teamManage)) {
+    if (!PermissionService.instance.isOwner) {
       emit(TeamManagementFailure(AppStrings.noPermissionForAction.tr()));
       return false;
     }
@@ -98,7 +98,7 @@ class TeamManagementCubit extends Cubit<TeamManagementState> {
     final ownerUid = AppStrings.userToken;
     if (ownerUid.isEmpty) return false;
 
-    if (!PermissionService.instance.hasPermission(AppPermissions.teamManage)) {
+    if (!PermissionService.instance.isOwner) {
       emit(TeamManagementFailure(AppStrings.noPermissionForAction.tr()));
       return false;
     }
@@ -158,7 +158,7 @@ class TeamManagementCubit extends Cubit<TeamManagementState> {
     final ownerUid = AppStrings.userToken;
     if (ownerUid.isEmpty) return;
 
-    if (!PermissionService.instance.hasPermission(AppPermissions.teamManage)) {
+    if (!PermissionService.instance.isOwner) {
       emit(TeamManagementFailure(AppStrings.noPermissionForAction.tr()));
       return;
     }
@@ -194,7 +194,7 @@ class TeamManagementCubit extends Cubit<TeamManagementState> {
     final ownerUid = AppStrings.userToken;
     if (ownerUid.isEmpty) return false;
 
-    if (!PermissionService.instance.hasPermission(AppPermissions.teamManage)) {
+    if (!PermissionService.instance.isOwner) {
       emit(TeamManagementFailure(AppStrings.noPermissionForAction.tr()));
       return false;
     }

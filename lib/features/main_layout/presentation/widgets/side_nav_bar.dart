@@ -55,8 +55,7 @@ class SideNavBar extends StatelessWidget {
             );
         final canManageTeam =
             (!Platform.isIOS || (AppStrings.isVip)) &&
-            (permissions.isOwner ||
-                permissions.hasPermission(AppPermissions.teamManage));
+            permissions.isOwner;
 
         return Container(
           width: MediaQuery.of(context).size.width * 0.25,

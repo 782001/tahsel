@@ -100,7 +100,7 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
         return isShop &&
             permissions.hasPermission(AppPermissions.shippingReconciliationView);
       case 11:
-        return permissions.hasPermission(AppPermissions.teamManage);
+        return permissions.isOwner;
       default:
         return false;
     }

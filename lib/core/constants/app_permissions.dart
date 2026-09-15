@@ -280,7 +280,7 @@ class AppPermissions {
         PermissionItem(employeesView, AppStrings.permEmployeesView),
         PermissionItem(employeesRecordAttendance, AppStrings.permEmployeesRecordAttendance),
         PermissionItem(employeesManagePayroll, AppStrings.permEmployeesManagePayroll),
-        PermissionItem(employeesManageAppUsers, AppStrings.permEmployeesManageAppUsers),
+        // PermissionItem(employeesManageAppUsers, AppStrings.permEmployeesManageAppUsers),
       ],
     ),
     const PermissionGroup(
