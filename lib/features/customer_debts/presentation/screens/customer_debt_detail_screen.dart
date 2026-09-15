@@ -858,145 +858,148 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                 ),
               ),
 
-              SliverToBoxAdapter(
-                child: SizedBox(height: isDesktop ? 20 : 20.h),
-              ),
-
-              // ── Section header ──────────────────────────────────────────────
-              SliverToBoxAdapter(
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxWidth: isDesktop ? 800 : double.infinity,
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isDesktop ? 32 : 24.w,
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: isDesktop ? 4 : 4.w,
-                            height: isDesktop ? 18 : 18.h,
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryColor,
-                              borderRadius: BorderRadius.circular(4.r),
-                            ),
-                          ),
-                          SizedBox(width: isDesktop ? 10 : 10.w),
-                          Text(
-                            AppStrings.activityDetails.tr(),
-                            style: TextStyles.customStyle(
-                              color: AppColors.black,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const Spacer(),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: isDesktop ? 10 : 10.w,
-                              vertical: isDesktop ? 4 : 4.h,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryColor.withValues(
-                                alpha: 0.1,
-                              ),
-                              borderRadius: BorderRadius.circular(20.r),
-                            ),
-                            child: Text(
-                              '${currentDetail.items.length} ${AppStrings.transactionCount.tr()}',
-                              style: TextStyles.customStyle(
-                                color: AppColors.primaryColor,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+              if (PermissionService.instance
+                  .hasPermission(AppPermissions.customersViewReports)) ...[
+                SliverToBoxAdapter(
+                  child: SizedBox(height: isDesktop ? 20 : 20.h),
                 ),
-              ),
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  height: isDesktop ? 12 : 12.h,
-                ),
-              ),
 
-              // ── Debt Items List ─────────────────────────────────────────────
-              if (isDesktop)
-                SliverPadding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: MediaQuery.of(context).size.width > 800
-                        ? (MediaQuery.of(context).size.width - 800) / 2
-                        : 32.w,
-                    vertical: 8,
-                  ),
-                  sliver: SliverGrid(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisExtent: 270,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
+                // ── Section header ──────────────────────────────────────────────
+                SliverToBoxAdapter(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: isDesktop ? 800 : double.infinity,
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isDesktop ? 32 : 24.w,
                         ),
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      return DebtItemCard(
-                        item: currentDetail.items[index],
-                        index: index + 1,
-                        onPayPartial: (item) {
-                          final cubit = context.read<DebtCubit>();
-                          showDialog(
-                            context: context,
-                            builder: (context) => BlocProvider.value(
-                              value: cubit,
-                              child: PartialPaymentDialog(
-                                customerName: currentDetail.customerName,
-                                totalRemaining: item.remainingDebt,
-                                debt: item.entity,
-                                firstDate: item.entity.timestamp,
+                        child: Row(
+                          children: [
+                            Container(
+                              width: isDesktop ? 4 : 4.w,
+                              height: isDesktop ? 18 : 18.h,
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryColor,
+                                borderRadius: BorderRadius.circular(4.r),
                               ),
                             ),
-                          );
-                        },
-                        onPayFull: (item) => _confirmPaySingleDebt(context, item),
-                        onRefresh: _fetchDebts,
+                            SizedBox(width: isDesktop ? 10 : 10.w),
+                            Text(
+                              AppStrings.activityDetails.tr(),
+                              style: TextStyles.customStyle(
+                                color: AppColors.black,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Spacer(),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isDesktop ? 10 : 10.w,
+                                vertical: isDesktop ? 4 : 4.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryColor.withValues(
+                                  alpha: 0.1,
+                                ),
+                                borderRadius: BorderRadius.circular(20.r),
+                              ),
+                              child: Text(
+                                '${currentDetail.items.length} ${AppStrings.transactionCount.tr()}',
+                                style: TextStyles.customStyle(
+                                  color: AppColors.primaryColor,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: isDesktop ? 12 : 12.h,
+                  ),
+                ),
+
+                // ── Debt Items List ─────────────────────────────────────────────
+                if (isDesktop)
+                  SliverPadding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: MediaQuery.of(context).size.width > 800
+                          ? (MediaQuery.of(context).size.width - 800) / 2
+                          : 32.w,
+                      vertical: 8,
+                    ),
+                    sliver: SliverGrid(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisExtent: 270,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                          ),
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        return DebtItemCard(
+                          item: currentDetail.items[index],
+                          index: index + 1,
+                          onPayPartial: (item) {
+                            final cubit = context.read<DebtCubit>();
+                            showDialog(
+                              context: context,
+                              builder: (context) => BlocProvider.value(
+                                value: cubit,
+                                child: PartialPaymentDialog(
+                                  customerName: currentDetail.customerName,
+                                  totalRemaining: item.remainingDebt,
+                                  debt: item.entity,
+                                  firstDate: item.entity.timestamp,
+                                ),
+                              ),
+                            );
+                          },
+                          onPayFull: (item) => _confirmPaySingleDebt(context, item),
+                          onRefresh: _fetchDebts,
+                        );
+                      }, childCount: currentDetail.items.length),
+                    ),
+                  )
+                else
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      return Padding(
+                        padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 :
+                         24.w),
+                        child: DebtItemCard(
+                          item: currentDetail.items[index],
+                          index: index + 1,
+                          onPayPartial: (item) {
+                            final cubit = context.read<DebtCubit>();
+                            showDialog(
+                              context: context,
+                              builder: (context) => BlocProvider.value(
+                                value: cubit,
+                                child: PartialPaymentDialog(
+                                  customerName: currentDetail.customerName,
+                                  totalRemaining: item.remainingDebt,
+                                  debt: item.entity,
+                                  firstDate: item.entity.timestamp,
+                                ),
+                              ),
+                            );
+                          },
+                          onPayFull: (item) => _confirmPaySingleDebt(context, item),
+                          onRefresh: _fetchDebts,
+                        ),
                       );
                     }, childCount: currentDetail.items.length),
                   ),
-                )
-              else
-                SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    return Padding(
-                      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 :
-                       24.w),
-                      child: DebtItemCard(
-                        item: currentDetail.items[index],
-                        index: index + 1,
-                        onPayPartial: (item) {
-                          final cubit = context.read<DebtCubit>();
-                          showDialog(
-                            context: context,
-                            builder: (context) => BlocProvider.value(
-                              value: cubit,
-                              child: PartialPaymentDialog(
-                                customerName: currentDetail.customerName,
-                                totalRemaining: item.remainingDebt,
-                                debt: item.entity,
-                                firstDate: item.entity.timestamp,
-                              ),
-                            ),
-                          );
-                        },
-                        onPayFull: (item) => _confirmPaySingleDebt(context, item),
-                        onRefresh: _fetchDebts,
-                      ),
-                    );
-                  }, childCount: currentDetail.items.length),
-                ),
+              ],
 
               SliverToBoxAdapter(child: SizedBox(height:isDesktop ? 120 : 120.h)),
             ],
