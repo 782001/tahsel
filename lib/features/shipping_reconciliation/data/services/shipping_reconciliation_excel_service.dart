@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/extensions/string_extensions.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/app_logger.dart';
 import '../../../../core/utils/app_strings.dart';
 import '../../domain/entities/order_reconciliation_item.dart';
 import '../../domain/entities/reconciliation_dashboard.dart';
@@ -16,7 +17,7 @@ class ShippingReconciliationExcelService {
   ShippingReconciliationExcelService._();
 
   static String _colorToHex(Color color) {
-    return '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
+    return '#${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
   }
 
   /// Get public visible directory for saving reports offline
@@ -647,17 +648,28 @@ class ShippingReconciliationExcelService {
       final file = File('${dir.path}/$fileName');
       await file.writeAsBytes(bytes);
 
-      try {
-        await Share.shareXFiles(
-          [XFile(file.path)],
-          text: AppStrings.exportExcelSuccess.tr(),
-        );
-      } catch (_) {
-        // OS level share modal handled gracefully
+      if (!kIsWeb && Platform.isWindows) {
+        try {
+          await Process.run('cmd', ['/c', 'start', '', file.path]);
+        } catch (_) {
+          try {
+            await Process.run('explorer.exe', ['/select,', file.path]);
+          } catch (_) {}
+        }
+      } else {
+        try {
+          await Share.shareXFiles(
+            [XFile(file.path)],
+            text: AppStrings.exportExcelSuccess.tr(),
+          );
+        } catch (e) {
+          AppLogger.printMessage('Share.shareXFiles error: $e');
+        }
       }
 
       return file.path;
     } catch (e) {
+      AppLogger.printMessage('ShippingReconciliationExcelService error: $e');
       return null;
     }
   }
