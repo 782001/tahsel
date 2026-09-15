@@ -6,6 +6,8 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/features/employee/domain/entities/employee_entity.dart';
 import 'package:tahsel/features/employee/presentation/cubit/employee_cubit.dart';
 import 'package:tahsel/features/employee/presentation/cubit/employee_state.dart';
@@ -99,20 +101,33 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
         elevation: 0,
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.analytics_rounded, color: Colors.white),
-            tooltip: AppStrings.viewReports.tr(),
-            onPressed: () async {
-              await Navigator.pushNamed(context, AppRoutes.employeeReports);
-              if (mounted) {
-                // ignore: use_build_context_synchronously
-                context.read<EmployeeCubit>().fetchEmployees(
-                  AppStrings.userToken,
-                  forceRefresh: true,
-                );
-              }
-            },
-          ),
+          if (PermissionService.instance
+              .hasPermission(AppPermissions.employeesView))
+            IconButton(
+              icon: const Icon(Icons.analytics_rounded, color: Colors.white),
+              tooltip: AppStrings.viewReports.tr(),
+              onPressed: () async {
+                if (!PermissionService.instance
+                    .hasPermission(AppPermissions.employeesView)) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      duration: const Duration(seconds: 2),
+                      content: Text(AppStrings.noPermissionForAction.tr()),
+                      backgroundColor: AppColors.orange,
+                    ),
+                  );
+                  return;
+                }
+                await Navigator.pushNamed(context, AppRoutes.employeeReports);
+                if (mounted) {
+                  // ignore: use_build_context_synchronously
+                  context.read<EmployeeCubit>().fetchEmployees(
+                    AppStrings.userToken,
+                    forceRefresh: true,
+                  );
+                }
+              },
+            ),
         ],
       ),
       floatingActionButton: FloatingActionButton(

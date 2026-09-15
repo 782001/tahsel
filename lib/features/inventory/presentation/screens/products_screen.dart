@@ -191,47 +191,60 @@ class _ProductsScreenState extends State<ProductsScreen> {
             ),
           ),
           actions: [
-            IconButton(
-              icon: Icon(
-                Icons.table_chart_rounded,
-                color: AppColors.success,
-                size: isDesktop ? 26 : 26.w,
-              ),
-              tooltip: AppStrings.exportToExcel.tr(),
-              onPressed: () async {
-                final messenger = ScaffoldMessenger.of(context);
-                messenger.showSnackBar(
-                  SnackBar(
-                    content: Text(AppStrings.exportingExcel.tr()),
-                    duration: const Duration(seconds: 2),
-                    backgroundColor: AppColors.primaryColor,
-                  ),
-                );
-                final savedPath = await context
-                    .read<InventoryProductsCubit>()
-                    .exportAllProductsToExcel();
-                if (mounted) {
-                  if (savedPath != null && savedPath.isNotEmpty) {
-                    messenger.showSnackBar(
+            if (PermissionService.instance
+                .hasPermission(AppPermissions.reportsExport))
+              IconButton(
+                icon: Icon(
+                  Icons.table_chart_rounded,
+                  color: AppColors.success,
+                  size: isDesktop ? 26 : 26.w,
+                ),
+                tooltip: AppStrings.exportToExcel.tr(),
+                onPressed: () async {
+                  if (!PermissionService.instance
+                      .hasPermission(AppPermissions.reportsExport)) {
+                    ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(
-                          '${AppStrings.exportSuccess.tr()}\n$savedPath',
-                        ),
-                        backgroundColor: AppColors.success,
-                        duration: const Duration(seconds: 4),
+                        duration: const Duration(seconds: 2),
+                        content: Text(AppStrings.noPermissionForAction.tr()),
+                        backgroundColor: AppColors.orange,
                       ),
                     );
-                  } else {
-                    messenger.showSnackBar(
-                      SnackBar(
-                        content: Text(AppStrings.exportFailed.tr()),
-                        backgroundColor: AppColors.error,
-                      ),
-                    );
+                    return;
                   }
-                }
-              },
-            ),
+                  final messenger = ScaffoldMessenger.of(context);
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text(AppStrings.exportingExcel.tr()),
+                      duration: const Duration(seconds: 2),
+                      backgroundColor: AppColors.primaryColor,
+                    ),
+                  );
+                  final savedPath = await context
+                      .read<InventoryProductsCubit>()
+                      .exportAllProductsToExcel();
+                  if (mounted) {
+                    if (savedPath != null && savedPath.isNotEmpty) {
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            '${AppStrings.exportSuccess.tr()}\n$savedPath',
+                          ),
+                          backgroundColor: AppColors.success,
+                          duration: const Duration(seconds: 4),
+                        ),
+                      );
+                    } else {
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: Text(AppStrings.exportFailed.tr()),
+                          backgroundColor: AppColors.error,
+                        ),
+                      );
+                    }
+                  }
+                },
+              ),
             SizedBox(width: 8.w),
           ],
         ),

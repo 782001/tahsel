@@ -54,6 +54,7 @@ class _SupplierDetailsScreenState extends State<SupplierDetailsScreen> {
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        centerTitle: true,
         title: Text(
           AppStrings.supplierDetails.tr(),
           style: TextStyles.customStyle(
