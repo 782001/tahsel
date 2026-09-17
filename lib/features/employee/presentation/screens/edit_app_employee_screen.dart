@@ -8,9 +8,9 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/custom_app_bar/custom_app_bar.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
-import 'package:tahsel/routes/app_routes.dart';
 
 import '../../data/models/app_employee_model.dart';
 import '../cubit/team_management_cubit.dart';
@@ -33,10 +33,7 @@ class EditAppEmployeeScreen extends StatefulWidget {
     return Navigator.pushNamed(
       context,
       AppRoutes.editAppEmployee,
-      arguments: {
-        'employee': employee,
-        'cubit': cubit,
-      },
+      arguments: {'employee': employee, 'cubit': cubit},
     );
   }
 
@@ -83,11 +80,72 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
     setState(() {
       if (_selectedPermissions.contains(key)) {
         _selectedPermissions.remove(key);
+        final dependents = AppPermissions.getDependents(key);
+        final removedDependents = dependents
+            .where((d) => _selectedPermissions.contains(d))
+            .toList();
+        if (removedDependents.isNotEmpty) {
+          _selectedPermissions.removeAll(dependents);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _showDependencyToast(
+              '${AppStrings.permAutoDisabledDependents.tr()}: ${removedDependents.map((k) => AppPermissions.getPermissionLabel(k)).join('، ')}',
+              isWarning: true,
+            );
+          });
+        }
       } else {
         _selectedPermissions.add(key);
+        final prerequisites = AppPermissions.getPrerequisites(key);
+        final addedPrerequisites = prerequisites
+            .where((p) => !_selectedPermissions.contains(p))
+            .toList();
+        if (addedPrerequisites.isNotEmpty) {
+          _selectedPermissions.addAll(prerequisites);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _showDependencyToast(
+              '${AppStrings.permAutoEnabledPrerequisites.tr()}: ${addedPrerequisites.map((k) => AppPermissions.getPermissionLabel(k)).join('، ')}',
+            );
+          });
+        }
       }
       _selectedPreset = AppPermissions.roleCustom;
     });
+  }
+
+  void _showDependencyToast(String message, {bool isWarning = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isWarning ? Icons.info_outline : Icons.check_circle_outline,
+              color: Colors.white,
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyles.customStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: isWarning
+            ? Colors.orange.shade800
+            : AppColors.primaryColor,
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.r),
+        ),
+      ),
+    );
   }
 
   void _selectAll() {
@@ -159,10 +217,7 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
               padding: EdgeInsetsDirectional.only(end: 14.w),
               child: Center(
                 child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 9.w,
-                    vertical: 4.h,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 4.h),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [AppColors.vipGoldStart, AppColors.vipGoldEnd],
@@ -230,7 +285,8 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                               children: [
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         AppStrings.appEmployeeNameField.tr(),
@@ -242,7 +298,8 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                                       ),
                                       const SizedBox(height: 6),
                                       QuickAddTextField(
-                                        hint: AppStrings.appEmployeeNameHint.tr(),
+                                        hint: AppStrings.appEmployeeNameHint
+                                            .tr(),
                                         controller: _nameController,
                                         icon: Icons.person_outline_rounded,
                                         readOnly: true,
@@ -254,7 +311,8 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         AppStrings.employeeEmail.tr(),
@@ -494,11 +552,17 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                               )
                               .length;
 
-                          final isFull = activeInGroup == groupItemsCount && groupItemsCount > 0;
-                          final isPartial = activeInGroup > 0 && activeInGroup < groupItemsCount;
+                          final isFull =
+                              activeInGroup == groupItemsCount &&
+                              groupItemsCount > 0;
+                          final isPartial =
+                              activeInGroup > 0 &&
+                              activeInGroup < groupItemsCount;
 
                           return Container(
-                            margin: EdgeInsets.only(bottom: isDesktop ? 12 : 10.h),
+                            margin: EdgeInsets.only(
+                              bottom: isDesktop ? 12 : 10.h,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.surface,
                               borderRadius: BorderRadius.circular(14.r),
@@ -508,12 +572,12 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                                         alpha: 0.4,
                                       )
                                     : isPartial
-                                        ? AppColors.stitchOrange.withValues(
-                                            alpha: 0.45,
-                                          )
-                                        : AppColors.lightGreyColor.withValues(
-                                            alpha: 0.7,
-                                          ),
+                                    ? AppColors.stitchOrange.withValues(
+                                        alpha: 0.45,
+                                      )
+                                    : AppColors.lightGreyColor.withValues(
+                                        alpha: 0.7,
+                                      ),
                                 width: (isFull || isPartial) ? 1.5 : 1,
                               ),
                             ),
@@ -530,25 +594,25 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                                             alpha: 0.12,
                                           )
                                         : isPartial
-                                            ? AppColors.stitchOrange.withValues(
-                                                alpha: 0.12,
-                                              )
-                                            : AppColors.lightGreyColor.withValues(
-                                                alpha: 0.3,
-                                              ),
+                                        ? AppColors.stitchOrange.withValues(
+                                            alpha: 0.12,
+                                          )
+                                        : AppColors.lightGreyColor.withValues(
+                                            alpha: 0.3,
+                                          ),
                                     shape: BoxShape.circle,
                                   ),
                                   child: Icon(
                                     isFull
                                         ? Icons.check_circle_rounded
                                         : isPartial
-                                            ? Icons.remove_circle_rounded
-                                            : Icons.circle_outlined,
+                                        ? Icons.remove_circle_rounded
+                                        : Icons.circle_outlined,
                                     color: isFull
                                         ? AppColors.primaryColor
                                         : isPartial
-                                            ? AppColors.stitchOrange
-                                            : AppColors.disabledColor,
+                                        ? AppColors.stitchOrange
+                                        : AppColors.disabledColor,
                                     size: 18,
                                   ),
                                 ),
@@ -567,8 +631,8 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                                     color: isFull
                                         ? AppColors.primaryColor
                                         : isPartial
-                                            ? AppColors.stitchOrange
-                                            : AppColors.sandText,
+                                        ? AppColors.stitchOrange
+                                        : AppColors.sandText,
                                     fontWeight: (isFull || isPartial)
                                         ? FontWeight.w600
                                         : FontWeight.normal,
@@ -593,6 +657,43 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                                             : AppColors.blackLight,
                                       ),
                                     ),
+                                    subtitle:
+                                        AppPermissions.hasPrerequisites(
+                                          item.key,
+                                        )
+                                        ? Padding(
+                                            padding: const EdgeInsets.only(
+                                              top: 2,
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.link_rounded,
+                                                  size: 13,
+                                                  color: AppColors.primaryColor
+                                                      .withValues(alpha: 0.75),
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Expanded(
+                                                  child: Text(
+                                                    '${AppStrings.permRequiresPrefix.tr()}: ${AppPermissions.getPrerequisiteLabels(item.key)}',
+                                                    style:
+                                                        TextStyles.customStyle(
+                                                          fontSize: 9,
+                                                          color: AppColors
+                                                              .sandText,
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                        ),
+                                                    maxLines: 2,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          )
+                                        : null,
                                     activeColor: AppColors.primaryColor,
                                     dense: true,
                                     contentPadding: EdgeInsets.symmetric(
@@ -626,9 +727,7 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                               padding: EdgeInsets.symmetric(
                                 vertical: isDesktop ? 16 : 14.h,
                               ),
-                              side: BorderSide(
-                                color: AppColors.lightGreyColor,
-                              ),
+                              side: BorderSide(color: AppColors.lightGreyColor),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14.r),
                               ),
@@ -670,7 +769,8 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                                 : FittedBox(
                                     fit: BoxFit.scaleDown,
                                     child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         const Icon(
                                           Icons.save_rounded,
@@ -679,7 +779,9 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                                         ),
                                         SizedBox(width: 8.w),
                                         Text(
-                                          AppStrings.appEmployeeUpdatePermissions.tr(),
+                                          AppStrings
+                                              .appEmployeeUpdatePermissions
+                                              .tr(),
                                           style: TextStyles.customStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.bold,
@@ -864,7 +966,11 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                         color: AppColors.primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8.r),
                       ),
-                      child: Icon(icon, size: 18, color: AppColors.primaryColor),
+                      child: Icon(
+                        icon,
+                        size: 18,
+                        color: AppColors.primaryColor,
+                      ),
                     ),
                     SizedBox(width: isDesktop ? 10 : 10.w),
                     Text(

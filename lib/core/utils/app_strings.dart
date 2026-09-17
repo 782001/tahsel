@@ -1590,4 +1590,7 @@ class AppStrings {
   static const String noPermission = "no_permission";
   static const String noPermissionForAction = "no_permission_for_action";
   static const String passwordMin6Chars = "password_min_6_chars";
+  static const String permRequiresPrefix = "perm_requires_prefix";
+  static const String permAutoEnabledPrerequisites = "perm_auto_enabled_prerequisites";
+  static const String permAutoDisabledDependents = "perm_auto_disabled_dependents";
 }

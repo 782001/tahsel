@@ -308,6 +308,121 @@ class AppPermissions {
       ],
     ),
   ];
+
+  /// Mapping of action/sub-permissions to their mandatory prerequisite permissions.
+  static const Map<String, List<String>> permissionDependencies = {
+    // POS
+    posQuickSale: [posAccess],
+    posManageSessions: [posAccess],
+    posAddDebt: [posAccess, customersView],
+
+    // Invoices
+    invoicesCreate: [invoicesView],
+    invoicesEdit: [invoicesView],
+    invoicesRecordPayment: [invoicesView],
+    invoicesDelete: [invoicesView],
+    invoicesPrintShare: [invoicesView],
+
+    // Expenses
+    expensesAdd: [expensesView],
+    expensesDelete: [expensesView],
+
+    // Customers
+    customersAdd: [customersView],
+    customersSettleDebt: [customersView],
+    customersDeleteDebt: [customersView],
+    customersSendWhatsapp: [customersView],
+    customersViewReports: [customersView],
+
+    // My Debts
+    myDebtsAdd: [myDebtsView],
+    myDebtsPay: [myDebtsView],
+    myDebtsDelete: [myDebtsView],
+
+    // Vault
+    vaultViewBalance: [vaultAccess],
+    vaultDeposit: [vaultAccess],
+    vaultWithdraw: [vaultAccess],
+    vaultViewHistory: [vaultAccess],
+
+    // Inventory
+    inventoryManageProducts: [inventoryView],
+    inventoryManageSuppliers: [inventoryView],
+    inventoryManagePurchases: [inventoryView],
+    inventoryStockAdjustments: [inventoryView],
+    inventoryViewAnalytics: [inventoryView],
+
+    // Employees / HR
+    employeesRecordAttendance: [employeesView],
+    employeesManagePayroll: [employeesView],
+
+    // Reports
+    reportsExport: [reportsViewSales],
+  };
+
+  /// Returns all direct and indirect prerequisites required by [permission].
+  static Set<String> getPrerequisites(String permission) {
+    final result = <String>{};
+    void addReqs(String p) {
+      final reqs = permissionDependencies[p];
+      if (reqs != null) {
+        for (final req in reqs) {
+          if (result.add(req)) {
+            addReqs(req);
+          }
+        }
+      }
+    }
+    addReqs(permission);
+    return result;
+  }
+
+  /// Returns all permissions that directly or indirectly depend on [permission].
+  static Set<String> getDependents(String permission) {
+    final result = <String>{};
+    void addDeps(String p) {
+      for (final entry in permissionDependencies.entries) {
+        if (entry.value.contains(p)) {
+          if (result.add(entry.key)) {
+            addDeps(entry.key);
+          }
+        }
+      }
+    }
+    addDeps(permission);
+    return result;
+  }
+
+  /// Resolves an iterable of permissions by including all their prerequisites.
+  static Set<String> resolveDependencies(Iterable<String> permissions) {
+    final resolved = Set<String>.from(permissions);
+    for (final perm in permissions) {
+      resolved.addAll(getPrerequisites(perm));
+    }
+    return resolved;
+  }
+
+  /// Checks if [permission] has any prerequisite dependencies.
+  static bool hasPrerequisites(String permission) =>
+      permissionDependencies.containsKey(permission) &&
+      permissionDependencies[permission]!.isNotEmpty;
+
+  /// Returns the localized label for a permission by [key].
+  static String getPermissionLabel(String key) {
+    for (final group in allGroups) {
+      for (final item in group.items) {
+        if (item.key == key) return item.labelKey.tr();
+      }
+    }
+    return key;
+  }
+
+  /// Returns a comma-separated localized string of prerequisite labels for [permission].
+  static String getPrerequisiteLabels(String permission) {
+    final reqs = permissionDependencies[permission];
+    if (reqs == null || reqs.isEmpty) return '';
+    return reqs.map((k) => getPermissionLabel(k)).join('، ');
+  }
 }
 
 class PermissionGroup {

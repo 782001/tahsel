@@ -72,11 +72,69 @@ class _AddAppEmployeeDialogState extends State<AddAppEmployeeDialog> {
     setState(() {
       if (_selectedPermissions.contains(key)) {
         _selectedPermissions.remove(key);
+        final dependents = AppPermissions.getDependents(key);
+        final removedDependents =
+            dependents.where((d) => _selectedPermissions.contains(d)).toList();
+        if (removedDependents.isNotEmpty) {
+          _selectedPermissions.removeAll(dependents);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _showDependencyToast(
+              '${AppStrings.permAutoDisabledDependents.tr()}: ${removedDependents.map((k) => AppPermissions.getPermissionLabel(k)).join('، ')}',
+              isWarning: true,
+            );
+          });
+        }
       } else {
         _selectedPermissions.add(key);
+        final prerequisites = AppPermissions.getPrerequisites(key);
+        final addedPrerequisites =
+            prerequisites.where((p) => !_selectedPermissions.contains(p)).toList();
+        if (addedPrerequisites.isNotEmpty) {
+          _selectedPermissions.addAll(prerequisites);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _showDependencyToast(
+              '${AppStrings.permAutoEnabledPrerequisites.tr()}: ${addedPrerequisites.map((k) => AppPermissions.getPermissionLabel(k)).join('، ')}',
+            );
+          });
+        }
       }
       _selectedPreset = AppPermissions.roleCustom;
     });
+  }
+
+  void _showDependencyToast(String message, {bool isWarning = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isWarning ? Icons.info_outline : Icons.check_circle_outline,
+              color: Colors.white,
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyles.customStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor:
+            isWarning ? Colors.orange.shade800 : AppColors.primaryColor,
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.r),
+        ),
+      ),
+    );
   }
 
   void _selectAll() {
@@ -517,6 +575,33 @@ class _AddAppEmployeeDialogState extends State<AddAppEmployeeDialog> {
                                                   : AppColors.blackLight,
                                             ),
                                           ),
+                                          subtitle: AppPermissions.hasPrerequisites(item.key)
+                                              ? Padding(
+                                                  padding: const EdgeInsets.only(top: 2),
+                                                  child: Row(
+                                                    children: [
+                                                      Icon(
+                                                        Icons.link_rounded,
+                                                        size: 13,
+                                                        color: AppColors.primaryColor.withValues(alpha: 0.75),
+                                                      ),
+                                                      const SizedBox(width: 4),
+                                                      Expanded(
+                                                        child: Text(
+                                                          '${AppStrings.permRequiresPrefix.tr()}: ${AppPermissions.getPrerequisiteLabels(item.key)}',
+                                                          style: TextStyles.customStyle(
+                                                            fontSize: 12,
+                                                            color: AppColors.sandText,
+                                                            fontWeight: FontWeight.w500,
+                                                          ),
+                                                          maxLines: 2,
+                                                          overflow: TextOverflow.ellipsis,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                )
+                                              : null,
                                           activeColor: AppColors.primaryColor,
                                           dense: true,
                                           contentPadding: EdgeInsets.symmetric(

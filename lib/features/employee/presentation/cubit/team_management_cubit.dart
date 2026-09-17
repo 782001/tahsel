@@ -64,6 +64,9 @@ class TeamManagementCubit extends Cubit<TeamManagementState> {
       }
     }
 
+    final sanitizedPermissions =
+        AppPermissions.resolveDependencies(permissions).toList();
+
     emit(TeamManagementLoading());
     try {
       final newEmp = await remoteDataSource.createAppEmployee(
@@ -72,7 +75,7 @@ class TeamManagementCubit extends Cubit<TeamManagementState> {
         email: email,
         password: password,
         rolePreset: rolePreset,
-        permissions: permissions,
+        permissions: sanitizedPermissions,
       );
 
       _employees = [newEmp, ..._employees];
@@ -122,20 +125,23 @@ class TeamManagementCubit extends Cubit<TeamManagementState> {
       }
     }
 
+    final sanitizedPermissions =
+        AppPermissions.resolveDependencies(permissions).toList();
+
     emit(TeamManagementLoading());
     try {
       await remoteDataSource.updateAppEmployeePermissions(
         ownerUid: ownerUid,
         employeeAuthUid: employeeAuthUid,
         rolePreset: rolePreset,
-        permissions: permissions,
+        permissions: sanitizedPermissions,
       );
 
       _employees = _employees.map((emp) {
         if (emp.authUid == employeeAuthUid) {
           return emp.copyWith(
             rolePreset: rolePreset,
-            permissions: permissions,
+            permissions: sanitizedPermissions,
           );
         }
         return emp;

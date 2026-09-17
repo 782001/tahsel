@@ -1388,5 +1388,8 @@
   "cannot_modify_self": "لا يمكنك تعديل صلاحيات حسابك الشخصي",
   "cannot_delete_self": "لا يمكنك حذف أو تعطيل حسابك الشخصي أثناء تسجيل الدخول",
   "no_permission": "ليس لديك صلاحية للوصول",
-  "no_permission_for_action": "ليس لديك صلاحية لتنفيذ هذا الإجراء"
+  "no_permission_for_action": "ليس لديك صلاحية لتنفيذ هذا الإجراء",
+  "perm_requires_prefix": "يتطلب",
+  "perm_auto_enabled_prerequisites": "تم تفعيل الصلاحيات الأساسية المطلوبة تلقائياً",
+  "perm_auto_disabled_dependents": "تم إلغاء الصلاحيات التابعة تلقائياً"
 }

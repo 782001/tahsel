@@ -40,7 +40,7 @@ class PermissionService {
     if (isOwner) {
       _permissions.add(AppPermissions.all);
     } else {
-      _permissions.addAll(permissionsList);
+      _permissions.addAll(AppPermissions.resolveDependencies(permissionsList));
     }
 
     // Mirror to AppStrings for fast access
@@ -125,16 +125,18 @@ class PermissionService {
         final List<String> updatedPerms = rawPerms is List
             ? rawPerms.map((e) => e.toString()).toList()
             : [];
+        final resolvedUpdated =
+            AppPermissions.resolveDependencies(updatedPerms).toList();
 
         final currentPermsList = _permissions.toList()..sort();
-        final newPermsList = List<String>.from(updatedPerms)..sort();
+        final newPermsList = List<String>.from(resolvedUpdated)..sort();
 
         if (currentPermsList.join(',') != newPermsList.join(',')) {
           AppLogger.printMessage(
-            '[PermissionService] Real-time permissions updated: ${updatedPerms.length} permissions.',
+            '[PermissionService] Real-time permissions updated: ${resolvedUpdated.length} permissions.',
           );
           _permissions.clear();
-          _permissions.addAll(updatedPerms);
+          _permissions.addAll(resolvedUpdated);
           AppStrings.userPermissions = _permissions.toList();
           await saveToStorage(storage);
           changeNotifier.value++;

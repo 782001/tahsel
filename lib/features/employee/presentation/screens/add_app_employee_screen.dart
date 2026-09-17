@@ -8,9 +8,9 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/custom_app_bar/custom_app_bar.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
-import 'package:tahsel/routes/app_routes.dart';
 
 import '../cubit/team_management_cubit.dart';
 
@@ -74,11 +74,72 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
     setState(() {
       if (_selectedPermissions.contains(key)) {
         _selectedPermissions.remove(key);
+        final dependents = AppPermissions.getDependents(key);
+        final removedDependents = dependents
+            .where((d) => _selectedPermissions.contains(d))
+            .toList();
+        if (removedDependents.isNotEmpty) {
+          _selectedPermissions.removeAll(dependents);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _showDependencyToast(
+              '${AppStrings.permAutoDisabledDependents.tr()}: ${removedDependents.map((k) => AppPermissions.getPermissionLabel(k)).join('، ')}',
+              isWarning: true,
+            );
+          });
+        }
       } else {
         _selectedPermissions.add(key);
+        final prerequisites = AppPermissions.getPrerequisites(key);
+        final addedPrerequisites = prerequisites
+            .where((p) => !_selectedPermissions.contains(p))
+            .toList();
+        if (addedPrerequisites.isNotEmpty) {
+          _selectedPermissions.addAll(prerequisites);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _showDependencyToast(
+              '${AppStrings.permAutoEnabledPrerequisites.tr()}: ${addedPrerequisites.map((k) => AppPermissions.getPermissionLabel(k)).join('، ')}',
+            );
+          });
+        }
       }
       _selectedPreset = AppPermissions.roleCustom;
     });
+  }
+
+  void _showDependencyToast(String message, {bool isWarning = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isWarning ? Icons.info_outline : Icons.check_circle_outline,
+              color: Colors.white,
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyles.customStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: isWarning
+            ? Colors.orange.shade800
+            : AppColors.primaryColor,
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.r),
+        ),
+      ),
+    );
   }
 
   void _selectAll() {
@@ -153,10 +214,7 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
               padding: EdgeInsetsDirectional.only(end: 14.w),
               child: Center(
                 child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 9.w,
-                    vertical: 4.h,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 4.h),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [AppColors.vipGoldStart, AppColors.vipGoldEnd],
@@ -226,7 +284,8 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                 children: [
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           '${AppStrings.appEmployeeNameField.tr()} *',
@@ -238,13 +297,17 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                         ),
                                         const SizedBox(height: 6),
                                         QuickAddTextField(
-                                          hint: AppStrings.appEmployeeNameHint.tr(),
+                                          hint: AppStrings.appEmployeeNameHint
+                                              .tr(),
                                           controller: _nameController,
                                           icon: Icons.badge_outlined,
                                           textInputAction: TextInputAction.next,
                                           validator: (val) {
-                                            if (val == null || val.trim().isEmpty) {
-                                              return AppStrings.appEmployeeNameRequired.tr();
+                                            if (val == null ||
+                                                val.trim().isEmpty) {
+                                              return AppStrings
+                                                  .appEmployeeNameRequired
+                                                  .tr();
                                             }
                                             return null;
                                           },
@@ -255,7 +318,8 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                   const SizedBox(width: 16),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           '${AppStrings.employeeEmail.tr()} *',
@@ -270,14 +334,20 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                           hint: 'employee@example.com',
                                           controller: _emailController,
                                           icon: Icons.email_outlined,
-                                          keyboardType: TextInputType.emailAddress,
+                                          keyboardType:
+                                              TextInputType.emailAddress,
                                           textInputAction: TextInputAction.next,
                                           validator: (val) {
-                                            if (val == null || val.trim().isEmpty) {
-                                              return AppStrings.appEmployeeEmailRequired.tr();
+                                            if (val == null ||
+                                                val.trim().isEmpty) {
+                                              return AppStrings
+                                                  .appEmployeeEmailRequired
+                                                  .tr();
                                             }
                                             if (!val.trim().isValidEmail()) {
-                                              return AppStrings.appEmployeeEmailFormatInvalid.tr();
+                                              return AppStrings
+                                                  .appEmployeeEmailFormatInvalid
+                                                  .tr();
                                             }
                                             return null;
                                           },
@@ -293,7 +363,8 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                 children: [
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           '${AppStrings.temporaryPassword.tr()} *',
@@ -305,7 +376,9 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                         ),
                                         const SizedBox(height: 6),
                                         QuickAddTextField(
-                                          hint: AppStrings.appEmployeePasswordMinLengthHint.tr(),
+                                          hint: AppStrings
+                                              .appEmployeePasswordMinLengthHint
+                                              .tr(),
                                           controller: _passwordController,
                                           icon: Icons.lock_outline_rounded,
                                           obscureText: _obscurePassword,
@@ -314,15 +387,21 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                               : Icons.visibility_outlined,
                                           onSuffixIconPressed: () {
                                             setState(() {
-                                              _obscurePassword = !_obscurePassword;
+                                              _obscurePassword =
+                                                  !_obscurePassword;
                                             });
                                           },
                                           validator: (val) {
-                                            if (val == null || val.trim().isEmpty) {
-                                              return AppStrings.appEmployeePasswordRequired.tr();
+                                            if (val == null ||
+                                                val.trim().isEmpty) {
+                                              return AppStrings
+                                                  .appEmployeePasswordRequired
+                                                  .tr();
                                             }
                                             if (val.trim().length < 6) {
-                                              return AppStrings.appEmployeePasswordMinLengthHint.tr();
+                                              return AppStrings
+                                                  .appEmployeePasswordMinLengthHint
+                                                  .tr();
                                             }
                                             return null;
                                           },
@@ -355,7 +434,8 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                 textInputAction: TextInputAction.next,
                                 validator: (val) {
                                   if (val == null || val.trim().isEmpty) {
-                                    return AppStrings.appEmployeeNameRequired.tr();
+                                    return AppStrings.appEmployeeNameRequired
+                                        .tr();
                                   }
                                   return null;
                                 },
@@ -378,10 +458,13 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                 textInputAction: TextInputAction.next,
                                 validator: (val) {
                                   if (val == null || val.trim().isEmpty) {
-                                    return AppStrings.appEmployeeEmailRequired.tr();
+                                    return AppStrings.appEmployeeEmailRequired
+                                        .tr();
                                   }
                                   if (!val.trim().isValidEmail()) {
-                                    return AppStrings.appEmployeeEmailFormatInvalid.tr();
+                                    return AppStrings
+                                        .appEmployeeEmailFormatInvalid
+                                        .tr();
                                   }
                                   return null;
                                 },
@@ -397,7 +480,9 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                               ),
                               SizedBox(height: 6.h),
                               QuickAddTextField(
-                                hint: AppStrings.appEmployeePasswordMinLengthHint.tr(),
+                                hint: AppStrings
+                                    .appEmployeePasswordMinLengthHint
+                                    .tr(),
                                 controller: _passwordController,
                                 icon: Icons.lock_outline_rounded,
                                 obscureText: _obscurePassword,
@@ -411,10 +496,14 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                 },
                                 validator: (val) {
                                   if (val == null || val.trim().isEmpty) {
-                                    return AppStrings.appEmployeePasswordRequired.tr();
+                                    return AppStrings
+                                        .appEmployeePasswordRequired
+                                        .tr();
                                   }
                                   if (val.trim().length < 6) {
-                                    return AppStrings.appEmployeePasswordMinLengthHint.tr();
+                                    return AppStrings
+                                        .appEmployeePasswordMinLengthHint
+                                        .tr();
                                   }
                                   return null;
                                 },
@@ -558,11 +647,17 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                 )
                                 .length;
 
-                            final isFull = activeInGroup == groupItemsCount && groupItemsCount > 0;
-                            final isPartial = activeInGroup > 0 && activeInGroup < groupItemsCount;
+                            final isFull =
+                                activeInGroup == groupItemsCount &&
+                                groupItemsCount > 0;
+                            final isPartial =
+                                activeInGroup > 0 &&
+                                activeInGroup < groupItemsCount;
 
                             return Container(
-                              margin: EdgeInsets.only(bottom: isDesktop ? 12 : 10.h),
+                              margin: EdgeInsets.only(
+                                bottom: isDesktop ? 12 : 10.h,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.surface,
                                 borderRadius: BorderRadius.circular(14.r),
@@ -572,12 +667,12 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                           alpha: 0.4,
                                         )
                                       : isPartial
-                                          ? AppColors.stitchOrange.withValues(
-                                              alpha: 0.45,
-                                            )
-                                          : AppColors.lightGreyColor.withValues(
-                                              alpha: 0.7,
-                                            ),
+                                      ? AppColors.stitchOrange.withValues(
+                                          alpha: 0.45,
+                                        )
+                                      : AppColors.lightGreyColor.withValues(
+                                          alpha: 0.7,
+                                        ),
                                   width: (isFull || isPartial) ? 1.5 : 1,
                                 ),
                               ),
@@ -587,32 +682,34 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                 ).copyWith(dividerColor: Colors.transparent),
                                 child: ExpansionTile(
                                   leading: Container(
-                                    padding: EdgeInsets.all(isDesktop ? 6 : 6.r),
+                                    padding: EdgeInsets.all(
+                                      isDesktop ? 6 : 6.r,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: isFull
                                           ? AppColors.primaryColor.withValues(
                                               alpha: 0.12,
                                             )
                                           : isPartial
-                                              ? AppColors.stitchOrange.withValues(
-                                                  alpha: 0.12,
-                                                )
-                                              : AppColors.lightGreyColor.withValues(
-                                                  alpha: 0.3,
-                                                ),
+                                          ? AppColors.stitchOrange.withValues(
+                                              alpha: 0.12,
+                                            )
+                                          : AppColors.lightGreyColor.withValues(
+                                              alpha: 0.3,
+                                            ),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(
                                       isFull
                                           ? Icons.check_circle_rounded
                                           : isPartial
-                                              ? Icons.remove_circle_rounded
-                                              : Icons.circle_outlined,
+                                          ? Icons.remove_circle_rounded
+                                          : Icons.circle_outlined,
                                       color: isFull
                                           ? AppColors.primaryColor
                                           : isPartial
-                                              ? AppColors.stitchOrange
-                                              : AppColors.disabledColor,
+                                          ? AppColors.stitchOrange
+                                          : AppColors.disabledColor,
                                       size: 18,
                                     ),
                                   ),
@@ -631,8 +728,8 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                       color: isFull
                                           ? AppColors.primaryColor
                                           : isPartial
-                                              ? AppColors.stitchOrange
-                                              : AppColors.sandText,
+                                          ? AppColors.stitchOrange
+                                          : AppColors.sandText,
                                       fontWeight: (isFull || isPartial)
                                           ? FontWeight.w600
                                           : FontWeight.normal,
@@ -657,6 +754,46 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                               : AppColors.blackLight,
                                         ),
                                       ),
+                                      subtitle:
+                                          AppPermissions.hasPrerequisites(
+                                            item.key,
+                                          )
+                                          ? Padding(
+                                              padding: const EdgeInsets.only(
+                                                top: 2,
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.link_rounded,
+                                                    size: 13,
+                                                    color: AppColors
+                                                        .primaryColor
+                                                        .withValues(
+                                                          alpha: 0.75,
+                                                        ),
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Expanded(
+                                                    child: Text(
+                                                      '${AppStrings.permRequiresPrefix.tr()}: ${AppPermissions.getPrerequisiteLabels(item.key)}',
+                                                      style:
+                                                          TextStyles.customStyle(
+                                                            fontSize: 9,
+                                                            color: AppColors
+                                                                .sandText,
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                          ),
+                                                      maxLines: 2,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            )
+                                          : null,
                                       activeColor: AppColors.primaryColor,
                                       dense: true,
                                       contentPadding: EdgeInsets.symmetric(
@@ -734,7 +871,8 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                   : FittedBox(
                                       fit: BoxFit.scaleDown,
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           const Icon(
                                             Icons.person_add_alt_1_rounded,
@@ -743,7 +881,9 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                           ),
                                           SizedBox(width: 8.w),
                                           Text(
-                                            AppStrings.appEmployeeSaveAndActivateAccount.tr(),
+                                            AppStrings
+                                                .appEmployeeSaveAndActivateAccount
+                                                .tr(),
                                             style: TextStyles.customStyle(
                                               fontSize: 14,
                                               fontWeight: FontWeight.bold,
@@ -872,7 +1012,11 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                         color: AppColors.primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8.r),
                       ),
-                      child: Icon(icon, size: 18, color: AppColors.primaryColor),
+                      child: Icon(
+                        icon,
+                        size: 18,
+                        color: AppColors.primaryColor,
+                      ),
                     ),
                     SizedBox(width: isDesktop ? 10 : 10.w),
                     Text(

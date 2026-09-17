@@ -1385,5 +1385,8 @@
   "cannot_modify_self": "You cannot modify your own permissions",
   "cannot_delete_self": "You cannot delete or disable your own account while logged in",
   "no_permission": "You do not have permission",
-  "no_permission_for_action": "You do not have permission to perform this action"
+  "no_permission_for_action": "You do not have permission to perform this action",
+  "perm_requires_prefix": "Requires",
+  "perm_auto_enabled_prerequisites": "Required prerequisite permissions were automatically enabled",
+  "perm_auto_disabled_dependents": "Dependent permissions were automatically disabled"
 }
