@@ -133,6 +133,16 @@ class QuickAddTextField extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: AppColors.error, width: 1.5),
         ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: AppColors.error, width: 1.8),
+        ),
+        errorStyle: TextStyles.customStyle(
+          color: AppColors.error,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+        errorMaxLines: 2,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 20,
           vertical: 18,

@@ -1475,6 +1475,8 @@ class AppStrings {
   static const String appEmployeeAddedSuccess = "app_employee_added_success";
   static const String employeeUpdatedSuccess = "employee_updated_success";
   static const String employeeDeletedSuccess = "employee_deleted_success";
+  static const String employeeActivatedSuccess = "employee_activated_success";
+  static const String employeeDisabledSuccess = "employee_disabled_success";
   static const String appPermissionDenied = "app_permission_denied";
   static const String roleCashierLabel = "role_cashier_label";
   static const String roleStorekeeperLabel = "role_storekeeper_label";

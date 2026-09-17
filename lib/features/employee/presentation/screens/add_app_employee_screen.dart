@@ -36,7 +36,9 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _scrollController = ScrollController();
 
+  AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
   bool _obscurePassword = true;
   String _selectedPreset = AppPermissions.roleCashier;
   late final Set<String> _selectedPermissions;
@@ -55,6 +57,7 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -164,17 +167,128 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
     });
   }
 
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (_selectedPermissions.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            AppStrings.appEmployeeSelectAtLeastOnePermission.tr(),
-            style: TextStyles.customStyle(color: AppColors.white),
-          ),
-          backgroundColor: AppColors.error,
+  void _scrollToTop() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+      );
+    }
+  }
+
+  void _showValidationError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.r),
         ),
+        backgroundColor: AppColors.error,
+        content: Row(
+          children: [
+            const Icon(
+              Icons.error_outline_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyles.customStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  Widget _buildFieldLabel(String label, {bool isRequired = true}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: RichText(
+        text: TextSpan(
+          text: label,
+          style: TextStyles.customStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: AppColors.black,
+          ),
+          children: [
+            if (isRequired)
+              TextSpan(
+                text: ' *',
+                style: TextStyles.customStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.error,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submit() async {
+    setState(() {
+      _autoValidateMode = AutovalidateMode.onUserInteraction;
+    });
+
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    // 1. Mandatory Name Validation
+    if (name.isEmpty) {
+      _scrollToTop();
+      _showValidationError(AppStrings.appEmployeeNameRequired.tr());
+      return;
+    }
+
+    // 2. Mandatory Email Validation & Format
+    if (email.isEmpty) {
+      _scrollToTop();
+      _showValidationError(AppStrings.appEmployeeEmailRequired.tr());
+      return;
+    }
+    if (!email.isValidEmail()) {
+      _scrollToTop();
+      _showValidationError(AppStrings.appEmployeeEmailFormatInvalid.tr());
+      return;
+    }
+
+    // 3. Mandatory Temporary Password Validation & Minimum Length
+    if (password.isEmpty) {
+      _scrollToTop();
+      _showValidationError(AppStrings.appEmployeePasswordRequired.tr());
+      return;
+    }
+    if (password.length < 6) {
+      _scrollToTop();
+      _showValidationError(AppStrings.appEmployeePasswordMin6Chars.tr());
+      return;
+    }
+
+    // Validate form fields for visual inline feedback
+    if (!_formKey.currentState!.validate()) {
+      _scrollToTop();
+      return;
+    }
+
+    // 4. Validate permissions selection
+    if (_selectedPermissions.isEmpty) {
+      _showValidationError(
+        AppStrings.appEmployeeSelectAtLeastOnePermission.tr(),
       );
       return;
     }
@@ -182,9 +296,9 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
     setState(() => _isLoading = true);
 
     final success = await widget.cubit.addEmployee(
-      name: _nameController.text.trim(),
-      email: _emailController.text.trim().toLowerCase(),
-      password: _passwordController.text.trim(),
+      name: name,
+      email: email.toLowerCase(),
+      password: password,
       rolePreset: _selectedPreset,
       permissions: _selectedPermissions.toList(),
     );
@@ -259,7 +373,9 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
             ),
             child: Form(
               key: _formKey,
+              autovalidateMode: _autoValidateMode,
               child: ListView(
+                controller: _scrollController,
                 padding: EdgeInsets.symmetric(
                   horizontal: isDesktop ? 32 : 16.w,
                   vertical: isDesktop ? 24 : 16.h,
@@ -287,15 +403,9 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          '${AppStrings.appEmployeeNameField.tr()} *',
-                                          style: TextStyles.customStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.black,
-                                          ),
+                                        _buildFieldLabel(
+                                          AppStrings.appEmployeeNameField.tr(),
                                         ),
-                                        const SizedBox(height: 6),
                                         QuickAddTextField(
                                           hint: AppStrings.appEmployeeNameHint
                                               .tr(),
@@ -321,15 +431,9 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          '${AppStrings.employeeEmail.tr()} *',
-                                          style: TextStyles.customStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.black,
-                                          ),
+                                        _buildFieldLabel(
+                                          AppStrings.employeeEmail.tr(),
                                         ),
-                                        const SizedBox(height: 6),
                                         QuickAddTextField(
                                           hint: 'employee@example.com',
                                           controller: _emailController,
@@ -366,15 +470,9 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          '${AppStrings.temporaryPassword.tr()} *',
-                                          style: TextStyles.customStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.black,
-                                          ),
+                                        _buildFieldLabel(
+                                          AppStrings.temporaryPassword.tr(),
                                         ),
-                                        const SizedBox(height: 6),
                                         QuickAddTextField(
                                           hint: AppStrings
                                               .appEmployeePasswordMinLengthHint
@@ -400,7 +498,7 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                             }
                                             if (val.trim().length < 6) {
                                               return AppStrings
-                                                  .appEmployeePasswordMinLengthHint
+                                                  .appEmployeePasswordMin6Chars
                                                   .tr();
                                             }
                                             return null;
@@ -418,15 +516,9 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                         : Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                '${AppStrings.appEmployeeNameField.tr()} *',
-                                style: TextStyles.customStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.black,
-                                ),
+                              _buildFieldLabel(
+                                AppStrings.appEmployeeNameField.tr(),
                               ),
-                              SizedBox(height: 6.h),
                               QuickAddTextField(
                                 hint: AppStrings.appEmployeeNameHint.tr(),
                                 controller: _nameController,
@@ -441,15 +533,7 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                 },
                               ),
                               SizedBox(height: 14.h),
-                              Text(
-                                '${AppStrings.employeeEmail.tr()} *',
-                                style: TextStyles.customStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.black,
-                                ),
-                              ),
-                              SizedBox(height: 6.h),
+                              _buildFieldLabel(AppStrings.employeeEmail.tr()),
                               QuickAddTextField(
                                 hint: 'employee@example.com',
                                 controller: _emailController,
@@ -470,15 +554,9 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                 },
                               ),
                               SizedBox(height: 14.h),
-                              Text(
-                                '${AppStrings.temporaryPassword.tr()} *',
-                                style: TextStyles.customStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.black,
-                                ),
+                              _buildFieldLabel(
+                                AppStrings.temporaryPassword.tr(),
                               ),
-                              SizedBox(height: 6.h),
                               QuickAddTextField(
                                 hint: AppStrings
                                     .appEmployeePasswordMinLengthHint
@@ -502,7 +580,7 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                   }
                                   if (val.trim().length < 6) {
                                     return AppStrings
-                                        .appEmployeePasswordMinLengthHint
+                                        .appEmployeePasswordMin6Chars
                                         .tr();
                                   }
                                   return null;

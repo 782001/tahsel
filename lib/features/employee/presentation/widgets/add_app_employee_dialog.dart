@@ -161,27 +161,78 @@ class _AddAppEmployeeDialogState extends State<AddAppEmployeeDialog> {
     });
   }
 
+  void _showValidationError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.r),
+        ),
+        backgroundColor: AppColors.error,
+        content: Row(
+          children: [
+            Icon(
+              Icons.error_outline_rounded,
+              color: Colors.white,
+              size: 18.sp,
+            ),
+            SizedBox(width: 8.w),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyles.customStyle(
+                  fontSize: 12,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
   Future<void> _submit() async {
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (name.isEmpty) {
+      _showValidationError(AppStrings.employeeNameRequired.tr());
+      return;
+    }
+    if (email.isEmpty) {
+      _showValidationError(AppStrings.employeeEmailRequired.tr());
+      return;
+    }
+    if (!email.isValidEmail()) {
+      _showValidationError(AppStrings.emailFormatInvalid.tr());
+      return;
+    }
+    if (password.isEmpty) {
+      _showValidationError(AppStrings.passwordRequired.tr());
+      return;
+    }
+    if (password.length < 6) {
+      _showValidationError(AppStrings.passwordMin6Chars.tr());
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
     if (_selectedPermissions.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            AppStrings.selectAtLeastOnePermission.tr(),
-            style: TextStyles.customStyle(color: AppColors.white),
-          ),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      _showValidationError(AppStrings.selectAtLeastOnePermission.tr());
       return;
     }
 
     setState(() => _isLoading = true);
 
     final success = await widget.cubit.addEmployee(
-      name: _nameController.text.trim(),
-      email: _emailController.text.trim().toLowerCase(),
-      password: _passwordController.text.trim(),
+      name: name,
+      email: email.toLowerCase(),
+      password: password,
       rolePreset: _selectedPreset,
       permissions: _selectedPermissions.toList(),
     );

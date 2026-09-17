@@ -186,23 +186,73 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
           child: BlocConsumer<TeamManagementCubit, TeamManagementState>(
             listener: (context, state) {
               if (state is TeamManagementActionSuccess) {
+                final isDisableAction =
+                    state.message == AppStrings.employeeDisabledSuccess;
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(
-                      state.message.tr(),
-                      style: TextStyles.customStyle(color: Colors.white),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
-                    backgroundColor: AppColors.success,
+                    backgroundColor: isDisableAction
+                        ? const Color(0xFFE65100)
+                        : AppColors.success,
+                    content: Row(
+                      children: [
+                        Icon(
+                          isDisableAction
+                              ? Icons.block_flipped
+                              : Icons.check_circle_outline_rounded,
+                          color: Colors.white,
+                          size: 20.sp,
+                        ),
+                        SizedBox(width: 10.w),
+                        Expanded(
+                          child: Text(
+                            state.message.tr(),
+                            style: TextStyles.customStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    duration: const Duration(seconds: 3),
                   ),
                 );
               } else if (state is TeamManagementFailure) {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(
-                      state.message,
-                      style: TextStyles.customStyle(color: Colors.white),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
                     backgroundColor: AppColors.error,
+                    content: Row(
+                      children: [
+                        Icon(
+                          Icons.error_outline_rounded,
+                          color: Colors.white,
+                          size: 20.sp,
+                        ),
+                        SizedBox(width: 10.w),
+                        Expanded(
+                          child: Text(
+                            state.message,
+                            style: TextStyles.customStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    duration: const Duration(seconds: 3),
                   ),
                 );
               }

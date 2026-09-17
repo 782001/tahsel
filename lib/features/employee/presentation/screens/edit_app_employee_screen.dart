@@ -171,6 +171,20 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
   }
 
   Future<void> _submit() async {
+    final trimmedName = _nameController.text.trim();
+    if (trimmedName.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppStrings.appEmployeeNameRequired.tr(),
+            style: TextStyles.customStyle(color: AppColors.white),
+          ),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
     if (_selectedPermissions.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -190,6 +204,7 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
       employeeAuthUid: widget.employee.authUid,
       rolePreset: _selectedPreset,
       permissions: _selectedPermissions.toList(),
+      name: trimmedName,
     );
 
     if (mounted) {
@@ -302,8 +317,6 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                                             .tr(),
                                         controller: _nameController,
                                         icon: Icons.person_outline_rounded,
-                                        readOnly: true,
-                                        suffixIcon: Icons.lock_outline_rounded,
                                       ),
                                     ],
                                   ),
@@ -373,8 +386,6 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
                               hint: AppStrings.appEmployeeNameHint.tr(),
                               controller: _nameController,
                               icon: Icons.person_outline_rounded,
-                              readOnly: true,
-                              suffixIcon: Icons.lock_outline_rounded,
                             ),
                             SizedBox(height: 14.h),
                             Text(

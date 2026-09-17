@@ -28,8 +28,10 @@ extension StringExtensions on String {
   /// Checks whether the string is a valid email format.
   /// Example: 'test@example.com'.isValidEmail() // true
   bool isValidEmail() {
-    final emailRegExp = RegExp(r'^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]+');
-    return emailRegExp.hasMatch(this);
+    final emailRegExp = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
+    return emailRegExp.hasMatch(trim());
   }
 
   /// Capitalizes the first letter of the string.

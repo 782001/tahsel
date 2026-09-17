@@ -23,6 +23,7 @@ abstract class TeamManagementRemoteDataSource {
     required String employeeAuthUid,
     required String rolePreset,
     required List<String> permissions,
+    String? name,
   });
 
   Future<void> toggleEmployeeStatus({
@@ -171,16 +172,23 @@ class TeamManagementRemoteDataSourceImpl implements TeamManagementRemoteDataSour
     required String employeeAuthUid,
     required String rolePreset,
     required List<String> permissions,
+    String? name,
   }) async {
     try {
       final batch = firestore.batch();
+      final trimmedName = name?.trim();
 
       // Update in employee's top-level auth document
       final userRef = firestore.collection('users').doc(employeeAuthUid);
-      batch.update(userRef, {
+      final Map<String, dynamic> userUpdates = {
         'permissions': permissions,
         'lastPermissionsUpdatedAt': FieldValue.serverTimestamp(),
-      });
+      };
+      if (trimmedName != null && trimmedName.isNotEmpty) {
+        userUpdates['name'] = trimmedName;
+        userUpdates['fullName'] = trimmedName;
+      }
+      batch.update(userRef, userUpdates);
 
       // Update in owner's team roster
       final teamRef = firestore
@@ -189,15 +197,20 @@ class TeamManagementRemoteDataSourceImpl implements TeamManagementRemoteDataSour
           .collection('app_employees')
           .doc(employeeAuthUid);
 
-      batch.update(teamRef, {
+      final Map<String, dynamic> teamUpdates = {
         'rolePreset': rolePreset,
         'permissions': permissions,
         'lastUpdatedAt': FieldValue.serverTimestamp(),
-      });
+      };
+      if (trimmedName != null && trimmedName.isNotEmpty) {
+        teamUpdates['name'] = trimmedName;
+      }
+
+      batch.update(teamRef, teamUpdates);
 
       await batch.commit();
       AppLogger.printMessage(
-        '[TeamManagement] Updated permissions for $employeeAuthUid',
+        '[TeamManagement] Updated permissions and profile for $employeeAuthUid',
       );
     } catch (e) {
       AppLogger.printMessage('[TeamManagement] Error updating permissions: $e');

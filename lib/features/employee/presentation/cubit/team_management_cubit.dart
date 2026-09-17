@@ -64,6 +64,40 @@ class TeamManagementCubit extends Cubit<TeamManagementState> {
       }
     }
 
+    final cleanName = name.trim();
+    final cleanEmail = email.trim().toLowerCase();
+    final cleanPassword = password.trim();
+
+    if (cleanName.isEmpty) {
+      emit(TeamManagementFailure(AppStrings.appEmployeeNameRequired.tr()));
+      return false;
+    }
+
+    if (cleanEmail.isEmpty) {
+      emit(TeamManagementFailure(AppStrings.appEmployeeEmailRequired.tr()));
+      return false;
+    }
+
+    if (!cleanEmail.isValidEmail()) {
+      emit(TeamManagementFailure(AppStrings.appEmployeeEmailFormatInvalid.tr()));
+      return false;
+    }
+
+    if (cleanPassword.isEmpty) {
+      emit(TeamManagementFailure(AppStrings.appEmployeePasswordRequired.tr()));
+      return false;
+    }
+
+    if (cleanPassword.length < 6) {
+      emit(TeamManagementFailure(AppStrings.appEmployeePasswordMin6Chars.tr()));
+      return false;
+    }
+
+    if (permissions.isEmpty) {
+      emit(TeamManagementFailure(AppStrings.appEmployeeSelectAtLeastOnePermission.tr()));
+      return false;
+    }
+
     final sanitizedPermissions =
         AppPermissions.resolveDependencies(permissions).toList();
 
@@ -71,9 +105,9 @@ class TeamManagementCubit extends Cubit<TeamManagementState> {
     try {
       final newEmp = await remoteDataSource.createAppEmployee(
         ownerUid: ownerUid,
-        name: name,
-        email: email,
-        password: password,
+        name: cleanName,
+        email: cleanEmail,
+        password: cleanPassword,
         rolePreset: rolePreset,
         permissions: sanitizedPermissions,
       );
@@ -97,6 +131,7 @@ class TeamManagementCubit extends Cubit<TeamManagementState> {
     required String employeeAuthUid,
     required String rolePreset,
     required List<String> permissions,
+    String? name,
   }) async {
     final ownerUid = AppStrings.userToken;
     if (ownerUid.isEmpty) return false;
@@ -135,11 +170,13 @@ class TeamManagementCubit extends Cubit<TeamManagementState> {
         employeeAuthUid: employeeAuthUid,
         rolePreset: rolePreset,
         permissions: sanitizedPermissions,
+        name: name,
       );
 
       _employees = _employees.map((emp) {
         if (emp.authUid == employeeAuthUid) {
           return emp.copyWith(
+            name: (name != null && name.trim().isNotEmpty) ? name.trim() : emp.name,
             rolePreset: rolePreset,
             permissions: sanitizedPermissions,
           );
@@ -189,6 +226,11 @@ class TeamManagementCubit extends Cubit<TeamManagementState> {
         return emp;
       }).toList();
 
+      emit(TeamManagementActionSuccess(
+        newStatus == 'active'
+            ? AppStrings.employeeActivatedSuccess
+            : AppStrings.employeeDisabledSuccess,
+      ));
       emit(TeamManagementLoaded(_employees));
     } catch (e) {
       emit(TeamManagementFailure(e.toString()));
