@@ -894,90 +894,85 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                       constraints: BoxConstraints(
                         maxWidth: isDesktop ? 500 : double.infinity,
                       ),
-                      child: Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+
                         children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: _isLoading
-                                  ? null
-                                  : () => Navigator.pop(context),
-                              style: OutlinedButton.styleFrom(
-                                padding: EdgeInsets.symmetric(
-                                  vertical: isDesktop ? 16 : 14.h,
-                                ),
-                                side: BorderSide(
-                                  color: AppColors.lightGreyColor,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14.r),
-                                ),
+                          ElevatedButton(
+                            onPressed: _isLoading ? null : _submit,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryColor,
+                              minimumSize: Size.fromHeight(
+                                isDesktop ? 55 : 55.h,
                               ),
-                              child: Text(
-                                AppStrings.cancel.tr(),
-                                style: TextStyles.customStyle(
-                                  fontSize: 14,
-                                  color: AppColors.sandText,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.r),
                               ),
                             ),
-                          ),
-                          SizedBox(width: isDesktop ? 16 : 14.w),
-                          Expanded(
-                            flex: 2,
-                            child: ElevatedButton(
-                              onPressed: _isLoading ? null : _submit,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primaryColor,
-                                padding: EdgeInsets.symmetric(
-                                  vertical: isDesktop ? 16 : 14.h,
-                                ),
-                                elevation: 2,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14.r),
-                                ),
-                              ),
-                              child: _isLoading
-                                  ? SizedBox(
-                                      height: isDesktop ? 22 : 22.h,
-                                      width: isDesktop ? 22 : 22.h,
-                                      child: const CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2.2,
-                                      ),
-                                    )
-                                  : FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          const Icon(
-                                            Icons.person_add_alt_1_rounded,
-                                            color: Colors.white,
-                                            size: 18,
-                                          ),
-                                          SizedBox(width: 8.w),
-                                          Text(
-                                            AppStrings
-                                                .appEmployeeSaveAndActivateAccount
-                                                .tr(),
-                                            style: TextStyles.customStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                            child: _isLoading
+                                ? SizedBox(
+                                    height: isDesktop ? 22 : 22.h,
+                                    width: isDesktop ? 22 : 22.h,
+                                    child: const CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2.2,
                                     ),
+                                  )
+                                : FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.person_add_alt_1_rounded,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
+                                        SizedBox(width: 8.w),
+                                        Text(
+                                          AppStrings
+                                              .appEmployeeSaveAndActivateAccount
+                                              .tr(),
+                                          style: TextStyles.customStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                          ),
+                          SizedBox(height: isDesktop ? 14 : 12.h),
+                          OutlinedButton(
+                            onPressed: _isLoading
+                                ? null
+                                : () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(
+                                vertical: isDesktop ? 16 : 14.h,
+                              ),
+                              side: BorderSide(color: AppColors.lightGreyColor),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                              ),
+                            ),
+                            child: Text(
+                              AppStrings.cancel.tr(),
+                              style: TextStyles.customStyle(
+                                fontSize: 14,
+                                color: AppColors.sandText,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  SizedBox(height: isDesktop ? 36 : 30.h),
+                  SizedBox(height: isDesktop ? 20 : 20.h),
                 ],
               ),
             ),
