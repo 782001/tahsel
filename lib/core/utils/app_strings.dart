@@ -1595,4 +1595,66 @@ class AppStrings {
   static const String permRequiresPrefix = "perm_requires_prefix";
   static const String permAutoEnabledPrerequisites = "perm_auto_enabled_prerequisites";
   static const String permAutoDisabledDependents = "perm_auto_disabled_dependents";
+
+  // Customer Account Statement
+  static const String customerAccountStatement = "customer_account_statement";
+  static const String accountStatement = "account_statement";
+  static const String runningBalance = "running_balance";
+  static const String openingBalance = "opening_balance";
+  static const String closingBalance = "closing_balance";
+  static const String statementPeriod = "statement_period";
+  static const String thisMonth = "this_month";
+  static const String lastMonth = "last_month";
+  static const String customPeriod = "custom_period";
+  static const String printStatement = "print_statement";
+  static const String sharePdf = "share_pdf";
+  static const String shareWhatsApp = "share_whatsapp";
+  static const String accountSettled = "account_settled";
+  static const String customerDebitStatus = "customer_debit_status";
+  static const String customerCreditStatus = "customer_credit_status";
+  static const String customerSurplusSettlement = "customer_surplus_settlement";
+  static const String accountantSignature = "accountant_signature";
+  static const String customerSignature = "customer_signature";
+  static const String statementNoticeText = "statement_notice_text";
+  static const String noPhoneForCustomer = "no_phone_for_customer";
+  static const String filterByDate = "filter_by_date";
+  static const String selectDateRange = "select_date_range";
+  static const String quickStatement = "quick_statement";
+  static const String debitAmount = "debit_amount";
+  static const String creditAmount = "credit_amount";
+  static const String paidToCustomer = "paid_to_customer";
+  static const String fromDate = "from_date";
+  static const String toDate = "to_date";
+  static const String customerStatementOptions = "customer_statement_options";
+  static const String viewDetailedStatement = "view_detailed_statement";
+  static const String sendToCustomerWhatsapp = "send_to_customer_whatsapp";
+  static const String instantCashPayment = "instant_cash_payment";
+  static const String directCashPayment = "direct_cash_payment";
+  static const String salesInvoice = "sales_invoice";
+  static const String statementOfAccountFor = "statement_of_account_for";
+  static const String customerStatementWhatsappMessage = "customer_statement_whatsapp_message";
+  static const String viewInvoice = "view_invoice";
+  static const String transactionDetails = "transaction_details";
+  static const String referenceNo = "reference_no";
+  static const String details = "details";
+  static const String viewDetailedStatementDesc = "view_detailed_statement_desc";
+  static const String directPrintDesc = "direct_print_desc";
+  static const String sharePdfDesc = "share_pdf_desc";
+  static const String sendToCustomerWhatsappDesc = "send_to_customer_whatsapp_desc";
+  static const String directSale = "direct_sale";
+  static const String creditInvoice = "credit_invoice";
+  static const String creditPurchase = "credit_purchase";
+  static const String gamingSession = "gaming_session";
+  static const String creditSession = "credit_session";
+  static const String sessionPayment = "session_payment";
+  static const String invoicePayment = "invoice_payment";
+  static const String directPayment = "direct_payment";
+  static const String deferredDebt = "deferred_debt";
+  static const String copyInvoiceCode = "copy_invoice_code";
+  static const String invoiceCodeCopied = "invoice_code_copied";
+  static const String invoiceCode = "invoice_code";
 }
+
+
+
+

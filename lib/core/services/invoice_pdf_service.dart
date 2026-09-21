@@ -215,7 +215,11 @@ class InvoicePdfService {
       pw.MultiPage(
         pageTheme: pw.PageTheme(
           pageFormat: PdfPageFormat.a4,
-          theme: pw.ThemeData.withFont(base: ttfRegular, bold: ttfBold),
+          theme: pw.ThemeData.withFont(
+            base: ttfRegular,
+            bold: ttfBold,
+            fontFallback: PdfAssetCache.getFallbackFonts(),
+          ),
           textDirection: isArabic ? pw.TextDirection.rtl : pw.TextDirection.ltr,
           buildBackground: (context) => _buildBackground(),
           margin: const pw.EdgeInsets.symmetric(horizontal: 22, vertical: 18),
@@ -778,7 +782,7 @@ class InvoicePdfService {
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(vertical: 5, horizontal: 3),
       child: pw.Text(
-        text,
+        text.cleanForPdf(),
         style: pw.TextStyle(
           color: PdfColors.white,
           fontWeight: pw.FontWeight.bold,
@@ -799,7 +803,7 @@ class InvoicePdfService {
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(vertical: 5, horizontal: 3),
       child: pw.Text(
-        text,
+        text.cleanForPdf(),
         style: pw.TextStyle(
           color: color ?? PdfColors.black,
           fontSize: fontSize,
@@ -1392,7 +1396,11 @@ class InvoicePdfService {
       pw.MultiPage(
         pageTheme: pw.PageTheme(
           pageFormat: PdfPageFormat.a4,
-          theme: pw.ThemeData.withFont(base: ttfRegular, bold: ttfBold),
+          theme: pw.ThemeData.withFont(
+            base: ttfRegular,
+            bold: ttfBold,
+            fontFallback: PdfAssetCache.getFallbackFonts(),
+          ),
           textDirection: isArabic ? pw.TextDirection.rtl : pw.TextDirection.ltr,
           buildBackground: (context) => pw.Container(color: PdfColors.white),
           margin: const pw.EdgeInsets.symmetric(horizontal: 22, vertical: 18),

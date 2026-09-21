@@ -515,6 +515,7 @@ class AppRoutes {
           builder: (_) => CustomerReportDetailsScreen(
             uid: args['uid'],
             customerName: args['customerName'],
+            customer: args['customer'],
           ),
         );
       case addMyDebt:

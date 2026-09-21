@@ -179,7 +179,11 @@ class VaultPdfExporter {
       pw.MultiPage(
         pageTheme: pw.PageTheme(
           pageFormat: PdfPageFormat.a4,
-          theme: pw.ThemeData.withFont(base: ttfRegular, bold: ttfBold),
+          theme: pw.ThemeData.withFont(
+            base: ttfRegular,
+            bold: ttfBold,
+            fontFallback: PdfAssetCache.getFallbackFonts(),
+          ),
           textDirection: isArabic ? pw.TextDirection.rtl : pw.TextDirection.ltr,
           margin: const pw.EdgeInsets.all(28),
         ),

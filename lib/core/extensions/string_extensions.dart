@@ -62,9 +62,36 @@ extension StringExtensions on String {
     return formattedPhone;
   }
 
-  /// Cleans emojis and unsupported symbols to avoid PDF font missing glyph exceptions
+  /// Cleans emojis and maps unsupported symbols (like multiplication ×) to safe ASCII
+  /// equivalents to avoid PDF font missing glyph exceptions (e.g. U+00D7)
   String cleanForPdf([String defaultValue = '']) {
     if (trim().isEmpty) return defaultValue;
+
+    // 1. Map mathematical and special typography symbols to safe ASCII equivalents
+    var processed = replaceAll('×', 'x')
+        .replaceAll('✕', 'x')
+        .replaceAll('✖', 'x')
+        .replaceAll('⨉', 'x')
+        .replaceAll('÷', '/')
+        .replaceAll('−', '-')
+        .replaceAll('–', '-')
+        .replaceAll('—', '-')
+        .replaceAll('•', '-')
+        .replaceAll('…', '...')
+        .replaceAll('’', "'")
+        .replaceAll('‘', "'")
+        .replaceAll('”', '"')
+        .replaceAll('“', '"')
+        .replaceAll('\u00A0', ' ')
+        .replaceAll('\u200E', '')
+        .replaceAll('\u200F', '')
+        .replaceAll('\u202A', '')
+        .replaceAll('\u202B', '')
+        .replaceAll('\u202C', '')
+        .replaceAll('\u202D', '')
+        .replaceAll('\u202E', '');
+
+    // 2. Filter emojis and unsupported symbol ranges
     final emojiPattern = RegExp(
       r'[\u{1F600}-\u{1F64F}'
       r'|\u{1F300}-\u{1F5FF}'
@@ -82,7 +109,7 @@ extension StringExtensions on String {
       r']+',
       unicode: true,
     );
-    final cleaned = replaceAll(emojiPattern, '').trim();
+    final cleaned = processed.replaceAll(emojiPattern, '').trim();
     return cleaned.isEmpty ? defaultValue : cleaned;
   }
 }

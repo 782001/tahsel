@@ -224,7 +224,7 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
 
       String cleanName(String raw) {
         String name = raw.trim();
-        final match = RegExp(r'^(.*?)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*×.*?\))?$')
+        final match = RegExp(r'^(.*?)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*[×xX*].*?\))?$')
             .firstMatch(name);
         if (match != null && match.group(1)?.trim().isNotEmpty == true) {
           name = match.group(1)!.trim();
@@ -305,7 +305,7 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
       final inventoryRepo = GetIt.I<InventoryRepository>();
       final itemsMap = items.map((item) {
         String name = item.description.trim();
-        final match = RegExp(r'^(.*?)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*×.*?\))?$')
+        final match = RegExp(r'^(.*?)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*[×xX*].*?\))?$')
             .firstMatch(name);
         if (match != null && match.group(1)?.trim().isNotEmpty == true) {
           name = match.group(1)!.trim();
@@ -336,7 +336,7 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
 
       String cleanName(String raw) {
         String name = raw.trim();
-        final match = RegExp(r'^(.*?)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*×.*?\))?$')
+        final match = RegExp(r'^(.*?)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*[×xX*].*?\))?$')
             .firstMatch(name);
         if (match != null && match.group(1)?.trim().isNotEmpty == true) {
           name = match.group(1)!.trim();
@@ -355,7 +355,7 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
 
       final itemsMap = grouped.values.map((p) {
         String name = p.name.trim();
-        final match = RegExp(r'^(.*?)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*×.*?\))?$')
+        final match = RegExp(r'^(.*?)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*[×xX*].*?\))?$')
             .firstMatch(name);
         if (match != null && match.group(1)?.trim().isNotEmpty == true) {
           name = match.group(1)!.trim();
@@ -392,7 +392,7 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
         final item = items[i];
         final itemId = item.id;
         String name = item.description.trim();
-        final match = RegExp(r'^(.*?)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*×.*?\))?$')
+        final match = RegExp(r'^(.*?)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*[×xX*].*?\))?$')
             .firstMatch(name);
         if (match != null && match.group(1)?.trim().isNotEmpty == true) {
           name = match.group(1)!.trim();

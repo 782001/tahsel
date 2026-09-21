@@ -4,9 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
-import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -518,7 +518,8 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
                               cubit.updatePayment(
                                 uid: AppStrings.userToken.isNotEmpty
                                     ? AppStrings.userToken
-                                    : (FirebaseAuth.instance.currentUser?.uid ?? ''),
+                                    : (FirebaseAuth.instance.currentUser?.uid ??
+                                          ''),
                                 debtId: debtId,
                                 paymentId: transaction.id ?? '',
                                 newAmount: newAmount,

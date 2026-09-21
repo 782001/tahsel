@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/error/firebase_error_handler.dart';
+import '../../../../core/extensions/string_extensions.dart';
+import '../../../../core/utils/app_strings.dart';
 import '../models/customer_model.dart';
 import '../../domain/entities/customer_operation.dart';
 
@@ -264,25 +266,34 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
   Future<Map<String, dynamic>> getCustomerOperations(
     String uid,
     String customerName, {
-    int limit = 15,
+    int limit = 0,
     DocumentSnapshot? lastDoc,
   }) async {
     try {
       final userRef = firestore.collection('users').doc(uid);
+      final trimmedCustomerName = customerName.trim();
 
-      // 1. Fetch operations with pagination
-      var opsQuery = userRef
-          .collection('operations')
-          .where('customerName', isEqualTo: customerName)
-          .orderBy('timestamp', descending: true)
-          .limit(limit);
-
-      if (lastDoc != null) {
-        opsQuery = opsQuery.startAfterDocument(lastDoc);
+      // Fetch customer profile details if on first page
+      CustomerModel? customerModel;
+      if (lastDoc == null) {
+        try {
+          final custSnapshot = await userRef
+              .collection('customers')
+              .where('name', isEqualTo: trimmedCustomerName)
+              .limit(1)
+              .get(const GetOptions(source: Source.serverAndCache));
+          if (custSnapshot.docs.isNotEmpty) {
+            final doc = custSnapshot.docs.first;
+            customerModel = CustomerModel.fromJson(doc.data(), id: doc.id);
+          }
+        } catch (_) {}
       }
 
-      final opsSnapshot = await opsQuery.get();
-      List<CustomerOperation> operations = [];
+      // 1. Fetch debts first to know which operations are credit debts vs cash sales
+      double totalSpent = 0.0;
+      double totalPaid = 0.0;
+      final Set<String> debtOperationIds = {};
+      final List<CustomerOperation> rawOperations = [];
 
       DateTime parseDate(dynamic val) {
         if (val == null) return DateTime.now();
@@ -293,71 +304,387 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
         return DateTime.now();
       }
 
-      for (var doc in opsSnapshot.docs) {
-        final data = doc.data();
-        final type = ((data['remainingDebt'] as num?)?.toDouble() ?? 0.0) > 0
-            ? CustomerOperationType.debt
-            : CustomerOperationType.purchase;
+      // Helper function to extract genuine invoice ID (starting with inv_)
+      String? extractRealInvoiceId(dynamic candidate) {
+        if (candidate == null) return null;
+        final str = candidate.toString().trim();
+        if (str.isEmpty) return null;
+        if (str.startsWith('debt_inv_')) {
+          final extracted = str.replaceFirst('debt_inv_', '');
+          return extractRealInvoiceId(extracted);
+        }
+        if (str.startsWith('debt_')) {
+          final extracted = str.replaceFirst('debt_', '');
+          return extractRealInvoiceId(extracted);
+        }
+        final match = RegExp(r'inv_[a-zA-Z0-9_-]+').firstMatch(str);
+        if (match != null) {
+          var id = match.group(0)!;
+          if (id.endsWith('_cash_pay')) id = id.replaceFirst('_cash_pay', '');
+          if (id.endsWith('_pay')) id = id.replaceFirst('_pay', '');
+          return id;
+        }
+        return null;
+      }
 
-        operations.add(
+      // Pre-load customer invoices to build an authoritative link map (docId / debtId -> real inv_ ID)
+      final Map<String, String> idToRealInvoiceMap = {};
+      QuerySnapshot<Map<String, dynamic>>? invoicesSnapshot;
+      if (lastDoc == null) {
+        try {
+          invoicesSnapshot = await userRef
+              .collection('invoices')
+              .where('customerName', isEqualTo: trimmedCustomerName)
+              .get(const GetOptions(source: Source.serverAndCache));
+
+          for (var invDoc in invoicesSnapshot.docs) {
+            final invData = invDoc.data();
+            final rawInvId = invData['id']?.toString() ?? invDoc.id;
+            final invId = rawInvId.startsWith('inv_') ? rawInvId : 'inv_$rawInvId';
+
+            idToRealInvoiceMap[invId] = invId;
+            idToRealInvoiceMap[invDoc.id] = invId;
+            idToRealInvoiceMap['debt_$invId'] = invId;
+            idToRealInvoiceMap['debt_inv_$invId'] = invId;
+
+            final linkedDebt = invData['linkedDebtId']?.toString();
+            if (linkedDebt != null && linkedDebt.isNotEmpty) {
+              idToRealInvoiceMap[linkedDebt] = invId;
+              if (linkedDebt.startsWith('debt_inv_')) {
+                idToRealInvoiceMap[linkedDebt.replaceFirst('debt_inv_', '')] = invId;
+              }
+            }
+          }
+        } catch (_) {}
+      }
+
+      String? resolveDebtInvoiceId(String debtId, String? opId, Map<String, dynamic> data) {
+        if (idToRealInvoiceMap.containsKey(debtId)) return idToRealInvoiceMap[debtId];
+        if (opId != null && idToRealInvoiceMap.containsKey(opId)) return idToRealInvoiceMap[opId];
+
+        final fromDebtId = extractRealInvoiceId(debtId);
+        if (fromDebtId != null) return fromDebtId;
+
+        if (opId != null) {
+          final fromOpId = extractRealInvoiceId(opId);
+          if (fromOpId != null) return fromOpId;
+        }
+
+        final fromInvField = extractRealInvoiceId(data['invoiceId']);
+        if (fromInvField != null) return fromInvField;
+
+        final fromLedger = extractRealInvoiceId(data['ledgerNumber']);
+        if (fromLedger != null) return fromLedger;
+
+        final fromDetails = extractRealInvoiceId(data['productOrSessionDetails']);
+        if (fromDetails != null) return fromDetails;
+
+        final fromNotes = extractRealInvoiceId(data['notes']);
+        if (fromNotes != null) return fromNotes;
+
+        return null;
+      }
+
+      String? resolveOpInvoiceId(String docId, Map<String, dynamic> data) {
+        if (idToRealInvoiceMap.containsKey(docId)) return idToRealInvoiceMap[docId];
+
+        final fromDocId = extractRealInvoiceId(docId);
+        if (fromDocId != null) return fromDocId;
+
+        final fromInvField = extractRealInvoiceId(data['invoiceId']);
+        if (fromInvField != null) return fromInvField;
+
+        final fromLedger = extractRealInvoiceId(data['ledgerNumber']);
+        if (fromLedger != null) return fromLedger;
+
+        final fromProduct = extractRealInvoiceId(data['productName']);
+        if (fromProduct != null) return fromProduct;
+
+        final fromNotes = extractRealInvoiceId(data['notes']);
+        if (fromNotes != null) return fromNotes;
+
+        return null;
+      }
+
+      QuerySnapshot<Map<String, dynamic>>? debtsSnapshot;
+      final Set<String> seenOpIds = {};
+
+      if (lastDoc == null) {
+        debtsSnapshot = await userRef
+            .collection('debts')
+            .where('customerName', isEqualTo: trimmedCustomerName)
+            .get(const GetOptions(source: Source.serverAndCache));
+
+        for (var debtDoc in debtsSnapshot.docs) {
+          debtOperationIds.add(debtDoc.id);
+          final debtData = debtDoc.data();
+          final debtOpId = debtData['operationId']?.toString();
+          if (debtOpId != null && debtOpId.isNotEmpty) {
+            debtOperationIds.add(debtOpId);
+          }
+
+          final debtTotal = (debtData['totalAmount'] as num? ?? 0.0).toDouble();
+          final debtPaid = (debtData['paidAmount'] as num? ?? 0.0).toDouble();
+          totalSpent += debtTotal;
+          totalPaid += debtPaid;
+
+          final activityName = debtData['operationType']?.toString() ?? '';
+          final debtInvId = resolveDebtInvoiceId(debtDoc.id, debtOpId, debtData);
+
+          // Optimization: ONLY query payments if paidAmount > 0
+          if (debtPaid > 0) {
+            final paymentsSnapshot = await debtDoc.reference
+                .collection('payments')
+                .get(const GetOptions(source: Source.serverAndCache));
+
+            for (var paymentDoc in paymentsSnapshot.docs) {
+              final pData = paymentDoc.data();
+              if (pData['type'] == 'debtAdded') continue;
+
+              final paidAmount = (pData['amountPaid'] as num?)?.toDouble() ?? 0.0;
+              if (paidAmount == 0.0) continue;
+
+              final pType = pData['type']?.toString();
+              final pActName = pData['activityName']?.toString();
+              final pNotes = pData['notes']?.toString();
+              final isSurplusRefund = paidAmount < 0;
+
+              final resolvedActName = isSurplusRefund
+                  ? (pActName ?? AppStrings.customerSurplusSettlement.tr())
+                  : (pActName ?? (pType == 'settlement' ? AppStrings.directPayment.tr() : activityName));
+
+              rawOperations.add(
+                CustomerOperation(
+                  id: paymentDoc.id,
+                  activityName: resolvedActName,
+                  amount: paidAmount,
+                  type: CustomerOperationType.payment,
+                  date: parseDate(pData['createdAt']),
+                  details: pNotes ??
+                      pData['paymentMethod']?.toString() ??
+                      (isSurplusRefund ? AppStrings.customerSurplusSettlement.tr() : null),
+                  referenceNumber: isSurplusRefund ? null : debtInvId,
+                  invoiceId: isSurplusRefund ? null : debtInvId,
+                  notes: pNotes,
+                ),
+              );
+            }
+          }
+        }
+      }
+
+      // 2. Fetch operations with serverAndCache
+      var opsQuery = userRef
+          .collection('operations')
+          .where('customerName', isEqualTo: trimmedCustomerName)
+          .orderBy('timestamp', descending: true);
+
+      if (limit > 0) {
+        opsQuery = opsQuery.limit(limit);
+      }
+
+      if (lastDoc != null) {
+        opsQuery = opsQuery.startAfterDocument(lastDoc);
+      }
+
+      final opsSnapshot = await opsQuery.get(
+        const GetOptions(source: Source.serverAndCache),
+      );
+
+      for (var doc in opsSnapshot.docs) {
+        seenOpIds.add(doc.id);
+        final data = doc.data();
+        final opInvId = resolveOpInvoiceId(doc.id, data);
+
+        if (opInvId != null) {
+          seenOpIds.add(opInvId);
+          seenOpIds.add('debt_inv_$opInvId');
+          seenOpIds.add('debt_$opInvId');
+        }
+
+        final remainingDebt = (data['remainingDebt'] as num?)?.toDouble() ?? 0.0;
+        final opTotal = (data['totalAmount'] as num?)?.toDouble() ?? 0.0;
+        final opPaid = (data['paidAmount'] as num?)?.toDouble() ?? (remainingDebt <= 0 ? opTotal : 0.0);
+        final opDate = parseDate(data['timestamp']);
+        final isDebt = remainingDebt > 0;
+        final type = isDebt ? CustomerOperationType.debt : CustomerOperationType.purchase;
+
+        // Record the purchase / debt operation
+        rawOperations.add(
           CustomerOperation(
             id: doc.id,
             activityName: data['type']?.toString() ?? '',
-            amount: (data['totalAmount'] as num?)?.toDouble() ?? 0.0,
+            amount: opTotal,
             type: type,
-            date: parseDate(data['timestamp']),
+            date: opDate,
             details: data['productName']?.toString(),
+            referenceNumber: opInvId,
+            invoiceId: opInvId,
+            notes: data['notes']?.toString(),
           ),
         );
-      }
 
-      // 2. Fetch payments and calculate aggregate statistics only if we are on the first page
-      double totalSpent = 0.0;
-      double totalPaid = 0.0;
+        // If this is a cash sale (not linked to debts collection) and paidAmount > 0:
+        // Record the corresponding cash payment so the sale doesn't leave phantom debt!
+        final isLinkedDebt = debtOperationIds.contains(doc.id) ||
+            (opInvId != null && debtOperationIds.contains('debt_inv_$opInvId')) ||
+            (opInvId != null && debtOperationIds.contains('debt_$opInvId'));
 
-      if (lastDoc == null) {
-        final debtsSnapshot = await userRef
-            .collection('debts')
-            .where('customerName', isEqualTo: customerName)
-            .get();
-
-        for (var debtDoc in debtsSnapshot.docs) {
-          final debtData = debtDoc.data();
-          totalSpent += (debtData['totalAmount'] as num? ?? 0.0).toDouble();
-          totalPaid += (debtData['paidAmount'] as num? ?? 0.0).toDouble();
-
-          final activityName = debtData['operationType']?.toString() ?? '';
-
-          final paymentsSnapshot = await debtDoc.reference
-              .collection('payments')
-              .get();
-
-          for (var paymentDoc in paymentsSnapshot.docs) {
-            final pData = paymentDoc.data();
-            if (pData['type'] == 'debtAdded') continue;
-
-            operations.add(
+        if (!isLinkedDebt) {
+          totalSpent += opTotal;
+          if (opPaid > 0) {
+            totalPaid += opPaid;
+            rawOperations.add(
               CustomerOperation(
-                id: paymentDoc.id,
-                activityName: activityName,
-                amount: (pData['amountPaid'] as num?)?.toDouble() ?? 0.0,
+                id: '${doc.id}_cash_pay',
+                activityName: data['type']?.toString() ?? '',
+                amount: opPaid,
                 type: CustomerOperationType.payment,
-                date: parseDate(pData['createdAt']),
-                details: null,
+                date: opDate.add(const Duration(milliseconds: 1)),
+                details: AppStrings.instantCashPayment.tr(),
+                referenceNumber: opInvId,
+                invoiceId: opInvId,
+                notes: AppStrings.directCashPayment.tr(),
               ),
             );
           }
         }
       }
 
-      // Sort combined list latest first
-      operations.sort((a, b) => b.date.compareTo(a.date));
+      // 3. Reconcile any debts from debtsSnapshot that had no corresponding operations doc
+      if (lastDoc == null && debtsSnapshot != null) {
+        for (var debtDoc in debtsSnapshot.docs) {
+          final debtData = debtDoc.data();
+          final debtOpId = debtData['operationId']?.toString();
+          final wasFoundInOps = seenOpIds.contains(debtDoc.id) ||
+              (debtOpId != null && seenOpIds.contains(debtOpId));
+          if (!wasFoundInOps) {
+            final debtTotal = (debtData['totalAmount'] as num? ?? 0.0).toDouble();
+            final debtDate = parseDate(debtData['timestamp'] ?? debtData['createdAt']);
+            final debtInvId = resolveDebtInvoiceId(debtDoc.id, debtOpId, debtData);
+
+            rawOperations.add(
+              CustomerOperation(
+                id: debtDoc.id,
+                activityName: debtData['operationType']?.toString() ?? AppStrings.debt.tr(),
+                amount: debtTotal,
+                type: CustomerOperationType.debt,
+                date: debtDate,
+                details: debtData['productOrSessionDetails']?.toString(),
+                referenceNumber: debtInvId,
+                invoiceId: debtInvId,
+                notes: debtData['notes']?.toString(),
+              ),
+            );
+          }
+        }
+
+        // 4. Reconcile direct cash invoices that were not linked to debts or operations
+        if (invoicesSnapshot != null) {
+          for (var invDoc in invoicesSnapshot.docs) {
+            final invData = invDoc.data();
+            final invStatus = invData['status']?.toString();
+            if (invStatus == 'cancelled' || invStatus == 'voided') continue;
+
+            final rawInvId = invData['id']?.toString() ?? invDoc.id;
+            final invId = rawInvId.startsWith('inv_') ? rawInvId : 'inv_$rawInvId';
+
+            final linkedDebt = invData['linkedDebtId']?.toString();
+            if (debtOperationIds.contains('debt_inv_$invId') ||
+                debtOperationIds.contains('debt_$invId') ||
+                debtOperationIds.contains(invId) ||
+                (linkedDebt != null && debtOperationIds.contains(linkedDebt)) ||
+                seenOpIds.contains(invId) ||
+                seenOpIds.contains(rawInvId) ||
+                (linkedDebt != null && seenOpIds.contains(linkedDebt))) {
+              continue;
+            }
+
+            final bool isQuotation = invStatus == 'quotation' ||
+                invData['isQuotation'] == true ||
+                invData['type'] == 'quotation';
+
+            final invTotal = (invData['totalAmount'] as num? ?? 0.0).toDouble();
+            final invPaid = (invData['totalPaid'] as num? ?? 0.0).toDouble();
+            final invDate = parseDate(invData['createdAt']);
+
+            final opTitle = isQuotation
+                ? AppStrings.invoiceStatusQuotation.tr()
+                : AppStrings.salesInvoice.tr();
+
+            rawOperations.add(
+              CustomerOperation(
+                id: invId,
+                activityName: opTitle,
+                amount: invTotal,
+                type: isQuotation
+                    ? CustomerOperationType.quotation
+                    : CustomerOperationType.purchase,
+                date: invDate,
+                details: '$opTitle #$invId',
+                referenceNumber: invId,
+                invoiceId: invId,
+                notes: invData['notes']?.toString(),
+              ),
+            );
+
+            if (!isQuotation) {
+              totalSpent += invTotal;
+              if (invPaid > 0) {
+                totalPaid += invPaid;
+                rawOperations.add(
+                  CustomerOperation(
+                    id: '${invId}_pay',
+                    activityName: AppStrings.salesInvoice.tr(),
+                    amount: invPaid,
+                    type: CustomerOperationType.payment,
+                    date: invDate.add(const Duration(milliseconds: 1)),
+                    details: AppStrings.instantCashPayment.tr(),
+                    referenceNumber: invId,
+                    invoiceId: invId,
+                    notes: AppStrings.directCashPayment.tr(),
+                  ),
+                );
+              }
+            }
+          }
+        }
+      }
+
+      // 5. Calculate running balance chronologically (oldest to newest) with tie-breaker
+      rawOperations.sort((a, b) {
+        final cmp = a.date.compareTo(b.date);
+        if (cmp != 0) return cmp;
+        if (a.type != b.type) {
+          if (a.type == CustomerOperationType.payment) return 1;
+          if (b.type == CustomerOperationType.payment) return -1;
+        }
+        return 0;
+      });
+
+      double currentRunning = 0.0;
+      final List<CustomerOperation> balancedOperations = [];
+
+      for (var op in rawOperations) {
+        if (op.type == CustomerOperationType.quotation) {
+          // Quotations are price offers and do not alter customer debt balance
+        } else if (op.type == CustomerOperationType.payment) {
+          currentRunning -= op.amount;
+        } else {
+          currentRunning += op.amount;
+        }
+        balancedOperations.add(op.copyWith(runningBalance: currentRunning));
+      }
+
+      // Sort latest first for UI display
+      final displayOperations = balancedOperations.reversed.toList();
 
       return {
-        'operations': operations,
+        'operations': displayOperations,
         'lastDoc': opsSnapshot.docs.isNotEmpty ? opsSnapshot.docs.last : null,
         'totalSpent': totalSpent,
         'totalPaid': totalPaid,
+        'customer': customerModel,
       };
     } catch (e) {
       FirebaseErrorHandler.handle(e);

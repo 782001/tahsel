@@ -110,6 +110,7 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
             ),
             centerTitle: true,
             elevation: 0,
+            scrolledUnderElevation: 0,
             backgroundColor: AppColors.transparent,
             leading: IconButton(
               icon: Icon(
@@ -361,7 +362,6 @@ class _DebtDetailsReportScreenState extends State<DebtDetailsReportScreen> {
               transaction: transaction,
               debtId: widget.debtId,
               customerName: debt?.customerName ?? '',
-              
             );
           }, childCount: transactions.length),
         ),

@@ -45,7 +45,10 @@ class ReportsDashboardCard extends StatelessWidget {
     return Padding(
       padding: isDesktop
           ? EdgeInsets.zero
-          : EdgeInsets.symmetric(horizontal:isDesktop? 0: 24.w, vertical: 8.h),
+          : EdgeInsets.symmetric(
+              horizontal: isDesktop ? 0 : 24.w,
+              vertical: 8.h,
+            ),
       child: GestureDetector(
         onTap: onTap,
         child: ClipRRect(
@@ -67,7 +70,10 @@ class ReportsDashboardCard extends StatelessWidget {
                     ],
               border: isSummaryCard
                   ? BorderDirectional(
-                      end: BorderSide(color: contentColor, width: 10.w),
+                      end: BorderSide(
+                        color: contentColor,
+                        width: isDesktop ? 7 : 7.w,
+                      ),
                     )
                   : null,
             ),

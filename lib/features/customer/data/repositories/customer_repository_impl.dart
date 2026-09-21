@@ -104,7 +104,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
   Future<
     Either<
       Failure,
-      (List<CustomerOperation>, DocumentSnapshot?, double, double)
+      (List<CustomerOperation>, DocumentSnapshot?, double, double, CustomerEntity?)
     >
   >
   getCustomerOperations(
@@ -125,6 +125,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
         result['lastDoc'] as DocumentSnapshot?,
         (result['totalSpent'] as num? ?? 0.0).toDouble(),
         (result['totalPaid'] as num? ?? 0.0).toDouble(),
+        result['customer'] as CustomerEntity?,
       ));
     } catch (e) {
       return Left(ServerFailure(e.toString()));

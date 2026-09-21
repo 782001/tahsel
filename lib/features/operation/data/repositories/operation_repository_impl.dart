@@ -109,7 +109,7 @@ class OperationRepositoryImpl implements OperationRepository {
         String name = clean;
         double quantity = 1.0;
         final match = RegExp(
-          r'^(.*?)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*×.*?\))?$',
+          r'^(.*?)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*[×xX*].*?\))?$',
         ).firstMatch(clean);
         if (match != null) {
           final extractedName = match.group(1)?.trim();

@@ -147,7 +147,7 @@ class InvoiceCubit extends Cubit<InvoiceState> {
         try {
           final itemsMap = invoiceWithId.items.map((item) {
             String name = item.description.trim();
-            final match = RegExp(r'^(.*?)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*×.*?\))?$')
+            final match = RegExp(r'^(.*?)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*[×xX*].*?\))?$')
                 .firstMatch(name);
             if (match != null && match.group(1)?.trim().isNotEmpty == true) {
               name = match.group(1)!.trim();

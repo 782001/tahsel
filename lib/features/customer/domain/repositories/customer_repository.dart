@@ -34,7 +34,7 @@ abstract class CustomerRepository {
   Future<
     Either<
       Failure,
-      (List<CustomerOperation>, DocumentSnapshot?, double, double)
+      (List<CustomerOperation>, DocumentSnapshot?, double, double, CustomerEntity?)
     >
   >
   getCustomerOperations(

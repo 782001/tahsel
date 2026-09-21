@@ -26,6 +26,13 @@ class PdfAssetCache {
     return _boldFont!;
   }
 
+  /// Returns standard fallback fonts for PDF styling
+  static List<pw.Font> getFallbackFonts() {
+    return [
+      pw.Font.helvetica(),
+    ];
+  }
+
   /// Loads the active project custom logo (if set) or falls back to Tahsel app logo
   static Future<pw.MemoryImage?> getLogoImage() async {
     try {
