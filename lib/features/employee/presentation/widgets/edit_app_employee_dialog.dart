@@ -45,7 +45,12 @@ class _EditAppEmployeeDialogState extends State<EditAppEmployeeDialog> {
   void initState() {
     super.initState();
     _selectedPreset = widget.employee.rolePreset;
-    _selectedPermissions = Set.from(widget.employee.permissions);
+    final allowedKeys = AppPermissions.getGroupsForBusinessType()
+        .expand((g) => g.items.map((i) => i.key))
+        .toSet();
+    _selectedPermissions = Set.from(
+      widget.employee.permissions.where((p) => allowedKeys.contains(p)),
+    );
   }
 
   void _applyPreset(String preset) {
@@ -134,7 +139,7 @@ class _EditAppEmployeeDialogState extends State<EditAppEmployeeDialog> {
 
   void _selectAll() {
     setState(() {
-      for (final group in AppPermissions.allGroups) {
+      for (final group in AppPermissions.getGroupsForBusinessType()) {
         for (final item in group.items) {
           _selectedPermissions.add(item.key);
         }
@@ -258,11 +263,13 @@ class _EditAppEmployeeDialogState extends State<EditAppEmployeeDialog> {
                             AppStrings.roleCashierLabel.tr(),
                             Icons.point_of_sale_rounded,
                           ),
-                          _buildPresetChip(
-                            AppPermissions.roleStorekeeper,
-                            AppStrings.roleStorekeeperLabel.tr(),
-                            Icons.inventory_2_outlined,
-                          ),
+                          if (AppPermissions.isShop ||
+                              _selectedPreset == AppPermissions.roleStorekeeper)
+                            _buildPresetChip(
+                              AppPermissions.roleStorekeeper,
+                              AppStrings.roleStorekeeperLabel.tr(),
+                              Icons.inventory_2_outlined,
+                            ),
                           _buildPresetChip(
                             AppPermissions.roleAccountant,
                             AppStrings.roleAccountantLabel.tr(),
@@ -333,7 +340,7 @@ class _EditAppEmployeeDialogState extends State<EditAppEmployeeDialog> {
                       SizedBox(height: 8.h),
 
                       // Permission Groups Accordion
-                      ...AppPermissions.allGroups.map((group) {
+                      ...AppPermissions.getGroupsForBusinessType().map((group) {
                         final groupItemsCount = group.items.length;
                         final activeInGroup = group.items
                             .where(

@@ -141,7 +141,7 @@ class _AddAppEmployeeDialogState extends State<AddAppEmployeeDialog> {
     setState(() {
       final isOwner = PermissionService.instance.isOwner;
       final myPerms = PermissionService.instance.permissions;
-      for (final group in AppPermissions.allGroups) {
+      for (final group in AppPermissions.getGroupsForBusinessType()) {
         for (final item in group.items) {
           if (!isOwner) {
             if (item.key == AppPermissions.employeesManageAppUsers) continue;
@@ -447,11 +447,12 @@ class _AddAppEmployeeDialogState extends State<AddAppEmployeeDialog> {
                                 AppStrings.roleCashierLabel.tr(),
                                 Icons.point_of_sale_rounded,
                               ),
-                              _buildPresetChip(
-                                AppPermissions.roleStorekeeper,
-                                AppStrings.roleStorekeeperLabel.tr(),
-                                Icons.inventory_2_outlined,
-                              ),
+                              if (AppPermissions.isShop)
+                                _buildPresetChip(
+                                  AppPermissions.roleStorekeeper,
+                                  AppStrings.roleStorekeeperLabel.tr(),
+                                  Icons.inventory_2_outlined,
+                                ),
                               _buildPresetChip(
                                 AppPermissions.roleAccountant,
                                 AppStrings.roleAccountantLabel.tr(),
@@ -525,7 +526,7 @@ class _AddAppEmployeeDialogState extends State<AddAppEmployeeDialog> {
                           SizedBox(height: isDesktop ? 8 : 8.h),
 
                           // Permission Groups Accordion
-                          ...AppPermissions.allGroups
+                          ...AppPermissions.getGroupsForBusinessType()
                               .where((group) {
                                 if (PermissionService.instance.isOwner) {
                                   return true;

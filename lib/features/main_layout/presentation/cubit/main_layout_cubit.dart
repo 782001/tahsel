@@ -91,9 +91,9 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
       case 6:
         return permissions.hasPermission(AppPermissions.customersView);
       case 7:
-        return permissions.hasPermission(AppPermissions.vaultAccess);
+        return isShop && permissions.hasPermission(AppPermissions.vaultAccess);
       case 8:
-        return permissions.hasPermission(AppPermissions.inventoryView);
+        return isShop && permissions.hasPermission(AppPermissions.inventoryView);
       case 9:
         return permissions.hasPermission(AppPermissions.hrEmployeesManage);
       case 10:

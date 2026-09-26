@@ -147,7 +147,7 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
 
   void _selectAll() {
     setState(() {
-      for (final group in AppPermissions.allGroups) {
+      for (final group in AppPermissions.getGroupsForBusinessType()) {
         for (final item in group.items) {
           if (!PermissionService.instance.isOwner) {
             if (item.key == AppPermissions.employeesManageAppUsers) continue;
@@ -617,12 +617,13 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                               Icons.point_of_sale_rounded,
                               isDesktop: isDesktop,
                             ),
-                            _buildPresetChip(
-                              AppPermissions.roleStorekeeper,
-                              AppStrings.roleStorekeeperLabel.tr(),
-                              Icons.inventory_2_outlined,
-                              isDesktop: isDesktop,
-                            ),
+                            if (AppPermissions.isShop)
+                              _buildPresetChip(
+                                AppPermissions.roleStorekeeper,
+                                AppStrings.roleStorekeeperLabel.tr(),
+                                Icons.inventory_2_outlined,
+                                isDesktop: isDesktop,
+                              ),
                             _buildPresetChip(
                               AppPermissions.roleAccountant,
                               AppStrings.roleAccountantLabel.tr(),
@@ -692,7 +693,7 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                       ],
                     ),
                     child: Column(
-                      children: AppPermissions.allGroups
+                      children: AppPermissions.getGroupsForBusinessType()
                           .where((group) {
                             if (PermissionService.instance.isOwner) {
                               return true;

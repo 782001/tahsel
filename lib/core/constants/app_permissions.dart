@@ -92,6 +92,22 @@ class AppPermissions {
   static const String inventoryPurchases = inventoryManagePurchases;
   static const String inventoryAnalytics = inventoryViewAnalytics;
 
+  // ── Permission Group IDs ─────────────────────────────────────────
+  static const String groupPos = 'pos';
+  static const String groupInvoices = 'invoices';
+  static const String groupExpenses = 'expenses';
+  static const String groupCustomers = 'customers';
+  static const String groupMyDebts = 'my_debts';
+  static const String groupVault = 'vault';
+  static const String groupInventory = 'inventory';
+  static const String groupEmployees = 'employees';
+  static const String groupReports = 'reports';
+  static const String groupShipping = 'shipping';
+  static const String groupSettings = 'settings';
+
+  /// Whether current business type is shop (vs cafe).
+  static bool get isShop => AppStrings.userType == AppStrings.shop;
+
   // ── Role Presets ──────────────────────────────────────────────────
   static const String roleCashier = 'cashier';
   static const String roleStorekeeper = 'storekeeper';
@@ -99,11 +115,13 @@ class AppPermissions {
   static const String roleSupervisor = 'supervisor';
   static const String roleCustom = 'custom';
 
-  /// Returns permissions list for a predefined role preset.
-  static List<String> permissionsForPreset(String preset) {
+  /// Returns permissions list for a predefined role preset, filtered for the business type.
+  static List<String> permissionsForPreset(String preset, {bool? isShop}) {
+    final shop = isShop ?? (AppStrings.userType == AppStrings.shop);
+    List<String> raw;
     switch (preset) {
       case roleCashier:
-        return [
+        raw = [
           posAccess,
           posQuickSale,
           posManageSessions,
@@ -117,8 +135,9 @@ class AppPermissions {
           customersSettleDebt,
           inventoryView,
         ];
+        break;
       case roleStorekeeper:
-        return [
+        raw = [
           inventoryView,
           inventoryManageProducts,
           inventoryManageSuppliers,
@@ -127,8 +146,9 @@ class AppPermissions {
           myDebtsView,
           myDebtsAdd,
         ];
+        break;
       case roleAccountant:
-        return [
+        raw = [
           invoicesView,
           invoicesCreate,
           invoicesEdit,
@@ -153,8 +173,9 @@ class AppPermissions {
           reportsExport,
           shippingView,
         ];
+        break;
       case roleSupervisor:
-        return [
+        raw = [
           posAccess,
           posQuickSale,
           posManageSessions,
@@ -190,15 +211,70 @@ class AppPermissions {
           employeesRecordAttendance,
           shippingView,
         ];
+        break;
       default:
         return [];
     }
+
+    final allowedKeys = getGroupsForBusinessType(isShop: shop)
+        .expand((g) => g.items.map((i) => i.key))
+        .toSet();
+
+    return raw.where((p) => allowedKeys.contains(p)).toList();
+  }
+
+  /// Returns permission groups filtered for the specific business type (Shop vs Cafe).
+  ///
+  /// Shop accounts have access to:
+  /// - Invoices & Sales (`groupInvoices`)
+  /// - Vault (`groupVault`)
+  /// - Inventory & Warehouse (`groupInventory`)
+  /// - Shipping Reconciliation (`groupShipping`)
+  /// But do NOT have access to PS / Cafe session management (`posManageSessions`).
+  ///
+  /// Cafe accounts have access to PS / Cafe session management (`posManageSessions`),
+  /// but do NOT have access to Invoices, Vault, Inventory, or Shipping Reconciliation.
+  static List<PermissionGroup> getGroupsForBusinessType({bool? isShop}) {
+    final shop = isShop ?? (AppStrings.userType == AppStrings.shop);
+    final List<PermissionGroup> result = [];
+
+    for (final group in allGroups) {
+      // 1. Shop-only groups: excluded for cafe accounts
+      if (!shop &&
+          (group.id == groupInvoices ||
+              group.id == groupVault ||
+              group.id == groupInventory ||
+              group.id == groupShipping)) {
+        continue;
+      }
+
+      // 2. Filter items within each group
+      final filteredItems = group.items.where((item) {
+        // PS / Cafe session management is cafe-only (excluded for shop)
+        if (shop && item.key == posManageSessions) {
+          return false;
+        }
+        return true;
+      }).toList();
+
+      if (filteredItems.isNotEmpty) {
+        result.add(
+          PermissionGroup(
+            id: group.id,
+            titleKey: group.titleKey,
+            items: filteredItems,
+          ),
+        );
+      }
+    }
+
+    return result;
   }
 
   /// All permission definitions grouped by category for UI selection.
   static final List<PermissionGroup> allGroups = [
     const PermissionGroup(
-      id: 'pos',
+      id: groupPos,
       titleKey: AppStrings.permGroupPos,
       items: [
         PermissionItem(posAccess, AppStrings.permPosAccess),
@@ -208,7 +284,7 @@ class AppPermissions {
       ],
     ),
     const PermissionGroup(
-      id: 'invoices',
+      id: groupInvoices,
       titleKey: AppStrings.permGroupInvoices,
       items: [
         PermissionItem(invoicesView, AppStrings.permInvoicesView),
@@ -220,7 +296,7 @@ class AppPermissions {
       ],
     ),
     const PermissionGroup(
-      id: 'expenses',
+      id: groupExpenses,
       titleKey: AppStrings.permGroupExpenses,
       items: [
         PermissionItem(expensesView, AppStrings.permExpensesView),
@@ -229,7 +305,7 @@ class AppPermissions {
       ],
     ),
     const PermissionGroup(
-      id: 'customers',
+      id: groupCustomers,
       titleKey: AppStrings.permGroupCustomers,
       items: [
         PermissionItem(customersView, AppStrings.permCustomersView),
@@ -241,7 +317,7 @@ class AppPermissions {
       ],
     ),
     const PermissionGroup(
-      id: 'my_debts',
+      id: groupMyDebts,
       titleKey: AppStrings.permGroupMyDebts,
       items: [
         PermissionItem(myDebtsView, AppStrings.permMyDebtsView),
@@ -251,7 +327,7 @@ class AppPermissions {
       ],
     ),
     const PermissionGroup(
-      id: 'vault',
+      id: groupVault,
       titleKey: AppStrings.permGroupVault,
       items: [
         PermissionItem(vaultAccess, AppStrings.permVaultAccess),
@@ -262,7 +338,7 @@ class AppPermissions {
       ],
     ),
     const PermissionGroup(
-      id: 'inventory',
+      id: groupInventory,
       titleKey: AppStrings.permGroupInventory,
       items: [
         PermissionItem(inventoryView, AppStrings.permInventoryView),
@@ -274,7 +350,7 @@ class AppPermissions {
       ],
     ),
     const PermissionGroup(
-      id: 'employees',
+      id: groupEmployees,
       titleKey: AppStrings.permGroupEmployees,
       items: [
         PermissionItem(employeesView, AppStrings.permEmployeesView),
@@ -284,7 +360,7 @@ class AppPermissions {
       ],
     ),
     const PermissionGroup(
-      id: 'reports',
+      id: groupReports,
       titleKey: AppStrings.permGroupReports,
       items: [
         PermissionItem(reportsViewNetProfit, AppStrings.permReportsViewNetProfit),
@@ -294,14 +370,14 @@ class AppPermissions {
       ],
     ),
     const PermissionGroup(
-      id: 'shipping',
+      id: groupShipping,
       titleKey: AppStrings.permGroupShipping,
       items: [
         PermissionItem(shippingView, AppStrings.permShippingView),
       ],
     ),
     const PermissionGroup(
-      id: 'settings',
+      id: groupSettings,
       titleKey: AppStrings.permGroupSettings,
       items: [
         PermissionItem(settingsEditProfile, AppStrings.permSettingsEditProfile),
