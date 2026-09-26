@@ -209,8 +209,8 @@ class AuthCubit extends Cubit<AuthState> {
 
   Future<void> logout() async {
     emit(AuthLoading());
-    await logoutUseCase.call(const NoParams());
     await _clearSessionData();
+    await logoutUseCase.call(const NoParams());
     emit(AuthUnauthenticated());
 
     final context = sl<NavigatorService>().context;
@@ -236,8 +236,8 @@ class AuthCubit extends Cubit<AuthState> {
 
     final isDeleteSuccess = state is AuthDeleteSuccess;
 
-    await logoutUseCase.call(const NoParams());
     await _clearSessionData();
+    await logoutUseCase.call(const NoParams());
     emit(AuthUnauthenticated());
 
     final context = sl<NavigatorService>().context;

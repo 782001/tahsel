@@ -169,12 +169,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSourceBase {
 
   @override
   Future<void> logout() async {
-    try {
-      await firestore.terminate();
-      await firestore.clearPersistence();
-    } catch (_) {
-      // Ignore if cache is already cleared or throws
-    }
     await firebaseAuth.signOut();
   }
 
