@@ -205,7 +205,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
                               ? Icons.block_flipped
                               : Icons.check_circle_outline_rounded,
                           color: Colors.white,
-                          size: 20.sp,
+                          size: 20,
                         ),
                         SizedBox(width: 10.w),
                         Expanded(
@@ -332,10 +332,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
             ),
             children: [
               // Overview Banner Skeleton
-              ShimmerPlaceholder(
-                height: 140.h,
-                borderRadius: 18.r,
-              ),
+              ShimmerPlaceholder(height: 140.h, borderRadius: 18.r),
               SizedBox(height: 16.h),
 
               // Header Skeleton
@@ -399,7 +396,10 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
                           ),
                         ],
                       ),
-                      Divider(height: 18.h, color: AppColors.lightGreyColor.withValues(alpha: 0.5)),
+                      Divider(
+                        height: 18.h,
+                        color: AppColors.lightGreyColor.withValues(alpha: 0.5),
+                      ),
 
                       // Bottom Row: Badges + Actions
                       Row(
@@ -654,7 +654,6 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
 
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
-      padding: EdgeInsets.all(14.r),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16.r),
@@ -671,122 +670,154 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Top Row: Avatar, Name, Email, Status Switch
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 20.r,
-                backgroundColor: isActive
-                    ? AppColors.primaryColor.withValues(alpha: 0.1)
-                    : AppColors.disabledColor.withValues(alpha: 0.2),
-                child: Text(
-                  emp.name.isNotEmpty ? emp.name[0].toUpperCase() : '؟',
-                  style: TextStyles.customStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: isActive
-                        ? AppColors.primaryColor
-                        : AppColors.sandText,
-                  ),
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16.r),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16.r),
+          onTap: () {
+            Navigator.pushNamed(
+              context,
+              AppRoutes.employeeActivity,
+              arguments: emp,
+            );
+          },
+          child: Padding(
+            padding: EdgeInsets.all(14.r),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top Row: Avatar, Name, Email, Status Switch
+                Row(
                   children: [
-                    Text(
-                      emp.name,
-                      style: TextStyles.customStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.black,
+                    CircleAvatar(
+                      radius: 20.r,
+                      backgroundColor: isActive
+                          ? AppColors.primaryColor.withValues(alpha: 0.1)
+                          : AppColors.disabledColor.withValues(alpha: 0.2),
+                      child: Text(
+                        emp.name.isNotEmpty ? emp.name[0].toUpperCase() : '؟',
+                        style: TextStyles.customStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: isActive
+                              ? AppColors.primaryColor
+                              : AppColors.sandText,
+                        ),
                       ),
                     ),
-                    Text(
-                      emp.email,
-                      style: TextStyles.customStyle(
-                        fontSize: 12,
-                        color: AppColors.sandText,
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            emp.name,
+                            style: TextStyles.customStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.black,
+                            ),
+                          ),
+                          Text(
+                            emp.email,
+                            style: TextStyles.customStyle(
+                              fontSize: 12,
+                              color: AppColors.sandText,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Status Switch
+                    Transform.scale(
+                      scale: 0.8,
+                      child: Switch(
+                        value: isActive,
+                        activeThumbColor: AppColors.success,
+                        onChanged: (_) {
+                          _cubit.toggleStatus(
+                            employeeAuthUid: emp.authUid,
+                            currentStatus: emp.accountStatus,
+                          );
+                        },
                       ),
                     ),
                   ],
                 ),
-              ),
-              // Status Switch
-              Transform.scale(
-                scale: 0.8,
-                child: Switch(
-                  value: isActive,
-                  activeThumbColor: AppColors.success,
-                  onChanged: (_) {
-                    _cubit.toggleStatus(
-                      employeeAuthUid: emp.authUid,
-                      currentStatus: emp.accountStatus,
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-          Divider(height: 18.h, color: AppColors.lightGreyColor),
+                Divider(height: 18.h, color: AppColors.lightGreyColor),
 
-          // Bottom Row: Role Badge, Permissions Count, Actions
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  _buildRoleBadge(emp.rolePreset),
-                  SizedBox(width: 8.w),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 8.w,
-                      vertical: 4.h,
+                // Bottom Row: Role Badge, Permissions Count, Actions
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        _buildRoleBadge(emp.rolePreset),
+                        SizedBox(width: 8.w),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 4.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.scafoldBackGround,
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Text(
+                            '${emp.permissions.length} ${AppStrings.permissionsCount.tr()}',
+                            style: TextStyles.customStyle(
+                              fontSize: 11,
+                              color: AppColors.sandText,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    decoration: BoxDecoration(
-                      color: AppColors.scafoldBackGround,
-                      borderRadius: BorderRadius.circular(8.r),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.history_rounded, size: 20),
+                          color: AppColors.primaryColor,
+                          tooltip: AppStrings.employeeActivityLog.tr(),
+                          onPressed: () {
+                            Navigator.pushNamed(
+                              context,
+                              AppRoutes.employeeActivity,
+                              arguments: emp,
+                            );
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined, size: 20),
+                          color: AppColors.primaryColor,
+                          tooltip: AppStrings.editAppEmployee.tr(),
+                          onPressed: () {
+                            Navigator.pushNamed(
+                              context,
+                              AppRoutes.editAppEmployee,
+                              arguments: {'employee': emp, 'cubit': _cubit},
+                            );
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.delete_outline_rounded,
+                            size: 20,
+                          ),
+                          color: AppColors.error,
+                          tooltip: AppStrings.deleteEmployeeAccess.tr(),
+                          onPressed: () =>
+                              _showDeleteConfirmation(emp.authUid, emp.name),
+                        ),
+                      ],
                     ),
-                    child: Text(
-                      '${emp.permissions.length} ${AppStrings.permissionsCount.tr()}',
-                      style: TextStyles.customStyle(
-                        fontSize: 11,
-                        color: AppColors.sandText,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined, size: 20),
-                    color: AppColors.primaryColor,
-                    tooltip: AppStrings.editAppEmployee.tr(),
-                    onPressed: () {
-                      Navigator.pushNamed(
-                        context,
-                        AppRoutes.editAppEmployee,
-                        arguments: {'employee': emp, 'cubit': _cubit},
-                      );
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline_rounded, size: 20),
-                    color: AppColors.error,
-                    tooltip: AppStrings.deleteEmployeeAccess.tr(),
-                    onPressed: () =>
-                        _showDeleteConfirmation(emp.authUid, emp.name),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }

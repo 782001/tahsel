@@ -3,6 +3,9 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/firebase_error_handler.dart';
+import '../../../../core/extensions/string_extensions.dart';
+import '../../../../core/services/activity_logger_service.dart';
+import '../../../../core/services/injection_container.dart';
 import '../../../../core/utils/app_strings.dart';
 import '../../../cashbox/domain/entities/vault_transaction_entity.dart';
 import '../../../../core/utils/summary_helper.dart';
@@ -121,6 +124,30 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
         'lastUpdatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final salaryTypeLabel = employee.salaryType == 'daily'
+            ? 'يومي'
+            : (employee.salaryType == 'hourly' ? 'بالساعة' : 'شهري');
+        sl<ActivityLoggerService>().appendToBatch(
+          batch,
+          ownerUid: employee.uid,
+          actionCategory: 'employees',
+          actionType: 'add_employee_record',
+          actionTitle: 'إضافة موظف: ${employee.name}',
+          details:
+              'إضافة سجل موظف جديد: ${employee.name} (الوظيفة: ${employee.role}) براتب أساسي: ${employee.salaryAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} (نوع الراتب: $salaryTypeLabel)',
+          amount: employee.salaryAmount,
+          extraData: {
+            'employeeId': docRef.id,
+            'employeeName': employee.name,
+            'jobTitle': employee.role,
+            'phone': employee.phone,
+            'baseSalary': employee.salaryAmount,
+            'salaryType': employee.salaryType,
+          },
+        );
+      }
+
       await batch.commit();
       return docRef.id;
     } catch (e) {
@@ -141,7 +168,34 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
           .collection('employees')
           .doc(employee.id);
 
-      await docRef.update(employee.toJson());
+      final batch = firestore.batch();
+      batch.update(docRef, employee.toJson());
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final salaryTypeLabel = employee.salaryType == 'daily'
+            ? 'يومي'
+            : (employee.salaryType == 'hourly' ? 'بالساعة' : 'شهري');
+        sl<ActivityLoggerService>().appendToBatch(
+          batch,
+          ownerUid: employee.uid,
+          actionCategory: 'employees',
+          actionType: 'update_employee_record',
+          actionTitle: 'تعديل موظف: ${employee.name}',
+          details:
+              'تعديل بيانات الموظف: ${employee.name} (الوظيفة: ${employee.role}, الراتب: ${employee.salaryAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}, نوع الراتب: $salaryTypeLabel)',
+          amount: employee.salaryAmount,
+          extraData: {
+            'employeeId': employee.id,
+            'employeeName': employee.name,
+            'jobTitle': employee.role,
+            'phone': employee.phone,
+            'baseSalary': employee.salaryAmount,
+            'salaryType': employee.salaryType,
+          },
+        );
+      }
+
+      await batch.commit();
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       throw Exception('Failed to edit employee: $e');
@@ -233,7 +287,52 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
           ? userRef.collection('attendances').doc(attendance.id)
           : userRef.collection('attendances').doc();
 
-      await docRef.set(attendance.toJson());
+      final batch = firestore.batch();
+      batch.set(docRef, attendance.toJson());
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        String statusLabel = 'حاضر';
+        switch (attendance.status) {
+          case 'absent':
+            statusLabel = 'غائب';
+            break;
+          case 'excused':
+            statusLabel = 'إجازة/عذر';
+            break;
+          case 'late':
+            statusLabel = 'متأخر';
+            break;
+          case 'half_day':
+            statusLabel = 'نصف يوم';
+            break;
+          case 'present':
+          default:
+            statusLabel = 'حاضر';
+            break;
+        }
+
+        sl<ActivityLoggerService>().appendToBatch(
+          batch,
+          ownerUid: attendance.uid,
+          actionCategory: 'employees',
+          actionType: 'employee_checkin',
+          actionTitle: 'تسجيل حضور: ${attendance.employeeName}',
+          details:
+              'تسجيل حضور الموظف ${attendance.employeeName} بتاريخ ${attendance.date} (الحالة: $statusLabel)',
+          extraData: {
+            'attendanceId': docRef.id,
+            'employeeId': attendance.employeeId,
+            'employeeName': attendance.employeeName,
+            'status': attendance.status,
+            'statusLabel': statusLabel,
+            'date': attendance.date,
+            'checkIn': attendance.checkIn?.toIso8601String(),
+          },
+          timestamp: attendance.checkIn ?? DateTime.now(),
+        );
+      }
+
+      await batch.commit();
       return docRef.id;
     } on DuplicateAttendanceException {
       rethrow;
@@ -261,7 +360,19 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
           .collection('attendances')
           .doc(attendanceId);
 
-      await docRef.update({
+      String employeeName = 'موظف';
+      String employeeId = '';
+      try {
+        final snap = await docRef.get();
+        if (snap.exists && snap.data() != null) {
+          final data = snap.data()!;
+          employeeName = data['employeeName'] as String? ?? 'موظف';
+          employeeId = data['employeeId'] as String? ?? '';
+        }
+      } catch (_) {}
+
+      final batch = firestore.batch();
+      batch.update(docRef, {
         'checkOut': Timestamp.fromDate(checkOut),
         'overtimeHours': overtimeHours,
         'deductionHours': deductionHours,
@@ -269,6 +380,33 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
         'status': status,
         'notes': notes,
       });
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final notesPart = notes.isNotEmpty ? ' (ملاحظات: $notes)' : '';
+        sl<ActivityLoggerService>().appendToBatch(
+          batch,
+          ownerUid: uid,
+          actionCategory: 'employees',
+          actionType: 'employee_checkout',
+          actionTitle: 'تسجيل انصراف: $employeeName',
+          details:
+              'تسجيل انصراف الموظف $employeeName: إضافي $overtimeHours ساعة، خصم $deductionHours ساعة، تأخير $lateMinutes دقيقة$notesPart',
+          extraData: {
+            'attendanceId': attendanceId,
+            'employeeId': employeeId,
+            'employeeName': employeeName,
+            'checkOut': checkOut.toIso8601String(),
+            'overtimeHours': overtimeHours,
+            'deductionHours': deductionHours,
+            'lateMinutes': lateMinutes,
+            'status': status,
+            'notes': notes,
+          },
+          timestamp: checkOut,
+        );
+      }
+
+      await batch.commit();
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       throw Exception('Failed to check out: $e');
@@ -453,6 +591,34 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
         }
       }
 
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final advPaid = payroll.advancePaid ?? 0.0;
+        sl<ActivityLoggerService>().appendToBatch(
+          batch,
+          ownerUid: payroll.uid,
+          actionCategory: 'employees',
+          actionType: 'payroll_payment',
+          actionTitle: 'صرف راتب: ${payroll.employeeName}',
+          details:
+              'صرف راتب شهر ${payroll.monthKey} للموظف ${payroll.employeeName} بصافي ${payroll.netSalary.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} (أساسي: ${payroll.amount.toStringAsFixed(1)}، إضافي: ${payroll.overtimeCompensation.toStringAsFixed(1)}، خصومات: ${(payroll.deduction + advPaid).toStringAsFixed(1)})',
+          amount: payroll.netSalary,
+          extraData: {
+            'payrollId': docRef.id,
+            'employeeId': payroll.employeeId,
+            'employeeName': payroll.employeeName,
+            'monthKey': payroll.monthKey,
+            'netSalary': payroll.netSalary,
+            'baseSalary': payroll.amount,
+            'overtimeCompensation': payroll.overtimeCompensation,
+            'deductionsTotal': payroll.deduction,
+            'advancesDeducted': advPaid,
+            'carriedForwardBalance': payroll.carriedForwardBalance,
+            'notes': payroll.notes,
+          },
+          timestamp: payroll.paymentDate,
+        );
+      }
+
       await batch.commit();
       return docRef.id;
     } catch (e) {
@@ -580,6 +746,31 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
         }
       }
 
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final reasonPart = advance.notes.isNotEmpty
+            ? ' (السبب: ${advance.notes})'
+            : '';
+        sl<ActivityLoggerService>().appendToBatch(
+          batch,
+          ownerUid: advance.uid,
+          actionCategory: 'employees',
+          actionType: 'employee_advance',
+          actionTitle: 'صرف سلفة: ${advance.employeeName}',
+          details:
+              'صرف سلفة للموظف ${advance.employeeName} بقيمة ${advance.amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}$reasonPart',
+          amount: advance.amount,
+          extraData: {
+            'advanceId': docRef.id,
+            'employeeId': advance.employeeId,
+            'employeeName': advance.employeeName,
+            'amount': advance.amount,
+            'notes': advance.notes,
+            'date': advance.date.toIso8601String(),
+          },
+          timestamp: advance.date,
+        );
+      }
+
       await batch.commit();
       return docRef.id;
     } catch (e) {
@@ -637,6 +828,23 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
       for (final id in advanceIds) {
         final docRef = userRef.collection('advances').doc(id);
         batch.update(docRef, {'status': 'deducted', 'payrollId': payrollId});
+      }
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        sl<ActivityLoggerService>().appendToBatch(
+          batch,
+          ownerUid: uid,
+          actionCategory: 'employees',
+          actionType: 'settle_advances',
+          actionTitle: 'تسوية سلف موظف',
+          details:
+              'تسوية وخصم ${advanceIds.length} سلفة مرتبطة بمسير الراتب رقم $payrollId',
+          extraData: {
+            'advanceIds': advanceIds,
+            'payrollId': payrollId,
+            'advancesCount': advanceIds.length,
+          },
+        );
       }
 
       await batch.commit();

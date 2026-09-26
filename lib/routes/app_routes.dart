@@ -23,10 +23,12 @@ import 'package:tahsel/features/debt/presentation/screens/monthly_collected_scre
 import 'package:tahsel/features/debt/presentation/screens/monthly_collected_transactions_screen.dart';
 import 'package:tahsel/features/employee/data/models/app_employee_model.dart';
 import 'package:tahsel/features/employee/domain/entities/employee_entity.dart';
+import 'package:tahsel/features/employee/presentation/cubit/employee_activity_cubit.dart';
 import 'package:tahsel/features/employee/presentation/cubit/employee_cubit.dart';
 import 'package:tahsel/features/employee/presentation/cubit/team_management_cubit.dart';
 import 'package:tahsel/features/employee/presentation/screens/add_app_employee_screen.dart';
 import 'package:tahsel/features/employee/presentation/screens/edit_app_employee_screen.dart';
+import 'package:tahsel/features/employee/presentation/screens/employee_activity_screen.dart';
 import 'package:tahsel/features/employee/presentation/screens/employee_details_screen.dart';
 import 'package:tahsel/features/employee/presentation/screens/employee_list_screen.dart';
 import 'package:tahsel/features/employee/presentation/screens/employee_reports_screen.dart';
@@ -98,6 +100,7 @@ class AppRoutes {
   static const String teamManagement = '/team-management';
   static const String addAppEmployee = '/add-app-employee';
   static const String editAppEmployee = '/edit-app-employee';
+  static const String employeeActivity = '/employee-activity';
   static const String createInvoice = '/create-invoice';
   static const String editInvoice = '/edit-invoice';
   static const String invoiceDetail = '/invoice-detail';
@@ -154,6 +157,34 @@ class AppRoutes {
             body: Center(
               child: TextWidget('Invalid arguments for ${settings.name}'),
             ),
+          ),
+        );
+      case employeeActivity:
+        if (!PermissionService.instance.isOwner) {
+          return _permissionRestrictedRoute();
+        }
+        if (!AppStrings.isVip) return _vipRestrictedRoute();
+        if (settings.arguments is! AppEmployeeModel) {
+          return MaterialPageRoute(
+            builder: (_) => Scaffold(
+              body: Center(
+                child: Text(
+                  'Invalid arguments for ${settings.name}',
+                  style: TextStyles.customStyle(fontSize: 18),
+                ),
+              ),
+            ),
+          );
+        }
+        final employee = settings.arguments as AppEmployeeModel;
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (_) => di.sl<EmployeeActivityCubit>()
+              ..loadInitialActivities(
+                ownerUid: AppStrings.userToken,
+                employeeUid: employee.authUid,
+              ),
+            child: EmployeeActivityScreen(employee: employee),
           ),
         );
       case vault:

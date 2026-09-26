@@ -28,6 +28,7 @@ class AppStrings {
   static bool get isOwner => userRole == 'owner' || userRole.isEmpty;
   static bool get isEmployee => userRole == 'employee';
   static String employeeAuthUid = '';
+  static String loggedInEmployeeName = '';
   static List<String> userPermissions = ['*'];
 
   /// Single Source of Truth for Vault Eligibility
@@ -1527,6 +1528,25 @@ class AppStrings {
   static const String temporarilyDisabled = "temporarily_disabled";
   static const String permanentDelete = "permanent_delete";
   static const String employeeColon = "employee_colon";
+
+  // Employee Activity & Audit Log
+  static const String employeeActivityLog = "employee_activity_log";
+  static const String operationsCount = "operations_count";
+  static const String activityFeed = "activity_feed";
+  static const String offlineSyncBadge = "offline_sync_badge";
+  static const String syncType = "sync_type";
+  static const String offlineSynced = "offline_synced";
+  static const String directOnline = "direct_online";
+  static const String additionalDetails = "additional_details";
+  static const String noActivitiesFound = "no_activities_found";
+  static const String noActivitiesHint = "no_activities_hint";
+  static const String roleAdminLabel = "role_admin_label";
+  static const String roleInventoryLabel = "role_inventory_label";
+  static const String sales = "sales";
+  static const String vault = "vault";
+  static const String inventory = "inventory";
+  static const String refresh = "refresh";
+  static const String close = "close";
 
   // Permission Group Titles
   static const String permGroupPos = "perm_group_pos";

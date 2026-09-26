@@ -1,7 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:tahsel/core/error/firebase_error_handler.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/activity_logger_service.dart';
+import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+
 import '../../../../core/utils/summary_helper.dart';
 import '../../domain/entities/vault_transaction_entity.dart';
 import '../models/vault_summary_model.dart';
@@ -338,6 +342,25 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
     );
 
     await recordTransaction(transaction);
+
+    if (sl.isRegistered<ActivityLoggerService>()) {
+      sl<ActivityLoggerService>().logStandalone(
+        ownerUid: uid,
+        actionCategory: 'vault',
+        actionType: 'vault_deposit',
+        actionTitle: 'إيداع نقدي في الخزينة',
+        details:
+            'إيداع يدوي في الخزينة بمبلغ ${amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${note != null && note.isNotEmpty ? "(البيان: $note)" : "(بدون بيان)"}',
+        amount: amount,
+        extraData: {
+          'transactionId': txId,
+          'amount': amount,
+          if (note != null && note.isNotEmpty) 'note': note,
+          'action': 'manual_deposit',
+        },
+        timestamp: transaction.createdAt,
+      );
+    }
   }
 
   @override
@@ -418,6 +441,27 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
         );
       }
 
+      // 5. Log Employee Activity
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        sl<ActivityLoggerService>().appendToBatch(
+          batch,
+          ownerUid: uid,
+          actionCategory: 'vault',
+          actionType: 'vault_withdrawal',
+          actionTitle: 'سحب نقدي من الخزينة',
+          details:
+              'سحب يدوي من الخزينة بمبلغ ${amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} (البيان: $description) وترحيله للمصروفات',
+          amount: amount,
+          extraData: {
+            'transactionId': txId,
+            'amount': amount,
+            if (note != null && note.isNotEmpty) 'note': note,
+            'action': 'manual_withdrawal',
+          },
+          timestamp: now,
+        );
+      }
+
       await batch.commit();
     } catch (e) {
       FirebaseErrorHandler.handle(e);
@@ -485,6 +529,39 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
         }
       }
 
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final deltaFormatted = deltaAmount >= 0
+            ? '+${deltaAmount.toStringAsFixed(1)}'
+            : deltaAmount.toStringAsFixed(1);
+        final String actionDetails;
+        if (deltaAmount != 0) {
+          actionDetails =
+              'تعديل حركة الخزينة: تم تغيير المبلغ من ${oldTransaction.amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} إلى ${newAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} (الفرق: $deltaFormatted) - البيان: $newDescription';
+        } else {
+          actionDetails =
+              'تعديل بيان وتفاصيل حركة الخزينة (${newAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}): تم تحديث البيان إلى "$newDescription"';
+        }
+
+        sl<ActivityLoggerService>().appendToBatch(
+          batch,
+          ownerUid: uid,
+          actionCategory: 'vault',
+          actionType: 'edit_vault_transaction',
+          actionTitle: 'تعديل حركة خزينة',
+          details: actionDetails,
+          amount: newAmount,
+          extraData: {
+            'transactionId': oldTransaction.id,
+            'oldAmount': oldTransaction.amount,
+            'newAmount': newAmount,
+            'delta': deltaAmount,
+            'description': newDescription,
+            'source': oldTransaction.source.name,
+            'direction': oldTransaction.direction.name,
+          },
+        );
+      }
+
       await batch.commit();
     } catch (e) {
       FirebaseErrorHandler.handle(e);
@@ -536,6 +613,26 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
             SetOptions(merge: true),
           );
         }
+      }
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        sl<ActivityLoggerService>().appendToBatch(
+          batch,
+          ownerUid: uid,
+          actionCategory: 'vault',
+          actionType: 'delete_vault_transaction',
+          actionTitle: 'حذف حركة خزينة',
+          details:
+              'تم حذف حركة الخزينة (${isIn ? 'إيداع' : 'سحب'}) بقيمة ${transaction.amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} (البيان: ${transaction.description}) وإعادة تسوية رصيد الخزينة بالكامل',
+          amount: transaction.amount,
+          extraData: {
+            'transactionId': transaction.id,
+            'source': transaction.source.name,
+            'direction': transaction.direction.name,
+            'amount': transaction.amount,
+            'description': transaction.description,
+          },
+        );
       }
 
       await batch.commit();

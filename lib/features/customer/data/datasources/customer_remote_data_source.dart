@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/error/firebase_error_handler.dart';
 import '../../../../core/extensions/string_extensions.dart';
+import '../../../../core/services/activity_logger_service.dart';
+import '../../../../core/services/injection_container.dart';
 import '../../../../core/utils/app_strings.dart';
 import '../models/customer_model.dart';
 import '../../domain/entities/customer_operation.dart';
@@ -119,7 +121,26 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
         }
         await doc.reference.update(updateData);
       } else {
-        await collection.add(customer.toJson());
+        final newDoc = await collection.add(customer.toJson());
+        if (sl.isRegistered<ActivityLoggerService>()) {
+          final phoneInfo = (customer.phoneNumber != null &&
+                  customer.phoneNumber!.isNotEmpty)
+              ? ' (هاتف: ${customer.phoneNumber})'
+              : '';
+          sl<ActivityLoggerService>().logStandalone(
+            ownerUid: uid,
+            actionCategory: 'debts',
+            actionType: 'add_customer_profile',
+            actionTitle: 'إضافة عميل جديد: ${customer.name}',
+            details: 'تسجيل ملف عميل جديد: ${customer.name}$phoneInfo',
+            extraData: {
+              'customerId': newDoc.id,
+              'customerName': customer.name,
+              'phoneNumber': customer.phoneNumber,
+              'taxNumber': customer.taxNumber,
+            },
+          );
+        }
       }
     } catch (e) {
       rethrow;
@@ -210,11 +231,13 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
           .collection('customers');
 
       DocumentReference? docRef;
+      Map<String, dynamic>? oldData;
       if (customerId != null && customerId.isNotEmpty) {
         final candidateRef = collection.doc(customerId);
         final docSnap = await candidateRef.get();
         if (docSnap.exists) {
           docRef = candidateRef;
+          oldData = docSnap.data();
         }
       }
 
@@ -226,6 +249,7 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
             .get();
         if (existing.docs.isNotEmpty) {
           docRef = existing.docs.first.reference;
+          oldData = existing.docs.first.data();
         }
       }
 
@@ -255,6 +279,61 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
           'notificationPreference': 'none',
           ...updateData,
         });
+      }
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final updatedFields = <String>[];
+        final oldPhone = (oldData?['phoneNumber'] as String?)?.trim() ?? '';
+        final newPhone = (phoneNumber ?? '').trim();
+        if (oldPhone != newPhone) {
+          final oldVal = oldPhone.isNotEmpty ? oldPhone : 'بدون';
+          final newVal = newPhone.isNotEmpty ? newPhone : 'بدون';
+          updatedFields.add('الهاتف: من "$oldVal" إلى "$newVal"');
+        }
+
+        final oldLedger = (oldData?['ledgerNumber'] as String?)?.trim() ?? '';
+        final newLedger = (ledgerNumber ?? '').trim();
+        if (oldLedger != newLedger) {
+          final oldVal = oldLedger.isNotEmpty ? oldLedger : 'بدون';
+          final newVal = newLedger.isNotEmpty ? newLedger : 'بدون';
+          updatedFields.add('صفحة الأستاذ: من "$oldVal" إلى "$newVal"');
+        }
+
+        final oldTax = (oldData?['taxNumber'] as String?)?.trim() ?? '';
+        final newTax = (taxNumber ?? '').trim();
+        if (oldTax != newTax) {
+          final oldVal = oldTax.isNotEmpty ? oldTax : 'بدون';
+          final newVal = newTax.isNotEmpty ? newTax : 'بدون';
+          updatedFields.add('الرقم الضريبي: من "$oldVal" إلى "$newVal"');
+        }
+
+        final oldCrn = (oldData?['commercialRegistration'] as String?)?.trim() ?? '';
+        final newCrn = (commercialRegistration ?? '').trim();
+        if (oldCrn != newCrn) {
+          final oldVal = oldCrn.isNotEmpty ? oldCrn : 'بدون';
+          final newVal = newCrn.isNotEmpty ? newCrn : 'بدون';
+          updatedFields.add('السجل التجاري: من "$oldVal" إلى "$newVal"');
+        }
+
+        final detailsText = updatedFields.isNotEmpty
+            ? 'تحديث بيانات العميل (${name.trim()}): تم تعديل ${updatedFields.join("، ")}'
+            : 'تحديث وتأكيد بيانات العميل: ${name.trim()}';
+
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: uid,
+          actionCategory: 'debts',
+          actionType: 'update_customer_details',
+          actionTitle: 'تعديل بيانات عميل: ${name.trim()}',
+          details: detailsText,
+          extraData: {
+            'customerName': name.trim(),
+            if (phoneNumber != null) 'phoneNumber': phoneNumber.trim(),
+            if (ledgerNumber != null) 'ledgerNumber': ledgerNumber.trim(),
+            if (taxNumber != null) 'taxNumber': taxNumber.trim(),
+            if (commercialRegistration != null)
+              'commercialRegistration': commercialRegistration.trim(),
+          },
+        );
       }
     } catch (e) {
       FirebaseErrorHandler.handle(e);

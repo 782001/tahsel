@@ -1,6 +1,9 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import '../../domain/entities/vault_summary_entity.dart';
 import '../../domain/entities/vault_transaction_entity.dart';
@@ -166,6 +169,10 @@ class VaultCubit extends Cubit<VaultState> {
           : FirebaseAuth.instance.currentUser?.uid);
 
   Future<void> depositManual({required double amount, String? note}) async {
+    if (!PermissionService.instance.hasPermission(AppPermissions.vaultDeposit)) {
+      emit(VaultError(AppStrings.noPermissionForAction.tr()));
+      return;
+    }
     _uid = _resolvedUid;
     if (_uid == null || _uid!.isEmpty) return;
     if (amount <= 0) {
@@ -189,6 +196,10 @@ class VaultCubit extends Cubit<VaultState> {
   }
 
   Future<void> withdrawManual({required double amount, String? note}) async {
+    if (!PermissionService.instance.hasPermission(AppPermissions.vaultWithdraw)) {
+      emit(VaultError(AppStrings.noPermissionForAction.tr()));
+      return;
+    }
     _uid = _resolvedUid;
     if (_uid == null || _uid!.isEmpty) return;
     if (amount <= 0) {
@@ -224,6 +235,12 @@ class VaultCubit extends Cubit<VaultState> {
     required double newAmount,
     required String newDescription,
   }) async {
+    final bool isDeposit = transaction.source == VaultTransactionSource.manualDeposit;
+    final requiredPerm = isDeposit ? AppPermissions.vaultDeposit : AppPermissions.vaultWithdraw;
+    if (!PermissionService.instance.hasPermission(requiredPerm)) {
+      emit(VaultError(AppStrings.noPermissionForAction.tr()));
+      return;
+    }
     _uid = _resolvedUid;
     if (_uid == null || _uid!.isEmpty) return;
     if (newAmount <= 0) {
@@ -248,6 +265,12 @@ class VaultCubit extends Cubit<VaultState> {
   }
 
   Future<void> deleteManualTransaction(VaultTransactionEntity transaction) async {
+    final bool isDeposit = transaction.source == VaultTransactionSource.manualDeposit;
+    final requiredPerm = isDeposit ? AppPermissions.vaultDeposit : AppPermissions.vaultWithdraw;
+    if (!PermissionService.instance.hasPermission(requiredPerm)) {
+      emit(VaultError(AppStrings.noPermissionForAction.tr()));
+      return;
+    }
     _uid = _resolvedUid;
     if (_uid == null || _uid!.isEmpty) return;
 

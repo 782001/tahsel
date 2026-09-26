@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/extensions/extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -27,20 +27,20 @@ class CustomerSummaryCard extends StatelessWidget {
     final statusColor = isDebit
         ? Colors.amber.shade200
         : isSettled
-            ? Colors.greenAccent.shade100
-            : Colors.lightBlueAccent.shade100;
+        ? Colors.greenAccent.shade100
+        : Colors.lightBlueAccent.shade100;
 
     final statusIcon = isDebit
         ? Icons.access_time_rounded
         : isSettled
-            ? Icons.check_circle_rounded
-            : Icons.account_balance_wallet_rounded;
+        ? Icons.check_circle_rounded
+        : Icons.account_balance_wallet_rounded;
 
     final statusLabel = isDebit
         ? AppStrings.customerDebitStatus.tr()
         : isSettled
-            ? AppStrings.accountSettled.tr()
-            : AppStrings.customerCreditStatus.tr();
+        ? AppStrings.accountSettled.tr()
+        : AppStrings.customerCreditStatus.tr();
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),

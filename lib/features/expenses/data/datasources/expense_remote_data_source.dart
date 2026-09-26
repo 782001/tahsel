@@ -1,4 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/activity_logger_service.dart';
+import 'package:tahsel/core/services/injection_container.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/date_formatter.dart';
 import 'package:tahsel/core/utils/summary_helper.dart';
 import 'package:tahsel/features/cashbox/data/datasources/vault_remote_data_source.dart';
@@ -122,6 +126,59 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
           }
           batch.set(summaryRef, summaryData, SetOptions(merge: true));
         }
+      }
+
+      // 4. Log Employee Activity
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final bool isEdit = previousAmount != null;
+        final oldAmtFormatted = previousAmount?.toStringAsFixed(1) ?? '';
+        final newAmtFormatted = expense.amount.toStringAsFixed(1);
+        final deltaFormatted = isEdit
+            ? (deltaAmount >= 0
+                ? '+${deltaAmount.toStringAsFixed(1)}'
+                : deltaAmount.toStringAsFixed(1))
+            : '';
+
+        String detailsText;
+        if (isEdit) {
+          final descPart = expense.description.isNotEmpty
+              ? ' - البيان: ${expense.description}'
+              : ' - بدون بيان';
+          if (deltaAmount != 0) {
+            detailsText =
+                'تعديل المصروف (${expense.category}): تم تغيير المبلغ من $oldAmtFormatted إلى $newAmtFormatted ${AppStrings.currencyEgp.tr()} ($deltaFormatted)$descPart';
+          } else {
+            detailsText =
+                'تعديل تفاصيل وبيان المصروف (${expense.category}): مبلغ $newAmtFormatted ${AppStrings.currencyEgp.tr()}$descPart';
+          }
+        } else {
+          detailsText =
+              'تسجيل مصروف جديد لبند (${expense.category}) بقيمة ${expense.amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} - البيان: ${expense.description.isNotEmpty ? expense.description : "بدون بيان"}';
+        }
+
+        sl<ActivityLoggerService>().appendToBatch(
+          batch,
+          ownerUid: expense.uid,
+          actionCategory: 'expenses',
+          actionType: isEdit ? 'update_expense' : 'add_expense',
+          actionTitle: isEdit
+              ? 'تعديل مصروف: ${expense.category}'
+              : 'تسجيل مصروف: ${expense.category}',
+          details: detailsText,
+          amount: expense.amount,
+          extraData: {
+            'expenseId': docRef.id,
+            'category': expense.category,
+            'description': expense.description,
+            if (isEdit) ...{
+              'previousAmount': previousAmount,
+              'newAmount': expense.amount,
+              'delta': deltaAmount,
+            },
+            'amount': expense.amount,
+          },
+          timestamp: expense.createdAt,
+        );
       }
 
       await batch.commit();
@@ -335,6 +392,25 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
         }, SetOptions(merge: true));
       }
 
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        sl<ActivityLoggerService>().appendToBatch(
+          batch,
+          ownerUid: uid,
+          actionCategory: 'expenses',
+          actionType: 'delete_expense',
+          actionTitle: 'حذف مصروف: ${expense.category}',
+          details:
+              'تم حذف مصروف (${expense.category}) بقيمة ${expense.amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} (البيان: ${expense.description.isNotEmpty ? expense.description : "بدون بيان"}) وإعادة المبلغ إلى الخزينة',
+          amount: expense.amount,
+          extraData: {
+            'expenseId': expenseId,
+            'category': expense.category,
+            'description': expense.description,
+            'amount': expense.amount,
+          },
+        );
+      }
+
       await batch.commit();
 
       if (expenseId.startsWith('exp_pur_') ||
@@ -433,6 +509,24 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
         'totalExpenses': FieldValue.increment(-totalAmountRemoved),
         'transactionCount': FieldValue.increment(-snapshot.docs.length),
       }, SetOptions(merge: true));
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        sl<ActivityLoggerService>().appendToBatch(
+          batch,
+          ownerUid: uid,
+          actionCategory: 'expenses',
+          actionType: 'delete_month_expenses',
+          actionTitle: 'حذف مصروفات شهر: $monthKey',
+          details:
+              'تم حذف كافة مصروفات شهر $monthKey بإجمالي ${totalAmountRemoved.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} (${snapshot.docs.length} مصروف)',
+          amount: totalAmountRemoved,
+          extraData: {
+            'monthKey': monthKey,
+            'count': snapshot.docs.length,
+            'totalAmountRemoved': totalAmountRemoved,
+          },
+        );
+      }
 
       await batch.commit();
     } catch (e) {

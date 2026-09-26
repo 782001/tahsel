@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../../../core/usecases/pagination_params.dart';
@@ -45,6 +46,11 @@ class DebtRepositoryImpl implements DebtRepository {
             model.timestamp?.toIso8601String() ??
             DateTime.now().toIso8601String();
         hivePayload['lastUpdatedAt'] = DateTime.now().toIso8601String();
+        if (AppStrings.isEmployee) {
+          hivePayload['employeeUid'] = AppStrings.employeeAuthUid;
+          hivePayload['employeeName'] = AppStrings.loggedInEmployeeName;
+          hivePayload['rolePreset'] = AppStrings.userRole;
+        }
 
         final payloadJson = jsonEncode(hivePayload);
 

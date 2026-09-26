@@ -51,6 +51,11 @@ class OperationRepositoryImpl implements OperationRepository {
         'durationMinutes': model.durationMinutes,
         'turnCount': model.turnCount,
         'rate': model.rate,
+        if (AppStrings.isEmployee) ...{
+          'employeeUid': AppStrings.employeeAuthUid,
+          'employeeName': AppStrings.loggedInEmployeeName,
+          'rolePreset': AppStrings.userRole,
+        },
       };
 
       final payloadJson = jsonEncode(hivePayload);

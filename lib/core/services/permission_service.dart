@@ -14,6 +14,7 @@ class PermissionService {
   static const String keyRole = 'user_role';
   static const String keyPermissions = 'user_permissions';
   static const String keyEmployeeUid = 'employee_auth_uid';
+  static const String keyEmployeeName = 'employee_name';
 
   String _currentRole = 'owner';
   final Set<String> _permissions = {AppPermissions.all};
@@ -33,6 +34,7 @@ class PermissionService {
     required String role,
     required List<String> permissionsList,
     String? employeeUid,
+    String? employeeName,
   }) {
     _currentRole = (role.isEmpty || role == 'owner') ? 'owner' : 'employee';
     _permissions.clear();
@@ -48,6 +50,9 @@ class PermissionService {
     AppStrings.userPermissions = _permissions.toList();
     if (employeeUid != null) {
       AppStrings.employeeAuthUid = employeeUid;
+    }
+    if (employeeName != null) {
+      AppStrings.loggedInEmployeeName = employeeName;
     }
 
     changeNotifier.value++;
@@ -168,6 +173,12 @@ class PermissionService {
         value: AppStrings.employeeAuthUid,
       );
     }
+    if (AppStrings.loggedInEmployeeName.isNotEmpty) {
+      await storage.saveData(
+        key: keyEmployeeName,
+        value: AppStrings.loggedInEmployeeName,
+      );
+    }
   }
 
   /// Loads permissions from SecureStorage during startup / offline-first boot.
@@ -176,6 +187,7 @@ class PermissionService {
       final role = await storage.getData(key: keyRole) ?? 'owner';
       final permsStr = await storage.getData(key: keyPermissions);
       final empUid = await storage.getData(key: keyEmployeeUid);
+      final empName = await storage.getData(key: keyEmployeeName);
 
       List<String> permsList = [];
       if (permsStr != null && permsStr.isNotEmpty) {
@@ -188,6 +200,7 @@ class PermissionService {
         role: role,
         permissionsList: permsList,
         employeeUid: empUid,
+        employeeName: empName,
       );
     } catch (e) {
       AppLogger.printMessage('[PermissionService] Error loading from storage: $e');
@@ -210,10 +223,12 @@ class PermissionService {
     AppStrings.userRole = 'owner';
     AppStrings.userPermissions = [AppPermissions.all];
     AppStrings.employeeAuthUid = '';
+    AppStrings.loggedInEmployeeName = '';
 
     await storage.deleteData(key: keyRole);
     await storage.deleteData(key: keyPermissions);
     await storage.deleteData(key: keyEmployeeUid);
+    await storage.deleteData(key: keyEmployeeName);
 
     changeNotifier.value++;
   }

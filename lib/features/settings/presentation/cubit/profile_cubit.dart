@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/core/services/activity_logger_service.dart';
+import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/services/profile/business_profile_service.dart';
@@ -115,6 +117,59 @@ class ProfileCubit extends Cubit<ProfileState> {
       };
 
       await _firestore.collection('users').doc(uid).update(updates);
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final changes = <String>[];
+        if (currentProfile.projectName != trimmedProjectName) {
+          changes.add(
+              'اسم النشاط: من "${currentProfile.projectName}" إلى "$trimmedProjectName"');
+        }
+        if (currentProfile.fullName != trimmedFullName) {
+          changes.add(
+              'الاسم التجاري: من "${currentProfile.fullName}" إلى "$trimmedFullName"');
+        }
+        if (currentProfile.phoneNumber != trimmedPhone) {
+          changes.add(
+              'الهاتف: من "${currentProfile.phoneNumber}" إلى "$trimmedPhone"');
+        }
+        if (taxRate != null && currentProfile.taxRate != taxRate) {
+          changes.add(
+              'نسبة الضريبة: من ${currentProfile.taxRate}% إلى $taxRate%');
+        }
+        if (currentProfile.crn != trimmedCrn) {
+          changes.add(
+              'السجل التجاري: من "${currentProfile.crn}" إلى "$trimmedCrn"');
+        }
+        if (currentProfile.vat != trimmedVat) {
+          changes.add(
+              'الرقم الضريبي: من "${currentProfile.vat}" إلى "$trimmedVat"');
+        }
+        if (currentProfile.address != trimmedAddress) {
+          changes.add(
+              'العنوان: من "${currentProfile.address}" إلى "$trimmedAddress"');
+        }
+
+        final detailsText = changes.isNotEmpty
+            ? 'تعديل الملف التعريفي للمنشأة ($trimmedProjectName): تم تعديل ${changes.join("، ")}'
+            : 'تحديث وتأكيد بيانات النشاط التجاري: $trimmedProjectName';
+
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: uid,
+          actionCategory: 'settings',
+          actionType: 'update_business_profile',
+          actionTitle: 'تعديل الملف التعريفي للمنشأة: $trimmedProjectName',
+          details: detailsText,
+          extraData: {
+            'fullName': trimmedFullName,
+            'projectName': trimmedProjectName,
+            'phoneNumber': trimmedPhone,
+            'crn': trimmedCrn,
+            'address': trimmedAddress,
+            'vat': trimmedVat,
+            if (taxRate != null) 'taxRate': taxRate,
+          },
+        );
+      }
 
       // Best effort display name sync with FirebaseAuth
       try {

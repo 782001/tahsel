@@ -1,12 +1,16 @@
 import 'dart:convert';
-import 'package:intl/intl.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/activity_logger_service.dart';
+import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/summary_helper.dart';
+import 'package:tahsel/features/cashbox/domain/entities/vault_transaction_entity.dart';
 
 import '../models/offline_record.dart';
-import 'package:tahsel/features/cashbox/domain/entities/vault_transaction_entity.dart';
 
 abstract class OfflineRemoteDataSource {
   Future<void> syncRecord(OfflineRecord record);
@@ -93,12 +97,14 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
 
     // Get person first to check if firstDate needs to be set/updated
     final personSnap = await personRef.get();
-    final bool firstDateIsNull = !personSnap.exists || personSnap.data()?['firstDate'] == null;
+    final bool firstDateIsNull =
+        !personSnap.exists || personSnap.data()?['firstDate'] == null;
 
     // Update firstDate if it's null OR if the new debt's date is earlier
     bool shouldUpdateFirstDate = firstDateIsNull;
     if (!shouldUpdateFirstDate && personSnap.exists) {
-      final existingFirstDate = (personSnap.data()!['firstDate'] as Timestamp).toDate();
+      final existingFirstDate = (personSnap.data()!['firstDate'] as Timestamp)
+          .toDate();
       shouldUpdateFirstDate = timestamp.toDate().isBefore(existingFirstDate);
     }
 
@@ -148,8 +154,12 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
       });
 
       if (AppStrings.isVaultEnabled()) {
-        final bool isPurchase = (record.id.startsWith('debt_pur_') || operationId.startsWith('pur_'));
-        final vaultTxRef = userRef.collection('vault_transactions').doc('vault_tx_mydebt_${record.id}_payment');
+        final bool isPurchase =
+            (record.id.startsWith('debt_pur_') ||
+            operationId.startsWith('pur_'));
+        final vaultTxRef = userRef
+            .collection('vault_transactions')
+            .doc('vault_tx_mydebt_${record.id}_payment');
         final vaultSummaryRef = userRef.collection('vault').doc('summary');
 
         batch.set(vaultTxRef, {
@@ -171,16 +181,12 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
           ),
         });
 
-        batch.set(
-          vaultSummaryRef,
-          {
-            'currentBalance': FieldValue.increment(-paidAmount),
-            'totalOut': FieldValue.increment(paidAmount),
-            'transactionCount': FieldValue.increment(1),
-            'lastUpdatedAt': FieldValue.serverTimestamp(),
-          },
-          SetOptions(merge: true),
-        );
+        batch.set(vaultSummaryRef, {
+          'currentBalance': FieldValue.increment(-paidAmount),
+          'totalOut': FieldValue.increment(paidAmount),
+          'transactionCount': FieldValue.increment(1),
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
       }
     }
 
@@ -197,6 +203,44 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
     }
 
     batch.set(personRef, personUpdate, SetOptions(merge: true));
+
+    final empUid =
+        payload['employeeUid'] as String? ??
+        (AppStrings.isEmployee ? AppStrings.employeeAuthUid : null);
+    final empName =
+        payload['employeeName'] as String? ??
+        (AppStrings.loggedInEmployeeName.isNotEmpty
+            ? AppStrings.loggedInEmployeeName
+            : null);
+    final rolePreset =
+        payload['rolePreset'] as String? ??
+        (AppStrings.userRole.isNotEmpty ? AppStrings.userRole : null);
+    if (empUid != null &&
+        empUid.isNotEmpty &&
+        sl.isRegistered<ActivityLoggerService>()) {
+      sl<ActivityLoggerService>().appendToBatch(
+        batch,
+        ownerUid: uid,
+        employeeUid: empUid,
+        employeeName: empName,
+        rolePreset: rolePreset,
+        actionCategory: 'debts',
+        actionType: 'my_debts_add_item',
+        actionTitle: 'تسجيل دين مورد (مزامنة): $personName',
+        details:
+            'تسجيل دين/فاتورة مورد بمبلغ ${remainingAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} (الإجمالي: ${totalAmount.toStringAsFixed(1)})',
+        amount: totalAmount,
+        extraData: {
+          'debtId': record.id,
+          'personName': personName,
+          'totalAmount': totalAmount,
+          'paidAmount': paidAmount,
+          'remainingAmount': remainingAmount,
+        },
+        timestamp: DateTime.parse(timestampStr),
+        isOfflineSync: true,
+      );
+    }
 
     await batch.commit();
   }
@@ -261,8 +305,11 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
 
     final batch = firestore.batch();
 
-    if (payload['dueDate'] is String && (payload['dueDate'] as String).isNotEmpty) {
-      payload['dueDate'] = Timestamp.fromDate(DateTime.parse(payload['dueDate'] as String));
+    if (payload['dueDate'] is String &&
+        (payload['dueDate'] as String).isNotEmpty) {
+      payload['dueDate'] = Timestamp.fromDate(
+        DateTime.parse(payload['dueDate'] as String),
+      );
     }
     payload['timestamp'] = timestamp;
     payload['lastUpdatedAt'] = FieldValue.serverTimestamp();
@@ -270,9 +317,7 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
     batch.set(debtRef, payload);
 
     if (shouldUpdateFirstDate && customerRef != null) {
-      batch.update(customerRef, {
-        'firstDate': timestamp,
-      });
+      batch.update(customerRef, {'firstDate': timestamp});
     }
 
     batch.set(opRef, {
@@ -315,7 +360,9 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
       });
 
       if (AppStrings.isVaultEnabled()) {
-        final vaultTxRef = userRef.collection('vault_transactions').doc('vault_tx_cust_${operationId}_payment');
+        final vaultTxRef = userRef
+            .collection('vault_transactions')
+            .doc('vault_tx_cust_${operationId}_payment');
         final vaultSummaryRef = userRef.collection('vault').doc('summary');
 
         batch.set(vaultTxRef, {
@@ -333,16 +380,12 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
           ),
         });
 
-        batch.set(
-          vaultSummaryRef,
-          {
-            'currentBalance': FieldValue.increment(paidAmount),
-            'totalIn': FieldValue.increment(paidAmount),
-            'transactionCount': FieldValue.increment(1),
-            'lastUpdatedAt': FieldValue.serverTimestamp(),
-          },
-          SetOptions(merge: true),
-        );
+        batch.set(vaultSummaryRef, {
+          'currentBalance': FieldValue.increment(paidAmount),
+          'totalIn': FieldValue.increment(paidAmount),
+          'transactionCount': FieldValue.increment(1),
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
       }
     }
 
@@ -357,6 +400,44 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
         if (remainingAmount > 0) 'debtCustomersCount': FieldValue.increment(1),
         'lastUpdatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
+    }
+
+    final empUid =
+        payload['employeeUid'] as String? ??
+        (AppStrings.isEmployee ? AppStrings.employeeAuthUid : null);
+    final empName =
+        payload['employeeName'] as String? ??
+        (AppStrings.loggedInEmployeeName.isNotEmpty
+            ? AppStrings.loggedInEmployeeName
+            : null);
+    final rolePreset =
+        payload['rolePreset'] as String? ??
+        (AppStrings.userRole.isNotEmpty ? AppStrings.userRole : null);
+    if (empUid != null &&
+        empUid.isNotEmpty &&
+        sl.isRegistered<ActivityLoggerService>()) {
+      sl<ActivityLoggerService>().appendToBatch(
+        batch,
+        ownerUid: uid,
+        employeeUid: empUid,
+        employeeName: empName,
+        rolePreset: rolePreset,
+        actionCategory: 'debts',
+        actionType: 'add_debt',
+        actionTitle: 'تسجيل دين (مزامنة): $customerName',
+        details:
+            'تسجيل مديونية بمبلغ $remainingAmount ${AppStrings.currencyEgp.tr()} (الإجمالي: $totalAmount)',
+        amount: totalAmount,
+        extraData: {
+          'debtId': operationId,
+          'customerName': customerName,
+          'totalAmount': totalAmount,
+          'paidAmount': paidAmount,
+          'remainingAmount': remainingAmount,
+        },
+        timestamp: timestampDate,
+        isOfflineSync: true,
+      );
     }
 
     await batch.commit();
@@ -382,7 +463,8 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
         .collection('attendances')
         .doc(attendanceId);
 
-    await docRef.update({
+    final batch = firestore.batch();
+    batch.update(docRef, {
       'checkOut': checkOut,
       'overtimeHours': overtimeHours,
       'deductionHours': deductionHours,
@@ -390,6 +472,48 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
       'status': status,
       'notes': notes,
     });
+
+    final empUid =
+        payload['employeeUid'] as String? ??
+        (AppStrings.isEmployee ? AppStrings.employeeAuthUid : null);
+    final empName =
+        payload['employeeName'] as String? ??
+        (AppStrings.loggedInEmployeeName.isNotEmpty
+            ? AppStrings.loggedInEmployeeName
+            : null);
+    final rolePreset =
+        payload['rolePreset'] as String? ??
+        (AppStrings.userRole.isNotEmpty ? AppStrings.userRole : null);
+
+    if (empUid != null &&
+        empUid.isNotEmpty &&
+        sl.isRegistered<ActivityLoggerService>()) {
+      final notesPart = notes.isNotEmpty ? ' ($notes)' : '';
+      sl<ActivityLoggerService>().appendToBatch(
+        batch,
+        ownerUid: uid,
+        employeeUid: empUid,
+        employeeName: empName,
+        rolePreset: rolePreset,
+        actionCategory: 'employees',
+        actionType: 'employee_checkout',
+        actionTitle: 'تسجيل انصراف (مزامنة)',
+        details:
+            'تسجيل انصراف: إضافي $overtimeHours س، خصم $deductionHours س، تأخير $lateMinutes دقيقة$notesPart',
+        extraData: {
+          'attendanceId': attendanceId,
+          'overtimeHours': overtimeHours,
+          'deductionHours': deductionHours,
+          'lateMinutes': lateMinutes,
+          'status': status,
+          'notes': notes,
+        },
+        timestamp: DateTime.parse(checkOutStr),
+        isOfflineSync: true,
+      );
+    }
+
+    await batch.commit();
   }
 
   Future<void> _syncSimpleRecord(
@@ -453,10 +577,15 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
       payload['date'] = Timestamp.fromDate(timestampDate);
     }
     if (payload['lastUpdatedAt'] is String) {
-      payload['lastUpdatedAt'] = Timestamp.fromDate(DateTime.parse(payload['lastUpdatedAt']));
+      payload['lastUpdatedAt'] = Timestamp.fromDate(
+        DateTime.parse(payload['lastUpdatedAt']),
+      );
     }
-    if (payload['dueDate'] is String && (payload['dueDate'] as String).isNotEmpty) {
-      payload['dueDate'] = Timestamp.fromDate(DateTime.parse(payload['dueDate'] as String));
+    if (payload['dueDate'] is String &&
+        (payload['dueDate'] as String).isNotEmpty) {
+      payload['dueDate'] = Timestamp.fromDate(
+        DateTime.parse(payload['dueDate'] as String),
+      );
     }
 
     payload['syncedAt'] = FieldValue.serverTimestamp();
@@ -518,10 +647,10 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
 
           final String description =
               (payload['description'] as String?)?.isNotEmpty == true
-                  ? (payload['description'] as String)
-                  : ((payload['category'] as String?)?.isNotEmpty == true
-                      ? (payload['category'] as String)
-                      : 'مصروف');
+              ? (payload['description'] as String)
+              : ((payload['category'] as String?)?.isNotEmpty == true
+                    ? (payload['category'] as String)
+                    : 'مصروف');
 
           batch.set(vaultTxRef, {
             'id': 'vault_tx_$docId',
@@ -535,16 +664,12 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
             'createdAt': Timestamp.fromDate(timestampDate),
           });
 
-          batch.set(
-            vaultSummaryRef,
-            {
-              'currentBalance': FieldValue.increment(-amount),
-              'totalOut': FieldValue.increment(amount),
-              'transactionCount': FieldValue.increment(1),
-              'lastUpdatedAt': FieldValue.serverTimestamp(),
-            },
-            SetOptions(merge: true),
-          );
+          batch.set(vaultSummaryRef, {
+            'currentBalance': FieldValue.increment(-amount),
+            'totalOut': FieldValue.increment(amount),
+            'transactionCount': FieldValue.increment(1),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
         }
       } else if (collectionPath.contains('employees')) {
         final allTimeRef = userRef.collection('summaries').doc('all_time');
@@ -587,6 +712,119 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
           }, SetOptions(merge: true));
         }
       }
+    }
+
+    final empUid =
+        payload['employeeUid'] as String? ??
+        (AppStrings.isEmployee ? AppStrings.employeeAuthUid : null);
+    final empName =
+        payload['employeeName'] as String? ??
+        (AppStrings.loggedInEmployeeName.isNotEmpty
+            ? AppStrings.loggedInEmployeeName
+            : null);
+    final rolePreset =
+        payload['rolePreset'] as String? ??
+        (AppStrings.userRole.isNotEmpty ? AppStrings.userRole : null);
+
+    if (uid != null &&
+        empUid != null &&
+        empUid.isNotEmpty &&
+        sl.isRegistered<ActivityLoggerService>()) {
+      String category = 'other';
+      String actionType = 'sync_record';
+      String actionTitle = 'عملية متزامنة';
+      String details = 'مزامنة سجل $docId';
+      double? actAmount;
+
+      if (collectionPath.contains('operations')) {
+        category = 'sales';
+        actionType = 'operation_sale';
+        final pName =
+            payload['productName'] as String? ??
+            payload['type'] as String? ??
+            'بيع';
+        actionTitle = 'بيع (مزامنة): $pName';
+        actAmount = (payload['totalAmount'] as num?)?.toDouble();
+        details =
+            'تسجيل بيع بمبلغ ${actAmount ?? 0} ${AppStrings.currencyEgp.tr()}';
+      } else if (collectionPath.contains('expenses')) {
+        category = 'expenses';
+        actionType = 'add_expense';
+        final catName = payload['category'] as String? ?? 'مصروف';
+        actionTitle = 'تسجيل مصروف: $catName';
+        actAmount = (payload['amount'] as num?)?.toDouble();
+        final desc = payload['description'] as String? ?? '';
+        details =
+            'تسجيل مصروف جديد لبند ($catName) بقيمة ${actAmount?.toStringAsFixed(1) ?? "0.0"} ${AppStrings.currencyEgp.tr()} - البيان: ${desc.isNotEmpty ? desc : "بدون بيان"}';
+      } else if (collectionPath.contains('attendances')) {
+        category = 'employees';
+        actionType = 'employee_checkin';
+        final empNameStr = payload['employeeName'] as String? ?? 'موظف';
+        final statusStr = payload['status'] as String? ?? 'حاضر';
+        actionTitle = 'تسجيل حضور (مزامنة): $empNameStr';
+        details = 'تسجيل حضور الموظف $empNameStr (الحالة: $statusStr)';
+      } else if (collectionPath.contains('payrolls')) {
+        category = 'employees';
+        actionType = 'payroll_payment';
+        final empNameStr = payload['employeeName'] as String? ?? 'موظف';
+        final monthKeyStr = payload['monthKey'] as String? ?? '';
+        actAmount = (payload['netSalary'] as num?)?.toDouble();
+        actionTitle = 'صرف راتب (مزامنة): $empNameStr';
+        details =
+            'صرف راتب شهر $monthKeyStr للموظف $empNameStr بصافي ${actAmount?.toStringAsFixed(1) ?? "0.0"} ${AppStrings.currencyEgp.tr()}';
+      } else if (collectionPath.contains('advances')) {
+        category = 'employees';
+        actionType = 'employee_advance';
+        final empNameStr = payload['employeeName'] as String? ?? 'موظف';
+        actAmount = (payload['amount'] as num?)?.toDouble();
+        actionTitle = 'صرف سلفة (مزامنة): $empNameStr';
+        details =
+            'صرف سلفة للموظف $empNameStr بقيمة ${actAmount?.toStringAsFixed(1) ?? "0.0"} ${AppStrings.currencyEgp.tr()}';
+      } else if (collectionPath.contains('employees')) {
+        category = 'employees';
+        actionType = 'add_employee_record';
+        final empNameStr = payload['name'] as String? ?? 'موظف';
+        final jobTitle = payload['jobTitle'] as String? ?? '';
+        actionTitle = 'إضافة موظف (مزامنة): $empNameStr';
+        details = 'إضافة سجل موظف جديد: $empNameStr (الوظيفة: $jobTitle)';
+      }
+
+      sl<ActivityLoggerService>().appendToBatch(
+        batch,
+        ownerUid: uid,
+        employeeUid: empUid,
+        employeeName: empName,
+        rolePreset: rolePreset,
+        actionCategory: category,
+        actionType: actionType,
+        actionTitle: actionTitle,
+        details: details,
+        amount: actAmount,
+        extraData: {
+          'recordId': docId,
+          'collection': collectionPath,
+          if (collectionPath.contains('expenses')) ...{
+            'category': payload['category'],
+            'description': payload['description'],
+            'amount': actAmount,
+          },
+          if (collectionPath.contains('payrolls')) ...{
+            'employeeName': payload['employeeName'],
+            'monthKey': payload['monthKey'],
+            'netSalary': actAmount,
+          },
+          if (collectionPath.contains('advances')) ...{
+            'employeeName': payload['employeeName'],
+            'amount': actAmount,
+          },
+          if (collectionPath.contains('attendances')) ...{
+            'employeeName': payload['employeeName'],
+            'status': payload['status'],
+          },
+        },
+        timestamp: timestampDate ?? DateTime.now(),
+        isOfflineSync: true,
+      );
     }
 
     await batch.commit();
@@ -787,6 +1025,69 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
         'transactionCount': FieldValue.increment(1),
         'lastUpdatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
+    }
+
+    final empUid =
+        payload['employeeUid'] as String? ??
+        (AppStrings.isEmployee ? AppStrings.employeeAuthUid : null);
+    final empName =
+        payload['employeeName'] as String? ??
+        (AppStrings.loggedInEmployeeName.isNotEmpty
+            ? AppStrings.loggedInEmployeeName
+            : null);
+    final rolePreset =
+        payload['rolePreset'] as String? ??
+        (AppStrings.userRole.isNotEmpty ? AppStrings.userRole : null);
+
+    if (empUid != null &&
+        empUid.isNotEmpty &&
+        sl.isRegistered<ActivityLoggerService>()) {
+      final device = (sessionData['deviceId'] as String?)?.isNotEmpty == true
+          ? sessionData['deviceId'] as String
+          : ((sessionData['roomId'] as String?)?.isNotEmpty == true
+                ? sessionData['roomId'] as String
+                : 'جلسة');
+      final hasDebt = remainingDebt > 0;
+      final custName = (sessionData['customerName'] as String?)?.trim() ?? '';
+      final hasCustomer = custName.isNotEmpty;
+      final cust = hasCustomer ? ' للعميل $custName' : '';
+      final actionTitle = hasCustomer
+          ? (hasDebt
+                ? 'إنهاء جلسة بمديونية (مزامنة): $custName ($device)'
+                : 'تحصيل جلسة (مزامنة): $custName ($device)')
+          : (hasDebt
+                ? 'إنهاء جلسة بمديونية (مزامنة): $device'
+                : 'إنهاء وتحصيل جلسة (مزامنة): $device');
+
+      sl<ActivityLoggerService>().appendToBatch(
+        batch,
+        ownerUid: uid,
+        employeeUid: empUid,
+        employeeName: empName,
+        rolePreset: rolePreset,
+        actionCategory: 'sales',
+        actionType: hasDebt
+            ? 'pos_end_session_with_debt'
+            : 'pos_end_session_cash',
+        actionTitle: actionTitle,
+        details: hasDebt
+            ? 'إنهاء جلسة للجهاز $device$cust بإجمالي ${totalAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} (المدفوع: ${paidAmount.toStringAsFixed(1)} ج.م، وترحيل متبقي دين: ${remainingDebt.toStringAsFixed(1)} ج.م)'
+            : 'إنهاء جلسة للجهاز $device$cust وتحصيل كامل الحساب بقيمة ${totalAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} نقدياً ($durationMinutes دقيقة)',
+        amount: totalAmount,
+        extraData: {
+          'sessionId': sessionId,
+          'deviceId': sessionData['deviceId'],
+          'roomId': sessionData['roomId'],
+          'totalAmount': totalAmount,
+          'paidAmount': paidAmount,
+          'remainingDebt': remainingDebt,
+          'customerName': sessionData['customerName'],
+          'durationMinutes': durationMinutes,
+          'hasDebt': hasDebt,
+        },
+        timestamp: endTime,
+        isOfflineSync: true,
+      );
     }
 
     await batch.commit();

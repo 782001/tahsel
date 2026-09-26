@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/activity_logger_service.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/assets.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/permission_guard.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/customer/domain/entities/customer_entity.dart';
 import 'package:tahsel/features/customer/presentation/utils/customer_statement_pdf_exporter.dart';
 import 'package:tahsel/features/customer/presentation/widgets/customer_operation_tile.dart';
 import 'package:tahsel/features/customer/presentation/widgets/customer_summary_card.dart';
 import 'package:tahsel/features/customer/presentation/widgets/skeletons/customer_operation_skeleton.dart';
-import 'package:tahsel/core/utils/assets.dart';
 import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
 import '../../../../core/services/injection_container.dart';
@@ -33,8 +37,9 @@ class CustomerReportDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => sl<CustomerDetailsCubit>()
-        ..fetchOperations(uid, customerName, customer: customer),
+      create: (context) =>
+          sl<CustomerDetailsCubit>()
+            ..fetchOperations(uid, customerName, customer: customer),
       child: Scaffold(
         backgroundColor: AppColors.scafoldBackGround,
         appBar: AppBar(
@@ -113,6 +118,12 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
   }
 
   Future<void> _handlePrint(CustomerDetailsLoaded state) async {
+    if (!PermissionService.instance.hasPermission(
+      AppPermissions.reportsExport,
+    )) {
+      showfailureToast(AppStrings.appPermissionDenied.tr());
+      return;
+    }
     if (_isExporting) return;
     setState(() => _isExporting = true);
     try {
@@ -129,6 +140,23 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
         isArabic: isArabic,
         periodTitle: _getPeriodTitle(state),
       );
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: widget.uid,
+          actionCategory: 'reports',
+          actionType: 'print_customer_statement',
+          actionTitle: 'طباعة كشف حساب: ${widget.customerName}',
+          details:
+              'طباعة كشف حساب تفصيلي للعميل ${widget.customerName} (${_getPeriodTitle(state)})',
+          extraData: {
+            'customerName': widget.customerName,
+            'period': state.selectedFilter,
+            'operationsCount': state.operations.length,
+            'remaining': state.remaining,
+          },
+        );
+      }
     } catch (e) {
       showfailureToast(e.toString());
     } finally {
@@ -137,6 +165,12 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
   }
 
   Future<void> _handleSharePdf(CustomerDetailsLoaded state) async {
+    if (!PermissionService.instance.hasPermission(
+      AppPermissions.reportsExport,
+    )) {
+      showfailureToast(AppStrings.appPermissionDenied.tr());
+      return;
+    }
     if (_isExporting) return;
     setState(() => _isExporting = true);
     try {
@@ -152,6 +186,23 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
         isArabic: isArabic,
         periodTitle: _getPeriodTitle(state),
       );
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: widget.uid,
+          actionCategory: 'reports',
+          actionType: 'export_customer_statement_pdf',
+          actionTitle: 'تصدير كشف حساب PDF: ${widget.customerName}',
+          details:
+              'تصدير ومشاركة كشف حساب تفصيلي PDF للعميل ${widget.customerName} (${_getPeriodTitle(state)})',
+          extraData: {
+            'customerName': widget.customerName,
+            'period': state.selectedFilter,
+            'operationsCount': state.operations.length,
+            'remaining': state.remaining,
+          },
+        );
+      }
     } catch (e) {
       showfailureToast(e.toString());
     } finally {
@@ -160,10 +211,18 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
   }
 
   Future<void> _handleWhatsApp(CustomerDetailsLoaded state) async {
+    if (!PermissionService.instance.hasPermission(
+      AppPermissions.customersSendWhatsapp,
+    )) {
+      showfailureToast(AppStrings.appPermissionDenied.tr());
+      return;
+    }
     if (_isExporting) return;
     final customer = state.customer ?? widget.customer;
-    if (customer?.phoneNumber == null || customer!.phoneNumber!.trim().isEmpty) {
+    if (customer?.phoneNumber == null ||
+        customer!.phoneNumber!.trim().isEmpty) {
       showfailureToast(AppStrings.noPhoneForCustomer.tr());
+      return;
     }
 
     setState(() => _isExporting = true);
@@ -180,6 +239,24 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
         isArabic: isArabic,
         periodTitle: _getPeriodTitle(state),
       );
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: widget.uid,
+          actionCategory: 'debts',
+          actionType: 'send_customer_statement_whatsapp',
+          actionTitle: 'إرسال كشف حساب واتساب: ${widget.customerName}',
+          details:
+              'إرسال كشف حساب ومطالبة مالية عبر واتساب للعميل ${widget.customerName} (${_getPeriodTitle(state)})',
+          amount: state.remaining > 0 ? state.remaining : null,
+          extraData: {
+            'customerName': widget.customerName,
+            'phoneNumber': customer.phoneNumber,
+            'period': state.selectedFilter,
+            'remaining': state.remaining,
+          },
+        );
+      }
     } catch (e) {
       showfailureToast(e.toString());
     } finally {
@@ -213,10 +290,10 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
     if (picked != null) {
       if (!mounted) return;
       context.read<CustomerDetailsCubit>().filterByPeriod(
-            'custom',
-            customStart: picked.start,
-            customEnd: picked.end,
-          );
+        'custom',
+        customStart: picked.start,
+        customEnd: picked.end,
+      );
     }
   }
 
@@ -246,11 +323,11 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
                         ? SliverGrid(
                             gridDelegate:
                                 const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              mainAxisExtent: 120,
-                              crossAxisSpacing: 16,
-                              mainAxisSpacing: 16,
-                            ),
+                                  crossAxisCount: 2,
+                                  mainAxisExtent: 120,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 16,
+                                ),
                             delegate: SliverChildBuilderDelegate(
                               (context, index) =>
                                   const CustomerOperationTileSkeleton(),
@@ -278,8 +355,11 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.error_outline_rounded,
-                      size: 48, color: AppColors.error),
+                  Icon(
+                    Icons.error_outline_rounded,
+                    size: 48,
+                    color: AppColors.error,
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     state.message,
@@ -293,10 +373,10 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
                   ElevatedButton(
                     onPressed: () {
                       context.read<CustomerDetailsCubit>().fetchOperations(
-                            widget.uid,
-                            widget.customerName,
-                            customer: widget.customer,
-                          );
+                        widget.uid,
+                        widget.customerName,
+                        customer: widget.customer,
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryColor,
@@ -384,11 +464,11 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
                         ? SliverGrid(
                             gridDelegate:
                                 const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              mainAxisExtent: 120,
-                              crossAxisSpacing: 14,
-                              mainAxisSpacing: 14,
-                            ),
+                                  crossAxisCount: 2,
+                                  mainAxisExtent: 120,
+                                  crossAxisSpacing: 14,
+                                  mainAxisSpacing: 14,
+                                ),
                             delegate: SliverChildBuilderDelegate(
                               (context, index) {
                                 if (index >= state.operations.length) {
@@ -397,7 +477,8 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
                                 final op = state.operations[index];
                                 return CustomerOperationTile(operation: op);
                               },
-                              childCount: state.operations.length +
+                              childCount:
+                                  state.operations.length +
                                   (state.isFetchingMore ? 1 : 0),
                             ),
                           )
@@ -410,7 +491,8 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
                                 final op = state.operations[index];
                                 return CustomerOperationTile(operation: op);
                               },
-                              childCount: state.operations.length +
+                              childCount:
+                                  state.operations.length +
                                   (state.isFetchingMore ? 1 : 0),
                             ),
                           ),
@@ -490,31 +572,41 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
               ),
             )
           else ...[
-            // Print Button
-            _buildActionButton(
-              icon: Icons.print_outlined,
-              label: isDesktop ? AppStrings.printStatement.tr() : null,
-              tooltip: AppStrings.printStatement.tr(),
-              color: AppColors.primaryColor,
-              onPressed: () => _handlePrint(state),
+            // Print Button (Guarded by reports.export)
+            PermissionGuard(
+              permission: AppPermissions.reportsExport,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildActionButton(
+                    icon: Icons.print_outlined,
+                    label: isDesktop ? AppStrings.printStatement.tr() : null,
+                    tooltip: AppStrings.printStatement.tr(),
+                    color: AppColors.primaryColor,
+                    onPressed: () => _handlePrint(state),
+                  ),
+                  const SizedBox(width: 6),
+                  _buildActionButton(
+                    icon: Icons.picture_as_pdf_outlined,
+                    label: isDesktop ? AppStrings.sharePdf.tr() : null,
+                    tooltip: AppStrings.sharePdf.tr(),
+                    color: Colors.deepOrange.shade600,
+                    onPressed: () => _handleSharePdf(state),
+                  ),
+                  const SizedBox(width: 6),
+                ],
+              ),
             ),
-            const SizedBox(width: 6),
-            // Share PDF Button
-            _buildActionButton(
-              icon: Icons.picture_as_pdf_outlined,
-              label: isDesktop ? AppStrings.sharePdf.tr() : null,
-              tooltip: AppStrings.sharePdf.tr(),
-              color: Colors.deepOrange.shade600,
-              onPressed: () => _handleSharePdf(state),
-            ),
-            const SizedBox(width: 6),
-            // WhatsApp Button
-            _buildActionButton(
-              assetIcon: Assets.imagesWhatsapp,
-              label: isDesktop ? AppStrings.shareWhatsApp.tr() : null,
-              tooltip: AppStrings.shareWhatsApp.tr(),
-              color: const Color(0xFF25D366),
-              onPressed: () => _handleWhatsApp(state),
+            // WhatsApp Button (Guarded by customers.send_whatsapp)
+            PermissionGuard(
+              permission: AppPermissions.customersSendWhatsapp,
+              child: _buildActionButton(
+                assetIcon: Assets.imagesWhatsapp,
+                label: isDesktop ? AppStrings.shareWhatsApp.tr() : null,
+                tooltip: AppStrings.shareWhatsApp.tr(),
+                color: const Color(0xFF25D366),
+                onPressed: () => _handleWhatsApp(state),
+              ),
             ),
           ],
         ],
@@ -529,6 +621,7 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
     required String tooltip,
     required Color color,
     required VoidCallback onPressed,
+    String? permission,
   }) {
     final Widget leadingWidget = assetIcon != null
         ? Image.asset(
@@ -536,38 +629,47 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
             width: label != null ? 18 : 22,
             height: label != null ? 18 : 22,
           )
-        : Icon(icon, size: label != null ? 16 : 20, color: label != null ? Colors.white : color);
+        : Icon(
+            icon,
+            size: label != null ? 16 : 20,
+            color: label != null ? Colors.white : color,
+          );
 
-    if (label != null) {
-      return ElevatedButton.icon(
-        onPressed: onPressed,
-        icon: leadingWidget,
-        label: Text(
-          label,
-          style: TextStyles.customStyle(
-            color: Colors.white,
-            fontSize: 12.5,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          elevation: 0,
-        ),
-      );
+    final Widget button = label != null
+        ? ElevatedButton.icon(
+            onPressed: onPressed,
+            icon: leadingWidget,
+            label: Text(
+              label,
+              style: TextStyles.customStyle(
+                color: Colors.white,
+                fontSize: 12.5,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: color,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              elevation: 0,
+            ),
+          )
+        : IconButton(
+            icon: leadingWidget,
+            tooltip: tooltip,
+            splashRadius: 20,
+            visualDensity: VisualDensity.compact,
+            onPressed: onPressed,
+          );
+
+    if (permission != null) {
+      return PermissionGuard(permission: permission, child: button);
     }
 
-    return IconButton(
-      icon: leadingWidget,
-      tooltip: tooltip,
-      splashRadius: 20,
-      visualDensity: VisualDensity.compact,
-      onPressed: onPressed,
-    );
+    return button;
   }
-
 
   Widget _buildFilterChips(CustomerDetailsLoaded state) {
     return SingleChildScrollView(
@@ -584,15 +686,17 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
           _filterChip(
             label: AppStrings.thisMonth.tr(),
             isSelected: state.selectedFilter == 'thisMonth',
-            onTap: () =>
-                context.read<CustomerDetailsCubit>().filterByPeriod('thisMonth'),
+            onTap: () => context.read<CustomerDetailsCubit>().filterByPeriod(
+              'thisMonth',
+            ),
           ),
           const SizedBox(width: 8),
           _filterChip(
             label: AppStrings.lastMonth.tr(),
             isSelected: state.selectedFilter == 'lastMonth',
-            onTap: () =>
-                context.read<CustomerDetailsCubit>().filterByPeriod('lastMonth'),
+            onTap: () => context.read<CustomerDetailsCubit>().filterByPeriod(
+              'lastMonth',
+            ),
           ),
           const SizedBox(width: 8),
           _filterChip(
@@ -619,9 +723,7 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primaryColor
-              : AppColors.surface,
+          color: isSelected ? AppColors.primaryColor : AppColors.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected

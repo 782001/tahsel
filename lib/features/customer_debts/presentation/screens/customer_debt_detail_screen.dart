@@ -8,6 +8,8 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/services/activity_logger_service.dart';
+import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/widgets/permission_guard.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
@@ -443,6 +445,25 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
             debtIds: remindedDebtIds.isNotEmpty ? remindedDebtIds : null,
           );
       _fetchDebts();
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: uid,
+          actionCategory: 'debts',
+          actionType: 'send_whatsapp_reminder',
+          actionTitle: 'إرسال تذكير واتساب: ${currentDetail.customerName}',
+          details:
+              'إرسال إشعار تذكير ومطالبة مالية للعميل ${currentDetail.customerName} عبر واتساب بقيمة ${reminderAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
+          amount: reminderAmount,
+          extraData: {
+            'customerName': currentDetail.customerName,
+            'amount': reminderAmount,
+            'totalDebt': currentDetail.totalDebt,
+            'note': result['note'],
+            'remindedDebtIds': remindedDebtIds,
+          },
+        );
+      }
 
       NotificationDialog.show(
         context: context,

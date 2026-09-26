@@ -1,7 +1,11 @@
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/activity_logger_service.dart';
+import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/usecases/pagination_params.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/summary_helper.dart';
 
 import '../../domain/entities/invoice_entity.dart';
@@ -62,6 +66,50 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
         .collection('users/${invoice.uid}/invoices')
         .doc(invoice.id)
         .set(payload, SetOptions(merge: true));
+
+    if (sl.isRegistered<ActivityLoggerService>()) {
+      final isQuotation = invoice.status == InvoiceStatus.quotation;
+      final refNum = (invoice.referenceNumber != null && invoice.referenceNumber!.isNotEmpty)
+          ? invoice.referenceNumber!
+          : invoice.id;
+      final hasSpecificCustomer =
+          invoice.customerName != null && invoice.customerName!.trim().isNotEmpty;
+      final cust = hasSpecificCustomer ? invoice.customerName!.trim() : 'عميل عام';
+      final totalFormatted = invoice.totalAmount.toStringAsFixed(1);
+      final paid = invoice.syncedTotalPaid ?? 0.0;
+      final paidFormatted = paid.toStringAsFixed(1);
+      final rem = invoice.totalAmount - paid;
+      final remFormatted = rem > 0 ? rem.toStringAsFixed(1) : "0.0";
+
+      final actionTitle = isQuotation
+          ? (hasSpecificCustomer ? 'عرض سعر للعميل: $cust' : 'عرض سعر جديد (#$refNum)')
+          : (hasSpecificCustomer ? 'فاتورة مبيعات للعميل: $cust' : 'فاتورة مبيعات (#$refNum)');
+
+      final actionDetails = isQuotation
+          ? 'إنشاء وتجهيز عرض سعر للعميل ($cust) بقيمة $totalFormatted ${AppStrings.currencyEgp.tr()} (${invoice.items.length} أصناف) - الرقم المرجعي: $refNum'
+          : 'فاتورة مبيعات للعميل ($cust) بقيمة $totalFormatted ${AppStrings.currencyEgp.tr()} (${invoice.items.length} أصناف) - المدفوع: $paidFormatted ج.م، المتبقي: $remFormatted ج.م (المرجع: $refNum)';
+
+      sl<ActivityLoggerService>().logStandalone(
+        ownerUid: invoice.uid,
+        actionCategory: 'invoices',
+        actionType: isQuotation ? 'create_quotation' : 'create_invoice',
+        actionTitle: actionTitle,
+        details: actionDetails,
+        amount: invoice.totalAmount,
+        extraData: {
+          'invoiceId': invoice.id,
+          'referenceNumber': invoice.referenceNumber,
+          'customerName': invoice.customerName,
+          'itemCount': invoice.items.length,
+          'totalAmount': invoice.totalAmount,
+          'paidAmount': invoice.syncedTotalPaid,
+          'remainingAmount': rem > 0 ? rem : 0.0,
+          'isQuotation': isQuotation,
+          'status': invoice.status.name,
+        },
+        timestamp: invoice.createdAt,
+      );
+    }
   }
 
   @override
@@ -158,6 +206,11 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
   ) async {
     final ref = firestore.collection('users/$uid/invoices').doc(invoiceId);
 
+    String? capturedRefNum;
+    String? capturedCustName;
+    double capturedRemaining = 0.0;
+    String capturedStatus = '';
+
     // Use a transaction so the status is recalculated atomically
     await firestore.runTransaction((txn) async {
       final snapshot = await txn.get(ref);
@@ -199,12 +252,49 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
         newStatus = InvoiceStatus.pending.name;
       }
 
+      capturedRefNum = existing.referenceNumber;
+      capturedCustName = existing.customerName;
+      capturedRemaining = remaining;
+      capturedStatus = newStatus;
+
       txn.update(ref, {
         'payments': updatedPayments,
         'status': newStatus,
         'lastUpdatedAt': FieldValue.serverTimestamp(),
       });
     });
+
+    if (sl.isRegistered<ActivityLoggerService>()) {
+      final amtFormatted = payment.amount.toStringAsFixed(1);
+      final rem = capturedRemaining > 0 ? capturedRemaining.toStringAsFixed(1) : "0.0";
+      final refNum = capturedRefNum != null && capturedRefNum!.isNotEmpty
+          ? capturedRefNum!
+          : invoiceId;
+      final cust = capturedCustName != null && capturedCustName!.isNotEmpty
+          ? ' للعميل $capturedCustName'
+          : '';
+
+      sl<ActivityLoggerService>().logStandalone(
+        ownerUid: uid,
+        actionCategory: 'invoices',
+        actionType: 'record_invoice_payment',
+        actionTitle: 'تحصيل دفعة فاتورة: $refNum',
+        details:
+            'تحصيل دفعة بقيمة $amtFormatted ${AppStrings.currencyEgp.tr()}$cust على الفاتورة $refNum (المتبقي: $rem ${AppStrings.currencyEgp.tr()})${payment.note != null && payment.note!.isNotEmpty ? " (${payment.note})" : ""}',
+        amount: payment.amount,
+        extraData: {
+          'invoiceId': invoiceId,
+          'paymentId': payment.id,
+          'referenceNumber': capturedRefNum,
+          'customerName': capturedCustName,
+          'amountPaid': payment.amount,
+          'remaining': capturedRemaining > 0 ? capturedRemaining : 0.0,
+          'newStatus': capturedStatus,
+          'note': payment.note,
+        },
+        timestamp: payment.paidAt,
+      );
+    }
   }
 
   @override
@@ -301,7 +391,7 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
       }
 
       final double debtRemaining = newTotalAmount - totalPaid;
-      
+
       final String newStatus;
       if (debtRemaining <= 0 && newTotalAmount > 0) {
         newStatus = InvoiceStatus.paid.name;
@@ -347,26 +437,32 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
 
         // Update summaries to keep TotalDebtsSummaryCard in sync
         final debtData = debtSnap.data()!;
-        final currentRemaining = (debtData['remainingAmount'] as num?)?.toDouble() ?? 0.0;
-        
-        if (debtRemaining != currentRemaining || newTotalAmount != oldInvoiceTotal) {
-          final debtTimestamp = (debtData['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
-          
+        final currentRemaining =
+            (debtData['remainingAmount'] as num?)?.toDouble() ?? 0.0;
+
+        if (debtRemaining != currentRemaining ||
+            newTotalAmount != oldInvoiceTotal) {
+          final debtTimestamp =
+              (debtData['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+
           final currentIsPaid = currentRemaining <= 0;
           final newIsPaid = debtRemaining <= 0;
-          
+
           final totalDebtsDelta = debtRemaining - currentRemaining;
-          final unpaidDelta = (newIsPaid ? 0.0 : debtRemaining) - (currentIsPaid ? 0.0 : currentRemaining);
-          
+          final unpaidDelta =
+              (newIsPaid ? 0.0 : debtRemaining) -
+              (currentIsPaid ? 0.0 : currentRemaining);
+
           final oldPaidDebtValue = currentIsPaid ? oldInvoiceTotal : 0.0;
           final newPaidDebtValue = newIsPaid ? newTotalAmount : 0.0;
           final paidDelta = newPaidDebtValue - oldPaidDebtValue;
-          
+
           final Map<String, Map<String, double>> summaryAccumulator = {};
           void addSummaryIncrement(String key, String field, double value) {
             if (value == 0) return;
             summaryAccumulator.putIfAbsent(key, () => {});
-            summaryAccumulator[key]![field] = (summaryAccumulator[key]![field] ?? 0.0) + value;
+            summaryAccumulator[key]![field] =
+                (summaryAccumulator[key]![field] ?? 0.0) + value;
           }
 
           final debtKeys = SummaryHelper.getSummaryKeys(debtTimestamp);
@@ -432,6 +528,43 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
           'lastUpdatedAt': FieldValue.serverTimestamp(),
         });
       }
+    }
+
+    if (sl.isRegistered<ActivityLoggerService>()) {
+      final refNum = (invoice.referenceNumber != null &&
+              invoice.referenceNumber!.isNotEmpty)
+          ? invoice.referenceNumber!
+          : invoice.id;
+      final hasTotalChanged = (newTotalAmount - oldInvoiceTotal).abs() > 0.001;
+      final oldFormatted = oldInvoiceTotal.toStringAsFixed(1);
+      final newFormatted = newTotalAmount.toStringAsFixed(1);
+      final delta = newTotalAmount - oldInvoiceTotal;
+      final deltaFormatted = delta.toStringAsFixed(1);
+      final cust = (invoice.customerName != null && invoice.customerName!.isNotEmpty)
+          ? invoice.customerName!
+          : 'عميل عام';
+
+      sl<ActivityLoggerService>().logStandalone(
+        ownerUid: invoice.uid,
+        actionCategory: 'invoices',
+        actionType: hasTotalChanged ? 'update_invoice_total' : 'update_invoice_details',
+        actionTitle: hasTotalChanged
+            ? 'تعديل قيمة فاتورة: $refNum'
+            : 'تعديل بيانات فاتورة: $refNum',
+        details: hasTotalChanged
+            ? 'تعديل فاتورة للعميل $cust: تم تغيير المبلغ من $oldFormatted ${AppStrings.currencyEgp.tr()} إلى $newFormatted ${AppStrings.currencyEgp.tr()} (الفارق: $deltaFormatted ${AppStrings.currencyEgp.tr()})'
+            : 'تعديل بيانات وأصناف الفاتورة $refNum للعميل $cust',
+        amount: newTotalAmount,
+        extraData: {
+          'invoiceId': invoice.id,
+          'referenceNumber': invoice.referenceNumber,
+          'oldTotal': oldInvoiceTotal,
+          'newTotal': newTotalAmount,
+          'delta': delta,
+          'customerName': invoice.customerName,
+          'itemCount': invoice.items.length,
+        },
+      );
     }
   }
 
@@ -571,6 +704,35 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
         };
         batch.set(summaryRef, updateData, SetOptions(merge: true));
       });
+    }
+
+    // ── Log Employee Activity ──
+    if (sl.isRegistered<ActivityLoggerService>()) {
+      final totalAmount = (invoiceDoc.data()?['totalAmount'] as num?)?.toDouble() ?? 0.0;
+      final totalFormatted = totalAmount.toStringAsFixed(1);
+      final refNum = (invoiceDoc.data()?['referenceNumber'] as String?) ?? invoiceId;
+      final cust = (invoiceDoc.data()?['customerName'] as String?)?.trim() ?? '';
+      final hasCust = cust.isNotEmpty;
+
+      final actionTitle = hasCust
+          ? 'إلغاء فاتورة مبيعات للعميل: $cust'
+          : 'إلغاء فاتورة مبيعات (#$refNum)';
+
+      sl<ActivityLoggerService>().appendToBatch(
+        batch,
+        ownerUid: uid,
+        actionCategory: 'invoices',
+        actionType: 'void_invoice',
+        actionTitle: actionTitle,
+        details: 'إلغاء الفاتورة رقم $refNum بالكامل بقيمة $totalFormatted ${AppStrings.currencyEgp.tr()}${hasCust ? " للعميل $cust" : ""} وإلغاء قيود الديون المرتبطة بها',
+        amount: totalAmount,
+        extraData: {
+          'invoiceId': invoiceId,
+          'referenceNumber': refNum,
+          'customerName': cust,
+          'totalAmount': totalAmount,
+        },
+      );
     }
 
     await batch.commit();

@@ -1,5 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
 import '../../../../core/error/firebase_error_handler.dart';
+import '../../../../core/services/activity_logger_service.dart';
+import '../../../../core/services/injection_container.dart';
 import '../../../../core/utils/app_strings.dart';
 import '../../../../core/utils/summary_helper.dart';
 import '../../../cashbox/domain/entities/vault_transaction_entity.dart';
@@ -44,6 +47,39 @@ class PsSessionRemoteDataSourceImpl implements PsSessionRemoteDataSource {
           ? _sessionsRef(session.uid).doc(session.id)
           : _sessionsRef(session.uid).doc();
       await docRef.set(session.toJson());
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final device = (session.deviceId != null && session.deviceId!.isNotEmpty)
+            ? session.deviceId!
+            : ((session.roomId != null && session.roomId!.isNotEmpty) ? session.roomId! : 'جلسة');
+        final isTime = session.subType == 'time';
+        final subDesc = isTime ? 'وقت مفتوح' : 'أدوار';
+        final hasCustomer = session.customerName != null &&
+            session.customerName!.trim().isNotEmpty;
+        final cust = hasCustomer ? ' (العميل: ${session.customerName!.trim()})' : '';
+        final actionTitle = hasCustomer
+            ? 'بدء جلسة: $device للعميل ${session.customerName!.trim()}'
+            : 'بدء جلسة: $device';
+
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: session.uid,
+          actionCategory: 'sales',
+          actionType: 'pos_start_session',
+          actionTitle: actionTitle,
+          details: 'بدء جلسة $subDesc للجهاز $device بسعر ${session.rate.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}/ساعة$cust',
+          amount: session.rate,
+          extraData: {
+            'sessionId': docRef.id,
+            'deviceId': session.deviceId,
+            'roomId': session.roomId,
+            'rate': session.rate,
+            'subType': session.subType,
+            'customerName': session.customerName,
+          },
+          timestamp: session.startTime,
+        );
+      }
+
       return docRef.id;
     } catch (e) {
       FirebaseErrorHandler.handle(e);
@@ -156,6 +192,52 @@ class PsSessionRemoteDataSourceImpl implements PsSessionRemoteDataSource {
             'lastUpdatedAt': FieldValue.serverTimestamp(),
           },
           SetOptions(merge: true),
+        );
+      }
+
+      // 5. Log Employee Activity
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final device = (session.deviceId != null && session.deviceId!.isNotEmpty)
+            ? session.deviceId!
+            : ((session.roomId != null && session.roomId!.isNotEmpty) ? session.roomId! : 'جلسة');
+        final hasDebt = remainingDebt > 0;
+        final totalFormatted = totalAmount.toStringAsFixed(1);
+        final paidFormatted = paidAmount.toStringAsFixed(1);
+        final remFormatted = remainingDebt.toStringAsFixed(1);
+        final hasCustomer = session.customerName != null &&
+            session.customerName!.trim().isNotEmpty;
+        final custName = hasCustomer ? session.customerName!.trim() : '';
+        final cust = hasCustomer ? ' للعميل $custName' : '';
+        final actionTitle = hasCustomer
+            ? (hasDebt
+                ? 'إنهاء جلسة بمديونية: $custName ($device)'
+                : 'تحصيل جلسة: $custName ($device)')
+            : (hasDebt
+                ? 'إنهاء جلسة بمديونية: $device'
+                : 'إنهاء وتحصيل جلسة: $device');
+
+        sl<ActivityLoggerService>().appendToBatch(
+          batch,
+          ownerUid: uid,
+          actionCategory: 'sales',
+          actionType: hasDebt ? 'pos_end_session_with_debt' : 'pos_end_session_cash',
+          actionTitle: actionTitle,
+          details: hasDebt
+              ? 'إنهاء جلسة للجهاز $device$cust بإجمالي $totalFormatted ${AppStrings.currencyEgp.tr()} (المدفوع: $paidFormatted ج.م، وترحيل متبقي دين: $remFormatted ج.م)'
+              : 'إنهاء جلسة للجهاز $device$cust وتحصيل كامل الحساب بقيمة $totalFormatted ${AppStrings.currencyEgp.tr()} نقدياً ($durationMinutes دقيقة)',
+          amount: totalAmount,
+          extraData: {
+            'sessionId': sessionId,
+            'deviceId': session.deviceId,
+            'roomId': session.roomId,
+            'totalAmount': totalAmount,
+            'paidAmount': paidAmount,
+            'remainingDebt': remainingDebt,
+            'customerName': session.customerName,
+            'durationMinutes': durationMinutes,
+            'hasDebt': hasDebt,
+          },
+          timestamp: endTime,
         );
       }
 

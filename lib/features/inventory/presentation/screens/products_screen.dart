@@ -6,6 +6,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/activity_logger_service.dart';
+import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -250,6 +252,19 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   if (mounted) {
                     messenger.hideCurrentSnackBar();
                     if (savedPath != null && savedPath.isNotEmpty) {
+                      if (sl.isRegistered<ActivityLoggerService>()) {
+                        sl<ActivityLoggerService>().logStandalone(
+                          ownerUid: AppStrings.userToken,
+                          actionCategory: 'reports',
+                          actionType: 'export_products_excel',
+                          actionTitle: 'تصدير أصناف المخزون Excel',
+                          details:
+                              'تصدير كشف أصناف وبيانات المخزون بالكامل إلى ملف Excel',
+                          extraData: {
+                            'filePath': savedPath,
+                          },
+                        );
+                      }
                       messenger.showSnackBar(
                         SnackBar(
                           content: Text(

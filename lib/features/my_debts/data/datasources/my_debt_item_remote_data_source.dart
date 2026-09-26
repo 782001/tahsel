@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get_it/get_it.dart';
 import 'package:tahsel/core/error/firebase_error_handler.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/activity_logger_service.dart';
+import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/usecases/pagination_params.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/date_formatter.dart';
@@ -245,6 +247,25 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         debtId: debtId,
         operationId: operationId,
       );
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final amtFormatted = creditAmount.toStringAsFixed(1);
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: uid,
+          actionCategory: 'debts',
+          actionType: 'my_debts_settle_credit',
+          actionTitle: 'تسوية رصيد دائن لمورد: $personName',
+          details:
+              'تمت تسوية واستلام رصيد دائن من المورد $personName بقيمة $amtFormatted ${AppStrings.currencyEgp.tr()}${note != null && note.isNotEmpty ? " ($note)" : ""}',
+          amount: creditAmount,
+          extraData: {
+            'debtId': debtId,
+            'personName': personName,
+            'creditAmount': creditAmount,
+            'note': note,
+          },
+        );
+      }
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;
@@ -664,6 +685,43 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           note: debt.details,
         );
       }
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final isPurchase = (debt.id?.startsWith('debt_pur_') == true ||
+            debt.operationId.startsWith('pur_') ||
+            debt.operationType.contains('مشتريات') ||
+            debt.operationType.contains('Purchase'));
+        final person = debt.personName ?? '';
+        final totalFormatted = debt.totalAmount.toStringAsFixed(1);
+        final paidFormatted = debt.paidAmount.toStringAsFixed(1);
+        final remFormatted = debt.remainingAmount.toStringAsFixed(1);
+
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: debt.uid,
+          actionCategory: 'debts',
+          actionType: isPurchase
+              ? 'my_debts_add_from_purchase'
+              : 'my_debts_add_manual',
+          actionTitle: isPurchase
+              ? 'دين مشتريات بالآجل: $person'
+              : 'إضافة دين مورد: $person',
+          details: isPurchase
+              ? 'ترحيل دين تلقائي للمورد $person بقيمة $remFormatted ${AppStrings.currencyEgp.tr()} ناتج عن فاتورة مشتريات'
+              : 'تسجيل دين جديد للمورد $person بإجمالي $totalFormatted ${AppStrings.currencyEgp.tr()} (مدفوع منه $paidFormatted ${AppStrings.currencyEgp.tr()} والمتبقي $remFormatted ${AppStrings.currencyEgp.tr()})${debt.details != null && debt.details!.isNotEmpty ? " - البيان: ${debt.details}" : ""}',
+          amount: debt.totalAmount,
+          extraData: {
+            'debtId': debtRef.id,
+            'personName': person,
+            'totalAmount': debt.totalAmount,
+            'paidAmount': debt.paidAmount,
+            'remainingAmount': debt.remainingAmount,
+            'details': debt.details,
+            'isPurchase': isPurchase,
+          },
+          timestamp: debt.timestamp,
+        );
+      }
+
       return debtRef.id;
     } catch (e) {
       FirebaseErrorHandler.handle(e);
@@ -941,6 +999,26 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           operationId: operationId,
         );
       }
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final amtFormatted = amount.toStringAsFixed(1);
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: uid,
+          actionCategory: 'debts',
+          actionType: 'my_debts_pay_partial',
+          actionTitle: 'سداد دفعة جزئية لمورد: $personName',
+          details:
+              'سداد دفعة نقدية بقيمة $amtFormatted ${AppStrings.currencyEgp.tr()} للمورد $personName وتوزيعها على الفواتير المتبقية${note != null && note.isNotEmpty ? " ($note)" : ""}',
+          amount: amount,
+          extraData: {
+            'personName': personName,
+            'amount': amount,
+            'note': note,
+            'paymentDate': paymentDate?.toIso8601String(),
+          },
+          timestamp: paymentDate,
+        );
+      }
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;
@@ -1099,6 +1177,23 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           operationId: operationId,
         );
       }
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final amtFormatted = totalRequired.toStringAsFixed(1);
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: uid,
+          actionCategory: 'debts',
+          actionType: 'my_debts_settle_all',
+          actionTitle: 'تصفية كامل حساب المورد: $personName',
+          details:
+              'تصفية وتسوية كامل مديونية المورد $personName بالكامل بمبلغ $amtFormatted ${AppStrings.currencyEgp.tr()} وإغلاق كافة فواتيره',
+          amount: totalRequired,
+          extraData: {
+            'personName': personName,
+            'totalSettled': totalRequired,
+          },
+        );
+      }
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;
@@ -1123,6 +1218,8 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       String personName = '';
       String? operationId;
       String paymentId = '';
+      bool isFullySettled = false;
+      double recordedRemaining = 0.0;
 
       // Balance check before starting transaction (prevents Windows C++ plugin crash inside runTransaction)
       if (AppStrings.isVaultEnabled() && amount > 0) {
@@ -1153,6 +1250,8 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         final newPaidAmount = currentPaid + amount;
         final newRemainingAmount = totalAmount - newPaidAmount;
         final isPaid = newRemainingAmount <= 0;
+        isFullySettled = isPaid;
+        recordedRemaining = newRemainingAmount;
 
         // 1. Update debt item
         transaction.update(debtRef, {
@@ -1240,6 +1339,35 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           operationId: operationId,
         );
       }
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final amtFormatted = amount.toStringAsFixed(1);
+        final remFormatted = recordedRemaining > 0 ? recordedRemaining.toStringAsFixed(1) : "0.0";
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: uid,
+          actionCategory: 'debts',
+          actionType: isFullySettled
+              ? 'my_debts_pay_item_full'
+              : 'my_debts_pay_item_partial',
+          actionTitle: isFullySettled
+              ? 'سداد كامل لبند دين مورد: $personName'
+              : 'سداد جزئي لبند دين مورد: $personName',
+          details: isFullySettled
+              ? 'سداد كامل لبند دين للمورد $personName بقيمة $amtFormatted ${AppStrings.currencyEgp.tr()} وإغلاق الفاتورة بالكامل${note != null && note.isNotEmpty ? " ($note)" : ""}'
+              : 'سداد جزء من بند دين للمورد $personName بقيمة $amtFormatted ${AppStrings.currencyEgp.tr()} (المتبقي: $remFormatted ${AppStrings.currencyEgp.tr()})${note != null && note.isNotEmpty ? " ($note)" : ""}',
+          amount: amount,
+          extraData: {
+            'debtId': debtId,
+            'paymentId': paymentId,
+            'personName': personName,
+            'amount': amount,
+            'remainingAmount': recordedRemaining > 0 ? recordedRemaining : 0.0,
+            'isFullySettled': isFullySettled,
+            'note': note,
+          },
+          timestamp: paymentDate,
+        );
+      }
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;
@@ -1318,6 +1446,26 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         await batch.commit();
       }
       await _recalculatePersonTotals(uid, personName);
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final totalFormatted = totalAmount.toStringAsFixed(1);
+        final remFormatted = remainingAmount.toStringAsFixed(1);
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: uid,
+          actionCategory: 'debts',
+          actionType: 'my_debts_delete_item',
+          actionTitle: 'حذف بند دين مورد: $personName',
+          details:
+              'قام الموظف بحذف فاتورة/بند دين للمورد $personName بقيمة إجمالية $totalFormatted ${AppStrings.currencyEgp.tr()} ومتبقي $remFormatted ${AppStrings.currencyEgp.tr()} مع كافة سجلات دفعاتها',
+          amount: totalAmount,
+          extraData: {
+            'debtId': debtId,
+            'personName': personName,
+            'totalAmount': totalAmount,
+            'remainingAmount': remainingAmount,
+          },
+        );
+      }
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;
@@ -1629,6 +1777,57 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           operationId: operationId,
         );
       }
+
+      if (sl.isRegistered<ActivityLoggerService>() && targetPayment != null) {
+        final isPayment = targetPayment!.type != 'debtAdded';
+        final oldFormatted = targetPayment!.amountPaid.toStringAsFixed(1);
+        final newFormatted = newAmount.toStringAsFixed(1);
+        final delta = newAmount - targetPayment!.amountPaid;
+        final deltaFormatted = delta >= 0
+            ? '+${delta.toStringAsFixed(1)}'
+            : delta.toStringAsFixed(1);
+
+        String detailsText;
+        if (isPayment) {
+          if (delta != 0) {
+            detailsText =
+                'تعديل دفعة للمورد $personName: تم تغيير المبلغ من $oldFormatted إلى $newFormatted ${AppStrings.currencyEgp.tr()} ($deltaFormatted)${note != null && note.isNotEmpty ? " - البيان: $note" : ""}';
+          } else {
+            detailsText =
+                'تعديل بيان وتفاصيل دفعة للمورد $personName بمبلغ $newFormatted ${AppStrings.currencyEgp.tr()}${note != null && note.isNotEmpty ? " - البيان: $note" : ""}';
+          }
+        } else {
+          if (delta != 0) {
+            detailsText =
+                'تعديل قيمة الدين للمورد $personName: تم تغيير المبلغ من $oldFormatted إلى $newFormatted ${AppStrings.currencyEgp.tr()} ($deltaFormatted)';
+          } else {
+            detailsText =
+                'تأكيد وتحديث قيد دين للمورد $personName بقيمة $newFormatted ${AppStrings.currencyEgp.tr()}';
+          }
+        }
+
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: uid,
+          actionCategory: 'debts',
+          actionType: isPayment
+              ? 'my_debts_update_payment'
+              : 'my_debts_update_debt',
+          actionTitle: isPayment
+              ? 'تعديل دفعة مورد: $personName'
+              : 'تعديل قيمة دين مورد: $personName',
+          details: detailsText,
+          amount: newAmount,
+          extraData: {
+            'debtId': debtId,
+            'paymentId': paymentId,
+            'personName': personName,
+            'oldAmount': targetPayment!.amountPaid,
+            'newAmount': newAmount,
+            'delta': delta,
+            'note': note,
+          },
+        );
+      }
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;
@@ -1816,6 +2015,31 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           uid: uid,
           debtId: debtId,
           operationId: operationId,
+        );
+      }
+
+      if (sl.isRegistered<ActivityLoggerService>() && targetPayment != null) {
+        final isPayment = targetPayment!.type != 'debtAdded';
+        final amtFormatted = targetPayment!.amountPaid.toStringAsFixed(1);
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: uid,
+          actionCategory: 'debts',
+          actionType: isPayment
+              ? 'my_debts_delete_payment'
+              : 'my_debts_delete_debt_record',
+          actionTitle: isPayment
+              ? 'حذف دفعة مورد: $personNameForRecalc'
+              : 'حذف قيد دين مورد: $personNameForRecalc',
+          details: isPayment
+              ? 'تم حذف دفعة مسددة للمورد $personNameForRecalc بقيمة $amtFormatted ${AppStrings.currencyEgp.tr()} وإعادة المبلغ للخزينة وزيادة المديونية'
+              : 'تم حذف قيد دين أصلي بقيمة $amtFormatted ${AppStrings.currencyEgp.tr()} للمورد $personNameForRecalc',
+          amount: targetPayment!.amountPaid,
+          extraData: {
+            'debtId': debtId,
+            'paymentId': paymentId,
+            'personName': personNameForRecalc,
+            'deletedAmount': targetPayment!.amountPaid,
+          },
         );
       }
     } catch (e) {

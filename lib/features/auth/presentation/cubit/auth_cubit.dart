@@ -182,6 +182,7 @@ class AuthCubit extends Cubit<AuthState> {
         role: user.role,
         permissionsList: user.permissions,
         employeeUid: user.isEmployee ? user.uid : null,
+        employeeName: user.isEmployee ? (user.displayName ?? '') : null,
       );
       await PermissionService.instance.saveToStorage(secureStorage);
 

@@ -1,16 +1,19 @@
 // ignore_for_file: avoid_types_as_parameter_names, unused_element
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/activity_logger_service.dart';
+import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/features/cashbox/domain/entities/vault_transaction_entity.dart';
 
 import '../../../../core/error/firebase_error_handler.dart';
 import '../../../../core/usecases/pagination_params.dart';
 import '../../../../core/utils/summary_helper.dart';
+import '../../domain/entities/monthly_collected_amount.dart';
 import '../../domain/entities/payment_entity.dart';
 import '../models/debt_model.dart';
 import '../models/payment_model.dart';
-import '../../domain/entities/monthly_collected_amount.dart';
-import 'package:tahsel/features/cashbox/domain/entities/vault_transaction_entity.dart';
 
 abstract class DebtRemoteDataSource {
   Future<String> addDebt(DebtModel debt);
@@ -126,42 +129,31 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
       final debtRef = userRef.collection('debts').doc(debtId);
       final opRef = userRef.collection('operations').doc(debtId);
 
-      final dueDateTimestamp =
-          dueDate != null ? Timestamp.fromDate(dueDate) : null;
+      final dueDateTimestamp = dueDate != null
+          ? Timestamp.fromDate(dueDate)
+          : null;
 
       final batch = firestore.batch();
 
-      batch.set(
-        debtRef,
-        {
-          'dueDate': dueDateTimestamp,
-          'lastReminderSentAt': null,
-          'lastUpdatedAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+      batch.set(debtRef, {
+        'dueDate': dueDateTimestamp,
+        'lastReminderSentAt': null,
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
-      batch.set(
-        opRef,
-        {
-          'dueDate': dueDateTimestamp,
-          'lastUpdatedAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+      batch.set(opRef, {
+        'dueDate': dueDateTimestamp,
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
       // If this debt is linked to an invoice (debt_inv_<invoiceId>)
       if (debtId.startsWith('debt_inv_')) {
         final invoiceId = debtId.substring('debt_inv_'.length);
         final invRef = userRef.collection('invoices').doc(invoiceId);
-        batch.set(
-          invRef,
-          {
-            'dueDate': dueDateTimestamp,
-            'lastUpdatedAt': FieldValue.serverTimestamp(),
-          },
-          SetOptions(merge: true),
-        );
+        batch.set(invRef, {
+          'dueDate': dueDateTimestamp,
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
       }
 
       await batch.commit();
@@ -219,8 +211,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
       if (!debtSnap.exists) return;
 
       final debtData = debtSnap.data() as Map<String, dynamic>;
-      final double totalAmount =
-          (debtData['totalAmount'] as num? ?? 0.0).toDouble();
+      final double totalAmount = (debtData['totalAmount'] as num? ?? 0.0)
+          .toDouble();
       final String customerName = debtData['customerName'] as String? ?? '';
       final String operationId = debtData['operationId'] as String? ?? '';
 
@@ -234,9 +226,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         final vaultSnap = await vaultSummaryRef.get();
         final double currentVaultBalance =
             (vaultSnap.exists && vaultSnap.data() != null)
-                ? ((vaultSnap.data()!['currentBalance'] as num?)?.toDouble() ??
-                    0.0)
-                : 0.0;
+            ? ((vaultSnap.data()!['currentBalance'] as num?)?.toDouble() ?? 0.0)
+            : 0.0;
         if (currentVaultBalance < creditAmount) {
           throw Exception(AppStrings.insufficientBalance);
         }
@@ -265,15 +256,11 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
       if (operationId.isNotEmpty) {
         final opRef = userRef.collection('operations').doc(operationId);
-        batch.set(
-          opRef,
-          {
-            'paidAmount': newPaid,
-            'remainingDebt': newRemaining,
-            'lastUpdatedAt': FieldValue.serverTimestamp(),
-          },
-          SetOptions(merge: true),
-        );
+        batch.set(opRef, {
+          'paidAmount': newPaid,
+          'remainingDebt': newRemaining,
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
       }
 
       // If debt is linked to an invoice (e.g. debt_inv_...)
@@ -281,23 +268,21 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         final invoiceId = debtId.replaceFirst('debt_inv_', '');
         if (invoiceId.isNotEmpty) {
           final invoiceRef = userRef.collection('invoices').doc(invoiceId);
-          batch.set(
-            invoiceRef,
-            {
-              'syncedTotalPaid': newPaid,
-              'status': 'paid',
-              'isRefundedToCustomer': true,
-              'lastUpdatedAt': FieldValue.serverTimestamp(),
-            },
-            SetOptions(merge: true),
-          );
+          batch.set(invoiceRef, {
+            'syncedTotalPaid': newPaid,
+            'status': 'paid',
+            'isRefundedToCustomer': true,
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
         }
       }
 
       // Vault Deduction (outFlow)
       if (AppStrings.isVaultEnabled()) {
         final vaultTxId = 'vault_tx_cust_${paymentRef.id}';
-        final vaultTxRef = userRef.collection('vault_transactions').doc(vaultTxId);
+        final vaultTxRef = userRef
+            .collection('vault_transactions')
+            .doc(vaultTxId);
         final vaultSummaryRef = userRef.collection('vault').doc('summary');
 
         batch.set(vaultTxRef, {
@@ -313,43 +298,50 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           'createdAt': FieldValue.serverTimestamp(),
         });
 
-        batch.set(
-          vaultSummaryRef,
-          {
-            'currentBalance': FieldValue.increment(-creditAmount),
-            'totalOut': FieldValue.increment(creditAmount),
-            'transactionCount': FieldValue.increment(1),
-            'lastUpdatedAt': FieldValue.serverTimestamp(),
-          },
-          SetOptions(merge: true),
-        );
+        batch.set(vaultSummaryRef, {
+          'currentBalance': FieldValue.increment(-creditAmount),
+          'totalOut': FieldValue.increment(creditAmount),
+          'transactionCount': FieldValue.increment(1),
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
       }
 
       // Summary collections (monthly and all-time)
       final allTimeRef = userRef
           .collection('summaries')
           .doc(SummaryHelper.getAllTimeKey());
-      batch.set(
-        allTimeRef,
-        {
-          'totalCollected': FieldValue.increment(-creditAmount),
-          'lastUpdatedAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+      batch.set(allTimeRef, {
+        'totalCollected': FieldValue.increment(-creditAmount),
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
       final now = DateTime.now();
       final monthlyKey = SummaryHelper.getMonthlyKey(now);
       final monthlyRef = userRef.collection('summaries').doc(monthlyKey);
-      batch.set(
-        monthlyRef,
-        {
-          'totalCollected': FieldValue.increment(-creditAmount),
-          'isHealed': false,
-          'lastUpdatedAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+      batch.set(monthlyRef, {
+        'totalCollected': FieldValue.increment(-creditAmount),
+        'isHealed': false,
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        sl<ActivityLoggerService>().appendToBatch(
+          batch,
+          ownerUid: uid,
+          actionCategory: 'debts',
+          actionType: 'customer_settle_credit',
+          actionTitle: 'تسوية رصيد دائن للعميل: $customerName',
+          details:
+              'تمت تسوية وإرجاع رصيد دائن بمبلغ ${creditAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} للعميل $customerName${note != null && note.isNotEmpty ? " ($note)" : ""}',
+          amount: creditAmount,
+          extraData: {
+            'debtId': debtId,
+            'customerName': customerName,
+            'creditAmount': creditAmount,
+            'note': note,
+          },
+        );
+      }
 
       await batch.commit();
     } catch (e) {
@@ -601,7 +593,9 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         });
 
         if (AppStrings.isVaultEnabled() && debt.paidAmount > 0) {
-          final vaultTxRef = userRef.collection('vault_transactions').doc('vault_tx_cust_${debt.operationId}_payment');
+          final vaultTxRef = userRef
+              .collection('vault_transactions')
+              .doc('vault_tx_cust_${debt.operationId}_payment');
           final vaultSummaryRef = userRef.collection('vault').doc('summary');
 
           batch.set(vaultTxRef, {
@@ -610,25 +604,25 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             'amount': debt.paidAmount,
             'direction': 'in',
             'source': VaultTransactionSource.customerDebt.name,
-            'type': debt.remainingAmount <= 0 ? 'full_settlement' : 'partial_payment',
+            'type': debt.remainingAmount <= 0
+                ? 'full_settlement'
+                : 'partial_payment',
             'description': 'تحصيل دفعة من العميل: ${debt.customerName ?? ''}',
             'relatedEntityId': '${debt.operationId}_payment',
             'relatedOperationId': debt.operationId,
             'createdAt': debt.timestamp != null
-                ? Timestamp.fromDate(debt.timestamp!.add(const Duration(milliseconds: 1)))
+                ? Timestamp.fromDate(
+                    debt.timestamp!.add(const Duration(milliseconds: 1)),
+                  )
                 : FieldValue.serverTimestamp(),
           });
 
-          batch.set(
-            vaultSummaryRef,
-            {
-              'currentBalance': FieldValue.increment(debt.paidAmount),
-              'totalIn': FieldValue.increment(debt.paidAmount),
-              'transactionCount': FieldValue.increment(1),
-              'lastUpdatedAt': FieldValue.serverTimestamp(),
-            },
-            SetOptions(merge: true),
-          );
+          batch.set(vaultSummaryRef, {
+            'currentBalance': FieldValue.increment(debt.paidAmount),
+            'totalIn': FieldValue.increment(debt.paidAmount),
+            'transactionCount': FieldValue.increment(1),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
         }
       }
 
@@ -666,6 +660,32 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
               ? Timestamp.fromDate(debt.timestamp!)
               : FieldValue.serverTimestamp(),
         });
+      }
+
+      // 7. Log Employee Activity
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final remFormatted = debt.remainingAmount.toStringAsFixed(1);
+        final totalFormatted = debt.totalAmount.toStringAsFixed(1);
+        final details = debt.productOrSessionDetails;
+        sl<ActivityLoggerService>().appendToBatch(
+          batch,
+          ownerUid: debt.uid,
+          actionCategory: 'debts',
+          actionType: 'customer_add_debt_manual',
+          actionTitle: 'تسجيل دين على عميل: ${debt.customerName ?? ""}',
+          details:
+              'تسجيل دين جديد على العميل ${debt.customerName ?? ""} بمبلغ $remFormatted ${AppStrings.currencyEgp.tr()} (الإجمالي: $totalFormatted ${AppStrings.currencyEgp.tr()})${details != null && details.isNotEmpty ? " - البيان: $details" : ""}',
+          amount: debt.totalAmount,
+          extraData: {
+            'debtId': debtRef.id,
+            'customerName': debt.customerName,
+            'totalAmount': debt.totalAmount,
+            'paidAmount': debt.paidAmount,
+            'remainingAmount': debt.remainingAmount,
+            'details': details,
+          },
+          timestamp: debt.timestamp,
+        );
       }
 
       await batch.commit();
@@ -761,7 +781,9 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
         // Read the linked invoice snapshot (if this is an invoice-linked debt)
         final invoiceSnap = await _getLinkedInvoiceSnap(
-          transaction, uid, debtRef.id,
+          transaction,
+          uid,
+          debtRef.id,
         );
 
         // 2. ALL WRITES SECOND
@@ -807,7 +829,9 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
         // Record Vault Movement (Atomic Inflow)
         if (AppStrings.isVaultEnabled() && payment.amountPaid > 0) {
-          final vaultTxRef = userRef.collection('vault_transactions').doc('vault_tx_cust_${paymentRef.id}');
+          final vaultTxRef = userRef
+              .collection('vault_transactions')
+              .doc('vault_tx_cust_${paymentRef.id}');
           final vaultSummaryRef = userRef.collection('vault').doc('summary');
 
           transaction.set(vaultTxRef, {
@@ -817,7 +841,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             'direction': 'in',
             'source': VaultTransactionSource.customerDebt.name,
             'type': isPaid ? 'full_settlement' : 'partial_payment',
-            'description': 'تحصيل دفعة من العميل: ${debtData['customerName'] ?? ''}',
+            'description':
+                'تحصيل دفعة من العميل: ${debtData['customerName'] ?? ''}',
             'relatedEntityId': paymentRef.id,
             'relatedOperationId': debtRef.id,
             'createdAt': payment.createdAt != null
@@ -825,16 +850,12 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
                 : FieldValue.serverTimestamp(),
           });
 
-          transaction.set(
-            vaultSummaryRef,
-            {
-              'currentBalance': FieldValue.increment(payment.amountPaid),
-              'totalIn': FieldValue.increment(payment.amountPaid),
-              'transactionCount': FieldValue.increment(1),
-              'lastUpdatedAt': FieldValue.serverTimestamp(),
-            },
-            SetOptions(merge: true),
-          );
+          transaction.set(vaultSummaryRef, {
+            'currentBalance': FieldValue.increment(payment.amountPaid),
+            'totalIn': FieldValue.increment(payment.amountPaid),
+            'transactionCount': FieldValue.increment(1),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
         }
 
         // ── Invoice Sync (inline, atomic) ──────────────────────────────────
@@ -878,14 +899,18 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
         // Customer status update is grouped by current timestamp
         if (becameFullyPaid) {
-          final currentKeys = SummaryHelper.getSummaryKeys(payment.createdAt ?? DateTime.now());
+          final currentKeys = SummaryHelper.getSummaryKeys(
+            payment.createdAt ?? DateTime.now(),
+          );
           for (final key in currentKeys) {
             addSummaryIncrement(key, 'debtCustomersCount', -1.0);
           }
         }
 
         // Payment metrics (totalCollected) are grouped by actual payment transaction date (now)
-        final paymentKeys = SummaryHelper.getSummaryKeys(payment.createdAt ?? DateTime.now());
+        final paymentKeys = SummaryHelper.getSummaryKeys(
+          payment.createdAt ?? DateTime.now(),
+        );
         for (final key in paymentKeys) {
           addSummaryIncrement(key, 'totalCollected', payment.amountPaid);
         }
@@ -902,6 +927,34 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           transaction.set(summaryRef, updateData, SetOptions(merge: true));
         }
       });
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final isFull = payment.type == PaymentType.full;
+        final amtFormatted = payment.amountPaid.toStringAsFixed(1);
+        final rem = debt.remainingAmount - payment.amountPaid;
+        final remFormatted = rem > 0 ? rem.toStringAsFixed(1) : "0.0";
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: uid,
+          actionCategory: 'debts',
+          actionType: isFull ? 'customer_debt_pay_full' : 'customer_debt_pay_partial',
+          actionTitle: isFull
+              ? 'سداد كامل لدين عميل: ${debt.customerName ?? ""}'
+              : 'سداد جزئي لدين عميل: ${debt.customerName ?? ""}',
+          details: isFull
+              ? 'سداد كامل قيمة الدين للعميل ${debt.customerName ?? ""} بمبلغ $amtFormatted ${AppStrings.currencyEgp.tr()} وتم إغلاق البند تماماً'
+              : 'سداد دفعة جزئية بقيمة $amtFormatted ${AppStrings.currencyEgp.tr()} للعميل ${debt.customerName ?? ""} (المتبقي: $remFormatted ${AppStrings.currencyEgp.tr()})',
+          amount: payment.amountPaid,
+          extraData: {
+            'debtId': debt.id,
+            'customerName': debt.customerName,
+            'paymentType': payment.type.name,
+            'amountPaid': payment.amountPaid,
+            'remainingAmount': rem > 0 ? rem : 0.0,
+            'isFull': isFull,
+          },
+          timestamp: payment.createdAt,
+        );
+      }
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       throw Exception('Failed to process payment: $e');
@@ -948,7 +1001,9 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           final debtId = doc.id;
           if (invoiceSnaps.containsKey(debtId)) continue;
           invoiceSnaps[debtId] = await _getLinkedInvoiceSnap(
-            transaction, uid, debtId,
+            transaction,
+            uid,
+            debtId,
           );
         }
 
@@ -1047,15 +1102,11 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
                   : FieldValue.serverTimestamp(),
             });
 
-            transaction.set(
-              vaultSummaryRef,
-              {
-                'currentBalance': FieldValue.increment(paymentForThisItem),
-                'totalIn': FieldValue.increment(paymentForThisItem),
-                'lastUpdatedAt': FieldValue.serverTimestamp(),
-              },
-              SetOptions(merge: true),
-            );
+            transaction.set(vaultSummaryRef, {
+              'currentBalance': FieldValue.increment(paymentForThisItem),
+              'totalIn': FieldValue.increment(paymentForThisItem),
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
           }
 
           // ── Invoice Sync (inline, atomic) ──────────────────────────────
@@ -1082,7 +1133,9 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           }
 
           // 2. Payment metrics (totalCollected) are grouped by actual payment transaction date (now)
-          final paymentKeys = SummaryHelper.getSummaryKeys(paymentDate ?? DateTime.now());
+          final paymentKeys = SummaryHelper.getSummaryKeys(
+            paymentDate ?? DateTime.now(),
+          );
           for (final key in paymentKeys) {
             addSummaryIncrement(key, 'totalCollected', paymentForThisItem);
           }
@@ -1094,7 +1147,9 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           (sum, d) => sum + (d.data()['remainingAmount'] as num).toDouble(),
         );
         if (amount >= totalUnpaidInSnapshot - 1e-9) {
-          final nowKeys = SummaryHelper.getSummaryKeys(paymentDate ?? DateTime.now());
+          final nowKeys = SummaryHelper.getSummaryKeys(
+            paymentDate ?? DateTime.now(),
+          );
           for (final key in nowKeys) {
             addSummaryIncrement(key, 'debtCustomersCount', -1.0);
           }
@@ -1117,6 +1172,21 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           transaction.set(summaryRef, updateData, SetOptions(merge: true));
         });
       });
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final amtFormatted = amount.toStringAsFixed(1);
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: uid,
+          actionCategory: 'debts',
+          actionType: 'customer_debt_pay_total',
+          actionTitle: 'سداد من إجمالي ديون العميل: $customerName',
+          details:
+              'تحصيل دفعة نقدية بقيمة $amtFormatted ${AppStrings.currencyEgp.tr()} وتوزيعها على فواتير العميل $customerName',
+          amount: amount,
+          extraData: {'customerName': customerName, 'amountPaid': amount},
+          timestamp: paymentDate,
+        );
+      }
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       throw Exception('Failed to pay total debt: $e');
@@ -1166,7 +1236,9 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           final debtId = doc.id;
           if (invoiceSnaps.containsKey(debtId)) continue;
           invoiceSnaps[debtId] = await _getLinkedInvoiceSnap(
-            transaction, uid, debtId,
+            transaction,
+            uid,
+            debtId,
           );
         }
 
@@ -1244,15 +1316,11 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
               'createdAt': FieldValue.serverTimestamp(),
             });
 
-            transaction.set(
-              vaultSummaryRef,
-              {
-                'currentBalance': FieldValue.increment(amountToPay),
-                'totalIn': FieldValue.increment(amountToPay),
-                'lastUpdatedAt': FieldValue.serverTimestamp(),
-              },
-              SetOptions(merge: true),
-            );
+            transaction.set(vaultSummaryRef, {
+              'currentBalance': FieldValue.increment(amountToPay),
+              'totalIn': FieldValue.increment(amountToPay),
+              'lastUpdatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
           }
 
           // ── Invoice Sync (inline, atomic) ──────────────────────────────
@@ -1313,6 +1381,21 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           transaction.set(summaryRef, updateData, SetOptions(merge: true));
         });
       });
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: uid,
+          actionCategory: 'debts',
+          actionType: 'customer_settle_all',
+          actionTitle: 'تصفية حساب العميل بالكامل: $customerName',
+          details:
+              'تم تسوية وتصفية كافة الديون المستحقة على العميل $customerName بالكامل (${snapshot.docs.length} ديون) وتصفير حسابه',
+          extraData: {
+            'customerName': customerName,
+            'debtsCount': snapshot.docs.length,
+          },
+        );
+      }
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       throw Exception('Failed to mark customer as paid: $e');
@@ -1452,6 +1535,21 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         }
 
         await batch.commit();
+      }
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: uid,
+          actionCategory: 'debts',
+          actionType: 'customer_delete_all_debts',
+          actionTitle: 'حذف كافة ديون وسجلات العميل: $customerName',
+          details:
+              'تم حذف كافة سجلات الديون والمدفوعات الخاصة بالعميل $customerName نهائياً (${snapshot.docs.length} سجل)',
+          extraData: {
+            'customerName': customerName,
+            'debtsCount': snapshot.docs.length,
+          },
+        );
       }
     } catch (e) {
       FirebaseErrorHandler.handle(e);
@@ -1634,6 +1732,25 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         }
       }
 
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        sl<ActivityLoggerService>().appendToBatch(
+          batch,
+          ownerUid: uid,
+          actionCategory: 'debts',
+          actionType: 'customer_delete_debt_item',
+          actionTitle: 'حذف فاتورة دين للعميل: ${customerName ?? ""}',
+          details:
+              'تم حذف بند الدين رقم $debtId للعميل ${customerName ?? ""} بقيمة إجمالية ${totalAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
+          amount: totalAmount,
+          extraData: {
+            'debtId': debtId,
+            'customerName': customerName,
+            'totalAmount': totalAmount,
+            'remainingAmount': remainingAmount,
+          },
+        );
+      }
+
       await batch.commit();
     } catch (e) {
       FirebaseErrorHandler.handle(e);
@@ -1800,6 +1917,10 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         );
       }
 
+      double oldAmount = 0.0;
+      double recordedDelta = 0.0;
+      String itemType = 'payment';
+
       await firestore.runTransaction((transaction) async {
         final debtSnap = await transaction.get(debtRef);
         if (!debtSnap.exists) throw Exception('Debt not found');
@@ -1818,6 +1939,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         final String relatedTo = targetPayment.type == PaymentType.debtAdded
             ? 'debt'
             : 'payment';
+        oldAmount = targetPayment.amountPaid;
+        itemType = relatedTo;
 
         // RULE 3 validation for debtAdded
         if (targetPayment.type == PaymentType.debtAdded) {
@@ -1840,10 +1963,15 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         }
 
         final delta = newAmount - targetPayment.amountPaid;
+        recordedDelta = delta;
         if (delta == 0) return;
 
         // Read the linked invoice snapshot DURING reads phase (before any writes)
-        final invoiceSnap = await _getLinkedInvoiceSnap(transaction, uid, debtId);
+        final invoiceSnap = await _getLinkedInvoiceSnap(
+          transaction,
+          uid,
+          debtId,
+        );
 
         // Direct Mutation: Update the same item
         transaction.update(paymentRef, {
@@ -1855,8 +1983,11 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         // Record Vault adjustment
         if (AppStrings.isVaultEnabled() && relatedTo == 'payment') {
           final userRef = firestore.collection('users').doc(uid);
-          final vaultTxId = 'vault_tx_cust_${paymentId}_adj_${DateTime.now().millisecondsSinceEpoch}';
-          final vaultTxRef = userRef.collection('vault_transactions').doc(vaultTxId);
+          final vaultTxId =
+              'vault_tx_cust_${paymentId}_adj_${DateTime.now().millisecondsSinceEpoch}';
+          final vaultTxRef = userRef
+              .collection('vault_transactions')
+              .doc(vaultTxId);
           final vaultSummaryRef = userRef.collection('vault').doc('summary');
 
           transaction.set(vaultTxRef, {
@@ -1872,16 +2003,12 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             'createdAt': FieldValue.serverTimestamp(),
           });
 
-          transaction.set(
-            vaultSummaryRef,
-            {
-              'currentBalance': FieldValue.increment(delta),
-              'totalIn': FieldValue.increment(delta > 0 ? delta : 0.0),
-              'totalOut': FieldValue.increment(delta < 0 ? -delta : 0.0),
-              'lastUpdatedAt': FieldValue.serverTimestamp(),
-            },
-            SetOptions(merge: true),
-          );
+          transaction.set(vaultSummaryRef, {
+            'currentBalance': FieldValue.increment(delta),
+            'totalIn': FieldValue.increment(delta > 0 ? delta : 0.0),
+            'totalOut': FieldValue.increment(delta < 0 ? -delta : 0.0),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
         }
 
         // Compute new values
@@ -2029,6 +2156,56 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           transaction.set(summaryRef, updateData, SetOptions(merge: true));
         }
       });
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final isPayment = itemType == 'payment';
+        final oldFormatted = oldAmount.toStringAsFixed(1);
+        final newFormatted = newAmount.toStringAsFixed(1);
+        final deltaFormatted = recordedDelta >= 0
+            ? '+${recordedDelta.toStringAsFixed(1)}'
+            : recordedDelta.toStringAsFixed(1);
+
+        String detailsText;
+        if (isPayment) {
+          if (recordedDelta != 0) {
+            detailsText =
+                'تعديل دفعة للعميل ${customerName ?? ""}: تم تغيير المبلغ من $oldFormatted إلى $newFormatted ${AppStrings.currencyEgp.tr()} ($deltaFormatted)${note != null && note.isNotEmpty ? " - البيان: $note" : ""}';
+          } else {
+            detailsText =
+                'تعديل بيان وتفاصيل دفعة العميل ${customerName ?? ""} بمبلغ $newFormatted ${AppStrings.currencyEgp.tr()}${note != null && note.isNotEmpty ? " - البيان: $note" : ""}';
+          }
+        } else {
+          if (recordedDelta != 0) {
+            detailsText =
+                'تعديل أصل قيمة الدين للعميل ${customerName ?? ""}: تم تغيير المبلغ من $oldFormatted إلى $newFormatted ${AppStrings.currencyEgp.tr()} ($deltaFormatted)';
+          } else {
+            detailsText =
+                'تأكيد وتحديث قيد أصل الدين للعميل ${customerName ?? ""} بمبلغ $newFormatted ${AppStrings.currencyEgp.tr()}';
+          }
+        }
+
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: uid,
+          actionCategory: 'debts',
+          actionType: isPayment
+              ? 'customer_update_payment'
+              : 'customer_update_debt_principal',
+          actionTitle: isPayment
+              ? 'تعديل دفعة عميل: ${customerName ?? ""}'
+              : 'تعديل أصل دين عميل: ${customerName ?? ""}',
+          details: detailsText,
+          amount: newAmount,
+          extraData: {
+            'debtId': debtId,
+            'paymentId': paymentId,
+            'customerName': customerName,
+            'oldAmount': oldAmount,
+            'newAmount': newAmount,
+            'delta': recordedDelta,
+            'note': note,
+          },
+        );
+      }
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;
@@ -2068,6 +2245,9 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         wasCustomerFullyPaid = unpaidSnapshot.docs.isEmpty;
       }
 
+      double deletedAmount = 0.0;
+      String itemType = 'payment';
+
       await firestore.runTransaction((transaction) async {
         final debtSnap = await transaction.get(debtRef);
         if (!debtSnap.exists) throw Exception('Debt not found');
@@ -2084,6 +2264,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         final String relatedTo = targetPayment.type == PaymentType.debtAdded
             ? 'debt'
             : 'payment';
+        deletedAmount = targetPayment.amountPaid;
+        itemType = relatedTo;
 
         if (targetPayment.type == PaymentType.debtAdded) {
           // RULE 2: Check for newer payments
@@ -2100,17 +2282,26 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         }
 
         // Read the linked invoice snapshot DURING the reads phase (before any writes)
-        final invoiceSnap = await _getLinkedInvoiceSnap(transaction, uid, debtId);
+        final invoiceSnap = await _getLinkedInvoiceSnap(
+          transaction,
+          uid,
+          debtId,
+        );
 
         // Direct Mutation: Delete the same item
         transaction.delete(paymentRef);
 
         final amountToDelete = targetPayment.amountPaid;
 
-        if (AppStrings.isVaultEnabled() && relatedTo == 'payment' && amountToDelete > 0) {
+        if (AppStrings.isVaultEnabled() &&
+            relatedTo == 'payment' &&
+            amountToDelete > 0) {
           final userRef = firestore.collection('users').doc(uid);
-          final vaultTxId = 'vault_tx_cust_${paymentId}_rev_${DateTime.now().millisecondsSinceEpoch}';
-          final vaultTxRef = userRef.collection('vault_transactions').doc(vaultTxId);
+          final vaultTxId =
+              'vault_tx_cust_${paymentId}_rev_${DateTime.now().millisecondsSinceEpoch}';
+          final vaultTxRef = userRef
+              .collection('vault_transactions')
+              .doc(vaultTxId);
           final vaultSummaryRef = userRef.collection('vault').doc('summary');
 
           transaction.set(vaultTxRef, {
@@ -2126,15 +2317,11 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             'createdAt': FieldValue.serverTimestamp(),
           });
 
-          transaction.set(
-            vaultSummaryRef,
-            {
-              'currentBalance': FieldValue.increment(-amountToDelete),
-              'totalIn': FieldValue.increment(-amountToDelete),
-              'lastUpdatedAt': FieldValue.serverTimestamp(),
-            },
-            SetOptions(merge: true),
-          );
+          transaction.set(vaultSummaryRef, {
+            'currentBalance': FieldValue.increment(-amountToDelete),
+            'totalIn': FieldValue.increment(-amountToDelete),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
         }
 
         // Calculate new values
@@ -2269,6 +2456,31 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           transaction.set(summaryRef, updateData, SetOptions(merge: true));
         }
       });
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final isPayment = itemType == 'payment';
+        final amtFormatted = deletedAmount.toStringAsFixed(1);
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: uid,
+          actionCategory: 'debts',
+          actionType: isPayment
+              ? 'customer_delete_payment'
+              : 'customer_delete_debt_record',
+          actionTitle: isPayment
+              ? 'حذف دفعة عميل: ${customerName ?? ""}'
+              : 'حذف أصل دين عميل: ${customerName ?? ""}',
+          details: isPayment
+              ? 'تم حذف دفعة محصلة بقيمة $amtFormatted ${AppStrings.currencyEgp.tr()} للعميل ${customerName ?? ""} وإعادتها لذمته وخصمها من الخزينة'
+              : 'تم حذف قيد الدين الأصلي بقيمة $amtFormatted ${AppStrings.currencyEgp.tr()} للعميل ${customerName ?? ""}',
+          amount: deletedAmount,
+          extraData: {
+            'debtId': debtId,
+            'paymentId': paymentId,
+            'customerName': customerName,
+            'deletedAmount': deletedAmount,
+          },
+        );
+      }
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;
@@ -2409,7 +2621,6 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
     return transaction.get(invoiceRef);
   }
 
-
   @override
   Future<PaginatedResult<DebtModel>> getDebtsPaginated(
     String uid, {
@@ -2421,7 +2632,9 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
     try {
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
-      final in3Days = today.add(const Duration(days: 4)); // Next 3 days (inclusive)
+      final in3Days = today.add(
+        const Duration(days: 4),
+      ); // Next 3 days (inclusive)
 
       Query<Map<String, dynamic>> query = firestore
           .collection('users')

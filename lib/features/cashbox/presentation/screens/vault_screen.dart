@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/activity_logger_service.dart';
+import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
@@ -134,6 +136,22 @@ class _VaultScreenState extends State<VaultScreen> {
             ? state.selectedSource.name
             : null,
       );
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: AppStrings.userToken,
+          actionCategory: 'reports',
+          actionType: 'print_vault_report',
+          actionTitle: 'طباعة كشف الخزينة',
+          details:
+              'طباعة كشف حركات الخزينة والسيولة النقدية (${transactionsToExport.length} حركة مسجلة)',
+          extraData: {
+            'transactionsCount': transactionsToExport.length,
+            'currentBalance': state.summary.currentBalance,
+            'sourceFilter': state.selectedSource.name,
+          },
+        );
+      }
     } catch (e) {
       if (mounted) {
         AppLogger.printMessage('Vault PDF print error: $e');
@@ -189,6 +207,22 @@ class _VaultScreenState extends State<VaultScreen> {
             ? state.selectedSource.name
             : null,
       );
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: AppStrings.userToken,
+          actionCategory: 'reports',
+          actionType: 'export_vault_report',
+          actionTitle: 'تصدير تقرير الخزينة PDF',
+          details:
+              'تصدير ومشاركة تقرير الخزينة والسيولة النقدية PDF (${transactionsToExport.length} حركة مسجلة)',
+          extraData: {
+            'transactionsCount': transactionsToExport.length,
+            'currentBalance': state.summary.currentBalance,
+            'sourceFilter': state.selectedSource.name,
+          },
+        );
+      }
     } catch (e) {
       if (mounted) {
         AppLogger.printMessage('Vault PDF export error: $e');

@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tahsel/core/services/activity_logger_service.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/cashbox/service_injection/cashbox_injection.dart';
 import 'package:tahsel/features/create_account/service_injection/create_account_injection.dart';
@@ -60,6 +61,11 @@ Future<void> initDependencies() async {
   if (!sl.isRegistered<FirebaseFirestore>()) {
     sl.registerLazySingleton<FirebaseFirestore>(
       () => FirebaseFirestore.instance,
+    );
+  }
+  if (!sl.isRegistered<ActivityLoggerService>()) {
+    sl.registerLazySingleton<ActivityLoggerService>(
+      () => ActivityLoggerService(firestore: sl()),
     );
   }
 

@@ -1,4 +1,4 @@
-﻿import 'dart:io' show Platform;
+import 'dart:io' show Platform;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -165,10 +165,14 @@ class _SplashScreenState extends State<SplashScreen>
 
         // Live permissions update from Firestore
         final perms = List<String>.from(data['permissions'] ?? []);
+        final empName = (data['name'] as String?) ??
+            (data['fullName'] as String?) ??
+            user.displayName;
         PermissionService.instance.init(
           role: 'employee',
           permissionsList: perms,
           employeeUid: user.uid,
+          employeeName: empName,
         );
         await PermissionService.instance.saveToStorage(secureStorage);
         PermissionService.instance.startRealtimeListener(

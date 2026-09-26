@@ -6,6 +6,7 @@ import 'package:internet_connection_checker/internet_connection_checker.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../../../core/utils/app_logger.dart';
+import '../../../../core/utils/app_strings.dart';
 import '../../../offline_sync/data/models/offline_record.dart';
 import '../../../offline_sync/domain/repositories/offline_sync_repository.dart';
 import '../../domain/entities/ps_session_entity.dart';
@@ -49,6 +50,11 @@ class PsSessionRepositoryImpl implements PsSessionRepository {
       'turnCount': session.turnCount,
       if (session.ledgerNumber != null) 'ledgerNumber': session.ledgerNumber,
       'createdAt': session.createdAt.toIso8601String(),
+      if (AppStrings.isEmployee) ...{
+        'employeeUid': AppStrings.employeeAuthUid,
+        'employeeName': AppStrings.loggedInEmployeeName,
+        'rolePreset': AppStrings.userRole,
+      },
     };
   }
 
@@ -165,6 +171,11 @@ class PsSessionRepositoryImpl implements PsSessionRepository {
         'turnCount': turnCount,
         // Embed full session snapshot for self-contained sync
         if (cachedSession != null) 'sessionSnapshot': cachedSession,
+        if (AppStrings.isEmployee) ...{
+          'employeeUid': AppStrings.employeeAuthUid,
+          'employeeName': AppStrings.loggedInEmployeeName,
+          'rolePreset': AppStrings.userRole,
+        },
       };
 
       // Use a DISTINCT key so this record doesn't overwrite the ps_session_start

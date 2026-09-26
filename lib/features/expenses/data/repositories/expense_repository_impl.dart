@@ -61,6 +61,11 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
         'description': modelWithId.description,
         'createdAt': modelWithId.createdAt.toIso8601String(), // Safe for JSON/Hive
         'monthKey': modelWithId.monthKey,
+        if (AppStrings.isEmployee) ...{
+          'employeeUid': AppStrings.employeeAuthUid,
+          'employeeName': AppStrings.loggedInEmployeeName,
+          'rolePreset': AppStrings.userRole,
+        },
       };
 
       final payloadJson = jsonEncode(hivePayload);

@@ -1,21 +1,23 @@
-﻿import 'package:dartz/dartz.dart';
+import 'package:dartz/dartz.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:get_it/get_it.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:tahsel/core/error/failures.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/activity_logger_service.dart';
+import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/date_formatter.dart';
+import 'package:tahsel/features/cashbox/data/datasources/vault_remote_data_source.dart';
+import 'package:tahsel/features/cashbox/domain/entities/vault_transaction_entity.dart';
 import 'package:tahsel/features/expenses/data/datasources/expense_remote_data_source.dart';
 import 'package:tahsel/features/expenses/data/models/expense_model.dart';
 import 'package:tahsel/features/expenses/domain/entities/expense_entity.dart';
 import 'package:tahsel/features/expenses/domain/repositories/expense_repository.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_item_entity.dart';
 import 'package:tahsel/features/my_debts/domain/repositories/my_debt_repository.dart';
-import 'package:tahsel/features/cashbox/data/datasources/vault_remote_data_source.dart';
-import 'package:tahsel/features/cashbox/domain/entities/vault_transaction_entity.dart';
 
 import '../../domain/entities/inventory_category_entity.dart';
 import '../../domain/entities/inventory_product_entity.dart';
@@ -76,7 +78,10 @@ class InventoryRepositoryImpl implements InventoryRepository {
             final now = DateTime.now().millisecondsSinceEpoch;
             final remoteProducts = await remoteDataSource
                 .fetchAllProductsFromRemoteWithoutLimit(_currentUid!);
-            final remoteIds = remoteProducts.where((p) => !p.isDeleted).map((p) => p.id).toSet();
+            final remoteIds = remoteProducts
+                .where((p) => !p.isDeleted)
+                .map((p) => p.id)
+                .toSet();
 
             for (final p in remoteProducts) {
               if (p.isDeleted) {
@@ -84,9 +89,10 @@ class InventoryRepositoryImpl implements InventoryRepository {
               } else {
                 final existing = await localDataSource.getProductById(p.id);
                 final double highestSold =
-                    (existing != null && existing.totalSoldQuantity > p.totalSoldQuantity)
-                        ? existing.totalSoldQuantity
-                        : p.totalSoldQuantity;
+                    (existing != null &&
+                        existing.totalSoldQuantity > p.totalSoldQuantity)
+                    ? existing.totalSoldQuantity
+                    : p.totalSoldQuantity;
                 final mergedProduct = InventoryProductModel.fromEntity(
                   p.copyWith(totalSoldQuantity: highestSold, isSynced: true),
                 );
@@ -104,13 +110,11 @@ class InventoryRepositoryImpl implements InventoryRepository {
             products = await localDataSource.getProducts();
           } else {
             final now = DateTime.now().millisecondsSinceEpoch;
-            final safeTimestamp =
-                (lastSync > 120000) ? (lastSync - 120000) : lastSync;
-            final deltaProducts =
-                await remoteDataSource.fetchProductsDeltaFromRemote(
-              _currentUid!,
-              safeTimestamp,
-            );
+            final safeTimestamp = (lastSync > 120000)
+                ? (lastSync - 120000)
+                : lastSync;
+            final deltaProducts = await remoteDataSource
+                .fetchProductsDeltaFromRemote(_currentUid!, safeTimestamp);
             if (deltaProducts.isNotEmpty) {
               for (final p in deltaProducts) {
                 if (p.isDeleted) {
@@ -127,8 +131,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
                     if (p.updatedAt.isAfter(existing.updatedAt)) {
                       final double highestSold =
                           (existing.totalSoldQuantity > p.totalSoldQuantity)
-                              ? existing.totalSoldQuantity
-                              : p.totalSoldQuantity;
+                          ? existing.totalSoldQuantity
+                          : p.totalSoldQuantity;
                       final mergedProduct = InventoryProductModel.fromEntity(
                         p.copyWith(
                           totalSoldQuantity: highestSold,
@@ -144,8 +148,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
                     // keep isSynced = false so user's edits will be synced to server!
                     final double highestSold =
                         (existing.totalSoldQuantity > p.totalSoldQuantity)
-                            ? existing.totalSoldQuantity
-                            : p.totalSoldQuantity;
+                        ? existing.totalSoldQuantity
+                        : p.totalSoldQuantity;
                     final mergedProduct = InventoryProductModel.fromEntity(
                       existing.copyWith(
                         currentQuantity: p.currentQuantity,
@@ -162,7 +166,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
             await localDataSource.saveLastProductsSyncTimestamp(now);
           }
         } catch (e) {
-          AppLogger.printMessage('Inventory: getProducts remote sync error: $e');
+          AppLogger.printMessage(
+            'Inventory: getProducts remote sync error: $e',
+          );
         }
       }
 
@@ -209,7 +215,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
 
   @override
   Future<Either<Failure, List<InventoryProductEntity>>>
-      fetchAllProductsFromRemoteWithoutLimit() async {
+  fetchAllProductsFromRemoteWithoutLimit() async {
     try {
       if (await connectionChecker.hasConnection && _currentUid != null) {
         final remoteProducts = await remoteDataSource
@@ -217,9 +223,10 @@ class InventoryRepositoryImpl implements InventoryRepository {
         for (final p in remoteProducts) {
           final existing = await localDataSource.getProductById(p.id);
           final double highestSold =
-              (existing != null && existing.totalSoldQuantity > p.totalSoldQuantity)
-                  ? existing.totalSoldQuantity
-                  : p.totalSoldQuantity;
+              (existing != null &&
+                  existing.totalSoldQuantity > p.totalSoldQuantity)
+              ? existing.totalSoldQuantity
+              : p.totalSoldQuantity;
           final mergedProduct = InventoryProductModel.fromEntity(
             p.copyWith(totalSoldQuantity: highestSold),
           );
@@ -227,9 +234,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
         }
       }
       final products = await localDataSource.getProducts();
-      return Right(
-        products.map((p) => p as InventoryProductEntity).toList(),
-      );
+      return Right(products.map((p) => p as InventoryProductEntity).toList());
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -274,7 +279,10 @@ class InventoryRepositoryImpl implements InventoryRepository {
           if (existing == null) {
             await remoteDataSource.syncProducts(_currentUid!, [model]);
           } else {
-            await remoteDataSource.updateProductFieldsInRemote(_currentUid!, model);
+            await remoteDataSource.updateProductFieldsInRemote(
+              _currentUid!,
+              model,
+            );
           }
         } catch (_) {}
       }
@@ -296,6 +304,122 @@ class InventoryRepositoryImpl implements InventoryRepository {
         await localDataSource.saveStockMovement(initialMovement);
       }
 
+      if (_currentUid != null && sl.isRegistered<ActivityLoggerService>()) {
+        final isNew = existing == null;
+        if (isNew) {
+          sl<ActivityLoggerService>().logStandalone(
+            ownerUid: _currentUid!,
+            actionCategory: 'inventory',
+            actionType: 'add_product',
+            actionTitle: 'إضافة صنف: ${product.name}',
+            details:
+                'إضافة صنف جديد بالمخزون: ${product.name} بسعر بيع ${product.sellingPrice.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} وسعر شراء ${product.purchasePrice.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} (الكمية الأولية: $finalQuantity)',
+            amount: product.sellingPrice,
+            extraData: {
+              'productId': product.id,
+              'name': product.name,
+              'purchasePrice': product.purchasePrice,
+              'sellingPrice': product.sellingPrice,
+              'quantity': finalQuantity,
+              if (product.categoryName.isNotEmpty) 'category': product.categoryName,
+              if (product.supplierName.isNotEmpty) 'supplier': product.supplierName,
+            },
+          );
+        } else {
+          final changes = <String>[];
+          if (existing.name != product.name) {
+            changes.add('الاسم: من "${existing.name}" إلى "${product.name}"');
+          }
+          if (existing.sellingPrice != product.sellingPrice) {
+            final sellPriceDiff = product.sellingPrice - existing.sellingPrice;
+            final sellDiffFormatted = sellPriceDiff >= 0
+                ? '+${sellPriceDiff.toStringAsFixed(1)}'
+                : sellPriceDiff.toStringAsFixed(1);
+            changes.add(
+                'سعر البيع: من ${existing.sellingPrice.toStringAsFixed(1)} إلى ${product.sellingPrice.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ($sellDiffFormatted)');
+          }
+          if (existing.purchasePrice != product.purchasePrice) {
+            final purPriceDiff = product.purchasePrice - existing.purchasePrice;
+            final purDiffFormatted = purPriceDiff >= 0
+                ? '+${purPriceDiff.toStringAsFixed(1)}'
+                : purPriceDiff.toStringAsFixed(1);
+            changes.add(
+                'سعر الشراء: من ${existing.purchasePrice.toStringAsFixed(1)} إلى ${product.purchasePrice.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ($purDiffFormatted)');
+          }
+          if (existing.currentQuantity != finalQuantity) {
+            final qtyDiff = finalQuantity - existing.currentQuantity;
+            final qtyDiffFormatted = qtyDiff >= 0 ? '+$qtyDiff' : '$qtyDiff';
+            changes.add(
+                'الكمية: من ${existing.currentQuantity} إلى $finalQuantity ($qtyDiffFormatted)');
+          }
+          if (existing.minQuantity != product.minQuantity) {
+            changes.add(
+                'حد الطلب/الإنذار: من ${existing.minQuantity} إلى ${product.minQuantity}');
+          }
+          if ((existing.barcode ?? '') != (product.barcode ?? '')) {
+            final oldBar = existing.barcode?.isNotEmpty == true
+                ? existing.barcode!
+                : 'بدون';
+            final newBar = product.barcode?.isNotEmpty == true
+                ? product.barcode!
+                : 'بدون';
+            changes.add('الباركود: من "$oldBar" إلى "$newBar"');
+          }
+          if (existing.unit != product.unit) {
+            changes.add('الوحدة: من "${existing.unit}" إلى "${product.unit}"');
+          }
+          if (existing.categoryName != product.categoryName &&
+              product.categoryName.isNotEmpty) {
+            final oldCat = existing.categoryName.isNotEmpty
+                ? existing.categoryName
+                : 'بدون';
+            changes.add('التصنيف: من "$oldCat" إلى "${product.categoryName}"');
+          }
+          if (existing.supplierName != product.supplierName &&
+              product.supplierName.isNotEmpty) {
+            final oldSup = existing.supplierName.isNotEmpty
+                ? existing.supplierName
+                : 'بدون';
+            changes.add('المورد: من "$oldSup" إلى "${product.supplierName}"');
+          }
+          if ((existing.notes ?? '') != (product.notes ?? '')) {
+            final oldNotes = existing.notes?.isNotEmpty == true
+                ? existing.notes!
+                : 'بدون';
+            final newNotes = product.notes?.isNotEmpty == true
+                ? product.notes!
+                : 'بدون';
+            changes.add('الملاحظات: من "$oldNotes" إلى "$newNotes"');
+          }
+          if (existing.isAvailable != product.isAvailable) {
+            changes.add(
+                'حالة التوفر: ${product.isAvailable ? "متاح للبيع" : "معطل/غير متاح"}');
+          }
+
+          final actionDetails = changes.isNotEmpty
+              ? 'تعديل بيانات الصنف (${product.name}): تم تعديل ${changes.join("، ")}'
+              : 'تحديث وحفظ بيانات الصنف: ${product.name} دون تغيير في الحقول الرئيسية';
+
+          sl<ActivityLoggerService>().logStandalone(
+            ownerUid: _currentUid!,
+            actionCategory: 'inventory',
+            actionType: 'update_product',
+            actionTitle: 'تعديل صنف: ${product.name}',
+            details: actionDetails,
+            amount: product.sellingPrice,
+            extraData: {
+              'productId': product.id,
+              'name': product.name,
+              'changesCount': changes.length,
+              'oldSellingPrice': existing.sellingPrice,
+              'newSellingPrice': product.sellingPrice,
+              'oldPurchasePrice': existing.purchasePrice,
+              'newPurchasePrice': product.purchasePrice,
+            },
+          );
+        }
+      }
+
       _triggerBackgroundSync();
       return const Right(null);
     } catch (e) {
@@ -306,12 +430,31 @@ class InventoryRepositoryImpl implements InventoryRepository {
   @override
   Future<Either<Failure, void>> deleteProduct(String id) async {
     try {
+      final existing = await localDataSource.getProductById(id);
       await localDataSource.deleteProduct(id);
       if (await connectionChecker.hasConnection && _currentUid != null) {
         try {
           await remoteDataSource.deleteProductFromRemote(_currentUid!, id);
         } catch (_) {}
       }
+
+      if (_currentUid != null && sl.isRegistered<ActivityLoggerService>()) {
+        final prodName = existing?.name ?? id;
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: _currentUid!,
+          actionCategory: 'inventory',
+          actionType: 'delete_product',
+          actionTitle: 'حذف صنف: $prodName',
+          details:
+              'تم حذف الصنف ($prodName) نهائياً من المخزون (الكمية المسجلة قبل الحذف: ${existing?.currentQuantity ?? 0})',
+          extraData: {
+            'productId': id,
+            'name': prodName,
+            'quantity': existing?.currentQuantity ?? 0,
+          },
+        );
+      }
+
       return const Right(null);
     } catch (e) {
       return Left(CacheFailure(e.toString()));
@@ -344,7 +487,10 @@ class InventoryRepositoryImpl implements InventoryRepository {
           final remoteCats = await remoteDataSource.fetchCategoriesFromRemote(
             _currentUid!,
           );
-          final remoteIds = remoteCats.where((c) => !c.isDeleted).map((c) => c.id).toSet();
+          final remoteIds = remoteCats
+              .where((c) => !c.isDeleted)
+              .map((c) => c.id)
+              .toSet();
 
           for (final c in remoteCats) {
             if (c.isDeleted) {
@@ -379,6 +525,10 @@ class InventoryRepositoryImpl implements InventoryRepository {
     InventoryCategoryEntity category,
   ) async {
     try {
+      final existingCategories = await localDataSource.getCategories();
+      final existing = existingCategories.where((c) => c.id == category.id).firstOrNull;
+      final isNew = existing == null;
+
       final model = InventoryCategoryModel.fromEntity(
         category.copyWith(updatedAt: DateTime.now(), isSynced: false),
       );
@@ -386,7 +536,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
 
       // Cascade update categoryName in all products belonging to this categoryId
       final allProducts = await localDataSource.getProducts();
-      final affectedProducts = allProducts.where((p) => p.categoryId == category.id).toList();
+      final affectedProducts = allProducts
+          .where((p) => p.categoryId == category.id)
+          .toList();
       final bool hasConn = await connectionChecker.hasConnection;
       for (final p in affectedProducts) {
         if (p.categoryName != category.name) {
@@ -400,10 +552,51 @@ class InventoryRepositoryImpl implements InventoryRepository {
           await localDataSource.saveProduct(updated);
           if (hasConn && _currentUid != null) {
             try {
-              await remoteDataSource.updateProductFieldsInRemote(_currentUid!, updated);
+              await remoteDataSource.updateProductFieldsInRemote(
+                _currentUid!,
+                updated,
+              );
             } catch (_) {}
           }
         }
+      }
+
+      if (_currentUid != null && sl.isRegistered<ActivityLoggerService>()) {
+        String actionDetails;
+        if (isNew) {
+          actionDetails =
+              'إضافة تصنيف جديد للأصناف: ${category.name}${category.description?.isNotEmpty == true ? " (الوصف: ${category.description})" : ""}';
+        } else {
+          final changes = <String>[];
+          if (existing.name != category.name) {
+            changes.add('الاسم: من "${existing.name}" إلى "${category.name}"');
+          }
+          if ((existing.description ?? '') != (category.description ?? '')) {
+            final oldDesc = existing.description?.isNotEmpty == true
+                ? existing.description!
+                : 'بدون وصف';
+            final newDesc = category.description?.isNotEmpty == true
+                ? category.description!
+                : 'بدون وصف';
+            changes.add('الوصف: من "$oldDesc" إلى "$newDesc"');
+          }
+          actionDetails = changes.isNotEmpty
+              ? 'تعديل بيانات التصنيف (${category.name}): تم تعديل ${changes.join("، ")}'
+              : 'تحديث بيانات التصنيف: ${category.name}';
+        }
+
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: _currentUid!,
+          actionCategory: 'inventory',
+          actionType: isNew ? 'add_category' : 'update_category',
+          actionTitle: isNew ? 'إضافة تصنيف: ${category.name}' : 'تعديل تصنيف: ${category.name}',
+          details: actionDetails,
+          extraData: {
+            'categoryId': category.id,
+            'name': category.name,
+            if (!isNew) 'oldName': existing.name,
+          },
+        );
       }
 
       _triggerBackgroundSync();
@@ -416,6 +609,10 @@ class InventoryRepositoryImpl implements InventoryRepository {
   @override
   Future<Either<Failure, void>> deleteCategory(String id) async {
     try {
+      final existingCategories = await localDataSource.getCategories();
+      final existing = existingCategories.where((c) => c.id == id).firstOrNull;
+      final catName = existing?.name ?? id;
+
       await localDataSource.deleteCategory(id);
       if (await connectionChecker.hasConnection && _currentUid != null) {
         try {
@@ -425,7 +622,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
 
       // Cascade update affected products: reset categoryId and categoryName to empty
       final allProducts = await localDataSource.getProducts();
-      final affectedProducts = allProducts.where((p) => p.categoryId == id).toList();
+      final affectedProducts = allProducts
+          .where((p) => p.categoryId == id)
+          .toList();
       for (final p in affectedProducts) {
         final updated = p.copyWith(
           categoryId: '',
@@ -433,8 +632,25 @@ class InventoryRepositoryImpl implements InventoryRepository {
           updatedAt: DateTime.now(),
           isSynced: false,
         );
-        await localDataSource.saveProduct(InventoryProductModel.fromEntity(updated));
+        await localDataSource.saveProduct(
+          InventoryProductModel.fromEntity(updated),
+        );
       }
+
+      if (_currentUid != null && sl.isRegistered<ActivityLoggerService>()) {
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: _currentUid!,
+          actionCategory: 'inventory',
+          actionType: 'delete_category',
+          actionTitle: 'حذف تصنيف: $catName',
+          details: 'تم حذف تصنيف الأصناف ($catName) وفك ارتباطه بالمنتجات التابعة له',
+          extraData: {
+            'categoryId': id,
+            'name': catName,
+          },
+        );
+      }
+
       _triggerBackgroundSync();
 
       return const Right(null);
@@ -453,7 +669,10 @@ class InventoryRepositoryImpl implements InventoryRepository {
         try {
           final remoteSuppliers = await remoteDataSource
               .fetchSuppliersFromRemote(_currentUid!);
-          final remoteIds = remoteSuppliers.where((s) => !s.isDeleted).map((s) => s.id).toSet();
+          final remoteIds = remoteSuppliers
+              .where((s) => !s.isDeleted)
+              .map((s) => s.id)
+              .toSet();
 
           for (final s in remoteSuppliers) {
             if (s.isDeleted) {
@@ -488,6 +707,10 @@ class InventoryRepositoryImpl implements InventoryRepository {
     InventorySupplierEntity supplier,
   ) async {
     try {
+      final existingSuppliers = await localDataSource.getSuppliers();
+      final existing = existingSuppliers.where((s) => s.id == supplier.id).firstOrNull;
+      final isNew = existing == null;
+
       final model = InventorySupplierModel.fromEntity(
         supplier.copyWith(updatedAt: DateTime.now(), isSynced: false),
       );
@@ -495,7 +718,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
 
       // Cascade update supplierName in all products belonging to this supplierId
       final allProducts = await localDataSource.getProducts();
-      final affectedProducts = allProducts.where((p) => p.supplierId == supplier.id).toList();
+      final affectedProducts = allProducts
+          .where((p) => p.supplierId == supplier.id)
+          .toList();
       final bool hasConn = await connectionChecker.hasConnection;
       for (final p in affectedProducts) {
         if (p.supplierName != supplier.name) {
@@ -509,7 +734,10 @@ class InventoryRepositoryImpl implements InventoryRepository {
           await localDataSource.saveProduct(updated);
           if (hasConn && _currentUid != null) {
             try {
-              await remoteDataSource.updateProductFieldsInRemote(_currentUid!, updated);
+              await remoteDataSource.updateProductFieldsInRemote(
+                _currentUid!,
+                updated,
+              );
             } catch (_) {}
           }
         }
@@ -517,15 +745,76 @@ class InventoryRepositoryImpl implements InventoryRepository {
 
       // Cascade update supplierName in all purchase invoices belonging to this supplierId
       final allPurchases = await localDataSource.getPurchases();
-      final affectedPurchases = allPurchases.where((pur) => pur.supplierId == supplier.id).toList();
+      final affectedPurchases = allPurchases
+          .where((pur) => pur.supplierId == supplier.id)
+          .toList();
       for (final pur in affectedPurchases) {
         if (pur.supplierName != supplier.name) {
           final updated = pur.copyWith(
             supplierName: supplier.name,
             isSynced: false,
           );
-          await localDataSource.savePurchase(InventoryPurchaseModel.fromEntity(updated));
+          await localDataSource.savePurchase(
+            InventoryPurchaseModel.fromEntity(updated),
+          );
         }
+      }
+
+      if (_currentUid != null && sl.isRegistered<ActivityLoggerService>()) {
+        String actionDetails;
+        if (isNew) {
+          final phonePart = supplier.phone.isNotEmpty ? " (هاتف: ${supplier.phone})" : "";
+          final compPart = supplier.companyName?.isNotEmpty == true
+              ? " - شركة: ${supplier.companyName}"
+              : "";
+          actionDetails =
+              'إضافة مورد جديد بالمخزون: ${supplier.name}$compPart$phonePart';
+        } else {
+          final changes = <String>[];
+          if (existing.name != supplier.name) {
+            changes.add('الاسم: من "${existing.name}" إلى "${supplier.name}"');
+          }
+          if (existing.phone != supplier.phone) {
+            changes.add('الهاتف: من "${existing.phone}" إلى "${supplier.phone}"');
+          }
+          if ((existing.companyName ?? '') != (supplier.companyName ?? '')) {
+            changes.add(
+                'الشركة: من "${existing.companyName ?? 'بدون'}" إلى "${supplier.companyName ?? 'بدون'}"');
+          }
+          if ((existing.taxNumber ?? '') != (supplier.taxNumber ?? '')) {
+            changes.add(
+                'الرقم الضريبي: من "${existing.taxNumber ?? 'بدون'}" إلى "${supplier.taxNumber ?? 'بدون'}"');
+          }
+          if (existing.address != supplier.address) {
+            changes.add('العنوان: من "${existing.address}" إلى "${supplier.address}"');
+          }
+          if ((existing.email ?? '') != (supplier.email ?? '')) {
+            changes.add(
+                'البريد: من "${existing.email ?? 'بدون'}" إلى "${supplier.email ?? 'بدون'}"');
+          }
+          if ((existing.notes ?? '') != (supplier.notes ?? '')) {
+            changes.add(
+                'الملاحظات: من "${existing.notes ?? 'بدون'}" إلى "${supplier.notes ?? 'بدون'}"');
+          }
+
+          actionDetails = changes.isNotEmpty
+              ? 'تعديل بيانات المورد (${supplier.name}): تم تعديل ${changes.join("، ")}'
+              : 'تحديث بيانات وحفظ المورد: ${supplier.name} دون تغيير في الحقول الرئيسية';
+        }
+
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: _currentUid!,
+          actionCategory: 'inventory',
+          actionType: isNew ? 'add_supplier' : 'update_supplier',
+          actionTitle: isNew ? 'إضافة مورد: ${supplier.name}' : 'تعديل بيانات مورد: ${supplier.name}',
+          details: actionDetails,
+          extraData: {
+            'supplierId': supplier.id,
+            'name': supplier.name,
+            'phone': supplier.phone,
+            if (!isNew) 'oldPhone': existing.phone,
+          },
+        );
       }
 
       _triggerBackgroundSync();
@@ -538,6 +827,10 @@ class InventoryRepositoryImpl implements InventoryRepository {
   @override
   Future<Either<Failure, void>> deleteSupplier(String id) async {
     try {
+      final existingSuppliers = await localDataSource.getSuppliers();
+      final existing = existingSuppliers.where((s) => s.id == id).firstOrNull;
+      final supName = existing?.name ?? id;
+
       await localDataSource.deleteSupplier(id);
       if (await connectionChecker.hasConnection && _currentUid != null) {
         try {
@@ -547,7 +840,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
 
       // Cascade update affected products: reset supplierId and supplierName to empty
       final allProducts = await localDataSource.getProducts();
-      final affectedProducts = allProducts.where((p) => p.supplierId == id).toList();
+      final affectedProducts = allProducts
+          .where((p) => p.supplierId == id)
+          .toList();
       for (final p in affectedProducts) {
         final updated = p.copyWith(
           supplierId: '',
@@ -555,8 +850,25 @@ class InventoryRepositoryImpl implements InventoryRepository {
           updatedAt: DateTime.now(),
           isSynced: false,
         );
-        await localDataSource.saveProduct(InventoryProductModel.fromEntity(updated));
+        await localDataSource.saveProduct(
+          InventoryProductModel.fromEntity(updated),
+        );
       }
+
+      if (_currentUid != null && sl.isRegistered<ActivityLoggerService>()) {
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: _currentUid!,
+          actionCategory: 'inventory',
+          actionType: 'delete_supplier',
+          actionTitle: 'حذف مورد: $supName',
+          details: 'تم حذف المورد ($supName) نهائياً وفك ارتباطه بالأصناف التابعة له',
+          extraData: {
+            'supplierId': id,
+            'name': supName,
+          },
+        );
+      }
+
       _triggerBackgroundSync();
 
       return const Right(null);
@@ -572,14 +884,14 @@ class InventoryRepositoryImpl implements InventoryRepository {
     int limit = 15,
   }) async {
     try {
-      List<InventoryPurchaseModel> purchases =
-          await localDataSource.getPurchases();
+      List<InventoryPurchaseModel> purchases = await localDataSource
+          .getPurchases();
       final bool hasConn = await connectionChecker.hasConnection;
 
       if (hasConn && _currentUid != null) {
         try {
-          final lastSync =
-              await localDataSource.getLastPurchasesSyncTimestamp();
+          final lastSync = await localDataSource
+              .getLastPurchasesSyncTimestamp();
           if (purchases.isEmpty || lastSync == null) {
             final now = DateTime.now().millisecondsSinceEpoch;
             final remotePurchases = await remoteDataSource
@@ -611,13 +923,11 @@ class InventoryRepositoryImpl implements InventoryRepository {
             purchases = await localDataSource.getPurchases();
           } else {
             final now = DateTime.now().millisecondsSinceEpoch;
-            final safeTimestamp =
-                (lastSync > 120000) ? (lastSync - 120000) : lastSync;
-            final deltaPurchases =
-                await remoteDataSource.fetchPurchasesDeltaFromRemote(
-              _currentUid!,
-              safeTimestamp,
-            );
+            final safeTimestamp = (lastSync > 120000)
+                ? (lastSync - 120000)
+                : lastSync;
+            final deltaPurchases = await remoteDataSource
+                .fetchPurchasesDeltaFromRemote(_currentUid!, safeTimestamp);
             if (deltaPurchases.isNotEmpty) {
               for (final p in deltaPurchases) {
                 if (p.isDeleted) {
@@ -635,7 +945,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
             await localDataSource.saveLastPurchasesSyncTimestamp(now);
           }
         } catch (e) {
-          AppLogger.printMessage('Inventory: getPurchases remote sync error: $e');
+          AppLogger.printMessage(
+            'Inventory: getPurchases remote sync error: $e',
+          );
         }
       }
 
@@ -659,7 +971,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
 
   Future<void> _syncPurchaseToExpenses(InventoryPurchaseEntity purchase) async {
     try {
-      final repo = expenseRepository ??
+      final repo =
+          expenseRepository ??
           (GetIt.I.isRegistered<ExpenseRepository>()
               ? GetIt.I<ExpenseRepository>()
               : null);
@@ -695,7 +1008,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
     InventoryPurchaseEntity purchase,
   ) async {
     try {
-      final repo = expenseRepository ??
+      final repo =
+          expenseRepository ??
           (GetIt.I.isRegistered<ExpenseRepository>()
               ? GetIt.I<ExpenseRepository>()
               : null);
@@ -715,7 +1029,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
     required InventoryPurchaseEntity newPurchase,
   }) async {
     try {
-      final repo = expenseRepository ??
+      final repo =
+          expenseRepository ??
           (GetIt.I.isRegistered<ExpenseRepository>()
               ? GetIt.I<ExpenseRepository>()
               : null);
@@ -730,7 +1045,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
       if (newPurchase.paidAmount <= 0) {
         await repo.deleteExpense(uid, expenseId);
       } else {
-        final monthKey = DateFormatter.formatNumericMonth(newPurchase.createdAt);
+        final monthKey = DateFormatter.formatNumericMonth(
+          newPurchase.createdAt,
+        );
         final categoryName = AppStrings.inventoryPurchases.tr();
         final description =
             '${AppStrings.purchaseInvoiceNum.tr()} #$cleanId - ${newPurchase.supplierName}';
@@ -763,7 +1080,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
 
   Future<void> _syncPurchaseToMyDebts(InventoryPurchaseEntity purchase) async {
     try {
-      final repo = myDebtRepository ??
+      final repo =
+          myDebtRepository ??
           (GetIt.I.isRegistered<MyDebtRepository>()
               ? GetIt.I<MyDebtRepository>()
               : null);
@@ -806,7 +1124,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
     InventoryPurchaseEntity purchase,
   ) async {
     try {
-      final repo = myDebtRepository ??
+      final repo =
+          myDebtRepository ??
           (GetIt.I.isRegistered<MyDebtRepository>()
               ? GetIt.I<MyDebtRepository>()
               : null);
@@ -858,7 +1177,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
     );
   }
 
-  Future<void> _removePurchaseFromVault(InventoryPurchaseEntity purchase) async {
+  Future<void> _removePurchaseFromVault(
+    InventoryPurchaseEntity purchase,
+  ) async {
     try {
       double totalPaid = purchase.paidAmount;
       final uid = _currentUid ?? AppStrings.userToken;
@@ -869,7 +1190,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
 
       // Check linked debt to get the true total paid (initial + subsequent payments from My Debts)
       try {
-        final myDebtRepo = myDebtRepository ??
+        final myDebtRepo =
+            myDebtRepository ??
             (GetIt.I.isRegistered<MyDebtRepository>()
                 ? GetIt.I<MyDebtRepository>()
                 : null);
@@ -887,12 +1209,14 @@ class InventoryRepositoryImpl implements InventoryRepository {
 
       await VaultRemoteDataSourceImpl.syncVaultTransaction(
         uid: uid,
-        transactionId: 'vault_tx_pur_${cleanId}_rev_${DateTime.now().millisecondsSinceEpoch}',
+        transactionId:
+            'vault_tx_pur_${cleanId}_rev_${DateTime.now().millisecondsSinceEpoch}',
         amount: totalPaid,
         direction: VaultTransactionDirection.inFlow,
         source: VaultTransactionSource.inventory,
         type: 'reversal',
-        description: 'إلغاء فاتورة مشتريات #$cleanId - ${purchase.supplierName}',
+        description:
+            'إلغاء فاتورة مشتريات #$cleanId - ${purchase.supplierName}',
         relatedEntityId: purchase.id,
         relatedOperationId: purchase.id,
         createdAt: DateTime.now(),
@@ -965,10 +1289,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
 
       // 2. Save Purchase Record locally
       final purchaseModel = InventoryPurchaseModel.fromEntity(
-        purchase.copyWith(
-          isSynced: hasConnection,
-          updatedAt: DateTime.now(),
-        ),
+        purchase.copyWith(isSynced: hasConnection, updatedAt: DateTime.now()),
       );
       await localDataSource.savePurchase(purchaseModel);
 
@@ -979,6 +1300,28 @@ class InventoryRepositoryImpl implements InventoryRepository {
           await _syncPurchaseToExpenses(purchase);
           await _syncPurchaseToMyDebts(purchase);
         } catch (_) {}
+      }
+
+      // Log Employee Activity if performed by an employee
+      if (sl.isRegistered<ActivityLoggerService>() && _currentUid != null) {
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: _currentUid!,
+          actionCategory: 'inventory',
+          actionType: 'purchase',
+          actionTitle: 'فاتورة مشتريات: ${purchase.supplierName}',
+          details:
+              'شراء بضاعة من المورد ${purchase.supplierName} بمبلغ ${purchase.totalAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} (${purchase.items.length} أصناف) - المدفوع: ${purchase.paidAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}، والمتبقي دين: ${purchase.remainingDebt.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
+          amount: purchase.totalAmount,
+          extraData: {
+            'purchaseId': purchase.id,
+            'supplierName': purchase.supplierName,
+            'itemCount': purchase.items.length,
+            'totalAmount': purchase.totalAmount,
+            'paidAmount': purchase.paidAmount,
+            'remainingDebt': purchase.remainingDebt,
+          },
+          timestamp: purchase.createdAt,
+        );
       }
 
       // 3. For each item: Increase product quantity & record StockMovement
@@ -1047,9 +1390,11 @@ class InventoryRepositoryImpl implements InventoryRepository {
 
       if (insufficientProducts.isNotEmpty) {
         final details = insufficientProducts.join('\n');
-        return Left(GeneralFailure(
-          '${AppStrings.cannotDeletePurchaseSoldPrefix.tr()}\n\n$details\n\n${AppStrings.cannotDeletePurchaseSoldSuffix.tr()}',
-        ));
+        return Left(
+          GeneralFailure(
+            '${AppStrings.cannotDeletePurchaseSoldPrefix.tr()}\n\n$details\n\n${AppStrings.cannotDeletePurchaseSoldSuffix.tr()}',
+          ),
+        );
       }
 
       final bool hasConnection = await connectionChecker.hasConnection;
@@ -1111,12 +1456,34 @@ class InventoryRepositoryImpl implements InventoryRepository {
             quantity: item.quantity,
             previousQuantity: prevQty,
             newQuantity: newQty,
-            notes: 'إلغاء فاتورة شراء رقم #${purchase.id.replaceAll("pur_", "")}',
+            notes:
+                'إلغاء فاتورة شراء رقم #${purchase.id.replaceAll("pur_", "")}',
             createdAt: DateTime.now(),
             isSynced: false,
           );
           await localDataSource.saveStockMovement(movement);
         }
+      }
+
+      if (_currentUid != null && sl.isRegistered<ActivityLoggerService>()) {
+        final invNum = purchase.id.replaceAll('pur_', '');
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: _currentUid!,
+          actionCategory: 'inventory',
+          actionType: 'delete_purchase',
+          actionTitle: 'حذف فاتورة شراء: #$invNum',
+          details:
+              'تم حذف فاتورة شراء للمورد ${purchase.supplierName} بقيمة ${purchase.totalAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} (${purchase.items.length} أصناف) واسترداد الأرصدة وإلغاء قيود الديون والمصروفات',
+          amount: purchase.totalAmount,
+          extraData: {
+            'purchaseId': purchase.id,
+            'supplierName': purchase.supplierName,
+            'totalAmount': purchase.totalAmount,
+            'paidAmount': purchase.paidAmount,
+            'remainingDebt': purchase.remainingDebt,
+            'itemsCount': purchase.items.length,
+          },
+        );
       }
 
       _triggerBackgroundSync();
@@ -1163,9 +1530,11 @@ class InventoryRepositoryImpl implements InventoryRepository {
 
       if (insufficientProducts.isNotEmpty) {
         final details = insufficientProducts.join('\n');
-        return Left(GeneralFailure(
-          '${AppStrings.cannotReducePurchaseQuantitySoldPrefix.tr()}\n\n$details\n\n${AppStrings.cannotReducePurchaseQuantitySoldSuffix.tr()}',
-        ));
+        return Left(
+          GeneralFailure(
+            '${AppStrings.cannotReducePurchaseQuantitySoldPrefix.tr()}\n\n$details\n\n${AppStrings.cannotReducePurchaseQuantitySoldSuffix.tr()}',
+          ),
+        );
       }
 
       final bool hasConnection = await connectionChecker.hasConnection;
@@ -1234,7 +1603,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
             newPurchase: newPurchase,
           );
         } catch (e) {
-          AppLogger.printMessage('Inventory: updatePurchase remote sync error: $e');
+          AppLogger.printMessage(
+            'Inventory: updatePurchase remote sync error: $e',
+          );
         }
       }
 
@@ -1292,13 +1663,66 @@ class InventoryRepositoryImpl implements InventoryRepository {
               quantity: deltaQty.abs(),
               previousQuantity: prevQty,
               newQuantity: newQty,
-              notes: 'تعديل فاتورة شراء رقم #${newPurchase.id.replaceAll("pur_", "")}',
+              notes:
+                  'تعديل فاتورة شراء رقم #${newPurchase.id.replaceAll("pur_", "")}',
               createdAt: DateTime.now(),
               isSynced: false,
             );
             await localDataSource.saveStockMovement(movement);
           }
         }
+      }
+
+      if (_currentUid != null && sl.isRegistered<ActivityLoggerService>()) {
+        final invNum = newPurchase.id.replaceAll('pur_', '');
+        final changes = <String>[];
+        if (oldPurchase.supplierName != newPurchase.supplierName) {
+          changes.add(
+              'المورد: من "${oldPurchase.supplierName}" إلى "${newPurchase.supplierName}"');
+        }
+        if (oldPurchase.totalAmount != newPurchase.totalAmount) {
+          final delta = newPurchase.totalAmount - oldPurchase.totalAmount;
+          final deltaFormatted = delta >= 0
+              ? '+${delta.toStringAsFixed(1)}'
+              : delta.toStringAsFixed(1);
+          changes.add(
+              'إجمالي الفاتورة: من ${oldPurchase.totalAmount.toStringAsFixed(1)} إلى ${newPurchase.totalAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ($deltaFormatted)');
+        }
+        if (oldPurchase.paidAmount != newPurchase.paidAmount) {
+          final deltaPaid = newPurchase.paidAmount - oldPurchase.paidAmount;
+          final deltaPaidFormatted = deltaPaid >= 0
+              ? '+${deltaPaid.toStringAsFixed(1)}'
+              : deltaPaid.toStringAsFixed(1);
+          changes.add(
+              'المدفوع نقداً: من ${oldPurchase.paidAmount.toStringAsFixed(1)} إلى ${newPurchase.paidAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ($deltaPaidFormatted)');
+        }
+        if (oldPurchase.items.length != newPurchase.items.length) {
+          changes.add(
+              'عدد الأصناف: من ${oldPurchase.items.length} إلى ${newPurchase.items.length}');
+        }
+
+        final actionDetails = changes.isNotEmpty
+            ? 'تعديل فاتورة الشراء (#$invNum) للمورد ${newPurchase.supplierName}: تم تعديل ${changes.join("، ")}'
+            : 'تعديل أصناف وبيانات فاتورة الشراء (#$invNum) للمورد ${newPurchase.supplierName} (${newPurchase.items.length} أصناف)';
+
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: _currentUid!,
+          actionCategory: 'inventory',
+          actionType: 'update_purchase',
+          actionTitle:
+              'تعديل فاتورة شراء: ${newPurchase.supplierName} (#$invNum)',
+          details: actionDetails,
+          amount: newPurchase.totalAmount,
+          extraData: {
+            'purchaseId': newPurchase.id,
+            'supplierName': newPurchase.supplierName,
+            'oldTotal': oldPurchase.totalAmount,
+            'newTotal': newPurchase.totalAmount,
+            'paidAmount': newPurchase.paidAmount,
+            'remainingDebt': newPurchase.remainingDebt,
+            'itemsCount': newPurchase.items.length,
+          },
+        );
       }
 
       _triggerBackgroundSync();
@@ -1398,6 +1822,26 @@ class InventoryRepositoryImpl implements InventoryRepository {
         } catch (_) {}
       }
 
+      if (_currentUid != null && sl.isRegistered<ActivityLoggerService>()) {
+        final sign = adjustmentQuantity >= 0 ? "+$adjustmentQuantity" : "$adjustmentQuantity";
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: _currentUid!,
+          actionCategory: 'inventory',
+          actionType: 'stock_adjustment',
+          actionTitle: 'تسوية مخزون: ${product.name}',
+          details:
+              'تسوية كمية الصنف ${product.name}: تغيير من $prevQty إلى $newQty ($sign) بسبب: $reason',
+          extraData: {
+            'productId': productId,
+            'productName': product.name,
+            'previousQuantity': prevQty,
+            'newQuantity': newQty,
+            'adjustmentQuantity': adjustmentQuantity,
+            'reason': reason,
+          },
+        );
+      }
+
       _triggerBackgroundSync();
       return const Right(null);
     } catch (e) {
@@ -1448,9 +1892,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
           final double deltaSold = (type == StockMovementType.invoiceSale)
               ? qtyChange.abs()
               : -qtyChange.abs();
-          final newSoldQty =
-              (matchingProduct.totalSoldQuantity + deltaSold)
-                  .clamp(0.0, double.infinity);
+          final newSoldQty = (matchingProduct.totalSoldQuantity + deltaSold)
+              .clamp(0.0, double.infinity);
 
           final bool hasConn = await connectionChecker.hasConnection;
 
@@ -1552,8 +1995,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
       if (unsyncedPurchases.isNotEmpty) {
         for (final p in unsyncedPurchases) {
           try {
-            final remotePurchase =
-                await remoteDataSource.getPurchaseByIdFromRemote(uid, p.id);
+            final remotePurchase = await remoteDataSource
+                .getPurchaseByIdFromRemote(uid, p.id);
             if (remotePurchase == null) {
               // ── Scenario 1: Newly created purchase while offline ────────────
               await _syncPurchaseToVault(p, isOfflineSync: true);
@@ -1577,7 +2020,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
               );
             }
           } catch (e) {
-            AppLogger.printMessage('Inventory: sync purchase side-effects error: $e');
+            AppLogger.printMessage(
+              'Inventory: sync purchase side-effects error: $e',
+            );
           }
         }
 
@@ -1586,10 +2031,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
         for (final p in unsyncedPurchases) {
           await localDataSource.savePurchase(
             InventoryPurchaseModel.fromEntity(
-              p.copyWith(
-                isSynced: true,
-                updatedAt: DateTime.now(),
-              ),
+              p.copyWith(isSynced: true, updatedAt: DateTime.now()),
             ),
           );
         }
@@ -1612,7 +2054,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
                 m.quantity,
               );
             } catch (e) {
-              AppLogger.printMessage('Inventory: sync manual adjustment stock error: $e');
+              AppLogger.printMessage(
+                'Inventory: sync manual adjustment stock error: $e',
+              );
             }
           }
         }

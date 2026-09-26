@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:tahsel/core/error/exceptions.dart';
+import 'package:tahsel/core/services/activity_logger_service.dart';
+import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import '../models/app_employee_model.dart';
@@ -125,6 +127,26 @@ class TeamManagementRemoteDataSourceImpl implements TeamManagementRemoteDataSour
 
       batch.set(teamRef, employeeModel.toMap());
 
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        sl<ActivityLoggerService>().appendToBatch(
+          batch,
+          ownerUid: ownerUid,
+          actionCategory: 'employees',
+          actionType: 'create_app_user',
+          actionTitle: 'إضافة مستخدم نظام: ${name.trim()}',
+          details:
+              'إنشاء حساب مستخدم جديد للموظف ${name.trim()} (${email.trim().toLowerCase()}) بدور: $rolePreset (${permissions.length} صلاحيات)',
+          extraData: {
+            'employeeAuthUid': employeeAuthUid,
+            'name': name.trim(),
+            'email': email.trim().toLowerCase(),
+            'rolePreset': rolePreset,
+            'permissionsCount': permissions.length,
+          },
+          timestamp: now,
+        );
+      }
+
       await batch.commit();
 
       AppLogger.printMessage(
@@ -208,6 +230,27 @@ class TeamManagementRemoteDataSourceImpl implements TeamManagementRemoteDataSour
 
       batch.update(teamRef, teamUpdates);
 
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final targetName = (trimmedName != null && trimmedName.isNotEmpty)
+            ? trimmedName
+            : employeeAuthUid;
+        sl<ActivityLoggerService>().appendToBatch(
+          batch,
+          ownerUid: ownerUid,
+          actionCategory: 'employees',
+          actionType: 'update_user_permissions',
+          actionTitle: 'تعديل صلاحيات: $targetName',
+          details:
+              'تحديث صلاحيات الموظف ($targetName): دور $rolePreset وتعيين ${permissions.length} صلاحيات',
+          extraData: {
+            'employeeAuthUid': employeeAuthUid,
+            'name': targetName,
+            'rolePreset': rolePreset,
+            'permissionsCount': permissions.length,
+          },
+        );
+      }
+
       await batch.commit();
       AppLogger.printMessage(
         '[TeamManagement] Updated permissions and profile for $employeeAuthUid',
@@ -236,6 +279,23 @@ class TeamManagementRemoteDataSourceImpl implements TeamManagementRemoteDataSour
           .collection('app_employees')
           .doc(employeeAuthUid);
       batch.update(teamRef, {'accountStatus': newStatus});
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final statusLabel = newStatus == 'active' ? 'تنشيط' : 'تعطيل / إيقاف';
+        sl<ActivityLoggerService>().appendToBatch(
+          batch,
+          ownerUid: ownerUid,
+          actionCategory: 'employees',
+          actionType: 'toggle_user_status',
+          actionTitle: '$statusLabel حساب موظف',
+          details:
+              'تم $statusLabel حساب الموظف ($employeeAuthUid) في النظام',
+          extraData: {
+            'employeeAuthUid': employeeAuthUid,
+            'newStatus': newStatus,
+          },
+        );
+      }
 
       await batch.commit();
       AppLogger.printMessage(
@@ -266,6 +326,21 @@ class TeamManagementRemoteDataSourceImpl implements TeamManagementRemoteDataSour
           .collection('app_employees')
           .doc(employeeAuthUid);
       batch.delete(teamRef);
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        sl<ActivityLoggerService>().appendToBatch(
+          batch,
+          ownerUid: ownerUid,
+          actionCategory: 'employees',
+          actionType: 'delete_app_user',
+          actionTitle: 'حذف حساب موظف',
+          details:
+              'تم حذف حساب الموظف ($employeeAuthUid) وإلغاء وصوله للنظام نهائياً',
+          extraData: {
+            'employeeAuthUid': employeeAuthUid,
+          },
+        );
+      }
 
       await batch.commit();
       AppLogger.printMessage(
