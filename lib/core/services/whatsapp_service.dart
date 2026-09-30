@@ -19,14 +19,21 @@ class WhatsAppService {
     // Format phone number: remove non-digits and ensure it starts with country code
     // For Egypt (EGP currency used in app), default to +20 if no country code
     String formattedPhone = phoneNumber.toWhatsAppFormat();
+    final String query = message.trim().isNotEmpty
+        ? '?text=${Uri.encodeComponent(message)}'
+        : '';
 
     final Uri whatsappUri = Uri.parse(
-      'https://wa.me/$formattedPhone?text=${Uri.encodeComponent(message)}',
+      'https://wa.me/$formattedPhone$query',
     );
 
-    if (await canLaunchUrl(whatsappUri)) {
+    try {
+      if (await canLaunchUrl(whatsappUri)) {
+        return await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
+      }
       return await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
-    } else {
+    } catch (e) {
+      AppLogger.printMessage('WhatsApp launch error: $e');
       return false;
     }
   }

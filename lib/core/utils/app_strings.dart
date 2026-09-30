@@ -950,6 +950,8 @@ class AppStrings {
   static const String facebookPageDesc = "facebookPageDesc";
   static const String whatsappGroup = "whatsappGroup";
   static const String whatsappGroupDesc = "whatsappGroupDesc";
+  static const String technicalSupport = "technicalSupport";
+  static const String technicalSupportDesc = "technicalSupportDesc";
   static const String copiedSuccessfully = "copiedSuccessfully";
   static const String showMore = "show_more";
   static const String showLess = "show_less";

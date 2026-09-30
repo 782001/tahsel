@@ -36,6 +36,7 @@ import 'package:tahsel/features/standard_features/no-internet/logic/connectivity
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_cubit.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_state.dart';
+import 'package:tahsel/core/services/whatsapp_service.dart';
 import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -3046,6 +3047,135 @@ class _MoreScreenState extends State<MoreScreen> {
                                                               color: AppColors
                                                                   .sandText,
                                                             ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                Icon(
+                                                  Icons.open_in_new_rounded,
+                                                  size: isDesktop ? 18 : 18,
+                                                  color: AppColors.sandText,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(height: isDesktop ? 20 : 20.h),
+
+                                        // Technical Support Section
+                                        SectionHeader(
+                                          title: AppStrings.technicalSupport
+                                              .tr(),
+                                        ),
+                                        InkWell(
+                                          onTap: () async {
+                                            final isArabic =
+                                                context
+                                                    .read<LocaleCubit>()
+                                                    .currentLangCode ==
+                                                AppStrings.arabicCode;
+                                            final emailSuffix =
+                                                userEmail.isNotEmpty
+                                                    ? '\n(حساب: $userEmail)'
+                                                    : '';
+                                            final message = isArabic
+                                                ? "مرحبا، أحتاج إلى مساعدة بخصوص الدعم الفني لتطبيق تحصيل$emailSuffix"
+                                                : "Hello, I need help regarding technical support for Tahsel app${userEmail.isNotEmpty ? '\n(Account: $userEmail)' : ''}";
+
+                                            final success =
+                                                await WhatsAppService
+                                                    .sendMessage(
+                                                      phoneNumber:
+                                                          '01028341201',
+                                                      message: message,
+                                                    );
+
+                                            if (context.mounted && !success) {
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                    AppStrings
+                                                        .whatsappNotInstalled
+                                                        .tr(),
+                                                  ),
+                                                ),
+                                              );
+                                            }
+                                          },
+                                          borderRadius: BorderRadius.circular(
+                                            12.r,
+                                          ),
+                                          child: Container(
+                                            padding: EdgeInsets.all(
+                                              isDesktop ? 16 : 14.w,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.whiteColor,
+                                              borderRadius:
+                                                  BorderRadius.circular(12.r),
+                                              border: Border.all(
+                                                color: AppColors.veryLightGrey,
+                                              ),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                CircleAvatar(
+                                                  backgroundColor: const Color(
+                                                    0xFF25D366,
+                                                  ).withValues(alpha: 0.1),
+                                                  radius: 20.r,
+                                                  child: Image.asset(
+                                                    Assets.imagesWhatsapp,
+                                                    width: isDesktop
+                                                        ? 22
+                                                        : 22.w,
+                                                    height: isDesktop
+                                                        ? 22
+                                                        : 22.w,
+                                                  ),
+                                                ),
+                                                SizedBox(
+                                                  width: isDesktop ? 16 : 16.w,
+                                                ),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        AppStrings
+                                                            .technicalSupport
+                                                            .tr(),
+                                                        style:
+                                                            TextStyles
+                                                                .customStyle(
+                                                          fontSize: 15,
+                                                          fontWeight:
+                                                              FontWeight
+                                                                  .bold,
+                                                          color: AppColors
+                                                              .blackReal,
+                                                        ),
+                                                      ),
+                                                      SizedBox(
+                                                        height: isDesktop
+                                                            ? 4
+                                                            : 4.h,
+                                                      ),
+                                                      Text(
+                                                        AppStrings
+                                                            .technicalSupportDesc
+                                                            .tr(),
+                                                        style:
+                                                            TextStyles
+                                                                .customStyle(
+                                                          fontSize: 12,
+                                                          color: AppColors
+                                                              .sandText,
+                                                        ),
                                                       ),
                                                     ],
                                                   ),
