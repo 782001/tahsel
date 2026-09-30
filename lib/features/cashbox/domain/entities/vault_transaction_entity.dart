@@ -11,6 +11,7 @@ enum VaultTransactionSource {
   expense,
   manualDeposit,
   manualWithdrawal,
+  custody,
 }
 
 class VaultTransactionEntity extends Equatable {

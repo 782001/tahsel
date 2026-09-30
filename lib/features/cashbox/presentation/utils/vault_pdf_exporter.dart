@@ -611,6 +611,17 @@ class VaultPdfExporter {
         return isArabic ? 'إيداع يدوي' : 'Manual Deposit';
       case VaultTransactionSource.manualWithdrawal:
         return isArabic ? 'سحب يدوي' : 'Manual Withdraw';
+      case VaultTransactionSource.custody:
+        if (type == 'custody_disbursement') {
+          return isArabic ? 'صرف عهدة' : 'Custody Disburse';
+        }
+        if (type == 'custody_settlement_refund') {
+          return isArabic ? 'استرجاع عهدة' : 'Custody Refund';
+        }
+        if (type == 'custody_settlement_reimbursement') {
+          return isArabic ? 'تسوية عهدة' : 'Custody Settle';
+        }
+        return isArabic ? 'عهدة نقدية' : 'Custody';
       case VaultTransactionSource.all:
         return isArabic ? 'الكل' : 'All';
     }

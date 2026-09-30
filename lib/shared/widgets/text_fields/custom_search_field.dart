@@ -36,7 +36,7 @@ class CustomSearchField extends StatelessWidget {
 
           hintStyle: TextStyles.customStyle(
             color: AppColors.disabledColor,
-            fontSize: 14,
+            fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
           prefixIcon: Icon(Icons.search, color: AppColors.disabledColor),

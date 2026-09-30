@@ -52,6 +52,10 @@ class VaultSourceFilterChips extends StatelessWidget {
         source: VaultTransactionSource.manualWithdrawal,
         label: AppStrings.cashboxSourceManualWithdraw.tr(),
       ),
+      (
+        source: VaultTransactionSource.custody,
+        label: AppStrings.custodyTitle.tr(),
+      ),
     ];
 
     return SizedBox(

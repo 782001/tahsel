@@ -33,6 +33,7 @@ import 'package:tahsel/features/employee/presentation/screens/employee_details_s
 import 'package:tahsel/features/employee/presentation/screens/employee_list_screen.dart';
 import 'package:tahsel/features/employee/presentation/screens/employee_reports_screen.dart';
 import 'package:tahsel/features/employee/presentation/screens/team_management_screen.dart';
+import 'package:tahsel/features/custody/presentation/screens/custody_management_screen.dart';
 import 'package:tahsel/features/expenses/presentation/screens/add_expense_screen.dart';
 import 'package:tahsel/features/inventory/presentation/cubits/inventory_categories_cubit.dart';
 import 'package:tahsel/features/inventory/presentation/cubits/inventory_dashboard_cubit.dart';
@@ -98,6 +99,7 @@ class AppRoutes {
   static const String employeeDetails = '/employee-details';
   static const String employeeReports = '/employee-reports';
   static const String teamManagement = '/team-management';
+  static const String custodyManagement = '/custody-management';
   static const String addAppEmployee = '/add-app-employee';
   static const String editAppEmployee = '/edit-app-employee';
   static const String employeeActivity = '/employee-activity';
@@ -125,6 +127,14 @@ class AppRoutes {
         }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
         return MaterialPageRoute(builder: (_) => const TeamManagementScreen());
+      case custodyManagement:
+        if (!PermissionService.instance.isOwner) {
+          return _permissionRestrictedRoute();
+        }
+        if (!AppStrings.isVip) return _vipRestrictedRoute();
+        return MaterialPageRoute(
+          builder: (_) => const CustodyManagementScreen(),
+        );
       case addAppEmployee:
         if (!PermissionService.instance.isOwner) {
           return _permissionRestrictedRoute();

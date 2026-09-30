@@ -205,7 +205,7 @@ class _MoreScreenState extends State<MoreScreen> {
                                       AppPermissions.employeesView,
                                     );
                                 final canViewTeam =
-                                    PermissionService.instance.isOwner ;
+                                    PermissionService.instance.isOwner;
                                 final canViewShipping =
                                     isShop &&
                                     PermissionService.instance.hasPermission(
@@ -767,8 +767,8 @@ class _MoreScreenState extends State<MoreScreen> {
                                                     right: -30,
                                                     top: -30,
                                                     child: Container(
-                                                      width: 130.w,
-                                                      height: 130.h,
+                                                      width: 130,
+                                                      height: 130,
                                                       decoration: BoxDecoration(
                                                         shape: BoxShape.circle,
                                                         color: AppColors
@@ -783,8 +783,8 @@ class _MoreScreenState extends State<MoreScreen> {
                                                     left: -20,
                                                     bottom: -20,
                                                     child: Container(
-                                                      width: 100.w,
-                                                      height: 100.h,
+                                                      width: 100,
+                                                      height: 100,
                                                       decoration: BoxDecoration(
                                                         shape: BoxShape.circle,
                                                         color: Colors.white
@@ -1366,8 +1366,8 @@ class _MoreScreenState extends State<MoreScreen> {
                                           ],
                                           // Team Management & Permissions (VIP)
                                           if (PermissionService
-                                                  .instance
-                                                  .isOwner) ...[
+                                              .instance
+                                              .isOwner) ...[
                                             SectionHeader(
                                               title: AppStrings
                                                   .teamAndPermissions
@@ -1379,8 +1379,8 @@ class _MoreScreenState extends State<MoreScreen> {
                                             InkWell(
                                               onTap: () {
                                                 if (!PermissionService
-                                                        .instance
-                                                        .isOwner) {
+                                                    .instance
+                                                    .isOwner) {
                                                   showfailureToast(
                                                     AppStrings
                                                         .noPermissionForAction
@@ -1675,6 +1675,329 @@ class _MoreScreenState extends State<MoreScreen> {
                                             SizedBox(
                                               height: isDesktop ? 20 : 20.h,
                                             ),
+                                          if (PermissionService.instance.isOwner) ...[
+                                            SectionHeader(
+                                              title: AppStrings
+                                                  .employeeCustodies
+                                                  .tr(),
+                                            ),
+                                            SizedBox(
+                                              height: isDesktop ? 5 : 5.h,
+                                            ),
+                                            InkWell(
+                                              onTap: () {
+                                                final canAccessCustody =
+                                                    PermissionService
+                                                        .instance
+                                                        .isOwner;
+                                                if (!canAccessCustody) {
+                                                  showfailureToast(
+                                                    AppStrings
+                                                        .noPermissionForAction
+                                                        .tr(),
+                                                  );
+                                                  return;
+                                                }
+                                                if (!(AppStrings.isVip)) {
+                                                  _showVipNoticeDialog(context);
+                                                  return;
+                                                }
+                                                if (isDesktop) {
+                                                  context
+                                                      .read<MainLayoutCubit>()
+                                                      .changeBottomNav(12);
+                                                } else {
+                                                  Navigator.pushNamed(
+                                                    context,
+                                                    AppRoutes.custodyManagement,
+                                                  );
+                                                }
+                                              },
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                    isDesktop ? 20 : 20.r,
+                                                  ),
+                                              child: Container(
+                                                clipBehavior: Clip.antiAlias,
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        isDesktop ? 20 : 20.r,
+                                                      ),
+                                                  gradient:
+                                                      const LinearGradient(
+                                                        colors: [
+                                                          Color(0xFF1E293B),
+                                                          Color(0xFF0F172A),
+                                                        ],
+                                                        begin:
+                                                            Alignment.topLeft,
+                                                        end: Alignment
+                                                            .bottomRight,
+                                                      ),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: const Color(
+                                                        0xFF0F172A,
+                                                      ).withValues(alpha: 0.35),
+                                                      blurRadius: 16,
+                                                      offset: const Offset(
+                                                        0,
+                                                        8,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                child: Stack(
+                                                  children: [
+                                                    Positioned(
+                                                      right: -25,
+                                                      top: -25,
+                                                      child: Container(
+                                                        width: isDesktop
+                                                            ? 120
+                                                            : 120.w,
+                                                        height: isDesktop
+                                                            ? 120
+                                                            : 120.h,
+                                                        decoration:
+                                                            BoxDecoration(
+                                                              shape: BoxShape
+                                                                  .circle,
+                                                              color: AppColors
+                                                                  .vipGoldStart
+                                                                  .withValues(
+                                                                    alpha: 0.12,
+                                                                  ),
+                                                            ),
+                                                      ),
+                                                    ),
+                                                    Positioned(
+                                                      left: -15,
+                                                      bottom: -15,
+                                                      child: Container(
+                                                        width: isDesktop
+                                                            ? 90
+                                                            : 90.w,
+                                                        height: isDesktop
+                                                            ? 90
+                                                            : 90.h,
+                                                        decoration:
+                                                            BoxDecoration(
+                                                              shape: BoxShape
+                                                                  .circle,
+                                                              color: Colors
+                                                                  .white
+                                                                  .withValues(
+                                                                    alpha: 0.05,
+                                                                  ),
+                                                            ),
+                                                      ),
+                                                    ),
+                                                    Padding(
+                                                      padding: EdgeInsets.all(
+                                                        isDesktop ? 22 : 18.w,
+                                                      ),
+                                                      child: Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          Row(
+                                                            children: [
+                                                              Container(
+                                                                padding:
+                                                                    EdgeInsets.all(
+                                                                      isDesktop
+                                                                          ? 14
+                                                                          : 12.w,
+                                                                    ),
+                                                                decoration: BoxDecoration(
+                                                                  gradient: LinearGradient(
+                                                                    colors: [
+                                                                      Colors
+                                                                          .white
+                                                                          .withValues(
+                                                                            alpha:
+                                                                                0.2,
+                                                                          ),
+                                                                      Colors
+                                                                          .white
+                                                                          .withValues(
+                                                                            alpha:
+                                                                                0.08,
+                                                                          ),
+                                                                    ],
+                                                                  ),
+                                                                  borderRadius:
+                                                                      BorderRadius.circular(
+                                                                        isDesktop
+                                                                            ? 16
+                                                                            : 14.r,
+                                                                      ),
+                                                                  border: Border.all(
+                                                                    color: AppColors
+                                                                        .vipGoldStart
+                                                                        .withValues(
+                                                                          alpha:
+                                                                              0.4,
+                                                                        ),
+                                                                    width: 1,
+                                                                  ),
+                                                                ),
+                                                                child: const Icon(
+                                                                  Icons
+                                                                      .account_balance_wallet_outlined,
+                                                                  color: AppColors
+                                                                      .vipGoldStart,
+                                                                  size: 28,
+                                                                ),
+                                                              ),
+                                                              SizedBox(
+                                                                width: isDesktop
+                                                                    ? 16
+                                                                    : 14.w,
+                                                              ),
+                                                              Expanded(
+                                                                child: Column(
+                                                                  crossAxisAlignment:
+                                                                      CrossAxisAlignment
+                                                                          .start,
+                                                                  children: [
+                                                                    Text(
+                                                                      AppStrings
+                                                                          .employeeCustodies
+                                                                          .tr(),
+                                                                      style: TextStyles.customStyle(
+                                                                        fontSize:
+                                                                            18,
+                                                                        fontWeight:
+                                                                            FontWeight.bold,
+                                                                        color: Colors
+                                                                            .white,
+                                                                      ),
+                                                                    ),
+                                                                    SizedBox(
+                                                                      height:
+                                                                          isDesktop
+                                                                          ? 4
+                                                                          : 4.h,
+                                                                    ),
+                                                                    Text(
+                                                                      AppStrings
+                                                                          .employeeCustodiesDesc
+                                                                          .tr(),
+                                                                      style: TextStyles.customStyle(
+                                                                        fontSize:
+                                                                            13,
+                                                                        color: Colors
+                                                                            .white
+                                                                            .withValues(
+                                                                              alpha: 0.8,
+                                                                            ),
+                                                                      ),
+                                                                      maxLines:
+                                                                          3,
+                                                                      overflow:
+                                                                          TextOverflow
+                                                                              .ellipsis,
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                              Container(
+                                                                padding: EdgeInsets.symmetric(
+                                                                  horizontal:
+                                                                      isDesktop
+                                                                      ? 12
+                                                                      : 10.w,
+                                                                  vertical:
+                                                                      isDesktop
+                                                                      ? 6
+                                                                      : 5.h,
+                                                                ),
+                                                                decoration: BoxDecoration(
+                                                                  gradient: const LinearGradient(
+                                                                    colors: [
+                                                                      AppColors
+                                                                          .vipGoldStart,
+                                                                      AppColors
+                                                                          .vipGoldEnd,
+                                                                    ],
+                                                                    begin: Alignment
+                                                                        .topLeft,
+                                                                    end: Alignment
+                                                                        .bottomRight,
+                                                                  ),
+                                                                  borderRadius:
+                                                                      BorderRadius.circular(
+                                                                        isDesktop
+                                                                            ? 20
+                                                                            : 20.r,
+                                                                      ),
+                                                                  boxShadow: [
+                                                                    BoxShadow(
+                                                                      color: AppColors
+                                                                          .vipGoldStart
+                                                                          .withValues(
+                                                                            alpha:
+                                                                                0.4,
+                                                                          ),
+                                                                      blurRadius:
+                                                                          8,
+                                                                      offset:
+                                                                          const Offset(
+                                                                            0,
+                                                                            2,
+                                                                          ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                child: Row(
+                                                                  mainAxisSize:
+                                                                      MainAxisSize
+                                                                          .min,
+                                                                  children: [
+                                                                    const Icon(
+                                                                      Icons
+                                                                          .workspace_premium_rounded,
+                                                                      size: 16,
+                                                                      color: Colors
+                                                                          .black87,
+                                                                    ),
+                                                                    SizedBox(
+                                                                      width:
+                                                                          isDesktop
+                                                                          ? 4
+                                                                          : 4.w,
+                                                                    ),
+                                                                    Text(
+                                                                      'VIP',
+                                                                      style: TextStyles.customStyle(
+                                                                        fontSize:
+                                                                            12,
+                                                                        fontWeight:
+                                                                            FontWeight.w900,
+                                                                        color: Colors
+                                                                            .black87,
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              height: isDesktop ? 20 : 20.h,
+                                            ),
+                                          ],
                                           ],
                                         ],
 

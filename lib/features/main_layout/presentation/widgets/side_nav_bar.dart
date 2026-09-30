@@ -54,9 +54,9 @@ class SideNavBar extends StatelessWidget {
               AppPermissions.shippingReconciliationView,
             );
         final canManageTeam =
-            (!Platform.isIOS || (AppStrings.isVip)) &&
-            permissions.isOwner;
-
+            (!Platform.isIOS || (AppStrings.isVip)) && permissions.isOwner;
+        final canManageCustodies =
+            (!Platform.isIOS || (AppStrings.isVip)) && permissions.isOwner;
         return Container(
           width: MediaQuery.of(context).size.width * 0.25,
           constraints: const BoxConstraints(minWidth: 240, maxWidth: 500),
@@ -209,6 +209,14 @@ class SideNavBar extends StatelessWidget {
                             tag: "VIP ✨",
                             isSelected: cubit.currentIndex == 11,
                             onTap: () => cubit.changeBottomNav(11),
+                          ),
+                        if (canManageCustodies)
+                          SideNavBarActionNavTile(
+                            icon: Icons.account_balance_wallet_outlined,
+                            label: AppStrings.employeeCustodies.tr(),
+                            tag: "VIP ✨",
+                            isSelected: cubit.currentIndex == 12,
+                            onTap: () => cubit.changeBottomNav(12),
                           ),
                       ],
                     ],

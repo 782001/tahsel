@@ -102,6 +102,8 @@ class VaultTransactionModel extends VaultTransactionEntity {
       case 'manual_withdrawal':
       case 'manual_withdraw':
         return VaultTransactionSource.manualWithdrawal;
+      case 'custody':
+        return VaultTransactionSource.custody;
       default:
         return VaultTransactionSource.all;
     }

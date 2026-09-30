@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
@@ -90,10 +90,10 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
             ),
           ),
           leading: IconButton(
-            icon: Icon(
+            icon:  Icon(
               Icons.arrow_back_ios,
               color: AppColors.black,
-              size: 20.r,
+              size: 20,
             ),
             onPressed: () {
               context.read<ExpenseCubit>().fetchMonths(AppStrings.userToken);
@@ -370,7 +370,8 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
                     (expense.id!.startsWith('exp_pur_') ||
                         expense.id!.startsWith('exp_pay_') ||
                         expense.id!.startsWith('exp_emp_') ||
-                        expense.id!.startsWith('exp_vault_manual_with_'))))
+                        expense.id!.startsWith('exp_vault_manual_with_') ||
+                        expense.id!.startsWith('exp_cust_'))))
             ? null
             : () => _confirmDelete(context, expense.id ?? ''),
       ),
@@ -380,6 +381,10 @@ class _MonthExpensesScreenState extends State<MonthExpensesScreen> {
   void _confirmDelete(BuildContext context, String expenseId) {
     if (!PermissionService.instance.hasPermission(AppPermissions.expensesDelete)) {
       showfailureToast(AppStrings.appPermissionDenied.tr());
+      return;
+    }
+    if (expenseId.startsWith('exp_cust_')) {
+      showfailureToast(AppStrings.cannotDeleteCustodySettledExpense.tr());
       return;
     }
     final expenseCubit = context.read<ExpenseCubit>();

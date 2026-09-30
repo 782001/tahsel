@@ -284,6 +284,8 @@ class VaultTransactionCard extends StatelessWidget {
         return Icons.south_west_rounded;
       case VaultTransactionSource.manualWithdrawal:
         return Icons.north_east_rounded;
+      case VaultTransactionSource.custody:
+        return Icons.account_balance_wallet_outlined;
       case VaultTransactionSource.all:
         return Icons.account_balance_wallet_rounded;
     }
@@ -300,6 +302,8 @@ class VaultTransactionCard extends StatelessWidget {
         return AppColors.primaryColor;
       case VaultTransactionSource.expense:
         return AppColors.vaultOutflow;
+      case VaultTransactionSource.custody:
+        return AppColors.primaryColor;
       default:
         return AppColors.vaultOutflow;
     }
@@ -323,6 +327,11 @@ class VaultTransactionCard extends StatelessWidget {
         return AppStrings.cashboxSourceManualAdd.tr();
       case VaultTransactionSource.manualWithdrawal:
         return AppStrings.cashboxSourceManualWithdraw.tr();
+      case VaultTransactionSource.custody:
+        if (type == 'custody_disbursement') return AppStrings.newCustody.tr();
+        if (type == 'custody_settlement_refund') return AppStrings.custodySettled.tr();
+        if (type == 'custody_settlement_reimbursement') return AppStrings.settleCustody.tr();
+        return AppStrings.custodyTitle.tr();
       case VaultTransactionSource.all:
         return AppStrings.filterAll.tr();
     }

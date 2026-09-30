@@ -8,6 +8,7 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/cashbox/service_injection/cashbox_injection.dart';
 import 'package:tahsel/features/create_account/service_injection/create_account_injection.dart';
 import 'package:tahsel/features/auth/service_injection/auth_injection.dart';
+import 'package:tahsel/features/custody/service_injection/custody_injection.dart';
 import 'package:tahsel/features/customer/service_injection/customer_injection.dart';
 import 'package:tahsel/features/debt/service_injection/debt_injection.dart';
 import 'package:tahsel/features/employee/service_injection/employee_injection.dart';
@@ -89,6 +90,7 @@ Future<void> initDependencies() async {
   InventoryInjection.init(sl);
   ShippingReconciliationInjection.init(sl);
   await CashboxInjection.init(sl);
+  CustodyInjection.init(sl);
 
   // localization
   /// -----localizationCubit------

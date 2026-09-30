@@ -30,6 +30,7 @@ import 'package:tahsel/features/settings/presentation/screens/more_screen.dart';
 import 'package:tahsel/features/shipping_reconciliation/presentation/screens/shipping_reconciliation_screen.dart';
 import 'package:tahsel/features/employee/presentation/cubit/team_management_cubit.dart';
 import 'package:tahsel/features/employee/presentation/screens/team_management_screen.dart';
+import 'package:tahsel/features/custody/presentation/screens/custody_management_screen.dart';
 
 class MainLayoutCubit extends Cubit<MainLayoutState> {
   final CleanupOldReportsUseCase cleanupOldReportsUseCase;
@@ -100,6 +101,7 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
         return isShop &&
             permissions.hasPermission(AppPermissions.shippingReconciliationView);
       case 11:
+      case 12:
         return permissions.isOwner;
       default:
         return false;
@@ -114,6 +116,7 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
     if (isIndexAllowed(7)) return 7;
     if (isIndexAllowed(9)) return 9;
     if (isIndexAllowed(11)) return 11;
+    if (isIndexAllowed(12)) return 12;
     if (isIndexAllowed(6)) return 6;
     if (isIndexAllowed(10)) return 10;
     return 5;
@@ -194,6 +197,7 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
       create: (_) => sl<TeamManagementCubit>(),
       child: const TeamManagementScreen(),
     ),
+    const CustodyManagementScreen(),
   ];
 
   void changeBottomNav(int index) {

@@ -16,6 +16,7 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/features/custody/presentation/cubit/custody_cubit.dart';
 import 'package:tahsel/features/customer/presentation/cubit/customer_cubit.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_cubit.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
@@ -274,6 +275,11 @@ class AuthCubit extends Cubit<AuthState> {
     await secureStorage.deleteData(key: AppStrings.userTypeKey);
     await secureStorage.deleteData(key: AppStrings.isVipKey);
     await PermissionService.instance.clear(secureStorage);
+
+    // Clear custody data in memory
+    if (sl.isRegistered<CustodyCubit>()) {
+      sl<CustodyCubit>().clearData();
+    }
 
     // Clear feature caches
     sl<ReportsCubit>().clearCache();

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:tahsel/core/error/exceptions.dart';
 import 'package:tahsel/core/error/failures.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/date_formatter.dart';
@@ -194,6 +195,8 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
         await remoteDataSource.deleteExpense(uid, expenseId);
       }
       return const Right(null);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.code));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

@@ -290,8 +290,8 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
             right: -30,
             top: -30,
             child: Container(
-              width: 130.w,
-              height: 130.h,
+              width: 130,
+              height: 130,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: AppColors.vipGoldStart.withValues(alpha: 0.12),
@@ -302,8 +302,8 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
             left: -20,
             bottom: -20,
             child: Container(
-              width: 100.w,
-              height: 100.h,
+              width: 100,
+              height: 100,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.white.withValues(alpha: 0.08),

@@ -8,6 +8,7 @@ import 'package:tahsel/core/utils/summary_helper.dart';
 import 'package:tahsel/features/cashbox/data/datasources/vault_remote_data_source.dart';
 import 'package:tahsel/features/cashbox/domain/entities/vault_transaction_entity.dart';
 
+import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/firebase_error_handler.dart';
 import '../../domain/entities/expense_entity.dart';
 import '../models/expense_model.dart';
@@ -71,7 +72,9 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
           : (expense.amount > 0 ? 1 : 0);
 
       final bool isInternalSync =
-          docRef.id.startsWith('exp_pur_') || docRef.id.startsWith('exp_pay_');
+          docRef.id.startsWith('exp_pur_') ||
+          docRef.id.startsWith('exp_pay_') ||
+          docRef.id.startsWith('exp_cust_');
 
       // 1. Sync Vault FIRST (Atomically checks balance inside Vault transaction without standalone .get() read)
       if (!isInternalSync && deltaAmount != 0) {
@@ -368,6 +371,9 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
 
   @override
   Future<void> deleteExpense(String uid, String expenseId) async {
+    if (expenseId.startsWith('exp_cust_')) {
+      throw ServerException(AppStrings.cannotDeleteCustodySettledExpense.tr());
+    }
     try {
       final userRef = firestore.collection('users').doc(uid);
       final expenseRef = userRef.collection('expenses').doc(expenseId);
@@ -415,7 +421,8 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
 
       if (expenseId.startsWith('exp_pur_') ||
           expenseId.startsWith('exp_pay_') ||
-          expenseId.startsWith('exp_vault_manual_with_')) {
+          expenseId.startsWith('exp_vault_manual_with_') ||
+          expenseId.startsWith('exp_cust_')) {
         // Vault reversal transactions for purchases, debt payments, and manual withdrawals are managed directly by Inventory/MyDebts/Vault modules
         return;
       }
@@ -462,6 +469,12 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
       Map<String, Map<String, double>> dailyWeeklyAmounts = {};
 
       for (final doc in snapshot.docs) {
+        if (doc.id.startsWith('exp_cust_') ||
+            doc.id.startsWith('exp_pur_') ||
+            doc.id.startsWith('exp_pay_') ||
+            doc.id.startsWith('exp_vault_manual_with_')) {
+          continue;
+        }
         final expense = ExpenseModel.fromJson(doc.data(), doc.id);
         totalAmountRemoved += expense.amount;
 
