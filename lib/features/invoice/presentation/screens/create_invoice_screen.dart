@@ -14,8 +14,14 @@ import 'package:tahsel/features/customer/presentation/widgets/customer_autocompl
 import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_cubit.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_state.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
+import 'package:tahsel/features/invoice/presentation/widgets/convert_quotation_button.dart';
+import 'package:tahsel/features/invoice/presentation/widgets/convert_quotation_dialog.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/invoice_item_row.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/multi_inventory_picker_bottom_sheet.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/shared/widgets/buttons/quick_action_button.dart';
 import 'package:tahsel/shared/widgets/quick_due_date_selector.dart';
 
@@ -324,7 +330,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
     );
   }
 
-  void _submit(BuildContext context) {
+  Future<void> _submit(BuildContext context, {bool convertToInvoice = false}) async {
     final uid = AppStrings.userToken;
     if (uid.isEmpty) return;
 
@@ -402,6 +408,29 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
         dueDate: _isQuotation ? null : _dueDate,
         clearDueDate: _isQuotation || _dueDate == null,
       );
+
+      if (convertToInvoice && _isQuotation) {
+        final connectivityState = context.read<ConnectivityCubit>().state;
+        if (connectivityState is ConnectivityDisconnected) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppStrings.noInternetConnection.tr()),
+              backgroundColor: AppColors.error,
+            ),
+          );
+          return;
+        }
+
+        final result = await ConvertQuotationDialog.show(context, updated);
+        if (result != null && result.confirmed && context.mounted) {
+          context.read<InvoiceCubit>().convertQuotationToInvoice(
+            quotation: updated,
+            dueDate: result.dueDate,
+          );
+        }
+        return;
+      }
+
       context.read<InvoiceCubit>().updateInvoice(
         updated,
         previous: widget.invoiceToEdit,
@@ -498,6 +527,14 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
             ),
           );
           Navigator.of(context).pop(true); // signal success to caller
+        } else if (state is InvoiceConvertSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppStrings.quotationConvertedSuccess.tr()),
+              backgroundColor: AppColors.success,
+            ),
+          );
+          Navigator.of(context).pop(true);
         } else if (state is InvoiceFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -738,6 +775,19 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                                   ? null
                                   : () => _submit(context),
                             ),
+                            if (_isEditMode &&
+                                _isQuotation &&
+                                PermissionService.instance.hasPermission(
+                                  AppPermissions.invoicesCreate,
+                                )) ...[
+                              const SizedBox(height: 12),
+                              ConvertQuotationButton(
+                                label: AppStrings.saveAndConvertToInvoice.tr(),
+                                onTap: isLoading
+                                    ? null
+                                    : () => _submit(context, convertToInvoice: true),
+                              ),
+                            ],
                             const SizedBox(height: 24),
                           ],
                         ),

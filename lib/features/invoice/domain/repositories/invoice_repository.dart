@@ -50,4 +50,10 @@ abstract class InvoiceRepository {
     String invoiceId, {
     InvoiceEntity? invoice,
   });
+
+  /// Converts a quotation into an actual sales invoice (status becomes pending, stock deducted).
+  Future<Either<Failure, void>> convertQuotationToInvoice(
+    InvoiceEntity quotation, {
+    DateTime? dueDate,
+  });
 }

@@ -9,6 +9,7 @@ import '../../../debt/domain/usecases/get_debt_by_id_usecase.dart';
 import '../../../debt/domain/usecases/get_debt_transactions_future_use_case.dart';
 import '../../../debt/domain/usecases/pay_item_debt_usecase.dart';
 import '../../domain/entities/invoice_entity.dart';
+import '../../domain/entities/invoice_history_entity.dart';
 import '../../domain/usecases/invoice_history_usecases.dart';
 import '../../domain/usecases/invoice_usecases.dart';
 import '../../utils/invoice_history_diff.dart';
@@ -39,6 +40,7 @@ class InvoiceCubit extends Cubit<InvoiceState> {
   final PayItemDebtUseCase payItemDebtUseCase;
   final UpdateInvoiceUseCase updateInvoiceUseCase;
   final VoidInvoiceUseCase voidInvoiceUseCase;
+  final ConvertQuotationToInvoiceUseCase convertQuotationToInvoiceUseCase;
   final AddInvoiceHistoryUseCase addInvoiceHistoryUseCase;
   final GetDebtTransactionsFutureUseCase getDebtTransactionsUseCase;
   final OfflineInvoiceLocalDataSource offlineInvoiceLocalDataSource;
@@ -63,6 +65,7 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     required this.payItemDebtUseCase,
     required this.updateInvoiceUseCase,
     required this.voidInvoiceUseCase,
+    required this.convertQuotationToInvoiceUseCase,
     required this.addInvoiceHistoryUseCase,
     required this.getDebtTransactionsUseCase,
     required this.offlineInvoiceLocalDataSource,
@@ -188,6 +191,7 @@ class InvoiceCubit extends Cubit<InvoiceState> {
          );
       }
        _serverAllInvoices = null;
+
        emit(InvoiceCreateSuccess(invoiceId));
     }
   }
@@ -654,5 +658,111 @@ class InvoiceCubit extends Cubit<InvoiceState> {
         emit(InvoiceVoidSuccess());
       },
     );
+  }
+
+  // ── Convert Quotation to Invoice ──────────────────────────────────────────
+
+  /// Converts a quotation into an actual sales invoice (status becomes pending, stock deducted, debt created).
+  Future<void> convertQuotationToInvoice({
+    required InvoiceEntity quotation,
+    DateTime? dueDate,
+    double paidNow = 0,
+    String? paymentNote,
+  }) async {
+    if (!PermissionService.instance.hasPermission(AppPermissions.invoicesCreate)) {
+      emit(InvoiceFailure(AppStrings.noPermissionForAction.tr()));
+      return;
+    }
+    emit(InvoiceLoading());
+
+    final effectiveDueDate = dueDate ?? quotation.dueDate;
+    final now = DateTime.now();
+    final convertedInvoice = quotation.copyWith(
+      status: InvoiceStatus.pending,
+      dueDate: effectiveDueDate,
+      createdAt: now,
+      lastUpdatedAt: now,
+    );
+
+    if (connectivityCubit.state is ConnectivityDisconnected) {
+      await offlineInvoiceLocalDataSource.convertOfflineQuotationToInvoice(
+        quotation.id,
+        dueDate: effectiveDueDate,
+      );
+
+      // Deduct inventory stock locally immediately if VIP subscription is active
+      if (AppStrings.isVip && GetIt.I.isRegistered<InventoryRepository>()) {
+        try {
+          final itemsMap = convertedInvoice.items.map((item) {
+            String name = item.description.trim();
+            final match = RegExp(r'^(.*?)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*[×xX*].*?\))?$')
+                .firstMatch(name);
+            if (match != null && match.group(1)?.trim().isNotEmpty == true) {
+              name = match.group(1)!.trim();
+            }
+            return {
+              'id': item.id,
+              'name': name,
+              'quantity': item.quantity,
+            };
+          }).toList();
+
+          await GetIt.I<InventoryRepository>().processInvoiceStockChange(
+            invoiceId: quotation.id,
+            items: itemsMap,
+            type: StockMovementType.invoiceSale,
+          );
+        } catch (_) {}
+      }
+
+      _serverAllInvoices = null;
+      emit(InvoiceConvertSuccess(quotation.id));
+      return;
+    }
+
+    final result = await convertQuotationToInvoiceUseCase(
+      convertedInvoice,
+      dueDate: effectiveDueDate,
+    );
+
+    final failure = result.fold((f) => f, (_) => null);
+    if (failure != null) {
+      emit(InvoiceFailure(failure.message));
+      return;
+    }
+
+    // Automatically create baseline debt and process initial payment if any
+    if (convertedInvoice.totalAmount > 0) {
+      await _processPaymentInternally(
+        uid: quotation.uid,
+        invoiceId: quotation.id,
+        invoice: convertedInvoice,
+        paidNow: paidNow,
+        note: paymentNote,
+      );
+    }
+
+    // Add audit history entry
+    unawaited(
+      addInvoiceHistoryUseCase(
+        uid: quotation.uid,
+        invoiceId: quotation.id,
+        entries: [
+          InvoiceHistoryEntity(
+            id: 'hist_${DateTime.now().millisecondsSinceEpoch}_conv',
+            invoiceId: quotation.id,
+            uid: quotation.uid,
+            changeType: InvoiceHistoryChangeType.quotationConverted,
+            timestamp: DateTime.now(),
+            fieldLabel: quotation.referenceNumber ?? quotation.id,
+            oldValue: AppStrings.quotation.tr(),
+            newValue: AppStrings.invoice.tr(),
+          ),
+        ],
+      ),
+    );
+
+    _serverAllInvoices = null;
+    emit(InvoiceConvertSuccess(quotation.id));
   }
 }

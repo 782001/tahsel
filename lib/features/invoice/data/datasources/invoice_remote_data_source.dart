@@ -39,6 +39,12 @@ abstract class InvoiceRemoteDataSource {
 
   /// Marks an invoice as voided. Irreversible.
   Future<void> voidInvoice(String uid, String invoiceId);
+
+  /// Converts an existing quotation into an active sales invoice.
+  Future<void> convertQuotationToInvoice(
+    InvoiceModel invoice, {
+    DateTime? dueDate,
+  });
 }
 
 class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
@@ -736,6 +742,82 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
     }
 
     await batch.commit();
+  }
+
+  @override
+  Future<void> convertQuotationToInvoice(
+    InvoiceModel invoice, {
+    DateTime? dueDate,
+  }) async {
+    final ref = firestore
+        .collection('users/${invoice.uid}/invoices')
+        .doc(invoice.id);
+
+    final snap = await ref.get();
+    if (!snap.exists) return;
+    final data = snap.data()!;
+    _normalizeDates(data);
+    data['id'] = snap.id;
+    final existing = InvoiceModel.fromMap(data);
+
+    if (existing.status != InvoiceStatus.quotation) return;
+
+    final items = invoice.items
+        .map((i) => InvoiceItemModel.fromEntity(i).toMap())
+        .toList();
+    final effectiveDueDate = dueDate ?? invoice.dueDate;
+
+    final conversionDate = DateTime.now();
+    final conversionTimestamp = Timestamp.fromDate(conversionDate);
+
+    await ref.update({
+      'status': InvoiceStatus.pending.name,
+      'createdAt': conversionTimestamp,
+      'convertedAt': conversionTimestamp,
+      'customerName': invoice.customerName,
+      'customerPhone': invoice.customerPhone,
+      'ledgerNumber': invoice.ledgerNumber,
+      'notes': invoice.notes,
+      'items': items,
+      'totalAmount': invoice.totalAmount,
+      'discountAmount': invoice.discountAmount,
+      if (invoice.taxRate != null) 'taxRate': invoice.taxRate,
+      'dueDate': effectiveDueDate != null
+          ? Timestamp.fromDate(effectiveDueDate)
+          : null,
+      'lastUpdatedAt': conversionTimestamp,
+    });
+    
+    if (sl.isRegistered<ActivityLoggerService>()) {
+      final refNum = (invoice.referenceNumber != null &&
+              invoice.referenceNumber!.isNotEmpty)
+          ? invoice.referenceNumber!
+          : invoice.id;
+      final hasSpecificCustomer = invoice.customerName != null &&
+          invoice.customerName!.trim().isNotEmpty;
+      final cust =
+          hasSpecificCustomer ? invoice.customerName!.trim() : 'عميل عام';
+      final totalFormatted = invoice.totalAmount.toStringAsFixed(1);
+
+      sl<ActivityLoggerService>().logStandalone(
+        ownerUid: invoice.uid,
+        actionCategory: 'invoices',
+        actionType: 'convert_quotation',
+        actionTitle: 'تحويل عرض سعر إلى فاتورة (#$refNum)',
+        details:
+            'تحويل عرض السعر رقم $refNum للعميل ($cust) بقيمة $totalFormatted ${AppStrings.currencyEgp.tr()} إلى فاتورة مبيعات فعلية',
+        amount: invoice.totalAmount,
+        extraData: {
+          'invoiceId': invoice.id,
+          'referenceNumber': invoice.referenceNumber,
+          'customerName': invoice.customerName,
+          'totalAmount': invoice.totalAmount,
+          'itemCount': invoice.items.length,
+          'convertedAt': DateTime.now().toIso8601String(),
+        },
+        timestamp: DateTime.now(),
+      );
+    }
   }
 
   // ── Helpers ─────────────────────────────────────────────────────────────────

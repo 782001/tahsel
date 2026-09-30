@@ -11,6 +11,8 @@ enum InvoiceHistoryChangeType {
   discountUpdated,
   /// Fires when the invoice grand total changes as a result of item edits.
   totalUpdated,
+  /// Fires when a quotation is converted into an actual sales invoice.
+  quotationConverted,
 }
 
 /// A single, immutable audit log entry for an invoice edit.

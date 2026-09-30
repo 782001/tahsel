@@ -153,6 +153,12 @@ class HistoryCard extends StatelessWidget {
           color: AppColors.primaryColor,
           title: AppStrings.historyTotalUpdated.tr(),
         );
+      case InvoiceHistoryChangeType.quotationConverted:
+        return CardConfig(
+          icon: Icons.published_with_changes_rounded,
+          color: AppColors.primaryColor,
+          title: AppStrings.historyQuotationConverted.tr(),
+        );
     }
   }
 

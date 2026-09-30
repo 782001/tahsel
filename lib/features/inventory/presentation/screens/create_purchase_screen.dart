@@ -41,6 +41,7 @@ class CreatePurchaseScreen extends StatefulWidget {
 
 class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
   bool _isLoading = false;
+  bool _isCardExpanded = false;
   InventorySupplierEntity? _selectedSupplier;
   final List<InventoryPurchaseItemEntity> _selectedItems = [];
   final TextEditingController _notesController = TextEditingController();
@@ -789,133 +790,74 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                     ),
                     SizedBox(height: isDesktop ? 16 : 16.h),
 
-                    // Total & Save Button
+                    // Total & Save Button Card
                     Container(
+                      height: _isCardExpanded
+                          ? (isDesktop
+                                ? 360
+                                : MediaQuery.of(context).size.height / 3)
+                          : null,
                       padding: EdgeInsets.all(isDesktop ? 16 : 16.w),
                       decoration: BoxDecoration(
                         color: AppColors.surface,
                         borderRadius: BorderRadius.circular(
                           isDesktop ? 16 : 16.r,
                         ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (hasTax) ...[
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  AppStrings.totalBeforeTax.tr(),
-                                  style: TextStyles.customStyle(
-                                    fontSize: 14,
-                                    color: AppColors.sandText,
-                                  ),
-                                ),
-                                Text(
-                                  '${totalBeforeTax.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-                                  style: TextStyles.customStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.blackReal,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: isDesktop ? 6 : 6.h),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  '${AppStrings.vatAmount.tr()} (${effectiveTaxRate.toSmartAmount()}%)',
-                                  style: TextStyles.customStyle(
-                                    fontSize: 14,
-                                    color: AppColors.sandText,
-                                  ),
-                                ),
-                                Text(
-                                  '${taxAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-                                  style: TextStyles.customStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.primaryColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: isDesktop ? 6 : 6.h),
-                            Divider(
-                              color: AppColors.disabledColor.withValues(
-                                alpha: 0.2,
-                              ),
-                            ),
-                            SizedBox(height: isDesktop ? 6 : 6.h),
-                          ],
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                hasTax
-                                    ? AppStrings.totalAfterTax.tr()
-                                    : AppStrings.totalAmount.tr(),
-                                style: TextStyles.customStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.blackReal,
-                                ),
-                              ),
-                              Text(
-                                '${_totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-                                style: TextStyles.customStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primaryColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: isDesktop ? 14 : 14.h),
-                          if (widget.initialPurchase == null ||
-                              widget.isReorder) ...[
-                            const Divider(),
-                            SizedBox(height: isDesktop ? 10 : 10.h),
-                            _buildPaymentMethodSection(isDesktop),
-                            SizedBox(height: isDesktop ? 16 : 16.h),
-                          ],
-                          SizedBox(
-                            width: double.infinity,
-                            height: isDesktop ? 48 : 48.h,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primaryColor,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    isDesktop ? 12 : 12.r,
-                                  ),
-                                ),
-                              ),
-                              onPressed: _isLoading ? null : _savePurchase,
-                              child: _isLoading
-                                  ? SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(
-                                        color: AppColors.white,
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : Text(
-                                      AppStrings.savePurchase.tr(),
-                                      style: TextStyles.customStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                            ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 10,
+                            offset: const Offset(0, -2),
                           ),
                         ],
+                        border: Border.all(
+                          color: AppColors.dividerColor.withValues(alpha: 0.6),
+                        ),
                       ),
+                      child: _isCardExpanded
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildTotalHeader(isDesktop, hasTax),
+                                SizedBox(height: isDesktop ? 10 : 10.h),
+                                Expanded(
+                                  child: SingleChildScrollView(
+                                    physics: const BouncingScrollPhysics(),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        if (hasTax) ...[
+                                          _buildTaxBreakdown(
+                                            isDesktop,
+                                            totalBeforeTax,
+                                            effectiveTaxRate,
+                                            taxAmount,
+                                          ),
+                                          SizedBox(
+                                            height: isDesktop ? 10 : 10.h,
+                                          ),
+                                        ],
+                                        if (widget.initialPurchase == null ||
+                                            widget.isReorder) ...[
+                                          const Divider(),
+                                          SizedBox(
+                                            height: isDesktop ? 10 : 10.h,
+                                          ),
+                                          _buildPaymentMethodSection(isDesktop),
+                                          SizedBox(
+                                            height: isDesktop ? 12 : 12.h,
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(height: isDesktop ? 10 : 10.h),
+                                _buildSaveButton(isDesktop),
+                              ],
+                            )
+                          : _buildTotalHeader(isDesktop, hasTax),
                     ),
                   ],
                 ),
@@ -1627,6 +1569,182 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTotalHeader(bool isDesktop, bool hasTax) {
+    return InkWell(
+      onTap: () => setState(() => _isCardExpanded = !_isCardExpanded),
+      borderRadius: BorderRadius.circular(isDesktop ? 10 : 10.r),
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 4.h),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      hasTax
+                          ? AppStrings.totalAfterTax.tr()
+                          : AppStrings.totalAmount.tr(),
+                      style: TextStyles.customStyle(
+                        fontSize: isDesktop ? 16 : 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.blackReal,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  SizedBox(width: isDesktop ? 6 : 6.w),
+                  if (widget.initialPurchase == null || widget.isReorder) ...[
+                    _buildPaymentMethodBadge(),
+                    SizedBox(width: isDesktop ? 6 : 6.w),
+                  ],
+                  Icon(
+                    _isCardExpanded
+                        ? Icons.keyboard_arrow_down_rounded
+                        : Icons.keyboard_arrow_up_rounded,
+                    color: AppColors.primaryColor,
+                    size: isDesktop ? 22 : 20,
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: isDesktop ? 8 : 8.w),
+            Text(
+              '${_totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+              style: TextStyles.customStyle(
+                fontSize: isDesktop ? 20 : 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentMethodBadge() {
+    String label;
+    Color color;
+    if (_selectedPaymentMethod == 'cash') {
+      label = AppStrings.paymentCash.tr();
+      color = AppColors.success;
+    } else if (_selectedPaymentMethod == 'card') {
+      label = AppStrings.paymentCard.tr();
+      color = AppColors.primaryColor;
+    } else {
+      label = AppStrings.paymentDebt.tr();
+      color = AppColors.warning;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        label,
+        style: TextStyles.customStyle(
+          fontSize: 10,
+          color: color,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTaxBreakdown(
+    bool isDesktop,
+    double totalBeforeTax,
+    double effectiveTaxRate,
+    double taxAmount,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              AppStrings.totalBeforeTax.tr(),
+              style: TextStyles.customStyle(
+                fontSize: 14,
+                color: AppColors.sandText,
+              ),
+            ),
+            Text(
+              '${totalBeforeTax.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+              style: TextStyles.customStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppColors.blackReal,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: isDesktop ? 6 : 6.h),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '${AppStrings.vatAmount.tr()} (${effectiveTaxRate.toSmartAmount()}%)',
+              style: TextStyles.customStyle(
+                fontSize: 14,
+                color: AppColors.sandText,
+              ),
+            ),
+            Text(
+              '${taxAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+              style: TextStyles.customStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primaryColor,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: isDesktop ? 6 : 6.h),
+      ],
+    );
+  }
+
+  Widget _buildSaveButton(bool isDesktop) {
+    return SizedBox(
+      width: double.infinity,
+      height: isDesktop ? 48 : 48.h,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primaryColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(isDesktop ? 12 : 12.r),
+          ),
+        ),
+        onPressed: _isLoading ? null : _savePurchase,
+        child: _isLoading
+            ? SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  color: AppColors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : Text(
+                AppStrings.savePurchase.tr(),
+                style: TextStyles.customStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
       ),
     );
   }

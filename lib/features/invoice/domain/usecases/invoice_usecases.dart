@@ -185,3 +185,17 @@ class GetInvoicesPaginatedParams {
   });
 }
 
+/// Converts a quotation into an actual sales invoice (status becomes pending, stock deducted).
+class ConvertQuotationToInvoiceUseCase {
+  final InvoiceRepository repository;
+
+  ConvertQuotationToInvoiceUseCase(this.repository);
+
+  Future<Either<Failure, void>> call(
+    InvoiceEntity quotation, {
+    DateTime? dueDate,
+  }) {
+    return repository.convertQuotationToInvoice(quotation, dueDate: dueDate);
+  }
+}
+

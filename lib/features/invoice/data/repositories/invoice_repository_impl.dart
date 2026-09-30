@@ -211,6 +211,26 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, void>> convertQuotationToInvoice(
+    InvoiceEntity quotation, {
+    DateTime? dueDate,
+  }) async {
+    try {
+      final model = InvoiceModel.fromEntity(quotation);
+      await remoteDataSource.convertQuotationToInvoice(model, dueDate: dueDate);
+
+      // Deduct inventory stock automatically if VIP subscription is active
+      if (AppStrings.isVip) {
+        _deductInventoryStockForInvoice(quotation.id, quotation.items);
+      }
+
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
   Future<void> _reconcileInvoiceStockDeltas({
     required String invoiceId,
     required List<InvoiceItem> oldItems,

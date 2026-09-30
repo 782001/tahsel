@@ -864,6 +864,17 @@ class AppStrings {
   static const String printQuotation = "print_quotation";
   static const String shareQuotationPdf = "share_quotation_pdf";
   static const String quotationsEmpty = "quotations_empty";
+  static const String convertToInvoice = "convert_to_invoice";
+  static const String convertToSalesInvoice = "convert_to_sales_invoice";
+  static const String convertQuotationConfirmTitle = "convert_quotation_confirm_title";
+  static const String convertQuotationConfirmMessage = "convert_quotation_confirm_message";
+  static const String confirmConversion = "confirm_conversion";
+  static const String quotationConvertedSuccess = "quotation_converted_success";
+  static const String saveAndConvertToInvoice = "save_and_convert_to_invoice";
+  static const String historyQuotationConverted = "history_quotation_converted";
+  static const String convertQuotationNotice = "convert_quotation_notice";
+  static const String quotation = "quotation";
+  static const String invoice = "invoice";
 
   // Invoice detail & payment
   static const String invoiceDetail = "invoice_detail";

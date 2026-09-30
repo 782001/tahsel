@@ -32,6 +32,7 @@ Future<void> initInvoice() async {
       payItemDebtUseCase: sl(),
       updateInvoiceUseCase: sl(),
       voidInvoiceUseCase: sl(),
+      convertQuotationToInvoiceUseCase: sl(),
       addInvoiceHistoryUseCase: sl(),
       getDebtTransactionsUseCase: sl(),
       offlineInvoiceLocalDataSource: sl(),
@@ -57,6 +58,7 @@ Future<void> initInvoice() async {
   sl.registerLazySingleton(() => LinkDebtToInvoiceUseCase(sl()));
   sl.registerLazySingleton(() => UpdateInvoiceUseCase(sl()));
   sl.registerLazySingleton(() => VoidInvoiceUseCase(sl()));
+  sl.registerLazySingleton(() => ConvertQuotationToInvoiceUseCase(sl()));
   // Debt use-cases needed by InvoiceCubit for smart payment routing
   if (!sl.isRegistered<GetDebtByIdUseCase>()) {
     sl.registerLazySingleton(() => GetDebtByIdUseCase(sl()));

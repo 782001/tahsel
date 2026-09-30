@@ -102,6 +102,16 @@ class InvoiceUpdateSuccess extends InvoiceState {}
 /// Invoice was voided successfully
 class InvoiceVoidSuccess extends InvoiceState {}
 
+/// Quotation was converted to actual sales invoice successfully
+class InvoiceConvertSuccess extends InvoiceState {
+  final String invoiceId;
+
+  const InvoiceConvertSuccess(this.invoiceId);
+
+  @override
+  List<Object?> get props => [invoiceId];
+}
+
 /// Error state
 class InvoiceFailure extends InvoiceState {
   final String message;

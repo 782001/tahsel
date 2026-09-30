@@ -135,7 +135,6 @@ class ReportsCubit extends Cubit<ReportsState> {
       emit(successState);
     });
   }
-
   /// Clears the cache, useful on logout or when global state changes significantly
   void clearCache() {
     _cache.clear();

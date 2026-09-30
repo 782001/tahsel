@@ -8,6 +8,7 @@ abstract class OfflineInvoiceLocalDataSource {
   Future<void> updateOfflinePayment(String invoiceId, double paymentAmount, String? paymentNote);
   Future<List<Map<String, dynamic>>> getPendingInvoices();
   Future<void> deleteOfflineInvoice(String invoiceId);
+  Future<void> convertOfflineQuotationToInvoice(String invoiceId, {DateTime? dueDate});
 }
 
 class OfflineInvoiceLocalDataSourceImpl implements OfflineInvoiceLocalDataSource {
@@ -97,5 +98,29 @@ class OfflineInvoiceLocalDataSourceImpl implements OfflineInvoiceLocalDataSource
   Future<void> deleteOfflineInvoice(String invoiceId) async {
     final box = await _getBox();
     await box.delete(invoiceId);
+  }
+
+  @override
+  Future<void> convertOfflineQuotationToInvoice(
+    String invoiceId, {
+    DateTime? dueDate,
+  }) async {
+    final box = await _getBox();
+    final jsonStr = box.get(invoiceId);
+    if (jsonStr != null) {
+      final data = jsonDecode(jsonStr) as Map<String, dynamic>;
+      final invoiceMap =
+          jsonDecode(data['invoiceJson']) as Map<String, dynamic>;
+      invoiceMap['status'] = 'pending';
+      final nowStr = DateTime.now().toIso8601String();
+      invoiceMap['createdAt'] = nowStr;
+      invoiceMap['convertedAt'] = nowStr;
+      if (dueDate != null) {
+        invoiceMap['dueDate'] = dueDate.toIso8601String();
+      }
+      invoiceMap['lastUpdatedAt'] = nowStr;
+      data['invoiceJson'] = jsonEncode(invoiceMap);
+      await box.put(invoiceId, jsonEncode(data));
+    }
   }
 }

@@ -28,6 +28,8 @@ import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_cubit.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_history_cubit.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_state.dart';
+import 'package:tahsel/features/invoice/presentation/widgets/convert_quotation_button.dart';
+import 'package:tahsel/features/invoice/presentation/widgets/convert_quotation_dialog.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/debt_payment_history_list.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/invoice_history_timeline.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/invoice_info_card.dart';
@@ -863,6 +865,22 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     }
   }
 
+  Future<void> _handleConvertQuotation() async {
+    final connectivityState = context.read<ConnectivityCubit>().state;
+    if (connectivityState is ConnectivityDisconnected) {
+      showfailureToast(AppStrings.noInternetConnection.tr());
+      return;
+    }
+
+    final result = await ConvertQuotationDialog.show(context, _invoice);
+    if (result != null && result.confirmed && mounted) {
+      context.read<InvoiceCubit>().convertQuotationToInvoice(
+        quotation: _invoice,
+        dueDate: result.dueDate,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
@@ -901,6 +919,19 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
           // Reload to reflect voided status
           final uid = AppStrings.userToken;
           context.read<InvoiceCubit>().loadInvoice(uid, _invoice.id);
+        } else if (state is InvoiceConvertSuccess) {
+          final uid = AppStrings.userToken;
+          context.read<InvoiceCubit>().loadInvoice(uid, state.invoiceId);
+          context.read<InvoiceHistoryCubit>().loadHistory(
+            uid: uid,
+            invoiceId: state.invoiceId,
+          );
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppStrings.quotationConvertedSuccess.tr()),
+              backgroundColor: AppColors.success,
+            ),
+          );
         } else if (state is InvoiceFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -1048,6 +1079,21 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                     },
                   ),
                 ),
+                // Convert Quotation to Invoice — only for quotations with invoice creation permission
+                if (_invoice.isQuotation &&
+                    PermissionService.instance.hasPermission(
+                      AppPermissions.invoicesCreate,
+                    ))
+                  IconButton(
+                    icon: Icon(
+                      Icons.published_with_changes_rounded,
+                      color: isDisconnected
+                          ? AppColors.disabledColor
+                          : AppColors.primaryColor,
+                    ),
+                    tooltip: AppStrings.convertToSalesInvoice.tr(),
+                    onPressed: isDisconnected ? null : _handleConvertQuotation,
+                  ),
                 // Edit — only for non-voided invoices with permission
                 if (_invoice.status != InvoiceStatus.voided &&
                     PermissionService.instance.hasPermission(
@@ -1690,6 +1736,18 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                                     context,
                                                     true,
                                                   ),
+                                          ),
+                                        ),
+
+                                      // ── Convert Quotation Button ──────────────────────
+                                      if (_invoice.isQuotation)
+                                        PermissionGuard(
+                                          permission:
+                                              AppPermissions.invoicesCreate,
+                                          child: ConvertQuotationButton(
+                                            onTap: (isLoading || isDisconnected)
+                                                ? null
+                                                : _handleConvertQuotation,
                                           ),
                                         ),
 

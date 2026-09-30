@@ -2,15 +2,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
-import 'package:tahsel/core/utils/app_colors.dart';
-import 'package:tahsel/core/utils/app_strings.dart';
-import 'package:tahsel/core/utils/styles.dart';
-import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/services/activity_logger_service.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/permission_service.dart';
+import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/permission_guard.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/customer/presentation/widgets/notification_dialog.dart';
@@ -113,7 +113,9 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
     String customerName,
     double totalDebt,
   ) {
-    if (!PermissionService.instance.hasPermission(AppPermissions.customersSettleDebt)) {
+    if (!PermissionService.instance.hasPermission(
+      AppPermissions.customersSettleDebt,
+    )) {
       showfailureToast(AppStrings.appPermissionDenied.tr());
       return;
     }
@@ -145,7 +147,9 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
   }
 
   void _onPayFull(BuildContext context, String customerName, double totalDebt) {
-    if (!PermissionService.instance.hasPermission(AppPermissions.customersSettleDebt)) {
+    if (!PermissionService.instance.hasPermission(
+      AppPermissions.customersSettleDebt,
+    )) {
       showfailureToast(AppStrings.appPermissionDenied.tr());
       return;
     }
@@ -244,7 +248,9 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
   }
 
   void _confirmPaySingleDebt(BuildContext context, DebtItem item) {
-    if (!PermissionService.instance.hasPermission(AppPermissions.customersSettleDebt)) {
+    if (!PermissionService.instance.hasPermission(
+      AppPermissions.customersSettleDebt,
+    )) {
       showfailureToast(AppStrings.appPermissionDenied.tr());
       return;
     }
@@ -294,7 +300,7 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                   .replaceAll('{currency}', currency),
               style: TextStyles.customStyle(
                 fontSize: 14,
-                color: AppColors.textColor,
+                color: AppColors.disabledColor,
               ),
             ),
             actions: [
@@ -366,18 +372,17 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
     CustomerDebtDetail currentDetail, {
     DebtItem? specificDebt,
   }) async {
-    if (!PermissionService.instance.hasPermission(AppPermissions.customersSendWhatsapp)) {
+    if (!PermissionService.instance.hasPermission(
+      AppPermissions.customersSendWhatsapp,
+    )) {
       showfailureToast(AppStrings.appPermissionDenied.tr());
       return;
     }
     final uid = AppStrings.userToken;
     if (uid.isEmpty) return;
 
-    if (context.read<ConnectivityCubit>().state
-        is ConnectivityDisconnected) {
-      showfailureToast(
-        AppStrings.noInternetConnection.tr(),
-      );
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      showfailureToast(AppStrings.noInternetConnection.tr());
       return;
     }
 
@@ -397,12 +402,14 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
             ? 'عدد ${sameDayDebts.length} عمليات مستحقة السداد:'
             : '${sameDayDebts.length} operations due for payment:';
         final currency = AppStrings.currencyEgp.tr();
-        final itemsBreakdown = sameDayDebts.map((d) {
-          final desc = d.itemDescription.trim().isNotEmpty
-              ? d.itemDescription.trim()
-              : (isArabic ? 'دين' : 'Debt');
-          return '• $desc (${d.remainingDebt.toSmartAmount()} $currency)';
-        }).join('\n');
+        final itemsBreakdown = sameDayDebts
+            .map((d) {
+              final desc = d.itemDescription.trim().isNotEmpty
+                  ? d.itemDescription.trim()
+                  : (isArabic ? 'دين' : 'Debt');
+              return '• $desc (${d.remainingDebt.toSmartAmount()} $currency)';
+            })
+            .join('\n');
         reminderNote = '$header\n$itemsBreakdown';
       } else {
         reminderAmount = specificDebt.remainingDebt;
@@ -440,10 +447,10 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
       }
 
       context.read<DebtCubit>().recordReminderSent(
-            uid: uid,
-            customerName: currentDetail.customerName,
-            debtIds: remindedDebtIds.isNotEmpty ? remindedDebtIds : null,
-          );
+        uid: uid,
+        customerName: currentDetail.customerName,
+        debtIds: remindedDebtIds.isNotEmpty ? remindedDebtIds : null,
+      );
       _fetchDebts();
 
       if (sl.isRegistered<ActivityLoggerService>()) {
@@ -654,7 +661,8 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
             permission: AppPermissions.debtsAdd,
             child: FloatingActionButton.extended(
               heroTag: 'add_debt',
-              onPressed: () => _onAddNewDebt(context, currentDetail.customerName),
+              onPressed: () =>
+                  _onAddNewDebt(context, currentDetail.customerName),
               backgroundColor: AppColors.primaryColor,
               label: Text(
                 AppStrings.addNewDebt.tr(),
@@ -702,7 +710,8 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
               ),
 
               // ── Due Date Warning Banner ─────────────────────────────────────
-              if (currentDetail.activeDueDebt != null && !_isDueDateBannerDismissed)
+              if (currentDetail.activeDueDebt != null &&
+                  !_isDueDateBannerDismissed)
                 SliverToBoxAdapter(
                   child: DebtDueDateWarningBanner(
                     debtItem: currentDetail.activeDueDebt!,
@@ -783,9 +792,8 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                                               vertical: 12.h,
                                             ),
                                             shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(
-                                                12.r,
-                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(12.r),
                                             ),
                                           ),
                                         ),
@@ -828,9 +836,8 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                                               vertical: 12.h,
                                             ),
                                             shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(
-                                                12.r,
-                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(12.r),
                                             ),
                                           ),
                                         ),
@@ -879,8 +886,9 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                 ),
               ),
 
-              if (PermissionService.instance
-                  .hasPermission(AppPermissions.customersViewReports)) ...[
+              if (PermissionService.instance.hasPermission(
+                AppPermissions.customersViewReports,
+              )) ...[
                 SliverToBoxAdapter(
                   child: SizedBox(height: isDesktop ? 20 : 20.h),
                 ),
@@ -943,9 +951,7 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                   ),
                 ),
                 SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: isDesktop ? 12 : 12.h,
-                  ),
+                  child: SizedBox(height: isDesktop ? 12 : 12.h),
                 ),
 
                 // ── Debt Items List ─────────────────────────────────────────────
@@ -984,7 +990,8 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                               ),
                             );
                           },
-                          onPayFull: (item) => _confirmPaySingleDebt(context, item),
+                          onPayFull: (item) =>
+                              _confirmPaySingleDebt(context, item),
                           onRefresh: _fetchDebts,
                         );
                       }, childCount: currentDetail.items.length),
@@ -994,8 +1001,9 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                   SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       return Padding(
-                        padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 :
-                         24.w),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isDesktop ? 24 : 24.w,
+                        ),
                         child: DebtItemCard(
                           item: currentDetail.items[index],
                           index: index + 1,
@@ -1014,7 +1022,8 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                               ),
                             );
                           },
-                          onPayFull: (item) => _confirmPaySingleDebt(context, item),
+                          onPayFull: (item) =>
+                              _confirmPaySingleDebt(context, item),
                           onRefresh: _fetchDebts,
                         ),
                       );
@@ -1022,7 +1031,9 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
                   ),
               ],
 
-              SliverToBoxAdapter(child: SizedBox(height:isDesktop ? 120 : 120.h)),
+              SliverToBoxAdapter(
+                child: SizedBox(height: isDesktop ? 120 : 120.h),
+              ),
             ],
           ),
         );

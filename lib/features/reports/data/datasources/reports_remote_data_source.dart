@@ -200,7 +200,7 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
         }
       }
 
-      // Fetch Invoices
+      // Fetch Invoices (created within the period)
       final invoicesSnapshot = await firestore
           .collection('users')
           .doc(uid)
@@ -208,6 +208,27 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
           .where('createdAt', isGreaterThanOrEqualTo: startTimestamp)
           .where('createdAt', isLessThan: endTimestamp)
           .get();
+
+      // Also merge any invoices converted in this period (even if originally drafted as a quotation earlier)
+      final Map<String, QueryDocumentSnapshot<Map<String, dynamic>>> allInvoicesMap = {};
+      for (final doc in invoicesSnapshot.docs) {
+        allInvoicesMap[doc.id] = doc;
+      }
+
+      try {
+        final convertedSnapshot = await firestore
+            .collection('users')
+            .doc(uid)
+            .collection('invoices')
+            .where('convertedAt', isGreaterThanOrEqualTo: startTimestamp)
+            .where('convertedAt', isLessThan: endTimestamp)
+            .get();
+        for (final doc in convertedSnapshot.docs) {
+          allInvoicesMap[doc.id] = doc;
+        }
+      } catch (e) {
+        AppLogger.printMessage('Reports convertedAt query: $e');
+      }
 
       int invoiceCount = 0;
       double invoiceIncome = 0;
@@ -222,7 +243,7 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
       int invoicePartialCount = 0;
       int invoiceUnpaidCount = 0;
 
-      for (var doc in invoicesSnapshot.docs) {
+      for (var doc in allInvoicesMap.values) {
         final data = doc.data();
         final statusStr = data['status'] as String? ?? 'pending';
         // Explicitly exclude voided invoices and quotations from all reports, summaries, income, and debts!
@@ -256,7 +277,10 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
         final double overallDiscount =
             (data['discountAmount'] as num? ?? 0.0).toDouble();
         final double netTotal = rawSubtotal - overallDiscount;
-        final double totalAmount = netTotal > 0 ? netTotal : 0.0;
+        final double rawDocTotal =
+            (data['totalAmount'] as num?)?.toDouble() ?? 0.0;
+        final double totalAmount =
+            rawDocTotal > 0 ? rawDocTotal : (netTotal > 0 ? netTotal : 0.0);
 
         final double remaining = totalAmount - totalPaid;
         final double finalRemaining = remaining > 0 ? remaining : 0.0;
