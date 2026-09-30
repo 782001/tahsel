@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 
 import '../../domain/entities/customer_entity.dart';
 import '../cubit/customer_cubit.dart';
+import '../cubit/customer_state.dart';
 
 /// A customer-name autocomplete field backed by [CustomerCubit].
 class CustomerAutocompleteField extends StatefulWidget {
@@ -52,6 +54,13 @@ class _CustomerAutocompleteFieldState extends State<CustomerAutocompleteField> {
     super.initState();
     _effectiveFocusNode.addListener(_onFocusChange);
     widget.controller.addListener(_onTextChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final uid = AppStrings.userToken;
+      if (uid.isNotEmpty) {
+        context.read<CustomerCubit>().fetchCustomers(uid);
+      }
+    });
   }
 
   @override
@@ -180,49 +189,56 @@ class _CustomerAutocompleteFieldState extends State<CustomerAutocompleteField> {
 
   @override
   Widget build(BuildContext context) {
-    return CompositedTransformTarget(
-      link: _layerLink,
-      child: TextField(
-        cursorColor: AppColors.primaryColor,
-        controller: widget.controller,
-        focusNode: _effectiveFocusNode,
-        textInputAction: widget.textInputAction,
-        onSubmitted: (val) {
-          _hideOverlay();
-          widget.onSubmitted?.call(val);
-        },
-        style: TextStyles.customStyle(
-          fontWeight: FontWeight.w600,
-          color: AppColors.black,
-        ),
-        decoration: InputDecoration(
-          hintText: widget.hint,
-          errorText: widget.errorText,
-          hintStyle: TextStyles.customStyle(
-            color: AppColors.blackLight.withValues(alpha: 0.5),
-            fontWeight: FontWeight.normal,
+    return BlocListener<CustomerCubit, CustomerState>(
+      listener: (context, state) {
+        if (state is CustomerLoaded && _effectiveFocusNode.hasFocus) {
+          _updateSuggestions(widget.controller.text);
+        }
+      },
+      child: CompositedTransformTarget(
+        link: _layerLink,
+        child: TextField(
+          cursorColor: AppColors.primaryColor,
+          controller: widget.controller,
+          focusNode: _effectiveFocusNode,
+          textInputAction: widget.textInputAction,
+          onSubmitted: (val) {
+            _hideOverlay();
+            widget.onSubmitted?.call(val);
+          },
+          style: TextStyles.customStyle(
+            fontWeight: FontWeight.w600,
+            color: AppColors.black,
           ),
-          prefixIcon: widget.icon != null
-              ? Icon(widget.icon, color: AppColors.blackLight)
-              : null,
-          suffixIcon: widget.suffixIcon != null
-              ? IconButton(
-                  icon: Icon(
-                    widget.suffixIcon,
-                    color: AppColors.primaryColor,
-                  ),
-                  onPressed: widget.onSuffixIconPressed,
-                )
-              : null,
-          filled: true,
-          fillColor: AppColors.stitchSurfaceHigh.withValues(alpha: 0.5),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 18,
+          decoration: InputDecoration(
+            hintText: widget.hint,
+            errorText: widget.errorText,
+            hintStyle: TextStyles.customStyle(
+              color: AppColors.blackLight.withValues(alpha: 0.5),
+              fontWeight: FontWeight.normal,
+            ),
+            prefixIcon: widget.icon != null
+                ? Icon(widget.icon, color: AppColors.blackLight)
+                : null,
+            suffixIcon: widget.suffixIcon != null
+                ? IconButton(
+                    icon: Icon(
+                      widget.suffixIcon,
+                      color: AppColors.primaryColor,
+                    ),
+                    onPressed: widget.onSuffixIconPressed,
+                  )
+                : null,
+            filled: true,
+            fillColor: AppColors.stitchSurfaceHigh.withValues(alpha: 0.5),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 18,
+            ),
           ),
         ),
       ),

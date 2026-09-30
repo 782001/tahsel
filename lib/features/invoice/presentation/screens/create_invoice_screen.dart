@@ -137,6 +137,10 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
   @override
   void initState() {
     super.initState();
+    final uid = AppStrings.userToken;
+    if (uid.isNotEmpty) {
+      context.read<CustomerCubit>().fetchCustomers(uid);
+    }
     if (BusinessProfileService.instance.cachedProfile == null) {
       BusinessProfileService.instance.getProfile().then((profile) {
         if (mounted && profile != null) {

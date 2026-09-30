@@ -4,6 +4,7 @@ import '../../domain/usecases/get_customers_usecase.dart';
 import '../../domain/usecases/save_customer_usecase.dart';
 import '../../domain/usecases/update_customer_phone_usecase.dart';
 import '../../domain/usecases/update_customer_preference_usecase.dart';
+import '../../../shipping_reconciliation/data/services/text_normalization_service.dart';
 import 'customer_state.dart';
 
 class CustomerCubit extends Cubit<CustomerState> {
@@ -13,6 +14,7 @@ class CustomerCubit extends Cubit<CustomerState> {
   final UpdateCustomerPreferenceUseCase updateCustomerPreferenceUseCase;
 
   List<CustomerEntity> _allCustomers = [];
+  bool _isFetching = false;
 
   CustomerCubit({
     required this.getCustomersUseCase,
@@ -27,16 +29,44 @@ class CustomerCubit extends Cubit<CustomerState> {
     super.emit(state);
   }
 
-  Future<void> fetchCustomers(String uid) async {
-    emit(CustomerLoading());
+  Future<void> fetchCustomers(
+    String uid, {
+    int limit = 0,
+    bool force = false,
+  }) async {
+    if (_isFetching && !force) return;
+    _isFetching = true;
+    if (_allCustomers.isEmpty) {
+      emit(CustomerLoading());
+    }
     final result = await getCustomersUseCase(
-      GetCustomersParams(uid: uid, limit: 100),
+      GetCustomersParams(uid: uid, limit: limit),
     );
-    result.fold((failure) => emit(CustomerError(failure.message)), (paginated) {
-      final customers = paginated.$1;
-      _allCustomers = customers;
-      emit(CustomerLoaded(customers));
-    });
+    _isFetching = false;
+    result.fold(
+      (failure) {
+        if (_allCustomers.isEmpty) {
+          emit(CustomerError(failure.message));
+        }
+      },
+      (paginated) {
+        final customers = paginated.$1;
+        _allCustomers = customers;
+        emit(CustomerLoaded(customers));
+      },
+    );
+  }
+
+  void addOrUpdateCustomerLocally(CustomerEntity customer) {
+    final index = _allCustomers.indexWhere(
+      (c) => c.name.trim().toLowerCase() == customer.name.trim().toLowerCase(),
+    );
+    if (index >= 0) {
+      _allCustomers[index] = customer;
+    } else {
+      _allCustomers.insert(0, customer);
+    }
+    emit(CustomerLoaded(List.from(_allCustomers)));
   }
 
   Future<void> saveCustomer(
@@ -124,10 +154,17 @@ class CustomerCubit extends Cubit<CustomerState> {
   }
 
   List<CustomerEntity> getSuggestions(String query) {
-    if (query.isEmpty) return _allCustomers;
-    return _allCustomers
-        .where((c) => c.name.toLowerCase().contains(query.toLowerCase()))
-        .toList();
+    if (query.trim().isEmpty) return _allCustomers;
+    final normalizedQuery =
+        TextNormalizationService.normalizeForMatching(query);
+    final rawLowerQuery = query.trim().toLowerCase();
+
+    return _allCustomers.where((c) {
+      final normalizedName =
+          TextNormalizationService.normalizeForMatching(c.name);
+      return normalizedName.contains(normalizedQuery) ||
+          c.name.toLowerCase().contains(rawLowerQuery);
+    }).toList();
   }
 
   void clearData() {

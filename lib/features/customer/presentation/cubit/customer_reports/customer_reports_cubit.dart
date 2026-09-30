@@ -8,6 +8,7 @@ import '../../../domain/usecases/save_customer_usecase.dart';
 import '../../../domain/usecases/update_customer_usecase.dart';
 import 'customer_reports_state.dart';
 import '../../../domain/entities/customer_entity.dart';
+import '../customer_cubit.dart';
 
 class CustomerReportsCubit extends Cubit<CustomerReportsState> {
   final GetCustomersUseCase getCustomersUseCase;
@@ -244,6 +245,10 @@ class CustomerReportsCubit extends Cubit<CustomerReportsState> {
       (_) {
         _serverAllCustomers = null;
         fetchCustomers(uid, isRefresh: true);
+        if (sl.isRegistered<CustomerCubit>()) {
+          sl<CustomerCubit>().addOrUpdateCustomerLocally(customer);
+          sl<CustomerCubit>().fetchCustomers(uid, force: true);
+        }
         return true;
       },
     );
@@ -284,6 +289,9 @@ class CustomerReportsCubit extends Cubit<CustomerReportsState> {
       (_) {
         _serverAllCustomers = null;
         fetchCustomers(uid, isRefresh: true);
+        if (sl.isRegistered<CustomerCubit>()) {
+          sl<CustomerCubit>().fetchCustomers(uid, force: true);
+        }
         return true;
       },
     );
