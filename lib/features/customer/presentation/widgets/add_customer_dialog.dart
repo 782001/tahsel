@@ -6,6 +6,7 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/core/utils/customer_data_masker.dart';
 import 'package:tahsel/features/customer/domain/entities/customer_entity.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 import '../cubit/customer_reports/customer_reports_cubit.dart';
@@ -39,12 +40,32 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
   void initState() {
     super.initState();
     if (widget.customer != null) {
+      final canViewPhone = CustomerDataMasker.canViewCustomerPhone;
       _nameController.text = widget.customer!.name;
-      _phoneController.text = widget.customer!.phoneNumber ?? '';
-      _ledgerController.text = widget.customer!.ledgerNumber ?? '';
-      _taxNumberController.text = widget.customer!.taxNumber ?? '';
-      _commercialRegistrationController.text =
-          widget.customer!.commercialRegistration ?? '';
+      _phoneController.text = canViewPhone
+          ? (widget.customer!.phoneNumber ?? '')
+          : (widget.customer!.phoneNumber != null &&
+                  widget.customer!.phoneNumber!.isNotEmpty
+              ? '••••••••••'
+              : '');
+      _ledgerController.text = canViewPhone
+          ? (widget.customer!.ledgerNumber ?? '')
+          : (widget.customer!.ledgerNumber != null &&
+                  widget.customer!.ledgerNumber!.isNotEmpty
+              ? '••••••'
+              : '');
+      _taxNumberController.text = canViewPhone
+          ? (widget.customer!.taxNumber ?? '')
+          : (widget.customer!.taxNumber != null &&
+                  widget.customer!.taxNumber!.isNotEmpty
+              ? '••••••'
+              : '');
+      _commercialRegistrationController.text = canViewPhone
+          ? (widget.customer!.commercialRegistration ?? '')
+          : (widget.customer!.commercialRegistration != null &&
+                  widget.customer!.commercialRegistration!.isNotEmpty
+              ? '••••••'
+              : '');
     }
   }
 
@@ -68,6 +89,7 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
     final cubit = context.read<CustomerReportsCubit>();
     final messenger = ScaffoldMessenger.of(context);
     final isEdit = widget.customer != null;
+    final canViewPhone = CustomerDataMasker.canViewCustomerPhone;
     final bool success;
 
     if (isEdit) {
@@ -75,19 +97,26 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
         uid: widget.uid,
         customerId: widget.customer!.id,
         name: widget.customer!.name,
-        phoneNumber: _phoneController.text.trim().isNotEmpty
-            ? _phoneController.text.trim()
-            : null,
-        ledgerNumber: _ledgerController.text.trim().isNotEmpty
-            ? _ledgerController.text.trim()
-            : null,
-        taxNumber: _taxNumberController.text.trim().isNotEmpty
-            ? _taxNumberController.text.trim()
-            : null,
-        commercialRegistration:
-            _commercialRegistrationController.text.trim().isNotEmpty
+        phoneNumber: canViewPhone
+            ? (_phoneController.text.trim().isNotEmpty
+                ? _phoneController.text.trim()
+                : null)
+            : widget.customer!.phoneNumber,
+        ledgerNumber: canViewPhone
+            ? (_ledgerController.text.trim().isNotEmpty
+                ? _ledgerController.text.trim()
+                : null)
+            : widget.customer!.ledgerNumber,
+        taxNumber: canViewPhone
+            ? (_taxNumberController.text.trim().isNotEmpty
+                ? _taxNumberController.text.trim()
+                : null)
+            : widget.customer!.taxNumber,
+        commercialRegistration: canViewPhone
+            ? (_commercialRegistrationController.text.trim().isNotEmpty
                 ? _commercialRegistrationController.text.trim()
-                : null,
+                : null)
+            : widget.customer!.commercialRegistration,
       );
     } else {
       success = await cubit.addCustomer(
@@ -258,6 +287,44 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                       ],
                       const SizedBox(height: 16),
 
+                      if (isEdit && !CustomerDataMasker.canViewCustomerPhone) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryColor.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: AppColors.primaryColor.withValues(alpha: 0.2),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.visibility_off_outlined,
+                                size: 16,
+                                color: AppColors.primaryColor,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  AppStrings.permRestrictedDataNotice.tr(),
+                                  style: TextStyles.customStyle(
+                                    color: AppColors.primaryColor,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+
                       // Customer Phone (Optional)
                       Text(
                         '${AppStrings.customerPhone.tr()} (${AppStrings.optional.tr()})',
@@ -269,11 +336,21 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                       ),
                       const SizedBox(height: 8),
                       QuickAddTextField(
-                        hint: '${AppStrings.customerPhone.tr()}...',
+                        hint: (isEdit && !CustomerDataMasker.canViewCustomerPhone)
+                            ? AppStrings.permRestrictedData.tr()
+                            : '${AppStrings.customerPhone.tr()}...',
                         controller: _phoneController,
                         icon: Icons.phone_outlined,
                         keyboardType: TextInputType.phone,
                         textInputAction: TextInputAction.next,
+                        readOnly: isEdit && !CustomerDataMasker.canViewCustomerPhone,
+                        obscureText: isEdit &&
+                            !CustomerDataMasker.canViewCustomerPhone &&
+                            _phoneController.text.isNotEmpty,
+                        suffixIcon:
+                            (isEdit && !CustomerDataMasker.canViewCustomerPhone)
+                                ? Icons.visibility_off_outlined
+                                : null,
                       ),
                       const SizedBox(height: 16),
 
@@ -288,11 +365,21 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                       ),
                       const SizedBox(height: 8),
                       QuickAddTextField(
-                        hint: '${AppStrings.ledgerNumber.tr()}...',
+                        hint: (isEdit && !CustomerDataMasker.canViewCustomerPhone)
+                            ? AppStrings.permRestrictedData.tr()
+                            : '${AppStrings.ledgerNumber.tr()}...',
                         controller: _ledgerController,
                         icon: Icons.menu_book_outlined,
                         isNumber: true,
                         textInputAction: TextInputAction.next,
+                        readOnly: isEdit && !CustomerDataMasker.canViewCustomerPhone,
+                        obscureText: isEdit &&
+                            !CustomerDataMasker.canViewCustomerPhone &&
+                            _ledgerController.text.isNotEmpty,
+                        suffixIcon:
+                            (isEdit && !CustomerDataMasker.canViewCustomerPhone)
+                                ? Icons.visibility_off_outlined
+                                : null,
                       ),
                       const SizedBox(height: 16),
 
@@ -307,11 +394,21 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                       ),
                       const SizedBox(height: 8),
                       QuickAddTextField(
-                        hint: '${AppStrings.taxNumber.tr()}...',
+                        hint: (isEdit && !CustomerDataMasker.canViewCustomerPhone)
+                            ? AppStrings.permRestrictedData.tr()
+                            : '${AppStrings.taxNumber.tr()}...',
                         controller: _taxNumberController,
                         icon: Icons.receipt_outlined,
                         isNumber: true,
                         textInputAction: TextInputAction.next,
+                        readOnly: isEdit && !CustomerDataMasker.canViewCustomerPhone,
+                        obscureText: isEdit &&
+                            !CustomerDataMasker.canViewCustomerPhone &&
+                            _taxNumberController.text.isNotEmpty,
+                        suffixIcon:
+                            (isEdit && !CustomerDataMasker.canViewCustomerPhone)
+                                ? Icons.visibility_off_outlined
+                                : null,
                       ),
                       const SizedBox(height: 16),
 
@@ -326,11 +423,21 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                       ),
                       const SizedBox(height: 8),
                       QuickAddTextField(
-                        hint: '${AppStrings.commercialRegistration.tr()}...',
+                        hint: (isEdit && !CustomerDataMasker.canViewCustomerPhone)
+                            ? AppStrings.permRestrictedData.tr()
+                            : '${AppStrings.commercialRegistration.tr()}...',
                         controller: _commercialRegistrationController,
                         icon: Icons.badge_outlined,
                         textInputAction: TextInputAction.done,
                         onSubmitted: (_) => _submit(),
+                        readOnly: isEdit && !CustomerDataMasker.canViewCustomerPhone,
+                        obscureText: isEdit &&
+                            !CustomerDataMasker.canViewCustomerPhone &&
+                            _commercialRegistrationController.text.isNotEmpty,
+                        suffixIcon:
+                            (isEdit && !CustomerDataMasker.canViewCustomerPhone)
+                                ? Icons.visibility_off_outlined
+                                : null,
                       ),
                     ],
                   ),

@@ -8,6 +8,7 @@ import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/assets.dart';
+import 'package:tahsel/core/utils/customer_data_masker.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/permission_guard.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
@@ -36,6 +37,46 @@ class CustomerReportDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!PermissionService.instance.hasPermission(
+      AppPermissions.customersViewReports,
+    )) {
+      return Scaffold(
+        backgroundColor: AppColors.scafoldBackGround,
+        appBar: AppBar(
+          backgroundColor: AppColors.scafoldBackGround,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: AppColors.black,
+            ),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.lock_outline_rounded,
+                size: 64,
+                color: AppColors.disabledColor,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                AppStrings.noPermissionForAction.tr(),
+                style: TextStyles.customStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.blackLight,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return BlocProvider(
       create: (context) =>
           sl<CustomerDetailsCubit>()
@@ -118,10 +159,11 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
   }
 
   Future<void> _handlePrint(CustomerDetailsLoaded state) async {
-    if (!PermissionService.instance.hasPermission(
-      AppPermissions.reportsExport,
-    )) {
-      showfailureToast(AppStrings.appPermissionDenied.tr());
+    final canPrintShare = PermissionService.instance.hasPermission(
+      AppPermissions.customersPrintShare,
+    );
+    if (!canPrintShare) {
+      showfailureToast(AppStrings.noPermissionForAction.tr());
       return;
     }
     if (_isExporting) return;
@@ -165,10 +207,11 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
   }
 
   Future<void> _handleSharePdf(CustomerDetailsLoaded state) async {
-    if (!PermissionService.instance.hasPermission(
-      AppPermissions.reportsExport,
-    )) {
-      showfailureToast(AppStrings.appPermissionDenied.tr());
+    final canPrintShare = PermissionService.instance.hasPermission(
+      AppPermissions.customersPrintShare,
+    );
+    if (!canPrintShare) {
+      showfailureToast(AppStrings.noPermissionForAction.tr());
       return;
     }
     if (_isExporting) return;
@@ -211,20 +254,28 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
   }
 
   Future<void> _handleWhatsApp(CustomerDetailsLoaded state) async {
-    if (!PermissionService.instance.hasPermission(
+    final customer = state.customer ?? widget.customer;
+    final canViewPhone = CustomerDataMasker.canViewCustomerPhone;
+    final canSendWhatsapp = PermissionService.instance.hasPermission(
       AppPermissions.customersSendWhatsapp,
-    )) {
-      showfailureToast(AppStrings.appPermissionDenied.tr());
+    );
+    final canPrintShare = PermissionService.instance.hasPermission(
+      AppPermissions.customersPrintShare,
+    );
+
+    if (!canViewPhone || !canSendWhatsapp || !canPrintShare) {
+      showfailureToast(AppStrings.noPermissionForAction.tr());
       return;
     }
-    if (_isExporting) return;
-    final customer = state.customer ?? widget.customer;
-    if (customer?.phoneNumber == null ||
-        customer!.phoneNumber!.trim().isEmpty) {
+
+    final hasPhone = customer?.phoneNumber != null &&
+        customer!.phoneNumber!.trim().isNotEmpty;
+    if (!hasPhone) {
       showfailureToast(AppStrings.noPhoneForCustomer.tr());
       return;
     }
 
+    if (_isExporting) return;
     setState(() => _isExporting = true);
     try {
       final isArabic = AppStrings.currentLang == 'ar';
@@ -572,41 +623,28 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
               ),
             )
           else ...[
-            // Print Button (Guarded by reports.export)
-            PermissionGuard(
-              permission: AppPermissions.reportsExport,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildActionButton(
-                    icon: Icons.print_outlined,
-                    label: isDesktop ? AppStrings.printStatement.tr() : null,
-                    tooltip: AppStrings.printStatement.tr(),
-                    color: AppColors.primaryColor,
-                    onPressed: () => _handlePrint(state),
-                  ),
-                  const SizedBox(width: 6),
-                  _buildActionButton(
-                    icon: Icons.picture_as_pdf_outlined,
-                    label: isDesktop ? AppStrings.sharePdf.tr() : null,
-                    tooltip: AppStrings.sharePdf.tr(),
-                    color: Colors.deepOrange.shade600,
-                    onPressed: () => _handleSharePdf(state),
-                  ),
-                  const SizedBox(width: 6),
-                ],
-              ),
+            _buildActionButton(
+              icon: Icons.print_outlined,
+              label: isDesktop ? AppStrings.printStatement.tr() : null,
+              tooltip: AppStrings.printStatement.tr(),
+              color: AppColors.primaryColor,
+              onPressed: () => _handlePrint(state),
             ),
-            // WhatsApp Button (Guarded by customers.send_whatsapp)
-            PermissionGuard(
-              permission: AppPermissions.customersSendWhatsapp,
-              child: _buildActionButton(
-                assetIcon: Assets.imagesWhatsapp,
-                label: isDesktop ? AppStrings.shareWhatsApp.tr() : null,
-                tooltip: AppStrings.shareWhatsApp.tr(),
-                color: const Color(0xFF25D366),
-                onPressed: () => _handleWhatsApp(state),
-              ),
+            const SizedBox(width: 6),
+            _buildActionButton(
+              icon: Icons.picture_as_pdf_outlined,
+              label: isDesktop ? AppStrings.sharePdf.tr() : null,
+              tooltip: AppStrings.sharePdf.tr(),
+              color: Colors.deepOrange.shade600,
+              onPressed: () => _handleSharePdf(state),
+            ),
+            const SizedBox(width: 6),
+            _buildActionButton(
+              assetIcon: Assets.imagesWhatsapp,
+              label: isDesktop ? AppStrings.shareWhatsApp.tr() : null,
+              tooltip: AppStrings.shareWhatsApp.tr(),
+              color: const Color(0xFF25D366),
+              onPressed: () => _handleWhatsApp(state),
             ),
           ],
         ],

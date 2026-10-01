@@ -8,6 +8,7 @@ import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/utils/customer_data_masker.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/customer/presentation/widgets/notification_dialog.dart';
 import 'package:tahsel/features/customer_debts/data/models/debt_item_model.dart';
@@ -310,7 +311,9 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
       final detailsMatches = (debt.productOrSessionDetails ?? '')
           .toLowerCase()
           .contains(query);
-      final phoneNumberMatches = (debt.phoneNumber ?? '').contains(query);
+      final canViewPhone = CustomerDataMasker.canViewCustomerPhone;
+      final phoneNumberMatches =
+          canViewPhone && (debt.phoneNumber ?? '').contains(query);
 
       if (query.isEmpty ||
           nameMatches ||

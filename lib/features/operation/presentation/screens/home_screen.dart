@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/constants/app_permissions.dart';
@@ -10,8 +10,10 @@ import 'package:tahsel/core/storage/cashhelper.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/customer_data_masker.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/features/customer/domain/entities/customer_entity.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_state.dart';
 import 'package:tahsel/features/operation/domain/entities/ps_session_entity.dart';
@@ -86,6 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _durationMinutes = 60; // Default to 60 mins (1 hour)
   String? _customerError;
   String? _selectedPhoneNumber;
+  CustomerEntity? _selectedCustomer;
   DateTime? _dueDate;
 
   void _onContactPickerPressed() async {
@@ -94,6 +97,7 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _customerController.text = result['name'] ?? '';
         _selectedPhoneNumber = result['phone'];
+        _selectedCustomer = null;
       });
     }
   }
@@ -214,6 +218,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _durationMinutes = 60;
       _customerError = null;
       _selectedPhoneNumber = null;
+      _selectedCustomer = null;
       _dueDate = null;
     });
   }
@@ -413,6 +418,17 @@ class _HomeScreenState extends State<HomeScreen> {
         return;
       }
 
+      final canViewPhone = CustomerDataMasker.canViewCustomerPhone;
+      final ledgerToSave = canViewPhone
+          ? (_ledgerController.text.trim().isNotEmpty
+              ? _ledgerController.text.trim()
+              : null)
+          : (_selectedCustomer?.ledgerNumber ??
+              (_ledgerController.text.trim().isNotEmpty &&
+                      !_ledgerController.text.contains('•')
+                  ? _ledgerController.text.trim()
+                  : null));
+
       operation = OperationEntity(
         uid: uid,
         type: AppStrings.shop,
@@ -422,9 +438,7 @@ class _HomeScreenState extends State<HomeScreen> {
         totalAmount: totalAmount,
         paidAmount: paidAmount,
         remainingDebt: remainingDebt,
-        ledgerNumber: _ledgerController.text.trim().isNotEmpty
-            ? _ledgerController.text.trim()
-            : null,
+        ledgerNumber: ledgerToSave,
         lastUpdatedAt: DateTime.now(),
         dueDate: _dueDate,
       );
@@ -585,12 +599,21 @@ class _HomeScreenState extends State<HomeScreen> {
               // Save customer for autocomplete
               final customerName = _customerController.text.trim();
               if (uid.isNotEmpty && customerName.isNotEmpty) {
+                final canViewPhone = CustomerDataMasker.canViewCustomerPhone;
+                final ledgerToSave = canViewPhone
+                    ? (_ledgerController.text.trim().isNotEmpty
+                        ? _ledgerController.text.trim()
+                        : null)
+                    : (_selectedCustomer?.ledgerNumber ??
+                        (_ledgerController.text.trim().isNotEmpty &&
+                                !_ledgerController.text.contains('•')
+                            ? _ledgerController.text.trim()
+                            : null));
+
                 context.read<CustomerCubit>().saveCustomer(
                   uid,
                   customerName,
-                  ledgerNumber: _ledgerController.text.trim().isNotEmpty
-                      ? _ledgerController.text.trim()
-                      : null,
+                  ledgerNumber: ledgerToSave,
                   phoneNumber: _selectedPhoneNumber,
                 );
               }
@@ -837,6 +860,15 @@ class _HomeScreenState extends State<HomeScreen> {
                             debtFocus: _debtFocus,
                             onDebtSubmitted: (_) => _submitOperation(context),
                             onContactPickerPressed: _onContactPickerPressed,
+                            onCustomerSelected: (customer) {
+                              setState(() {
+                                _selectedCustomer = customer;
+                                if (customer?.phoneNumber != null &&
+                                    customer!.phoneNumber!.isNotEmpty) {
+                                  _selectedPhoneNumber = customer.phoneNumber;
+                                }
+                              });
+                            },
                             dueDate: _dueDate,
                             onDueDateChanged: (date) {
                               setState(() {

@@ -547,7 +547,7 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => CustomersListScreen(uid: uid));
       case customerReportDetails:
         if (!PermissionService.instance.hasPermission(
-          AppPermissions.customersView,
+          AppPermissions.customersViewReports,
         )) {
           return _permissionRestrictedRoute();
         }

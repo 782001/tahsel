@@ -8,6 +8,7 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/core/utils/customer_data_masker.dart';
 import 'package:tahsel/features/customer/domain/entities/customer_entity.dart';
 import 'package:tahsel/features/customer/presentation/cubit/customer_cubit.dart';
 import 'package:tahsel/features/customer/presentation/widgets/customer_autocomplete_field.dart';
@@ -84,6 +85,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
   InvoiceEntity? _pendingInvoice;
 
   // ── Customer info ──────────────────────────────────────────────────────────
+  CustomerEntity? _selectedCustomer;
   final _customerController = TextEditingController();
   final _phoneController = TextEditingController();
   final _ledgerController = TextEditingController();
@@ -134,9 +136,48 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
   bool get _isQuotation =>
       widget.isQuotation || (widget.invoiceToEdit?.isQuotation ?? false);
 
+  bool get _isCustomerRestricted {
+    if (CustomerDataMasker.canViewCustomerPhone) return false;
+    if (_selectedCustomer != null) return true;
+    if (_isEditMode &&
+        widget.invoiceToEdit?.customerName != null &&
+        widget.invoiceToEdit!.customerName!.trim().isNotEmpty &&
+        _customerController.text.trim() ==
+            widget.invoiceToEdit!.customerName!.trim()) {
+      return true;
+    }
+    return false;
+  }
+
+  void _onCustomerTextChanged() {
+    if (_selectedCustomer != null &&
+        _customerController.text.trim() != _selectedCustomer!.name.trim()) {
+      setState(() {
+        _selectedCustomer = null;
+        if (!CustomerDataMasker.canViewCustomerPhone) {
+          _phoneController.clear();
+          _ledgerController.clear();
+        }
+      });
+    } else if (_isEditMode &&
+        widget.invoiceToEdit?.customerName != null &&
+        _customerController.text.trim() !=
+            widget.invoiceToEdit!.customerName!.trim()) {
+      if (!CustomerDataMasker.canViewCustomerPhone &&
+          (_phoneController.text.contains('•') ||
+              _ledgerController.text.contains('•'))) {
+        setState(() {
+          _phoneController.clear();
+          _ledgerController.clear();
+        });
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    _customerController.addListener(_onCustomerTextChanged);
     final uid = AppStrings.userToken;
     if (uid.isNotEmpty) {
       context.read<CustomerCubit>().fetchCustomers(uid);
@@ -151,8 +192,19 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
     if (_isEditMode) {
       final inv = widget.invoiceToEdit!;
       _customerController.text = inv.customerName ?? '';
-      _phoneController.text = inv.customerPhone ?? '';
-      _ledgerController.text = inv.ledgerNumber ?? '';
+      if (CustomerDataMasker.canViewCustomerPhone) {
+        _phoneController.text = inv.customerPhone ?? '';
+        _ledgerController.text = inv.ledgerNumber ?? '';
+      } else {
+        _phoneController.text = (inv.customerPhone != null &&
+                inv.customerPhone!.isNotEmpty)
+            ? '••••••••••'
+            : '';
+        _ledgerController.text = (inv.ledgerNumber != null &&
+                inv.ledgerNumber!.isNotEmpty)
+            ? '••••••'
+            : '';
+      }
       _notesController.text = inv.notes ?? '';
       _overallDiscountController.text = inv.discountAmount > 0
           ? inv.discountAmount.toSmartAmount()
@@ -169,6 +221,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
 
   @override
   void dispose() {
+    _customerController.removeListener(_onCustomerTextChanged);
     _customerController.dispose();
     _phoneController.dispose();
     _ledgerController.dispose();
@@ -200,6 +253,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
       setState(() {
         _customerController.text = result['name'] ?? '';
         _phoneController.text = result['phone'] ?? '';
+        _selectedCustomer = null;
       });
     }
   }
@@ -393,16 +447,26 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
     final overallDiscount =
         double.tryParse(_overallDiscountController.text) ?? 0.0;
 
+    final bool isRestricted = _isCustomerRestricted;
+    final phoneToSave = isRestricted
+        ? (_selectedCustomer?.phoneNumber ??
+            (_isEditMode ? widget.invoiceToEdit?.customerPhone : null))
+        : (_phoneController.text.trim().isNotEmpty
+            ? _phoneController.text.trim()
+            : null);
+    final ledgerToSave = isRestricted
+        ? (_selectedCustomer?.ledgerNumber ??
+            (_isEditMode ? widget.invoiceToEdit?.ledgerNumber : null))
+        : (_ledgerController.text.trim().isNotEmpty
+            ? _ledgerController.text.trim()
+            : null);
+
     if (_isEditMode) {
       // Edit mode — patch mutable fields, preserve payments/status/createdAt
       final updated = widget.invoiceToEdit!.copyWith(
         customerName: customerName,
-        customerPhone: _phoneController.text.trim().isNotEmpty
-            ? _phoneController.text.trim()
-            : null,
-        ledgerNumber: _ledgerController.text.trim().isNotEmpty
-            ? _ledgerController.text.trim()
-            : null,
+        customerPhone: phoneToSave,
+        ledgerNumber: ledgerToSave,
         items: items,
         notes: _notesController.text.trim().isNotEmpty
             ? _notesController.text.trim()
@@ -447,12 +511,8 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
         id: '',
         uid: uid,
         customerName: customerName,
-        customerPhone: _phoneController.text.trim().isNotEmpty
-            ? _phoneController.text.trim()
-            : null,
-        ledgerNumber: _ledgerController.text.trim().isNotEmpty
-            ? _ledgerController.text.trim()
-            : null,
+        customerPhone: phoneToSave,
+        ledgerNumber: ledgerToSave,
         items: items,
         status: _isQuotation ? InvoiceStatus.quotation : InvoiceStatus.pending,
         notes: _notesController.text.trim().isNotEmpty
@@ -473,6 +533,8 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
+    final canViewCustomerPhone = CustomerDataMasker.canViewCustomerPhone;
+    final isRestricted = _isCustomerRestricted;
     final effectiveTaxRate = _isEditMode
         ? (widget.invoiceToEdit?.taxRate ??
             BusinessProfileService.instance.cachedProfile?.taxRate ??
@@ -490,12 +552,8 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
             context.read<CustomerCubit>().saveCustomer(
               uid,
               name,
-              phoneNumber: _phoneController.text.trim().isNotEmpty
-                  ? _phoneController.text.trim()
-                  : null,
-              ledgerNumber: _ledgerController.text.trim().isNotEmpty
-                  ? _ledgerController.text.trim()
-                  : null,
+              phoneNumber: _pendingInvoice?.customerPhone,
+              ledgerNumber: _pendingInvoice?.ledgerNumber,
             );
           }
           // ──────────────────────────────────────────────────────────────────
@@ -606,27 +664,78 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                               hint: AppStrings.customerNameHint.tr(),
                               label: AppStrings.customerName.tr(),
                               onContactTap: _pickContact,
+                              canPickContact: !isRestricted,
                               onSelected: (customer) {
                                 setState(() {
-                                  _phoneController.text =
-                                      customer.phoneNumber ?? '';
-                                  _ledgerController.text =
-                                      customer.ledgerNumber ?? '';
+                                  _selectedCustomer = customer;
+                                  if (canViewCustomerPhone) {
+                                    _phoneController.text =
+                                        customer.phoneNumber ?? '';
+                                    _ledgerController.text =
+                                        customer.ledgerNumber ?? '';
+                                  } else {
+                                    _phoneController.text =
+                                        (customer.phoneNumber != null &&
+                                                customer.phoneNumber!.isNotEmpty)
+                                            ? '••••••••••'
+                                            : '';
+                                    _ledgerController.text =
+                                        (customer.ledgerNumber != null &&
+                                                customer.ledgerNumber!.isNotEmpty)
+                                            ? '••••••'
+                                            : '';
+                                  }
                                 });
                               },
                             ),
                             const SizedBox(height: 10),
                             _SimpleField(
                               controller: _phoneController,
-                              hint: AppStrings.invoicePhoneHint.tr(),
+                              hint: isRestricted
+                                  ? AppStrings.permRestrictedData.tr()
+                                  : AppStrings.invoicePhoneHint.tr(),
                               label: AppStrings.customerPhone.tr(),
                               isNumber: true,
+                              readOnly: isRestricted,
+                              obscureText: isRestricted &&
+                                  _phoneController.text.isNotEmpty,
+                              enableInteractiveSelection: !isRestricted,
+                              suffixIcon: isRestricted
+                                  ? Tooltip(
+                                      message:
+                                          AppStrings.permRestrictedData.tr(),
+                                      child: Icon(
+                                        Icons.visibility_off_outlined,
+                                        size: 20,
+                                        color: AppColors.blackLight
+                                            .withValues(alpha: 0.6),
+                                      ),
+                                    )
+                                  : null,
                             ),
                             const SizedBox(height: 10),
                             _SimpleField(
                               controller: _ledgerController,
-                              hint: AppStrings.invoiceLedgerHint.tr(),
+                              hint: isRestricted
+                                  ? AppStrings.permRestrictedData.tr()
+                                  : AppStrings.invoiceLedgerHint.tr(),
                               label: AppStrings.ledgerNumber.tr(),
+                              readOnly: isRestricted,
+                              obscureText: isRestricted &&
+                                  _ledgerController.text.isNotEmpty,
+                              enableInteractiveSelection: !isRestricted,
+                              suffixIcon: isRestricted
+                                  ? Tooltip(
+                                      message:
+                                          AppStrings.permRestrictedData.tr(),
+                                      child: Icon(
+                                        Icons.visibility_off_outlined,
+                                        size: 20,
+                                        color: AppColors.blackLight
+                                            .withValues(alpha: 0.6),
+                                      ),
+                                    )
+                                  : null,
                             ),
                             const SizedBox(height: 24),
 
@@ -842,6 +951,7 @@ class _CustomerField extends StatelessWidget {
   final String hint;
   final String label;
   final VoidCallback onContactTap;
+  final bool canPickContact;
   final ValueChanged<CustomerEntity>? onSelected;
 
   const _CustomerField({
@@ -849,6 +959,7 @@ class _CustomerField extends StatelessWidget {
     required this.hint,
     required this.label,
     required this.onContactTap,
+    this.canPickContact = true,
     this.onSelected,
   });
 
@@ -869,8 +980,8 @@ class _CustomerField extends StatelessWidget {
         CustomerAutocompleteField(
           controller: controller,
           hint: hint,
-          suffixIcon: Icons.contact_phone_rounded,
-          onSuffixIconPressed: onContactTap,
+          suffixIcon: canPickContact ? Icons.contact_phone_rounded : null,
+          onSuffixIconPressed: canPickContact ? onContactTap : null,
           onSelected: onSelected,
         ),
       ],
@@ -884,6 +995,10 @@ class _SimpleField extends StatelessWidget {
   final String label;
   final bool isNumber;
   final ValueChanged<String>? onChanged;
+  final bool readOnly;
+  final bool obscureText;
+  final bool enableInteractiveSelection;
+  final Widget? suffixIcon;
 
   const _SimpleField({
     required this.controller,
@@ -891,6 +1006,10 @@ class _SimpleField extends StatelessWidget {
     required this.label,
     this.isNumber = false,
     this.onChanged,
+    this.readOnly = false,
+    this.obscureText = false,
+    this.enableInteractiveSelection = true,
+    this.suffixIcon,
   });
 
   @override
@@ -910,12 +1029,16 @@ class _SimpleField extends StatelessWidget {
         TextField(
           cursorColor: AppColors.primaryColor,
           controller: controller,
+          readOnly: readOnly,
+          obscureText: obscureText,
+          enableInteractiveSelection: enableInteractiveSelection,
           keyboardType: isNumber ? TextInputType.phone : TextInputType.text,
           onChanged: onChanged,
           style: TextStyles.customStyle(fontSize: 15),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyles.customStyle(color: AppColors.disabledColor),
+            suffixIcon: suffixIcon,
             filled: true,
             fillColor: AppColors.surface,
             contentPadding: const EdgeInsets.symmetric(

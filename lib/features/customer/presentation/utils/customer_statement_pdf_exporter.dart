@@ -13,6 +13,7 @@ import 'package:tahsel/core/services/pdf_asset_cache.dart';
 import 'package:tahsel/core/services/profile/business_profile_service.dart';
 import 'package:tahsel/core/services/tahsel_print_service.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/customer_data_masker.dart';
 import 'package:tahsel/features/customer/domain/entities/customer_entity.dart';
 import 'package:tahsel/features/customer/domain/entities/customer_operation.dart';
 import 'package:tahsel/features/customer/presentation/utils/customer_operation_display_helper.dart';
@@ -577,7 +578,7 @@ class CustomerStatementPdfExporter {
                         ),
                       ),
                       pw.Text(
-                        customer.phoneNumber!.cleanForPdf(),
+                        CustomerDataMasker.formatPhone(customer.phoneNumber).cleanForPdf(),
                         style: const pw.TextStyle(
                           fontSize: 10,
                           color: _neutralDark,
@@ -597,7 +598,7 @@ class CustomerStatementPdfExporter {
                         ),
                       ),
                       pw.Text(
-                        customer.ledgerNumber!.cleanForPdf(),
+                        CustomerDataMasker.formatGeneric(customer.ledgerNumber).cleanForPdf(),
                         style: const pw.TextStyle(
                           fontSize: 10,
                           color: _neutralDark,
@@ -617,7 +618,7 @@ class CustomerStatementPdfExporter {
                         ),
                       ),
                       pw.Text(
-                        customer.taxNumber!.cleanForPdf(),
+                        CustomerDataMasker.formatGeneric(customer.taxNumber).cleanForPdf(),
                         style: const pw.TextStyle(
                           fontSize: 10,
                           color: _neutralDark,

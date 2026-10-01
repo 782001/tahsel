@@ -15,6 +15,7 @@ import 'package:tahsel/core/services/pdf_asset_cache.dart';
 import 'package:tahsel/core/services/profile/business_profile_service.dart';
 import 'package:tahsel/core/services/tahsel_print_service.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/customer_data_masker.dart';
 import 'package:get_it/get_it.dart';
 import 'package:tahsel/features/inventory/data/datasources/inventory_local_data_source.dart';
 import 'package:tahsel/features/inventory/domain/entities/inventory_purchase_entity.dart';
@@ -502,7 +503,7 @@ class InvoicePdfService {
                     invoice.customerPhone!.isNotEmpty) ...[
                   pw.SizedBox(height: 2),
                   pw.Text(
-                    "${isArabic ? 'الهاتف:' : 'Phone:'} ${invoice.customerPhone!}",
+                    "${isArabic ? 'الهاتف:' : 'Phone:'} ${CustomerDataMasker.formatCustomerDisplayPhone(invoice.customerPhone).cleanForPdf()}",
                     style: const pw.TextStyle(
                       fontSize: 9,
                       color: PdfColors.grey800,
@@ -513,7 +514,7 @@ class InvoicePdfService {
                     invoice.ledgerNumber!.isNotEmpty) ...[
                   pw.SizedBox(height: 2),
                   pw.Text(
-                    "${isArabic ? 'رقم الدفتر:' : 'Ledger #:'} ${invoice.ledgerNumber}",
+                    "${isArabic ? 'رقم الدفتر:' : 'Ledger #:'} ${CustomerDataMasker.formatCustomerDisplayLedger(invoice.ledgerNumber).cleanForPdf()}",
                     style: const pw.TextStyle(
                       fontSize: 9,
                       color: PdfColors.grey800,

@@ -29,11 +29,13 @@ class AppPermissions {
 
   // ── 4. Customers & Customer Debts ─────────────────────────────────
   static const String customersView = 'customers.view';
+  static const String customersViewPhone = 'customers.view_phone';
   static const String customersAdd = 'customers.add';
   static const String customersSettleDebt = 'customers.settle_debt';
   static const String customersDeleteDebt = 'customers.delete_debt';
   static const String customersSendWhatsapp = 'customers.send_whatsapp';
   static const String customersViewReports = 'customers.view_reports';
+  static const String customersPrintShare = 'customers.print_share';
 
   // ── 5. My Debts (Supplier Liabilities) ────────────────────────────
   static const String myDebtsView = 'my_debts.view';
@@ -78,6 +80,9 @@ class AppPermissions {
   static const String settingsDeleteAccount = 'settings.delete_account';
 
   // ── Convenient Aliases ───────────────────────────────────────────
+  static const String customersViewContactInfo = customersViewPhone;
+  static const String customersPrintShareStatement = customersPrintShare;
+  static const String customersPrintStatement = customersPrintShare;
   static const String customersCreate = customersAdd;
   static const String customersEdit = customersAdd;
   static const String debtsAdd = customersAdd;
@@ -157,9 +162,11 @@ class AppPermissions {
           expensesView,
           expensesAdd,
           customersView,
+          customersViewPhone,
           customersAdd,
           customersSettleDebt,
           customersViewReports,
+          customersPrintShare,
           myDebtsView,
           myDebtsAdd,
           myDebtsPay,
@@ -189,11 +196,13 @@ class AppPermissions {
           expensesView,
           expensesAdd,
           customersView,
+          customersViewPhone,
           customersAdd,
           customersSettleDebt,
           customersDeleteDebt,
           customersSendWhatsapp,
           customersViewReports,
+          customersPrintShare,
           myDebtsView,
           myDebtsAdd,
           myDebtsPay,
@@ -309,11 +318,13 @@ class AppPermissions {
       titleKey: AppStrings.permGroupCustomers,
       items: [
         PermissionItem(customersView, AppStrings.permCustomersView),
+        PermissionItem(customersViewPhone, AppStrings.permCustomersViewPhone),
         PermissionItem(customersAdd, AppStrings.permCustomersAdd),
         PermissionItem(customersSettleDebt, AppStrings.permCustomersSettleDebt),
         PermissionItem(customersDeleteDebt, AppStrings.permCustomersDeleteDebt),
         PermissionItem(customersSendWhatsapp, AppStrings.permCustomersSendWhatsapp),
         PermissionItem(customersViewReports, AppStrings.permCustomersViewReports),
+        PermissionItem(customersPrintShare, AppStrings.permCustomersPrintShare),
       ],
     ),
     const PermissionGroup(
@@ -404,11 +415,13 @@ class AppPermissions {
     expensesDelete: [expensesView],
 
     // Customers
+    customersViewPhone: [customersView],
     customersAdd: [customersView],
     customersSettleDebt: [customersView],
     customersDeleteDebt: [customersView],
-    customersSendWhatsapp: [customersView],
+    customersSendWhatsapp: [customersView, customersViewPhone],
     customersViewReports: [customersView],
+    customersPrintShare: [customersView, customersViewReports],
 
     // My Debts
     myDebtsAdd: [myDebtsView],

@@ -6,18 +6,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart' as di;
 import 'package:tahsel/core/services/invoice_pdf_service.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/customer_data_masker.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/utils/summary_helper.dart';
 import 'package:tahsel/core/utils/vault_balance_helper.dart';
-import 'package:tahsel/core/constants/app_permissions.dart';
-import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/widgets/permission_guard.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/cashbox/data/datasources/vault_remote_data_source.dart';
@@ -800,7 +801,9 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
   }
 
   Future<void> _confirmVoid(BuildContext context) async {
-    if (!PermissionService.instance.hasPermission(AppPermissions.invoicesDelete)) {
+    if (!PermissionService.instance.hasPermission(
+      AppPermissions.invoicesDelete,
+    )) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppStrings.noPermissionForAction.tr()),
@@ -1026,33 +1029,38 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                         return;
                       }
 
-                      String? phone = _invoice.customerPhone;
-                      if (!kIsWeb && Platform.isAndroid) {
-                        if (phone == null || phone.isEmpty) {
-                          final result = await PhoneInputSheet.show(context);
-                          if (result == null) return;
-                          phone = result;
+                      final canViewPhone = CustomerDataMasker.canViewCustomerPhone;
+                      String? phone;
 
-                          if (_invoice.customerName != null) {
-                            try {
-                              di.sl<CustomerCubit>().updateCustomerPhone(
-                                AppStrings.userToken,
-                                _invoice.customerName!,
-                                phone,
-                              );
-                            } catch (e) {
-                              AppLogger.printMessage(
-                                'Failed to update customer phone: $e',
-                              );
+                      if (canViewPhone) {
+                        phone = _invoice.customerPhone;
+                        if (!kIsWeb && Platform.isAndroid) {
+                          if (phone == null || phone.isEmpty) {
+                            final result = await PhoneInputSheet.show(context);
+                            if (result == null) return;
+                            phone = result;
+
+                            if (_invoice.customerName != null) {
+                              try {
+                                di.sl<CustomerCubit>().updateCustomerPhone(
+                                  AppStrings.userToken,
+                                  _invoice.customerName!,
+                                  phone,
+                                );
+                              } catch (e) {
+                                AppLogger.printMessage(
+                                  'Failed to update customer phone: $e',
+                                );
+                              }
                             }
-                          }
 
-                          // Save the phone number to the invoice document
-                          // ignore: use_build_context_synchronously
-                          context.read<InvoiceCubit>().updateInvoice(
-                            _invoice.copyWith(customerPhone: phone),
-                            previous: _invoice,
-                          );
+                            // Save the phone number to the invoice document
+                            // ignore: use_build_context_synchronously
+                            context.read<InvoiceCubit>().updateInvoice(
+                              _invoice.copyWith(customerPhone: phone),
+                              previous: _invoice,
+                            );
+                          }
                         }
                       }
 
@@ -1215,14 +1223,33 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                               ),
                                             if (_invoice.customerPhone != null)
                                               InvoiceInfoRow(
-                                                icon: Icons.phone_rounded,
-                                                label: _invoice.customerPhone!,
+                                                icon:
+                                                    CustomerDataMasker
+                                                        .canViewCustomerPhone
+                                                    ? Icons.phone_rounded
+                                                    : Icons
+                                                          .visibility_off_outlined,
+                                                label:
+                                                    CustomerDataMasker
+                                                        .canViewCustomerPhone
+                                                    ? _invoice.customerPhone!
+                                                    : CustomerDataMasker.maskPhone(
+                                                        _invoice.customerPhone!,
+                                                      ),
                                               ),
                                             if (_invoice.ledgerNumber != null)
                                               InvoiceInfoRow(
-                                                icon: Icons.tag_rounded,
+                                                icon:
+                                                    CustomerDataMasker
+                                                        .canViewCustomerPhone
+                                                    ? Icons.tag_rounded
+                                                    : Icons
+                                                          .visibility_off_outlined,
                                                 label:
-                                                    '# ${_invoice.ledgerNumber}',
+                                                    CustomerDataMasker
+                                                        .canViewCustomerPhone
+                                                    ? '# ${_invoice.ledgerNumber}'
+                                                    : '# ${CustomerDataMasker.maskGeneric(_invoice.ledgerNumber!)}',
                                               ),
                                             if (_invoice.linkedDebtId != null)
                                               InvoiceInfoRow(
@@ -1727,8 +1754,8 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                           _invoice.status !=
                                               InvoiceStatus.voided)
                                         PermissionGuard(
-                                          permission:
-                                              AppPermissions.invoicesRecordPayment,
+                                          permission: AppPermissions
+                                              .invoicesRecordPayment,
                                           child: RecordPaymentButton(
                                             onTap: isLoading
                                                 ? null

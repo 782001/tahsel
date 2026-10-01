@@ -6,6 +6,7 @@ import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/utils/customer_data_masker.dart';
 import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
@@ -88,7 +89,7 @@ class HeaderBanner extends StatelessWidget {
                             borderRadius: BorderRadius.circular(20.r),
                           ),
                           child: Text(
-                            detail.ledgerNumber ?? "",
+                            CustomerDataMasker.formatCustomerDisplayLedger(detail.ledgerNumber),
                             style: TextStyles.customStyle(
                               color: Colors.white,
                               fontSize: 11,

@@ -1590,11 +1590,13 @@ class AppStrings {
   static const String permExpensesAdd = "perm_expenses_add";
   static const String permExpensesDelete = "perm_expenses_delete";
   static const String permCustomersView = "perm_customers_view";
+  static const String permCustomersViewPhone = "perm_customers_view_phone";
   static const String permCustomersAdd = "perm_customers_add";
   static const String permCustomersSettleDebt = "perm_customers_settle_debt";
   static const String permCustomersDeleteDebt = "perm_customers_delete_debt";
   static const String permCustomersSendWhatsapp = "perm_customers_send_whatsapp";
   static const String permCustomersViewReports = "perm_customers_view_reports";
+  static const String permCustomersPrintShare = "perm_customers_print_share";
   static const String permMyDebtsView = "perm_my_debts_view";
   static const String permMyDebtsAdd = "perm_my_debts_add";
   static const String permMyDebtsPay = "perm_my_debts_pay";
@@ -1629,6 +1631,9 @@ class AppStrings {
   static const String permRequiresPrefix = "perm_requires_prefix";
   static const String permAutoEnabledPrerequisites = "perm_auto_enabled_prerequisites";
   static const String permAutoDisabledDependents = "perm_auto_disabled_dependents";
+  static const String permRestrictedData = "perm_restricted_data";
+  static const String permRestrictedDataNotice = "perm_restricted_data_notice";
+  static const String searchByName = "search_by_name";
 
   // Customer Account Statement
   static const String customerAccountStatement = "customer_account_statement";

@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:tahsel/core/extensions/extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/customer_data_masker.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/features/customer/domain/entities/customer_entity.dart';
 import 'package:tahsel/features/customer/presentation/widgets/customer_autocomplete_field.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/multi_inventory_picker_bottom_sheet.dart';
 import 'package:tahsel/features/product/presentation/widgets/product_autocomplete_field.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 import 'package:tahsel/shared/widgets/quick_due_date_selector.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
 class QuickAddShopForm extends StatefulWidget {
   final TextEditingController totalAmountController;
@@ -34,6 +37,7 @@ class QuickAddShopForm extends StatefulWidget {
   final VoidCallback? onContactPickerPressed;
   final DateTime? dueDate;
   final ValueChanged<DateTime?>? onDueDateChanged;
+  final ValueChanged<CustomerEntity?>? onCustomerSelected;
 
   const QuickAddShopForm({
     super.key,
@@ -61,6 +65,7 @@ class QuickAddShopForm extends StatefulWidget {
     this.onContactPickerPressed,
     this.dueDate,
     this.onDueDateChanged,
+    this.onCustomerSelected,
   });
 
   @override
@@ -69,6 +74,30 @@ class QuickAddShopForm extends StatefulWidget {
 
 class _QuickAddShopFormState extends State<QuickAddShopForm> {
   List<SelectedInventoryItem> _selectedInventoryItems = [];
+  CustomerEntity? _selectedCustomer;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.customerController.addListener(_onCustomerTextChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.customerController.removeListener(_onCustomerTextChanged);
+    super.dispose();
+  }
+
+  void _onCustomerTextChanged() {
+    if (_selectedCustomer != null &&
+        widget.customerController.text.trim() != _selectedCustomer!.name.trim()) {
+      setState(() {
+        _selectedCustomer = null;
+        widget.ledgerController.clear();
+      });
+      widget.onCustomerSelected?.call(null);
+    }
+  }
 
   void _openInventoryPicker(BuildContext context) {
     if (widget.productController.text.trim().isEmpty) {
@@ -187,13 +216,35 @@ class _QuickAddShopFormState extends State<QuickAddShopForm> {
             controller: customerController,
             errorText: customerError,
             icon: Icons.person_outline,
-            suffixIcon: Icons.contact_phone_rounded,
-            onSuffixIconPressed: onContactPickerPressed,
+            suffixIcon: (!CustomerDataMasker.canViewCustomerPhone &&
+                    _selectedCustomer != null)
+                ? null
+                : Icons.contact_phone_rounded,
+            onSuffixIconPressed: (!CustomerDataMasker.canViewCustomerPhone &&
+                    _selectedCustomer != null)
+                ? null
+                : onContactPickerPressed,
             focusNode: customerFocus,
             textInputAction: customerInputAction,
             onSubmitted: (_) => isShop
                 ? ledgerFocus.requestFocus()
                 : totalAmountFocus.requestFocus(),
+            onSelected: (customer) {
+              setState(() {
+                _selectedCustomer = customer;
+                final canViewPhone = CustomerDataMasker.canViewCustomerPhone;
+                if (canViewPhone) {
+                  widget.ledgerController.text = customer.ledgerNumber ?? '';
+                } else {
+                  widget.ledgerController.text =
+                      (customer.ledgerNumber != null &&
+                              customer.ledgerNumber!.isNotEmpty)
+                          ? '••••••'
+                          : '';
+                }
+              });
+              widget.onCustomerSelected?.call(customer);
+            },
           ),
           if (isShop) ...[
             const SizedBox(height: 20),
@@ -206,14 +257,37 @@ class _QuickAddShopFormState extends State<QuickAddShopForm> {
               ),
             ),
             const SizedBox(height: 8),
-            QuickAddTextField(
-              hint: AppStrings.ledgerNumber.tr(),
-              controller: ledgerController,
-              icon: Icons.menu_book_outlined,
-              isNumber: true,
-              focusNode: ledgerFocus,
-              textInputAction: ledgerInputAction,
-              onSubmitted: (_) => productFocus.requestFocus(),
+            Builder(
+              builder: (context) {
+                final canViewPhone = CustomerDataMasker.canViewCustomerPhone;
+                final isRestricted =
+                    !canViewPhone && _selectedCustomer != null;
+                return QuickAddTextField(
+                  hint: isRestricted
+                      ? AppStrings.permRestrictedData.tr()
+                      : AppStrings.ledgerNumber.tr(),
+                  controller: ledgerController,
+                  icon: Icons.menu_book_outlined,
+                  isNumber: !isRestricted,
+                  readOnly: isRestricted,
+                  obscureText: isRestricted && ledgerController.text.isNotEmpty,
+                  suffixIcon:
+                      isRestricted ? Icons.visibility_off_outlined : null,
+                  onSuffixIconPressed: isRestricted
+                      ? () => showfailureToast(
+                            AppStrings.permRestrictedData.tr(),
+                          )
+                      : null,
+                  onTap: isRestricted
+                      ? () => showfailureToast(
+                            AppStrings.permRestrictedData.tr(),
+                          )
+                      : null,
+                  focusNode: ledgerFocus,
+                  textInputAction: ledgerInputAction,
+                  onSubmitted: (_) => productFocus.requestFocus(),
+                );
+              },
             ),
           ],
           const SizedBox(height: 20),

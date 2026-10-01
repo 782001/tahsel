@@ -1,8 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:tahsel/core/extensions/extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/utils/customer_data_masker.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 
 class CustomerDebtCard extends StatelessWidget {
@@ -164,7 +165,7 @@ class CustomerDebtCard extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
-                                  ledgerNumber ?? "",
+                                  CustomerDataMasker.formatCustomerDisplayLedger(ledgerNumber),
                                   style: TextStyles.customStyle(
                                     color: statusColor,
                                     fontSize: 10,

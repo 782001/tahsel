@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
@@ -8,6 +8,7 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/widgets/permission_guard.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/core/utils/customer_data_masker.dart';
 import 'package:tahsel/features/customer/presentation/widgets/add_customer_dialog.dart';
 import 'package:tahsel/features/customer/presentation/widgets/customer_list_card.dart';
 import 'package:tahsel/features/customer/presentation/widgets/skeletons/customer_card_skeleton.dart';
@@ -162,7 +163,9 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
                   ),
                   cursorColor: AppColors.primaryColor,
                   decoration: InputDecoration(
-                    hintText: AppStrings.searchByNameOrPhone.tr(),
+                    hintText: CustomerDataMasker.canViewCustomerPhone
+                        ? AppStrings.searchByNameOrPhone.tr()
+                        : AppStrings.searchByName.tr(),
                     hintStyle: TextStyles.customStyle(
                       color: AppColors.blackLight,
                       fontSize: 14,

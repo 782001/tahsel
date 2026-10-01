@@ -13,6 +13,8 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/assets.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/customer/presentation/cubit/customer_cubit.dart';
 import 'package:tahsel/features/customer/presentation/cubit/customer_state.dart';
@@ -53,6 +55,11 @@ class NotificationDialog extends StatefulWidget {
     DateTime? targetDate,
   }) {
     if (_isShowing) return;
+
+    if (!PermissionService.instance.hasPermission(AppPermissions.customersViewPhone) ||
+        !PermissionService.instance.hasPermission(AppPermissions.customersSendWhatsapp)) {
+      return;
+    }
 
     final customerState = context.read<CustomerCubit>().state;
     String preference = 'none';

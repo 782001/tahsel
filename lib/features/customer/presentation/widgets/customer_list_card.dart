@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/assets.dart';
+import 'package:tahsel/core/utils/customer_data_masker.dart';
 import 'package:tahsel/core/utils/styles.dart';
-import 'package:tahsel/core/widgets/responsive_layout.dart';
-import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/widgets/permission_guard.dart';
+import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/customer/domain/entities/customer_entity.dart';
 import 'package:tahsel/features/customer/domain/usecases/get_customer_operations_usecase.dart';
 import 'package:tahsel/features/customer/presentation/utils/customer_statement_pdf_exporter.dart';
 import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
+
 import '../cubit/customer_reports/customer_reports_cubit.dart';
 import 'add_customer_dialog.dart';
 
@@ -33,11 +36,16 @@ class CustomerListCard extends StatelessWidget {
       showDialog(
         context: context,
         builder: (ctx) => Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           backgroundColor: AppColors.surface,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
-            child: _CustomerStatementOptionsWidget(customer: customer, uid: uid),
+            child: _CustomerStatementOptionsWidget(
+              customer: customer,
+              uid: uid,
+            ),
           ),
         ),
       );
@@ -49,7 +57,8 @@ class CustomerListCard extends StatelessWidget {
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        builder: (ctx) => _CustomerStatementOptionsWidget(customer: customer, uid: uid),
+        builder: (ctx) =>
+            _CustomerStatementOptionsWidget(customer: customer, uid: uid),
       );
     }
   }
@@ -57,6 +66,7 @@ class CustomerListCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
+    final canViewCustomerInfo = CustomerDataMasker.canViewCustomerPhone;
     return Card(
       margin: isDesktop ? EdgeInsets.zero : const EdgeInsets.only(bottom: 16),
       elevation: 0,
@@ -68,6 +78,12 @@ class CustomerListCard extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: () {
+          if (!PermissionService.instance.hasPermission(
+            AppPermissions.customersViewReports,
+          )) {
+            showfailureToast(AppStrings.noPermissionForAction.tr());
+            return;
+          }
           Navigator.pushNamed(
             context,
             AppRoutes.customerReportDetails,
@@ -133,19 +149,26 @@ class CustomerListCard extends StatelessWidget {
                             customer.phoneNumber!.isNotEmpty) ...[
                           const SizedBox(width: 8),
                           Icon(
-                            Icons.phone_outlined,
+                            canViewCustomerInfo
+                                ? Icons.phone_outlined
+                                : Icons.visibility_off_outlined,
                             size: 14,
                             color: AppColors.blackLight,
                           ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              customer.phoneNumber!,
+                              canViewCustomerInfo
+                                  ? customer.phoneNumber!
+                                  : CustomerDataMasker.maskPhone(
+                                      customer.phoneNumber!,
+                                    ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyles.customStyle(
                                 color: AppColors.blackLight,
                                 fontSize: 12,
+                                letterSpacing: canViewCustomerInfo ? null : 1.2,
                               ),
                             ),
                           ),
@@ -168,21 +191,21 @@ class CustomerListCard extends StatelessWidget {
                             _buildBadge(
                               icon: Icons.menu_book_outlined,
                               text:
-                                  '${AppStrings.ledgerNumber.tr()}: ${customer.ledgerNumber}',
+                                  '${AppStrings.ledgerNumber.tr()}: ${canViewCustomerInfo ? customer.ledgerNumber : CustomerDataMasker.maskGeneric(customer.ledgerNumber)}',
                             ),
                           if (customer.taxNumber != null &&
                               customer.taxNumber!.isNotEmpty)
                             _buildBadge(
                               icon: Icons.receipt_outlined,
                               text:
-                                  '${AppStrings.taxNumber.tr()}: ${customer.taxNumber}',
+                                  '${AppStrings.taxNumber.tr()}: ${canViewCustomerInfo ? customer.taxNumber : CustomerDataMasker.maskGeneric(customer.taxNumber)}',
                             ),
                           if (customer.commercialRegistration != null &&
                               customer.commercialRegistration!.isNotEmpty)
                             _buildBadge(
                               icon: Icons.badge_outlined,
                               text:
-                                  '${AppStrings.commercialRegistration.tr()}: ${customer.commercialRegistration}',
+                                  '${AppStrings.commercialRegistration.tr()}: ${canViewCustomerInfo ? customer.commercialRegistration : CustomerDataMasker.maskGeneric(customer.commercialRegistration)}',
                             ),
                         ],
                       ),
@@ -248,10 +271,7 @@ class CustomerListCard extends StatelessWidget {
     );
   }
 
-  Widget _buildBadge({
-    required IconData icon,
-    required String text,
-  }) {
+  Widget _buildBadge({required IconData icon, required String text}) {
     return Container(
       constraints: const BoxConstraints(maxWidth: 220),
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -262,11 +282,7 @@ class CustomerListCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 12,
-            color: AppColors.blackLight,
-          ),
+          Icon(icon, size: 12, color: AppColors.blackLight),
           const SizedBox(width: 4),
           Flexible(
             child: Text(
@@ -387,9 +403,19 @@ class _CustomerStatementOptionsWidgetState
 
   @override
   Widget build(BuildContext context) {
-    final hasPhone = widget.customer.phoneNumber != null &&
+    final hasPhone =
+        widget.customer.phoneNumber != null &&
         widget.customer.phoneNumber!.trim().isNotEmpty;
+    final canViewPhone = CustomerDataMasker.canViewCustomerPhone;
+    final canSendWhatsapp = PermissionService.instance.hasPermission(
+      AppPermissions.customersSendWhatsapp,
+    );
 
+    final canPrintShare = PermissionService.instance.hasPermission(
+      AppPermissions.customersPrintShare,
+    );
+    final isWhatsappAllowed =
+        hasPhone && canViewPhone && canSendWhatsapp && canPrintShare;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       child: Column(
@@ -467,6 +493,12 @@ class _CustomerStatementOptionsWidgetState
             isLoading: false,
             onTap: () {
               Navigator.pop(context);
+              if (!PermissionService.instance.hasPermission(
+                AppPermissions.customersViewReports,
+              )) {
+                showfailureToast(AppStrings.noPermissionForAction.tr());
+                return;
+              }
               Navigator.pushNamed(
                 context,
                 AppRoutes.customerReportDetails,
@@ -486,7 +518,14 @@ class _CustomerStatementOptionsWidgetState
             subtitle: AppStrings.directPrintDesc.tr(),
             iconColor: Colors.teal,
             isLoading: _runningAction == _StatementAction.print,
-            onTap: () => _executeAction(_StatementAction.print),
+            enabled: canPrintShare,
+            onTap: () {
+              if (!canPrintShare) {
+                showfailureToast(AppStrings.noPermissionForAction.tr());
+                return;
+              }
+              _executeAction(_StatementAction.print);
+            },
           ),
 
           // Action 3: Share PDF
@@ -496,7 +535,14 @@ class _CustomerStatementOptionsWidgetState
             subtitle: AppStrings.sharePdfDesc.tr(),
             iconColor: Colors.deepOrange,
             isLoading: _runningAction == _StatementAction.share,
-            onTap: () => _executeAction(_StatementAction.share),
+            enabled: canPrintShare,
+            onTap: () {
+              if (!canPrintShare) {
+                showfailureToast(AppStrings.noPermissionForAction.tr());
+                return;
+              }
+              _executeAction(_StatementAction.share);
+            },
           ),
 
           // Action 4: Send to WhatsApp
@@ -506,8 +552,12 @@ class _CustomerStatementOptionsWidgetState
             subtitle: AppStrings.sendToCustomerWhatsappDesc.tr(),
             iconColor: const Color(0xFF25D366),
             isLoading: _runningAction == _StatementAction.whatsapp,
-            enabled: hasPhone,
+            enabled: isWhatsappAllowed,
             onTap: () {
+              if (!canViewPhone || !canSendWhatsapp || !canPrintShare) {
+                showfailureToast(AppStrings.noPermissionForAction.tr());
+                return;
+              }
               if (!hasPhone) {
                 showfailureToast(AppStrings.noPhoneForCustomer.tr());
                 return;
@@ -541,21 +591,21 @@ class _CustomerStatementOptionsWidgetState
           borderRadius: BorderRadius.circular(10),
         ),
         child: assetIcon != null
-            ? Image.asset(
-                assetIcon,
-                width: 22,
-                height: 22,
-              )
+            ? Image.asset(assetIcon, width: 22, height: 22)
             : Icon(
                 icon,
-                color: enabled ? iconColor : AppColors.blackLight.withAlpha(100),
+                color: enabled
+                    ? iconColor
+                    : AppColors.blackLight.withAlpha(100),
                 size: 22,
               ),
       ),
       title: Text(
         title,
         style: TextStyles.customStyle(
-          color: enabled ? AppColors.black : AppColors.blackLight.withAlpha(120),
+          color: enabled
+              ? AppColors.black
+              : AppColors.blackLight.withAlpha(120),
           fontSize: 14.5,
           fontWeight: FontWeight.w600,
         ),
@@ -584,6 +634,4 @@ class _CustomerStatementOptionsWidgetState
       onTap: isLoading ? null : onTap,
     );
   }
-
 }
-
