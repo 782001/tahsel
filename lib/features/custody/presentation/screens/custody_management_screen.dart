@@ -437,7 +437,7 @@ class _CustodyManagementScreenState extends State<CustodyManagementScreen> {
                           Navigator.of(context).pop();
                         } else {
                           try {
-                            context.read<MainLayoutCubit>().changeBottomNav(5);
+                            context.read<MainLayoutCubit>().changeBottomNav(0);
                           } catch (_) {}
                         }
                       }
