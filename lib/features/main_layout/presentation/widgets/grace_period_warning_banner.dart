@@ -10,21 +10,51 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 
-class GracePeriodWarningBanner extends StatelessWidget {
+class GracePeriodWarningBanner extends StatefulWidget {
   const GracePeriodWarningBanner({super.key});
+
+  @override
+  State<GracePeriodWarningBanner> createState() =>
+      _GracePeriodWarningBannerState();
+}
+
+class _GracePeriodWarningBannerState extends State<GracePeriodWarningBanner> {
+  Stream<DocumentSnapshot<Map<String, dynamic>>>? _userStream;
+  String? _cachedUid;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAndInitStream();
+  }
+
+  void _checkAndInitStream() {
+    final String uid = AppStrings.userToken;
+    if (uid != _cachedUid || _userStream == null) {
+      _cachedUid = uid;
+      if (uid.isNotEmpty) {
+        _userStream = FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .snapshots();
+      } else {
+        _userStream = null;
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final String uid = AppStrings.userToken;
     if (uid.isEmpty) return const SizedBox.shrink();
 
+    _checkAndInitStream();
+    if (_userStream == null) return const SizedBox.shrink();
+
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .snapshots(),
+      stream: _userStream,
       builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data == null) {
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
           return const SizedBox.shrink();
         }
 

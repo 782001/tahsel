@@ -22,29 +22,59 @@ class GlobalDebtDueDateWarningBanner extends StatefulWidget {
 class _GlobalDebtDueDateWarningBannerState
     extends State<GlobalDebtDueDateWarningBanner> {
   bool _isDismissed = false;
+  Stream<QuerySnapshot<Map<String, dynamic>>>? _debtStream;
+  String? _cachedUid;
+  DateTime? _cachedDay;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAndInitStream();
+  }
+
+  void _checkAndInitStream() {
+    final String uid = AppStrings.userToken;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    if (uid != _cachedUid || today != _cachedDay || _debtStream == null) {
+      _cachedUid = uid;
+      _cachedDay = today;
+      if (uid.isNotEmpty) {
+        final alertThreshold = today.add(const Duration(days: 4)); // In the next 3 days (inclusive)
+        _debtStream = FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('debts')
+            .where('isPaid', isEqualTo: false)
+            .where(
+              'dueDate',
+              isLessThanOrEqualTo: Timestamp.fromDate(alertThreshold),
+            )
+            .snapshots();
+      } else {
+        _debtStream = null;
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final String uid = AppStrings.userToken;
     if (uid.isEmpty || _isDismissed) return const SizedBox.shrink();
 
+    _checkAndInitStream();
+    if (_debtStream == null) return const SizedBox.shrink();
+
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final alertThreshold = today.add(const Duration(days: 4)); // In the next 3 days (inclusive)
 
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('debts')
-          .where('isPaid', isEqualTo: false)
-          .where(
-            'dueDate',
-            isLessThanOrEqualTo: Timestamp.fromDate(alertThreshold),
-          )
-          .snapshots(),
+      stream: _debtStream,
       builder: (context, snapshot) {
-        if (!snapshot.hasData ||
+        if (snapshot.hasError ||
+            !snapshot.hasData ||
             snapshot.data == null ||
             snapshot.data!.docs.isEmpty) {
           return const SizedBox.shrink();
