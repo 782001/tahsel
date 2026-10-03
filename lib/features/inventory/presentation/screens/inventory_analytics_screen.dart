@@ -238,7 +238,6 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
                   final canViewProfit = PermissionService.instance
                       .hasPermission(AppPermissions.reportsViewNetProfit);
 
-                             
                   return RefreshIndicator(
                     color: AppColors.primaryColor,
                     onRefresh: () async {
@@ -272,7 +271,7 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
                                     child: _buildMetricCard(
                                       title: AppStrings.avgProfitMargin.tr(),
                                       value: canViewProfit
-                                          ? '${avgProfitMarginPct.toStringAsFixed(1)}%'
+                                          ? '${avgProfitMarginPct.toSmartAmount()}%'
                                           : '••••',
                                       icon: Icons.percent_rounded,
                                       color: AppColors.actionButton,

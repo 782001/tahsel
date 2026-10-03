@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
-import 'package:tahsel/core/services/invoice_pdf_service.dart';
-import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/services/activity_logger_service.dart';
 import 'package:tahsel/core/services/injection_container.dart';
+import 'package:tahsel/core/services/invoice_pdf_service.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -69,9 +70,10 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
     try {
       if (sl.isRegistered<ActivityLoggerService>()) {
         final ownerUid = AppStrings.userToken;
-        final supp =
-            pur.supplierName.trim().isNotEmpty ? pur.supplierName.trim() : 'عام';
-        final totalFormatted = pur.totalAmount.toStringAsFixed(1);
+        final supp = pur.supplierName.trim().isNotEmpty
+            ? pur.supplierName.trim()
+            : 'عام';
+        final totalFormatted = pur.totalAmount.toSmartAmount();
         final invoiceNum = pur.id;
         sl<ActivityLoggerService>().logStandalone(
           ownerUid: ownerUid,
@@ -111,9 +113,10 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
     try {
       if (sl.isRegistered<ActivityLoggerService>()) {
         final ownerUid = AppStrings.userToken;
-        final supp =
-            pur.supplierName.trim().isNotEmpty ? pur.supplierName.trim() : 'عام';
-        final totalFormatted = pur.totalAmount.toStringAsFixed(1);
+        final supp = pur.supplierName.trim().isNotEmpty
+            ? pur.supplierName.trim()
+            : 'عام';
+        final totalFormatted = pur.totalAmount.toSmartAmount();
         final invoiceNum = pur.id;
         sl<ActivityLoggerService>().logStandalone(
           ownerUid: ownerUid,
@@ -150,9 +153,10 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
     try {
       if (sl.isRegistered<ActivityLoggerService>()) {
         final ownerUid = AppStrings.userToken;
-        final supp =
-            pur.supplierName.trim().isNotEmpty ? pur.supplierName.trim() : 'عام';
-        final totalFormatted = pur.totalAmount.toStringAsFixed(1);
+        final supp = pur.supplierName.trim().isNotEmpty
+            ? pur.supplierName.trim()
+            : 'عام';
+        final totalFormatted = pur.totalAmount.toSmartAmount();
         final invoiceNum = pur.id;
         sl<ActivityLoggerService>().logStandalone(
           ownerUid: ownerUid,
@@ -198,7 +202,9 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
   }
 
   void _editPurchase(InventoryPurchaseEntity pur) {
-    if (!PermissionService.instance.hasPermission(AppPermissions.inventoryPurchases)) {
+    if (!PermissionService.instance.hasPermission(
+      AppPermissions.inventoryPurchases,
+    )) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppStrings.noPermission.tr()),
@@ -231,7 +237,9 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
   }
 
   void _reorderPurchase(InventoryPurchaseEntity pur) {
-    if (!PermissionService.instance.hasPermission(AppPermissions.inventoryPurchases)) {
+    if (!PermissionService.instance.hasPermission(
+      AppPermissions.inventoryPurchases,
+    )) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppStrings.noPermission.tr()),
@@ -264,7 +272,9 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
   }
 
   void _navigateToCreatePurchase() {
-    if (!PermissionService.instance.hasPermission(AppPermissions.inventoryPurchases)) {
+    if (!PermissionService.instance.hasPermission(
+      AppPermissions.inventoryPurchases,
+    )) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppStrings.noPermission.tr()),
@@ -293,7 +303,9 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
   }
 
   Future<void> _confirmDeletePurchase(InventoryPurchaseEntity pur) async {
-    if (!PermissionService.instance.hasPermission(AppPermissions.inventoryPurchases)) {
+    if (!PermissionService.instance.hasPermission(
+      AppPermissions.inventoryPurchases,
+    )) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppStrings.noPermission.tr()),
@@ -505,11 +517,17 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
           ),
         ),
       ),
-      floatingActionButton: PermissionService.instance.hasPermission(AppPermissions.inventoryPurchases)
+      floatingActionButton:
+          PermissionService.instance.hasPermission(
+            AppPermissions.inventoryPurchases,
+          )
           ? FloatingActionButton.extended(
               backgroundColor: AppColors.primaryColor,
               onPressed: _navigateToCreatePurchase,
-              icon: const Icon(Icons.add_shopping_cart_rounded, color: Colors.white),
+              icon: const Icon(
+                Icons.add_shopping_cart_rounded,
+                color: Colors.white,
+              ),
               label: Text(
                 AppStrings.newPurchase.tr(),
                 style: TextStyles.customStyle(
@@ -537,170 +555,185 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                         .read<InventoryPurchasesCubit>()
                         .fetchPurchases();
                   },
-                  child: BlocBuilder<InventoryPurchasesCubit, InventoryPurchasesState>(
-                    builder: (context, state) {
-                      // Apply Search & Date Filters
-                      final query = _searchController.text.trim().toLowerCase();
-                      final isFiltering =
-                          query.isNotEmpty || _selectedDateRange != null;
+                  child:
+                      BlocBuilder<
+                        InventoryPurchasesCubit,
+                        InventoryPurchasesState
+                      >(
+                        builder: (context, state) {
+                          // Apply Search & Date Filters
+                          final query = _searchController.text
+                              .trim()
+                              .toLowerCase();
+                          final isFiltering =
+                              query.isNotEmpty || _selectedDateRange != null;
 
-                      List<InventoryPurchaseEntity> filteredPurchases = [];
-                      if (state is InventoryPurchasesLoaded) {
-                        final sourceList = isFiltering
-                            ? state.allPurchases
-                            : state.purchases;
+                          List<InventoryPurchaseEntity> filteredPurchases = [];
+                          if (state is InventoryPurchasesLoaded) {
+                            final sourceList = isFiltering
+                                ? state.allPurchases
+                                : state.purchases;
 
-                        filteredPurchases = sourceList.where((p) {
-                          final matchesSearch =
-                              query.isEmpty ||
-                              p.supplierName.toLowerCase().contains(query) ||
-                              p.id.toLowerCase().contains(query) ||
-                              p.items.any(
-                                (i) =>
-                                    i.productName.toLowerCase().contains(query),
-                              );
-
-                          final matchesDate =
-                              _selectedDateRange == null ||
-                              (p.createdAt.isAfter(
-                                    _selectedDateRange!.start.subtract(
-                                      const Duration(days: 1),
+                            filteredPurchases = sourceList.where((p) {
+                              final matchesSearch =
+                                  query.isEmpty ||
+                                  p.supplierName.toLowerCase().contains(
+                                    query,
+                                  ) ||
+                                  p.id.toLowerCase().contains(query) ||
+                                  p.items.any(
+                                    (i) => i.productName.toLowerCase().contains(
+                                      query,
                                     ),
-                                  ) &&
-                                  p.createdAt.isBefore(
-                                    _selectedDateRange!.end.add(
-                                      const Duration(days: 1),
-                                    ),
-                                  ));
+                                  );
 
-                          return matchesSearch && matchesDate;
-                        }).toList();
-                      }
+                              final matchesDate =
+                                  _selectedDateRange == null ||
+                                  (p.createdAt.isAfter(
+                                        _selectedDateRange!.start.subtract(
+                                          const Duration(days: 1),
+                                        ),
+                                      ) &&
+                                      p.createdAt.isBefore(
+                                        _selectedDateRange!.end.add(
+                                          const Duration(days: 1),
+                                        ),
+                                      ));
 
-                      return CustomScrollView(
-                        controller: _scrollController,
-                        keyboardDismissBehavior:
-                            ScrollViewKeyboardDismissBehavior.onDrag,
-                        physics: const AlwaysScrollableScrollPhysics(
-                          parent: BouncingScrollPhysics(),
-                        ),
-                        slivers: [
-                          // ── Search & Filter Bar ──────
-                          SliverToBoxAdapter(
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: isDesktop ? 24 : 16.w,
-                                vertical: isDesktop ? 8 : 6.h,
-                              ),
-                              child: PurchaseSearchBar(
-                                searchController: _searchController,
-                                selectedDateRange: _selectedDateRange,
-                                onSelectDateRange: () =>
-                                    _pickDateRange(context),
-                                onClearFilters: _clearFilters,
-                              ),
+                              return matchesSearch && matchesDate;
+                            }).toList();
+                          }
+
+                          return CustomScrollView(
+                            controller: _scrollController,
+                            keyboardDismissBehavior:
+                                ScrollViewKeyboardDismissBehavior.onDrag,
+                            physics: const AlwaysScrollableScrollPhysics(
+                              parent: BouncingScrollPhysics(),
                             ),
-                          ),
+                            slivers: [
+                              // ── Search & Filter Bar ──────
+                              SliverToBoxAdapter(
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: isDesktop ? 24 : 16.w,
+                                    vertical: isDesktop ? 8 : 6.h,
+                                  ),
+                                  child: PurchaseSearchBar(
+                                    searchController: _searchController,
+                                    selectedDateRange: _selectedDateRange,
+                                    onSelectDateRange: () =>
+                                        _pickDateRange(context),
+                                    onClearFilters: _clearFilters,
+                                  ),
+                                ),
+                              ),
 
-                          // ── Body Content ──────────────────────────────────
-                          if (state is InventoryPurchasesLoading)
-                            SliverPadding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: isDesktop ? 24 : 16.w,
-                                vertical: 12.h,
-                              ),
-                              sliver: SliverList(
-                                delegate: SliverChildBuilderDelegate(
-                                  (_, __) => const PurchaseCardSkeleton(),
-                                  childCount: 6,
+                              // ── Body Content ──────────────────────────────────
+                              if (state is InventoryPurchasesLoading)
+                                SliverPadding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: isDesktop ? 24 : 16.w,
+                                    vertical: 12.h,
+                                  ),
+                                  sliver: SliverList(
+                                    delegate: SliverChildBuilderDelegate(
+                                      (_, __) => const PurchaseCardSkeleton(),
+                                      childCount: 6,
+                                    ),
+                                  ),
+                                )
+                              else if (state is InventoryPurchasesError)
+                                SliverFillRemaining(
+                                  hasScrollBody: false,
+                                  child: InventoryEmptyState(
+                                    icon: Icons.error_outline_rounded,
+                                    title: AppStrings.noResults.tr(),
+                                    description: state.message,
+                                    actionLabel: AppStrings.tryAgain.tr(),
+                                    onAction: () => context
+                                        .read<InventoryPurchasesCubit>()
+                                        .fetchPurchases(),
+                                  ),
+                                )
+                              else if (state is InventoryPurchasesLoaded &&
+                                  state.purchases.isEmpty)
+                                SliverFillRemaining(
+                                  hasScrollBody: false,
+                                  child: InventoryEmptyState(
+                                    icon: Icons.shopping_bag_outlined,
+                                    title: AppStrings.noPurchasesFound.tr(),
+                                    description: AppStrings.emptyPurchasesDesc
+                                        .tr(),
+                                    actionLabel: AppStrings.newPurchase.tr(),
+                                    onAction: _navigateToCreatePurchase,
+                                  ),
+                                )
+                              else if (state is InventoryPurchasesLoaded &&
+                                  filteredPurchases.isEmpty)
+                                SliverFillRemaining(
+                                  hasScrollBody: false,
+                                  child: InventoryEmptyState(
+                                    icon: Icons.search_off_rounded,
+                                    title: AppStrings.noResults.tr(),
+                                    description: AppStrings.noPurchasesFound
+                                        .tr(),
+                                    actionLabel: AppStrings.tryAgain.tr(),
+                                    onAction: _clearFilters,
+                                  ),
+                                )
+                              else if (state is InventoryPurchasesLoaded)
+                                SliverPadding(
+                                  padding: EdgeInsets.only(
+                                    left: isDesktop ? 24 : 16.w,
+                                    right: isDesktop ? 24 : 16.w,
+                                    top: 12.h,
+                                    bottom: 80.h,
+                                  ),
+                                  sliver: SliverList(
+                                    delegate: SliverChildBuilderDelegate(
+                                      (context, index) {
+                                        if (index == filteredPurchases.length) {
+                                          return const PurchaseCardSkeleton();
+                                        }
+                                        final pur = filteredPurchases[index];
+                                        return Padding(
+                                          padding: EdgeInsets.only(
+                                            bottom: isDesktop ? 12 : 12.h,
+                                          ),
+                                          child: PurchaseCardItem(
+                                            purchase: pur,
+                                            onPrintPdf: () =>
+                                                _printPurchasePdf(pur),
+                                            onSharePdf: () =>
+                                                _sharePurchasePdf(pur),
+                                            onDownloadPdf: () =>
+                                                _downloadPurchasePdf(pur),
+                                            onReorder: () =>
+                                                _reorderPurchase(pur),
+                                            onEdit: () => _editPurchase(pur),
+                                            onDelete: () =>
+                                                _confirmDeletePurchase(pur),
+                                          ),
+                                        );
+                                      },
+                                      childCount:
+                                          filteredPurchases.length +
+                                          (!isFiltering &&
+                                                  state.isPaginationLoading
+                                              ? 1
+                                              : 0),
+                                    ),
+                                  ),
+                                )
+                              else
+                                const SliverToBoxAdapter(
+                                  child: SizedBox.shrink(),
                                 ),
-                              ),
-                            )
-                          else if (state is InventoryPurchasesError)
-                            SliverFillRemaining(
-                              hasScrollBody: false,
-                              child: InventoryEmptyState(
-                                icon: Icons.error_outline_rounded,
-                                title: AppStrings.noResults.tr(),
-                                description: state.message,
-                                actionLabel: AppStrings.tryAgain.tr(),
-                                onAction: () => context
-                                    .read<InventoryPurchasesCubit>()
-                                    .fetchPurchases(),
-                              ),
-                            )
-                          else if (state is InventoryPurchasesLoaded &&
-                              state.purchases.isEmpty)
-                            SliverFillRemaining(
-                              hasScrollBody: false,
-                              child: InventoryEmptyState(
-                                icon: Icons.shopping_bag_outlined,
-                                title: AppStrings.noPurchasesFound.tr(),
-                                description: AppStrings.emptyPurchasesDesc.tr(),
-                                actionLabel: AppStrings.newPurchase.tr(),
-                                onAction: _navigateToCreatePurchase,
-                              ),
-                            )
-                          else if (state is InventoryPurchasesLoaded &&
-                              filteredPurchases.isEmpty)
-                            SliverFillRemaining(
-                              hasScrollBody: false,
-                              child: InventoryEmptyState(
-                                icon: Icons.search_off_rounded,
-                                title: AppStrings.noResults.tr(),
-                                description: AppStrings.noPurchasesFound.tr(),
-                                actionLabel: AppStrings.tryAgain.tr(),
-                                onAction: _clearFilters,
-                              ),
-                            )
-                          else if (state is InventoryPurchasesLoaded)
-                            SliverPadding(
-                              padding: EdgeInsets.only(
-                                left: isDesktop ? 24 : 16.w,
-                                right: isDesktop ? 24 : 16.w,
-                                top: 12.h,
-                                bottom: 80.h,
-                              ),
-                              sliver: SliverList(
-                                delegate: SliverChildBuilderDelegate(
-                                  (context, index) {
-                                    if (index == filteredPurchases.length) {
-                                      return const PurchaseCardSkeleton();
-                                    }
-                                    final pur = filteredPurchases[index];
-                                    return Padding(
-                                      padding: EdgeInsets.only(
-                                        bottom: isDesktop ? 12 : 12.h,
-                                      ),
-                                      child: PurchaseCardItem(
-                                        purchase: pur,
-                                        onPrintPdf: () =>
-                                            _printPurchasePdf(pur),
-                                        onSharePdf: () =>
-                                            _sharePurchasePdf(pur),
-                                        onDownloadPdf: () =>
-                                            _downloadPurchasePdf(pur),
-                                        onReorder: () => _reorderPurchase(pur),
-                                        onEdit: () => _editPurchase(pur),
-                                        onDelete: () =>
-                                            _confirmDeletePurchase(pur),
-                                      ),
-                                    );
-                                  },
-                                  childCount:
-                                      filteredPurchases.length +
-                                      (!isFiltering && state.isPaginationLoading
-                                          ? 1
-                                          : 0),
-                                ),
-                              ),
-                            )
-                          else
-                            const SliverToBoxAdapter(child: SizedBox.shrink()),
-                        ],
-                      );
-                    },
-                  ),
+                            ],
+                          );
+                        },
+                      ),
                 ),
               ),
             ),

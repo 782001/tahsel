@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/activity_logger_service.dart';
 import 'package:tahsel/core/services/injection_container.dart';
@@ -134,12 +135,12 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
       // 4. Log Employee Activity
       if (sl.isRegistered<ActivityLoggerService>()) {
         final bool isEdit = previousAmount != null;
-        final oldAmtFormatted = previousAmount?.toStringAsFixed(1) ?? '';
-        final newAmtFormatted = expense.amount.toStringAsFixed(1);
+        final oldAmtFormatted = previousAmount?.toSmartAmount() ?? '';
+        final newAmtFormatted = expense.amount.toSmartAmount();
         final deltaFormatted = isEdit
             ? (deltaAmount >= 0
-                ? '+${deltaAmount.toStringAsFixed(1)}'
-                : deltaAmount.toStringAsFixed(1))
+                  ? '+${deltaAmount.toSmartAmount()}'
+                  : deltaAmount.toSmartAmount())
             : '';
 
         String detailsText;
@@ -156,7 +157,7 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
           }
         } else {
           detailsText =
-              'تسجيل مصروف جديد لبند (${expense.category}) بقيمة ${expense.amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} - البيان: ${expense.description.isNotEmpty ? expense.description : "بدون بيان"}';
+              'تسجيل مصروف جديد لبند (${expense.category}) بقيمة ${expense.amount.toSmartAmount()} ${AppStrings.currencyEgp.tr()} - البيان: ${expense.description.isNotEmpty ? expense.description : "بدون بيان"}';
         }
 
         sl<ActivityLoggerService>().appendToBatch(
@@ -406,7 +407,7 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
           actionType: 'delete_expense',
           actionTitle: 'حذف مصروف: ${expense.category}',
           details:
-              'تم حذف مصروف (${expense.category}) بقيمة ${expense.amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} (البيان: ${expense.description.isNotEmpty ? expense.description : "بدون بيان"}) وإعادة المبلغ إلى الخزينة',
+              'تم حذف مصروف (${expense.category}) بقيمة ${expense.amount.toSmartAmount()} ${AppStrings.currencyEgp.tr()} (البيان: ${expense.description.isNotEmpty ? expense.description : "بدون بيان"}) وإعادة المبلغ إلى الخزينة',
           amount: expense.amount,
           extraData: {
             'expenseId': expenseId,
@@ -531,7 +532,7 @@ class ExpenseRemoteDataSourceImpl implements ExpenseRemoteDataSource {
           actionType: 'delete_month_expenses',
           actionTitle: 'حذف مصروفات شهر: $monthKey',
           details:
-              'تم حذف كافة مصروفات شهر $monthKey بإجمالي ${totalAmountRemoved.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} (${snapshot.docs.length} مصروف)',
+              'تم حذف كافة مصروفات شهر $monthKey بإجمالي ${totalAmountRemoved.toSmartAmount()} ${AppStrings.currencyEgp.tr()} (${snapshot.docs.length} مصروف)',
           amount: totalAmountRemoved,
           extraData: {
             'monthKey': monthKey,

@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
-import 'package:tahsel/core/constants/app_permissions.dart';
-import 'package:tahsel/core/services/permission_service.dart';
-import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/utils/vault_balance_helper.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
@@ -28,6 +27,7 @@ import 'package:tahsel/features/employee/presentation/widgets/request_advance_di
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/shared/widgets/no_internet_view.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
 class EmployeeDetailsScreen extends StatefulWidget {
   final EmployeeEntity employee;
@@ -749,19 +749,20 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
               if (activeCheckIn != null) ...[
                 SizedBox(width: isDesktop ? 12 : 12.w),
                 ElevatedButton.icon(
-                  onPressed: !PermissionService.instance.hasPermission(
+                  onPressed:
+                      !PermissionService.instance.hasPermission(
                         AppPermissions.employeesRecordAttendance,
                       )
                       ? () => showfailureToast(
-                            AppStrings.noPermissionForAction.tr(),
-                          )
+                          AppStrings.noPermissionForAction.tr(),
+                        )
                       : _guard.canCheckOut(employee.status)
-                          ? () => _showCheckInOutDialog(
-                              employee,
-                              activeCheckIn,
-                              attendanceLogs,
-                            )
-                          : () => _showStatusBlockedSnackBar(employee.status),
+                      ? () => _showCheckInOutDialog(
+                          employee,
+                          activeCheckIn,
+                          attendanceLogs,
+                        )
+                      : () => _showStatusBlockedSnackBar(employee.status),
                   icon: const Icon(
                     Icons.logout_rounded,
                     color: Colors.white,
@@ -797,19 +798,20 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
               runSpacing: 8,
               children: [
                 ElevatedButton.icon(
-                  onPressed: !PermissionService.instance.hasPermission(
+                  onPressed:
+                      !PermissionService.instance.hasPermission(
                         AppPermissions.employeesRecordAttendance,
                       )
                       ? () => showfailureToast(
-                            AppStrings.noPermissionForAction.tr(),
-                          )
+                          AppStrings.noPermissionForAction.tr(),
+                        )
                       : _guard.canCheckIn(employee.status)
-                          ? () => _showCheckInOutDialog(
-                              employee,
-                              activeCheckIn,
-                              attendanceLogs,
-                            )
-                          : () => _showStatusBlockedSnackBar(employee.status),
+                      ? () => _showCheckInOutDialog(
+                          employee,
+                          activeCheckIn,
+                          attendanceLogs,
+                        )
+                      : () => _showStatusBlockedSnackBar(employee.status),
                   icon: const Icon(
                     Icons.login_rounded,
                     color: Colors.white,
@@ -837,19 +839,20 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                 ),
                 if (employee.salaryType == "monthly") ...[
                   OutlinedButton.icon(
-                    onPressed: !PermissionService.instance.hasPermission(
+                    onPressed:
+                        !PermissionService.instance.hasPermission(
                           AppPermissions.employeesRecordAttendance,
                         )
                         ? () => showfailureToast(
-                              AppStrings.noPermissionForAction.tr(),
-                            )
+                            AppStrings.noPermissionForAction.tr(),
+                          )
                         : _guard.canModifyAttendance(employee.status)
-                            ? () => _showMarkExceptionDialog(
-                                context,
-                                employee,
-                                'absent',
-                              )
-                            : () => _showStatusBlockedSnackBar(employee.status),
+                        ? () => _showMarkExceptionDialog(
+                            context,
+                            employee,
+                            'absent',
+                          )
+                        : () => _showStatusBlockedSnackBar(employee.status),
                     icon: Icon(
                       Icons.cancel_outlined,
                       color: AppColors.error,
@@ -875,19 +878,20 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                     ),
                   ),
                   OutlinedButton.icon(
-                    onPressed: !PermissionService.instance.hasPermission(
+                    onPressed:
+                        !PermissionService.instance.hasPermission(
                           AppPermissions.employeesRecordAttendance,
                         )
                         ? () => showfailureToast(
-                              AppStrings.noPermissionForAction.tr(),
-                            )
+                            AppStrings.noPermissionForAction.tr(),
+                          )
                         : _guard.canModifyAttendance(employee.status)
-                            ? () => _showMarkExceptionDialog(
-                                context,
-                                employee,
-                                'excused',
-                              )
-                            : () => _showStatusBlockedSnackBar(employee.status),
+                        ? () => _showMarkExceptionDialog(
+                            context,
+                            employee,
+                            'excused',
+                          )
+                        : () => _showStatusBlockedSnackBar(employee.status),
                     icon: Icon(
                       Icons.event_busy_rounded,
                       color: AppColors.blackLight,
@@ -1322,7 +1326,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                             ),
                           ),
                           Text(
-                            "${(log.checkOut != null && log.checkIn != null ? log.checkOut!.difference(log.checkIn!).inMinutes / 60.0 : 0.0).toStringAsFixed(1)} ${AppStrings.hours.tr()}",
+                            "${(log.checkOut != null && log.checkIn != null ? log.checkOut!.difference(log.checkIn!).inMinutes / 60.0 : 0.0).toSmartAmount()} ${AppStrings.hours.tr()}",
                             style: TextStyles.customStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
@@ -1681,17 +1685,17 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
               ),
             ],
             ElevatedButton.icon(
-              onPressed: !PermissionService.instance.hasPermission(
+              onPressed:
+                  !PermissionService.instance.hasPermission(
                     AppPermissions.employeesManagePayroll,
                   )
-                  ? () => showfailureToast(
-                        AppStrings.noPermissionForAction.tr(),
-                      )
+                  ? () =>
+                        showfailureToast(AppStrings.noPermissionForAction.tr())
                   : !isWithinWindow
-                      ? null
-                      : !_guard.canPaySalary(employee.status)
-                      ? () => _showStatusBlockedSnackBar(employee.status)
-                      : () {
+                  ? null
+                  : !_guard.canPaySalary(employee.status)
+                  ? () => _showStatusBlockedSnackBar(employee.status)
+                  : () {
                       if (context.read<ConnectivityCubit>().state
                           is ConnectivityDisconnected) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -1769,13 +1773,11 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                                 })
                                 .map((log) => log.id!)
                                 .toList();
-                            context
-                                .read<EmployeeCubit>()
-                                .payPayroll(
-                                  payroll,
-                                  advanceIdsToDeduct: paidAdvanceIds,
-                                  attendanceIds: unpaidAttendanceIds,
-                                );
+                            context.read<EmployeeCubit>().payPayroll(
+                              payroll,
+                              advanceIdsToDeduct: paidAdvanceIds,
+                              attendanceIds: unpaidAttendanceIds,
+                            );
                           },
                         ),
                       );
@@ -1907,7 +1909,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                         Expanded(
                           child: _buildPendingMetricItem(
                             AppStrings.bonusHours.tr(),
-                            "${(pending['bonusHours'] as num?)?.toStringAsFixed(1) ?? '0.0'} ${AppStrings.hours.tr()}",
+                            "${(pending['bonusHours'] as num?)?.toSmartAmount() ?? '0.0'} ${AppStrings.hours.tr()}",
                           ),
                         ),
                         const Expanded(child: SizedBox()),
@@ -2032,7 +2034,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          log.netSalary.toStringAsFixed(2),
+                          log.netSalary.toSmartAmount(),
                           style: TextStyles.customStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w900,
@@ -2081,7 +2083,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            "+${log.overtimeCompensation.toStringAsFixed(2)}",
+                            "+${log.overtimeCompensation.toSmartAmount()}",
                             style: TextStyles.customStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
@@ -2326,17 +2328,16 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
             ),
           ),
           ElevatedButton.icon(
-            onPressed: !PermissionService.instance.hasPermission(
+            onPressed:
+                !PermissionService.instance.hasPermission(
                   AppPermissions.employeesManagePayroll,
                 )
-                ? () => showfailureToast(
-                      AppStrings.noPermissionForAction.tr(),
-                    )
+                ? () => showfailureToast(AppStrings.noPermissionForAction.tr())
                 : _guard.canRequestAdvance(employee.status)
-                    ? () {
-                        _showRequestAdvanceDialog(employee);
-                      }
-                    : () => _showStatusBlockedSnackBar(employee.status),
+                ? () {
+                    _showRequestAdvanceDialog(employee);
+                  }
+                : () => _showStatusBlockedSnackBar(employee.status),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryColor,
               shape: RoundedRectangleBorder(

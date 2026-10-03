@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_types_as_parameter_names, unused_element
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/activity_logger_service.dart';
 import 'package:tahsel/core/services/injection_container.dart';
@@ -141,7 +142,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           final data = debtSnap.data()!;
           customerName = data['customerName'] as String? ?? '';
           totalAmount = (data['totalAmount'] as num?)?.toDouble() ?? 0.0;
-          remainingAmount = (data['remainingAmount'] as num?)?.toDouble() ?? 0.0;
+          remainingAmount =
+              (data['remainingAmount'] as num?)?.toDouble() ?? 0.0;
           oldDueDate = (data['dueDate'] as Timestamp?)?.toDate();
         }
       } catch (_) {}
@@ -181,8 +183,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             ? '${dueDate.year}/${dueDate.month.toString().padLeft(2, '0')}/${dueDate.day.toString().padLeft(2, '0')}'
             : 'بدون موعد (تمت الإزالة)';
 
-        final remFormatted = remainingAmount.toStringAsFixed(1);
-        final totalFormatted = totalAmount.toStringAsFixed(1);
+        final remFormatted = remainingAmount.toSmartAmount();
+        final totalFormatted = totalAmount.toSmartAmount();
         final custPart = customerName.isNotEmpty ? ' للعميل $customerName' : '';
 
         final detailsText = dueDate != null
@@ -194,7 +196,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           ownerUid: uid,
           actionCategory: 'debts',
           actionType: 'update_debt_due_date',
-          actionTitle: 'تعديل موعد استحقاق دين: ${customerName.isNotEmpty ? customerName : debtId}',
+          actionTitle:
+              'تعديل موعد استحقاق دين: ${customerName.isNotEmpty ? customerName : debtId}',
           details: detailsText,
           amount: remainingAmount > 0 ? remainingAmount : totalAmount,
           extraData: {
@@ -384,7 +387,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           actionType: 'customer_settle_credit',
           actionTitle: 'تسوية رصيد دائن للعميل: $customerName',
           details:
-              'تمت تسوية وإرجاع رصيد دائن بمبلغ ${creditAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} للعميل $customerName${note != null && note.isNotEmpty ? " ($note)" : ""}',
+              'تمت تسوية وإرجاع رصيد دائن بمبلغ ${creditAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()} للعميل $customerName${note != null && note.isNotEmpty ? " ($note)" : ""}',
           amount: creditAmount,
           extraData: {
             'debtId': debtId,
@@ -716,8 +719,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
       // 7. Log Employee Activity
       if (sl.isRegistered<ActivityLoggerService>()) {
-        final remFormatted = debt.remainingAmount.toStringAsFixed(1);
-        final totalFormatted = debt.totalAmount.toStringAsFixed(1);
+        final remFormatted = debt.remainingAmount.toSmartAmount();
+        final totalFormatted = debt.totalAmount.toSmartAmount();
         final details = debt.productOrSessionDetails;
         sl<ActivityLoggerService>().appendToBatch(
           batch,
@@ -982,13 +985,15 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
       if (sl.isRegistered<ActivityLoggerService>()) {
         final isFull = payment.type == PaymentType.full;
-        final amtFormatted = payment.amountPaid.toStringAsFixed(1);
+        final amtFormatted = payment.amountPaid.toSmartAmount();
         final rem = debt.remainingAmount - payment.amountPaid;
-        final remFormatted = rem > 0 ? rem.toStringAsFixed(1) : "0.0";
+        final remFormatted = rem > 0 ? rem.toSmartAmount() : "0.0";
         sl<ActivityLoggerService>().logStandalone(
           ownerUid: uid,
           actionCategory: 'debts',
-          actionType: isFull ? 'customer_debt_pay_full' : 'customer_debt_pay_partial',
+          actionType: isFull
+              ? 'customer_debt_pay_full'
+              : 'customer_debt_pay_partial',
           actionTitle: isFull
               ? 'سداد كامل لدين عميل: ${debt.customerName ?? ""}'
               : 'سداد جزئي لدين عميل: ${debt.customerName ?? ""}',
@@ -1226,7 +1231,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
       });
 
       if (sl.isRegistered<ActivityLoggerService>()) {
-        final amtFormatted = amount.toStringAsFixed(1);
+        final amtFormatted = amount.toSmartAmount();
         sl<ActivityLoggerService>().logStandalone(
           ownerUid: uid,
           actionCategory: 'debts',
@@ -1792,7 +1797,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           actionType: 'customer_delete_debt_item',
           actionTitle: 'حذف فاتورة دين للعميل: ${customerName ?? ""}',
           details:
-              'تم حذف بند الدين رقم $debtId للعميل ${customerName ?? ""} بقيمة إجمالية ${totalAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
+              'تم حذف بند الدين رقم $debtId للعميل ${customerName ?? ""} بقيمة إجمالية ${totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
           amount: totalAmount,
           extraData: {
             'debtId': debtId,
@@ -2211,11 +2216,11 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
       if (sl.isRegistered<ActivityLoggerService>()) {
         final isPayment = itemType == 'payment';
-        final oldFormatted = oldAmount.toStringAsFixed(1);
-        final newFormatted = newAmount.toStringAsFixed(1);
+        final oldFormatted = oldAmount.toSmartAmount();
+        final newFormatted = newAmount.toSmartAmount();
         final deltaFormatted = recordedDelta >= 0
-            ? '+${recordedDelta.toStringAsFixed(1)}'
-            : recordedDelta.toStringAsFixed(1);
+            ? '+${recordedDelta.toSmartAmount()}'
+            : recordedDelta.toSmartAmount();
 
         String detailsText;
         if (isPayment) {
@@ -2511,7 +2516,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
       if (sl.isRegistered<ActivityLoggerService>()) {
         final isPayment = itemType == 'payment';
-        final amtFormatted = deletedAmount.toStringAsFixed(1);
+        final amtFormatted = deletedAmount.toSmartAmount();
         sl<ActivityLoggerService>().logStandalone(
           ownerUid: uid,
           actionCategory: 'debts',

@@ -3,9 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
-import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -32,7 +32,8 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final cubit = context.read<MyDebtDetailsReportCubit>();
     final state = cubit.state;
-    final bool isSettlement = transaction.type == PaymentType.settlement ||
+    final bool isSettlement =
+        transaction.type == PaymentType.settlement ||
         transaction.amountPaid < 0;
     final bool isDebtAdded =
         transaction.type == PaymentType.debtAdded && !isSettlement;
@@ -147,20 +148,20 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
                   color: isSettlement
                       ? AppColors.creditAmberEnd.withValues(alpha: 0.12)
                       : (isDebtAdded ? AppColors.error : AppColors.primaryColor)
-                          .withValues(alpha: 0.1),
+                            .withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Icon(
                   isSettlement
                       ? Icons.output_rounded
                       : (isDebtAdded
-                          ? Icons.add_circle_outline
-                          : Icons.account_balance_wallet_outlined),
+                            ? Icons.add_circle_outline
+                            : Icons.account_balance_wallet_outlined),
                   color: isSettlement
                       ? AppColors.creditAmberEnd
                       : (isDebtAdded
-                          ? AppColors.error
-                          : AppColors.primaryColor),
+                            ? AppColors.error
+                            : AppColors.primaryColor),
                   size: 24.r,
                 ),
               ),
@@ -217,8 +218,8 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
                         color: isSettlement
                             ? AppColors.creditAmberEnd
                             : (isDebtAdded
-                                ? AppColors.error
-                                : AppColors.primaryColor),
+                                  ? AppColors.error
+                                  : AppColors.primaryColor),
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
                       ),
@@ -451,10 +452,10 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
                               }
 
                               final newAmountRounded = double.parse(
-                                newAmount.toStringAsFixed(2),
+                                newAmount.toSmartAmount(),
                               );
                               final minAmountRounded = double.parse(
-                                minAmount.toStringAsFixed(2),
+                                minAmount.toSmartAmount(),
                               );
 
                               if ((newAmountRounded < minAmountRounded) &&
@@ -469,7 +470,7 @@ class MyDebtDetailsTransactionItem extends StatelessWidget {
                               if (maxAmount != null &&
                                   transaction.type != PaymentType.debtAdded) {
                                 final maxAmountRounded = double.parse(
-                                  maxAmount.toStringAsFixed(2),
+                                  maxAmount.toSmartAmount(),
                                 );
                                 if (newAmountRounded > maxAmountRounded) {
                                   setState(

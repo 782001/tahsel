@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 
 import '../../../../core/error/firebase_error_handler.dart';
@@ -98,21 +99,23 @@ class OperationRemoteDataSourceImpl implements OperationRemoteDataSource {
             ? operation.productName!
             : operation.type;
         final hasDebt = operation.remainingDebt > 0;
-        final totalFormatted = operation.totalAmount.toStringAsFixed(1);
-        final paidFormatted = operation.paidAmount.toStringAsFixed(1);
-        final remFormatted = operation.remainingDebt.toStringAsFixed(1);
-        final hasCustomer = operation.customerName != null &&
+        final totalFormatted = operation.totalAmount.toSmartAmount();
+        final paidFormatted = operation.paidAmount.toSmartAmount();
+        final remFormatted = operation.remainingDebt.toSmartAmount();
+        final hasCustomer =
+            operation.customerName != null &&
             operation.customerName!.trim().isNotEmpty;
-        final customerNameStr =
-            hasCustomer ? operation.customerName!.trim() : '';
+        final customerNameStr = hasCustomer
+            ? operation.customerName!.trim()
+            : '';
 
         final actionTitle = hasCustomer
             ? (hasDebt
-                ? 'بيع آجل للعميل: $customerNameStr ($desc)'
-                : 'بيع مباشر للعميل: $customerNameStr ($desc)')
+                  ? 'بيع آجل للعميل: $customerNameStr ($desc)'
+                  : 'بيع مباشر للعميل: $customerNameStr ($desc)')
             : (hasDebt
-                ? 'بيع آجل (POS): $desc'
-                : 'بيع مباشر نقدي (POS): $desc');
+                  ? 'بيع آجل (POS): $desc'
+                  : 'بيع مباشر نقدي (POS): $desc');
 
         final detailsText = hasDebt
             ? 'تسجيل بيع آجل${hasCustomer ? " للعميل $customerNameStr" : ""} ($desc) بمبلغ $totalFormatted ${AppStrings.currencyEgp.tr()} (المدفوع: $paidFormatted ج.م، والمتبقي دين: $remFormatted ج.م)'

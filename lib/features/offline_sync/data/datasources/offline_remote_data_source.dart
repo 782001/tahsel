@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/activity_logger_service.dart';
 import 'package:tahsel/core/services/injection_container.dart';
@@ -228,7 +229,7 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
         actionType: 'my_debts_add_item',
         actionTitle: 'تسجيل دين مورد (مزامنة): $personName',
         details:
-            'تسجيل دين/فاتورة مورد بمبلغ ${remainingAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} (الإجمالي: ${totalAmount.toStringAsFixed(1)})',
+            'تسجيل دين/فاتورة مورد بمبلغ ${remainingAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()} (الإجمالي: ${totalAmount.toSmartAmount()})',
         amount: totalAmount,
         extraData: {
           'debtId': record.id,
@@ -755,7 +756,7 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
         actAmount = (payload['amount'] as num?)?.toDouble();
         final desc = payload['description'] as String? ?? '';
         details =
-            'تسجيل مصروف جديد لبند ($catName) بقيمة ${actAmount?.toStringAsFixed(1) ?? "0.0"} ${AppStrings.currencyEgp.tr()} - البيان: ${desc.isNotEmpty ? desc : "بدون بيان"}';
+            'تسجيل مصروف جديد لبند ($catName) بقيمة ${actAmount?.toSmartAmount() ?? "0.0"} ${AppStrings.currencyEgp.tr()} - البيان: ${desc.isNotEmpty ? desc : "بدون بيان"}';
       } else if (collectionPath.contains('attendances')) {
         category = 'employees';
         actionType = 'employee_checkin';
@@ -771,7 +772,7 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
         actAmount = (payload['netSalary'] as num?)?.toDouble();
         actionTitle = 'صرف راتب (مزامنة): $empNameStr';
         details =
-            'صرف راتب شهر $monthKeyStr للموظف $empNameStr بصافي ${actAmount?.toStringAsFixed(1) ?? "0.0"} ${AppStrings.currencyEgp.tr()}';
+            'صرف راتب شهر $monthKeyStr للموظف $empNameStr بصافي ${actAmount?.toSmartAmount() ?? "0.0"} ${AppStrings.currencyEgp.tr()}';
       } else if (collectionPath.contains('advances')) {
         category = 'employees';
         actionType = 'employee_advance';
@@ -779,7 +780,7 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
         actAmount = (payload['amount'] as num?)?.toDouble();
         actionTitle = 'صرف سلفة (مزامنة): $empNameStr';
         details =
-            'صرف سلفة للموظف $empNameStr بقيمة ${actAmount?.toStringAsFixed(1) ?? "0.0"} ${AppStrings.currencyEgp.tr()}';
+            'صرف سلفة للموظف $empNameStr بقيمة ${actAmount?.toSmartAmount() ?? "0.0"} ${AppStrings.currencyEgp.tr()}';
       } else if (collectionPath.contains('employees')) {
         category = 'employees';
         actionType = 'add_employee_record';
@@ -1071,8 +1072,8 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
             : 'pos_end_session_cash',
         actionTitle: actionTitle,
         details: hasDebt
-            ? 'إنهاء جلسة للجهاز $device$cust بإجمالي ${totalAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} (المدفوع: ${paidAmount.toStringAsFixed(1)} ج.م، وترحيل متبقي دين: ${remainingDebt.toStringAsFixed(1)} ج.م)'
-            : 'إنهاء جلسة للجهاز $device$cust وتحصيل كامل الحساب بقيمة ${totalAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} نقدياً ($durationMinutes دقيقة)',
+            ? 'إنهاء جلسة للجهاز $device$cust بإجمالي ${totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()} (المدفوع: ${paidAmount.toSmartAmount()} ج.م، وترحيل متبقي دين: ${remainingDebt.toSmartAmount()} ج.م)'
+            : 'إنهاء جلسة للجهاز $device$cust وتحصيل كامل الحساب بقيمة ${totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()} نقدياً ($durationMinutes دقيقة)',
         amount: totalAmount,
         extraData: {
           'sessionId': sessionId,

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get_it/get_it.dart';
 import 'package:tahsel/core/error/firebase_error_handler.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/activity_logger_service.dart';
 import 'package:tahsel/core/services/injection_container.dart';
@@ -130,8 +131,8 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       if (!debtSnap.exists) return;
 
       final debtData = debtSnap.data() as Map<String, dynamic>;
-      final double totalAmount =
-          (debtData['totalAmount'] as num? ?? 0.0).toDouble();
+      final double totalAmount = (debtData['totalAmount'] as num? ?? 0.0)
+          .toDouble();
       final String personName = debtData['personName'] as String? ?? '';
       final String operationId = debtData['operationId'] as String? ?? '';
 
@@ -160,57 +161,47 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
 
       if (operationId.isNotEmpty) {
         final opRef = userRef.collection('my_debt_operations').doc(operationId);
-        batch.set(
-          opRef,
-          {
-            'paidAmount': newPaid,
-            'remainingDebt': newRemaining,
-            'lastUpdatedAt': FieldValue.serverTimestamp(),
-          },
-          SetOptions(merge: true),
-        );
+        batch.set(opRef, {
+          'paidAmount': newPaid,
+          'remainingDebt': newRemaining,
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
       }
 
       if (personName.isNotEmpty) {
         final personRef = userRef.collection('my_debt_persons').doc(personName);
-        batch.set(
-          personRef,
-          {
-            'totalRemainingDebt': FieldValue.increment(creditAmount),
-            'lastUsedAt': FieldValue.serverTimestamp(),
-          },
-          SetOptions(merge: true),
-        );
+        batch.set(personRef, {
+          'totalRemainingDebt': FieldValue.increment(creditAmount),
+          'lastUsedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
       }
 
       final String? purchaseId = (operationId.startsWith('pur_'))
           ? operationId
           : (debtId.startsWith('debt_pur_')
-              ? debtId.replaceAll('debt_', '')
-              : null);
+                ? debtId.replaceAll('debt_', '')
+                : null);
       if (purchaseId != null) {
-        final purchaseRef =
-            userRef.collection('inventory_purchases').doc(purchaseId);
-        batch.set(
-          purchaseRef,
-          {
-            'paidAmount': newPaid,
-            'isPaid': isPaid,
-            'lastUpdatedAt': FieldValue.serverTimestamp(),
-          },
-          SetOptions(merge: true),
-        );
+        final purchaseRef = userRef
+            .collection('inventory_purchases')
+            .doc(purchaseId);
+        batch.set(purchaseRef, {
+          'paidAmount': newPaid,
+          'isPaid': isPaid,
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
       }
 
       // Vault Inflow (Adding refunded credit from supplier to the vault)
       if (AppStrings.isVaultEnabled() && creditAmount > 0) {
         final vaultTxId = 'vault_tx_mydebt_${paymentRef.id}';
-        final vaultTxRef =
-            userRef.collection('vault_transactions').doc(vaultTxId);
+        final vaultTxRef = userRef
+            .collection('vault_transactions')
+            .doc(vaultTxId);
         final vaultSummaryRef = userRef.collection('vault').doc('summary');
 
-        final bool isPurchase = (debtId.startsWith('debt_pur_') ||
-            operationId.startsWith('pur_'));
+        final bool isPurchase =
+            (debtId.startsWith('debt_pur_') || operationId.startsWith('pur_'));
 
         batch.set(vaultTxRef, {
           'id': vaultTxId,
@@ -227,16 +218,12 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           'createdAt': FieldValue.serverTimestamp(),
         });
 
-        batch.set(
-          vaultSummaryRef,
-          {
-            'currentBalance': FieldValue.increment(creditAmount),
-            'totalIn': FieldValue.increment(creditAmount),
-            'transactionCount': FieldValue.increment(1),
-            'lastUpdatedAt': FieldValue.serverTimestamp(),
-          },
-          SetOptions(merge: true),
-        );
+        batch.set(vaultSummaryRef, {
+          'currentBalance': FieldValue.increment(creditAmount),
+          'totalIn': FieldValue.increment(creditAmount),
+          'transactionCount': FieldValue.increment(1),
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
       }
 
       await batch.commit();
@@ -249,7 +236,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       );
 
       if (sl.isRegistered<ActivityLoggerService>()) {
-        final amtFormatted = creditAmount.toStringAsFixed(1);
+        final amtFormatted = creditAmount.toSmartAmount();
         sl<ActivityLoggerService>().logStandalone(
           ownerUid: uid,
           actionCategory: 'debts',
@@ -287,25 +274,28 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
     double? previousAmount,
   }) async {
     try {
-      if (amountPaid <= 0 && (previousAmount == null || previousAmount <= 0)) return;
+      if (amountPaid <= 0 && (previousAmount == null || previousAmount <= 0))
+        return;
 
       final expenseId = 'exp_pay_$paymentId';
-      final String? purchaseId = (operationId != null && operationId.startsWith('pur_'))
+      final String? purchaseId =
+          (operationId != null && operationId.startsWith('pur_'))
           ? operationId
           : (debtId.startsWith('debt_pur_')
-              ? debtId.replaceAll('debt_', '')
-              : null);
+                ? debtId.replaceAll('debt_', '')
+                : null);
 
       final String categoryName = (purchaseId != null && purchaseId.isNotEmpty)
           ? (AppStrings.inventoryPurchases.tr().isNotEmpty
-              ? AppStrings.inventoryPurchases.tr()
-              : 'مشتريات مخزون')
+                ? AppStrings.inventoryPurchases.tr()
+                : 'مشتريات مخزون')
           : (AppStrings.myDebts.tr().isNotEmpty
-              ? AppStrings.myDebts.tr()
-              : 'سداد ديون');
+                ? AppStrings.myDebts.tr()
+                : 'سداد ديون');
 
-      final String cleanId =
-          purchaseId != null ? purchaseId.replaceAll('pur_', '') : '';
+      final String cleanId = purchaseId != null
+          ? purchaseId.replaceAll('pur_', '')
+          : '';
       final String description = purchaseId != null
           ? '${AppStrings.purchaseInvoiceNum.tr()} #$cleanId - $personName${note != null && note.isNotEmpty ? " ($note)" : ""}'
           : 'سداد دين - $personName${note != null && note.isNotEmpty ? " ($note)" : ""}';
@@ -320,7 +310,10 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         monthKey: DateFormatter.formatNumericMonth(paymentDate),
       );
 
-      await _expenseDataSource.addExpense(expense, previousAmount: previousAmount);
+      await _expenseDataSource.addExpense(
+        expense,
+        previousAmount: previousAmount,
+      );
     } catch (_) {}
   }
 
@@ -340,11 +333,12 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
     required String? operationId,
   }) async {
     try {
-      final String? purchaseId = (operationId != null && operationId.startsWith('pur_'))
+      final String? purchaseId =
+          (operationId != null && operationId.startsWith('pur_'))
           ? operationId
           : (debtId.startsWith('debt_pur_')
-              ? debtId.replaceAll('debt_', '')
-              : null);
+                ? debtId.replaceAll('debt_', '')
+                : null);
 
       if (purchaseId == null) return;
 
@@ -359,7 +353,8 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
 
       final data = debtSnap.data() as Map<String, dynamic>;
       final double paidAmount = (data['paidAmount'] as num? ?? 0.0).toDouble();
-      final double totalAmount = (data['totalAmount'] as num? ?? 0.0).toDouble();
+      final double totalAmount = (data['totalAmount'] as num? ?? 0.0)
+          .toDouble();
       final bool isPaid = paidAmount >= totalAmount;
 
       final purchaseRef = firestore
@@ -381,10 +376,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         final idx = purchases.indexWhere((p) => p.id == purchaseId);
         if (idx != -1) {
           final updated = InventoryPurchaseModel.fromEntity(
-            purchases[idx].copyWith(
-              paidAmount: paidAmount,
-              isSynced: true,
-            ),
+            purchases[idx].copyWith(paidAmount: paidAmount, isSynced: true),
           );
           await localDS.savePurchase(updated);
         }
@@ -418,16 +410,13 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           .collection('my_debt_persons')
           .doc(personName);
 
-      await personRef.set(
-        {
-          'name': personName,
-          'totalDebtAmount': sumTotal,
-          'totalRemainingDebt': sumRemaining,
-          'totalTransactions': count,
-          'lastUsedAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+      await personRef.set({
+        'name': personName,
+        'totalDebtAmount': sumTotal,
+        'totalRemainingDebt': sumRemaining,
+        'totalTransactions': count,
+        'lastUsedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
     } catch (_) {}
   }
 
@@ -451,10 +440,10 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       final existingDebtSnap = await debtRef.get();
       if (existingDebtSnap.exists) {
         final existingData = existingDebtSnap.data() as Map<String, dynamic>;
-        final double oldTotal =
-            (existingData['totalAmount'] as num? ?? 0.0).toDouble();
-        final double existingPaid =
-            (existingData['paidAmount'] as num? ?? 0.0).toDouble();
+        final double oldTotal = (existingData['totalAmount'] as num? ?? 0.0)
+            .toDouble();
+        final double existingPaid = (existingData['paidAmount'] as num? ?? 0.0)
+            .toDouble();
         final double oldRemaining =
             (existingData['remainingAmount'] as num? ?? 0.0).toDouble();
 
@@ -480,36 +469,28 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         final batch = firestore.batch();
         batch.set(debtRef, updatedModel.toJson(), SetOptions(merge: true));
 
-        batch.set(
-          opRef,
-          {
-            'uid': debt.uid,
-            'type': debt.operationType,
-            'personName': debt.personName,
-            'details': debt.details,
-            'totalAmount': newTotal,
-            'paidAmount': actualPaid,
-            'remainingDebt': newRemaining,
-            'timestamp': debt.timestamp != null
-                ? Timestamp.fromDate(debt.timestamp!)
-                : FieldValue.serverTimestamp(),
-            'lastUpdatedAt': FieldValue.serverTimestamp(),
-          },
-          SetOptions(merge: true),
-        );
+        batch.set(opRef, {
+          'uid': debt.uid,
+          'type': debt.operationType,
+          'personName': debt.personName,
+          'details': debt.details,
+          'totalAmount': newTotal,
+          'paidAmount': actualPaid,
+          'remainingDebt': newRemaining,
+          'timestamp': debt.timestamp != null
+              ? Timestamp.fromDate(debt.timestamp!)
+              : FieldValue.serverTimestamp(),
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
 
-        batch.set(
-          personRef,
-          {
-            'name': debt.personName,
-            'lastUsedAt': debt.timestamp != null
-                ? Timestamp.fromDate(debt.timestamp!)
-                : FieldValue.serverTimestamp(),
-            'totalDebtAmount': FieldValue.increment(deltaTotal),
-            'totalRemainingDebt': FieldValue.increment(deltaRemaining),
-          },
-          SetOptions(merge: true),
-        );
+        batch.set(personRef, {
+          'name': debt.personName,
+          'lastUsedAt': debt.timestamp != null
+              ? Timestamp.fromDate(debt.timestamp!)
+              : FieldValue.serverTimestamp(),
+          'totalDebtAmount': FieldValue.increment(deltaTotal),
+          'totalRemainingDebt': FieldValue.increment(deltaRemaining),
+        }, SetOptions(merge: true));
 
         final debtAddedQuery = await debtRef
             .collection('payments')
@@ -518,14 +499,10 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
             .get();
         if (debtAddedQuery.docs.isNotEmpty) {
           final debtAddedDocRef = debtAddedQuery.docs.first.reference;
-          batch.set(
-            debtAddedDocRef,
-            {
-              'amountPaid': newTotal,
-              'remainingAmount': newTotal,
-            },
-            SetOptions(merge: true),
-          );
+          batch.set(debtAddedDocRef, {
+            'amountPaid': newTotal,
+            'remainingAmount': newTotal,
+          }, SetOptions(merge: true));
         }
 
         await batch.commit();
@@ -539,27 +516,36 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
 
       // Get person first to check if firstDate needs to be set/updated
       final personDoc = await personRef.get();
-      final bool firstDateIsNull = !personDoc.exists || personDoc.data()?['firstDate'] == null;
+      final bool firstDateIsNull =
+          !personDoc.exists || personDoc.data()?['firstDate'] == null;
 
       // Update firstDate if it's null OR if the new debt's date is earlier
       bool shouldUpdateFirstDate = firstDateIsNull;
       if (!firstDateIsNull && debt.timestamp != null) {
-        final existingFirstDate = (personDoc.data()?['firstDate'] as Timestamp?)?.toDate();
-        if (existingFirstDate != null && debt.timestamp!.isBefore(existingFirstDate)) {
+        final existingFirstDate = (personDoc.data()?['firstDate'] as Timestamp?)
+            ?.toDate();
+        if (existingFirstDate != null &&
+            debt.timestamp!.isBefore(existingFirstDate)) {
           shouldUpdateFirstDate = true;
         }
       }
 
-      final bool isPurchase = (debt.id?.startsWith('debt_pur_') == true ||
+      final bool isPurchase =
+          (debt.id?.startsWith('debt_pur_') == true ||
           debt.operationId.startsWith('pur_') ||
           debt.operationType.contains('مشتريات') ||
           debt.operationType.contains('Purchase'));
 
       // Balance Check before batch commit for initial paid amount (Only for non-purchase debts because purchases already perform balance check)
       if (AppStrings.isVaultEnabled() && debt.paidAmount > 0 && !isPurchase) {
-        final summaryDoc = await userRef.collection('vault').doc('summary').get();
-        final double currentBalance = (summaryDoc.exists && summaryDoc.data() != null)
-            ? ((summaryDoc.data()!['currentBalance'] as num?)?.toDouble() ?? 0.0)
+        final summaryDoc = await userRef
+            .collection('vault')
+            .doc('summary')
+            .get();
+        final double currentBalance =
+            (summaryDoc.exists && summaryDoc.data() != null)
+            ? ((summaryDoc.data()!['currentBalance'] as num?)?.toDouble() ??
+                  0.0)
             : 0.0;
         if (currentBalance <= 0 || currentBalance < debt.paidAmount) {
           throw Exception(AppStrings.insufficientBalance);
@@ -615,7 +601,9 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
 
         // Only sync to Vault if NOT a purchase (since InventoryRepository already handles the purchase vault transaction)
         if (AppStrings.isVaultEnabled() && !isPurchase) {
-          final vaultTxRef = userRef.collection('vault_transactions').doc('vault_tx_mydebt_${actualPaymentRef.id}');
+          final vaultTxRef = userRef
+              .collection('vault_transactions')
+              .doc('vault_tx_mydebt_${actualPaymentRef.id}');
           final vaultSummaryRef = userRef.collection('vault').doc('summary');
 
           batch.set(vaultTxRef, {
@@ -629,20 +617,18 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
             'relatedEntityId': actualPaymentRef.id,
             'relatedOperationId': debt.id,
             'createdAt': debt.timestamp != null
-                ? Timestamp.fromDate(debt.timestamp!.add(const Duration(milliseconds: 1)))
+                ? Timestamp.fromDate(
+                    debt.timestamp!.add(const Duration(milliseconds: 1)),
+                  )
                 : FieldValue.serverTimestamp(),
           });
 
-          batch.set(
-            vaultSummaryRef,
-            {
-              'currentBalance': FieldValue.increment(-debt.paidAmount),
-              'totalOut': FieldValue.increment(debt.paidAmount),
-              'transactionCount': FieldValue.increment(1),
-              'lastUpdatedAt': FieldValue.serverTimestamp(),
-            },
-            SetOptions(merge: true),
-          );
+          batch.set(vaultSummaryRef, {
+            'currentBalance': FieldValue.increment(-debt.paidAmount),
+            'totalOut': FieldValue.increment(debt.paidAmount),
+            'transactionCount': FieldValue.increment(1),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
         }
       }
 
@@ -672,8 +658,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       await batch.commit();
       await _recalculatePersonTotals(debt.uid, debt.personName ?? '');
 
-      if (actualPaymentRef != null &&
-          !debt.operationId.startsWith('pur_')) {
+      if (actualPaymentRef != null && !debt.operationId.startsWith('pur_')) {
         await _syncPaymentToExpense(
           uid: debt.uid,
           paymentId: actualPaymentRef.id,
@@ -687,14 +672,15 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       }
 
       if (sl.isRegistered<ActivityLoggerService>()) {
-        final isPurchase = (debt.id?.startsWith('debt_pur_') == true ||
+        final isPurchase =
+            (debt.id?.startsWith('debt_pur_') == true ||
             debt.operationId.startsWith('pur_') ||
             debt.operationType.contains('مشتريات') ||
             debt.operationType.contains('Purchase'));
         final person = debt.personName ?? '';
-        final totalFormatted = debt.totalAmount.toStringAsFixed(1);
-        final paidFormatted = debt.paidAmount.toStringAsFixed(1);
-        final remFormatted = debt.remainingAmount.toStringAsFixed(1);
+        final totalFormatted = debt.totalAmount.toSmartAmount();
+        final paidFormatted = debt.paidAmount.toSmartAmount();
+        final remFormatted = debt.remainingAmount.toSmartAmount();
 
         sl<ActivityLoggerService>().logStandalone(
           ownerUid: debt.uid,
@@ -802,7 +788,8 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
 
       await batch.commit();
 
-      final bool isPurchase = (debt.id?.startsWith('debt_pur_') == true ||
+      final bool isPurchase =
+          (debt.id?.startsWith('debt_pur_') == true ||
           debt.operationId.startsWith('pur_') ||
           debt.operationType.contains('مشتريات') ||
           debt.operationType.contains('Purchase'));
@@ -857,8 +844,10 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
             .collection('vault')
             .doc('summary')
             .get();
-        final double currentBalance = (summaryDoc.exists && summaryDoc.data() != null)
-            ? ((summaryDoc.data()!['currentBalance'] as num?)?.toDouble() ?? 0.0)
+        final double currentBalance =
+            (summaryDoc.exists && summaryDoc.data() != null)
+            ? ((summaryDoc.data()!['currentBalance'] as num?)?.toDouble() ??
+                  0.0)
             : 0.0;
         if (currentBalance <= 0 || currentBalance < amount) {
           throw Exception(AppStrings.insufficientBalance);
@@ -904,7 +893,9 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           'paidAmount': newPaidAmount,
           'remainingAmount': newRemainingAmount,
           'isPaid': isPaid,
-          'lastUpdatedAt': paymentDate != null ? Timestamp.fromDate(paymentDate) : FieldValue.serverTimestamp(),
+          'lastUpdatedAt': paymentDate != null
+              ? Timestamp.fromDate(paymentDate)
+              : FieldValue.serverTimestamp(),
         });
 
         if (operationId != null && operationId.isNotEmpty) {
@@ -917,7 +908,9 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
             {
               'paidAmount': newPaidAmount,
               'remainingDebt': newRemainingAmount,
-              'lastUpdatedAt': paymentDate != null ? Timestamp.fromDate(paymentDate) : FieldValue.serverTimestamp(),
+              'lastUpdatedAt': paymentDate != null
+                  ? Timestamp.fromDate(paymentDate)
+                  : FieldValue.serverTimestamp(),
             },
           );
         }
@@ -927,7 +920,9 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           'debtId': debtId,
           'amountPaid': paymentForThisItem,
           'remainingAmount': newRemainingAmount,
-          'createdAt': paymentDate != null ? Timestamp.fromDate(paymentDate) : FieldValue.serverTimestamp(),
+          'createdAt': paymentDate != null
+              ? Timestamp.fromDate(paymentDate)
+              : FieldValue.serverTimestamp(),
           'type': isPaid ? 'full' : 'partial',
           'note': note,
         });
@@ -948,7 +943,9 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           .doc(personName);
       batch.update(personRef, {
         'totalRemainingDebt': FieldValue.increment(-amount),
-        'lastUsedAt': paymentDate != null ? Timestamp.fromDate(paymentDate) : FieldValue.serverTimestamp(),
+        'lastUsedAt': paymentDate != null
+            ? Timestamp.fromDate(paymentDate)
+            : FieldValue.serverTimestamp(),
       });
 
       await batch.commit();
@@ -960,7 +957,8 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         final debtId = p['debtId'] as String;
         final operationId = p['operationId'] as String?;
 
-        final bool isPurchase = (debtId.startsWith('debt_pur_') ||
+        final bool isPurchase =
+            (debtId.startsWith('debt_pur_') ||
             (operationId != null && operationId.startsWith('pur_')));
 
         if (amountPaid > 0) {
@@ -1001,7 +999,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       }
 
       if (sl.isRegistered<ActivityLoggerService>()) {
-        final amtFormatted = amount.toStringAsFixed(1);
+        final amtFormatted = amount.toSmartAmount();
         sl<ActivityLoggerService>().logStandalone(
           ownerUid: uid,
           actionCategory: 'debts',
@@ -1042,7 +1040,8 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       for (var doc in snapshot.docs) {
         final debtData = doc.data();
         final currentTotal = (debtData['totalAmount'] as num).toDouble();
-        final amountPaid = currentTotal - (debtData['paidAmount'] as num).toDouble();
+        final amountPaid =
+            currentTotal - (debtData['paidAmount'] as num).toDouble();
         if (amountPaid > 0) {
           totalRequired += amountPaid;
         }
@@ -1055,8 +1054,10 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
             .collection('vault')
             .doc('summary')
             .get();
-        final double currentBalance = (summaryDoc.exists && summaryDoc.data() != null)
-            ? ((summaryDoc.data()!['currentBalance'] as num?)?.toDouble() ?? 0.0)
+        final double currentBalance =
+            (summaryDoc.exists && summaryDoc.data() != null)
+            ? ((summaryDoc.data()!['currentBalance'] as num?)?.toDouble() ??
+                  0.0)
             : 0.0;
         if (currentBalance <= 0 || currentBalance < totalRequired) {
           throw Exception(AppStrings.insufficientBalance);
@@ -1138,7 +1139,8 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
         final debtId = p['debtId'] as String;
         final operationId = p['operationId'] as String?;
 
-        final bool isPurchase = (debtId.startsWith('debt_pur_') ||
+        final bool isPurchase =
+            (debtId.startsWith('debt_pur_') ||
             (operationId != null && operationId.startsWith('pur_')));
 
         if (amountPaid > 0) {
@@ -1151,7 +1153,9 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
             source: isPurchase
                 ? VaultTransactionSource.inventory
                 : VaultTransactionSource.myDebt,
-            type: isPurchase ? 'full_purchase_settlement' : 'full_debt_settlement',
+            type: isPurchase
+                ? 'full_purchase_settlement'
+                : 'full_debt_settlement',
             description: isPurchase
                 ? 'تسوية مديونية شراء للمورد بالكامل: $personName'
                 : 'تسوية مديونية للمورد/الشخص بالكامل: $personName',
@@ -1179,7 +1183,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       }
 
       if (sl.isRegistered<ActivityLoggerService>()) {
-        final amtFormatted = totalRequired.toStringAsFixed(1);
+        final amtFormatted = totalRequired.toSmartAmount();
         sl<ActivityLoggerService>().logStandalone(
           ownerUid: uid,
           actionCategory: 'debts',
@@ -1188,10 +1192,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           details:
               'تصفية وتسوية كامل مديونية المورد $personName بالكامل بمبلغ $amtFormatted ${AppStrings.currencyEgp.tr()} وإغلاق كافة فواتيره',
           amount: totalRequired,
-          extraData: {
-            'personName': personName,
-            'totalSettled': totalRequired,
-          },
+          extraData: {'personName': personName, 'totalSettled': totalRequired},
         );
       }
     } catch (e) {
@@ -1229,7 +1230,8 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
             .collection('vault')
             .doc('summary');
         final vaultSnap = await vaultSummaryRef.get();
-        final double currentVaultBalance = (vaultSnap.exists && vaultSnap.data() != null)
+        final double currentVaultBalance =
+            (vaultSnap.exists && vaultSnap.data() != null)
             ? ((vaultSnap.data()!['currentBalance'] as num?)?.toDouble() ?? 0.0)
             : 0.0;
         if (currentVaultBalance <= 0 || currentVaultBalance < amount) {
@@ -1258,7 +1260,9 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           'paidAmount': newPaidAmount,
           'remainingAmount': newRemainingAmount,
           'isPaid': isPaid,
-          'lastUpdatedAt': paymentDate != null ? Timestamp.fromDate(paymentDate) : FieldValue.serverTimestamp(),
+          'lastUpdatedAt': paymentDate != null
+              ? Timestamp.fromDate(paymentDate)
+              : FieldValue.serverTimestamp(),
         });
 
         // 2. Update operation if exists
@@ -1271,7 +1275,9 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           transaction.update(opRef, {
             'paidAmount': newPaidAmount,
             'remainingDebt': newRemainingAmount,
-            'lastUpdatedAt': paymentDate != null ? Timestamp.fromDate(paymentDate) : FieldValue.serverTimestamp(),
+            'lastUpdatedAt': paymentDate != null
+                ? Timestamp.fromDate(paymentDate)
+                : FieldValue.serverTimestamp(),
           });
         }
 
@@ -1282,7 +1288,9 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           'debtId': debtId,
           'amountPaid': amount,
           'remainingAmount': newRemainingAmount,
-          'createdAt': paymentDate != null ? Timestamp.fromDate(paymentDate) : FieldValue.serverTimestamp(),
+          'createdAt': paymentDate != null
+              ? Timestamp.fromDate(paymentDate)
+              : FieldValue.serverTimestamp(),
           'type': isPaid ? 'full' : 'partial',
           'note': note,
         });
@@ -1295,12 +1303,15 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
             .doc(personName);
         transaction.update(personRef, {
           'totalRemainingDebt': FieldValue.increment(-amount),
-          'lastUsedAt': paymentDate != null ? Timestamp.fromDate(paymentDate) : FieldValue.serverTimestamp(),
+          'lastUsedAt': paymentDate != null
+              ? Timestamp.fromDate(paymentDate)
+              : FieldValue.serverTimestamp(),
         });
       });
 
       if (paymentId.isNotEmpty) {
-        final bool isPurchase = (debtId.startsWith('debt_pur_') ||
+        final bool isPurchase =
+            (debtId.startsWith('debt_pur_') ||
             (operationId != null && operationId!.startsWith('pur_')));
 
         if (amount > 0) {
@@ -1341,8 +1352,10 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       }
 
       if (sl.isRegistered<ActivityLoggerService>()) {
-        final amtFormatted = amount.toStringAsFixed(1);
-        final remFormatted = recordedRemaining > 0 ? recordedRemaining.toStringAsFixed(1) : "0.0";
+        final amtFormatted = amount.toSmartAmount();
+        final remFormatted = recordedRemaining > 0
+            ? recordedRemaining.toSmartAmount()
+            : "0.0";
         sl<ActivityLoggerService>().logStandalone(
           ownerUid: uid,
           actionCategory: 'debts',
@@ -1399,7 +1412,10 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       for (var paymentDoc in paymentsSnapshot.docs) {
         allRefs.add(paymentDoc.reference);
         try {
-          await _expenseDataSource.deleteExpense(uid, 'exp_pay_${paymentDoc.id}');
+          await _expenseDataSource.deleteExpense(
+            uid,
+            'exp_pay_${paymentDoc.id}',
+          );
         } catch (_) {}
       }
 
@@ -1448,8 +1464,8 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       await _recalculatePersonTotals(uid, personName);
 
       if (sl.isRegistered<ActivityLoggerService>()) {
-        final totalFormatted = totalAmount.toStringAsFixed(1);
-        final remFormatted = remainingAmount.toStringAsFixed(1);
+        final totalFormatted = totalAmount.toSmartAmount();
+        final remFormatted = remainingAmount.toSmartAmount();
         sl<ActivityLoggerService>().logStandalone(
           ownerUid: uid,
           actionCategory: 'debts',
@@ -1644,11 +1660,15 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
 
         if (relatedTo == 'payment') {
           final userRef = firestore.collection('users').doc(uid);
-          final vaultTxId = 'vault_tx_mydebt_${paymentId}_adj_${DateTime.now().millisecondsSinceEpoch}';
-          final vaultTxRef = userRef.collection('vault_transactions').doc(vaultTxId);
+          final vaultTxId =
+              'vault_tx_mydebt_${paymentId}_adj_${DateTime.now().millisecondsSinceEpoch}';
+          final vaultTxRef = userRef
+              .collection('vault_transactions')
+              .doc(vaultTxId);
           final vaultSummaryRef = userRef.collection('vault').doc('summary');
 
-          final bool isPurchase = (debtId.startsWith('debt_pur_') ||
+          final bool isPurchase =
+              (debtId.startsWith('debt_pur_') ||
               (operationId != null && operationId!.startsWith('pur_')));
 
           transaction.set(vaultTxRef, {
@@ -1668,21 +1688,20 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
             'createdAt': FieldValue.serverTimestamp(),
           });
 
-          transaction.set(
-            vaultSummaryRef,
-            {
-              'currentBalance': FieldValue.increment(-delta),
-              'totalOut': FieldValue.increment(delta > 0 ? delta : 0.0),
-              'lastUpdatedAt': FieldValue.serverTimestamp(),
-            },
-            SetOptions(merge: true),
-          );
+          transaction.set(vaultSummaryRef, {
+            'currentBalance': FieldValue.increment(-delta),
+            'totalOut': FieldValue.increment(delta > 0 ? delta : 0.0),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
         }
 
         // Calculate new values
-        final currentTotal = (debtSnap.data()?['totalAmount'] as num?)?.toDouble() ?? 0.0;
-        final currentPaid = (debtSnap.data()?['paidAmount'] as num?)?.toDouble() ?? 0.0;
-        final currentRemaining = (debtSnap.data()?['remainingAmount'] as num?)?.toDouble() ?? 0.0;
+        final currentTotal =
+            (debtSnap.data()?['totalAmount'] as num?)?.toDouble() ?? 0.0;
+        final currentPaid =
+            (debtSnap.data()?['paidAmount'] as num?)?.toDouble() ?? 0.0;
+        final currentRemaining =
+            (debtSnap.data()?['remainingAmount'] as num?)?.toDouble() ?? 0.0;
 
         double newTotalAmount = currentTotal;
         double newPaidAmount = currentPaid;
@@ -1780,12 +1799,12 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
 
       if (sl.isRegistered<ActivityLoggerService>() && targetPayment != null) {
         final isPayment = targetPayment!.type != 'debtAdded';
-        final oldFormatted = targetPayment!.amountPaid.toStringAsFixed(1);
-        final newFormatted = newAmount.toStringAsFixed(1);
+        final oldFormatted = targetPayment!.amountPaid.toSmartAmount();
+        final newFormatted = newAmount.toSmartAmount();
         final delta = newAmount - targetPayment!.amountPaid;
         final deltaFormatted = delta >= 0
-            ? '+${delta.toStringAsFixed(1)}'
-            : delta.toStringAsFixed(1);
+            ? '+${delta.toSmartAmount()}'
+            : delta.toSmartAmount();
 
         String detailsText;
         if (isPayment) {
@@ -1891,11 +1910,15 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
 
         if (relatedTo == 'payment' && amountToDelete > 0) {
           final userRef = firestore.collection('users').doc(uid);
-          final vaultTxId = 'vault_tx_mydebt_${paymentId}_rev_${DateTime.now().millisecondsSinceEpoch}';
-          final vaultTxRef = userRef.collection('vault_transactions').doc(vaultTxId);
+          final vaultTxId =
+              'vault_tx_mydebt_${paymentId}_rev_${DateTime.now().millisecondsSinceEpoch}';
+          final vaultTxRef = userRef
+              .collection('vault_transactions')
+              .doc(vaultTxId);
           final vaultSummaryRef = userRef.collection('vault').doc('summary');
 
-          final bool isPurchase = (debtId.startsWith('debt_pur_') ||
+          final bool isPurchase =
+              (debtId.startsWith('debt_pur_') ||
               (operationId != null && operationId!.startsWith('pur_')));
 
           transaction.set(vaultTxRef, {
@@ -1915,21 +1938,20 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
             'createdAt': FieldValue.serverTimestamp(),
           });
 
-          transaction.set(
-            vaultSummaryRef,
-            {
-              'currentBalance': FieldValue.increment(amountToDelete),
-              'totalOut': FieldValue.increment(-amountToDelete),
-              'lastUpdatedAt': FieldValue.serverTimestamp(),
-            },
-            SetOptions(merge: true),
-          );
+          transaction.set(vaultSummaryRef, {
+            'currentBalance': FieldValue.increment(amountToDelete),
+            'totalOut': FieldValue.increment(-amountToDelete),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
         }
 
         // Calculate new values
-        final currentTotal = (debtSnap.data()?['totalAmount'] as num?)?.toDouble() ?? 0.0;
-        final currentPaid = (debtSnap.data()?['paidAmount'] as num?)?.toDouble() ?? 0.0;
-        final currentRemaining = (debtSnap.data()?['remainingAmount'] as num?)?.toDouble() ?? 0.0;
+        final currentTotal =
+            (debtSnap.data()?['totalAmount'] as num?)?.toDouble() ?? 0.0;
+        final currentPaid =
+            (debtSnap.data()?['paidAmount'] as num?)?.toDouble() ?? 0.0;
+        final currentRemaining =
+            (debtSnap.data()?['remainingAmount'] as num?)?.toDouble() ?? 0.0;
 
         double newTotalAmount = currentTotal;
         double newPaidAmount = currentPaid;
@@ -2007,10 +2029,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
       await _recalculatePersonTotals(uid, personNameForRecalc);
 
       if (targetPayment != null && targetPayment!.type != 'debtAdded') {
-        await _deletePaymentExpense(
-          uid: uid,
-          paymentId: paymentId,
-        );
+        await _deletePaymentExpense(uid: uid, paymentId: paymentId);
         await _syncPurchasePaidAmount(
           uid: uid,
           debtId: debtId,
@@ -2020,7 +2039,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
 
       if (sl.isRegistered<ActivityLoggerService>() && targetPayment != null) {
         final isPayment = targetPayment!.type != 'debtAdded';
-        final amtFormatted = targetPayment!.amountPaid.toStringAsFixed(1);
+        final amtFormatted = targetPayment!.amountPaid.toSmartAmount();
         sl<ActivityLoggerService>().logStandalone(
           ownerUid: uid,
           actionCategory: 'debts',

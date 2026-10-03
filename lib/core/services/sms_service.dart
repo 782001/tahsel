@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -43,8 +44,8 @@ class SmsService {
 
     message = message
         .replaceAll('{name}', name)
-        .replaceAll('{amount}', amount.toStringAsFixed(2))
-        .replaceAll('{remaining}', remaining.toStringAsFixed(2))
+        .replaceAll('{amount}', amount.toSmartAmount())
+        .replaceAll('{remaining}', remaining.toSmartAmount())
         .replaceAll('{date}', date)
         .replaceAll('{note}', note);
 

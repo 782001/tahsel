@@ -358,7 +358,7 @@ class _ActiveSessionCardState extends State<ActiveSessionCard> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              "${calculatedCost.toStringAsFixed(2)} ${AppStrings.currencyEgp.tr()}",
+                              "${calculatedCost.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
                               style: TextStyles.customStyle(
                                 color: AppColors.primaryColor,
                                 fontWeight: FontWeight.w800,
@@ -563,7 +563,7 @@ class _EndSessionSheetState extends State<_EndSessionSheet> {
       _totalAmount = _turnCount * widget.session.rate;
     } else {
       _totalAmount = double.parse(
-        widget.session.calculatedAmount.toStringAsFixed(2),
+        widget.session.calculatedAmount.toSmartAmount(),
       );
     }
   }
@@ -736,7 +736,7 @@ class _EndSessionSheetState extends State<_EndSessionSheet> {
                     ),
                   ),
                   Text(
-                    "${_totalAmount.toStringAsFixed(2)} ${AppStrings.currencyEgp.tr()}",
+                    "${_totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
                     style: TextStyles.customStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -761,7 +761,7 @@ class _EndSessionSheetState extends State<_EndSessionSheet> {
                   TextButton(
                     onPressed: () {
                       setState(() {
-                        _paidController.text = _totalAmount.toStringAsFixed(2);
+                        _paidController.text = _totalAmount.toSmartAmount();
                       });
                     },
                     child: Text(

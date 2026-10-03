@@ -104,8 +104,10 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
               onPressed: () {
                 EmployeeActivityExportService.showExportOptions(
                   context,
-                  title: '${AppStrings.employeeActivityLog.tr()}: ${widget.employee.name}',
-                  subtitle: '${AppStrings.rolePreset.tr()}: ${ActivityFieldLocalizer.formatRole(widget.employee.rolePreset)}',
+                  title:
+                      '${AppStrings.employeeActivityLog.tr()}: ${widget.employee.name}',
+                  subtitle:
+                      '${AppStrings.rolePreset.tr()}: ${ActivityFieldLocalizer.formatRole(widget.employee.rolePreset)}',
                   activities: state.activities,
                   stats: state.stats,
                   dateRange: state.selectedDateRange,
@@ -349,7 +351,7 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                 title: AppStrings.sales.tr(),
                 value: '${stats.salesCount}',
                 subtitle: stats.totalSalesAmount > 0
-                    ? '${stats.totalSalesAmount.toStringAsFixed(1)} $currency'
+                    ? '${stats.totalSalesAmount.toSmartAmount()} $currency'
                     : null,
                 icon: Icons.shopping_bag_outlined,
                 color: AppColors.success,
@@ -361,7 +363,7 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                 title: AppStrings.expenses.tr(),
                 value: '${stats.expensesCount}',
                 subtitle: stats.totalExpensesAmount > 0
-                    ? '${stats.totalExpensesAmount.toStringAsFixed(1)} $currency'
+                    ? '${stats.totalExpensesAmount.toSmartAmount()} $currency'
                     : null,
                 icon: Icons.money_off_csred_rounded,
                 color: AppColors.error,
@@ -760,192 +762,193 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                     : BorderRadius.vertical(top: Radius.circular(24.r)),
               ),
               child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40.w,
-                      height: 4.h,
-                      decoration: BoxDecoration(
-                        color: AppColors.lightGreyColor,
-                        borderRadius: BorderRadius.circular(2.r),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40.w,
+                        height: 4.h,
+                        decoration: BoxDecoration(
+                          color: AppColors.lightGreyColor,
+                          borderRadius: BorderRadius.circular(2.r),
+                        ),
                       ),
                     ),
-                  ),
-                  SizedBox(height: 16.h),
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 22.r,
-                        backgroundColor: meta.color.withValues(alpha: 0.12),
-                        child: Icon(meta.icon, color: meta.color, size: 22),
+                    SizedBox(height: 16.h),
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 22.r,
+                          backgroundColor: meta.color.withValues(alpha: 0.12),
+                          child: Icon(meta.icon, color: meta.color, size: 22),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                activity.actionTitle,
+                                style: TextStyles.customStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.black,
+                                ),
+                              ),
+                              SizedBox(height: 2.h),
+                              Text(
+                                '${activity.employeeName} • ${DateFormat('yyyy-MM-dd • hh:mm a', 'ar').format(activity.timestamp)}',
+                                style: TextStyles.customStyle(
+                                  fontSize: 11,
+                                  color: AppColors.sandText,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 16.h),
+                    Divider(color: AppColors.lightGreyColor),
+                    SizedBox(height: 10.h),
+                    _buildDetailRow(AppStrings.category.tr(), meta.label),
+                    if (activity.amount != null && activity.amount! > 0)
+                      _buildDetailRow(
+                        AppStrings.amount.tr(),
+                        '${activity.amount!.toSmartAmount()} $currency',
+                        valueColor: meta.color,
+                        isBold: true,
                       ),
-                      SizedBox(width: 12.w),
-                      Expanded(
+                    _buildDetailRow(AppStrings.details.tr(), activity.details),
+                    _buildDetailRow(
+                      AppStrings.syncType.tr(),
+                      activity.isOfflineSync
+                          ? AppStrings.offlineSynced.tr()
+                          : AppStrings.directOnline.tr(),
+                    ),
+                    if (activity.extraData != null &&
+                        activity.extraData!.isNotEmpty) ...[
+                      SizedBox(height: 8.h),
+                      Text(
+                        AppStrings.additionalDetails.tr(),
+                        style: TextStyles.customStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.black,
+                        ),
+                      ),
+                      SizedBox(height: 6.h),
+                      Container(
+                        padding: EdgeInsets.all(10.r),
+                        decoration: BoxDecoration(
+                          color: AppColors.scafoldBackGround,
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              activity.actionTitle,
-                              style: TextStyles.customStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.black,
+                          children: activity.extraData!.entries.map((e) {
+                            return Padding(
+                              padding: EdgeInsets.symmetric(vertical: 3.h),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    ActivityFieldLocalizer.localizeKey(
+                                      context,
+                                      e.key,
+                                    ),
+                                    style: TextStyles.customStyle(
+                                      fontSize: 11,
+                                      color: AppColors.sandText,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${e.value}',
+                                    style: TextStyles.customStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.black,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                            SizedBox(height: 2.h),
-                            Text(
-                              '${activity.employeeName} • ${DateFormat('yyyy-MM-dd • hh:mm a', 'ar').format(activity.timestamp)}',
-                              style: TextStyles.customStyle(
-                                fontSize: 11,
-                                color: AppColors.sandText,
-                              ),
-                            ),
-                          ],
+                            );
+                          }).toList(),
                         ),
                       ),
                     ],
-                  ),
-                  SizedBox(height: 16.h),
-                  Divider(color: AppColors.lightGreyColor),
-                  SizedBox(height: 10.h),
-                  _buildDetailRow(AppStrings.category.tr(), meta.label),
-                  if (activity.amount != null && activity.amount! > 0)
-                    _buildDetailRow(
-                      AppStrings.amount.tr(),
-                      '${activity.amount!.toStringAsFixed(2)} $currency',
-                      valueColor: meta.color,
-                      isBold: true,
-                    ),
-                  _buildDetailRow(AppStrings.details.tr(), activity.details),
-                  _buildDetailRow(
-                    AppStrings.syncType.tr(),
-                    activity.isOfflineSync
-                        ? AppStrings.offlineSynced.tr()
-                        : AppStrings.directOnline.tr(),
-                  ),
-                  if (activity.extraData != null &&
-                      activity.extraData!.isNotEmpty) ...[
-                    SizedBox(height: 8.h),
-                    Text(
-                      AppStrings.additionalDetails.tr(),
-                      style: TextStyles.customStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.black,
-                      ),
-                    ),
-                    SizedBox(height: 6.h),
-                    Container(
-                      padding: EdgeInsets.all(10.r),
-                      decoration: BoxDecoration(
-                        color: AppColors.scafoldBackGround,
-                        borderRadius: BorderRadius.circular(10.r),
-                      ),
-                      child: Column(
-                        children: activity.extraData!.entries.map((e) {
-                          return Padding(
-                            padding: EdgeInsets.symmetric(vertical: 3.h),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  ActivityFieldLocalizer.localizeKey(
-                                    context,
-                                    e.key,
-                                  ),
-                                  style: TextStyles.customStyle(
-                                    fontSize: 11,
-                                    color: AppColors.sandText,
-                                  ),
-                                ),
-                                Text(
-                                  '${e.value}',
-                                  style: TextStyles.customStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.black,
-                                  ),
-                                ),
-                              ],
+                    if (ActivityNavigationHelper.hasLinkedEntity(activity)) ...[
+                      SizedBox(height: 16.h),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            ActivityNavigationHelper.navigateToLinkedEntity(
+                              context,
+                              activity,
+                            );
+                          },
+                          icon: Icon(
+                            ActivityNavigationHelper.getLinkedEntityIcon(
+                              activity,
                             ),
-                          );
-                        }).toList(),
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                          label: Text(
+                            ActivityNavigationHelper.getLinkedEntityLabel(
+                              activity,
+                            ),
+                            style: TextStyles.customStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryColor,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            padding: EdgeInsets.symmetric(vertical: 12.h),
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
-                  if (ActivityNavigationHelper.hasLinkedEntity(activity)) ...[
-                    SizedBox(height: 16.h),
+                    ],
+                    SizedBox(height: 10.h),
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.pop(ctx);
-                          ActivityNavigationHelper.navigateToLinkedEntity(
-                            context,
-                            activity,
-                          );
-                        },
-                        icon: Icon(
-                          ActivityNavigationHelper.getLinkedEntityIcon(
-                            activity,
-                          ),
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                        label: Text(
-                          ActivityNavigationHelper.getLinkedEntityLabel(
-                            activity,
-                          ),
-                          style: TextStyles.customStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryColor,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: AppColors.lightGreyColor),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.r),
                           ),
                           padding: EdgeInsets.symmetric(vertical: 12.h),
                         ),
+                        child: Text(
+                          AppStrings.close.tr(),
+                          style: TextStyles.customStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.sandText,
+                          ),
+                        ),
                       ),
                     ),
                   ],
-                  SizedBox(height: 10.h),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: AppColors.lightGreyColor),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                        padding: EdgeInsets.symmetric(vertical: 12.h),
-                      ),
-                      child: Text(
-                        AppStrings.close.tr(),
-                        style: TextStyles.customStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.sandText,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
   Widget _buildDetailRow(
     String title,
@@ -1190,7 +1193,6 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
         );
     }
   }
-
 }
 
 class _CategoryMeta {

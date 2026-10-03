@@ -106,10 +106,10 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
     super.initState();
     _baseSalaryController = TextEditingController(
       text: (widget.initialBaseSalary ?? widget.employee.salaryAmount)
-          .toStringAsFixed(2),
+          .toSmartAmount(),
     );
     _overtimeHoursController = TextEditingController(
-      text: (widget.initialOvertimeHours ?? 0.0).toStringAsFixed(2),
+      text: (widget.initialOvertimeHours ?? 0.0).toSmartAmount(),
     );
 
     // Estimate overtime hourly rate based on type.
@@ -137,10 +137,10 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
     );
 
     _allowancesController = TextEditingController(
-      text: (widget.initialAllowances ?? 0.0).toStringAsFixed(2),
+      text: (widget.initialAllowances ?? 0.0).toSmartAmount(),
     );
     _deductionsController = TextEditingController(
-      text: (widget.initialDeductions ?? 0.0).toStringAsFixed(2),
+      text: (widget.initialDeductions ?? 0.0).toSmartAmount(),
     );
     _notesController = TextEditingController();
     _paymentDate = DateTime.now();
@@ -279,7 +279,7 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
                           ],
                         ),
                         Text(
-                          "${widget.employee.salaryAmount.toStringAsFixed(2)} / ${_getSalaryTypeTranslation(widget.employee.salaryType)}",
+                          "${widget.employee.salaryAmount.toSmartAmount()} / ${_getSalaryTypeTranslation(widget.employee.salaryType)}",
                           style: TextStyles.customStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
@@ -410,7 +410,7 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
                                 ),
                                 _buildDialogMetric(
                                   AppStrings.bonusHours.tr(),
-                                  "${(widget.pendingMap!['bonusHours'] as num?)?.toStringAsFixed(1) ?? '0.0'} ${AppStrings.hours.tr()}",
+                                  "${(widget.pendingMap!['bonusHours'] as num?)?.toSmartAmount() ?? '0.0'} ${AppStrings.hours.tr()}",
                                 ),
                               ],
                             ),
@@ -729,7 +729,7 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
                               horizontal: 8.w,
                             ),
                             title: Text(
-                              "${advance.amount.toStringAsFixed(2)} • ${DateFormat('yyyy-MM-dd').format(advance.date)}",
+                              "${advance.amount.toSmartAmount()} • ${DateFormat('yyyy-MM-dd').format(advance.date)}",
                               style: TextStyles.customStyle(
                                 fontSize: 13,
                                 color: AppColors.blackReal,
@@ -1094,8 +1094,10 @@ class _PaySalaryDialogState extends State<PaySalaryDialog> {
             .collection('vault')
             .doc('summary')
             .get();
-        final double currentBalance = (summaryDoc.exists && summaryDoc.data() != null)
-            ? ((summaryDoc.data()!['currentBalance'] as num?)?.toDouble() ?? 0.0)
+        final double currentBalance =
+            (summaryDoc.exists && summaryDoc.data() != null)
+            ? ((summaryDoc.data()!['currentBalance'] as num?)?.toDouble() ??
+                  0.0)
             : 0.0;
         if (currentBalance <= 0 || currentBalance < actualPaid) {
           if (mounted) {

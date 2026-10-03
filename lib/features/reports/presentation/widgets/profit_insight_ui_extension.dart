@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/features/reports/domain/entities/profit_insight.dart';
@@ -11,12 +12,12 @@ extension ProfitInsightUIExtension on ProfitInsight {
     }
     return finalKey.tr(
       args: [
-        difference.abs().toStringAsFixed(1),
+        difference.abs().toSmartAmount(),
         if (status == ProfitInsightStatus.loss &&
-            netProfit.abs().toStringAsFixed(1) != "0.0")
-          "-${netProfit.abs().toStringAsFixed(1)}"
+            netProfit.abs().toSmartAmount() != "0.0")
+          "-${netProfit.abs().toSmartAmount()}"
         else
-          netProfit.abs().toStringAsFixed(1),
+          netProfit.abs().toSmartAmount(),
       ],
     );
   }

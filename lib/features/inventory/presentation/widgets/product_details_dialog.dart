@@ -45,7 +45,7 @@ class ProductDetailsDialog extends StatelessWidget {
         ? (((product.sellingPrice - product.purchasePrice) /
                       product.purchasePrice) *
                   100)
-              .toStringAsFixed(1)
+              .toSmartAmount()
         : '0';
 
     return Dialog(
@@ -78,7 +78,7 @@ class ProductDetailsDialog extends StatelessWidget {
                         child: Icon(
                           Icons.inventory_2_rounded,
                           color: AppColors.primaryColor,
-                          size: isDesktop ? 24 : 24 
+                          size: isDesktop ? 24 : 24,
                         ),
                       ),
                       SizedBox(width: isDesktop ? 12 : 12.w),
@@ -180,7 +180,7 @@ class ProductDetailsDialog extends StatelessWidget {
                             child: _buildMetricTile(
                               label: AppStrings.purchasePrice.tr(),
                               value:
-                                  '${product.purchasePrice.toStringAsFixed(2)} ${AppStrings.currencyEgp.tr()}',
+                                  '${product.purchasePrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                               icon: Icons.shopping_bag_outlined,
                               color: AppColors.primaryColor,
                               isDesktop: isDesktop,
@@ -191,7 +191,7 @@ class ProductDetailsDialog extends StatelessWidget {
                             child: _buildMetricTile(
                               label: AppStrings.sellingPrice.tr(),
                               value:
-                                  '${product.sellingPrice.toStringAsFixed(2)} ${AppStrings.currencyEgp.tr()}',
+                                  '${product.sellingPrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                               icon: Icons.sell_outlined,
                               color: AppColors.success,
                               isDesktop: isDesktop,

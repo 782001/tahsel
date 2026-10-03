@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/meta_chip.dart';
@@ -33,7 +34,7 @@ class MetadataRow extends StatelessWidget {
 
   String _fmt(dynamic val) {
     if (val is double) {
-      return val % 1 == 0 ? val.toInt().toString() : val.toStringAsFixed(2);
+      return val % 1 == 0 ? val.toInt().toString() : val.toSmartAmount();
     }
     return val.toString();
   }

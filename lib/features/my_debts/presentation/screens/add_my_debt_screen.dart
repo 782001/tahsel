@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/contact_service.dart';
 import 'package:tahsel/core/services/injection_container.dart';
@@ -461,7 +462,7 @@ class _AddMyDebtScreenState extends State<AddMyDebtScreen> {
             child: FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
-                '${_remaining.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
+                '${_remaining.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
                 style: TextStyles.customStyle(
                   color: AppColors.primaryColor,
                   fontSize: 18,

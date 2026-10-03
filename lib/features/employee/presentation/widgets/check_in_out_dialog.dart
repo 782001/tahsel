@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:tahsel/core/config/locale/app_localizations.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
@@ -120,20 +121,20 @@ class _CheckInOutDialogState extends State<CheckInOutDialog> {
       double netOvertime = totalOvertime - widget.previousOvertimeToday;
       double netDeduction = 0.0 - widget.previousDeductionToday;
 
-      _overtimeController.text = netOvertime.toStringAsFixed(2);
-      _deductionsController.text = netDeduction.toStringAsFixed(2);
+      _overtimeController.text = netOvertime.toSmartAmount();
+      _deductionsController.text = netDeduction.toSmartAmount();
     } else if (totalWorkedToday < expectedHours) {
       double totalDeduction = expectedHours - totalWorkedToday;
       double netDeduction = totalDeduction - widget.previousDeductionToday;
       double netOvertime = 0.0 - widget.previousOvertimeToday;
 
-      _overtimeController.text = netOvertime.toStringAsFixed(2);
-      _deductionsController.text = netDeduction.toStringAsFixed(2);
+      _overtimeController.text = netOvertime.toSmartAmount();
+      _deductionsController.text = netDeduction.toSmartAmount();
     } else {
       double netOvertime = 0.0 - widget.previousOvertimeToday;
       double netDeduction = 0.0 - widget.previousDeductionToday;
-      _overtimeController.text = netOvertime.toStringAsFixed(2);
-      _deductionsController.text = netDeduction.toStringAsFixed(2);
+      _overtimeController.text = netOvertime.toSmartAmount();
+      _deductionsController.text = netDeduction.toSmartAmount();
     }
   }
 

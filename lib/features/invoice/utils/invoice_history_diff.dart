@@ -1,3 +1,4 @@
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
 import 'package:tahsel/features/invoice/domain/entities/invoice_history_entity.dart';
 
@@ -27,28 +28,32 @@ class InvoiceHistoryDiff {
 
     // ── 1. Customer name ──────────────────────────────────────────────────────
     if ((before.customerName ?? '') != (after.customerName ?? '')) {
-      entries.add(InvoiceHistoryEntity(
-        id: newId(),
-        invoiceId: after.id,
-        uid: uid,
-        changeType: InvoiceHistoryChangeType.customerUpdated,
-        timestamp: now,
-        oldValue: before.customerName,
-        newValue: after.customerName,
-      ));
+      entries.add(
+        InvoiceHistoryEntity(
+          id: newId(),
+          invoiceId: after.id,
+          uid: uid,
+          changeType: InvoiceHistoryChangeType.customerUpdated,
+          timestamp: now,
+          oldValue: before.customerName,
+          newValue: after.customerName,
+        ),
+      );
     }
 
     // ── 2. Notes ──────────────────────────────────────────────────────────────
     if ((before.notes ?? '') != (after.notes ?? '')) {
-      entries.add(InvoiceHistoryEntity(
-        id: newId(),
-        invoiceId: after.id,
-        uid: uid,
-        changeType: InvoiceHistoryChangeType.notesUpdated,
-        timestamp: now,
-        oldValue: before.notes,
-        newValue: after.notes,
-      ));
+      entries.add(
+        InvoiceHistoryEntity(
+          id: newId(),
+          invoiceId: after.id,
+          uid: uid,
+          changeType: InvoiceHistoryChangeType.notesUpdated,
+          timestamp: now,
+          oldValue: before.notes,
+          newValue: after.notes,
+        ),
+      );
     }
 
     // ── 3. Items — detect removed, added, and mutated ─────────────────────────
@@ -58,38 +63,42 @@ class InvoiceHistoryDiff {
     // Items present in old but missing in new → REMOVED
     for (final oldItem in before.items) {
       if (!newById.containsKey(oldItem.id)) {
-        entries.add(InvoiceHistoryEntity(
-          id: newId(),
-          invoiceId: after.id,
-          uid: uid,
-          changeType: InvoiceHistoryChangeType.itemRemoved,
-          timestamp: now,
-          fieldLabel: oldItem.description,
-          metadata: {
-            'quantity': oldItem.quantity,
-            'unitPrice': oldItem.unitPrice,
-            'subtotal': oldItem.subtotal,
-          },
-        ));
+        entries.add(
+          InvoiceHistoryEntity(
+            id: newId(),
+            invoiceId: after.id,
+            uid: uid,
+            changeType: InvoiceHistoryChangeType.itemRemoved,
+            timestamp: now,
+            fieldLabel: oldItem.description,
+            metadata: {
+              'quantity': oldItem.quantity,
+              'unitPrice': oldItem.unitPrice,
+              'subtotal': oldItem.subtotal,
+            },
+          ),
+        );
       }
     }
 
     // Items present in new but missing in old → ADDED
     for (final newItem in after.items) {
       if (!oldById.containsKey(newItem.id)) {
-        entries.add(InvoiceHistoryEntity(
-          id: newId(),
-          invoiceId: after.id,
-          uid: uid,
-          changeType: InvoiceHistoryChangeType.itemAdded,
-          timestamp: now,
-          fieldLabel: newItem.description,
-          metadata: {
-            'quantity': newItem.quantity,
-            'unitPrice': newItem.unitPrice,
-            'subtotal': newItem.subtotal,
-          },
-        ));
+        entries.add(
+          InvoiceHistoryEntity(
+            id: newId(),
+            invoiceId: after.id,
+            uid: uid,
+            changeType: InvoiceHistoryChangeType.itemAdded,
+            timestamp: now,
+            fieldLabel: newItem.description,
+            metadata: {
+              'quantity': newItem.quantity,
+              'unitPrice': newItem.unitPrice,
+              'subtotal': newItem.subtotal,
+            },
+          ),
+        );
       }
     }
 
@@ -100,34 +109,38 @@ class InvoiceHistoryDiff {
 
       // Quantity changed
       if (oldItem.quantity != newItem.quantity) {
-        entries.add(InvoiceHistoryEntity(
-          id: newId(),
-          invoiceId: after.id,
-          uid: uid,
-          changeType: InvoiceHistoryChangeType.quantityUpdated,
-          timestamp: now,
-          fieldLabel: newItem.description,
-          oldValue: oldItem.quantity.toStringAsFixed(
-            oldItem.quantity % 1 == 0 ? 0 : 2,
+        entries.add(
+          InvoiceHistoryEntity(
+            id: newId(),
+            invoiceId: after.id,
+            uid: uid,
+            changeType: InvoiceHistoryChangeType.quantityUpdated,
+            timestamp: now,
+            fieldLabel: newItem.description,
+            oldValue: oldItem.quantity.toStringAsFixed(
+              oldItem.quantity % 1 == 0 ? 0 : 2,
+            ),
+            newValue: newItem.quantity.toStringAsFixed(
+              newItem.quantity % 1 == 0 ? 0 : 2,
+            ),
           ),
-          newValue: newItem.quantity.toStringAsFixed(
-            newItem.quantity % 1 == 0 ? 0 : 2,
-          ),
-        ));
+        );
       }
 
       // Unit price changed
       if (oldItem.unitPrice != newItem.unitPrice) {
-        entries.add(InvoiceHistoryEntity(
-          id: newId(),
-          invoiceId: after.id,
-          uid: uid,
-          changeType: InvoiceHistoryChangeType.priceUpdated,
-          timestamp: now,
-          fieldLabel: newItem.description,
-          oldValue: oldItem.unitPrice.toStringAsFixed(2),
-          newValue: newItem.unitPrice.toStringAsFixed(2),
-        ));
+        entries.add(
+          InvoiceHistoryEntity(
+            id: newId(),
+            invoiceId: after.id,
+            uid: uid,
+            changeType: InvoiceHistoryChangeType.priceUpdated,
+            timestamp: now,
+            fieldLabel: newItem.description,
+            oldValue: oldItem.unitPrice.toSmartAmount(),
+            newValue: newItem.unitPrice.toSmartAmount(),
+          ),
+        );
       }
 
       // Discount changed
@@ -138,16 +151,18 @@ class InvoiceHistoryDiff {
         final newPct = (newItem.discountRate * 100).toStringAsFixed(
           newItem.discountRate % 1 == 0 ? 0 : 1,
         );
-        entries.add(InvoiceHistoryEntity(
-          id: newId(),
-          invoiceId: after.id,
-          uid: uid,
-          changeType: InvoiceHistoryChangeType.discountUpdated,
-          timestamp: now,
-          fieldLabel: newItem.description,
-          oldValue: '$oldPct%',
-          newValue: '$newPct%',
-        ));
+        entries.add(
+          InvoiceHistoryEntity(
+            id: newId(),
+            invoiceId: after.id,
+            uid: uid,
+            changeType: InvoiceHistoryChangeType.discountUpdated,
+            timestamp: now,
+            fieldLabel: newItem.description,
+            oldValue: '$oldPct%',
+            newValue: '$newPct%',
+          ),
+        );
       }
     }
 
@@ -158,15 +173,17 @@ class InvoiceHistoryDiff {
     final oldTotal = before.totalAmount;
     final newTotal = after.totalAmount;
     if ((oldTotal - newTotal).abs() > 0.001) {
-      entries.add(InvoiceHistoryEntity(
-        id: newId(),
-        invoiceId: after.id,
-        uid: uid,
-        changeType: InvoiceHistoryChangeType.totalUpdated,
-        timestamp: now,
-        oldValue: oldTotal.toStringAsFixed(2),
-        newValue: newTotal.toStringAsFixed(2),
-      ));
+      entries.add(
+        InvoiceHistoryEntity(
+          id: newId(),
+          invoiceId: after.id,
+          uid: uid,
+          changeType: InvoiceHistoryChangeType.totalUpdated,
+          timestamp: now,
+          oldValue: oldTotal.toSmartAmount(),
+          newValue: newTotal.toSmartAmount(),
+        ),
+      );
     }
 
     return entries;

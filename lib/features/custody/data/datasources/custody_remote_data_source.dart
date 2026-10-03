@@ -81,7 +81,8 @@ class CustodyRemoteDataSourceImpl implements CustodyRemoteDataSource {
       final existingActive = await getActiveCustodyForRecipient(
         ownerUid,
         employeeUid: recipientEmployeeId,
-        recipientName: recipientEmployeeId == null || recipientEmployeeId.isEmpty
+        recipientName:
+            recipientEmployeeId == null || recipientEmployeeId.isEmpty
             ? recipientName
             : null,
       );
@@ -110,7 +111,9 @@ class CustodyRemoteDataSourceImpl implements CustodyRemoteDataSource {
       );
 
       await docRef.set(custody.toMap());
-      AppLogger.printMessage('[CustodyRemote] Created custody ${docRef.id} for $recipientName');
+      AppLogger.printMessage(
+        '[CustodyRemote] Created custody ${docRef.id} for $recipientName',
+      );
 
       // Deduct disbursed custody amount from Vault
       if (initialAmount > 0 && AppStrings.isVaultEnabled()) {
@@ -129,7 +132,9 @@ class CustodyRemoteDataSourceImpl implements CustodyRemoteDataSource {
             createdAt: now,
           );
         } catch (vaultError) {
-          AppLogger.printMessage('[CustodyRemote] Error syncing vault on custody creation: $vaultError');
+          AppLogger.printMessage(
+            '[CustodyRemote] Error syncing vault on custody creation: $vaultError',
+          );
           await docRef.delete();
           if (vaultError.toString().contains(AppStrings.insufficientBalance) ||
               vaultError.toString().contains('insufficient_balance')) {
@@ -155,21 +160,25 @@ class CustodyRemoteDataSourceImpl implements CustodyRemoteDataSource {
     try {
       final rawExpenses = rawData['expenses'] as List<dynamic>? ?? [];
       if (model.expenses.length < rawExpenses.length) {
-        _custodiesRef(ownerUid).doc(docId).update({
-          'spentAmount': model.spentAmount,
-          'remainingAmount': model.remainingAmount,
-          'expenses': model.expenses
-              .map((e) => CustodyExpenseItemModel.fromEntity(e).toMap())
-              .toList(),
-        }).then((_) {
-          AppLogger.printMessage(
-            '[CustodyRemote] Auto-repaired duplicate expenses for custody $docId',
-          );
-        }).catchError((e) {
-          AppLogger.printMessage(
-            '[CustodyRemote] Error auto-repairing custody $docId: $e',
-          );
-        });
+        _custodiesRef(ownerUid)
+            .doc(docId)
+            .update({
+              'spentAmount': model.spentAmount,
+              'remainingAmount': model.remainingAmount,
+              'expenses': model.expenses
+                  .map((e) => CustodyExpenseItemModel.fromEntity(e).toMap())
+                  .toList(),
+            })
+            .then((_) {
+              AppLogger.printMessage(
+                '[CustodyRemote] Auto-repaired duplicate expenses for custody $docId',
+              );
+            })
+            .catchError((e) {
+              AppLogger.printMessage(
+                '[CustodyRemote] Error auto-repairing custody $docId: $e',
+              );
+            });
       }
     } catch (_) {}
   }
@@ -177,9 +186,9 @@ class CustodyRemoteDataSourceImpl implements CustodyRemoteDataSource {
   @override
   Future<List<CustodyModel>> getCustodies(String ownerUid) async {
     try {
-      final snapshot = await _custodiesRef(ownerUid)
-          .orderBy('createdAt', descending: true)
-          .get();
+      final snapshot = await _custodiesRef(
+        ownerUid,
+      ).orderBy('createdAt', descending: true).get();
 
       return snapshot.docs.map((doc) {
         final data = doc.data();
@@ -200,8 +209,9 @@ class CustodyRemoteDataSourceImpl implements CustodyRemoteDataSource {
     String? recipientName,
   }) async {
     try {
-      Query<Map<String, dynamic>> query =
-          _custodiesRef(ownerUid).where('status', isEqualTo: 'active');
+      Query<Map<String, dynamic>> query = _custodiesRef(
+        ownerUid,
+      ).where('status', isEqualTo: 'active');
 
       if (employeeUid != null && employeeUid.isNotEmpty) {
         query = query.where('recipientEmployeeId', isEqualTo: employeeUid);
@@ -218,7 +228,9 @@ class CustodyRemoteDataSourceImpl implements CustodyRemoteDataSource {
       _repairCustodyDuplicatesIfNeeded(ownerUid, doc.id, data, model);
       return model;
     } catch (e) {
-      AppLogger.printMessage('[CustodyRemote] Error fetching active custody: $e');
+      AppLogger.printMessage(
+        '[CustodyRemote] Error fetching active custody: $e',
+      );
       return null;
     }
   }
@@ -245,14 +257,17 @@ class CustodyRemoteDataSourceImpl implements CustodyRemoteDataSource {
         final rawExpenses = data['expenses'] as List<dynamic>? ?? [];
 
         // Idempotency check: don't add the same expense twice
-        final alreadyExists = rawExpenses.any((e) =>
-            e is Map &&
-            (e['id'] == expense.id ||
-             (expense.id.isNotEmpty && e['id'] == 'cust_exp_${expense.id}') ||
-             (expense.id.isNotEmpty &&
-              e['id'] is String &&
-              (e['id'] as String).replaceFirst('cust_exp_', '') ==
-                  expense.id.replaceFirst('cust_exp_', ''))));
+        final alreadyExists = rawExpenses.any(
+          (e) =>
+              e is Map &&
+              (e['id'] == expense.id ||
+                  (expense.id.isNotEmpty &&
+                      e['id'] == 'cust_exp_${expense.id}') ||
+                  (expense.id.isNotEmpty &&
+                      e['id'] is String &&
+                      (e['id'] as String).replaceFirst('cust_exp_', '') ==
+                          expense.id.replaceFirst('cust_exp_', ''))),
+        );
         if (alreadyExists) {
           AppLogger.printMessage(
             '[CustodyRemote] Expense ${expense.id} already exists in custody $custodyId, skipping.',
@@ -261,7 +276,8 @@ class CustodyRemoteDataSourceImpl implements CustodyRemoteDataSource {
         }
 
         final currentSpent = (data['spentAmount'] as num?)?.toDouble() ?? 0.0;
-        final initialAmount = (data['initialAmount'] as num?)?.toDouble() ?? 0.0;
+        final initialAmount =
+            (data['initialAmount'] as num?)?.toDouble() ?? 0.0;
         final newSpent = currentSpent + expense.amount;
         final newRemaining = initialAmount - newSpent;
 
@@ -274,9 +290,13 @@ class CustodyRemoteDataSourceImpl implements CustodyRemoteDataSource {
           'expenses': updatedExpenses,
         });
       });
-      AppLogger.printMessage('[CustodyRemote] Added expense to custody $custodyId');
+      AppLogger.printMessage(
+        '[CustodyRemote] Added expense to custody $custodyId',
+      );
     } catch (e) {
-      AppLogger.printMessage('[CustodyRemote] Error adding custody expense: $e');
+      AppLogger.printMessage(
+        '[CustodyRemote] Error adding custody expense: $e',
+      );
       throw ServerException(e.toString());
     }
   }
@@ -303,9 +323,12 @@ class CustodyRemoteDataSourceImpl implements CustodyRemoteDataSource {
         throw ServerException('Custody is already settled');
       }
       final recipientName = custodyData['recipientName'] as String? ?? '';
-      final initialAmount = (custodyData['initialAmount'] as num?)?.toDouble() ?? 0.0;
-      final currentSpent = (custodyData['spentAmount'] as num?)?.toDouble() ?? 0.0;
-      final remainingAmount = (custodyData['remainingAmount'] as num?)?.toDouble() ?? 0.0;
+      final initialAmount =
+          (custodyData['initialAmount'] as num?)?.toDouble() ?? 0.0;
+      final currentSpent =
+          (custodyData['spentAmount'] as num?)?.toDouble() ?? 0.0;
+      final remainingAmount =
+          (custodyData['remainingAmount'] as num?)?.toDouble() ?? 0.0;
       final rawExpenses = custodyData['expenses'] as List<dynamic>? ?? [];
       final now = DateTime.now();
 
@@ -320,7 +343,8 @@ class CustodyRemoteDataSourceImpl implements CustodyRemoteDataSource {
       );
 
       if (deficitAmount > 0) {
-        final reason = (deficitReason != null && deficitReason.trim().isNotEmpty)
+        final reason =
+            (deficitReason != null && deficitReason.trim().isNotEmpty)
             ? deficitReason.trim()
             : AppStrings.deficitSettlementDefaultReason.tr();
 
@@ -339,7 +363,10 @@ class CustodyRemoteDataSourceImpl implements CustodyRemoteDataSource {
       await docRef.update({
         'status': 'settled',
         'spentAmount': finalSpent,
-        'remainingAmount': (initialAmount - finalSpent).clamp(0.0, double.infinity),
+        'remainingAmount': (initialAmount - finalSpent).clamp(
+          0.0,
+          double.infinity,
+        ),
         'expenses': updatedExpenses,
         'actualSettledAmount': actualReturnedAmount,
         'varianceAmount': varianceAmount,
@@ -366,7 +393,9 @@ class CustodyRemoteDataSourceImpl implements CustodyRemoteDataSource {
             createdAt: now,
           );
         } catch (vaultError) {
-          AppLogger.printMessage('[CustodyRemote] Error syncing vault refund: $vaultError');
+          AppLogger.printMessage(
+            '[CustodyRemote] Error syncing vault refund: $vaultError',
+          );
         }
       }
 
@@ -389,7 +418,9 @@ class CustodyRemoteDataSourceImpl implements CustodyRemoteDataSource {
               createdAt: now,
             );
           } catch (vaultError) {
-            AppLogger.printMessage('[CustodyRemote] Error syncing vault reimbursement: $vaultError');
+            AppLogger.printMessage(
+              '[CustodyRemote] Error syncing vault reimbursement: $vaultError',
+            );
           }
         }
       }
@@ -437,7 +468,9 @@ class CustodyRemoteDataSourceImpl implements CustodyRemoteDataSource {
           }
           await batch.commit();
         } catch (expErr) {
-          AppLogger.printMessage('[CustodyRemote] Error posting settlement expense: $expErr');
+          AppLogger.printMessage(
+            '[CustodyRemote] Error posting settlement expense: $expErr',
+          );
         }
       }
 
@@ -456,9 +489,13 @@ class CustodyRemoteDataSourceImpl implements CustodyRemoteDataSource {
   }) async {
     try {
       await _custodiesRef(ownerUid).doc(custodyId).update({'notes': notes});
-      AppLogger.printMessage('[CustodyRemote] Updated notes for custody $custodyId');
+      AppLogger.printMessage(
+        '[CustodyRemote] Updated notes for custody $custodyId',
+      );
     } catch (e) {
-      AppLogger.printMessage('[CustodyRemote] Error updating custody notes: $e');
+      AppLogger.printMessage(
+        '[CustodyRemote] Error updating custody notes: $e',
+      );
       throw ServerException(e.toString());
     }
   }
@@ -472,7 +509,9 @@ class CustodyRemoteDataSourceImpl implements CustodyRemoteDataSource {
         final data = docSnap.data()!;
         final status = data['status'] as String? ?? 'active';
         if (status == 'settled') {
-          throw ServerException(AppStrings.cannotDeleteSettledCustodyExpense.tr());
+          throw ServerException(
+            AppStrings.cannotDeleteSettledCustodyExpense.tr(),
+          );
         }
 
         final spent = (data['spentAmount'] as num?)?.toDouble() ?? 0.0;
@@ -498,12 +537,15 @@ class CustodyRemoteDataSourceImpl implements CustodyRemoteDataSource {
               direction: VaultTransactionDirection.inFlow,
               source: VaultTransactionSource.custody,
               type: 'custody_deletion_refund',
-              description: 'استرجاع كامل مبلغ عهدة ملغاة إلى الخزينة: $recipientName',
+              description:
+                  'استرجاع كامل مبلغ عهدة ملغاة إلى الخزينة: $recipientName',
               relatedEntityId: custodyId,
               createdAt: DateTime.now(),
             );
           } catch (vaultErr) {
-            AppLogger.printMessage('[CustodyRemote] Error returning custody to vault: $vaultErr');
+            AppLogger.printMessage(
+              '[CustodyRemote] Error returning custody to vault: $vaultErr',
+            );
           }
         }
 
@@ -516,7 +558,7 @@ class CustodyRemoteDataSourceImpl implements CustodyRemoteDataSource {
               actionType: 'delete_custody',
               actionTitle: 'حذف عهدة نقدية: $recipientName',
               details:
-                  'تم حذف العهدة كأن لم تكن واسترجاع كامل مبلغها (${initial.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}) إلى الخزينة وحذفها نهائياً من حساب المستلم',
+                  'تم حذف العهدة كأن لم تكن واسترجاع كامل مبلغها (${initial.toSmartAmount()} ${AppStrings.currencyEgp.tr()}) إلى الخزينة وحذفها نهائياً من حساب المستلم',
               amount: initial,
               extraData: {
                 'custodyId': custodyId,
@@ -564,8 +606,12 @@ class CustodyRemoteDataSourceImpl implements CustodyRemoteDataSource {
         recipientName = data['recipientName'] as String? ?? '';
 
         final currentSpent = (data['spentAmount'] as num?)?.toDouble() ?? 0.0;
-        final initialAmount = (data['initialAmount'] as num?)?.toDouble() ?? 0.0;
-        final newSpent = (currentSpent - expenseItem.amount).clamp(0.0, double.infinity);
+        final initialAmount =
+            (data['initialAmount'] as num?)?.toDouble() ?? 0.0;
+        final newSpent = (currentSpent - expenseItem.amount).clamp(
+          0.0,
+          double.infinity,
+        );
         final newRemaining = initialAmount - newSpent;
 
         final rawExpenses = data['expenses'] as List<dynamic>? ?? [];
@@ -636,9 +682,13 @@ class CustodyRemoteDataSourceImpl implements CustodyRemoteDataSource {
         } catch (_) {}
       }
 
-      AppLogger.printMessage('[CustodyRemote] Deleted expense item ${expenseItem.id} from custody $custodyId');
+      AppLogger.printMessage(
+        '[CustodyRemote] Deleted expense item ${expenseItem.id} from custody $custodyId',
+      );
     } catch (e) {
-      AppLogger.printMessage('[CustodyRemote] Error deleting custody expense item: $e');
+      AppLogger.printMessage(
+        '[CustodyRemote] Error deleting custody expense item: $e',
+      );
       throw ServerException(e.toString());
     }
   }

@@ -146,15 +146,25 @@ class EmployeeActivityExportService {
                 color: AppColors.primaryColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(Icons.picture_as_pdf_rounded, color: AppColors.primaryColor, size: 24),
+              child: Icon(
+                Icons.picture_as_pdf_rounded,
+                color: AppColors.primaryColor,
+                size: 24,
+              ),
             ),
             title: Text(
               AppStrings.pdfPrintReady.tr(),
-              style: TextStyles.customStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              style: TextStyles.customStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             subtitle: Text(
               AppStrings.pdfPrintReadyDesc.tr(),
-              style: TextStyles.customStyle(fontSize: 11, color: AppColors.sandText),
+              style: TextStyles.customStyle(
+                fontSize: 11,
+                color: AppColors.sandText,
+              ),
             ),
             trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
             onTap: () {
@@ -179,15 +189,25 @@ class EmployeeActivityExportService {
                 color: AppColors.success.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(Icons.table_chart_rounded, color: AppColors.success, size: 24),
+              child: Icon(
+                Icons.table_chart_rounded,
+                color: AppColors.success,
+                size: 24,
+              ),
             ),
             title: Text(
               AppStrings.excelSheetExport.tr(),
-              style: TextStyles.customStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              style: TextStyles.customStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             subtitle: Text(
               AppStrings.excelSheetExportDesc.tr(),
-              style: TextStyles.customStyle(fontSize: 11, color: AppColors.sandText),
+              style: TextStyles.customStyle(
+                fontSize: 11,
+                color: AppColors.sandText,
+              ),
             ),
             trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
             onTap: () {
@@ -300,7 +320,9 @@ class EmployeeActivityExportService {
 
           // 1. Employee Details Banner (When available)
           content.add(pw.SizedBox(height: 8));
-          content.add(_buildPdfEmployeeDetailsCard(employee, activities.firstOrNull));
+          content.add(
+            _buildPdfEmployeeDetailsCard(employee, activities.firstOrNull),
+          );
           content.add(pw.SizedBox(height: 10));
 
           // 2. KPI Summary Banner
@@ -333,8 +355,8 @@ class EmployeeActivityExportService {
     final businessName = (profile?.projectName.isNotEmpty == true)
         ? profile!.projectName
         : ((profile?.fullName.isNotEmpty == true)
-            ? profile!.fullName
-            : 'تطبيق تحصيل');
+              ? profile!.fullName
+              : 'تطبيق تحصيل');
 
     return pw.Container(
       padding: const pw.EdgeInsets.only(bottom: 12),
@@ -370,23 +392,26 @@ class EmployeeActivityExportService {
                   pw.SizedBox(height: 2),
                   pw.Text(
                     subtitle.cleanForPdf(),
-                    style: const pw.TextStyle(fontSize: 10, color: _neutralMuted),
+                    style: const pw.TextStyle(
+                      fontSize: 10,
+                      color: _neutralMuted,
+                    ),
                   ),
                 ],
                 pw.SizedBox(height: 2),
                 pw.Text(
-                  '${AppStrings.statementPeriod.tr()}: $periodText | ${AppStrings.exportDate.tr()}: $nowFormatted'.cleanForPdf(),
-                  style: const pw.TextStyle(fontSize: 8.5, color: _neutralMuted),
+                  '${AppStrings.statementPeriod.tr()}: $periodText | ${AppStrings.exportDate.tr()}: $nowFormatted'
+                      .cleanForPdf(),
+                  style: const pw.TextStyle(
+                    fontSize: 8.5,
+                    color: _neutralMuted,
+                  ),
                 ),
               ],
             ),
           ),
           if (logoImage != null)
-            pw.Container(
-              width: 52,
-              height: 52,
-              child: pw.Image(logoImage),
-            ),
+            pw.Container(width: 52, height: 52, child: pw.Image(logoImage)),
         ],
       ),
     );
@@ -418,16 +443,28 @@ class EmployeeActivityExportService {
                 children: [
                   pw.Text(
                     '${AppStrings.appEmployeeNameField.tr()}: ',
-                    style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: _primaryColor),
+                    style: pw.TextStyle(
+                      fontSize: 9,
+                      fontWeight: pw.FontWeight.bold,
+                      color: _primaryColor,
+                    ),
                   ),
                   pw.Text(
                     employee.name.cleanForPdf(),
-                    style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: _neutralDark),
+                    style: pw.TextStyle(
+                      fontSize: 9,
+                      fontWeight: pw.FontWeight.bold,
+                      color: _neutralDark,
+                    ),
                   ),
                   pw.SizedBox(width: 14),
                   pw.Text(
                     '${AppStrings.rolePreset.tr()}: ',
-                    style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: _primaryColor),
+                    style: pw.TextStyle(
+                      fontSize: 9,
+                      fontWeight: pw.FontWeight.bold,
+                      color: _primaryColor,
+                    ),
                   ),
                   pw.Text(
                     role.cleanForPdf(),
@@ -440,7 +477,10 @@ class EmployeeActivityExportService {
               children: [
                 pw.Text(
                   '${AppStrings.employeeEmail.tr()}: ',
-                  style: const pw.TextStyle(fontSize: 8.5, color: _neutralMuted),
+                  style: const pw.TextStyle(
+                    fontSize: 8.5,
+                    color: _neutralMuted,
+                  ),
                 ),
                 pw.Text(
                   employee.email.cleanForPdf(),
@@ -448,10 +488,17 @@ class EmployeeActivityExportService {
                 ),
                 pw.SizedBox(width: 12),
                 pw.Container(
-                  padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const pw.EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: pw.BoxDecoration(
-                    color: employee.isActive ? const PdfColor.fromInt(0xFFDCFCE7) : const PdfColor.fromInt(0xFFFEE2E2),
-                    borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+                    color: employee.isActive
+                        ? const PdfColor.fromInt(0xFFDCFCE7)
+                        : const PdfColor.fromInt(0xFFFEE2E2),
+                    borderRadius: const pw.BorderRadius.all(
+                      pw.Radius.circular(4),
+                    ),
                   ),
                   child: pw.Text(
                     status,
@@ -482,7 +529,11 @@ class EmployeeActivityExportService {
         children: [
           pw.Text(
             '${AppStrings.teamActivityLogTitle.tr()}: ${AppStrings.allTeamEmployees.tr()}',
-            style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: _primaryColor),
+            style: pw.TextStyle(
+              fontSize: 9,
+              fontWeight: pw.FontWeight.bold,
+              color: _primaryColor,
+            ),
           ),
           pw.Text(
             AppStrings.teamActivityTimelineDesc.tr(),
@@ -511,21 +562,28 @@ class EmployeeActivityExportService {
           _buildPdfKpiItem(AppStrings.totalOperationsStat.tr(), '$loadedCount'),
           _buildPdfKpiItem(
             AppStrings.sales.tr(),
-            '${stats.salesCount} (${stats.totalSalesAmount.toStringAsFixed(1)} $currency)',
+            '${stats.salesCount} (${stats.totalSalesAmount.toSmartAmount()} $currency)',
             valueColor: _successColor,
           ),
           _buildPdfKpiItem(
             AppStrings.expenses.tr(),
-            '${stats.expensesCount} (${stats.totalExpensesAmount.toStringAsFixed(1)} $currency)',
+            '${stats.expensesCount} (${stats.totalExpensesAmount.toSmartAmount()} $currency)',
             valueColor: _errorColor,
           ),
-          _buildPdfKpiItem(AppStrings.categoryDebts.tr(), '${stats.debtsCount}'),
+          _buildPdfKpiItem(
+            AppStrings.categoryDebts.tr(),
+            '${stats.debtsCount}',
+          ),
         ],
       ),
     );
   }
 
-  static pw.Widget _buildPdfKpiItem(String title, String value, {PdfColor? valueColor}) {
+  static pw.Widget _buildPdfKpiItem(
+    String title,
+    String value, {
+    PdfColor? valueColor,
+  }) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.center,
       children: [
@@ -578,7 +636,10 @@ class EmployeeActivityExportService {
           decoration: const pw.BoxDecoration(color: _primaryColor),
           children: headers.map((h) {
             return pw.Padding(
-              padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 5),
+              padding: const pw.EdgeInsets.symmetric(
+                horizontal: 4,
+                vertical: 5,
+              ),
               child: pw.Center(
                 child: pw.Text(
                   h,
@@ -598,7 +659,7 @@ class EmployeeActivityExportService {
           final isEven = i % 2 == 0;
           final dtStr = DateFormat('yyyy-MM-dd HH:mm').format(act.timestamp);
           final amtStr = act.amount != null && act.amount! > 0
-              ? '${act.amount!.toStringAsFixed(1)} $currency'
+              ? '${act.amount!.toSmartAmount()} $currency'
               : '-';
 
           return pw.TableRow(
@@ -609,20 +670,29 @@ class EmployeeActivityExportService {
               pw.Padding(
                 padding: const pw.EdgeInsets.all(4),
                 child: pw.Center(
-                  child: pw.Text('${i + 1}', style: const pw.TextStyle(fontSize: 8)),
+                  child: pw.Text(
+                    '${i + 1}',
+                    style: const pw.TextStyle(fontSize: 8),
+                  ),
                 ),
               ),
               pw.Padding(
                 padding: const pw.EdgeInsets.all(4),
                 child: pw.Center(
-                  child: pw.Text(dtStr, style: const pw.TextStyle(fontSize: 7.5)),
+                  child: pw.Text(
+                    dtStr,
+                    style: const pw.TextStyle(fontSize: 7.5),
+                  ),
                 ),
               ),
               pw.Padding(
                 padding: const pw.EdgeInsets.all(4),
                 child: pw.Text(
                   act.employeeName.cleanForPdf(),
-                  style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold),
+                  style: pw.TextStyle(
+                    fontSize: 8,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
                   overflow: pw.TextOverflow.clip,
                 ),
               ),
@@ -639,13 +709,19 @@ class EmployeeActivityExportService {
                 padding: const pw.EdgeInsets.all(4),
                 child: pw.Text(
                   act.actionTitle.cleanForPdf(),
-                  style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold),
+                  style: pw.TextStyle(
+                    fontSize: 8,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
                 ),
               ),
               pw.Padding(
                 padding: const pw.EdgeInsets.all(4),
                 child: pw.Center(
-                  child: pw.Text(amtStr.cleanForPdf(), style: const pw.TextStyle(fontSize: 7.5)),
+                  child: pw.Text(
+                    amtStr.cleanForPdf(),
+                    style: const pw.TextStyle(fontSize: 7.5),
+                  ),
                 ),
               ),
               pw.Padding(
@@ -664,8 +740,12 @@ class EmployeeActivityExportService {
                         : AppStrings.directOnline.tr(),
                     style: pw.TextStyle(
                       fontSize: 7,
-                      color: act.isOfflineSync ? _secondaryColor : _neutralMuted,
-                      fontWeight: act.isOfflineSync ? pw.FontWeight.bold : pw.FontWeight.normal,
+                      color: act.isOfflineSync
+                          ? _secondaryColor
+                          : _neutralMuted,
+                      fontWeight: act.isOfflineSync
+                          ? pw.FontWeight.bold
+                          : pw.FontWeight.normal,
                     ),
                   ),
                 ),
@@ -692,10 +772,12 @@ class EmployeeActivityExportService {
             style: const pw.TextStyle(fontSize: 8, color: _neutralMuted),
           ),
           pw.Text(
-            AppStrings.pageXOfY.tr(namedArgs: {
-              'current': '${context.pageNumber}',
-              'total': '${context.pagesCount}',
-            }),
+            AppStrings.pageXOfY.tr(
+              namedArgs: {
+                'current': '${context.pageNumber}',
+                'total': '${context.pagesCount}',
+              },
+            ),
             style: const pw.TextStyle(fontSize: 8, color: _neutralMuted),
           ),
         ],
@@ -724,8 +806,16 @@ class EmployeeActivityExportService {
       const primaryHex = '#1E56A0';
       const tintHex = '#D6E4F0';
 
-      void styleCell(int col, int row, {required String bgHex, required String fontHex, bool bold = false}) {
-        final cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: col, rowIndex: row));
+      void styleCell(
+        int col,
+        int row, {
+        required String bgHex,
+        required String fontHex,
+        bool bold = false,
+      }) {
+        final cell = sheet.cell(
+          CellIndex.indexByColumnRow(columnIndex: col, rowIndex: row),
+        );
         cell.cellStyle = CellStyle(
           bold: bold,
           backgroundColorHex: ExcelColor.fromHexString(bgHex),
@@ -734,19 +824,30 @@ class EmployeeActivityExportService {
       }
 
       // Row 0: Report Title Banner
-      sheet.appendRow([TextCellValue(AppStrings.activityAuditReport.tr()), TextCellValue('')]);
+      sheet.appendRow([
+        TextCellValue(AppStrings.activityAuditReport.tr()),
+        TextCellValue(''),
+      ]);
       styleCell(0, 0, bgHex: primaryHex, fontHex: '#FFFFFF', bold: true);
       styleCell(1, 0, bgHex: primaryHex, fontHex: '#FFFFFF', bold: true);
 
       // Row 1: Generation Date & Time
-      final nowFormatted = DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now());
-      sheet.appendRow([TextCellValue(AppStrings.exportDate.tr()), TextCellValue(nowFormatted)]);
+      final nowFormatted = DateFormat(
+        'yyyy-MM-dd HH:mm',
+      ).format(DateTime.now());
+      sheet.appendRow([
+        TextCellValue(AppStrings.exportDate.tr()),
+        TextCellValue(nowFormatted),
+      ]);
 
       // Row 2: Selected Period
       final periodText = dateRange != null
           ? '${DateFormat('yyyy-MM-dd').format(dateRange.start)} -> ${DateFormat('yyyy-MM-dd').format(dateRange.end)}'
           : AppStrings.allTime.tr();
-      sheet.appendRow([TextCellValue(AppStrings.statementPeriod.tr()), TextCellValue(periodText)]);
+      sheet.appendRow([
+        TextCellValue(AppStrings.statementPeriod.tr()),
+        TextCellValue(periodText),
+      ]);
 
       // Row 3: Employee Details Header
       if (employee != null) {
@@ -776,9 +877,15 @@ class EmployeeActivityExportService {
 
       // Row 4: Summary KPIs
       sheet.appendRow([
-        TextCellValue('${AppStrings.totalOperationsStat.tr()}: ${activities.length}'),
-        TextCellValue('${AppStrings.sales.tr()}: ${stats.salesCount} (${stats.totalSalesAmount.toStringAsFixed(1)})'),
-        TextCellValue('${AppStrings.expenses.tr()}: ${stats.expensesCount} (${stats.totalExpensesAmount.toStringAsFixed(1)})'),
+        TextCellValue(
+          '${AppStrings.totalOperationsStat.tr()}: ${activities.length}',
+        ),
+        TextCellValue(
+          '${AppStrings.sales.tr()}: ${stats.salesCount} (${stats.totalSalesAmount.toSmartAmount()})',
+        ),
+        TextCellValue(
+          '${AppStrings.expenses.tr()}: ${stats.expensesCount} (${stats.totalExpensesAmount.toSmartAmount()})',
+        ),
         TextCellValue('${AppStrings.categoryDebts.tr()}: ${stats.debtsCount}'),
       ]);
       for (var c = 0; c < 4; c++) {
@@ -811,7 +918,13 @@ class EmployeeActivityExportService {
             : (col == 8 ? 40.0 : (col == 6 ? 28.0 : 18.0));
         sheet.setColumnWidth(col, width);
 
-        styleCell(col, headerRowIndex, bgHex: primaryHex, fontHex: '#FFFFFF', bold: true);
+        styleCell(
+          col,
+          headerRowIndex,
+          bgHex: primaryHex,
+          fontHex: '#FFFFFF',
+          bold: true,
+        );
       }
 
       // Rows 7+: Data rows
@@ -830,9 +943,11 @@ class EmployeeActivityExportService {
           TextCellValue(act.actionTitle),
           DoubleCellValue(act.amount ?? 0.0),
           TextCellValue(act.details),
-          TextCellValue(act.isOfflineSync
-              ? AppStrings.offlineSynced.tr()
-              : AppStrings.directOnline.tr()),
+          TextCellValue(
+            act.isOfflineSync
+                ? AppStrings.offlineSynced.tr()
+                : AppStrings.directOnline.tr(),
+          ),
         ]);
 
         final rowIndex = headerRowIndex + 1 + i;
@@ -840,7 +955,9 @@ class EmployeeActivityExportService {
         final rowBgHex = isEven ? '#FFFFFF' : '#F8FAFC';
 
         for (var c = 0; c < tableHeaders.length; c++) {
-          final cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: c, rowIndex: rowIndex));
+          final cell = sheet.cell(
+            CellIndex.indexByColumnRow(columnIndex: c, rowIndex: rowIndex),
+          );
           cell.cellStyle = CellStyle(
             backgroundColorHex: ExcelColor.fromHexString(rowBgHex),
           );
@@ -849,7 +966,9 @@ class EmployeeActivityExportService {
 
       final bytes = excel.save();
       if (bytes == null) {
-        AppLogger.printMessage('EmployeeActivityExportService: excel.save() returned null');
+        AppLogger.printMessage(
+          'EmployeeActivityExportService: excel.save() returned null',
+        );
         return null;
       }
 
@@ -863,16 +982,25 @@ class EmployeeActivityExportService {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             backgroundColor: AppColors.success,
             content: Row(
               children: [
-                const Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 20),
+                const Icon(
+                  Icons.check_circle_outline_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     AppStrings.excelExportSuccess.tr(),
-                    style: TextStyles.customStyle(fontSize: 13, color: Colors.white),
+                    style: TextStyles.customStyle(
+                      fontSize: 13,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ],
@@ -891,10 +1019,9 @@ class EmployeeActivityExportService {
         }
       } else {
         try {
-          await Share.shareXFiles(
-            [XFile(file.path)],
-            text: AppStrings.teamActivityLogTitle.tr(),
-          );
+          await Share.shareXFiles([
+            XFile(file.path),
+          ], text: AppStrings.teamActivityLogTitle.tr());
         } catch (e) {
           AppLogger.printMessage('Share.shareXFiles error: $e');
         }
@@ -902,7 +1029,9 @@ class EmployeeActivityExportService {
 
       return file.path;
     } catch (e) {
-      AppLogger.printMessage('EmployeeActivityExportService.exportExcel error: $e');
+      AppLogger.printMessage(
+        'EmployeeActivityExportService.exportExcel error: $e',
+      );
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

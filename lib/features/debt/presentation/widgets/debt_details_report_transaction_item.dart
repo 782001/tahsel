@@ -474,10 +474,10 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
                               }
 
                               final newAmountRounded = double.parse(
-                                newAmount.toStringAsFixed(2),
+                                newAmount.toSmartAmount(),
                               );
                               final minAmountRounded = double.parse(
-                                minAmount.toStringAsFixed(2),
+                                minAmount.toSmartAmount(),
                               );
 
                               if ((newAmountRounded < minAmountRounded) &&
@@ -492,7 +492,7 @@ class DebtDetailsReportTransactionItem extends StatelessWidget {
                               if (maxAmount != null &&
                                   transaction.type != PaymentType.debtAdded) {
                                 final maxAmountRounded = double.parse(
-                                  maxAmount.toStringAsFixed(2),
+                                  maxAmount.toSmartAmount(),
                                 );
                                 if (newAmountRounded > maxAmountRounded) {
                                   setState(

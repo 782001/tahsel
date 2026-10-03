@@ -9,8 +9,8 @@ import 'package:intl/intl.dart';
 import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
-import 'package:tahsel/core/services/injection_container.dart' as di;
 import 'package:tahsel/core/services/activity_logger_service.dart';
+import 'package:tahsel/core/services/injection_container.dart' as di;
 import 'package:tahsel/core/services/invoice_pdf_service.dart';
 import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
@@ -747,9 +747,9 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
 
       if (di.sl.isRegistered<ActivityLoggerService>()) {
         final cust = _invoice.customerName ?? 'نقدي';
-        final surplusFormatted = surplus.toStringAsFixed(1);
-        final totalPaidFormatted = _invoice.totalPaid.toStringAsFixed(1);
-        final invTotalFormatted = _invoice.totalAmount.toStringAsFixed(1);
+        final surplusFormatted = surplus.toSmartAmount();
+        final totalPaidFormatted = _invoice.totalPaid.toSmartAmount();
+        final invTotalFormatted = _invoice.totalAmount.toSmartAmount();
         di.sl<ActivityLoggerService>().appendToBatch(
           batch,
           ownerUid: uid,
@@ -1019,8 +1019,8 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                               ? 'طباعة عرض سعر: ${_invoice.referenceNumber}'
                               : 'طباعة فاتورة مبيعات: ${_invoice.referenceNumber}';
                           final details = isQuo
-                              ? 'قام الموظف بطباعة عرض سعر رقم ${_invoice.referenceNumber} للعميل ${_invoice.customerName ?? "نقدي"} بإجمالي ${_invoice.totalAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}'
-                              : 'قام الموظف بطباعة فاتورة مبيعات رقم ${_invoice.referenceNumber} للعميل ${_invoice.customerName ?? "نقدي"} بإجمالي ${_invoice.totalAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}';
+                              ? 'قام الموظف بطباعة عرض سعر رقم ${_invoice.referenceNumber} للعميل ${_invoice.customerName ?? "نقدي"} بإجمالي ${_invoice.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}'
+                              : 'قام الموظف بطباعة فاتورة مبيعات رقم ${_invoice.referenceNumber} للعميل ${_invoice.customerName ?? "نقدي"} بإجمالي ${_invoice.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}';
                           di.sl<ActivityLoggerService>().logStandalone(
                             ownerUid: ownerUid,
                             actionCategory: 'invoices',
@@ -1124,8 +1124,8 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                               ? 'مشاركة/تصدير عرض سعر: ${_invoice.referenceNumber}'
                               : 'مشاركة/تصدير فاتورة مبيعات: ${_invoice.referenceNumber}';
                           final details = isQuo
-                              ? 'قام الموظف بمشاركة/تصدير عرض سعر PDF رقم ${_invoice.referenceNumber} للعميل ${_invoice.customerName ?? "نقدي"} بإجمالي ${_invoice.totalAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}'
-                              : 'قام الموظف بمشاركة/تصدير فاتورة مبيعات PDF رقم ${_invoice.referenceNumber} للعميل ${_invoice.customerName ?? "نقدي"} بإجمالي ${_invoice.totalAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}';
+                              ? 'قام الموظف بمشاركة/تصدير عرض سعر PDF رقم ${_invoice.referenceNumber} للعميل ${_invoice.customerName ?? "نقدي"} بإجمالي ${_invoice.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}'
+                              : 'قام الموظف بمشاركة/تصدير فاتورة مبيعات PDF رقم ${_invoice.referenceNumber} للعميل ${_invoice.customerName ?? "نقدي"} بإجمالي ${_invoice.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}';
                           di.sl<ActivityLoggerService>().logStandalone(
                             ownerUid: ownerUid,
                             actionCategory: 'invoices',

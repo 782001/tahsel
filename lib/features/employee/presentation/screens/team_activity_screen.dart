@@ -8,12 +8,12 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/features/employee/data/models/app_employee_model.dart';
 import 'package:tahsel/features/employee/domain/entities/employee_activity_entity.dart';
 import 'package:tahsel/features/employee/presentation/cubit/employee_activity_cubit.dart';
 import 'package:tahsel/features/employee/presentation/cubit/employee_activity_state.dart';
 import 'package:tahsel/features/employee/presentation/cubit/team_management_cubit.dart';
 import 'package:tahsel/features/employee/presentation/cubit/team_management_state.dart';
-import 'package:tahsel/features/employee/data/models/app_employee_model.dart';
 import 'package:tahsel/features/employee/presentation/utils/activity_field_localizer.dart';
 import 'package:tahsel/features/employee/presentation/utils/activity_navigation_helper.dart';
 import 'package:tahsel/features/employee/presentation/utils/employee_activity_export_service.dart';
@@ -102,7 +102,8 @@ class _TeamActivityScreenState extends State<TeamActivityScreen> {
               onPressed: () {
                 AppEmployeeModel? selectedEmp;
                 if (state.selectedEmployeeUid != 'all') {
-                  for (final e in context.read<TeamManagementCubit>().employees) {
+                  for (final e
+                      in context.read<TeamManagementCubit>().employees) {
                     if (e.authUid == state.selectedEmployeeUid) {
                       selectedEmp = e;
                       break;
@@ -455,7 +456,7 @@ class _TeamActivityScreenState extends State<TeamActivityScreen> {
             title: AppStrings.sales.tr(),
             value: '${stats.salesCount}',
             subtitle: stats.totalSalesAmount > 0
-                ? '${stats.totalSalesAmount.toStringAsFixed(1)} $currency'
+                ? '${stats.totalSalesAmount.toSmartAmount()} $currency'
                 : null,
             icon: Icons.shopping_bag_outlined,
             color: AppColors.success,
@@ -467,7 +468,7 @@ class _TeamActivityScreenState extends State<TeamActivityScreen> {
             title: AppStrings.expenses.tr(),
             value: '${stats.expensesCount}',
             subtitle: stats.totalExpensesAmount > 0
-                ? '${stats.totalExpensesAmount.toStringAsFixed(1)} $currency'
+                ? '${stats.totalExpensesAmount.toSmartAmount()} $currency'
                 : null,
             icon: Icons.money_off_csred_rounded,
             color: AppColors.error,
@@ -765,7 +766,9 @@ class _TeamActivityScreenState extends State<TeamActivityScreen> {
                                     borderRadius: BorderRadius.circular(6.r),
                                   ),
                                   child: Text(
-                                    ActivityFieldLocalizer.formatRole(activity.rolePreset),
+                                    ActivityFieldLocalizer.formatRole(
+                                      activity.rolePreset,
+                                    ),
                                     style: TextStyles.customStyle(
                                       fontSize: 9.5,
                                       color: AppColors.sandText,
@@ -960,7 +963,7 @@ class _TeamActivityScreenState extends State<TeamActivityScreen> {
                     if (activity.amount != null && activity.amount! > 0)
                       _buildDetailRow(
                         AppStrings.amount.tr(),
-                        '${activity.amount!.toStringAsFixed(2)} $currency',
+                        '${activity.amount!.toSmartAmount()} $currency',
                         valueColor: meta.color,
                         isBold: true,
                       ),

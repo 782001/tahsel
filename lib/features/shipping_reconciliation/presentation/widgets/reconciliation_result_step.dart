@@ -66,7 +66,7 @@ class _ReconciliationResultStepState extends State<ReconciliationResultStep> {
               actionType: 'export_shipping_reconciliation_excel',
               actionTitle: 'تصدير تقرير مطابقة الشحن Excel',
               details:
-                  'تصدير تقرير مطابقة شحنات Excel: إجمالي المطلوب ${dashboard.totalRequiredAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}، المحصل ${dashboard.totalCollectedAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}، المتبقي ${dashboard.totalRemainingAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} (${dashboard.totalReconciledRecords} شحنة)',
+                  'تصدير تقرير مطابقة شحنات Excel: إجمالي المطلوب ${dashboard.totalRequiredAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}، المحصل ${dashboard.totalCollectedAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}، المتبقي ${dashboard.totalRemainingAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()} (${dashboard.totalReconciledRecords} شحنة)',
               amount: dashboard.totalCollectedAmount,
               extraData: {
                 'totalRequired': dashboard.totalRequiredAmount,
@@ -76,7 +76,8 @@ class _ReconciliationResultStepState extends State<ReconciliationResultStep> {
                 'matchedCount': dashboard.matchedOrdersCount,
                 'deliveredCount': dashboard.deliveredCount,
                 'returnedCount': dashboard.returnedCount,
-                'conflictsCount': dashboard.dataConflictsCount +
+                'conflictsCount':
+                    dashboard.dataConflictsCount +
                     dashboard.duplicateOrdersCount,
               },
             );

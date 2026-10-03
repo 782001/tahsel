@@ -414,8 +414,9 @@ class FinancialReportPdfExporter {
     required bool canViewExpenses,
     required bool isArabic,
   }) {
-    final currency = CurrencyService.instance.currentSymbol
-        .cleanForPdf(AppStrings.currencyEgp.tr());
+    final currency = CurrencyService.instance.currentSymbol.cleanForPdf(
+      AppStrings.currencyEgp.tr(),
+    );
     final List<pw.Widget> tiles = [];
 
     if (canViewSales) {
@@ -470,7 +471,7 @@ class FinancialReportPdfExporter {
         pw.Expanded(
           child: _buildMetricTile(
             title: isArabic ? 'هامش الربح التشغيلي' : 'Operating Margin',
-            value: '${margin.toStringAsFixed(1)}%',
+            value: '${margin.toSmartAmount()}%',
             bgColor: _neutralLight,
             textColor: _navyPrimary,
           ),
@@ -489,8 +490,9 @@ class FinancialReportPdfExporter {
     required ReportsEntity reports,
     required bool isArabic,
   }) {
-    final currency = CurrencyService.instance.currentSymbol
-        .cleanForPdf(AppStrings.currencyEgp.tr());
+    final currency = CurrencyService.instance.currentSymbol.cleanForPdf(
+      AppStrings.currencyEgp.tr(),
+    );
 
     return pw.Container(
       padding: const pw.EdgeInsets.all(12),
@@ -549,8 +551,9 @@ class FinancialReportPdfExporter {
     required ReportsEntity reports,
     required bool isArabic,
   }) {
-    final currency = CurrencyService.instance.currentSymbol
-        .cleanForPdf(AppStrings.currencyEgp.tr());
+    final currency = CurrencyService.instance.currentSymbol.cleanForPdf(
+      AppStrings.currencyEgp.tr(),
+    );
 
     return pw.Container(
       padding: const pw.EdgeInsets.all(12),
@@ -648,8 +651,9 @@ class FinancialReportPdfExporter {
     required ReportsEntity reports,
     required bool isArabic,
   }) {
-    final currency = CurrencyService.instance.currentSymbol
-        .cleanForPdf(AppStrings.currencyEgp.tr());
+    final currency = CurrencyService.instance.currentSymbol.cleanForPdf(
+      AppStrings.currencyEgp.tr(),
+    );
 
     return pw.Row(
       children: [

@@ -30,7 +30,7 @@ class ExpensesBalance extends StatelessWidget {
           previousMonthAmount = state.previousStats!.previousMonthAmount;
         }
 
-        final amountString = totalAmount.toStringAsFixed(1);
+        final amountString = totalAmount.toSmartAmount();
         final parts = amountString.split('.');
         final amountMain = parts[0];
         final amountDecimal = ".${parts[1]}";

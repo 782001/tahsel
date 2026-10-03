@@ -234,7 +234,7 @@ class ExpensesList extends StatelessWidget {
             ),
           ),
           Text(
-            "${record.amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}",
+            "${record.amount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
             style: TextStyles.customStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,

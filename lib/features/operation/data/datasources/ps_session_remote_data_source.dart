@@ -1,13 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+
 import '../../../../core/error/firebase_error_handler.dart';
 import '../../../../core/services/activity_logger_service.dart';
 import '../../../../core/services/injection_container.dart';
 import '../../../../core/utils/app_strings.dart';
 import '../../../../core/utils/summary_helper.dart';
 import '../../../cashbox/domain/entities/vault_transaction_entity.dart';
-import '../models/ps_session_model.dart';
 import '../models/operation_model.dart';
+import '../models/ps_session_model.dart';
 
 abstract class PsSessionRemoteDataSource {
   /// Creates a new session document in Firestore. Returns the document ID.
@@ -49,14 +51,20 @@ class PsSessionRemoteDataSourceImpl implements PsSessionRemoteDataSource {
       await docRef.set(session.toJson());
 
       if (sl.isRegistered<ActivityLoggerService>()) {
-        final device = (session.deviceId != null && session.deviceId!.isNotEmpty)
+        final device =
+            (session.deviceId != null && session.deviceId!.isNotEmpty)
             ? session.deviceId!
-            : ((session.roomId != null && session.roomId!.isNotEmpty) ? session.roomId! : 'جلسة');
+            : ((session.roomId != null && session.roomId!.isNotEmpty)
+                  ? session.roomId!
+                  : 'جلسة');
         final isTime = session.subType == 'time';
         final subDesc = isTime ? 'وقت مفتوح' : 'أدوار';
-        final hasCustomer = session.customerName != null &&
+        final hasCustomer =
+            session.customerName != null &&
             session.customerName!.trim().isNotEmpty;
-        final cust = hasCustomer ? ' (العميل: ${session.customerName!.trim()})' : '';
+        final cust = hasCustomer
+            ? ' (العميل: ${session.customerName!.trim()})'
+            : '';
         final actionTitle = hasCustomer
             ? 'بدء جلسة: $device للعميل ${session.customerName!.trim()}'
             : 'بدء جلسة: $device';
@@ -66,7 +74,8 @@ class PsSessionRemoteDataSourceImpl implements PsSessionRemoteDataSource {
           actionCategory: 'sales',
           actionType: 'pos_start_session',
           actionTitle: actionTitle,
-          details: 'بدء جلسة $subDesc للجهاز $device بسعر ${session.rate.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}/ساعة$cust',
+          details:
+              'بدء جلسة $subDesc للجهاز $device بسعر ${session.rate.toSmartAmount()} ${AppStrings.currencyEgp.tr()}/ساعة$cust',
           amount: session.rate,
           extraData: {
             'sessionId': docRef.id,
@@ -166,8 +175,8 @@ class PsSessionRemoteDataSourceImpl implements PsSessionRemoteDataSource {
             .doc('vault_tx_ps_$sessionId');
         final vaultSummaryRef = userRef.collection('vault').doc('summary');
 
-        final String cust = session.customerName != null &&
-                session.customerName!.isNotEmpty
+        final String cust =
+            session.customerName != null && session.customerName!.isNotEmpty
             ? session.customerName!
             : 'عميل';
 
@@ -183,44 +192,46 @@ class PsSessionRemoteDataSourceImpl implements PsSessionRemoteDataSource {
           'createdAt': Timestamp.fromDate(endTime),
         });
 
-        batch.set(
-          vaultSummaryRef,
-          {
-            'currentBalance': FieldValue.increment(paidAmount),
-            'totalIn': FieldValue.increment(paidAmount),
-            'transactionCount': FieldValue.increment(1),
-            'lastUpdatedAt': FieldValue.serverTimestamp(),
-          },
-          SetOptions(merge: true),
-        );
+        batch.set(vaultSummaryRef, {
+          'currentBalance': FieldValue.increment(paidAmount),
+          'totalIn': FieldValue.increment(paidAmount),
+          'transactionCount': FieldValue.increment(1),
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
       }
 
       // 5. Log Employee Activity
       if (sl.isRegistered<ActivityLoggerService>()) {
-        final device = (session.deviceId != null && session.deviceId!.isNotEmpty)
+        final device =
+            (session.deviceId != null && session.deviceId!.isNotEmpty)
             ? session.deviceId!
-            : ((session.roomId != null && session.roomId!.isNotEmpty) ? session.roomId! : 'جلسة');
+            : ((session.roomId != null && session.roomId!.isNotEmpty)
+                  ? session.roomId!
+                  : 'جلسة');
         final hasDebt = remainingDebt > 0;
-        final totalFormatted = totalAmount.toStringAsFixed(1);
-        final paidFormatted = paidAmount.toStringAsFixed(1);
-        final remFormatted = remainingDebt.toStringAsFixed(1);
-        final hasCustomer = session.customerName != null &&
+        final totalFormatted = totalAmount.toSmartAmount();
+        final paidFormatted = paidAmount.toSmartAmount();
+        final remFormatted = remainingDebt.toSmartAmount();
+        final hasCustomer =
+            session.customerName != null &&
             session.customerName!.trim().isNotEmpty;
         final custName = hasCustomer ? session.customerName!.trim() : '';
         final cust = hasCustomer ? ' للعميل $custName' : '';
         final actionTitle = hasCustomer
             ? (hasDebt
-                ? 'إنهاء جلسة بمديونية: $custName ($device)'
-                : 'تحصيل جلسة: $custName ($device)')
+                  ? 'إنهاء جلسة بمديونية: $custName ($device)'
+                  : 'تحصيل جلسة: $custName ($device)')
             : (hasDebt
-                ? 'إنهاء جلسة بمديونية: $device'
-                : 'إنهاء وتحصيل جلسة: $device');
+                  ? 'إنهاء جلسة بمديونية: $device'
+                  : 'إنهاء وتحصيل جلسة: $device');
 
         sl<ActivityLoggerService>().appendToBatch(
           batch,
           ownerUid: uid,
           actionCategory: 'sales',
-          actionType: hasDebt ? 'pos_end_session_with_debt' : 'pos_end_session_cash',
+          actionType: hasDebt
+              ? 'pos_end_session_with_debt'
+              : 'pos_end_session_cash',
           actionTitle: actionTitle,
           details: hasDebt
               ? 'إنهاء جلسة للجهاز $device$cust بإجمالي $totalFormatted ${AppStrings.currencyEgp.tr()} (المدفوع: $paidFormatted ج.م، وترحيل متبقي دين: $remFormatted ج.م)'

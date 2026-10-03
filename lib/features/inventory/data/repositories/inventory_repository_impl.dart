@@ -313,7 +313,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
             actionType: 'add_product',
             actionTitle: 'إضافة صنف: ${product.name}',
             details:
-                'إضافة صنف جديد بالمخزون: ${product.name} بسعر بيع ${product.sellingPrice.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} وسعر شراء ${product.purchasePrice.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} (الكمية الأولية: $finalQuantity)',
+                'إضافة صنف جديد بالمخزون: ${product.name} بسعر بيع ${product.sellingPrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()} وسعر شراء ${product.purchasePrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()} (الكمية الأولية: $finalQuantity)',
             amount: product.sellingPrice,
             extraData: {
               'productId': product.id,
@@ -321,8 +321,10 @@ class InventoryRepositoryImpl implements InventoryRepository {
               'purchasePrice': product.purchasePrice,
               'sellingPrice': product.sellingPrice,
               'quantity': finalQuantity,
-              if (product.categoryName.isNotEmpty) 'category': product.categoryName,
-              if (product.supplierName.isNotEmpty) 'supplier': product.supplierName,
+              if (product.categoryName.isNotEmpty)
+                'category': product.categoryName,
+              if (product.supplierName.isNotEmpty)
+                'supplier': product.supplierName,
             },
           );
         } else {
@@ -333,28 +335,32 @@ class InventoryRepositoryImpl implements InventoryRepository {
           if (existing.sellingPrice != product.sellingPrice) {
             final sellPriceDiff = product.sellingPrice - existing.sellingPrice;
             final sellDiffFormatted = sellPriceDiff >= 0
-                ? '+${sellPriceDiff.toStringAsFixed(1)}'
-                : sellPriceDiff.toStringAsFixed(1);
+                ? '+${sellPriceDiff.toSmartAmount()}'
+                : sellPriceDiff.toSmartAmount();
             changes.add(
-                'سعر البيع: من ${existing.sellingPrice.toStringAsFixed(1)} إلى ${product.sellingPrice.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ($sellDiffFormatted)');
+              'سعر البيع: من ${existing.sellingPrice.toSmartAmount()} إلى ${product.sellingPrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()} ($sellDiffFormatted)',
+            );
           }
           if (existing.purchasePrice != product.purchasePrice) {
             final purPriceDiff = product.purchasePrice - existing.purchasePrice;
             final purDiffFormatted = purPriceDiff >= 0
-                ? '+${purPriceDiff.toStringAsFixed(1)}'
-                : purPriceDiff.toStringAsFixed(1);
+                ? '+${purPriceDiff.toSmartAmount()}'
+                : purPriceDiff.toSmartAmount();
             changes.add(
-                'سعر الشراء: من ${existing.purchasePrice.toStringAsFixed(1)} إلى ${product.purchasePrice.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ($purDiffFormatted)');
+              'سعر الشراء: من ${existing.purchasePrice.toSmartAmount()} إلى ${product.purchasePrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()} ($purDiffFormatted)',
+            );
           }
           if (existing.currentQuantity != finalQuantity) {
             final qtyDiff = finalQuantity - existing.currentQuantity;
             final qtyDiffFormatted = qtyDiff >= 0 ? '+$qtyDiff' : '$qtyDiff';
             changes.add(
-                'الكمية: من ${existing.currentQuantity} إلى $finalQuantity ($qtyDiffFormatted)');
+              'الكمية: من ${existing.currentQuantity} إلى $finalQuantity ($qtyDiffFormatted)',
+            );
           }
           if (existing.minQuantity != product.minQuantity) {
             changes.add(
-                'حد الطلب/الإنذار: من ${existing.minQuantity} إلى ${product.minQuantity}');
+              'حد الطلب/الإنذار: من ${existing.minQuantity} إلى ${product.minQuantity}',
+            );
           }
           if ((existing.barcode ?? '') != (product.barcode ?? '')) {
             final oldBar = existing.barcode?.isNotEmpty == true
@@ -393,7 +399,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
           }
           if (existing.isAvailable != product.isAvailable) {
             changes.add(
-                'حالة التوفر: ${product.isAvailable ? "متاح للبيع" : "معطل/غير متاح"}');
+              'حالة التوفر: ${product.isAvailable ? "متاح للبيع" : "معطل/غير متاح"}',
+            );
           }
 
           final actionDetails = changes.isNotEmpty
@@ -526,7 +533,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
   ) async {
     try {
       final existingCategories = await localDataSource.getCategories();
-      final existing = existingCategories.where((c) => c.id == category.id).firstOrNull;
+      final existing = existingCategories
+          .where((c) => c.id == category.id)
+          .firstOrNull;
       final isNew = existing == null;
 
       final model = InventoryCategoryModel.fromEntity(
@@ -589,7 +598,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
           ownerUid: _currentUid!,
           actionCategory: 'inventory',
           actionType: isNew ? 'add_category' : 'update_category',
-          actionTitle: isNew ? 'إضافة تصنيف: ${category.name}' : 'تعديل تصنيف: ${category.name}',
+          actionTitle: isNew
+              ? 'إضافة تصنيف: ${category.name}'
+              : 'تعديل تصنيف: ${category.name}',
           details: actionDetails,
           extraData: {
             'categoryId': category.id,
@@ -643,11 +654,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
           actionCategory: 'inventory',
           actionType: 'delete_category',
           actionTitle: 'حذف تصنيف: $catName',
-          details: 'تم حذف تصنيف الأصناف ($catName) وفك ارتباطه بالمنتجات التابعة له',
-          extraData: {
-            'categoryId': id,
-            'name': catName,
-          },
+          details:
+              'تم حذف تصنيف الأصناف ($catName) وفك ارتباطه بالمنتجات التابعة له',
+          extraData: {'categoryId': id, 'name': catName},
         );
       }
 
@@ -708,7 +717,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
   ) async {
     try {
       final existingSuppliers = await localDataSource.getSuppliers();
-      final existing = existingSuppliers.where((s) => s.id == supplier.id).firstOrNull;
+      final existing = existingSuppliers
+          .where((s) => s.id == supplier.id)
+          .firstOrNull;
       final isNew = existing == null;
 
       final model = InventorySupplierModel.fromEntity(
@@ -763,7 +774,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
       if (_currentUid != null && sl.isRegistered<ActivityLoggerService>()) {
         String actionDetails;
         if (isNew) {
-          final phonePart = supplier.phone.isNotEmpty ? " (هاتف: ${supplier.phone})" : "";
+          final phonePart = supplier.phone.isNotEmpty
+              ? " (هاتف: ${supplier.phone})"
+              : "";
           final compPart = supplier.companyName?.isNotEmpty == true
               ? " - شركة: ${supplier.companyName}"
               : "";
@@ -775,26 +788,34 @@ class InventoryRepositoryImpl implements InventoryRepository {
             changes.add('الاسم: من "${existing.name}" إلى "${supplier.name}"');
           }
           if (existing.phone != supplier.phone) {
-            changes.add('الهاتف: من "${existing.phone}" إلى "${supplier.phone}"');
+            changes.add(
+              'الهاتف: من "${existing.phone}" إلى "${supplier.phone}"',
+            );
           }
           if ((existing.companyName ?? '') != (supplier.companyName ?? '')) {
             changes.add(
-                'الشركة: من "${existing.companyName ?? 'بدون'}" إلى "${supplier.companyName ?? 'بدون'}"');
+              'الشركة: من "${existing.companyName ?? 'بدون'}" إلى "${supplier.companyName ?? 'بدون'}"',
+            );
           }
           if ((existing.taxNumber ?? '') != (supplier.taxNumber ?? '')) {
             changes.add(
-                'الرقم الضريبي: من "${existing.taxNumber ?? 'بدون'}" إلى "${supplier.taxNumber ?? 'بدون'}"');
+              'الرقم الضريبي: من "${existing.taxNumber ?? 'بدون'}" إلى "${supplier.taxNumber ?? 'بدون'}"',
+            );
           }
           if (existing.address != supplier.address) {
-            changes.add('العنوان: من "${existing.address}" إلى "${supplier.address}"');
+            changes.add(
+              'العنوان: من "${existing.address}" إلى "${supplier.address}"',
+            );
           }
           if ((existing.email ?? '') != (supplier.email ?? '')) {
             changes.add(
-                'البريد: من "${existing.email ?? 'بدون'}" إلى "${supplier.email ?? 'بدون'}"');
+              'البريد: من "${existing.email ?? 'بدون'}" إلى "${supplier.email ?? 'بدون'}"',
+            );
           }
           if ((existing.notes ?? '') != (supplier.notes ?? '')) {
             changes.add(
-                'الملاحظات: من "${existing.notes ?? 'بدون'}" إلى "${supplier.notes ?? 'بدون'}"');
+              'الملاحظات: من "${existing.notes ?? 'بدون'}" إلى "${supplier.notes ?? 'بدون'}"',
+            );
           }
 
           actionDetails = changes.isNotEmpty
@@ -806,7 +827,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
           ownerUid: _currentUid!,
           actionCategory: 'inventory',
           actionType: isNew ? 'add_supplier' : 'update_supplier',
-          actionTitle: isNew ? 'إضافة مورد: ${supplier.name}' : 'تعديل بيانات مورد: ${supplier.name}',
+          actionTitle: isNew
+              ? 'إضافة مورد: ${supplier.name}'
+              : 'تعديل بيانات مورد: ${supplier.name}',
           details: actionDetails,
           extraData: {
             'supplierId': supplier.id,
@@ -861,11 +884,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
           actionCategory: 'inventory',
           actionType: 'delete_supplier',
           actionTitle: 'حذف مورد: $supName',
-          details: 'تم حذف المورد ($supName) نهائياً وفك ارتباطه بالأصناف التابعة له',
-          extraData: {
-            'supplierId': id,
-            'name': supName,
-          },
+          details:
+              'تم حذف المورد ($supName) نهائياً وفك ارتباطه بالأصناف التابعة له',
+          extraData: {'supplierId': id, 'name': supName},
         );
       }
 
@@ -1310,7 +1331,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
           actionType: 'purchase',
           actionTitle: 'فاتورة مشتريات: ${purchase.supplierName}',
           details:
-              'شراء بضاعة من المورد ${purchase.supplierName} بمبلغ ${purchase.totalAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} (${purchase.items.length} أصناف) - المدفوع: ${purchase.paidAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}، والمتبقي دين: ${purchase.remainingDebt.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
+              'شراء بضاعة من المورد ${purchase.supplierName} بمبلغ ${purchase.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()} (${purchase.items.length} أصناف) - المدفوع: ${purchase.paidAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}، والمتبقي دين: ${purchase.remainingDebt.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
           amount: purchase.totalAmount,
           extraData: {
             'purchaseId': purchase.id,
@@ -1473,7 +1494,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
           actionType: 'delete_purchase',
           actionTitle: 'حذف فاتورة شراء: #$invNum',
           details:
-              'تم حذف فاتورة شراء للمورد ${purchase.supplierName} بقيمة ${purchase.totalAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} (${purchase.items.length} أصناف) واسترداد الأرصدة وإلغاء قيود الديون والمصروفات',
+              'تم حذف فاتورة شراء للمورد ${purchase.supplierName} بقيمة ${purchase.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()} (${purchase.items.length} أصناف) واسترداد الأرصدة وإلغاء قيود الديون والمصروفات',
           amount: purchase.totalAmount,
           extraData: {
             'purchaseId': purchase.id,
@@ -1678,27 +1699,31 @@ class InventoryRepositoryImpl implements InventoryRepository {
         final changes = <String>[];
         if (oldPurchase.supplierName != newPurchase.supplierName) {
           changes.add(
-              'المورد: من "${oldPurchase.supplierName}" إلى "${newPurchase.supplierName}"');
+            'المورد: من "${oldPurchase.supplierName}" إلى "${newPurchase.supplierName}"',
+          );
         }
         if (oldPurchase.totalAmount != newPurchase.totalAmount) {
           final delta = newPurchase.totalAmount - oldPurchase.totalAmount;
           final deltaFormatted = delta >= 0
-              ? '+${delta.toStringAsFixed(1)}'
-              : delta.toStringAsFixed(1);
+              ? '+${delta.toSmartAmount()}'
+              : delta.toSmartAmount();
           changes.add(
-              'إجمالي الفاتورة: من ${oldPurchase.totalAmount.toStringAsFixed(1)} إلى ${newPurchase.totalAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ($deltaFormatted)');
+            'إجمالي الفاتورة: من ${oldPurchase.totalAmount.toSmartAmount()} إلى ${newPurchase.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()} ($deltaFormatted)',
+          );
         }
         if (oldPurchase.paidAmount != newPurchase.paidAmount) {
           final deltaPaid = newPurchase.paidAmount - oldPurchase.paidAmount;
           final deltaPaidFormatted = deltaPaid >= 0
-              ? '+${deltaPaid.toStringAsFixed(1)}'
-              : deltaPaid.toStringAsFixed(1);
+              ? '+${deltaPaid.toSmartAmount()}'
+              : deltaPaid.toSmartAmount();
           changes.add(
-              'المدفوع نقداً: من ${oldPurchase.paidAmount.toStringAsFixed(1)} إلى ${newPurchase.paidAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ($deltaPaidFormatted)');
+            'المدفوع نقداً: من ${oldPurchase.paidAmount.toSmartAmount()} إلى ${newPurchase.paidAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()} ($deltaPaidFormatted)',
+          );
         }
         if (oldPurchase.items.length != newPurchase.items.length) {
           changes.add(
-              'عدد الأصناف: من ${oldPurchase.items.length} إلى ${newPurchase.items.length}');
+            'عدد الأصناف: من ${oldPurchase.items.length} إلى ${newPurchase.items.length}',
+          );
         }
 
         final actionDetails = changes.isNotEmpty
@@ -1823,7 +1848,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
       }
 
       if (_currentUid != null && sl.isRegistered<ActivityLoggerService>()) {
-        final sign = adjustmentQuantity >= 0 ? "+$adjustmentQuantity" : "$adjustmentQuantity";
+        final sign = adjustmentQuantity >= 0
+            ? "+$adjustmentQuantity"
+            : "$adjustmentQuantity";
         sl<ActivityLoggerService>().logStandalone(
           ownerUid: _currentUid!,
           actionCategory: 'inventory',

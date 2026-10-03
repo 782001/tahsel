@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -41,7 +42,7 @@ class QuickAddSummaryCard extends StatelessWidget {
           const SizedBox(height: 4),
           FittedBox(
             child: Text(
-              '${totalDue.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
+              '${totalDue.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
               style: TextStyles.customStyle(
                 fontSize: 48,
                 fontWeight: FontWeight.w900,

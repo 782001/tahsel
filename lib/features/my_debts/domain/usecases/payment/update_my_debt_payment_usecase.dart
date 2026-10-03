@@ -1,10 +1,10 @@
 import 'package:dartz/dartz.dart';
 import 'package:tahsel/core/base_usecase/base_usecase.dart';
 import 'package:tahsel/core/error/failures.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
-import 'package:tahsel/features/my_debts/domain/repositories/my_debt_repository.dart';
-
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/features/my_debts/domain/repositories/my_debt_repository.dart';
 
 class UpdateMyDebtPaymentParams {
   final String uid;
@@ -36,17 +36,15 @@ class UpdateMyDebtPaymentUseCase
 
   @override
   Future<Either<Failure, void>> call(UpdateMyDebtPaymentParams params) {
-    final newAmountRounded = double.parse(params.newAmount.toStringAsFixed(2));
-    final minAmountRounded = double.parse(params.minAmount.toStringAsFixed(2));
+    final newAmountRounded = double.parse(params.newAmount.toSmartAmount());
+    final minAmountRounded = double.parse(params.minAmount.toSmartAmount());
 
     if (params.isDebtAdded && (newAmountRounded < minAmountRounded)) {
       return Future.value(Left(ServerFailure(AppStrings.minValueError.tr())));
     }
 
     if (!params.isDebtAdded && params.maxAmount != null) {
-      final maxAmountRounded = double.parse(
-        params.maxAmount!.toStringAsFixed(2),
-      );
+      final maxAmountRounded = double.parse(params.maxAmount!.toSmartAmount());
       if (newAmountRounded > maxAmountRounded) {
         return Future.value(
           Left(ServerFailure(AppStrings.paymentExceedsRemaining.tr())),

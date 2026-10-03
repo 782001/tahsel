@@ -460,7 +460,7 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
           actionType: 'send_whatsapp_reminder',
           actionTitle: 'إرسال تذكير واتساب: ${currentDetail.customerName}',
           details:
-              'إرسال إشعار تذكير ومطالبة مالية للعميل ${currentDetail.customerName} عبر واتساب بقيمة ${reminderAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
+              'إرسال إشعار تذكير ومطالبة مالية للعميل ${currentDetail.customerName} عبر واتساب بقيمة ${reminderAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
           amount: reminderAmount,
           extraData: {
             'customerName': currentDetail.customerName,

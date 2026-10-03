@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -36,8 +37,9 @@ class _PaymentReminderDialogState extends State<PaymentReminderDialog> {
   @override
   void initState() {
     super.initState();
-    _amountController =
-        TextEditingController(text: widget.totalRemaining.toStringAsFixed(1));
+    _amountController = TextEditingController(
+      text: widget.totalRemaining.toSmartAmount(),
+    );
     _noteController = TextEditingController(text: widget.defaultNote ?? '');
     _selectedDate = widget.defaultDate ?? DateTime.now();
   }
@@ -110,8 +112,8 @@ class _PaymentReminderDialogState extends State<PaymentReminderDialog> {
       'note': _noteController.text.trim().isNotEmpty
           ? _noteController.text.trim()
           : (widget.defaultNote?.isNotEmpty == true
-              ? widget.defaultNote!
-              : AppStrings.customerDebts.tr()),
+                ? widget.defaultNote!
+                : AppStrings.customerDebts.tr()),
       'targetDate': _selectedDate,
     });
   }

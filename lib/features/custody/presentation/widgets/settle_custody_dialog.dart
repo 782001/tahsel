@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
@@ -65,7 +66,7 @@ class _SettleCustodyDialogState extends State<SettleCustodyDialog> {
         ? widget.custody.remainingAmount
         : 0.0;
     _actualReturnedController = TextEditingController(
-      text: _actualReturned.toStringAsFixed(2),
+      text: _actualReturned.toSmartAmount(),
     );
     _calculateVariance();
   }

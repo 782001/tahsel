@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/date_formatter.dart';
 import 'package:tahsel/features/offline_sync/data/models/offline_record.dart';
@@ -79,9 +80,10 @@ class ExpenseCubit extends Cubit<ExpenseState> {
     result.fold(
       (failure) {
         final errorMsg = failure.message.toLowerCase();
-        final isOfflineError = errorMsg.contains('unavailable') || 
-                               errorMsg.contains('network') || 
-                               errorMsg.contains('resolve host');
+        final isOfflineError =
+            errorMsg.contains('unavailable') ||
+            errorMsg.contains('network') ||
+            errorMsg.contains('resolve host');
 
         if (pendingRecords.isNotEmpty || isOfflineError) {
           emit(
@@ -262,7 +264,7 @@ class ExpenseCubit extends Cubit<ExpenseState> {
       isUp = true;
     }
 
-    percentage = double.parse(percentage.toStringAsFixed(1));
+    percentage = double.parse(percentage.toSmartAmount());
 
     return ExpenseStats(
       totalAmount: currentTotal,
@@ -330,9 +332,10 @@ class ExpenseCubit extends Cubit<ExpenseState> {
     result.fold(
       (failure) async {
         final errorMsg = failure.message.toLowerCase();
-        final isOfflineError = errorMsg.contains('unavailable') || 
-                               errorMsg.contains('network') || 
-                               errorMsg.contains('resolve host');
+        final isOfflineError =
+            errorMsg.contains('unavailable') ||
+            errorMsg.contains('network') ||
+            errorMsg.contains('resolve host');
 
         // If it's a connection failure but we HAVE pending items for this month, show them!
         if (filteredPending.isNotEmpty || isOfflineError) {
@@ -468,7 +471,9 @@ class ExpenseCubit extends Cubit<ExpenseState> {
     String? monthKey,
     String? monthName,
   }) async {
-    if (!PermissionService.instance.hasPermission(AppPermissions.expensesDelete)) {
+    if (!PermissionService.instance.hasPermission(
+      AppPermissions.expensesDelete,
+    )) {
       emit(ExpenseFailure(message: AppStrings.noPermissionForAction.tr()));
       return;
     }
@@ -490,7 +495,9 @@ class ExpenseCubit extends Cubit<ExpenseState> {
   }
 
   Future<void> deleteMonth(String uid, String monthKey) async {
-    if (!PermissionService.instance.hasPermission(AppPermissions.expensesDelete)) {
+    if (!PermissionService.instance.hasPermission(
+      AppPermissions.expensesDelete,
+    )) {
       emit(ExpenseFailure(message: AppStrings.noPermissionForAction.tr()));
       return;
     }

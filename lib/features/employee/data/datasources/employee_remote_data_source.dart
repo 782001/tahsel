@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/firebase_error_handler.dart';
@@ -135,7 +136,7 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
           actionType: 'add_employee_record',
           actionTitle: 'إضافة موظف: ${employee.name}',
           details:
-              'إضافة سجل موظف جديد: ${employee.name} (الوظيفة: ${employee.role}) براتب أساسي: ${employee.salaryAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} (نوع الراتب: $salaryTypeLabel)',
+              'إضافة سجل موظف جديد: ${employee.name} (الوظيفة: ${employee.role}) براتب أساسي: ${employee.salaryAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()} (نوع الراتب: $salaryTypeLabel)',
           amount: employee.salaryAmount,
           extraData: {
             'employeeId': docRef.id,
@@ -197,13 +198,15 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
           final oldPhone = oldData['phone'] as String? ?? '';
           if (oldPhone != employee.phone) {
             changes.add(
-                'الهاتف من "${oldPhone.isEmpty ? 'فارغ' : oldPhone}" إلى "${employee.phone}"');
+              'الهاتف من "${oldPhone.isEmpty ? 'فارغ' : oldPhone}" إلى "${employee.phone}"',
+            );
           }
           final oldSalary =
               (oldData['salaryAmount'] as num?)?.toDouble() ?? 0.0;
           if ((oldSalary - employee.salaryAmount).abs() > 0.001) {
             changes.add(
-                'الراتب من ${oldSalary.toStringAsFixed(1)} إلى ${employee.salaryAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}');
+              'الراتب من ${oldSalary.toSmartAmount()} إلى ${employee.salaryAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+            );
           }
           final oldSalaryType = oldData['salaryType'] as String? ?? 'monthly';
           if (oldSalaryType != employee.salaryType) {
@@ -216,7 +219,7 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
 
         final detailsText = changes.isNotEmpty
             ? 'تعديل بيانات الموظف (${employee.name}): تم تعديل ${changes.join("، ")}'
-            : 'تعديل بيانات الموظف: ${employee.name} (الوظيفة: ${employee.role}, الراتب: ${employee.salaryAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}, نوع الراتب: $salaryTypeLabel)';
+            : 'تعديل بيانات الموظف: ${employee.name} (الوظيفة: ${employee.role}, الراتب: ${employee.salaryAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}, نوع الراتب: $salaryTypeLabel)';
 
         sl<ActivityLoggerService>().appendToBatch(
           batch,
@@ -640,7 +643,7 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
           actionType: 'payroll_payment',
           actionTitle: 'صرف راتب: ${payroll.employeeName}',
           details:
-              'صرف راتب شهر ${payroll.monthKey} للموظف ${payroll.employeeName} بصافي ${payroll.netSalary.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} (أساسي: ${payroll.amount.toStringAsFixed(1)}، إضافي: ${payroll.overtimeCompensation.toStringAsFixed(1)}، خصومات: ${(payroll.deduction + advPaid).toStringAsFixed(1)})',
+              'صرف راتب شهر ${payroll.monthKey} للموظف ${payroll.employeeName} بصافي ${payroll.netSalary.toSmartAmount()} ${AppStrings.currencyEgp.tr()} (أساسي: ${payroll.amount.toSmartAmount()}، إضافي: ${payroll.overtimeCompensation.toSmartAmount()}، خصومات: ${(payroll.deduction + advPaid).toSmartAmount()})',
           amount: payroll.netSalary,
           extraData: {
             'payrollId': docRef.id,
@@ -794,7 +797,7 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
           actionType: 'employee_advance',
           actionTitle: 'صرف سلفة: ${advance.employeeName}',
           details:
-              'صرف سلفة للموظف ${advance.employeeName} بقيمة ${advance.amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}$reasonPart',
+              'صرف سلفة للموظف ${advance.employeeName} بقيمة ${advance.amount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}$reasonPart',
           amount: advance.amount,
           extraData: {
             'advanceId': docRef.id,

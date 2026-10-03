@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
@@ -45,10 +46,10 @@ class _MyPartialPaymentDialogState extends State<MyPartialPaymentDialog> {
   }
 
   Future<void> _pickDate() async {
-final DateTime minDate = widget.firstDate != null
+    final DateTime minDate = widget.firstDate != null
         ? widget.firstDate!.add(const Duration(days: 1))
         : DateTime(2000);
-            final DateTime initialDate = _selectedDate ?? DateTime.now();
+    final DateTime initialDate = _selectedDate ?? DateTime.now();
     final DateTime finalInitialDate = initialDate.isBefore(minDate)
         ? minDate
         : initialDate;
@@ -167,7 +168,7 @@ final DateTime minDate = widget.firstDate != null
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      '${AppStrings.amountPaid.tr()} (${AppStrings.remainingDebt.tr()}: ${widget.totalRemaining.toStringAsFixed(1)})',
+                      '${AppStrings.amountPaid.tr()} (${AppStrings.remainingDebt.tr()}: ${widget.totalRemaining.toSmartAmount()})',
                       style: TextStyles.customStyle(
                         color: AppColors.disabledColor,
                         fontSize: 12,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -51,7 +52,7 @@ class _AddEditEmployeeDialogState extends State<AddEditEmployeeDialog> {
     _roleController = TextEditingController(text: widget.employee?.role ?? '');
     _salaryAmountController = TextEditingController(
       text: widget.employee != null
-          ? widget.employee!.salaryAmount.toStringAsFixed(2)
+          ? widget.employee!.salaryAmount.toSmartAmount()
           : '',
     );
     _notesController = TextEditingController(

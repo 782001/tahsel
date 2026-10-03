@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/contact_service.dart';
 import 'package:tahsel/core/services/injection_container.dart';
@@ -161,9 +162,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final remaining = (total - paid) > 0 ? (total - paid) : 0.0;
 
-    if (mounted && _debtController.text != remaining.toStringAsFixed(1)) {
+    if (mounted && _debtController.text != remaining.toSmartAmount()) {
       setState(() {
-        _debtController.text = remaining.toStringAsFixed(1);
+        _debtController.text = remaining.toSmartAmount();
       });
     }
   }
@@ -224,7 +225,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _startPsSession() {
-    if (!PermissionService.instance.hasPermission(AppPermissions.posManageSessions)) {
+    if (!PermissionService.instance.hasPermission(
+      AppPermissions.posManageSessions,
+    )) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           duration: const Duration(seconds: 2),
@@ -341,7 +344,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final isShopAccount = context.read<MainLayoutCubit>().isShop;
 
     if (_selectedMode == QuickAddMode.shop) {
-      if (!PermissionService.instance.hasPermission(AppPermissions.posQuickSale)) {
+      if (!PermissionService.instance.hasPermission(
+        AppPermissions.posQuickSale,
+      )) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             duration: const Duration(seconds: 2),
@@ -383,7 +388,9 @@ class _HomeScreenState extends State<HomeScreen> {
       }
 
       if (remainingDebt > 0 &&
-          !PermissionService.instance.hasPermission(AppPermissions.posAddDebt)) {
+          !PermissionService.instance.hasPermission(
+            AppPermissions.posAddDebt,
+          )) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             duration: const Duration(seconds: 2),
@@ -421,13 +428,13 @@ class _HomeScreenState extends State<HomeScreen> {
       final canViewPhone = CustomerDataMasker.canViewCustomerPhone;
       final ledgerToSave = canViewPhone
           ? (_ledgerController.text.trim().isNotEmpty
-              ? _ledgerController.text.trim()
-              : null)
+                ? _ledgerController.text.trim()
+                : null)
           : (_selectedCustomer?.ledgerNumber ??
-              (_ledgerController.text.trim().isNotEmpty &&
-                      !_ledgerController.text.contains('•')
-                  ? _ledgerController.text.trim()
-                  : null));
+                (_ledgerController.text.trim().isNotEmpty &&
+                        !_ledgerController.text.contains('•')
+                    ? _ledgerController.text.trim()
+                    : null));
 
       operation = OperationEntity(
         uid: uid,
@@ -445,7 +452,9 @@ class _HomeScreenState extends State<HomeScreen> {
     } else {
       if (_psSubMode == PlayStationMode.time) return;
 
-      if (!PermissionService.instance.hasPermission(AppPermissions.posManageSessions)) {
+      if (!PermissionService.instance.hasPermission(
+        AppPermissions.posManageSessions,
+      )) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             duration: const Duration(seconds: 2),
@@ -474,7 +483,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
       final remainingPsDebt = (totalDue - paid) > 0 ? (totalDue - paid) : 0.0;
       if (remainingPsDebt > 0 &&
-          !PermissionService.instance.hasPermission(AppPermissions.posAddDebt)) {
+          !PermissionService.instance.hasPermission(
+            AppPermissions.posAddDebt,
+          )) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             duration: const Duration(seconds: 2),
@@ -528,11 +539,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: AppColors.error.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                Icons.lock_rounded,
-                color: AppColors.error,
-                size: 56,
-              ),
+              child: Icon(Icons.lock_rounded, color: AppColors.error, size: 56),
             ),
             const SizedBox(height: 16),
             Text(
@@ -602,13 +609,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 final canViewPhone = CustomerDataMasker.canViewCustomerPhone;
                 final ledgerToSave = canViewPhone
                     ? (_ledgerController.text.trim().isNotEmpty
-                        ? _ledgerController.text.trim()
-                        : null)
+                          ? _ledgerController.text.trim()
+                          : null)
                     : (_selectedCustomer?.ledgerNumber ??
-                        (_ledgerController.text.trim().isNotEmpty &&
-                                !_ledgerController.text.contains('•')
-                            ? _ledgerController.text.trim()
-                            : null));
+                          (_ledgerController.text.trim().isNotEmpty &&
+                                  !_ledgerController.text.contains('•')
+                              ? _ledgerController.text.trim()
+                              : null));
 
                 context.read<CustomerCubit>().saveCustomer(
                   uid,
@@ -794,7 +801,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   onPressed: () {
                                     setState(() {
                                       _paidController.text = totalDue
-                                          .toStringAsFixed(1);
+                                          .toSmartAmount();
                                     });
                                   },
                                   child: Text(

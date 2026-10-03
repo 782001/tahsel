@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/activity_logger_service.dart';
 import 'package:tahsel/core/services/injection_container.dart';
@@ -75,21 +76,30 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
 
     if (sl.isRegistered<ActivityLoggerService>()) {
       final isQuotation = invoice.status == InvoiceStatus.quotation;
-      final refNum = (invoice.referenceNumber != null && invoice.referenceNumber!.isNotEmpty)
+      final refNum =
+          (invoice.referenceNumber != null &&
+              invoice.referenceNumber!.isNotEmpty)
           ? invoice.referenceNumber!
           : invoice.id;
       final hasSpecificCustomer =
-          invoice.customerName != null && invoice.customerName!.trim().isNotEmpty;
-      final cust = hasSpecificCustomer ? invoice.customerName!.trim() : 'عميل عام';
-      final totalFormatted = invoice.totalAmount.toStringAsFixed(1);
+          invoice.customerName != null &&
+          invoice.customerName!.trim().isNotEmpty;
+      final cust = hasSpecificCustomer
+          ? invoice.customerName!.trim()
+          : 'عميل عام';
+      final totalFormatted = invoice.totalAmount.toSmartAmount();
       final paid = invoice.syncedTotalPaid ?? 0.0;
-      final paidFormatted = paid.toStringAsFixed(1);
+      final paidFormatted = paid.toSmartAmount();
       final rem = invoice.totalAmount - paid;
-      final remFormatted = rem > 0 ? rem.toStringAsFixed(1) : "0.0";
+      final remFormatted = rem > 0 ? rem.toSmartAmount() : "0.0";
 
       final actionTitle = isQuotation
-          ? (hasSpecificCustomer ? 'عرض سعر للعميل: $cust' : 'عرض سعر جديد (#$refNum)')
-          : (hasSpecificCustomer ? 'فاتورة مبيعات للعميل: $cust' : 'فاتورة مبيعات (#$refNum)');
+          ? (hasSpecificCustomer
+                ? 'عرض سعر للعميل: $cust'
+                : 'عرض سعر جديد (#$refNum)')
+          : (hasSpecificCustomer
+                ? 'فاتورة مبيعات للعميل: $cust'
+                : 'فاتورة مبيعات (#$refNum)');
 
       final actionDetails = isQuotation
           ? 'إنشاء وتجهيز عرض سعر للعميل ($cust) بقيمة $totalFormatted ${AppStrings.currencyEgp.tr()} (${invoice.items.length} أصناف) - الرقم المرجعي: $refNum'
@@ -273,8 +283,10 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
     });
 
     if (sl.isRegistered<ActivityLoggerService>()) {
-      final amtFormatted = payment.amount.toStringAsFixed(1);
-      final rem = capturedRemaining > 0 ? capturedRemaining.toStringAsFixed(1) : "0.0";
+      final amtFormatted = payment.amount.toSmartAmount();
+      final rem = capturedRemaining > 0
+          ? capturedRemaining.toSmartAmount()
+          : "0.0";
       final refNum = capturedRefNum != null && capturedRefNum!.isNotEmpty
           ? capturedRefNum!
           : invoiceId;
@@ -542,16 +554,18 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
     }
 
     if (sl.isRegistered<ActivityLoggerService>()) {
-      final refNum = (invoice.referenceNumber != null &&
+      final refNum =
+          (invoice.referenceNumber != null &&
               invoice.referenceNumber!.isNotEmpty)
           ? invoice.referenceNumber!
           : invoice.id;
       final hasTotalChanged = (newTotalAmount - oldInvoiceTotal).abs() > 0.001;
-      final oldFormatted = oldInvoiceTotal.toStringAsFixed(1);
-      final newFormatted = newTotalAmount.toStringAsFixed(1);
+      final oldFormatted = oldInvoiceTotal.toSmartAmount();
+      final newFormatted = newTotalAmount.toSmartAmount();
       final delta = newTotalAmount - oldInvoiceTotal;
-      final deltaFormatted = delta.toStringAsFixed(1);
-      final cust = (invoice.customerName != null && invoice.customerName!.isNotEmpty)
+      final deltaFormatted = delta.toSmartAmount();
+      final cust =
+          (invoice.customerName != null && invoice.customerName!.isNotEmpty)
           ? invoice.customerName!
           : 'عميل عام';
 
@@ -559,31 +573,39 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
       if (hasTotalChanged) {
         final sign = delta >= 0 ? '+$deltaFormatted' : deltaFormatted;
         changes.add(
-            'الإجمالي من $oldFormatted إلى $newFormatted ${AppStrings.currencyEgp.tr()} ($sign)');
+          'الإجمالي من $oldFormatted إلى $newFormatted ${AppStrings.currencyEgp.tr()} ($sign)',
+        );
       }
       if (preData != null) {
         final oldCust = (preData['customerName'] as String?)?.trim() ?? '';
         final newCust = (invoice.customerName ?? '').trim();
         if (oldCust != newCust && (oldCust.isNotEmpty || newCust.isNotEmpty)) {
           changes.add(
-              'العميل من "${oldCust.isEmpty ? 'عميل عام' : oldCust}" إلى "${newCust.isEmpty ? 'عميل عام' : newCust}"');
+            'العميل من "${oldCust.isEmpty ? 'عميل عام' : oldCust}" إلى "${newCust.isEmpty ? 'عميل عام' : newCust}"',
+          );
         }
         final oldPhone = (preData['customerPhone'] as String?)?.trim() ?? '';
         final newPhone = (invoice.customerPhone ?? '').trim();
-        if (oldPhone != newPhone && (oldPhone.isNotEmpty || newPhone.isNotEmpty)) {
+        if (oldPhone != newPhone &&
+            (oldPhone.isNotEmpty || newPhone.isNotEmpty)) {
           changes.add(
-              'الهاتف من "${oldPhone.isEmpty ? 'بدون' : oldPhone}" إلى "${newPhone.isEmpty ? 'بدون' : newPhone}"');
+            'الهاتف من "${oldPhone.isEmpty ? 'بدون' : oldPhone}" إلى "${newPhone.isEmpty ? 'بدون' : newPhone}"',
+          );
         }
-        final oldDiscount = (preData['discountAmount'] as num?)?.toDouble() ?? 0.0;
+        final oldDiscount =
+            (preData['discountAmount'] as num?)?.toDouble() ?? 0.0;
         final newDiscount = invoice.discountAmount;
         if ((oldDiscount - newDiscount).abs() > 0.001) {
           changes.add(
-              'الخصم من ${oldDiscount.toStringAsFixed(1)} إلى ${newDiscount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}');
+            'الخصم من ${oldDiscount.toSmartAmount()} إلى ${newDiscount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+          );
         }
         final oldItemsRaw = preData['items'] as List<dynamic>?;
         final oldItemsCount = oldItemsRaw?.length ?? 0;
         if (oldItemsCount != invoice.items.length) {
-          changes.add('عدد الأصناف من $oldItemsCount إلى ${invoice.items.length}');
+          changes.add(
+            'عدد الأصناف من $oldItemsCount إلى ${invoice.items.length}',
+          );
         }
         DateTime? oldDueDate;
         final rawOldDue = preData['dueDate'];
@@ -611,22 +633,26 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
         }
         final oldNotes = (preData['notes'] as String?)?.trim() ?? '';
         final newNotes = (invoice.notes ?? '').trim();
-        if (oldNotes != newNotes && (oldNotes.isNotEmpty || newNotes.isNotEmpty)) {
+        if (oldNotes != newNotes &&
+            (oldNotes.isNotEmpty || newNotes.isNotEmpty)) {
           changes.add(
-              'الملاحظات من "${oldNotes.isEmpty ? 'بدون' : oldNotes}" إلى "${newNotes.isEmpty ? 'بدون' : newNotes}"');
+            'الملاحظات من "${oldNotes.isEmpty ? 'بدون' : oldNotes}" إلى "${newNotes.isEmpty ? 'بدون' : newNotes}"',
+          );
         }
       }
 
       final detailsText = changes.isNotEmpty
           ? 'تعديل الفاتورة ($refNum) للعميل $cust: تم تعديل ${changes.join("، ")}'
           : (hasTotalChanged
-              ? 'تعديل فاتورة للعميل $cust: تم تغيير المبلغ من $oldFormatted ${AppStrings.currencyEgp.tr()} إلى $newFormatted ${AppStrings.currencyEgp.tr()} (الفارق: $deltaFormatted ${AppStrings.currencyEgp.tr()})'
-              : 'تعديل بيانات وأصناف الفاتورة $refNum للعميل $cust');
+                ? 'تعديل فاتورة للعميل $cust: تم تغيير المبلغ من $oldFormatted ${AppStrings.currencyEgp.tr()} إلى $newFormatted ${AppStrings.currencyEgp.tr()} (الفارق: $deltaFormatted ${AppStrings.currencyEgp.tr()})'
+                : 'تعديل بيانات وأصناف الفاتورة $refNum للعميل $cust');
 
       sl<ActivityLoggerService>().logStandalone(
         ownerUid: invoice.uid,
         actionCategory: 'invoices',
-        actionType: hasTotalChanged ? 'update_invoice_total' : 'update_invoice_details',
+        actionType: hasTotalChanged
+            ? 'update_invoice_total'
+            : 'update_invoice_details',
         actionTitle: hasTotalChanged
             ? 'تعديل قيمة فاتورة: $refNum'
             : 'تعديل بيانات فاتورة: $refNum',
@@ -786,10 +812,13 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
 
     // ── Log Employee Activity ──
     if (sl.isRegistered<ActivityLoggerService>()) {
-      final totalAmount = (invoiceDoc.data()?['totalAmount'] as num?)?.toDouble() ?? 0.0;
-      final totalFormatted = totalAmount.toStringAsFixed(1);
-      final refNum = (invoiceDoc.data()?['referenceNumber'] as String?) ?? invoiceId;
-      final cust = (invoiceDoc.data()?['customerName'] as String?)?.trim() ?? '';
+      final totalAmount =
+          (invoiceDoc.data()?['totalAmount'] as num?)?.toDouble() ?? 0.0;
+      final totalFormatted = totalAmount.toSmartAmount();
+      final refNum =
+          (invoiceDoc.data()?['referenceNumber'] as String?) ?? invoiceId;
+      final cust =
+          (invoiceDoc.data()?['customerName'] as String?)?.trim() ?? '';
       final hasCust = cust.isNotEmpty;
 
       final actionTitle = hasCust
@@ -802,7 +831,8 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
         actionCategory: 'invoices',
         actionType: 'void_invoice',
         actionTitle: actionTitle,
-        details: 'إلغاء الفاتورة رقم $refNum بالكامل بقيمة $totalFormatted ${AppStrings.currencyEgp.tr()}${hasCust ? " للعميل $cust" : ""} وإلغاء قيود الديون المرتبطة بها',
+        details:
+            'إلغاء الفاتورة رقم $refNum بالكامل بقيمة $totalFormatted ${AppStrings.currencyEgp.tr()}${hasCust ? " للعميل $cust" : ""} وإلغاء قيود الديون المرتبطة بها',
         amount: totalAmount,
         extraData: {
           'invoiceId': invoiceId,
@@ -859,17 +889,20 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
           : null,
       'lastUpdatedAt': conversionTimestamp,
     });
-    
+
     if (sl.isRegistered<ActivityLoggerService>()) {
-      final refNum = (invoice.referenceNumber != null &&
+      final refNum =
+          (invoice.referenceNumber != null &&
               invoice.referenceNumber!.isNotEmpty)
           ? invoice.referenceNumber!
           : invoice.id;
-      final hasSpecificCustomer = invoice.customerName != null &&
+      final hasSpecificCustomer =
+          invoice.customerName != null &&
           invoice.customerName!.trim().isNotEmpty;
-      final cust =
-          hasSpecificCustomer ? invoice.customerName!.trim() : 'عميل عام';
-      final totalFormatted = invoice.totalAmount.toStringAsFixed(1);
+      final cust = hasSpecificCustomer
+          ? invoice.customerName!.trim()
+          : 'عميل عام';
+      final totalFormatted = invoice.totalAmount.toSmartAmount();
 
       sl<ActivityLoggerService>().logStandalone(
         ownerUid: invoice.uid,
