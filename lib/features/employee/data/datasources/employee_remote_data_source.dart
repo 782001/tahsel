@@ -7,8 +7,8 @@ import '../../../../core/extensions/string_extensions.dart';
 import '../../../../core/services/activity_logger_service.dart';
 import '../../../../core/services/injection_container.dart';
 import '../../../../core/utils/app_strings.dart';
-import '../../../cashbox/domain/entities/vault_transaction_entity.dart';
 import '../../../../core/utils/summary_helper.dart';
+import '../../../cashbox/domain/entities/vault_transaction_entity.dart';
 import '../models/advance_model.dart';
 import '../models/attendance_model.dart';
 import '../models/employee_model.dart';
@@ -126,8 +126,8 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
 
       if (sl.isRegistered<ActivityLoggerService>()) {
         final salaryTypeLabel = employee.salaryType == 'daily'
-            ? 'يومي'
-            : (employee.salaryType == 'hourly' ? 'بالساعة' : 'شهري');
+            ? 'يومى'
+            : (employee.salaryType == 'hourly' ? 'بالساعة' : 'شهرى');
         sl<ActivityLoggerService>().appendToBatch(
           batch,
           ownerUid: employee.uid,
@@ -173,8 +173,8 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
 
       if (sl.isRegistered<ActivityLoggerService>()) {
         final salaryTypeLabel = employee.salaryType == 'daily'
-            ? 'يومي'
-            : (employee.salaryType == 'hourly' ? 'بالساعة' : 'شهري');
+            ? 'يومى'
+            : (employee.salaryType == 'hourly' ? 'بالساعة' : 'شهرى');
         sl<ActivityLoggerService>().appendToBatch(
           batch,
           ownerUid: employee.uid,
@@ -545,23 +545,20 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
           'createdAt': Timestamp.fromDate(payroll.paymentDate),
         });
 
-        batch.set(
-          vaultSummaryRef,
-          {
-            'currentBalance': FieldValue.increment(-payroll.netSalary),
-            'totalOut': FieldValue.increment(payroll.netSalary),
-            'transactionCount': FieldValue.increment(1),
-            'lastUpdatedAt': FieldValue.serverTimestamp(),
-          },
-          SetOptions(merge: true),
-        );
+        batch.set(vaultSummaryRef, {
+          'currentBalance': FieldValue.increment(-payroll.netSalary),
+          'totalOut': FieldValue.increment(payroll.netSalary),
+          'transactionCount': FieldValue.increment(1),
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
       }
 
       // Record Expense and Summaries for salary payment atomically
       if (payroll.netSalary > 0) {
-        final expenseDocRef =
-            userRef.collection('expenses').doc('exp_emp_sal_${docRef.id}');
-        String salaryTypeLabel = 'راتب شهري';
+        final expenseDocRef = userRef
+            .collection('expenses')
+            .doc('exp_emp_sal_${docRef.id}');
+        String salaryTypeLabel = 'راتب شهرى';
         if (payroll.salaryType == 'daily') {
           salaryTypeLabel = 'يومية';
         } else if (payroll.salaryType == 'hourly') {
@@ -707,22 +704,19 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
           'createdAt': Timestamp.fromDate(advance.date),
         });
 
-        batch.set(
-          vaultSummaryRef,
-          {
-            'currentBalance': FieldValue.increment(-advance.amount),
-            'totalOut': FieldValue.increment(advance.amount),
-            'transactionCount': FieldValue.increment(1),
-            'lastUpdatedAt': FieldValue.serverTimestamp(),
-          },
-          SetOptions(merge: true),
-        );
+        batch.set(vaultSummaryRef, {
+          'currentBalance': FieldValue.increment(-advance.amount),
+          'totalOut': FieldValue.increment(advance.amount),
+          'transactionCount': FieldValue.increment(1),
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
       }
 
       // Record Expense and Summaries for advance payment atomically
       if (advance.amount > 0) {
-        final expenseDocRef =
-            userRef.collection('expenses').doc('exp_emp_adv_${docRef.id}');
+        final expenseDocRef = userRef
+            .collection('expenses')
+            .doc('exp_emp_adv_${docRef.id}');
         final String categoryName = 'صرف سلفة للموظف: ${advance.employeeName}';
 
         batch.set(expenseDocRef, {

@@ -183,10 +183,10 @@
   "price_per_turn": "سعر الدور",
   "turn_count": "عدد الأدوار",
   "time_duration": "الوقت (دقيقة)",
-  "quick_add_desc": "سيتم إضافة هذه العملية فوراً إلى سجل النشاط اليومي.",
+  "quick_add_desc": "سيتم إضافة هذه العملية فوراً إلى سجل النشاط اليومى.",
   "customer_name_hint": "اكتب اسم الزبون هنا...",
   "product_name_hint": "ايه اللي اتباع؟",
-  "weekly": "أسبوعي",
+  "weekly": "أسبوعى",
 
   "net_profit": "صافي الربح",
   "total_income": "إجمالي الدخل",
@@ -230,8 +230,8 @@
   "ps_session_turn": "جلسة بلايستيشن (دور)",
   "insight_profit_daily_increase": "لقد حققت حالياً {netProfit} {currency}، وهو ما يزيد بمقدار {difference} {currency} عن أمس.",
   "insight_profit_daily_decrease": "لقد حققت حالياً {netProfit} {currency}، وهو ما يقل بمقدار {difference} {currency} عن أمس.",
-  "insight_profit_weekly_increase": "معدل ربحك الأسبوعي هو {netProfit} {currency}، وهو ما يزيد بمقدار {difference} {currency} عن الأسبوع الماضي.",
-  "insight_profit_weekly_decrease": "معدل ربحك الأسبوعي هو {netProfit} {currency}، وهو ما يقل بمقدار {difference} {currency} عن الأسبوع الماضي.",
+  "insight_profit_weekly_increase": "معدل ربحك الأسبوعى هو {netProfit} {currency}، وهو ما يزيد بمقدار {difference} {currency} عن الأسبوع الماضي.",
+  "insight_profit_weekly_decrease": "معدل ربحك الأسبوعى هو {netProfit} {currency}، وهو ما يقل بمقدار {difference} {currency} عن الأسبوع الماضي.",
   "insight_profit_monthly_increase": "ربحك الشهري هو {netProfit} {currency}، وهو ما يزيد بمقدار {difference} {currency} عن الشهر الماضي.",
   "insight_profit_monthly_decrease": "ربحك الشهري هو {netProfit} {currency}، وهو ما يقل بمقدار {difference} {currency} عن الشهر الماضي.",
   "insight_profit_same_daily": "ربحك اليوم مستقر مقارنة بالأمس.",
@@ -260,9 +260,9 @@
   "no_income_data": "لا توجد بيانات دخل للفترة المحددة",
   "duration_mins": "{mins} دقيقة",
   "walking_customer": "زبون عام",
-  "period_daily": "يومي",
-  "period_weekly": "أسبوعي",
-  "period_monthly": "شهري",
+  "period_daily": "يومى",
+  "period_weekly": "أسبوعى",
+  "period_monthly": "شهرى",
   "total_income_value": "إجمالي الدخل: {amount} {currency}",
   "confirm_delete_debt_title": "حذف دين العميل",
   "confirm_delete_debt_message": "هل أنت متأكد من حذف جميع بيانات الدين لهذا العميل؟",
@@ -514,8 +514,8 @@
   "reports_summary_desc": "مراجعة بصرية للأداء بناءً على نسبة الحضور الإجمالية والأجور المدفوعة.",
   "all": "الكل",
   "hourly": "بالساعة",
-  "monthly": "شهري",
-  "daily": "يومي",
+  "monthly": "شهرى",
+  "daily": "يومى",
   "present": "حاضر",
   "late": "متأخر",
   "absent": "غائب",
@@ -554,7 +554,7 @@
   "outstanding_balance": "الرصيد المتبقي (المديونية)",
   "carried_forward_automatically": "سيتم ترحيله تلقائياً للراتب القادم.",
   "allowed_paid_weekends_per_month": "عدد أيام الراحات المدفوعة",
-  "daily_deduction_multiplier": "مضاعف الخصم اليومي",
+  "daily_deduction_multiplier": "مضاعف الخصم اليومى",
   "attendance_overlap_error": "هذا الوقت يتداخل مع سجل حضور موجود",
   "payroll_already_paid_for_month": "تم دفع راتب هذا الشهر بالفعل ({month}).",
   "payroll_closing_day": "يوم إغلاق كشف الرواتب",
@@ -1250,7 +1250,7 @@
   "print_report": "طباعة التقرير",
   "print_vault_report": "طباعة تقرير الخزنة",
   "print_preview": "معاينة وطباعة",
- 
+
   "print_document": "طباعة المستند",
   "print_success": "تم إرسال أمر الطباعة بنجاح",
   "print_failed": "تعذر إرسال أمر الطباعة",
@@ -1610,6 +1610,3 @@
   "deficit_reason_other_hint": "مثال: مصاريف انتقالات، فواتير مفقودة...",
   "cannot_delete_custody_settled_expense": "لا يمكن حذف هذا المصروف لأنه ناتج عن تسوية عهدة مالية نهائية."
 }
-
-
-
