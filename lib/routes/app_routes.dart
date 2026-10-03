@@ -11,6 +11,7 @@ import 'package:tahsel/features/auth/presentation/screens/login_screen.dart';
 import 'package:tahsel/features/cashbox/presentation/cubit/vault_cubit.dart';
 import 'package:tahsel/features/cashbox/presentation/screens/vault_screen.dart';
 import 'package:tahsel/features/create_account/presentation/screens/create_account_screen.dart';
+import 'package:tahsel/features/custody/presentation/screens/custody_management_screen.dart';
 import 'package:tahsel/features/customer/presentation/screens/customer_report_details_screen.dart';
 import 'package:tahsel/features/customer/presentation/screens/customers_list_screen.dart';
 import 'package:tahsel/features/customer_debts/data/models/debt_item_model.dart';
@@ -33,7 +34,6 @@ import 'package:tahsel/features/employee/presentation/screens/employee_details_s
 import 'package:tahsel/features/employee/presentation/screens/employee_list_screen.dart';
 import 'package:tahsel/features/employee/presentation/screens/employee_reports_screen.dart';
 import 'package:tahsel/features/employee/presentation/screens/team_management_screen.dart';
-import 'package:tahsel/features/custody/presentation/screens/custody_management_screen.dart';
 import 'package:tahsel/features/expenses/presentation/screens/add_expense_screen.dart';
 import 'package:tahsel/features/inventory/presentation/cubits/inventory_categories_cubit.dart';
 import 'package:tahsel/features/inventory/presentation/cubits/inventory_dashboard_cubit.dart';
@@ -685,12 +685,12 @@ class AppRoutes {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: AppColors.error.withValues(alpha: 0.1),
+                    color: AppColors.grey.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.lock_rounded,
-                    color: AppColors.error,
+                    color: AppColors.grey,
                     size: 64,
                   ),
                 ),
@@ -701,7 +701,7 @@ class AppRoutes {
                   style: TextStyles.customStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.blackReal,
+                    color: AppColors.grey,
                   ),
                 ),
                 const SizedBox(height: 24),
