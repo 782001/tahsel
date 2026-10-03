@@ -657,27 +657,34 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
                       ),
                     ),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.bolt_rounded,
-                              size: 18,
-                              color: AppColors.vipGoldStart,
-                            ),
-                            SizedBox(width: 6.w),
-                            Text(
-                              AppStrings.teamLiveFeed.tr(),
-                              style: TextStyles.customStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                        Expanded(
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.bolt_rounded,
+                                size: 18,
+                                color: AppColors.vipGoldStart,
                               ),
-                            ),
-                          ],
+                              SizedBox(width: 6.w),
+                              Expanded(
+                                child: Text(
+                                  AppStrings.teamLiveFeed.tr(),
+                                  style: TextStyles.customStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
+                        SizedBox(width: 8.w),
                         Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
                               AppStrings.viewFeed.tr(),
