@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/constants/app_permissions.dart';
@@ -32,7 +32,12 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
     final isPushed = !(ModalRoute.of(context)?.isFirst ?? true);
-    final showBackButton = isPushed || !isDesktop;
+    MainLayoutCubit? cubit;
+    try {
+      cubit = context.read<MainLayoutCubit>();
+    } catch (_) {}
+    final isInBottomBar = cubit?.mobileBottomNavIndices.contains(8) ?? false;
+    final showBackButton = isPushed || (!isDesktop && !isInBottomBar);
 
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
@@ -52,7 +57,8 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                     Navigator.of(context).pop();
                   } else {
                     try {
-                      context.read<MainLayoutCubit>().changeBottomNav(0);
+                      final cubit = context.read<MainLayoutCubit>();
+                      cubit.changeBottomNav(cubit.firstAllowedIndex);
                     } catch (_) {}
                   }
                 },

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -44,10 +45,13 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
     required this.secureStorage,
     required this.firestore,
   }) : super(MainLayoutInitial()) {
+    _ensureValidInitialIndex();
     _init();
+    PermissionService.instance.changeNotifier.addListener(_onPermissionsChanged);
   }
 
-  String _userType = AppStrings.cafe;
+  String _userType =
+      AppStrings.userType.isNotEmpty ? AppStrings.userType : AppStrings.cafe;
   String get userType => _userType;
 
   bool get isShop => _userType == AppStrings.shop;
@@ -60,7 +64,8 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
   }
 
   void _ensureValidInitialIndex() {
-    if (!isIndexAllowed(currentIndex)) {
+    if (!isIndexAllowed(currentIndex) ||
+        (currentIndex == 5 && firstAllowedIndex != 5)) {
       final safeIndex = firstAllowedIndex;
       currentIndex = safeIndex;
       emit(MainLayoutChangeBottomNavIndex(currentIndex));
@@ -92,17 +97,20 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
       case 6:
         return permissions.hasPermission(AppPermissions.customersView);
       case 7:
-        return isShop && permissions.hasPermission(AppPermissions.vaultAccess);
+        return isShop &&
+            ((!Platform.isIOS) || AppStrings.isVip) &&
+            permissions.hasPermission(AppPermissions.vaultAccess);
       case 8:
         return isShop && permissions.hasPermission(AppPermissions.inventoryView);
       case 9:
-        return permissions.hasPermission(AppPermissions.hrEmployeesManage);
+        return ((!Platform.isIOS) || AppStrings.isVip) &&
+            permissions.hasPermission(AppPermissions.hrEmployeesManage);
       case 10:
         return isShop &&
             permissions.hasPermission(AppPermissions.shippingReconciliationView);
       case 11:
       case 12:
-        return permissions.isOwner;
+        return ((!Platform.isIOS) || AppStrings.isVip) && permissions.isOwner;
       default:
         return false;
     }
@@ -112,14 +120,36 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
     for (int i = 0; i <= 4; i++) {
       if (isIndexAllowed(i)) return i;
     }
+    if (isIndexAllowed(6)) return 6;
     if (isIndexAllowed(8)) return 8;
     if (isIndexAllowed(7)) return 7;
+    if (isIndexAllowed(10)) return 10;
     if (isIndexAllowed(9)) return 9;
     if (isIndexAllowed(11)) return 11;
     if (isIndexAllowed(12)) return 12;
-    if (isIndexAllowed(6)) return 6;
-    if (isIndexAllowed(10)) return 10;
     return 5;
+  }
+
+  /// Returns the indices of tabs that are actually present in the mobile BottomNavBar.
+  List<int> get mobileBottomNavIndices {
+    final primary = [0, 1, 2, if (isShop) 3, 4]
+        .where((idx) => isIndexAllowed(idx))
+        .toList();
+    const int targetCapacity = 5;
+    final availableSlots = (targetCapacity - 1) - primary.length;
+    final secondary = [
+      6,
+      if (isShop) 8,
+      if (isShop) 7,
+      if (isShop) 10,
+      9,
+      11,
+      12,
+    ]
+        .where((idx) => isIndexAllowed(idx))
+        .take(availableSlots > 0 ? availableSlots : 0)
+        .toList();
+    return [...primary, ...secondary, 5];
   }
 
   int lowStockCount = 0;
@@ -213,5 +243,34 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
     if (index == 5 || index == 8) {
       loadLowStockCount();
     }
+  }
+
+  void _onPermissionsChanged() {
+    if (isClosed) return;
+    AppLogger.printMessage(
+      '[MainLayoutCubit] Permissions changed in real-time. Evaluating current tab $currentIndex.',
+    );
+    if (!isIndexAllowed(currentIndex)) {
+      final safeIndex = firstAllowedIndex;
+      AppLogger.printMessage(
+        '[MainLayoutCubit] Current tab $currentIndex is no longer allowed. Redirecting to $safeIndex.',
+      );
+      currentIndex = safeIndex;
+      emit(MainLayoutChangeBottomNavIndex(currentIndex));
+      if (currentIndex == 5 || currentIndex == 8) {
+        loadLowStockCount();
+      }
+    } else {
+      // Re-emit current index so all observers (BottomNavBar, SideNavBar, MainLayoutScreen)
+      // re-render synchronously with the new permissions mapping.
+      emit(MainLayoutChangeBottomNavIndex(currentIndex));
+    }
+  }
+
+  @override
+  Future<void> close() {
+    PermissionService.instance.changeNotifier
+        .removeListener(_onPermissionsChanged);
+    return super.close();
   }
 }

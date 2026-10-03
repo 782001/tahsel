@@ -244,7 +244,12 @@ class _VaultScreenState extends State<VaultScreen> {
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
     final isPushed = !(ModalRoute.of(context)?.isFirst ?? true);
-    final showBackButton = isPushed || !isDesktop;
+    MainLayoutCubit? cubit;
+    try {
+      cubit = context.read<MainLayoutCubit>();
+    } catch (_) {}
+    final isInBottomBar = cubit?.mobileBottomNavIndices.contains(7) ?? false;
+    final showBackButton = isPushed || (!isDesktop && !isInBottomBar);
 
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
@@ -263,7 +268,8 @@ class _VaultScreenState extends State<VaultScreen> {
                   Navigator.of(context).pop();
                 } else {
                   try {
-                    context.read<MainLayoutCubit>().changeBottomNav(0);
+                    final cubit = context.read<MainLayoutCubit>();
+                    cubit.changeBottomNav(cubit.firstAllowedIndex);
                   } catch (_) {}
                 }
               }

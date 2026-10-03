@@ -41,7 +41,13 @@ class CustomersListScreen extends StatelessWidget {
         builder: (context) {
           final isDesktop = ResponsiveLayout.isDesktop(context);
           final isPushed = !(ModalRoute.of(context)?.isFirst ?? true);
-          final showBackButton = isPushed || !isDesktop;
+          MainLayoutCubit? cubit;
+          try {
+            cubit = context.read<MainLayoutCubit>();
+          } catch (_) {}
+          final isInBottomBar =
+              cubit?.mobileBottomNavIndices.contains(6) ?? false;
+          final showBackButton = isPushed || (!isDesktop && !isInBottomBar);
           return Scaffold(
             backgroundColor: AppColors.scafoldBackGround,
             appBar: AppBar(
@@ -67,7 +73,8 @@ class CustomersListScreen extends StatelessWidget {
                           Navigator.of(context).pop();
                         } else {
                           try {
-                            context.read<MainLayoutCubit>().changeBottomNav(0);
+                            final cubit = context.read<MainLayoutCubit>();
+                            cubit.changeBottomNav(cubit.firstAllowedIndex);
                           } catch (_) {}
                         }
                       },

@@ -9,6 +9,7 @@ import 'package:tahsel/core/utils/responsive_text.dart';
 import 'package:tahsel/core/utils/styles.dart';
 
 void showSuccessToast(String message) {
+  if (message.trim().isEmpty) return;
   if (!kIsWeb && Platform.isWindows) {
     _showDesktopSnackBar(
       message: message,
@@ -39,6 +40,7 @@ void showSuccessToast(String message) {
 }
 
 void showfailureToast(String message) {
+  if (message.trim().isEmpty) return;
   if (!kIsWeb && Platform.isWindows) {
     _showDesktopSnackBar(
       message: message,

@@ -50,7 +50,8 @@ class _ShippingReconciliationScreenContent extends StatelessWidget {
         Navigator.of(context).pop();
       } else {
         try {
-          context.read<MainLayoutCubit>().changeBottomNav(0);
+          final cubit = context.read<MainLayoutCubit>();
+          cubit.changeBottomNav(cubit.firstAllowedIndex);
         } catch (_) {}
       }
     }
@@ -99,8 +100,16 @@ class _ShippingReconciliationScreenContent extends StatelessWidget {
         final currentStep = _getCurrentStep(state);
         final hasFiles = state is ShippingReconciliationFilesLoaded &&
             (state.internalFile != null || state.shippingFile != null);
-        final showBackButton =
-            currentStep > 1 || hasFiles || isPushed || !isDesktop;
+        MainLayoutCubit? mainCubit;
+        try {
+          mainCubit = context.read<MainLayoutCubit>();
+        } catch (_) {}
+        final isInBottomBar =
+            mainCubit?.mobileBottomNavIndices.contains(10) ?? false;
+        final showBackButton = currentStep > 1 ||
+            hasFiles ||
+            isPushed ||
+            (!isDesktop && !isInBottomBar);
 
         return PopScope(
           canPop: false,

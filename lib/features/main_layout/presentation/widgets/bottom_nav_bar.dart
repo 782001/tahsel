@@ -7,12 +7,19 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 
 /// Screen index mapping (matches MainLayoutCubit.screens):
-///   0 → Home
-///   1 → Expenses
-///   2 → Debts
-///   3 → Invoices  (shop only)
-///   4 → Reports
-///   5 → More (Business Tools & App Settings)
+///   0  → Home
+///   1  → Expenses
+///   2  → Debts
+///   3  → Invoices  (shop only)
+///   4  → Reports
+///   5  → More (Business Tools & App Settings)
+///   6  → Customers
+///   7  → Vault (shop only)
+///   8  → Inventory (shop only)
+///   9  → Employees
+///   10 → Shipping Reconciliation (shop only)
+///   11 → Team Management (owner only)
+///   12 → Custody Management (owner only)
 class BottomNavBar extends StatelessWidget {
   final MainLayoutCubit cubit;
   final bool isShop;
@@ -24,7 +31,8 @@ class BottomNavBar extends StatelessWidget {
     return ValueListenableBuilder<int>(
       valueListenable: PermissionService.instance.changeNotifier,
       builder: (context, _, __) {
-        final allItems = <_BottomNavItemData>[
+        // 1. Primary core navigation items
+        final primaryItems = <_BottomNavItemData>[
           _BottomNavItemData(
             realIndex: 0,
             icon: Icons.home_rounded,
@@ -51,19 +59,82 @@ class BottomNavBar extends StatelessWidget {
             icon: Icons.bar_chart_rounded,
             label: AppStrings.reports.tr(),
           ),
+        ];
+
+        // 2. Candidate items that can be promoted to fill empty slots
+        // when an employee has fewer than 5 items in the bottom navigation bar.
+        final secondaryCandidates = <_BottomNavItemData>[
           _BottomNavItemData(
-            realIndex: 5,
-            icon: Icons.grid_view_rounded,
-            label: AppStrings.more.tr(),
+            realIndex: 6,
+            icon: Icons.groups_rounded,
+            label: AppStrings.customers.tr(),
+          ),
+          if (isShop)
+            _BottomNavItemData(
+              realIndex: 8,
+              icon: Icons.inventory_2_rounded,
+              label: AppStrings.inventory.tr(),
+            ),
+          if (isShop)
+            _BottomNavItemData(
+              realIndex: 7,
+              icon: Icons.savings_rounded,
+              label: AppStrings.vaultTitle.tr(),
+            ),
+          if (isShop)
+            _BottomNavItemData(
+              realIndex: 10,
+              icon: Icons.local_shipping_rounded,
+              label: AppStrings.shippingReconciliation.tr(),
+            ),
+          _BottomNavItemData(
+            realIndex: 9,
+            icon: Icons.badge_rounded,
+            label: AppStrings.employees.tr(),
+          ),
+          _BottomNavItemData(
+            realIndex: 11,
+            icon: Icons.admin_panel_settings_rounded,
+            label: AppStrings.teamAndPermissions.tr(),
+          ),
+          _BottomNavItemData(
+            realIndex: 12,
+            icon: Icons.account_balance_wallet_outlined,
+            label: AppStrings.employeeCustodies.tr(),
           ),
         ];
 
-        // Filter items based on RBAC permissions
-        final allowedItems = allItems
+        final moreItem = _BottomNavItemData(
+          realIndex: 5,
+          icon: Icons.grid_view_rounded,
+          label: AppStrings.more.tr(),
+        );
+
+        // Filter primary items allowed for current user
+        final allowedPrimary = primaryItems
             .where((item) => cubit.isIndexAllowed(item.realIndex))
             .toList();
 
-        final itemsToShow = allowedItems;
+        // Standard bottom nav holds up to 5 items comfortably.
+        // We reserve 1 slot for "More" (المزيد).
+        const int targetCapacity = 5;
+        final int availableSlots = (targetCapacity - 1) - allowedPrimary.length;
+
+        final List<_BottomNavItemData> promotedSecondary;
+        if (availableSlots > 0) {
+          promotedSecondary = secondaryCandidates
+              .where((item) => cubit.isIndexAllowed(item.realIndex))
+              .take(availableSlots)
+              .toList();
+        } else {
+          promotedSecondary = const [];
+        }
+
+        final itemsToShow = [
+          ...allowedPrimary,
+          ...promotedSecondary,
+          moreItem,
+        ];
 
         // BottomNavigationBar requires at least 2 items. If fewer, hide it.
         if (itemsToShow.length < 2) {
@@ -79,8 +150,8 @@ class BottomNavBar extends StatelessWidget {
           for (final e in visibleToReal.entries) e.value: e.key,
         };
 
-        // If current screen index is not in the bottom bar (e.g. Reports index 4,
-        // or a sub-tool opened from More), keep "More" (index 5) highlighted if available.
+        // If current screen index is in the bottom bar, highlight it.
+        // Otherwise, highlight "More" (index 5) as the fallback container.
         final currentVisible =
             realToVisible[cubit.currentIndex] ?? realToVisible[5] ?? 0;
 
@@ -99,16 +170,31 @@ class BottomNavBar extends StatelessWidget {
           showSelectedLabels: true,
           showUnselectedLabels: true,
           selectedLabelStyle: TextStyles.customStyle(
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: FontWeight.bold,
           ),
           unselectedLabelStyle: TextStyles.customStyle(
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: FontWeight.w500,
           ),
           items: itemsToShow.map((item) {
+            Widget iconWidget = Icon(item.icon);
+            if (item.realIndex == 8 && cubit.lowStockCount > 0) {
+              iconWidget = Badge(
+                label: Text(
+                  cubit.lowStockCount > 99 ? '99+' : '${cubit.lowStockCount}',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                backgroundColor: AppColors.redColor,
+                child: iconWidget,
+              );
+            }
             return BottomNavigationBarItem(
-              icon: Icon(item.icon),
+              icon: iconWidget,
               label: item.label,
             );
           }).toList(),

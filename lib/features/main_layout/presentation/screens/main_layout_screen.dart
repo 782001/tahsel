@@ -58,11 +58,13 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
                 listener: (context, state) {},
                 builder: (context, state) {
                   var cubit = BlocProvider.of<MainLayoutCubit>(context);
-                  final isDesktop = ResponsiveLayout.isDesktop(context);
 
-                  if (!isDesktop && cubit.currentIndex >= 6) {
+                  final isCurrentAllowed =
+                      cubit.isIndexAllowed(cubit.currentIndex);
+
+                  if (!isCurrentAllowed) {
                     WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (cubit.currentIndex >= 6) {
+                      if (!cubit.isIndexAllowed(cubit.currentIndex)) {
                         cubit.changeBottomNav(cubit.firstAllowedIndex);
                       }
                     });
