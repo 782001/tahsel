@@ -25,6 +25,7 @@ class EmployeeActivityLoaded extends EmployeeActivityState {
   final bool hasMore;
   final bool isLoadingMore;
   final String selectedCategory;
+  final String selectedEmployeeUid;
   final DateTimeRange? selectedDateRange;
   final EmployeeActivityStats stats;
   final String? errorMessage;
@@ -35,6 +36,7 @@ class EmployeeActivityLoaded extends EmployeeActivityState {
     required this.hasMore,
     this.isLoadingMore = false,
     this.selectedCategory = 'all',
+    this.selectedEmployeeUid = 'all',
     this.selectedDateRange,
     this.stats = const EmployeeActivityStats(),
     this.errorMessage,
@@ -46,6 +48,7 @@ class EmployeeActivityLoaded extends EmployeeActivityState {
     bool? hasMore,
     bool? isLoadingMore,
     String? selectedCategory,
+    String? selectedEmployeeUid,
     DateTimeRange? selectedDateRange,
     bool clearDateRange = false,
     EmployeeActivityStats? stats,
@@ -57,6 +60,7 @@ class EmployeeActivityLoaded extends EmployeeActivityState {
       hasMore: hasMore ?? this.hasMore,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       selectedCategory: selectedCategory ?? this.selectedCategory,
+      selectedEmployeeUid: selectedEmployeeUid ?? this.selectedEmployeeUid,
       selectedDateRange:
           clearDateRange ? null : (selectedDateRange ?? this.selectedDateRange),
       stats: stats ?? this.stats,
@@ -71,6 +75,7 @@ class EmployeeActivityLoaded extends EmployeeActivityState {
         hasMore,
         isLoadingMore,
         selectedCategory,
+        selectedEmployeeUid,
         selectedDateRange,
         stats,
         errorMessage,

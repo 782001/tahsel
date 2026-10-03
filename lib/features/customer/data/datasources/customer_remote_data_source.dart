@@ -164,10 +164,40 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
           .limit(1)
           .get();
 
+      String oldPhone = 'بدون';
+      final cleanNewPhone = phoneNumber.trim();
+
       if (existing.docs.isNotEmpty) {
-        await existing.docs.first.reference.update({
-          'phoneNumber': phoneNumber,
+        final doc = existing.docs.first;
+        oldPhone = (doc.data()['phoneNumber'] as String?)?.trim() ?? 'بدون';
+        if (oldPhone.isEmpty) oldPhone = 'بدون';
+        await doc.reference.update({
+          'phoneNumber': cleanNewPhone,
         });
+      } else {
+        await collection.add({
+          'name': normalizedName,
+          'phoneNumber': cleanNewPhone,
+          'notificationPreference': 'none',
+          'lastUsedAt': Timestamp.now(),
+          'totalTransactions': 0,
+        });
+      }
+
+      if (sl.isRegistered<ActivityLoggerService>() && oldPhone != cleanNewPhone) {
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: uid,
+          actionCategory: 'debts',
+          actionType: 'update_customer_phone',
+          actionTitle: 'تعديل هاتف العميل: $normalizedName',
+          details:
+              'تعديل رقم هاتف العميل ($normalizedName): تم تغيير الهاتف من "$oldPhone" إلى "$cleanNewPhone"',
+          extraData: {
+            'customerName': normalizedName,
+            'oldPhoneNumber': oldPhone,
+            'newPhoneNumber': cleanNewPhone,
+          },
+        );
       }
     } catch (e) {
       FirebaseErrorHandler.handle(e);
@@ -192,9 +222,12 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
           .limit(1)
           .get();
 
+      String oldPref = 'none';
+
       if (existing.docs.isNotEmpty) {
-        // Customer document exists — just update the preference
-        await existing.docs.first.reference.update({
+        final doc = existing.docs.first;
+        oldPref = (doc.data()['notificationPreference'] as String?) ?? 'none';
+        await doc.reference.update({
           'notificationPreference': preference,
         });
       } else {
@@ -207,6 +240,35 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
           'totalTransactions': 0,
           'phoneNumber': null,
         });
+      }
+
+      if (sl.isRegistered<ActivityLoggerService>() && oldPref != preference) {
+        String prefLabel(String p) {
+          switch (p) {
+            case 'whatsapp':
+              return 'واتساب';
+            case 'sms':
+              return 'رسائل SMS';
+            case 'both':
+              return 'واتساب وSMS';
+            default:
+              return 'بدون إشعارات';
+          }
+        }
+
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: uid,
+          actionCategory: 'debts',
+          actionType: 'update_customer_preference',
+          actionTitle: 'تعديل وسيلة إشعار العميل: $normalizedName',
+          details:
+              'تعديل تفضيل إشعار العميل ($normalizedName): تم التغيير من "${prefLabel(oldPref)}" إلى "${prefLabel(preference)}"',
+          extraData: {
+            'customerName': normalizedName,
+            'oldPreference': oldPref,
+            'newPreference': preference,
+          },
+        );
       }
     } catch (e) {
       FirebaseErrorHandler.handle(e);
@@ -234,11 +296,13 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
       Map<String, dynamic>? oldData;
       if (customerId != null && customerId.isNotEmpty) {
         final candidateRef = collection.doc(customerId);
-        final docSnap = await candidateRef.get();
-        if (docSnap.exists) {
-          docRef = candidateRef;
-          oldData = docSnap.data();
-        }
+        try {
+          final docSnap = await candidateRef.get();
+          if (docSnap.exists) {
+            docRef = candidateRef;
+            oldData = docSnap.data();
+          }
+        } catch (_) {}
       }
 
       if (docRef == null) {
@@ -296,7 +360,7 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
         if (oldLedger != newLedger) {
           final oldVal = oldLedger.isNotEmpty ? oldLedger : 'بدون';
           final newVal = newLedger.isNotEmpty ? newLedger : 'بدون';
-          updatedFields.add('صفحة الأستاذ: من "$oldVal" إلى "$newVal"');
+          updatedFields.add('رقم الدفتر: من "$oldVal" إلى "$newVal"');
         }
 
         final oldTax = (oldData?['taxNumber'] as String?)?.trim() ?? '';

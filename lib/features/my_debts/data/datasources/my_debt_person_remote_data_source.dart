@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:tahsel/core/error/firebase_error_handler.dart';
 import 'package:tahsel/core/usecases/pagination_params.dart';
+import 'package:tahsel/core/services/activity_logger_service.dart';
+import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/features/my_debts/data/models/my_debt_person_model.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_operation_entity.dart';
 import 'package:tahsel/features/my_debts/domain/entities/my_debt_summary_entity.dart';
@@ -194,7 +196,36 @@ class MyDebtPersonRemoteDataSourceImpl implements MyDebtPersonRemoteDataSource {
           .collection('my_debt_persons');
       final normalizedName = name.trim();
       final docRef = collection.doc(normalizedName);
-      await docRef.update({'phoneNumber': phoneNumber});
+      String oldPhone = 'بدون';
+      try {
+        final docSnap = await docRef.get();
+        if (docSnap.exists && docSnap.data() != null) {
+          oldPhone =
+              (docSnap.data()?['phoneNumber'] as String?)?.trim() ?? 'بدون';
+          if (oldPhone.isEmpty) oldPhone = 'بدون';
+        }
+      } catch (_) {}
+      final cleanNewPhone = phoneNumber.trim();
+
+      await docRef.set({
+        'phoneNumber': cleanNewPhone,
+      }, SetOptions(merge: true));
+
+      if (sl.isRegistered<ActivityLoggerService>() && oldPhone != cleanNewPhone) {
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: uid,
+          actionCategory: 'debts',
+          actionType: 'update_supplier_phone',
+          actionTitle: 'تعديل هاتف المورد: $normalizedName',
+          details:
+              'تعديل رقم هاتف المورد ($normalizedName): تم تغيير الهاتف من "$oldPhone" إلى "$cleanNewPhone"',
+          extraData: {
+            'personName': normalizedName,
+            'oldPhoneNumber': oldPhone,
+            'newPhoneNumber': cleanNewPhone,
+          },
+        );
+      }
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;
@@ -214,7 +245,47 @@ class MyDebtPersonRemoteDataSourceImpl implements MyDebtPersonRemoteDataSource {
           .collection('my_debt_persons');
       final normalizedName = name.trim();
       final docRef = collection.doc(normalizedName);
-      await docRef.update({'notificationPreference': preference});
+      String oldPref = 'none';
+      try {
+        final docSnap = await docRef.get();
+        if (docSnap.exists && docSnap.data() != null) {
+          oldPref =
+              (docSnap.data()?['notificationPreference'] as String?) ?? 'none';
+        }
+      } catch (_) {}
+
+      await docRef.set({
+        'notificationPreference': preference,
+      }, SetOptions(merge: true));
+
+      if (sl.isRegistered<ActivityLoggerService>() && oldPref != preference) {
+        String prefLabel(String p) {
+          switch (p) {
+            case 'whatsapp':
+              return 'واتساب';
+            case 'sms':
+              return 'رسائل SMS';
+            case 'both':
+              return 'واتساب وSMS';
+            default:
+              return 'بدون إشعارات';
+          }
+        }
+
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: uid,
+          actionCategory: 'debts',
+          actionType: 'update_supplier_preference',
+          actionTitle: 'تعديل وسيلة إشعار المورد: $normalizedName',
+          details:
+              'تعديل تفضيل إشعار المورد ($normalizedName): تم التغيير من "${prefLabel(oldPref)}" إلى "${prefLabel(preference)}"',
+          extraData: {
+            'personName': normalizedName,
+            'oldPreference': oldPref,
+            'newPreference': preference,
+          },
+        );
+      }
     } catch (e) {
       FirebaseErrorHandler.handle(e);
       rethrow;

@@ -2,6 +2,7 @@ import 'dart:io' show Platform, Process;
 
 import 'package:flutter/foundation.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:tahsel/core/extensions/extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
@@ -75,8 +76,8 @@ class WhatsAppService {
 
     message = message
         .replaceAll('{name}', name)
-        .replaceAll('{amount}', amount.toStringAsFixed(2))
-        .replaceAll('{remaining}', remaining.toStringAsFixed(2))
+        .replaceAll('{amount}', amount.toSmartAmount())
+        .replaceAll('{remaining}', remaining.toSmartAmount())
         .replaceAll('{date}', date)
         .replaceAll('{note}', note);
 

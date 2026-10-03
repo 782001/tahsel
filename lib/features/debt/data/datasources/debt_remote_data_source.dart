@@ -129,6 +129,23 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
       final debtRef = userRef.collection('debts').doc(debtId);
       final opRef = userRef.collection('operations').doc(debtId);
 
+      // Pre-read debt to log details of the specific debt part modified
+      String customerName = '';
+      double totalAmount = 0.0;
+      double remainingAmount = 0.0;
+      DateTime? oldDueDate;
+
+      try {
+        final debtSnap = await debtRef.get();
+        if (debtSnap.exists && debtSnap.data() != null) {
+          final data = debtSnap.data()!;
+          customerName = data['customerName'] as String? ?? '';
+          totalAmount = (data['totalAmount'] as num?)?.toDouble() ?? 0.0;
+          remainingAmount = (data['remainingAmount'] as num?)?.toDouble() ?? 0.0;
+          oldDueDate = (data['dueDate'] as Timestamp?)?.toDate();
+        }
+      } catch (_) {}
+
       final dueDateTimestamp = dueDate != null
           ? Timestamp.fromDate(dueDate)
           : null;
@@ -154,6 +171,41 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           'dueDate': dueDateTimestamp,
           'lastUpdatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
+      }
+
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final oldDateStr = oldDueDate != null
+            ? '${oldDueDate.year}/${oldDueDate.month.toString().padLeft(2, '0')}/${oldDueDate.day.toString().padLeft(2, '0')}'
+            : 'غير محدد';
+        final newDateStr = dueDate != null
+            ? '${dueDate.year}/${dueDate.month.toString().padLeft(2, '0')}/${dueDate.day.toString().padLeft(2, '0')}'
+            : 'بدون موعد (تمت الإزالة)';
+
+        final remFormatted = remainingAmount.toStringAsFixed(1);
+        final totalFormatted = totalAmount.toStringAsFixed(1);
+        final custPart = customerName.isNotEmpty ? ' للعميل $customerName' : '';
+
+        final detailsText = dueDate != null
+            ? 'تعديل موعد استحقاق دين$custPart (بند بمبلغ $remFormatted من أصل $totalFormatted ${AppStrings.currencyEgp.tr()}): تم تغيير الموعد من "$oldDateStr" إلى "$newDateStr"'
+            : 'إلغاء موعد استحقاق دين$custPart (بند بمبلغ $remFormatted من أصل $totalFormatted ${AppStrings.currencyEgp.tr()}): كان محدداً بتاريخ "$oldDateStr"';
+
+        sl<ActivityLoggerService>().appendToBatch(
+          batch,
+          ownerUid: uid,
+          actionCategory: 'debts',
+          actionType: 'update_debt_due_date',
+          actionTitle: 'تعديل موعد استحقاق دين: ${customerName.isNotEmpty ? customerName : debtId}',
+          details: detailsText,
+          amount: remainingAmount > 0 ? remainingAmount : totalAmount,
+          extraData: {
+            'debtId': debtId,
+            'customerName': customerName,
+            'remainingAmount': remainingAmount,
+            'totalAmount': totalAmount,
+            'oldDueDate': oldDueDate?.toIso8601String(),
+            'newDueDate': dueDate?.toIso8601String(),
+          },
+        );
       }
 
       await batch.commit();

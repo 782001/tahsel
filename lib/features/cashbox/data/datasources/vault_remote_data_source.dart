@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:tahsel/core/error/firebase_error_handler.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/activity_logger_service.dart';
 import 'package:tahsel/core/services/injection_container.dart';
@@ -16,11 +17,13 @@ abstract class VaultRemoteDataSource {
   Stream<VaultSummaryModel> watchSummary(String uid);
 
   Future<
-      ({
-        List<VaultTransactionModel> transactions,
-        DocumentSnapshot? lastDoc,
-        bool hasMore
-      })> getTransactionsPaginated({
+    ({
+      List<VaultTransactionModel> transactions,
+      DocumentSnapshot? lastDoc,
+      bool hasMore,
+    })
+  >
+  getTransactionsPaginated({
     required String uid,
     VaultTransactionSource sourceFilter = VaultTransactionSource.all,
     int limit = 15,
@@ -70,18 +73,25 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
   final FirebaseFirestore firestore;
 
   VaultRemoteDataSourceImpl({FirebaseFirestore? firestore})
-      : firestore = firestore ?? FirebaseFirestore.instance;
+    : firestore = firestore ?? FirebaseFirestore.instance;
 
   DocumentReference _getUserRef(String uid) {
     return firestore.collection('users').doc(uid);
   }
 
   DocumentReference _getSummaryRef(String uid) {
-    return firestore.collection('users').doc(uid).collection('vault').doc('summary');
+    return firestore
+        .collection('users')
+        .doc(uid)
+        .collection('vault')
+        .doc('summary');
   }
 
   CollectionReference _getTransactionsCol(String uid) {
-    return firestore.collection('users').doc(uid).collection('vault_transactions');
+    return firestore
+        .collection('users')
+        .doc(uid)
+        .collection('vault_transactions');
   }
 
   /// Static atomic helper for all modules (Debts, Purchases, Expenses, Employees, Offline Sync)
@@ -108,15 +118,24 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
     if (amount <= 0 || uid.isEmpty) return;
 
     final db = firestore ?? FirebaseFirestore.instance;
-    final txRef = db.collection('users').doc(uid).collection('vault_transactions').doc(transactionId);
-    final summaryRef = db.collection('users').doc(uid).collection('vault').doc('summary');
+    final txRef = db
+        .collection('users')
+        .doc(uid)
+        .collection('vault_transactions')
+        .doc(transactionId);
+    final summaryRef = db
+        .collection('users')
+        .doc(uid)
+        .collection('vault')
+        .doc('summary');
 
     final isIn = direction == VaultTransactionDirection.inFlow;
 
     // Balance check before starting transaction (prevents Windows C++ plugin crash inside runTransaction)
     if (!isIn && !allowNegativeBalance) {
       final summaryDoc = await summaryRef.get();
-      final double currentBalance = (summaryDoc.exists && summaryDoc.data() != null)
+      final double currentBalance =
+          (summaryDoc.exists && summaryDoc.data() != null)
           ? ((summaryDoc.data()!['currentBalance'] as num?)?.toDouble() ?? 0.0)
           : 0.0;
       if (currentBalance <= 0 || currentBalance < amount) {
@@ -149,17 +168,13 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
 
       final double signedDelta = isIn ? amount : -amount;
 
-      tx.set(
-        summaryRef,
-        {
-          'currentBalance': FieldValue.increment(signedDelta),
-          'totalIn': FieldValue.increment(isIn ? amount : 0.0),
-          'totalOut': FieldValue.increment(isIn ? 0.0 : amount),
-          'transactionCount': FieldValue.increment(1),
-          'lastUpdatedAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+      tx.set(summaryRef, {
+        'currentBalance': FieldValue.increment(signedDelta),
+        'totalIn': FieldValue.increment(isIn ? amount : 0.0),
+        'totalOut': FieldValue.increment(isIn ? 0.0 : amount),
+        'transactionCount': FieldValue.increment(1),
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
     });
   }
 
@@ -195,21 +210,29 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
 
   @override
   Future<
-      ({
-        List<VaultTransactionModel> transactions,
-        DocumentSnapshot? lastDoc,
-        bool hasMore
-      })> getTransactionsPaginated({
+    ({
+      List<VaultTransactionModel> transactions,
+      DocumentSnapshot? lastDoc,
+      bool hasMore,
+    })
+  >
+  getTransactionsPaginated({
     required String uid,
     VaultTransactionSource sourceFilter = VaultTransactionSource.all,
     int limit = 15,
     DocumentSnapshot? lastDoc,
   }) async {
     if (!AppStrings.isVaultEnabled()) {
-      return (transactions: <VaultTransactionModel>[], lastDoc: null, hasMore: false);
+      return (
+        transactions: <VaultTransactionModel>[],
+        lastDoc: null,
+        hasMore: false,
+      );
     }
     try {
-      Query query = _getTransactionsCol(uid).orderBy('createdAt', descending: true);
+      Query query = _getTransactionsCol(
+        uid,
+      ).orderBy('createdAt', descending: true);
 
       if (sourceFilter != VaultTransactionSource.all) {
         query = query.where('source', isEqualTo: sourceFilter.name);
@@ -224,10 +247,12 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
       final snapshot = await query.get();
       final docs = snapshot.docs;
       final transactions = docs
-          .map((doc) => VaultTransactionModel.fromMap(
-                doc.data() as Map<String, dynamic>,
-                doc.id,
-              ))
+          .map(
+            (doc) => VaultTransactionModel.fromMap(
+              doc.data() as Map<String, dynamic>,
+              doc.id,
+            ),
+          )
           .toList();
 
       final bool hasMore = docs.length == limit;
@@ -302,16 +327,12 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
       final batch = firestore.batch();
       batch.set(txRef, model.toMap(), SetOptions(merge: true));
 
-      batch.set(
-        summaryRef,
-        {
-          'currentBalance': FieldValue.increment(signedDelta),
-          'totalIn': FieldValue.increment(isIn ? deltaAmount.abs() : 0.0),
-          'totalOut': FieldValue.increment(isIn ? 0.0 : deltaAmount.abs()),
-          'lastUpdatedAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+      batch.set(summaryRef, {
+        'currentBalance': FieldValue.increment(signedDelta),
+        'totalIn': FieldValue.increment(isIn ? deltaAmount.abs() : 0.0),
+        'totalOut': FieldValue.increment(isIn ? 0.0 : deltaAmount.abs()),
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
       await batch.commit();
     } catch (e) {
@@ -329,7 +350,8 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
     if (!AppStrings.isVaultEnabled()) return;
     if (amount <= 0) return;
 
-    final String txId = 'vault_manual_dep_${DateTime.now().millisecondsSinceEpoch}';
+    final String txId =
+        'vault_manual_dep_${DateTime.now().millisecondsSinceEpoch}';
     final transaction = VaultTransactionModel(
       id: txId,
       uid: uid,
@@ -350,7 +372,7 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
         actionType: 'vault_deposit',
         actionTitle: 'إيداع نقدي في الخزينة',
         details:
-            'إيداع يدوي في الخزينة بمبلغ ${amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} ${note != null && note.isNotEmpty ? "(البيان: $note)" : "(بدون بيان)"}',
+            'إيداع يدوي في الخزينة بمبلغ ${amount.toSmartAmount()} ${AppStrings.currencyEgp.tr()} ${note != null && note.isNotEmpty ? "(البيان: $note)" : "(بدون بيان)"}',
         amount: amount,
         extraData: {
           'transactionId': txId,
@@ -373,10 +395,13 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
     if (amount <= 0) return;
 
     try {
-      final String txId = 'vault_manual_with_${DateTime.now().millisecondsSinceEpoch}';
+      final String txId =
+          'vault_manual_with_${DateTime.now().millisecondsSinceEpoch}';
       final now = DateTime.now();
       final monthKey = DateFormat('yyyy-MM', 'en').format(now);
-      final description = note != null && note.isNotEmpty ? note : 'سحب نقدي يدوياً';
+      final description = note != null && note.isNotEmpty
+          ? note
+          : 'سحب نقدي يدوياً';
 
       final transaction = VaultTransactionModel(
         id: txId,
@@ -400,45 +425,33 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
       batch.set(txRef, transaction.toMap(), SetOptions(merge: true));
 
       // 2. Vault Summary Update
-      batch.set(
-        summaryRef,
-        {
-          'currentBalance': FieldValue.increment(-amount),
-          'totalOut': FieldValue.increment(amount),
-          'transactionCount': FieldValue.increment(1),
-          'lastUpdatedAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+      batch.set(summaryRef, {
+        'currentBalance': FieldValue.increment(-amount),
+        'totalOut': FieldValue.increment(amount),
+        'transactionCount': FieldValue.increment(1),
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
       // 3. Expense Document
-      batch.set(
-        expenseRef,
-        {
-          'id': 'exp_$txId',
-          'uid': uid,
-          'amount': amount,
-          'category': 'سحب نقدي من الخزنة',
-          'description': description,
-          'createdAt': Timestamp.fromDate(now),
-          'monthKey': monthKey,
-          'syncedAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+      batch.set(expenseRef, {
+        'id': 'exp_$txId',
+        'uid': uid,
+        'amount': amount,
+        'category': 'سحب نقدي من الخزنة',
+        'description': description,
+        'createdAt': Timestamp.fromDate(now),
+        'monthKey': monthKey,
+        'syncedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
       // 4. Expense Summaries Update
       final summaryKeys = SummaryHelper.getSummaryKeys(now);
       for (final key in summaryKeys) {
-        batch.set(
-          userRef.collection('summaries').doc(key),
-          {
-            'totalExpenses': FieldValue.increment(amount),
-            'transactionCount': FieldValue.increment(1),
-            'lastUpdatedAt': FieldValue.serverTimestamp(),
-          },
-          SetOptions(merge: true),
-        );
+        batch.set(userRef.collection('summaries').doc(key), {
+          'totalExpenses': FieldValue.increment(amount),
+          'transactionCount': FieldValue.increment(1),
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
       }
 
       // 5. Log Employee Activity
@@ -450,7 +463,7 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
           actionType: 'vault_withdrawal',
           actionTitle: 'سحب نقدي من الخزينة',
           details:
-              'سحب يدوي من الخزينة بمبلغ ${amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} (البيان: $description) وترحيله للمصروفات',
+              'سحب يدوي من الخزينة بمبلغ ${amount.toSmartAmount()} ${AppStrings.currencyEgp.tr()} (البيان: $description) وترحيله للمصروفات',
           amount: amount,
           extraData: {
             'transactionId': txId,
@@ -493,53 +506,47 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
         'lastUpdatedAt': FieldValue.serverTimestamp(),
       });
 
-      batch.set(
-        summaryRef,
-        {
-          'currentBalance': FieldValue.increment(isIn ? deltaAmount : -deltaAmount),
-          'totalIn': FieldValue.increment(isIn ? deltaAmount : 0.0),
-          'totalOut': FieldValue.increment(isIn ? 0.0 : deltaAmount),
-          'lastUpdatedAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+      batch.set(summaryRef, {
+        'currentBalance': FieldValue.increment(
+          isIn ? deltaAmount : -deltaAmount,
+        ),
+        'totalIn': FieldValue.increment(isIn ? deltaAmount : 0.0),
+        'totalOut': FieldValue.increment(isIn ? 0.0 : deltaAmount),
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
       if (oldTransaction.source == VaultTransactionSource.manualWithdrawal) {
-        final expenseRef = userRef.collection('expenses').doc('exp_${oldTransaction.id}');
-        batch.set(
-          expenseRef,
-          {
-            'amount': newAmount,
-            'description': newDescription,
-            'lastUpdatedAt': FieldValue.serverTimestamp(),
-          },
-          SetOptions(merge: true),
-        );
+        final expenseRef = userRef
+            .collection('expenses')
+            .doc('exp_${oldTransaction.id}');
+        batch.set(expenseRef, {
+          'amount': newAmount,
+          'description': newDescription,
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
 
-        final summaryKeys = SummaryHelper.getSummaryKeys(oldTransaction.createdAt);
+        final summaryKeys = SummaryHelper.getSummaryKeys(
+          oldTransaction.createdAt,
+        );
         for (final key in summaryKeys) {
-          batch.set(
-            userRef.collection('summaries').doc(key),
-            {
-              'totalExpenses': FieldValue.increment(deltaAmount),
-              'lastUpdatedAt': FieldValue.serverTimestamp(),
-            },
-            SetOptions(merge: true),
-          );
+          batch.set(userRef.collection('summaries').doc(key), {
+            'totalExpenses': FieldValue.increment(deltaAmount),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
         }
       }
 
       if (sl.isRegistered<ActivityLoggerService>()) {
         final deltaFormatted = deltaAmount >= 0
-            ? '+${deltaAmount.toStringAsFixed(1)}'
-            : deltaAmount.toStringAsFixed(1);
+            ? '+${deltaAmount.toSmartAmount()}'
+            : deltaAmount.toSmartAmount();
         final String actionDetails;
         if (deltaAmount != 0) {
           actionDetails =
-              'تعديل حركة الخزينة: تم تغيير المبلغ من ${oldTransaction.amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} إلى ${newAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} (الفرق: $deltaFormatted) - البيان: $newDescription';
+              'تعديل حركة الخزينة: تم تغيير المبلغ من ${oldTransaction.amount.toSmartAmount()} ${AppStrings.currencyEgp.tr()} إلى ${newAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()} (الفرق: $deltaFormatted) - البيان: $newDescription';
         } else {
           actionDetails =
-              'تعديل بيان وتفاصيل حركة الخزينة (${newAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}): تم تحديث البيان إلى "$newDescription"';
+              'تعديل بيان وتفاصيل حركة الخزينة (${newAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}): تم تحديث البيان إلى "$newDescription"';
         }
 
         sl<ActivityLoggerService>().appendToBatch(
@@ -586,32 +593,26 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
       final batch = firestore.batch();
       batch.delete(txRef);
 
-      batch.set(
-        summaryRef,
-        {
-          'currentBalance': FieldValue.increment(isIn ? -amount : amount),
-          'totalIn': FieldValue.increment(isIn ? -amount : 0.0),
-          'totalOut': FieldValue.increment(isIn ? 0.0 : -amount),
-          'lastUpdatedAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+      batch.set(summaryRef, {
+        'currentBalance': FieldValue.increment(isIn ? -amount : amount),
+        'totalIn': FieldValue.increment(isIn ? -amount : 0.0),
+        'totalOut': FieldValue.increment(isIn ? 0.0 : -amount),
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
       if (transaction.source == VaultTransactionSource.manualWithdrawal) {
-        final expenseRef = userRef.collection('expenses').doc('exp_${transaction.id}');
+        final expenseRef = userRef
+            .collection('expenses')
+            .doc('exp_${transaction.id}');
         batch.delete(expenseRef);
 
         final summaryKeys = SummaryHelper.getSummaryKeys(transaction.createdAt);
         for (final key in summaryKeys) {
-          batch.set(
-            userRef.collection('summaries').doc(key),
-            {
-              'totalExpenses': FieldValue.increment(-amount),
-              'transactionCount': FieldValue.increment(-1),
-              'lastUpdatedAt': FieldValue.serverTimestamp(),
-            },
-            SetOptions(merge: true),
-          );
+          batch.set(userRef.collection('summaries').doc(key), {
+            'totalExpenses': FieldValue.increment(-amount),
+            'transactionCount': FieldValue.increment(-1),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
         }
       }
 
@@ -623,7 +624,7 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
           actionType: 'delete_vault_transaction',
           actionTitle: 'حذف حركة خزينة',
           details:
-              'تم حذف حركة الخزينة (${isIn ? 'إيداع' : 'سحب'}) بقيمة ${transaction.amount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} (البيان: ${transaction.description}) وإعادة تسوية رصيد الخزينة بالكامل',
+              'تم حذف حركة الخزينة (${isIn ? 'إيداع' : 'سحب'}) بقيمة ${transaction.amount.toSmartAmount()} ${AppStrings.currencyEgp.tr()} (البيان: ${transaction.description}) وإعادة تسوية رصيد الخزينة بالكامل',
           amount: transaction.amount,
           extraData: {
             'transactionId': transaction.id,

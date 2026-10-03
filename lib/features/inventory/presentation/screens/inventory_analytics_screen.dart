@@ -592,7 +592,7 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
                         ),
                         child: Text(
                           canViewProfit
-                              ? '${profitMargin.toStringAsFixed(0)}% ${AppStrings.profitMarginRatio.tr()}'
+                              ? '${profitMargin.toSmartAmount()}% ${AppStrings.profitMarginRatio.tr()}'
                               : '•••• ${AppStrings.profitMarginRatio.tr()}',
                           style: TextStyles.customStyle(
                             fontSize: 10,

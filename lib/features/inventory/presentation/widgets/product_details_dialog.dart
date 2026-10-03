@@ -161,7 +161,7 @@ class ProductDetailsDialog extends StatelessWidget {
                               ],
                             ),
                             Text(
-                              '${product.currentQuantity.toStringAsFixed(0)} ${product.unit}',
+                              '${product.currentQuantity.toSmartAmount()} ${product.unit}',
                               style: TextStyles.customStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -206,7 +206,7 @@ class ProductDetailsDialog extends StatelessWidget {
                             child: _buildMetricTile(
                               label: AppStrings.minQuantity.tr(),
                               value:
-                                  '${product.minQuantity.toStringAsFixed(0)} ${product.unit}',
+                                  '${product.minQuantity.toSmartAmount()} ${product.unit}',
                               icon: Icons.compress_rounded,
                               color: AppColors.sandText,
                               isDesktop: isDesktop,

@@ -89,9 +89,18 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     for (final p in pending) {
       final invoiceId = p['invoiceId'] as String;
       final map = jsonDecode(p['invoiceJson']) as Map<String, dynamic>;
-      final invoice = InvoiceModel.fromMap(map);
+      final rawInvoice = InvoiceModel.fromMap(map);
       final paymentAmount = (p['paymentAmount'] as num).toDouble();
       final note = p['paymentNote'] as String?;
+      final offlineEmpUid =
+          p['employeeUid'] as String? ?? rawInvoice.creatorEmployeeUid;
+      final offlineEmpName =
+          p['employeeName'] as String? ?? rawInvoice.creatorEmployeeName;
+
+      final invoice = rawInvoice.copyWith(
+        creatorEmployeeUid: offlineEmpUid,
+        creatorEmployeeName: offlineEmpName,
+      );
 
       // 1. Create invoice online (with isAlreadyDeductedLocally flag)
       final createResult = await createInvoiceUseCase(

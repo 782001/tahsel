@@ -4,6 +4,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/extensions/number_extensions.dart';
 import '../../../../core/extensions/string_extensions.dart';
+import '../../../../core/services/activity_logger_service.dart';
+import '../../../../core/services/injection_container.dart';
 import '../../../../core/utils/app_colors.dart';
 import '../../../../core/utils/app_strings.dart';
 import '../../../../core/utils/styles.dart';
@@ -56,6 +58,30 @@ class _ReconciliationResultStepState extends State<ReconciliationResultStep> {
 
       if (context.mounted) {
         if (path != null) {
+          final uid = AppStrings.userToken;
+          if (uid.isNotEmpty && sl.isRegistered<ActivityLoggerService>()) {
+            sl<ActivityLoggerService>().logStandalone(
+              ownerUid: uid,
+              actionCategory: 'reports',
+              actionType: 'export_shipping_reconciliation_excel',
+              actionTitle: 'تصدير تقرير مطابقة الشحن Excel',
+              details:
+                  'تصدير تقرير مطابقة شحنات Excel: إجمالي المطلوب ${dashboard.totalRequiredAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}، المحصل ${dashboard.totalCollectedAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}، المتبقي ${dashboard.totalRemainingAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()} (${dashboard.totalReconciledRecords} شحنة)',
+              amount: dashboard.totalCollectedAmount,
+              extraData: {
+                'totalRequired': dashboard.totalRequiredAmount,
+                'totalCollected': dashboard.totalCollectedAmount,
+                'totalRemaining': dashboard.totalRemainingAmount,
+                'totalShipments': dashboard.totalReconciledRecords,
+                'matchedCount': dashboard.matchedOrdersCount,
+                'deliveredCount': dashboard.deliveredCount,
+                'returnedCount': dashboard.returnedCount,
+                'conflictsCount': dashboard.dataConflictsCount +
+                    dashboard.duplicateOrdersCount,
+              },
+            );
+          }
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(AppStrings.exportExcelSuccess.tr()),

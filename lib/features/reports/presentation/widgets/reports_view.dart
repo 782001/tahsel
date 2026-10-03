@@ -7,6 +7,8 @@ import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/navigator_service.dart';
+import 'package:tahsel/core/services/activity_logger_service.dart';
+import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -824,12 +826,36 @@ class _ReportsViewState extends State<ReportsView> {
     final isShop = context.read<MainLayoutCubit>().isShop;
     final currentLang = context.read<LocaleCubit>().currentLangCode;
     final isArabic = currentLang == AppStrings.arabicCode;
+    final period = _getPeriodTitle();
+
+    if (sl.isRegistered<ActivityLoggerService>()) {
+      final ownerUid = AppStrings.userToken.isNotEmpty
+          ? AppStrings.userToken
+          : FirebaseAuth.instance.currentUser?.uid ?? '';
+      sl<ActivityLoggerService>().logStandalone(
+        ownerUid: ownerUid,
+        actionCategory: 'reports',
+        actionType: 'export_financial_report',
+        actionTitle: 'تصدير/طباعة التقرير المالي: $period',
+        details:
+            'قام الموظف بتصدير/طباعة التقرير المالي للفترة ($period) - إجمالي الدخل: ${state.reports.totalIncome.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}، صافي الأرباح: ${state.reports.netProfit.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}',
+        amount: state.reports.totalIncome,
+        extraData: {
+          'period': period,
+          'totalIncome': state.reports.totalIncome,
+          'netProfit': state.reports.netProfit,
+          'totalExpenses': state.reports.totalExpenses,
+          'startDate': dateRange.start.toIso8601String(),
+          'endDate': dateRange.end.toIso8601String(),
+        },
+      );
+    }
 
     await FinancialReportPdfExporter.previewOrPrint(
       context: context,
       reports: state.reports,
       insights: state.insights,
-      periodTitle: _getPeriodTitle(),
+      periodTitle: period,
       startDate: dateRange.start,
       endDate: dateRange.end,
       isShop: isShop,

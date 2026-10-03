@@ -2,34 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
-import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/extensions.dart';
 import 'package:tahsel/core/services/currency/currency_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/features/employee/domain/entities/employee_activity_entity.dart';
+import 'package:tahsel/features/employee/presentation/cubit/employee_activity_cubit.dart';
+import 'package:tahsel/features/employee/presentation/cubit/employee_activity_state.dart';
+import 'package:tahsel/features/employee/presentation/cubit/team_management_cubit.dart';
+import 'package:tahsel/features/employee/presentation/cubit/team_management_state.dart';
+import 'package:tahsel/features/employee/data/models/app_employee_model.dart';
+import 'package:tahsel/features/employee/presentation/utils/activity_field_localizer.dart';
+import 'package:tahsel/features/employee/presentation/utils/activity_navigation_helper.dart';
+import 'package:tahsel/features/employee/presentation/utils/employee_activity_export_service.dart';
 import 'package:tahsel/shared/widgets/custom_app_bar/custom_app_bar.dart';
 import 'package:tahsel/shared/widgets/shimmer/shimmer_loading.dart';
 
-import '../../data/models/app_employee_model.dart';
-import '../../domain/entities/employee_activity_entity.dart';
-import '../cubit/employee_activity_cubit.dart';
-import '../cubit/employee_activity_state.dart';
-import '../utils/activity_field_localizer.dart';
-import '../utils/activity_navigation_helper.dart';
-import '../utils/employee_activity_export_service.dart';
-
-class EmployeeActivityScreen extends StatefulWidget {
-  final AppEmployeeModel employee;
-
-  const EmployeeActivityScreen({super.key, required this.employee});
+class TeamActivityScreen extends StatefulWidget {
+  const TeamActivityScreen({super.key});
 
   @override
-  State<EmployeeActivityScreen> createState() => _EmployeeActivityScreenState();
+  State<TeamActivityScreen> createState() => _TeamActivityScreenState();
 }
 
-class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
+class _TeamActivityScreenState extends State<TeamActivityScreen> {
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -90,7 +88,7 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
     return Scaffold(
       backgroundColor: AppColors.scafoldBackGround,
       appBar: CustomAppBar(
-        centerTitle: AppStrings.employeeActivityLog.tr(),
+        centerTitle: AppStrings.teamActivityLogTitle.tr(),
         leadingIcon: const Icon(Icons.arrow_back_ios_new_rounded),
         onLeadingTap: () => Navigator.of(context).pop(),
         actionIcon: BlocBuilder<EmployeeActivityCubit, EmployeeActivityState>(
@@ -102,14 +100,26 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
               icon: const Icon(Icons.share_outlined),
               tooltip: AppStrings.exportReport.tr(),
               onPressed: () {
+                AppEmployeeModel? selectedEmp;
+                if (state.selectedEmployeeUid != 'all') {
+                  for (final e in context.read<TeamManagementCubit>().employees) {
+                    if (e.authUid == state.selectedEmployeeUid) {
+                      selectedEmp = e;
+                      break;
+                    }
+                  }
+                }
+
                 EmployeeActivityExportService.showExportOptions(
                   context,
-                  title: '${AppStrings.employeeActivityLog.tr()}: ${widget.employee.name}',
-                  subtitle: '${AppStrings.rolePreset.tr()}: ${ActivityFieldLocalizer.formatRole(widget.employee.rolePreset)}',
+                  title: AppStrings.teamActivityLogTitle.tr(),
+                  subtitle: selectedEmp != null
+                      ? '${AppStrings.employeeSpecificActivity.tr()}: ${selectedEmp.name}'
+                      : AppStrings.teamActivityLogSubtitle.tr(),
                   activities: state.activities,
                   stats: state.stats,
                   dateRange: state.selectedDateRange,
-                  employee: widget.employee,
+                  employee: selectedEmp,
                 );
               },
             );
@@ -147,7 +157,7 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
               child: Center(
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
-                    maxWidth: isDesktop ? 900 : double.infinity,
+                    maxWidth: isDesktop ? 1000 : double.infinity,
                   ),
                   child: RefreshIndicator(
                     onRefresh: () =>
@@ -168,7 +178,9 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _buildEmployeeHeaderCard(widget.employee),
+                                _buildTeamHeaderCard(),
+                                SizedBox(height: 12.h),
+                                _buildEmployeeSelectorChips(context, state),
                                 SizedBox(height: 14.h),
                                 _buildSummaryStats(state, currency),
                                 SizedBox(height: 14.h),
@@ -237,19 +249,13 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
     );
   }
 
-  Widget _buildEmployeeHeaderCard(AppEmployeeModel emp) {
-    final bool isActive = emp.isActive;
-
+  Widget _buildTeamHeaderCard() {
     return Container(
       padding: EdgeInsets.all(14.r),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: isActive
-              ? AppColors.lightGreyColor
-              : AppColors.error.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: AppColors.lightGreyColor),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -263,13 +269,10 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
           CircleAvatar(
             radius: 24.r,
             backgroundColor: AppColors.primaryColor.withValues(alpha: 0.12),
-            child: Text(
-              emp.name.isNotEmpty ? emp.name[0].toUpperCase() : '؟',
-              style: TextStyles.customStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primaryColor,
-              ),
+            child: Icon(
+              Icons.groups_rounded,
+              color: AppColors.primaryColor,
+              size: 26,
             ),
           ),
           SizedBox(width: 12.w),
@@ -277,50 +280,23 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        emp.name,
-                        style: TextStyles.customStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.black,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    _buildRoleBadge(emp.rolePreset),
-                  ],
-                ),
-                SizedBox(height: 4.h),
                 Text(
-                  emp.email,
+                  AppStrings.teamActivityTimeline.tr(),
                   style: TextStyles.customStyle(
-                    fontSize: 12,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.black,
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  AppStrings.teamActivityTimelineDesc.tr(),
+                  style: TextStyles.customStyle(
+                    fontSize: 11.5,
                     color: AppColors.sandText,
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
-            ),
-          ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-            decoration: BoxDecoration(
-              color: isActive
-                  ? AppColors.success.withValues(alpha: 0.1)
-                  : AppColors.error.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8.r),
-            ),
-            child: Text(
-              isActive ? AppStrings.active.tr() : AppStrings.disabled.tr(),
-              style: TextStyles.customStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: isActive ? AppColors.success : AppColors.error,
-              ),
             ),
           ),
         ],
@@ -328,48 +304,176 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
     );
   }
 
-  Widget _buildSummaryStats(EmployeeActivityLoaded state, String currency) {
-    final stats = state.stats;
+  Widget _buildEmployeeSelectorChips(
+    BuildContext context,
+    EmployeeActivityLoaded state,
+  ) {
+    return BlocBuilder<TeamManagementCubit, TeamManagementState>(
+      builder: (context, teamState) {
+        final cubit = context.read<TeamManagementCubit>();
+        final employees = cubit.employees;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Row(
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: _buildStatItem(
-                title: AppStrings.operationsCount.tr(),
-                value: '${stats.totalCount}',
-                icon: Icons.checklist_rounded,
-                color: AppColors.primaryColor,
-              ),
+            Row(
+              children: [
+                Icon(
+                  Icons.person_pin_outlined,
+                  size: 16,
+                  color: AppColors.sandText,
+                ),
+                SizedBox(width: 6.w),
+                Text(
+                  AppStrings.filterByEmployee.tr(),
+                  style: TextStyles.customStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.black,
+                  ),
+                ),
+              ],
             ),
-            SizedBox(width: 10.w),
-            Expanded(
-              child: _buildStatItem(
-                title: AppStrings.sales.tr(),
-                value: '${stats.salesCount}',
-                subtitle: stats.totalSalesAmount > 0
-                    ? '${stats.totalSalesAmount.toStringAsFixed(1)} $currency'
-                    : null,
-                icon: Icons.shopping_bag_outlined,
-                color: AppColors.success,
-              ),
-            ),
-            SizedBox(width: 10.w),
-            Expanded(
-              child: _buildStatItem(
-                title: AppStrings.expenses.tr(),
-                value: '${stats.expensesCount}',
-                subtitle: stats.totalExpensesAmount > 0
-                    ? '${stats.totalExpensesAmount.toStringAsFixed(1)} $currency'
-                    : null,
-                icon: Icons.money_off_csred_rounded,
-                color: AppColors.error,
+            SizedBox(height: 8.h),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: [
+                  ChoiceChip(
+                    label: Text(
+                      AppStrings.allEmployees.tr(),
+                      style: TextStyles.customStyle(
+                        fontSize: 12,
+                        fontWeight: state.selectedEmployeeUid == 'all'
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                        color: state.selectedEmployeeUid == 'all'
+                            ? Colors.white
+                            : AppColors.sandText,
+                      ),
+                    ),
+                    selected: state.selectedEmployeeUid == 'all',
+                    selectedColor: AppColors.primaryColor,
+                    backgroundColor: AppColors.surface,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.r),
+                      side: BorderSide(
+                        color: state.selectedEmployeeUid == 'all'
+                            ? AppColors.primaryColor
+                            : AppColors.lightGreyColor,
+                      ),
+                    ),
+                    showCheckmark: false,
+                    onSelected: (_) {
+                      context.read<EmployeeActivityCubit>().changeEmployee(
+                        'all',
+                      );
+                    },
+                  ),
+                  SizedBox(width: 8.w),
+                  ...employees.map((emp) {
+                    final isSelected = state.selectedEmployeeUid == emp.authUid;
+                    return Padding(
+                      padding: EdgeInsetsDirectional.only(end: 8.w),
+                      child: ChoiceChip(
+                        avatar: CircleAvatar(
+                          radius: 10.r,
+                          backgroundColor: isSelected
+                              ? Colors.white.withValues(alpha: 0.25)
+                              : AppColors.primaryColor.withValues(alpha: 0.12),
+                          child: Text(
+                            emp.name.isNotEmpty
+                                ? emp.name[0].toUpperCase()
+                                : '؟',
+                            style: TextStyles.customStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                              color: isSelected
+                                  ? Colors.white
+                                  : AppColors.primaryColor,
+                            ),
+                          ),
+                        ),
+                        label: Text(
+                          emp.name,
+                          style: TextStyles.customStyle(
+                            fontSize: 12,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                            color: isSelected
+                                ? Colors.white
+                                : AppColors.sandText,
+                          ),
+                        ),
+                        selected: isSelected,
+                        selectedColor: AppColors.primaryColor,
+                        backgroundColor: AppColors.surface,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                          side: BorderSide(
+                            color: isSelected
+                                ? AppColors.primaryColor
+                                : AppColors.lightGreyColor,
+                          ),
+                        ),
+                        showCheckmark: false,
+                        onSelected: (_) {
+                          context.read<EmployeeActivityCubit>().changeEmployee(
+                            emp.authUid,
+                          );
+                        },
+                      ),
+                    );
+                  }),
+                ],
               ),
             ),
           ],
         );
       },
+    );
+  }
+
+  Widget _buildSummaryStats(EmployeeActivityLoaded state, String currency) {
+    final stats = state.stats;
+
+    return Row(
+      children: [
+        Expanded(
+          child: _buildStatItem(
+            title: AppStrings.operationsCount.tr(),
+            value: '${stats.totalCount}',
+            icon: Icons.checklist_rounded,
+            color: AppColors.primaryColor,
+          ),
+        ),
+        SizedBox(width: 10.w),
+        Expanded(
+          child: _buildStatItem(
+            title: AppStrings.sales.tr(),
+            value: '${stats.salesCount}',
+            subtitle: stats.totalSalesAmount > 0
+                ? '${stats.totalSalesAmount.toStringAsFixed(1)} $currency'
+                : null,
+            icon: Icons.shopping_bag_outlined,
+            color: AppColors.success,
+          ),
+        ),
+        SizedBox(width: 10.w),
+        Expanded(
+          child: _buildStatItem(
+            title: AppStrings.expenses.tr(),
+            value: '${stats.expensesCount}',
+            subtitle: stats.totalExpensesAmount > 0
+                ? '${stats.totalExpensesAmount.toStringAsFixed(1)} $currency'
+                : null,
+            icon: Icons.money_off_csred_rounded,
+            color: AppColors.error,
+          ),
+        ),
+      ],
     );
   }
 
@@ -634,15 +738,41 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Flexible(
-                            child: Text(
-                              activity.actionTitle,
-                              style: TextStyles.customStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.black,
-                              ),
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
+                            child: Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    activity.employeeName,
+                                    style: TextStyles.customStyle(
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.primaryColor,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                SizedBox(width: 6.w),
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 6.w,
+                                    vertical: 2.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.sandText.withValues(
+                                      alpha: 0.12,
+                                    ),
+                                    borderRadius: BorderRadius.circular(6.r),
+                                  ),
+                                  child: Text(
+                                    ActivityFieldLocalizer.formatRole(activity.rolePreset),
+                                    style: TextStyles.customStyle(
+                                      fontSize: 9.5,
+                                      color: AppColors.sandText,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           if (activity.amount != null && activity.amount! > 0)
@@ -656,14 +786,25 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                             ),
                         ],
                       ),
-                      SizedBox(height: 4.h),
+                      SizedBox(height: 3.h),
+                      Text(
+                        activity.actionTitle,
+                        style: TextStyles.customStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.black,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 3.h),
                       Text(
                         activity.details,
                         style: TextStyles.customStyle(
-                          fontSize: 12,
+                          fontSize: 11.5,
                           color: AppColors.sandText,
                         ),
-                        maxLines: 5,
+                        maxLines: 4,
                         overflow: TextOverflow.ellipsis,
                       ),
                       SizedBox(height: 6.h),
@@ -760,192 +901,197 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                     : BorderRadius.vertical(top: Radius.circular(24.r)),
               ),
               child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40.w,
-                      height: 4.h,
-                      decoration: BoxDecoration(
-                        color: AppColors.lightGreyColor,
-                        borderRadius: BorderRadius.circular(2.r),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40.w,
+                        height: 4.h,
+                        decoration: BoxDecoration(
+                          color: AppColors.lightGreyColor,
+                          borderRadius: BorderRadius.circular(2.r),
+                        ),
                       ),
                     ),
-                  ),
-                  SizedBox(height: 16.h),
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 22.r,
-                        backgroundColor: meta.color.withValues(alpha: 0.12),
-                        child: Icon(meta.icon, color: meta.color, size: 22),
+                    SizedBox(height: 16.h),
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 22.r,
+                          backgroundColor: meta.color.withValues(alpha: 0.12),
+                          child: Icon(meta.icon, color: meta.color, size: 22),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                activity.actionTitle,
+                                style: TextStyles.customStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.black,
+                                ),
+                              ),
+                              SizedBox(height: 2.h),
+                              Text(
+                                '${activity.employeeName} (${ActivityFieldLocalizer.formatRole(activity.rolePreset)}) • ${DateFormat('yyyy-MM-dd • hh:mm a', 'ar').format(activity.timestamp)}',
+                                style: TextStyles.customStyle(
+                                  fontSize: 11,
+                                  color: AppColors.sandText,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 16.h),
+                    Divider(color: AppColors.lightGreyColor),
+                    SizedBox(height: 10.h),
+                    _buildDetailRow(
+                      AppStrings.employeeName.tr(),
+                      activity.employeeName,
+                    ),
+                    _buildDetailRow(AppStrings.category.tr(), meta.label),
+                    if (activity.amount != null && activity.amount! > 0)
+                      _buildDetailRow(
+                        AppStrings.amount.tr(),
+                        '${activity.amount!.toStringAsFixed(2)} $currency',
+                        valueColor: meta.color,
+                        isBold: true,
                       ),
-                      SizedBox(width: 12.w),
-                      Expanded(
+                    _buildDetailRow(AppStrings.details.tr(), activity.details),
+                    _buildDetailRow(
+                      AppStrings.syncType.tr(),
+                      activity.isOfflineSync
+                          ? AppStrings.offlineSynced.tr()
+                          : AppStrings.directOnline.tr(),
+                    ),
+                    if (activity.extraData != null &&
+                        activity.extraData!.isNotEmpty) ...[
+                      SizedBox(height: 8.h),
+                      Text(
+                        AppStrings.additionalDetails.tr(),
+                        style: TextStyles.customStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.black,
+                        ),
+                      ),
+                      SizedBox(height: 6.h),
+                      Container(
+                        padding: EdgeInsets.all(10.r),
+                        decoration: BoxDecoration(
+                          color: AppColors.scafoldBackGround,
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              activity.actionTitle,
-                              style: TextStyles.customStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.black,
+                          children: activity.extraData!.entries.map((e) {
+                            return Padding(
+                              padding: EdgeInsets.symmetric(vertical: 3.h),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    ActivityFieldLocalizer.localizeKey(
+                                      context,
+                                      e.key,
+                                    ),
+                                    style: TextStyles.customStyle(
+                                      fontSize: 11,
+                                      color: AppColors.sandText,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${e.value}',
+                                    style: TextStyles.customStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.black,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                            SizedBox(height: 2.h),
-                            Text(
-                              '${activity.employeeName} • ${DateFormat('yyyy-MM-dd • hh:mm a', 'ar').format(activity.timestamp)}',
-                              style: TextStyles.customStyle(
-                                fontSize: 11,
-                                color: AppColors.sandText,
-                              ),
-                            ),
-                          ],
+                            );
+                          }).toList(),
                         ),
                       ),
                     ],
-                  ),
-                  SizedBox(height: 16.h),
-                  Divider(color: AppColors.lightGreyColor),
-                  SizedBox(height: 10.h),
-                  _buildDetailRow(AppStrings.category.tr(), meta.label),
-                  if (activity.amount != null && activity.amount! > 0)
-                    _buildDetailRow(
-                      AppStrings.amount.tr(),
-                      '${activity.amount!.toStringAsFixed(2)} $currency',
-                      valueColor: meta.color,
-                      isBold: true,
-                    ),
-                  _buildDetailRow(AppStrings.details.tr(), activity.details),
-                  _buildDetailRow(
-                    AppStrings.syncType.tr(),
-                    activity.isOfflineSync
-                        ? AppStrings.offlineSynced.tr()
-                        : AppStrings.directOnline.tr(),
-                  ),
-                  if (activity.extraData != null &&
-                      activity.extraData!.isNotEmpty) ...[
-                    SizedBox(height: 8.h),
-                    Text(
-                      AppStrings.additionalDetails.tr(),
-                      style: TextStyles.customStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.black,
-                      ),
-                    ),
-                    SizedBox(height: 6.h),
-                    Container(
-                      padding: EdgeInsets.all(10.r),
-                      decoration: BoxDecoration(
-                        color: AppColors.scafoldBackGround,
-                        borderRadius: BorderRadius.circular(10.r),
-                      ),
-                      child: Column(
-                        children: activity.extraData!.entries.map((e) {
-                          return Padding(
-                            padding: EdgeInsets.symmetric(vertical: 3.h),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  ActivityFieldLocalizer.localizeKey(
-                                    context,
-                                    e.key,
-                                  ),
-                                  style: TextStyles.customStyle(
-                                    fontSize: 11,
-                                    color: AppColors.sandText,
-                                  ),
-                                ),
-                                Text(
-                                  '${e.value}',
-                                  style: TextStyles.customStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.black,
-                                  ),
-                                ),
-                              ],
+                    if (ActivityNavigationHelper.hasLinkedEntity(activity)) ...[
+                      SizedBox(height: 16.h),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            ActivityNavigationHelper.navigateToLinkedEntity(
+                              context,
+                              activity,
+                            );
+                          },
+                          icon: Icon(
+                            ActivityNavigationHelper.getLinkedEntityIcon(
+                              activity,
                             ),
-                          );
-                        }).toList(),
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                          label: Text(
+                            ActivityNavigationHelper.getLinkedEntityLabel(
+                              activity,
+                            ),
+                            style: TextStyles.customStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryColor,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            padding: EdgeInsets.symmetric(vertical: 12.h),
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
-                  if (ActivityNavigationHelper.hasLinkedEntity(activity)) ...[
-                    SizedBox(height: 16.h),
+                    ],
+                    SizedBox(height: 10.h),
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.pop(ctx);
-                          ActivityNavigationHelper.navigateToLinkedEntity(
-                            context,
-                            activity,
-                          );
-                        },
-                        icon: Icon(
-                          ActivityNavigationHelper.getLinkedEntityIcon(
-                            activity,
-                          ),
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                        label: Text(
-                          ActivityNavigationHelper.getLinkedEntityLabel(
-                            activity,
-                          ),
-                          style: TextStyles.customStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryColor,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: AppColors.lightGreyColor),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.r),
                           ),
                           padding: EdgeInsets.symmetric(vertical: 12.h),
                         ),
+                        child: Text(
+                          AppStrings.close.tr(),
+                          style: TextStyles.customStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.sandText,
+                          ),
+                        ),
                       ),
                     ),
                   ],
-                  SizedBox(height: 10.h),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: AppColors.lightGreyColor),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                        padding: EdgeInsets.symmetric(vertical: 12.h),
-                      ),
-                      child: Text(
-                        AppStrings.close.tr(),
-                        style: TextStyles.customStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.sandText,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
   Widget _buildDetailRow(
     String title,
@@ -965,16 +1111,16 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
               color: AppColors.sandText,
             ),
           ),
-          Flexible(
+          SizedBox(width: 10.w),
+          Expanded(
             child: Text(
               value,
+              textAlign: TextAlign.end,
               style: TextStyles.customStyle(
                 fontSize: 12,
-                fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+                fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
                 color: valueColor ?? AppColors.black,
               ),
-              textAlign: TextAlign.end,
-              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -990,31 +1136,64 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.receipt_long_outlined,
-              size: 56,
+              Icons.feed_outlined,
+              size: 56.r,
               color: AppColors.sandText.withValues(alpha: 0.5),
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: 14.h),
             Text(
-              AppStrings.noActivitiesFound.tr(),
+              AppStrings.noActivityLogged.tr(),
               style: TextStyles.customStyle(
-                fontSize: 15,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppColors.sandText,
+                color: AppColors.black,
               ),
-              textAlign: TextAlign.center,
             ),
             SizedBox(height: 6.h),
             Text(
-              AppStrings.noActivitiesHint.tr(),
+              AppStrings.noActivityLoggedDesc.tr(),
+              textAlign: TextAlign.center,
               style: TextStyles.customStyle(
                 fontSize: 12,
-                color: AppColors.sandText.withValues(alpha: 0.7),
+                color: AppColors.sandText,
               ),
-              textAlign: TextAlign.center,
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildInitialLoading() {
+    return ShimmerLoading(
+      child: ListView(
+        padding: EdgeInsets.all(16.r),
+        children: [
+          ShimmerPlaceholder(height: 70.h, borderRadius: 16.r),
+          SizedBox(height: 14.h),
+          ShimmerPlaceholder(height: 50.h, borderRadius: 12.r),
+          SizedBox(height: 14.h),
+          Row(
+            children: [
+              Expanded(
+                child: ShimmerPlaceholder(height: 60.h, borderRadius: 12.r),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: ShimmerPlaceholder(height: 60.h, borderRadius: 12.r),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: ShimmerPlaceholder(height: 60.h, borderRadius: 12.r),
+              ),
+            ],
+          ),
+          SizedBox(height: 14.h),
+          for (int i = 0; i < 4; i++) ...[
+            ShimmerPlaceholder(height: 75.h, borderRadius: 14.r),
+            SizedBox(height: 10.h),
+          ],
+        ],
       ),
     );
   }
@@ -1026,32 +1205,34 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline_rounded, size: 48, color: AppColors.error),
+            Icon(
+              Icons.error_outline_rounded,
+              size: 48.r,
+              color: AppColors.error,
+            ),
             SizedBox(height: 12.h),
             Text(
               message,
+              textAlign: TextAlign.center,
               style: TextStyles.customStyle(
                 fontSize: 14,
-                color: AppColors.sandText,
+                color: AppColors.error,
               ),
-              textAlign: TextAlign.center,
             ),
             SizedBox(height: 16.h),
-            ElevatedButton.icon(
+            ElevatedButton(
               onPressed: () => context.read<EmployeeActivityCubit>().refresh(),
-              icon: const Icon(Icons.refresh_rounded, color: Colors.white),
-              label: Text(
-                AppStrings.retry.tr(),
-                style: TextStyles.customStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryColor,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10.r),
+                ),
+              ),
+              child: Text(
+                AppStrings.retry.tr(),
+                style: TextStyles.customStyle(
+                  fontSize: 13,
+                  color: Colors.white,
                 ),
               ),
             ),
@@ -1061,146 +1242,80 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
     );
   }
 
-  Widget _buildInitialLoading() {
-    return Padding(
-      padding: EdgeInsets.all(16.r),
-      child: Column(
-        children: List.generate(
-          5,
-          (index) => Padding(
-            padding: EdgeInsets.only(bottom: 12.h),
-            child: ShimmerLoading(
-              child: ShimmerPlaceholder(
-                height: 75.h,
-                width: double.infinity,
-                borderRadius: 14.r,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRoleBadge(String preset) {
-    String label = preset;
-    Color color = AppColors.primaryColor;
-
-    switch (preset) {
-      case AppPermissions.roleCashier:
-        label = AppStrings.roleCashierLabel.tr();
-        color = AppColors.primaryColor;
-        break;
-      case AppPermissions.roleAccountant:
-        label = AppStrings.roleAccountantLabel.tr();
-        color = AppColors.stitchBlue;
-        break;
-      case AppPermissions.roleSupervisor:
-        label = AppStrings.roleSupervisorLabel.tr();
-        color = AppColors.error;
-        break;
-      case AppPermissions.roleStorekeeper:
-        label = AppStrings.roleStorekeeperLabel.tr();
-        color = AppColors.stitchOrange;
-        break;
-      default:
-        label = AppStrings.roleCustomLabel.tr();
-        color = AppColors.sandText;
-        break;
-    }
-
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 2.5.h),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6.r),
-      ),
-      child: Text(
-        label,
-        style: TextStyles.customStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-          color: color,
-        ),
-      ),
-    );
-  }
-
   _CategoryMeta _getCategoryMeta(String category) {
     switch (category) {
       case 'sales':
         return _CategoryMeta(
-          label: AppStrings.sales.tr(),
-          icon: Icons.shopping_bag_outlined,
           color: AppColors.success,
+          icon: Icons.point_of_sale_rounded,
+          label: AppStrings.sales.tr(),
         );
       case 'invoices':
         return _CategoryMeta(
-          label: AppStrings.invoices.tr(),
-          icon: Icons.receipt_long_outlined,
           color: AppColors.primaryColor,
+          icon: Icons.receipt_long_rounded,
+          label: AppStrings.invoices.tr(),
         );
       case 'debts':
         return _CategoryMeta(
-          label: AppStrings.debts.tr(),
+          color: const Color(0xFFE65100),
           icon: Icons.account_balance_wallet_outlined,
-          color: AppColors.stitchBlue,
+          label: AppStrings.debts.tr(),
         );
       case 'expenses':
         return _CategoryMeta(
-          label: AppStrings.expenses.tr(),
-          icon: Icons.money_off_csred_rounded,
           color: AppColors.error,
+          icon: Icons.money_off_csred_rounded,
+          label: AppStrings.expenses.tr(),
         );
       case 'vault':
         return _CategoryMeta(
-          label: AppStrings.vault.tr(),
+          color: const Color(0xFF00897B),
           icon: Icons.savings_outlined,
-          color: AppColors.stitchOrange,
+          label: AppStrings.vault.tr(),
         );
       case 'inventory':
         return _CategoryMeta(
-          label: AppStrings.inventory.tr(),
+          color: const Color(0xFF5E35B1),
           icon: Icons.inventory_2_outlined,
-          color: const Color(0xFF7B1FA2),
+          label: AppStrings.inventory.tr(),
         );
       case 'employees':
         return _CategoryMeta(
+          color: const Color(0xFF1E88E5),
+          icon: Icons.badge_outlined,
           label: AppStrings.permGroupEmployees.tr(),
-          icon: Icons.people_outline_rounded,
-          color: const Color(0xFF00897B),
         );
       case 'reports':
         return _CategoryMeta(
-          label: AppStrings.permGroupReports.tr(),
+          color: const Color(0xFF8E24AA),
           icon: Icons.analytics_outlined,
-          color: const Color(0xFFE65100),
+          label: AppStrings.permGroupReports.tr(),
         );
       case 'settings':
         return _CategoryMeta(
-          label: AppStrings.permGroupSettings.tr(),
+          color: const Color(0xFF546E7A),
           icon: Icons.settings_outlined,
-          color: const Color(0xFF5E35B1),
+          label: AppStrings.permGroupSettings.tr(),
         );
       default:
         return _CategoryMeta(
-          label: AppStrings.other.tr(),
-          icon: Icons.history_rounded,
           color: AppColors.sandText,
+          icon: Icons.history_rounded,
+          label: AppStrings.all.tr(),
         );
     }
   }
-
 }
 
 class _CategoryMeta {
-  final String label;
-  final IconData icon;
   final Color color;
+  final IconData icon;
+  final String label;
 
   const _CategoryMeta({
-    required this.label,
-    required this.icon,
     required this.color,
+    required this.icon,
+    required this.label,
   });
 }

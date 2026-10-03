@@ -101,6 +101,8 @@ class InvoiceModel extends InvoiceEntity {
     super.isRefundedToCustomer,
     super.dueDate,
     super.taxRate,
+    super.creatorEmployeeUid,
+    super.creatorEmployeeName,
   });
 
   factory InvoiceModel.fromEntity(InvoiceEntity e) => InvoiceModel(
@@ -122,6 +124,8 @@ class InvoiceModel extends InvoiceEntity {
     isRefundedToCustomer: e.isRefundedToCustomer,
     dueDate: e.dueDate,
     taxRate: e.taxRate,
+    creatorEmployeeUid: e.creatorEmployeeUid,
+    creatorEmployeeName: e.creatorEmployeeName,
   );
 
   factory InvoiceModel.fromMap(Map<String, dynamic> map) {
@@ -162,6 +166,8 @@ class InvoiceModel extends InvoiceEntity {
             ? map['dueDate'] as DateTime
             : DateTime.tryParse(map['dueDate'].toString())),
       taxRate: (map['taxRate'] as num?)?.toDouble(),
+      creatorEmployeeUid: map['creatorEmployeeUid'] as String?,
+      creatorEmployeeName: map['creatorEmployeeName'] as String?,
     );
   }
 
@@ -187,6 +193,8 @@ class InvoiceModel extends InvoiceEntity {
     'isRefundedToCustomer': isRefundedToCustomer,
     'dueDate': dueDate?.toIso8601String(),
     if (taxRate != null) 'taxRate': taxRate,
+    if (creatorEmployeeUid != null) 'creatorEmployeeUid': creatorEmployeeUid,
+    if (creatorEmployeeName != null) 'creatorEmployeeName': creatorEmployeeName,
   };
 
   String toJson() => jsonEncode(toMap());

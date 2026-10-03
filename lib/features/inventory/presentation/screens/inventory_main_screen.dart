@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/constants/app_permissions.dart';
+import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
@@ -233,7 +234,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                             Expanded(
                               child: _buildTahselKpiCard(
                                 title: AppStrings.totalInventoryValue.tr(),
-                                value: totalValue.toStringAsFixed(0),
+                                value: totalValue.toSmartAmount(),
                                 subtitle: AppStrings.currencyEgp.tr(),
                                 icon: Icons.account_balance_wallet_rounded,
                                 color: AppColors.success,

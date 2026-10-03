@@ -1,10 +1,12 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/invoice_pdf_service.dart';
 import 'package:tahsel/core/services/permission_service.dart';
+import 'package:tahsel/core/services/activity_logger_service.dart';
+import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
@@ -65,6 +67,28 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
   Future<void> _printPurchasePdf(InventoryPurchaseEntity pur) async {
     final isArabic = AppStrings.currentLang == 'ar';
     try {
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final ownerUid = AppStrings.userToken;
+        final supp =
+            pur.supplierName.trim().isNotEmpty ? pur.supplierName.trim() : 'عام';
+        final totalFormatted = pur.totalAmount.toStringAsFixed(1);
+        final invoiceNum = pur.id;
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: ownerUid,
+          actionCategory: 'inventory',
+          actionType: 'print_purchase_invoice',
+          actionTitle: 'طباعة فاتورة مشتريات: $invoiceNum',
+          details:
+              'قام الموظف بطباعة فاتورة مشتريات للمورد ($supp) برقم $invoiceNum بإجمالي $totalFormatted ${AppStrings.currencyEgp.tr()}',
+          amount: pur.totalAmount,
+          extraData: {
+            'purchaseId': pur.id,
+            'supplierName': pur.supplierName,
+            'totalAmount': pur.totalAmount,
+          },
+        );
+      }
+
       await InvoicePdfService.printPurchaseInvoice(
         context,
         pur,
@@ -85,6 +109,28 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
   Future<void> _sharePurchasePdf(InventoryPurchaseEntity pur) async {
     final isArabic = AppStrings.currentLang == 'ar';
     try {
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final ownerUid = AppStrings.userToken;
+        final supp =
+            pur.supplierName.trim().isNotEmpty ? pur.supplierName.trim() : 'عام';
+        final totalFormatted = pur.totalAmount.toStringAsFixed(1);
+        final invoiceNum = pur.id;
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: ownerUid,
+          actionCategory: 'inventory',
+          actionType: 'export_purchase_invoice_pdf',
+          actionTitle: 'مشاركة فاتورة مشتريات PDF: $invoiceNum',
+          details:
+              'قام الموظف بمشاركة فاتورة مشتريات PDF للمورد ($supp) برقم $invoiceNum بإجمالي $totalFormatted ${AppStrings.currencyEgp.tr()}',
+          amount: pur.totalAmount,
+          extraData: {
+            'purchaseId': pur.id,
+            'supplierName': pur.supplierName,
+            'totalAmount': pur.totalAmount,
+          },
+        );
+      }
+
       await InvoicePdfService.sharePurchaseInvoicePdf(pur, isArabic: isArabic);
     } catch (e) {
       if (mounted) {
@@ -102,6 +148,28 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
     final isArabic = AppStrings.currentLang == 'ar';
     final messenger = ScaffoldMessenger.of(context);
     try {
+      if (sl.isRegistered<ActivityLoggerService>()) {
+        final ownerUid = AppStrings.userToken;
+        final supp =
+            pur.supplierName.trim().isNotEmpty ? pur.supplierName.trim() : 'عام';
+        final totalFormatted = pur.totalAmount.toStringAsFixed(1);
+        final invoiceNum = pur.id;
+        sl<ActivityLoggerService>().logStandalone(
+          ownerUid: ownerUid,
+          actionCategory: 'inventory',
+          actionType: 'download_purchase_invoice_pdf',
+          actionTitle: 'حفظ وتنزيل فاتورة مشتريات PDF: $invoiceNum',
+          details:
+              'قام الموظف بحفظ وتنزيل ملف فاتورة مشتريات للمورد ($supp) برقم $invoiceNum بإجمالي $totalFormatted ${AppStrings.currencyEgp.tr()}',
+          amount: pur.totalAmount,
+          extraData: {
+            'purchaseId': pur.id,
+            'supplierName': pur.supplierName,
+            'totalAmount': pur.totalAmount,
+          },
+        );
+      }
+
       final file = await InvoicePdfService.savePurchasePdfToStorage(
         purchase: pur,
         isArabic: isArabic,

@@ -132,42 +132,59 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
               : null,
           actionIcon: Padding(
             padding: EdgeInsetsDirectional.only(end: 14.w),
-            child: Center(
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.vipGoldStart, AppColors.vipGoldEnd],
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(
+                    Icons.history_edu_rounded,
+                    color: AppColors.primaryColor,
+                    size: 24,
                   ),
-                  borderRadius: BorderRadius.circular(12.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.vipGoldStart.withValues(alpha: 0.4),
-                      blurRadius: 6,
-                      offset: const Offset(0, 1),
-                    ),
-                  ],
+                  tooltip: AppStrings.teamActivityLogTitle.tr(),
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRoutes.teamActivity),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.workspace_premium_rounded,
-                      size: 14,
-                      color: Colors.black87,
-                    ),
-                    SizedBox(width: 3.w),
-                    Text(
-                      'VIP',
-                      style: TextStyles.customStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.black87,
+                SizedBox(width: 2.w),
+                Center(
+                  child: Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 9.w, vertical: 4.h),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppColors.vipGoldStart, AppColors.vipGoldEnd],
                       ),
+                      borderRadius: BorderRadius.circular(12.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.vipGoldStart.withValues(alpha: 0.4),
+                          blurRadius: 6,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
                     ),
-                  ],
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.workspace_premium_rounded,
+                          size: 14,
+                          color: Colors.black87,
+                        ),
+                        SizedBox(width: 3.w),
+                        Text(
+                          'VIP',
+                          style: TextStyles.customStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ),
@@ -280,7 +297,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
                 child: Center(
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
-                      maxWidth: isDesktop ? 900 : double.infinity,
+                      maxWidth: isDesktop ? 1000 : double.infinity,
                     ),
                     child: ListView(
                       physics: const AlwaysScrollableScrollPhysics(
@@ -292,7 +309,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
                       ),
                       children: [
                         // Overview Banner
-                        _buildOverviewCard(employees),
+                        _buildOverviewCard(context, employees),
                         SizedBox(height: 16.h),
 
                         // List Header
@@ -327,7 +344,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
     return Center(
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: isDesktop ? 900 : double.infinity,
+          maxWidth: isDesktop ? 1000 : double.infinity,
         ),
         child: ShimmerLoading(
           child: ListView(
@@ -454,7 +471,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
     );
   }
 
-  Widget _buildOverviewCard(List employees) {
+  Widget _buildOverviewCard(BuildContext context, List employees) {
     final activeCount = employees.where((e) => e.isActive).length;
     final disabledCount = employees.length - activeCount;
 
@@ -623,6 +640,64 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
                       disabledCount.toString(),
                     ),
                   ],
+                ),
+                SizedBox(height: 12.h),
+                InkWell(
+                  onTap: () =>
+                      Navigator.pushNamed(context, AppRoutes.teamActivity),
+                  borderRadius: BorderRadius.circular(12.r),
+                  child: Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.bolt_rounded,
+                              size: 18,
+                              color: AppColors.vipGoldStart,
+                            ),
+                            SizedBox(width: 6.w),
+                            Text(
+                              AppStrings.teamLiveFeed.tr(),
+                              style: TextStyles.customStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            Text(
+                              AppStrings.viewFeed.tr(),
+                              style: TextStyles.customStyle(
+                                fontSize: 11,
+                                color: AppColors.vipGoldStart,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(width: 4.w),
+                            const Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 11,
+                              color: AppColors.vipGoldStart,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),

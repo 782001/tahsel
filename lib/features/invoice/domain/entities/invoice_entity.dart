@@ -138,6 +138,10 @@ class InvoiceEntity extends Equatable {
   final DateTime? dueDate;
   final double? taxRate;
 
+  /// Optional employee attribution for RBAC audits & offline sync
+  final String? creatorEmployeeUid;
+  final String? creatorEmployeeName;
+
   const InvoiceEntity({
     required this.id,
     required this.uid,
@@ -157,6 +161,8 @@ class InvoiceEntity extends Equatable {
     this.isRefundedToCustomer = false,
     this.dueDate,
     this.taxRate,
+    this.creatorEmployeeUid,
+    this.creatorEmployeeName,
   });
 
   /// Raw subtotal of all items before ANY discounts (sum of qty * unitPrice).
@@ -311,6 +317,8 @@ class InvoiceEntity extends Equatable {
     DateTime? dueDate,
     bool clearDueDate = false,
     double? taxRate,
+    String? creatorEmployeeUid,
+    String? creatorEmployeeName,
   }) {
     return InvoiceEntity(
       id: id ?? this.id,
@@ -331,6 +339,8 @@ class InvoiceEntity extends Equatable {
       isRefundedToCustomer: isRefundedToCustomer ?? this.isRefundedToCustomer,
       dueDate: clearDueDate ? null : (dueDate ?? this.dueDate),
       taxRate: taxRate ?? this.taxRate,
+      creatorEmployeeUid: creatorEmployeeUid ?? this.creatorEmployeeUid,
+      creatorEmployeeName: creatorEmployeeName ?? this.creatorEmployeeName,
     );
   }
 
@@ -354,5 +364,7 @@ class InvoiceEntity extends Equatable {
     isRefundedToCustomer,
     dueDate,
     taxRate,
+    creatorEmployeeUid,
+    creatorEmployeeName,
   ];
 }

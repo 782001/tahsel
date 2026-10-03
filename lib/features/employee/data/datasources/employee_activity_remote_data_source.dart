@@ -59,6 +59,7 @@ abstract class EmployeeActivityRemoteDataSource {
   Future<EmployeeActivityStats> getEmployeeStats({
     required String ownerUid,
     required String employeeUid,
+    bool forceRefresh = false,
   });
 }
 
@@ -78,7 +79,7 @@ class EmployeeActivityRemoteDataSourceImpl implements EmployeeActivityRemoteData
   }) async {
     final cleanOwner = ownerUid.trim();
     final cleanEmp = employeeUid.trim();
-    if (cleanOwner.isEmpty || cleanEmp.isEmpty) {
+    if (cleanOwner.isEmpty) {
       return const EmployeeActivityResult(
         activities: [],
         lastDocument: null,
@@ -90,8 +91,11 @@ class EmployeeActivityRemoteDataSourceImpl implements EmployeeActivityRemoteData
       Query<Map<String, dynamic>> query = firestore
           .collection('users')
           .doc(cleanOwner)
-          .collection('employee_activities')
-          .where('employeeUid', isEqualTo: cleanEmp);
+          .collection('employee_activities');
+
+      if (cleanEmp.isNotEmpty && cleanEmp != 'all') {
+        query = query.where('employeeUid', isEqualTo: cleanEmp);
+      }
 
       if (category != 'all') {
         query = query.where('actionCategory', isEqualTo: category);
@@ -165,11 +169,14 @@ class EmployeeActivityRemoteDataSourceImpl implements EmployeeActivityRemoteData
     DocumentSnapshot? lastDoc,
   }) async {
     try {
-      var query = firestore
+      Query<Map<String, dynamic>> query = firestore
           .collection('users')
           .doc(ownerUid)
-          .collection('employee_activities')
-          .where('employeeUid', isEqualTo: employeeUid);
+          .collection('employee_activities');
+
+      if (employeeUid.trim().isNotEmpty && employeeUid.trim() != 'all') {
+        query = query.where('employeeUid', isEqualTo: employeeUid.trim());
+      }
 
       if (lastDoc != null) {
         query = query.startAfterDocument(lastDoc);
@@ -210,30 +217,52 @@ class EmployeeActivityRemoteDataSourceImpl implements EmployeeActivityRemoteData
     }
   }
 
+  final Map<String, _CachedActivityStats> _statsCache = {};
+
   @override
   Future<EmployeeActivityStats> getEmployeeStats({
     required String ownerUid,
     required String employeeUid,
+    bool forceRefresh = false,
   }) async {
     final cleanOwner = ownerUid.trim();
     final cleanEmp = employeeUid.trim();
-    if (cleanOwner.isEmpty || cleanEmp.isEmpty) {
+    if (cleanOwner.isEmpty) {
       return const EmployeeActivityStats();
     }
 
+    final cacheKey = '${cleanOwner}_$cleanEmp';
+    if (!forceRefresh && _statsCache.containsKey(cacheKey)) {
+      final cached = _statsCache[cacheKey]!;
+      if (DateTime.now().difference(cached.cachedAt) < const Duration(minutes: 3)) {
+        return cached.stats;
+      }
+    }
+
     try {
-      final baseQuery = firestore
+      Query<Map<String, dynamic>> baseQuery = firestore
           .collection('users')
           .doc(cleanOwner)
-          .collection('employee_activities')
-          .where('employeeUid', isEqualTo: cleanEmp);
+          .collection('employee_activities');
+
+      if (cleanEmp.isNotEmpty && cleanEmp != 'all') {
+        baseQuery = baseQuery.where('employeeUid', isEqualTo: cleanEmp);
+      }
 
       final countSnapshot = await baseQuery.count().get();
       final totalCount = countSnapshot.count ?? 0;
 
+      // If no activities exist at all, return empty stats immediately without reading recentDocs!
+      if (totalCount == 0) {
+        const emptyStats = EmployeeActivityStats();
+        _statsCache[cacheKey] = _CachedActivityStats(emptyStats, DateTime.now());
+        return emptyStats;
+      }
+
+      // Read at most 40 recent docs (down from 100) to compute recent KPI breakdown, saving 60% Firestore read cost
       final recentDocs = await baseQuery
           .orderBy('timestamp', descending: true)
-          .limit(100)
+          .limit(40)
           .get();
 
       int salesCount = 0;
@@ -276,7 +305,7 @@ class EmployeeActivityRemoteDataSourceImpl implements EmployeeActivityRemoteData
         }
       }
 
-      return EmployeeActivityStats(
+      final stats = EmployeeActivityStats(
         totalCount: totalCount,
         salesCount: salesCount,
         invoicesCount: invoicesCount,
@@ -290,9 +319,18 @@ class EmployeeActivityRemoteDataSourceImpl implements EmployeeActivityRemoteData
         totalSalesAmount: totalSales,
         totalExpensesAmount: totalExpenses,
       );
+
+      _statsCache[cacheKey] = _CachedActivityStats(stats, DateTime.now());
+      return stats;
     } catch (e) {
       AppLogger.printMessage('[EmployeeActivityRemoteDataSource] Stats error: $e');
       return const EmployeeActivityStats();
     }
   }
+}
+
+class _CachedActivityStats {
+  final EmployeeActivityStats stats;
+  final DateTime cachedAt;
+  const _CachedActivityStats(this.stats, this.cachedAt);
 }

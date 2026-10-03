@@ -168,6 +168,14 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
           .collection('employees')
           .doc(employee.id);
 
+      Map<String, dynamic>? oldData;
+      try {
+        final oldSnap = await docRef.get();
+        if (oldSnap.exists) {
+          oldData = oldSnap.data();
+        }
+      } catch (_) {}
+
       final batch = firestore.batch();
       batch.update(docRef, employee.toJson());
 
@@ -175,14 +183,48 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
         final salaryTypeLabel = employee.salaryType == 'daily'
             ? 'يومى'
             : (employee.salaryType == 'hourly' ? 'بالساعة' : 'شهرى');
+
+        final List<String> changes = [];
+        if (oldData != null) {
+          final oldName = oldData['name'] as String? ?? '';
+          if (oldName.isNotEmpty && oldName != employee.name) {
+            changes.add('الاسم من "$oldName" إلى "${employee.name}"');
+          }
+          final oldRole = oldData['role'] as String? ?? '';
+          if (oldRole.isNotEmpty && oldRole != employee.role) {
+            changes.add('المسمى الوظيفي من "$oldRole" إلى "${employee.role}"');
+          }
+          final oldPhone = oldData['phone'] as String? ?? '';
+          if (oldPhone != employee.phone) {
+            changes.add(
+                'الهاتف من "${oldPhone.isEmpty ? 'فارغ' : oldPhone}" إلى "${employee.phone}"');
+          }
+          final oldSalary =
+              (oldData['salaryAmount'] as num?)?.toDouble() ?? 0.0;
+          if ((oldSalary - employee.salaryAmount).abs() > 0.001) {
+            changes.add(
+                'الراتب من ${oldSalary.toStringAsFixed(1)} إلى ${employee.salaryAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}');
+          }
+          final oldSalaryType = oldData['salaryType'] as String? ?? 'monthly';
+          if (oldSalaryType != employee.salaryType) {
+            final oldTypeLabel = oldSalaryType == 'daily'
+                ? 'يومى'
+                : (oldSalaryType == 'hourly' ? 'بالساعة' : 'شهرى');
+            changes.add('نوع الراتب من "$oldTypeLabel" إلى "$salaryTypeLabel"');
+          }
+        }
+
+        final detailsText = changes.isNotEmpty
+            ? 'تعديل بيانات الموظف (${employee.name}): تم تعديل ${changes.join("، ")}'
+            : 'تعديل بيانات الموظف: ${employee.name} (الوظيفة: ${employee.role}, الراتب: ${employee.salaryAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}, نوع الراتب: $salaryTypeLabel)';
+
         sl<ActivityLoggerService>().appendToBatch(
           batch,
           ownerUid: employee.uid,
           actionCategory: 'employees',
           actionType: 'update_employee_record',
           actionTitle: 'تعديل موظف: ${employee.name}',
-          details:
-              'تعديل بيانات الموظف: ${employee.name} (الوظيفة: ${employee.role}, الراتب: ${employee.salaryAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}, نوع الراتب: $salaryTypeLabel)',
+          details: detailsText,
           amount: employee.salaryAmount,
           extraData: {
             'employeeId': employee.id,
@@ -191,6 +233,7 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
             'phone': employee.phone,
             'baseSalary': employee.salaryAmount,
             'salaryType': employee.salaryType,
+            'changes': changes,
           },
         );
       }

@@ -18,7 +18,7 @@ class EmployeeActivityCubit extends Cubit<EmployeeActivityState> {
 
   Future<void> loadInitialActivities({
     required String ownerUid,
-    required String employeeUid,
+    String employeeUid = 'all',
   }) async {
     _ownerUid = ownerUid;
     _employeeUid = employeeUid;
@@ -50,6 +50,7 @@ class EmployeeActivityCubit extends Cubit<EmployeeActivityState> {
           hasMore: actResult.hasMore,
           stats: stats,
           selectedCategory: 'all',
+          selectedEmployeeUid: employeeUid,
           selectedDateRange: null,
         ),
       );
@@ -177,23 +178,77 @@ class EmployeeActivityCubit extends Cubit<EmployeeActivityState> {
     }
   }
 
+  Future<void> changeEmployee(String employeeUid) async {
+    if (_ownerUid == null) return;
+    if (state is! EmployeeActivityLoaded) return;
+
+    final currentState = state as EmployeeActivityLoaded;
+    if (currentState.selectedEmployeeUid == employeeUid && _employeeUid == employeeUid) return;
+
+    _employeeUid = employeeUid;
+
+    emit(currentState.copyWith(
+      selectedEmployeeUid: employeeUid,
+      activities: [],
+      hasMore: false,
+      isLoadingMore: false,
+    ));
+
+    try {
+      final statsFuture = remoteDataSource.getEmployeeStats(
+        ownerUid: _ownerUid!,
+        employeeUid: employeeUid,
+      );
+
+      final activitiesFuture = remoteDataSource.getActivitiesPaginated(
+        ownerUid: _ownerUid!,
+        employeeUid: employeeUid,
+        category: currentState.selectedCategory,
+        dateRange: currentState.selectedDateRange,
+        limit: 15,
+      );
+
+      final results = await Future.wait([statsFuture, activitiesFuture]);
+      final stats = results[0] as EmployeeActivityStats;
+      final actResult = results[1] as EmployeeActivityResult;
+
+      emit(currentState.copyWith(
+        selectedEmployeeUid: employeeUid,
+        activities: actResult.activities,
+        lastDocument: actResult.lastDocument,
+        hasMore: actResult.hasMore,
+        stats: stats,
+        isLoadingMore: false,
+      ));
+    } catch (e) {
+      AppLogger.printMessage('[EmployeeActivityCubit] changeEmployee error: $e');
+      emit(currentState.copyWith(
+        selectedEmployeeUid: employeeUid,
+        errorMessage: e.toString(),
+      ));
+    }
+  }
+
   Future<void> refresh() async {
     if (_ownerUid == null || _employeeUid == null) return;
 
     final currentCategory =
         state is EmployeeActivityLoaded ? (state as EmployeeActivityLoaded).selectedCategory : 'all';
+    final currentEmp =
+        state is EmployeeActivityLoaded ? (state as EmployeeActivityLoaded).selectedEmployeeUid : (_employeeUid ?? 'all');
     final currentDateRange =
         state is EmployeeActivityLoaded ? (state as EmployeeActivityLoaded).selectedDateRange : null;
 
     try {
       final statsFuture = remoteDataSource.getEmployeeStats(
         ownerUid: _ownerUid!,
-        employeeUid: _employeeUid!,
+        employeeUid: currentEmp,
+        forceRefresh: true,
       );
 
       final activitiesFuture = remoteDataSource.getActivitiesPaginated(
         ownerUid: _ownerUid!,
-        employeeUid: _employeeUid!,
+        employeeUid: currentEmp,
         category: currentCategory,
         dateRange: currentDateRange,
         limit: 15,
@@ -210,6 +265,7 @@ class EmployeeActivityCubit extends Cubit<EmployeeActivityState> {
           hasMore: actResult.hasMore,
           stats: stats,
           selectedCategory: currentCategory,
+          selectedEmployeeUid: currentEmp,
           selectedDateRange: currentDateRange,
         ),
       );

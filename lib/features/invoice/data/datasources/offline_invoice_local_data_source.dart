@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:tahsel/core/utils/app_strings.dart';
 import '../models/invoice_model.dart';
 import '../../domain/entities/invoice_entity.dart';
 
@@ -24,15 +25,30 @@ class OfflineInvoiceLocalDataSourceImpl implements OfflineInvoiceLocalDataSource
   @override
   Future<void> saveOfflineInvoice(InvoiceEntity invoice) async {
     final box = await _getBox();
-    final model = InvoiceModel.fromEntity(invoice);
-    
+    final effectiveEmpUid = invoice.creatorEmployeeUid ??
+        (AppStrings.isEmployee && AppStrings.employeeAuthUid.isNotEmpty
+            ? AppStrings.employeeAuthUid
+            : null);
+    final effectiveEmpName = invoice.creatorEmployeeName ??
+        (AppStrings.isEmployee && AppStrings.loggedInEmployeeName.isNotEmpty
+            ? AppStrings.loggedInEmployeeName
+            : null);
+    final effectiveInvoice = invoice.copyWith(
+      creatorEmployeeUid: effectiveEmpUid,
+      creatorEmployeeName: effectiveEmpName,
+    );
+    final model = InvoiceModel.fromEntity(effectiveInvoice);
+
     final data = {
       'invoiceId': invoice.id,
       'invoiceJson': model.toJson(),
       'paymentAmount': 0.0,
       'paymentNote': null,
+      'employeeUid': effectiveEmpUid,
+      'employeeName': effectiveEmpName,
+      'rolePreset': AppStrings.userRole.isNotEmpty ? AppStrings.userRole : null,
     };
-    
+
     await box.put(invoice.id, jsonEncode(data));
   }
 
@@ -49,6 +65,11 @@ class OfflineInvoiceLocalDataSourceImpl implements OfflineInvoiceLocalDataSource
       
       data['paymentAmount'] = newPaymentAmount;
       data['paymentNote'] = paymentNote;
+      if (data['employeeUid'] == null && AppStrings.employeeAuthUid.isNotEmpty) {
+        data['employeeUid'] = AppStrings.employeeAuthUid;
+        data['employeeName'] = AppStrings.loggedInEmployeeName;
+        data['rolePreset'] = AppStrings.userRole;
+      }
       
       // Update the embedded invoiceJson so UI reflects the payment immediately
       final invoiceMap = jsonDecode(data['invoiceJson']) as Map<String, dynamic>;

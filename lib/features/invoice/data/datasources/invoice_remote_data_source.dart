@@ -97,6 +97,8 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
 
       sl<ActivityLoggerService>().logStandalone(
         ownerUid: invoice.uid,
+        employeeUid: invoice.creatorEmployeeUid,
+        employeeName: invoice.creatorEmployeeName,
         actionCategory: 'invoices',
         actionType: isQuotation ? 'create_quotation' : 'create_invoice',
         actionTitle: actionTitle,
@@ -334,14 +336,17 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
     // transaction, which causes a platform-thread crash on Windows desktop.
     String? capturedDebtId;
     double oldInvoiceTotal = 0;
+    Map<String, dynamic>? preData;
 
-    final preSnap = await ref.get();
-    if (preSnap.exists) {
-      final preData = preSnap.data()!;
-      capturedDebtId =
-          (preData['linkedDebtId'] as String?) ?? 'debt_inv_${invoice.id}';
-      oldInvoiceTotal = (preData['totalAmount'] as num?)?.toDouble() ?? 0.0;
-    }
+    try {
+      final preSnap = await ref.get();
+      if (preSnap.exists && preSnap.data() != null) {
+        preData = preSnap.data()!;
+        capturedDebtId =
+            (preData['linkedDebtId'] as String?) ?? 'debt_inv_${invoice.id}';
+        oldInvoiceTotal = (preData['totalAmount'] as num?)?.toDouble() ?? 0.0;
+      }
+    } catch (_) {}
 
     // Use a transaction to atomically update the invoice + linked debt.
     await firestore.runTransaction((txn) async {
@@ -550,6 +555,74 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
           ? invoice.customerName!
           : 'عميل عام';
 
+      final List<String> changes = [];
+      if (hasTotalChanged) {
+        final sign = delta >= 0 ? '+$deltaFormatted' : deltaFormatted;
+        changes.add(
+            'الإجمالي من $oldFormatted إلى $newFormatted ${AppStrings.currencyEgp.tr()} ($sign)');
+      }
+      if (preData != null) {
+        final oldCust = (preData['customerName'] as String?)?.trim() ?? '';
+        final newCust = (invoice.customerName ?? '').trim();
+        if (oldCust != newCust && (oldCust.isNotEmpty || newCust.isNotEmpty)) {
+          changes.add(
+              'العميل من "${oldCust.isEmpty ? 'عميل عام' : oldCust}" إلى "${newCust.isEmpty ? 'عميل عام' : newCust}"');
+        }
+        final oldPhone = (preData['customerPhone'] as String?)?.trim() ?? '';
+        final newPhone = (invoice.customerPhone ?? '').trim();
+        if (oldPhone != newPhone && (oldPhone.isNotEmpty || newPhone.isNotEmpty)) {
+          changes.add(
+              'الهاتف من "${oldPhone.isEmpty ? 'بدون' : oldPhone}" إلى "${newPhone.isEmpty ? 'بدون' : newPhone}"');
+        }
+        final oldDiscount = (preData['discountAmount'] as num?)?.toDouble() ?? 0.0;
+        final newDiscount = invoice.discountAmount;
+        if ((oldDiscount - newDiscount).abs() > 0.001) {
+          changes.add(
+              'الخصم من ${oldDiscount.toStringAsFixed(1)} إلى ${newDiscount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}');
+        }
+        final oldItemsRaw = preData['items'] as List<dynamic>?;
+        final oldItemsCount = oldItemsRaw?.length ?? 0;
+        if (oldItemsCount != invoice.items.length) {
+          changes.add('عدد الأصناف من $oldItemsCount إلى ${invoice.items.length}');
+        }
+        DateTime? oldDueDate;
+        final rawOldDue = preData['dueDate'];
+        if (rawOldDue is Timestamp) {
+          oldDueDate = rawOldDue.toDate();
+        } else if (rawOldDue is String) {
+          oldDueDate = DateTime.tryParse(rawOldDue);
+        }
+        if (oldDueDate != invoice.dueDate) {
+          if (oldDueDate != null && invoice.dueDate != null) {
+            final oldDStr =
+                '${oldDueDate.year}-${oldDueDate.month.toString().padLeft(2, '0')}-${oldDueDate.day.toString().padLeft(2, '0')}';
+            final newDStr =
+                '${invoice.dueDate!.year}-${invoice.dueDate!.month.toString().padLeft(2, '0')}-${invoice.dueDate!.day.toString().padLeft(2, '0')}';
+            if (oldDStr != newDStr) {
+              changes.add('تاريخ الاستحقاق من $oldDStr إلى $newDStr');
+            }
+          } else if (oldDueDate == null && invoice.dueDate != null) {
+            final newDStr =
+                '${invoice.dueDate!.year}-${invoice.dueDate!.month.toString().padLeft(2, '0')}-${invoice.dueDate!.day.toString().padLeft(2, '0')}';
+            changes.add('تحديد تاريخ استحقاق: $newDStr');
+          } else if (oldDueDate != null && invoice.dueDate == null) {
+            changes.add('إلغاء تاريخ الاستحقاق');
+          }
+        }
+        final oldNotes = (preData['notes'] as String?)?.trim() ?? '';
+        final newNotes = (invoice.notes ?? '').trim();
+        if (oldNotes != newNotes && (oldNotes.isNotEmpty || newNotes.isNotEmpty)) {
+          changes.add(
+              'الملاحظات من "${oldNotes.isEmpty ? 'بدون' : oldNotes}" إلى "${newNotes.isEmpty ? 'بدون' : newNotes}"');
+        }
+      }
+
+      final detailsText = changes.isNotEmpty
+          ? 'تعديل الفاتورة ($refNum) للعميل $cust: تم تعديل ${changes.join("، ")}'
+          : (hasTotalChanged
+              ? 'تعديل فاتورة للعميل $cust: تم تغيير المبلغ من $oldFormatted ${AppStrings.currencyEgp.tr()} إلى $newFormatted ${AppStrings.currencyEgp.tr()} (الفارق: $deltaFormatted ${AppStrings.currencyEgp.tr()})'
+              : 'تعديل بيانات وأصناف الفاتورة $refNum للعميل $cust');
+
       sl<ActivityLoggerService>().logStandalone(
         ownerUid: invoice.uid,
         actionCategory: 'invoices',
@@ -557,9 +630,7 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
         actionTitle: hasTotalChanged
             ? 'تعديل قيمة فاتورة: $refNum'
             : 'تعديل بيانات فاتورة: $refNum',
-        details: hasTotalChanged
-            ? 'تعديل فاتورة للعميل $cust: تم تغيير المبلغ من $oldFormatted ${AppStrings.currencyEgp.tr()} إلى $newFormatted ${AppStrings.currencyEgp.tr()} (الفارق: $deltaFormatted ${AppStrings.currencyEgp.tr()})'
-            : 'تعديل بيانات وأصناف الفاتورة $refNum للعميل $cust',
+        details: detailsText,
         amount: newTotalAmount,
         extraData: {
           'invoiceId': invoice.id,
@@ -569,6 +640,7 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
           'delta': delta,
           'customerName': invoice.customerName,
           'itemCount': invoice.items.length,
+          'changes': changes,
         },
       );
     }

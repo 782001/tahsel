@@ -523,6 +523,12 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
         lastUpdatedAt: DateTime.now(),
         dueDate: _isQuotation ? null : _dueDate,
         taxRate: profileTaxRate,
+        creatorEmployeeUid: AppStrings.isEmployee && AppStrings.employeeAuthUid.isNotEmpty
+            ? AppStrings.employeeAuthUid
+            : null,
+        creatorEmployeeName: AppStrings.isEmployee && AppStrings.loggedInEmployeeName.isNotEmpty
+            ? AppStrings.loggedInEmployeeName
+            : null,
       );
 
       _pendingInvoice = invoice;

@@ -10,6 +10,7 @@ import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/injection_container.dart' as di;
+import 'package:tahsel/core/services/activity_logger_service.dart';
 import 'package:tahsel/core/services/invoice_pdf_service.dart';
 import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
@@ -744,6 +745,30 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
         'lastUpdatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
+      if (di.sl.isRegistered<ActivityLoggerService>()) {
+        final cust = _invoice.customerName ?? 'نقدي';
+        final surplusFormatted = surplus.toStringAsFixed(1);
+        final totalPaidFormatted = _invoice.totalPaid.toStringAsFixed(1);
+        final invTotalFormatted = _invoice.totalAmount.toStringAsFixed(1);
+        di.sl<ActivityLoggerService>().appendToBatch(
+          batch,
+          ownerUid: uid,
+          actionCategory: 'debts',
+          actionType: 'refund_invoice_surplus',
+          actionTitle: 'إرجاع فائض مدفوعات عميل: $cust',
+          details:
+              'قام الموظف بإرجاع فائض مدفوعات للعميل $cust بمبلغ $surplusFormatted ${AppStrings.currencyEgp.tr()} (من إجمالي مدفوع سابق $totalPaidFormatted ${AppStrings.currencyEgp.tr()} لفاتورة بقيمة $invTotalFormatted ${AppStrings.currencyEgp.tr()}) وخصمها من الخزينة',
+          amount: surplus,
+          extraData: {
+            'invoiceId': _invoice.id,
+            'customerName': cust,
+            'surplusAmount': surplus,
+            'totalAmount': _invoice.totalAmount,
+            'previousTotalPaid': _invoice.totalPaid,
+          },
+        );
+      }
+
       await batch.commit();
 
       if (mounted) {
@@ -987,6 +1012,32 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                     onPressed: () async {
                       try {
                         final isArabic = AppStrings.currentLang == 'ar';
+                        if (di.sl.isRegistered<ActivityLoggerService>()) {
+                          final isQuo = _invoice.isQuotation;
+                          final ownerUid = AppStrings.userToken;
+                          final actionTitle = isQuo
+                              ? 'طباعة عرض سعر: ${_invoice.referenceNumber}'
+                              : 'طباعة فاتورة مبيعات: ${_invoice.referenceNumber}';
+                          final details = isQuo
+                              ? 'قام الموظف بطباعة عرض سعر رقم ${_invoice.referenceNumber} للعميل ${_invoice.customerName ?? "نقدي"} بإجمالي ${_invoice.totalAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}'
+                              : 'قام الموظف بطباعة فاتورة مبيعات رقم ${_invoice.referenceNumber} للعميل ${_invoice.customerName ?? "نقدي"} بإجمالي ${_invoice.totalAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}';
+                          di.sl<ActivityLoggerService>().logStandalone(
+                            ownerUid: ownerUid,
+                            actionCategory: 'invoices',
+                            actionType: isQuo ? 'print_quotation' : 'print_invoice',
+                            actionTitle: actionTitle,
+                            details: details,
+                            amount: _invoice.totalAmount,
+                            extraData: {
+                              'invoiceId': _invoice.id,
+                              'referenceNumber': _invoice.referenceNumber,
+                              'customerName': _invoice.customerName,
+                              'total': _invoice.totalAmount,
+                              'isQuotation': isQuo,
+                            },
+                          );
+                        }
+
                         await InvoicePdfService.printInvoice(
                           context,
                           _invoice,
@@ -1066,6 +1117,32 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
 
                       try {
                         final isArabic = AppStrings.currentLang == 'ar';
+                        if (di.sl.isRegistered<ActivityLoggerService>()) {
+                          final isQuo = _invoice.isQuotation;
+                          final ownerUid = AppStrings.userToken;
+                          final actionTitle = isQuo
+                              ? 'مشاركة/تصدير عرض سعر: ${_invoice.referenceNumber}'
+                              : 'مشاركة/تصدير فاتورة مبيعات: ${_invoice.referenceNumber}';
+                          final details = isQuo
+                              ? 'قام الموظف بمشاركة/تصدير عرض سعر PDF رقم ${_invoice.referenceNumber} للعميل ${_invoice.customerName ?? "نقدي"} بإجمالي ${_invoice.totalAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}'
+                              : 'قام الموظف بمشاركة/تصدير فاتورة مبيعات PDF رقم ${_invoice.referenceNumber} للعميل ${_invoice.customerName ?? "نقدي"} بإجمالي ${_invoice.totalAmount.toStringAsFixed(1)} ${AppStrings.currencyEgp.tr()}';
+                          di.sl<ActivityLoggerService>().logStandalone(
+                            ownerUid: ownerUid,
+                            actionCategory: 'invoices',
+                            actionType: isQuo ? 'export_quotation_pdf' : 'export_invoice_pdf',
+                            actionTitle: actionTitle,
+                            details: details,
+                            amount: _invoice.totalAmount,
+                            extraData: {
+                              'invoiceId': _invoice.id,
+                              'referenceNumber': _invoice.referenceNumber,
+                              'customerName': _invoice.customerName,
+                              'total': _invoice.totalAmount,
+                              'isQuotation': isQuo,
+                            },
+                          );
+                        }
+
                         await InvoicePdfService.generateAndShareInvoice(
                           _invoice,
                           isArabic: isArabic,

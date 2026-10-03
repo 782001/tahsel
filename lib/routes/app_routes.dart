@@ -33,6 +33,7 @@ import 'package:tahsel/features/employee/presentation/screens/employee_activity_
 import 'package:tahsel/features/employee/presentation/screens/employee_details_screen.dart';
 import 'package:tahsel/features/employee/presentation/screens/employee_list_screen.dart';
 import 'package:tahsel/features/employee/presentation/screens/employee_reports_screen.dart';
+import 'package:tahsel/features/employee/presentation/screens/team_activity_screen.dart';
 import 'package:tahsel/features/employee/presentation/screens/team_management_screen.dart';
 import 'package:tahsel/features/expenses/presentation/screens/add_expense_screen.dart';
 import 'package:tahsel/features/inventory/presentation/cubits/inventory_categories_cubit.dart';
@@ -103,6 +104,7 @@ class AppRoutes {
   static const String addAppEmployee = '/add-app-employee';
   static const String editAppEmployee = '/edit-app-employee';
   static const String employeeActivity = '/employee-activity';
+  static const String teamActivity = '/team-activity';
   static const String createInvoice = '/create-invoice';
   static const String editInvoice = '/edit-invoice';
   static const String invoiceDetail = '/invoice-detail';
@@ -195,6 +197,28 @@ class AppRoutes {
                 employeeUid: employee.authUid,
               ),
             child: EmployeeActivityScreen(employee: employee),
+          ),
+        );
+      case teamActivity:
+        if (!PermissionService.instance.isOwner) {
+          return _permissionRestrictedRoute();
+        }
+        if (!AppStrings.isVip) return _vipRestrictedRoute();
+        return MaterialPageRoute(
+          builder: (_) => MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (_) => di.sl<EmployeeActivityCubit>()
+                  ..loadInitialActivities(
+                    ownerUid: AppStrings.userToken,
+                    employeeUid: 'all',
+                  ),
+              ),
+              BlocProvider.value(
+                value: di.sl<TeamManagementCubit>()..loadEmployees(),
+              ),
+            ],
+            child: const TeamActivityScreen(),
           ),
         );
       case vault:
