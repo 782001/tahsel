@@ -594,7 +594,7 @@ class AppRoutes {
         );
       case monthlyCollected:
         if (!PermissionService.instance.hasPermission(
-          AppPermissions.reportsViewSales,
+          AppPermissions.customersViewReports,
         )) {
           return _permissionRestrictedRoute();
         }
@@ -604,7 +604,7 @@ class AppRoutes {
         );
       case monthlyCollectedTransactions:
         if (!PermissionService.instance.hasPermission(
-          AppPermissions.reportsViewSales,
+          AppPermissions.customersViewReports,
         )) {
           return _permissionRestrictedRoute();
         }
@@ -688,7 +688,7 @@ class AppRoutes {
                     color: AppColors.grey.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.lock_rounded,
                     color: AppColors.grey,
                     size: 64,

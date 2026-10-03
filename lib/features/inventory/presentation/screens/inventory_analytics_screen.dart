@@ -235,7 +235,10 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
                                 totalPurchaseValue) *
                             100
                       : 0.0;
+                  final canViewProfit = PermissionService.instance
+                      .hasPermission(AppPermissions.reportsViewNetProfit);
 
+                             
                   return RefreshIndicator(
                     color: AppColors.primaryColor,
                     onRefresh: () async {
@@ -256,8 +259,9 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
                                     child: _buildMetricCard(
                                       title: AppStrings.expectedInventoryProfit
                                           .tr(),
-                                      value:
-                                          '${totalExpectedProfit.toSmartAmount()} ${CurrencyService.instance.currentSymbol}',
+                                      value: canViewProfit
+                                          ? '${totalExpectedProfit.toSmartAmount()} ${CurrencyService.instance.currentSymbol}'
+                                          : '••••••',
                                       icon: Icons.trending_up_rounded,
                                       color: AppColors.success,
                                       isDesktop: isDesktop,
@@ -267,8 +271,9 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
                                   Expanded(
                                     child: _buildMetricCard(
                                       title: AppStrings.avgProfitMargin.tr(),
-                                      value:
-                                          '${avgProfitMarginPct.toStringAsFixed(1)}%',
+                                      value: canViewProfit
+                                          ? '${avgProfitMarginPct.toStringAsFixed(1)}%'
+                                          : '••••',
                                       icon: Icons.percent_rounded,
                                       color: AppColors.actionButton,
                                       isDesktop: isDesktop,
@@ -320,6 +325,7 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
                               _buildProfitableProductsList(
                                 sortedProfitable,
                                 isDesktop: isDesktop,
+                                canViewProfit: canViewProfit,
                               ),
 
                               // Tab 2: Dead Stock List
@@ -421,6 +427,7 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
   Widget _buildProfitableProductsList(
     List<InventoryProductEntity> products, {
     required bool isDesktop,
+    required bool canViewProfit,
   }) {
     if (products.isEmpty) {
       return InventoryEmptyState(
@@ -564,7 +571,9 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        '+${unitProfit.toSmartAmount()} ${CurrencyService.instance.currentSymbol}',
+                        canViewProfit
+                            ? '+${unitProfit.toSmartAmount()} ${CurrencyService.instance.currentSymbol}'
+                            : '+••••',
                         style: TextStyles.customStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -582,7 +591,9 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
                           borderRadius: BorderRadius.circular(12.r),
                         ),
                         child: Text(
-                          '${profitMargin.toStringAsFixed(0)}% ${AppStrings.profitMarginRatio.tr()}',
+                          canViewProfit
+                              ? '${profitMargin.toStringAsFixed(0)}% ${AppStrings.profitMarginRatio.tr()}'
+                              : '•••• ${AppStrings.profitMarginRatio.tr()}',
                           style: TextStyles.customStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
@@ -609,7 +620,9 @@ class _InventoryAnalyticsScreenState extends State<InventoryAnalyticsScreen>
                       ),
                     ),
                     Text(
-                      '${totalPotentialProfit.toSmartAmount()} ${CurrencyService.instance.currentSymbol}',
+                      canViewProfit
+                          ? '${totalPotentialProfit.toSmartAmount()} ${CurrencyService.instance.currentSymbol}'
+                          : '••••••',
                       style: TextStyles.customStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,

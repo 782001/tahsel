@@ -176,7 +176,6 @@ class AppPermissions {
           vaultWithdraw,
           vaultViewHistory,
           reportsViewSales,
-          reportsViewTax,
           reportsExport,
           shippingView,
         ];
@@ -376,7 +375,8 @@ class AppPermissions {
       items: [
         PermissionItem(reportsViewNetProfit, AppStrings.permReportsViewNetProfit),
         PermissionItem(reportsViewSales, AppStrings.permReportsViewSales),
-        PermissionItem(reportsViewTax, AppStrings.permReportsViewTax),
+        // Hidden temporarily as tax reporting feature is not implemented yet:
+        // PermissionItem(reportsViewTax, AppStrings.permReportsViewTax),
         PermissionItem(reportsExport, AppStrings.permReportsExport),
       ],
     ),
@@ -446,6 +446,7 @@ class AppPermissions {
     employeesManagePayroll: [employeesView],
 
     // Reports
+    reportsViewNetProfit: [reportsViewSales],
     reportsExport: [reportsViewSales],
   };
 

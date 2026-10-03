@@ -6,10 +6,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+
+import 'package:url_launcher/url_launcher.dart';
 
 class TahselPrintPreviewScreen extends StatelessWidget {
   final String title;
@@ -38,6 +41,26 @@ class TahselPrintPreviewScreen extends StatelessWidget {
     bool allowPrinting = true,
     bool allowSharing = true,
   }) {
+    return open(
+      context: context,
+      title: title,
+      buildPdf: buildPdf,
+      pdfFileName: pdfFileName,
+      actions: actions,
+      allowPrinting: allowPrinting,
+      allowSharing: allowSharing,
+    );
+  }
+
+  static Future<void> open({
+    required BuildContext context,
+    required String title,
+    required Future<Uint8List> Function(PdfPageFormat format) buildPdf,
+    required String pdfFileName,
+    List<PdfPreviewAction>? actions,
+    bool allowPrinting = true,
+    bool allowSharing = true,
+  }) {
     return Navigator.of(context).push(
       MaterialPageRoute(
         builder: (ctx) => TahselPrintPreviewScreen(
@@ -52,32 +75,95 @@ class TahselPrintPreviewScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _openSavedFile(File file, Uint8List bytes) async {
+    if (!kIsWeb && Platform.isWindows) {
+      try {
+        final uri = Uri.file(file.path);
+        final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (launched) return;
+      } catch (_) {}
+
+      try {
+        await Process.run('explorer.exe', [file.path]);
+      } catch (_) {}
+    } else if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+      try {
+        await Share.shareXFiles(
+          [XFile(file.path, mimeType: 'application/pdf')],
+          subject: title,
+        );
+      } catch (_) {
+        try {
+          await Printing.sharePdf(
+            bytes: bytes,
+            filename: pdfFileName,
+            subject: title,
+          );
+        } catch (_) {}
+      }
+    } else if (!kIsWeb && Platform.isMacOS) {
+      try {
+        final uri = Uri.file(file.path);
+        final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (launched) return;
+      } catch (_) {}
+      try {
+        await Process.run('open', [file.path]);
+      } catch (_) {}
+    } else if (!kIsWeb && Platform.isLinux) {
+      try {
+        final uri = Uri.file(file.path);
+        final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (launched) return;
+      } catch (_) {}
+      try {
+        await Process.run('xdg-open', [file.path]);
+      } catch (_) {}
+    }
+  }
+
   Future<void> _savePdfToStorage(
     BuildContext context,
     PdfPageFormat format,
   ) async {
     try {
       final bytes = await buildPdf(format);
-      Directory? targetDir;
 
-      if (!kIsWeb) {
-        if (Platform.isWindows) {
-          try {
-            targetDir = await getDownloadsDirectory();
-          } catch (_) {}
-          targetDir ??= await getApplicationDocumentsDirectory();
-        } else if (Platform.isAndroid) {
-          try {
-            final downloadDir = Directory('/storage/emulated/0/Download');
-            if (await downloadDir.exists()) {
-              targetDir = downloadDir;
-            }
-          } catch (_) {}
-          targetDir ??= await getDownloadsDirectory();
-          targetDir ??= await getApplicationDocumentsDirectory();
-        } else if (Platform.isIOS) {
-          targetDir = await getApplicationDocumentsDirectory();
+      if (kIsWeb) {
+        await Printing.sharePdf(
+          bytes: bytes,
+          filename: pdfFileName,
+          subject: title,
+        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppStrings.pdfSavedSuccessfully.tr()),
+              backgroundColor: AppColors.success,
+              duration: const Duration(seconds: 3),
+            ),
+          );
         }
+        return;
+      }
+
+      Directory? targetDir;
+      if (Platform.isWindows) {
+        try {
+          targetDir = await getDownloadsDirectory();
+        } catch (_) {}
+        targetDir ??= await getApplicationDocumentsDirectory();
+      } else if (Platform.isAndroid) {
+        try {
+          final downloadDir = Directory('/storage/emulated/0/Download');
+          if (await downloadDir.exists()) {
+            targetDir = downloadDir;
+          }
+        } catch (_) {}
+        targetDir ??= await getDownloadsDirectory();
+        targetDir ??= await getApplicationDocumentsDirectory();
+      } else if (Platform.isIOS) {
+        targetDir = await getApplicationDocumentsDirectory();
       }
 
       targetDir ??= await getApplicationDocumentsDirectory();
@@ -91,16 +177,26 @@ class TahselPrintPreviewScreen extends StatelessWidget {
       await file.writeAsBytes(bytes);
 
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.hideCurrentSnackBar();
+        messenger.showSnackBar(
           SnackBar(
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
             content: Text(
               '${AppStrings.pdfSavedSuccessfully.tr()}\n${file.path}',
             ),
             backgroundColor: AppColors.success,
-            duration: const Duration(seconds: 4),
+            duration: const Duration(seconds: 3),
           ),
         );
       }
+
+      // Allow gesture lifecycle and frame rendering to cleanly finish before opening external viewer
+      await Future.delayed(const Duration(milliseconds: 300));
+      await _openSavedFile(file, bytes);
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

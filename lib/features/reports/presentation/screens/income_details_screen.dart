@@ -350,8 +350,8 @@ class _IncomeDetailsScreenState extends State<IncomeDetailsScreen> {
     final bool isArabic =
         context.read<LocaleCubit>().state.locale.languageCode == 'ar';
     final DateFormat formatter = isArabic
-        ? DateFormat('d MMM', 'ar')
-        : DateFormat('d MMM', 'en');
+        ? DateFormat('d MMM yyyy', 'ar')
+        : DateFormat('d MMM yyyy', 'en');
 
     // If it's the same day
     if (start.year == end.year &&

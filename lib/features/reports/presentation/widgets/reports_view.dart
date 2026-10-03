@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -15,6 +16,7 @@ import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit
 import 'package:tahsel/features/reports/domain/entities/profit_insight.dart';
 import 'package:tahsel/features/reports/presentation/cubit/reports_cubit/reports_cubit.dart';
 import 'package:tahsel/features/reports/presentation/cubit/reports_cubit/reports_state.dart';
+import 'package:tahsel/features/reports/presentation/utils/financial_report_pdf_exporter.dart';
 import 'package:tahsel/features/reports/presentation/widgets/build_report_insight_detail_row.dart';
 import 'package:tahsel/features/reports/presentation/widgets/profit_insight_ui_extension.dart';
 import 'package:tahsel/features/reports/presentation/widgets/reports_dashboard_card.dart';
@@ -22,6 +24,7 @@ import 'package:tahsel/features/reports/presentation/widgets/reports_invoice_sum
 import 'package:tahsel/features/reports/presentation/widgets/reports_net_profit_card.dart';
 import 'package:tahsel/features/reports/presentation/widgets/reports_operational_margin_card.dart';
 import 'package:tahsel/features/reports/presentation/widgets/reports_time_range_selector.dart';
+import 'package:tahsel/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/routes/app_routes.dart';
@@ -48,18 +51,53 @@ class _ReportsViewState extends State<ReportsView> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(
-                child: Padding(
-                  padding: EdgeInsets.only(top: 10.h),
-                  child: Text(
-                    AppStrings.reports.tr(),
-                    style: TextStyles.customStyle(
-                      color: AppColors.black,
-                      fontSize: 25,
-                      fontWeight: FontWeight.bold,
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isDesktop ? 24 : 16.w,
+                  vertical: 10.h,
+                ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Center(
+                      child: Text(
+                        AppStrings.reports.tr(),
+                        style: TextStyles.customStyle(
+                          color: AppColors.black,
+                          fontSize: 25,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
-                    textAlign: TextAlign.center,
-                  ),
+                    if (PermissionService.instance.hasPermission(AppPermissions.reportsExport))
+                      Align(
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: BlocBuilder<ReportsCubit, ReportsState>(
+                          builder: (context, state) {
+                            final isReady = state is ReportsSuccess;
+                            return IconButton(
+                              tooltip: AppStrings.permReportsExport.tr(),
+                              icon: Container(
+                                padding: EdgeInsets.all(isDesktop ? 8 : 6.w),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryColor.withValues(alpha: 0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.picture_as_pdf_rounded,
+                                  color: isReady
+                                      ? AppColors.primaryColor
+                                      : AppColors.grey,
+                                  size: isDesktop ? 20 : 18.sp,
+                                ),
+                              ),
+                              onPressed: isReady ? () => _exportReport(state) : null,
+                            );
+                          },
+                        ),
+                      ),
+                  ],
                 ),
               ),
               if (isOffline)
@@ -159,6 +197,25 @@ class _ReportsViewState extends State<ReportsView> {
                                     final canViewNetProfit =
                                         PermissionService.instance.hasPermission(
                                           AppPermissions.reportsViewNetProfit,
+                                        );
+                                    final canViewSales =
+                                        PermissionService.instance.hasPermission(
+                                          AppPermissions.reportsViewSales,
+                                        );
+                                    final canViewExpenses =
+                                        PermissionService.instance.hasPermission(
+                                          AppPermissions.expensesView,
+                                        );
+                                    final canViewDebts =
+                                        PermissionService.instance.hasPermission(
+                                          AppPermissions.customersView,
+                                        ) ||
+                                        PermissionService.instance.hasPermission(
+                                          AppPermissions.customersViewReports,
+                                        );
+                                    final canViewInvoices =
+                                        PermissionService.instance.hasPermission(
+                                          AppPermissions.invoicesView,
                                         );
                                     final margin = data.totalIncome > 0
                                         ? data.netProfit / data.totalIncome
@@ -384,6 +441,15 @@ class _ReportsViewState extends State<ReportsView> {
                                           )
                                         : null;
 
+                                    final bool hasAnyActivityCard =
+                                        (canViewSales &&
+                                            (showCafeCard ||
+                                                showPlaystationCard)) ||
+                                        canViewNetProfit ||
+                                        canViewDebts ||
+                                        (canViewInvoices &&
+                                            invoiceSummaryCard != null);
+
                                     return Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
@@ -407,25 +473,42 @@ class _ReportsViewState extends State<ReportsView> {
                                                 ],
                                               ),
                                             ),
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 24,
-                                              vertical: 8,
+                                          if (canViewSales && canViewExpenses)
+                                            Padding(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 24,
+                                                vertical: 8,
+                                              ),
+                                              child: Row(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Expanded(
+                                                    child: totalIncomeCard,
+                                                  ),
+                                                  const SizedBox(width: 16),
+                                                  Expanded(
+                                                    child: totalExpensesCard,
+                                                  ),
+                                                ],
+                                              ),
+                                            )
+                                          else if (canViewSales)
+                                            Padding(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 24,
+                                                vertical: 8,
+                                              ),
+                                              child: totalIncomeCard,
+                                            )
+                                          else if (canViewExpenses)
+                                            Padding(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 24,
+                                                vertical: 8,
+                                              ),
+                                              child: totalExpensesCard,
                                             ),
-                                            child: Row(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Expanded(
-                                                  child: totalIncomeCard,
-                                                ),
-                                                const SizedBox(width: 16),
-                                                Expanded(
-                                                  child: totalExpensesCard,
-                                                ),
-                                              ],
-                                            ),
-                                          ),
                                         ] else ...[
                                           if (canViewNetProfit) ...[
                                             netProfitCard,
@@ -438,98 +521,118 @@ class _ReportsViewState extends State<ReportsView> {
                                                 child: insightCard,
                                               ),
                                           ],
-                                          totalIncomeCard,
-                                          totalExpensesCard,
+                                          if (canViewSales) totalIncomeCard,
+                                          if (canViewExpenses) totalExpensesCard,
                                         ],
 
-                                        const Padding(
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: 24,
+                                        if (hasAnyActivityCard) ...[
+                                          const Padding(
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: 24,
+                                            ),
+                                            child: Divider(height: 32),
                                           ),
-                                          child: Divider(height: 32),
-                                        ),
 
-                                        Padding(
-                                          padding: isDesktop
-                                              ? const EdgeInsets.symmetric(
-                                                  horizontal: 24,
-                                                )
-                                              : EdgeInsets.symmetric(
-                                                  horizontal: 24.w,
-                                                ),
-                                          child: Text(
-                                            AppStrings.activityDetails.tr(),
-                                            style: TextStyles.customStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColors.black,
+                                          Padding(
+                                            padding: isDesktop
+                                                ? const EdgeInsets.symmetric(
+                                                    horizontal: 24,
+                                                  )
+                                                : EdgeInsets.symmetric(
+                                                    horizontal: 24.w,
+                                                  ),
+                                            child: Text(
+                                              AppStrings.activityDetails.tr(),
+                                              style: TextStyles.customStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.black,
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                        const SizedBox(height: 12),
+                                          const SizedBox(height: 12),
+                                        ],
 
                                         if (isDesktop) ...[
-                                          if (showCafeCard &&
-                                              showPlaystationCard)
+                                          if (canViewSales) ...[
+                                            if (showCafeCard &&
+                                                showPlaystationCard)
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 24,
+                                                      vertical: 8,
+                                                    ),
+                                                child: Row(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Expanded(child: cafeCard!),
+                                                    const SizedBox(width: 16),
+                                                    Expanded(
+                                                      child: playstationCard!,
+                                                    ),
+                                                  ],
+                                                ),
+                                              )
+                                            else if (showCafeCard)
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 24,
+                                                      vertical: 8,
+                                                    ),
+                                                child: cafeCard!,
+                                              )
+                                            else if (showPlaystationCard)
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 24,
+                                                      vertical: 8,
+                                                    ),
+                                                child: playstationCard!,
+                                              ),
+                                          ],
+
+                                          if (canViewNetProfit && canViewDebts)
                                             Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 24,
-                                                    vertical: 8,
-                                                  ),
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 24,
+                                                vertical: 8,
+                                              ),
                                               child: Row(
                                                 crossAxisAlignment:
                                                     CrossAxisAlignment.start,
                                                 children: [
-                                                  Expanded(child: cafeCard!),
-                                                  const SizedBox(width: 16),
-                                                  Expanded(
-                                                    child: playstationCard!,
-                                                  ),
-                                                ],
-                                              ),
-                                            )
-                                          else if (showCafeCard)
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 24,
-                                                    vertical: 8,
-                                                  ),
-                                              child: cafeCard!,
-                                            )
-                                          else if (showPlaystationCard)
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 24,
-                                                    vertical: 8,
-                                                  ),
-                                              child: playstationCard!,
-                                            ),
-
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 24,
-                                              vertical: 8,
-                                            ),
-                                            child: Row(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                if (canViewNetProfit) ...[
                                                   Expanded(
                                                     child: operationalMarginCard,
                                                   ),
                                                   const SizedBox(width: 16),
+                                                  Expanded(
+                                                    child: unpaidDebtsCard,
+                                                  ),
                                                 ],
-                                                Expanded(
-                                                  child: unpaidDebtsCard,
-                                                ),
-                                              ],
+                                              ),
+                                            )
+                                          else if (canViewNetProfit)
+                                            Padding(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 24,
+                                                vertical: 8,
+                                              ),
+                                              child: operationalMarginCard,
+                                            )
+                                          else if (canViewDebts)
+                                            Padding(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 24,
+                                                vertical: 8,
+                                              ),
+                                              child: unpaidDebtsCard,
                                             ),
-                                          ),
-                                          if (invoiceSummaryCard != null)
+
+                                          if (canViewInvoices && invoiceSummaryCard != null)
                                             Padding(
                                               padding:
                                                   const EdgeInsets.symmetric(
@@ -539,13 +642,14 @@ class _ReportsViewState extends State<ReportsView> {
                                               child: invoiceSummaryCard,
                                             ),
                                         ] else ...[
-                                          if (showCafeCard) cafeCard!,
-                                          if (showPlaystationCard)
+                                          if (canViewSales && showCafeCard) cafeCard!,
+                                          if (canViewSales && showPlaystationCard)
                                             playstationCard!,
                                           if (canViewNetProfit)
                                             operationalMarginCard,
-                                          unpaidDebtsCard,
-                                          if (invoiceSummaryCard != null)
+                                          if (canViewDebts)
+                                            unpaidDebtsCard,
+                                          if (canViewInvoices && invoiceSummaryCard != null)
                                             invoiceSummaryCard,
                                         ],
 
@@ -700,6 +804,39 @@ class _ReportsViewState extends State<ReportsView> {
     );
   }
 
+  String _getPeriodTitle() {
+    switch (_selectedTimeRange) {
+      case 0:
+        return AppStrings.daily.tr();
+      case 1:
+        return AppStrings.weekly.tr();
+      case 2:
+        return AppStrings.monthly.tr();
+      case 3:
+        return AppStrings.allTime.tr();
+      default:
+        return AppStrings.daily.tr();
+    }
+  }
+
+  Future<void> _exportReport(ReportsSuccess state) async {
+    final dateRange = _getDateRange();
+    final isShop = context.read<MainLayoutCubit>().isShop;
+    final currentLang = context.read<LocaleCubit>().currentLangCode;
+    final isArabic = currentLang == AppStrings.arabicCode;
+
+    await FinancialReportPdfExporter.previewOrPrint(
+      context: context,
+      reports: state.reports,
+      insights: state.insights,
+      periodTitle: _getPeriodTitle(),
+      startDate: dateRange.start,
+      endDate: dateRange.end,
+      isShop: isShop,
+      isArabic: isArabic,
+    );
+  }
+
   Future<void> _onTabChanged(int index, {bool forceRefresh = false}) async {
     setState(() => _selectedTimeRange = index);
     final cubit = context.read<ReportsCubit>();
@@ -733,8 +870,13 @@ class _ReportsViewState extends State<ReportsView> {
       case 2:
         return (start: DateTime(now.year, now.month, 1), end: now);
       case 3:
-        // All time: from a very old date to now
-        return (start: DateTime(1800, 1, 1), end: now);
+        // All time: rely first on account creation date, fallback to 1800-01-01
+        final creationTime =
+            FirebaseAuth.instance.currentUser?.metadata.creationTime;
+        final startDate = creationTime != null
+            ? DateTime(creationTime.year, creationTime.month, creationTime.day)
+            : DateTime(1800, 1, 1);
+        return (start: startDate, end: now);
       default:
         return (start: DateTime(now.year, now.month, now.day), end: now);
     }

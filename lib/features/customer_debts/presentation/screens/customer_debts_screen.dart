@@ -144,21 +144,24 @@ class _CustomerDebtsScreenState extends State<CustomerDebtsScreen>
                     const SliverToBoxAdapter(child: CustomerDebtsHeader()),
                     if (!isOffline) ...[
                       const SliverToBoxAdapter(child: TotalDebtsSummaryCard()),
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          child: InkWell(
-                            onTap: () {
-                              final uid = AppStrings.userToken;
-                              if (uid.isNotEmpty) {
-                                Navigator.pushNamed(
-                                  context,
-                                  AppRoutes.monthlyCollected,
-                                  arguments: uid,
-                                );
-                              }
-                            },
-                            borderRadius: BorderRadius.circular(12.r),
+                      if (PermissionService.instance.hasPermission(
+                        AppPermissions.customersViewReports,
+                      ))
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: InkWell(
+                              onTap: () {
+                                final uid = AppStrings.userToken;
+                                if (uid.isNotEmpty) {
+                                  Navigator.pushNamed(
+                                    context,
+                                    AppRoutes.monthlyCollected,
+                                    arguments: uid,
+                                  );
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(12.r),
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                 vertical: 16,
