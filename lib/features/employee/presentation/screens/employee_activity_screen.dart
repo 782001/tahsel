@@ -112,6 +112,10 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                   stats: state.stats,
                   dateRange: state.selectedDateRange,
                   employee: widget.employee,
+                  hasMore: state.hasMore,
+                  onFetchAllForExport: () => context
+                      .read<EmployeeActivityCubit>()
+                      .getAllActivitiesForExport(),
                 );
               },
             );

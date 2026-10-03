@@ -121,6 +121,10 @@ class _TeamActivityScreenState extends State<TeamActivityScreen> {
                   stats: state.stats,
                   dateRange: state.selectedDateRange,
                   employee: selectedEmp,
+                  hasMore: state.hasMore,
+                  onFetchAllForExport: () => context
+                      .read<EmployeeActivityCubit>()
+                      .getAllActivitiesForExport(),
                 );
               },
             );

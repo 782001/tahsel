@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import '../../data/datasources/employee_activity_remote_data_source.dart';
+import '../../domain/entities/employee_activity_entity.dart';
 import 'employee_activity_state.dart';
 
 class EmployeeActivityCubit extends Cubit<EmployeeActivityState> {
@@ -275,5 +276,41 @@ class EmployeeActivityCubit extends Cubit<EmployeeActivityState> {
         emit((state as EmployeeActivityLoaded).copyWith(errorMessage: e.toString()));
       }
     }
+  }
+
+  /// Fetches all activities matching the current active filter for complete export.
+  /// If all activities are already loaded into memory (hasMore == false), returns them
+  /// immediately without making any extra Firestore queries (0 read cost).
+  Future<List<EmployeeActivityEntity>> getAllActivitiesForExport({
+    int maxLimit = 1000,
+  }) async {
+    if (_ownerUid == null || _employeeUid == null) return [];
+    if (state is! EmployeeActivityLoaded) return [];
+
+    final currentState = state as EmployeeActivityLoaded;
+
+    // Cost optimization: if all activities are already in memory, reuse them!
+    if (!currentState.hasMore && currentState.activities.isNotEmpty) {
+      return currentState.activities;
+    }
+
+    try {
+      final results = await remoteDataSource.getAllActivitiesForExport(
+        ownerUid: _ownerUid!,
+        employeeUid: _employeeUid!,
+        category: currentState.selectedCategory,
+        dateRange: currentState.selectedDateRange,
+        limit: maxLimit,
+      );
+
+      if (results.isNotEmpty) {
+        return results;
+      }
+    } catch (e) {
+      AppLogger.printMessage('[EmployeeActivityCubit] getAllActivitiesForExport error: $e');
+    }
+
+    // Fallback to loaded activities
+    return currentState.activities;
   }
 }

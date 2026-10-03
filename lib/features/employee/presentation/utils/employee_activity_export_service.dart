@@ -79,6 +79,8 @@ class EmployeeActivityExportService {
     required List<EmployeeActivityEntity> activities,
     required EmployeeActivityStats stats,
     DateTimeRange? dateRange,
+    bool hasMore = false,
+    Future<List<EmployeeActivityEntity>> Function()? onFetchAllForExport,
   }) {
     if (activities.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -94,6 +96,66 @@ class EmployeeActivityExportService {
     }
 
     final isDesktop = ResponsiveLayout.isDesktop(context);
+
+    Future<List<EmployeeActivityEntity>> resolveActivitiesToExport(BuildContext modalContext) async {
+      Navigator.pop(modalContext);
+      if (!hasMore || onFetchAllForExport == null) {
+        return activities;
+      }
+
+      // Show quick loading indicator while fetching complete records up to safe limit
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(strokeWidth: 2.5),
+                ),
+                const SizedBox(width: 14),
+                Text(
+                  AppStrings.loading.tr(),
+                  style: TextStyles.customStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      try {
+        final fetched = await onFetchAllForExport();
+        if (fetched.isNotEmpty) {
+          return fetched;
+        }
+      } catch (e) {
+        AppLogger.printMessage('[EmployeeActivityExportService] fetch error: $e');
+      } finally {
+        if (context.mounted) {
+          Navigator.of(context, rootNavigator: true).pop();
+        }
+      }
+
+      return activities;
+    }
+
+    final countLabel = hasMore
+        ? '${activities.length}+ ${AppStrings.operationsCount.tr()}'
+        : '${activities.length} ${AppStrings.operationsCount.tr()}';
 
     final contentWidget = Container(
       padding: EdgeInsets.symmetric(
@@ -131,7 +193,7 @@ class EmployeeActivityExportService {
           ),
           const SizedBox(height: 4),
           Text(
-            '${AppStrings.chooseExportFormat.tr()} (${activities.length} ${AppStrings.operationsCount.tr()})',
+            '${AppStrings.chooseExportFormat.tr()} ($countLabel)',
             style: TextStyles.customStyle(
               fontSize: 12,
               color: AppColors.sandText,
@@ -167,17 +229,19 @@ class EmployeeActivityExportService {
               ),
             ),
             trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
-            onTap: () {
-              Navigator.pop(context);
-              exportPdf(
-                context,
-                title: title,
-                subtitle: subtitle,
-                employee: employee,
-                activities: activities,
-                stats: stats,
-                dateRange: dateRange,
-              );
+            onTap: () async {
+              final finalActivities = await resolveActivitiesToExport(context);
+              if (context.mounted) {
+                exportPdf(
+                  context,
+                  title: title,
+                  subtitle: subtitle,
+                  employee: employee,
+                  activities: finalActivities,
+                  stats: stats,
+                  dateRange: dateRange,
+                );
+              }
             },
           ),
           const Divider(height: 20),
@@ -210,16 +274,18 @@ class EmployeeActivityExportService {
               ),
             ),
             trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
-            onTap: () {
-              Navigator.pop(context);
-              exportExcel(
-                context,
-                title: title,
-                employee: employee,
-                activities: activities,
-                stats: stats,
-                dateRange: dateRange,
-              );
+            onTap: () async {
+              final finalActivities = await resolveActivitiesToExport(context);
+              if (context.mounted) {
+                exportExcel(
+                  context,
+                  title: title,
+                  employee: employee,
+                  activities: finalActivities,
+                  stats: stats,
+                  dateRange: dateRange,
+                );
+              }
             },
           ),
           const SizedBox(height: 12),
