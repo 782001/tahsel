@@ -10,6 +10,7 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
+import 'package:tahsel/features/main_layout/presentation/screens/main_layout_screen.dart';
 import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/shimmer/shimmer_loading.dart';
 
@@ -32,7 +33,9 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
-    final isPushed = !(ModalRoute.of(context)?.isFirst ?? true);
+    final isEmbedded =
+        context.findAncestorWidgetOfExactType<MainLayoutScreen>() != null;
+    final isPushed = !isEmbedded;
     MainLayoutCubit? cubit;
     try {
       cubit = context.read<MainLayoutCubit>();
@@ -54,13 +57,13 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
                   color: AppColors.primaryColor,
                 ),
                 onPressed: () {
-                  if (Navigator.of(context).canPop()) {
-                    Navigator.of(context).pop();
-                  } else {
+                  if (isEmbedded) {
                     try {
                       final cubit = context.read<MainLayoutCubit>();
-                      cubit.changeBottomNav(cubit.firstAllowedIndex);
+                      cubit.changeBottomNav(5);
                     } catch (_) {}
+                  } else if (Navigator.of(context).canPop()) {
+                    Navigator.of(context).pop();
                   }
                 },
               )

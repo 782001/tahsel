@@ -21,6 +21,7 @@ import 'package:tahsel/features/custody/presentation/widgets/custody_expenses_sh
 import 'package:tahsel/features/custody/presentation/widgets/new_custody_dialog.dart';
 import 'package:tahsel/features/custody/presentation/widgets/settle_custody_dialog.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
+import 'package:tahsel/features/main_layout/presentation/screens/main_layout_screen.dart';
 import 'package:tahsel/shared/widgets/custom_app_bar/custom_app_bar.dart';
 import 'package:tahsel/shared/widgets/text_fields/custom_search_field.dart';
 import 'package:tahsel/shared/widgets/text_fields/custom_text_form_field.dart';
@@ -411,7 +412,9 @@ class _CustodyManagementScreenState extends State<CustodyManagementScreen> {
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
-    final isPushed = !(ModalRoute.of(context)?.isFirst ?? true);
+    final isEmbedded =
+        context.findAncestorWidgetOfExactType<MainLayoutScreen>() != null;
+    final isPushed = !isEmbedded;
     MainLayoutCubit? cubit;
     try {
       cubit = context.read<MainLayoutCubit>();
@@ -438,13 +441,13 @@ class _CustodyManagementScreenState extends State<CustodyManagementScreen> {
                     : null,
                 onLeadingTap: showBackButton
                     ? () {
-                        if (Navigator.of(context).canPop()) {
-                          Navigator.of(context).pop();
-                        } else {
+                        if (isEmbedded) {
                           try {
                             final cubit = context.read<MainLayoutCubit>();
-                            cubit.changeBottomNav(cubit.firstAllowedIndex);
+                            cubit.changeBottomNav(5);
                           } catch (_) {}
+                        } else if (Navigator.of(context).canPop()) {
+                          Navigator.of(context).pop();
                         }
                       }
                     : null,

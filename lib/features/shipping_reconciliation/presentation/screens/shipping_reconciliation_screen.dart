@@ -10,6 +10,7 @@ import '../../../../core/utils/app_strings.dart';
 import '../../../../core/utils/styles.dart';
 import '../../../../core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
+import 'package:tahsel/features/main_layout/presentation/screens/main_layout_screen.dart';
 import '../cubit/shipping_reconciliation_cubit.dart';
 import '../cubit/shipping_reconciliation_state.dart';
 import '../widgets/column_mapping_step.dart';
@@ -46,13 +47,15 @@ class _ShippingReconciliationScreenContent extends StatelessWidget {
       cubit.resetSession();
     } else {
       // Initial state / Empty -> Exit
-      if (Navigator.of(context).canPop()) {
-        Navigator.of(context).pop();
-      } else {
+      final isEmbedded =
+          context.findAncestorWidgetOfExactType<MainLayoutScreen>() != null;
+      if (isEmbedded) {
         try {
           final cubit = context.read<MainLayoutCubit>();
-          cubit.changeBottomNav(cubit.firstAllowedIndex);
+          cubit.changeBottomNav(5);
         } catch (_) {}
+      } else if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
       }
     }
   }
@@ -79,7 +82,9 @@ class _ShippingReconciliationScreenContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
-    final isPushed = !(ModalRoute.of(context)?.isFirst ?? true);
+    final isEmbedded =
+        context.findAncestorWidgetOfExactType<MainLayoutScreen>() != null;
+    final isPushed = !isEmbedded;
 
     return BlocConsumer<
       ShippingReconciliationCubit,

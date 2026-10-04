@@ -128,13 +128,17 @@ class AppRoutes {
           return _permissionRestrictedRoute();
         }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
-        return MaterialPageRoute(builder: (_) => const TeamManagementScreen());
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const TeamManagementScreen(),
+        );
       case custodyManagement:
         if (!PermissionService.instance.isOwner) {
           return _permissionRestrictedRoute();
         }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
         return MaterialPageRoute(
+          settings: settings,
           builder: (_) => const CustodyManagementScreen(),
         );
       case addAppEmployee:
@@ -463,6 +467,7 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const SplashScreen());
       case mainLayout:
         return MaterialPageRoute(
+          settings: settings,
           builder: (_) => MultiBlocProvider(
             providers: [
               BlocProvider(create: (context) => di.sl<MainLayoutCubit>()),

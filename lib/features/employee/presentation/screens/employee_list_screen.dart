@@ -17,6 +17,7 @@ import 'package:tahsel/features/employee/presentation/widgets/add_edit_employee_
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
+import 'package:tahsel/features/main_layout/presentation/screens/main_layout_screen.dart';
 import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/no_internet_view.dart';
 
@@ -64,7 +65,9 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
-    final isPushed = !(ModalRoute.of(context)?.isFirst ?? true);
+    final isEmbedded =
+        context.findAncestorWidgetOfExactType<MainLayoutScreen>() != null;
+    final isPushed = !isEmbedded;
     MainLayoutCubit? cubit;
     try {
       cubit = context.read<MainLayoutCubit>();
@@ -84,13 +87,13 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                   color: Colors.white,
                 ),
                 onPressed: () {
-                  if (Navigator.of(context).canPop()) {
-                    Navigator.of(context).pop();
-                  } else {
+                  if (isEmbedded) {
                     try {
                       final cubit = context.read<MainLayoutCubit>();
-                      cubit.changeBottomNav(cubit.firstAllowedIndex);
+                      cubit.changeBottomNav(5);
                     } catch (_) {}
+                  } else if (Navigator.of(context).canPop()) {
+                    Navigator.of(context).pop();
                   }
                 },
               )

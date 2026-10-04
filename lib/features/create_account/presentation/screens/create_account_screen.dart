@@ -238,7 +238,11 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         if (state is CreateAccountSuccess) {
           _showSuccess(AppStrings.userCreatedSuccessfully.tr());
 
-          Navigator.pushReplacementNamed(context, AppRoutes.login);
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.login,
+            (route) => false,
+          );
         }
         if (state is CreateAccountError) {
           final errorMessage = FirebaseErrorHandler.getLocalizedMessage(

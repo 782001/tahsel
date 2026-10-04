@@ -13,6 +13,7 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/utils/vault_balance_helper.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
+import 'package:tahsel/features/main_layout/presentation/screens/main_layout_screen.dart';
 import 'package:tahsel/features/standard_features/localization/presentation/cubit/locale_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
@@ -243,7 +244,9 @@ class _VaultScreenState extends State<VaultScreen> {
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
-    final isPushed = !(ModalRoute.of(context)?.isFirst ?? true);
+    final isEmbedded =
+        context.findAncestorWidgetOfExactType<MainLayoutScreen>() != null;
+    final isPushed = !isEmbedded;
     MainLayoutCubit? cubit;
     try {
       cubit = context.read<MainLayoutCubit>();
@@ -264,13 +267,13 @@ class _VaultScreenState extends State<VaultScreen> {
             : null,
         onLeadingTap: showBackButton
             ? () {
-                if (Navigator.of(context).canPop()) {
-                  Navigator.of(context).pop();
-                } else {
+                if (isEmbedded) {
                   try {
                     final cubit = context.read<MainLayoutCubit>();
-                    cubit.changeBottomNav(cubit.firstAllowedIndex);
+                    cubit.changeBottomNav(5);
                   } catch (_) {}
+                } else if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
                 }
               }
             : null,

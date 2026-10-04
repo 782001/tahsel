@@ -350,9 +350,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       listener: (context, state) {
                                         if (state is AuthSuccess) {
                                           sl<NavigatorService>()
-                                              .navigatorKey
-                                              .currentState
-                                              ?.pushReplacementNamed(
+                                              .pushNamedAndRemoveUntil(
                                                 AppRoutes.mainLayout,
                                               );
                                         } else if (state is AuthFailure) {

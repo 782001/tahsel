@@ -75,6 +75,15 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
                     onPopInvokedWithResult: (didPop, result) async {
                       if (didPop) return;
 
+                      // If on mobile and currently on a sub-screen not in the mobile bottom bar
+                      // (e.g. after resizing from desktop mode while viewing a desktop-only tab),
+                      // navigate to More (5) first.
+                      if (!ResponsiveLayout.isDesktop(context) &&
+                          !cubit.mobileBottomNavIndices.contains(cubit.currentIndex)) {
+                        cubit.changeBottomNav(5);
+                        return;
+                      }
+
                       final defaultLanding = cubit.firstAllowedIndex;
                       if (cubit.currentIndex != defaultLanding) {
                         cubit.changeBottomNav(defaultLanding);

@@ -3,7 +3,6 @@ import 'dart:io' show Platform, Process;
 import 'package:flutter/foundation.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:tahsel/core/extensions/extensions.dart';
-import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -24,13 +23,14 @@ class WhatsAppService {
         ? '?text=${Uri.encodeComponent(message)}'
         : '';
 
-    final Uri whatsappUri = Uri.parse(
-      'https://wa.me/$formattedPhone$query',
-    );
+    final Uri whatsappUri = Uri.parse('https://wa.me/$formattedPhone$query');
 
     try {
       if (await canLaunchUrl(whatsappUri)) {
-        return await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
+        return await launchUrl(
+          whatsappUri,
+          mode: LaunchMode.externalApplication,
+        );
       }
       return await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
     } catch (e) {
@@ -115,10 +115,7 @@ class WhatsAppService {
           await Process.run('explorer.exe', ['/select,', image.path]);
         } catch (_) {}
       }
-      return await sendMessage(
-        phoneNumber: phoneNumber,
-        message: message,
-      );
+      return await sendMessage(phoneNumber: phoneNumber, message: message);
     }
 
     if (!kIsWeb && Platform.isAndroid) {
@@ -148,10 +145,7 @@ class WhatsAppService {
       return true;
     } catch (e) {
       AppLogger.printMessage("Share.shareXFiles fallback error: $e");
-      return await sendMessage(
-        phoneNumber: phoneNumber,
-        message: message,
-      );
+      return await sendMessage(phoneNumber: phoneNumber, message: message);
     }
   }
 }

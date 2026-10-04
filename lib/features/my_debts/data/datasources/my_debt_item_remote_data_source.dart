@@ -8,14 +8,14 @@ import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/usecases/pagination_params.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/date_formatter.dart';
-import 'package:tahsel/features/expenses/data/datasources/expense_remote_data_source.dart';
-import 'package:tahsel/features/expenses/data/models/expense_model.dart';
-import 'package:tahsel/features/my_debts/data/models/my_debt_item_model.dart';
-import 'package:tahsel/features/inventory/data/datasources/inventory_local_data_source.dart';
-import 'package:tahsel/features/inventory/data/models/inventory_purchase_model.dart';
-import 'package:tahsel/features/my_debts/data/models/my_debt_payment_model.dart';
 import 'package:tahsel/features/cashbox/data/datasources/vault_remote_data_source.dart';
 import 'package:tahsel/features/cashbox/domain/entities/vault_transaction_entity.dart';
+import 'package:tahsel/features/expenses/data/datasources/expense_remote_data_source.dart';
+import 'package:tahsel/features/expenses/data/models/expense_model.dart';
+import 'package:tahsel/features/inventory/data/datasources/inventory_local_data_source.dart';
+import 'package:tahsel/features/inventory/data/models/inventory_purchase_model.dart';
+import 'package:tahsel/features/my_debts/data/models/my_debt_item_model.dart';
+import 'package:tahsel/features/my_debts/data/models/my_debt_payment_model.dart';
 
 abstract class MyDebtItemRemoteDataSource {
   Future<String> addDebtItem(MyDebtItemModel debt);
@@ -274,8 +274,9 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
     double? previousAmount,
   }) async {
     try {
-      if (amountPaid <= 0 && (previousAmount == null || previousAmount <= 0))
+      if (amountPaid <= 0 && (previousAmount == null || previousAmount <= 0)) {
         return;
+      }
 
       final expenseId = 'exp_pay_$paymentId';
       final String? purchaseId =

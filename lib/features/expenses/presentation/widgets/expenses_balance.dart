@@ -32,8 +32,8 @@ class ExpensesBalance extends StatelessWidget {
 
         final amountString = totalAmount.toSmartAmount();
         final parts = amountString.split('.');
-        final amountMain = parts[0];
-        final amountDecimal = ".${parts[1]}";
+        final amountMain = parts.isNotEmpty ? parts[0] : '0';
+        final amountDecimal = parts.length > 1 ? '.${parts[1]}' : '';
         final currency = AppStrings.currencyEgp.tr();
 
         final hasPrevData = previousMonthAmount > 0;
@@ -91,15 +91,17 @@ class ExpensesBalance extends StatelessWidget {
                         height: 1.0,
                       ),
                     ),
-                    SizedBox(width: 4.w),
-                    Text(
-                      amountDecimal,
-                      style: TextStyles.customStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.blackLight,
+                    if (amountDecimal.isNotEmpty) ...[
+                      SizedBox(width: 4.w),
+                      Text(
+                        amountDecimal,
+                        style: TextStyles.customStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.blackLight,
+                        ),
                       ),
-                    ),
+                    ],
                     SizedBox(width: 8.w),
                     Text(
                       currency,

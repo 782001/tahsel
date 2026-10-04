@@ -14,6 +14,7 @@ import 'package:tahsel/features/customer/presentation/widgets/customer_list_card
 import 'package:tahsel/features/customer/presentation/widgets/skeletons/customer_card_skeleton.dart';
 
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
+import 'package:tahsel/features/main_layout/presentation/screens/main_layout_screen.dart';
 import '../../../../core/services/injection_container.dart';
 import '../cubit/customer_reports/customer_reports_cubit.dart';
 import '../cubit/customer_reports/customer_reports_state.dart';
@@ -40,7 +41,9 @@ class CustomersListScreen extends StatelessWidget {
       child: Builder(
         builder: (context) {
           final isDesktop = ResponsiveLayout.isDesktop(context);
-          final isPushed = !(ModalRoute.of(context)?.isFirst ?? true);
+          final isEmbedded =
+              context.findAncestorWidgetOfExactType<MainLayoutScreen>() != null;
+          final isPushed = !isEmbedded;
           MainLayoutCubit? cubit;
           try {
             cubit = context.read<MainLayoutCubit>();
@@ -69,13 +72,13 @@ class CustomersListScreen extends StatelessWidget {
                         color: AppColors.black,
                       ),
                       onPressed: () {
-                        if (Navigator.of(context).canPop()) {
-                          Navigator.of(context).pop();
-                        } else {
+                        if (isEmbedded) {
                           try {
                             final cubit = context.read<MainLayoutCubit>();
-                            cubit.changeBottomNav(cubit.firstAllowedIndex);
+                            cubit.changeBottomNav(5);
                           } catch (_) {}
+                        } else if (Navigator.of(context).canPop()) {
+                          Navigator.of(context).pop();
                         }
                       },
                     )
