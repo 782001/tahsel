@@ -760,6 +760,18 @@ class _AddAppEmployeeScreenState extends State<AddAppEmployeeScreen> {
                                   context,
                                 ).copyWith(dividerColor: Colors.transparent),
                                 child: ExpansionTile(
+                                  iconColor: AppColors.primaryColor,
+                                  collapsedIconColor: isFull
+                                      ? AppColors.primaryColor.withValues(
+                                          alpha: 0.4,
+                                        )
+                                      : isPartial
+                                      ? AppColors.stitchOrange.withValues(
+                                          alpha: 0.45,
+                                        )
+                                      : AppColors.lightGreyColor.withValues(
+                                          alpha: 0.7,
+                                        ),
                                   leading: Container(
                                     padding: EdgeInsets.all(
                                       isDesktop ? 6 : 6.r,

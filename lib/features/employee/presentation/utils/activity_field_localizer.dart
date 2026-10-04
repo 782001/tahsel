@@ -364,7 +364,14 @@ class ActivityFieldLocalizer {
       case 'filePath':
         return isArabic ? 'مسار الملف' : 'File Path';
       case 'collection':
+      case 'collectionName':
+      case 'collectionPath':
         return isArabic ? 'مجموعة السجلات' : 'Collection';
+      case 'docId':
+      case 'documentId':
+        return isArabic ? 'معرف المستند' : 'Document ID';
+      case 'path':
+        return isArabic ? 'المسار' : 'Path';
 
       default:
         return key;
@@ -385,5 +392,58 @@ class ActivityFieldLocalizer {
       default:
         return AppStrings.roleCustomLabel.tr();
     }
+  }
+
+  /// Formats values in extraData for clean, localized, and multi-line-safe presentation.
+  static String formatValue(BuildContext context, String key, dynamic value) {
+    if (value == null) return '-';
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    if (value is bool) {
+      return value ? (isArabic ? 'نعم' : 'Yes') : (isArabic ? 'لا' : 'No');
+    }
+
+    if (value is List) {
+      if (value.isEmpty) return '-';
+      return value.map((item) => '$item').join(', ');
+    }
+
+    if (value is Map) {
+      if (value.isEmpty) return '-';
+      return value.entries
+          .map((entry) => '${entry.key}: ${entry.value}')
+          .join(', ');
+    }
+
+    if (value is num) {
+      final k = key.toLowerCase();
+      if (k.contains('amount') ||
+          k.contains('price') ||
+          k.contains('total') ||
+          k.contains('cost') ||
+          k.contains('profit') ||
+          k.contains('balance') ||
+          k.contains('debt') ||
+          k.contains('salary') ||
+          k.contains('discount') ||
+          k.contains('delta') ||
+          k.contains('diff')) {
+        return value.toSmartAmount();
+      }
+      return '$value';
+    }
+
+    final str = '$value';
+    return _breakLongWords(str);
+  }
+
+  /// Inserts zero-width spaces after slashes and delimiters so long unbroken tokens
+  /// (e.g. Firestore paths, hashes, IDs) wrap cleanly across lines without overflowing.
+  static String _breakLongWords(String text) {
+    if (text.isEmpty) return text;
+    return text.replaceAllMapped(
+      RegExp(r'([/\\_\-.@])'),
+      (match) => '${match.group(0)}\u200B',
+    );
   }
 }

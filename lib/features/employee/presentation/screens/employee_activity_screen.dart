@@ -637,9 +637,10 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Flexible(
+                          Expanded(
                             child: Text(
                               activity.actionTitle,
                               style: TextStyles.customStyle(
@@ -647,11 +648,10 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.black,
                               ),
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          if (activity.amount != null && activity.amount! > 0)
+                          if (activity.amount != null && activity.amount! > 0) ...[
+                            SizedBox(width: 8.w),
                             Text(
                               '${activity.amount!.toSmartAmount()} $currency',
                               style: TextStyles.customStyle(
@@ -660,6 +660,7 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                                 color: meta.color,
                               ),
                             ),
+                          ],
                         ],
                       ),
                       SizedBox(height: 4.h),
@@ -669,30 +670,35 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                           fontSize: 12,
                           color: AppColors.sandText,
                         ),
-                        maxLines: 5,
-                        overflow: TextOverflow.ellipsis,
                       ),
                       SizedBox(height: 6.h),
-                      Row(
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8.w,
+                        runSpacing: 4.h,
                         children: [
-                          Icon(
-                            Icons.access_time_rounded,
-                            size: 12,
-                            color: AppColors.sandText,
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.access_time_rounded,
+                                size: 12,
+                                color: AppColors.grey,
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                DateFormat(
+                                  'yyyy-MM-dd • hh:mm a',
+                                  'ar',
+                                ).format(activity.timestamp),
+                                style: TextStyles.customStyle(
+                                  fontSize: 10.5,
+                                  color: AppColors.grey,
+                                ),
+                              ),
+                            ],
                           ),
-                          SizedBox(width: 4.w),
-                          Text(
-                            DateFormat(
-                              'yyyy-MM-dd • hh:mm a',
-                              'ar',
-                            ).format(activity.timestamp),
-                            style: TextStyles.customStyle(
-                              fontSize: 10.5,
-                              color: AppColors.sandText,
-                            ),
-                          ),
-                          if (activity.isOfflineSync) ...[
-                            SizedBox(width: 8.w),
+                          if (activity.isOfflineSync)
                             Container(
                               padding: EdgeInsets.symmetric(
                                 horizontal: 6.w,
@@ -724,7 +730,6 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                                 ],
                               ),
                             ),
-                          ],
                         ],
                       ),
                     ],
@@ -751,21 +756,19 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
-        return Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: isDesktop ? 650 : double.infinity,
-              maxHeight: MediaQuery.of(context).size.height * 0.85,
+        return ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: isDesktop ? 650 : double.infinity,
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
+          ),
+          child: Container(
+            padding: EdgeInsets.all(isDesktop ? 24 : 20.r),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
             ),
-            child: Container(
-              padding: EdgeInsets.all(isDesktop ? 24 : 20.r),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: isDesktop
-                    ? BorderRadius.circular(20)
-                    : BorderRadius.vertical(top: Radius.circular(24.r)),
-              ),
-              child: SingleChildScrollView(
+            child: SingleChildScrollView(
+              child: SelectionArea(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -775,13 +778,14 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                         width: 40.w,
                         height: 4.h,
                         decoration: BoxDecoration(
-                          color: AppColors.lightGreyColor,
+                          color: AppColors.grey,
                           borderRadius: BorderRadius.circular(2.r),
                         ),
                       ),
                     ),
                     SizedBox(height: 16.h),
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         CircleAvatar(
                           radius: 22.r,
@@ -853,27 +857,41 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                         child: Column(
                           children: activity.extraData!.entries.map((e) {
                             return Padding(
-                              padding: EdgeInsets.symmetric(vertical: 3.h),
+                              padding: EdgeInsets.symmetric(vertical: 4.h),
                               child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    ActivityFieldLocalizer.localizeKey(
-                                      context,
-                                      e.key,
-                                    ),
-                                    style: TextStyles.customStyle(
-                                      fontSize: 11,
-                                      color: AppColors.sandText,
+                                  ConstrainedBox(
+                                    constraints:
+                                        BoxConstraints(maxWidth: 130.w),
+                                    child: Text(
+                                      ActivityFieldLocalizer.localizeKey(
+                                        context,
+                                        e.key,
+                                      ),
+                                      style: TextStyles.customStyle(
+                                        fontSize: 11,
+                                        color: AppColors.sandText,
+                                      ),
                                     ),
                                   ),
-                                  Text(
-                                    '${e.value}',
-                                    style: TextStyles.customStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.black,
+                                  SizedBox(width: 8.w),
+                                  Expanded(
+                                    child: Text(
+                                      ActivityFieldLocalizer.formatValue(
+                                        context,
+                                        e.key,
+                                        e.value,
+                                      ),
+                                      textAlign: TextAlign.end,
+                                      softWrap: true,
+                                      style: TextStyles.customStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.black,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -963,25 +981,30 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 5.h),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            title,
-            style: TextStyles.customStyle(
-              fontSize: 12,
-              color: AppColors.sandText,
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: 130.w),
+            child: Text(
+              title,
+              style: TextStyles.customStyle(
+                fontSize: 12,
+                color: AppColors.sandText,
+              ),
             ),
           ),
-          Flexible(
+          SizedBox(width: 10.w),
+          Expanded(
             child: Text(
               value,
+              textAlign: TextAlign.end,
+              softWrap: true,
               style: TextStyles.customStyle(
                 fontSize: 12,
                 fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
                 color: valueColor ?? AppColors.black,
               ),
-              textAlign: TextAlign.end,
-              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

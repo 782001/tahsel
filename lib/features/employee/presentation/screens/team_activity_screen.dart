@@ -740,24 +740,23 @@ class _TeamActivityScreenState extends State<TeamActivityScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Flexible(
-                            child: Row(
+                          Expanded(
+                            child: Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 6.w,
+                              runSpacing: 2.h,
                               children: [
-                                Flexible(
-                                  child: Text(
-                                    activity.employeeName,
-                                    style: TextStyles.customStyle(
-                                      fontSize: 13.5,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.primaryColor,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                Text(
+                                  activity.employeeName,
+                                  style: TextStyles.customStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primaryColor,
                                   ),
                                 ),
-                                SizedBox(width: 6.w),
                                 Container(
                                   padding: EdgeInsets.symmetric(
                                     horizontal: 6.w,
@@ -782,7 +781,8 @@ class _TeamActivityScreenState extends State<TeamActivityScreen> {
                               ],
                             ),
                           ),
-                          if (activity.amount != null && activity.amount! > 0)
+                          if (activity.amount != null && activity.amount! > 0) ...[
+                            SizedBox(width: 8.w),
                             Text(
                               '${activity.amount!.toSmartAmount()} $currency',
                               style: TextStyles.customStyle(
@@ -791,6 +791,7 @@ class _TeamActivityScreenState extends State<TeamActivityScreen> {
                                 color: meta.color,
                               ),
                             ),
+                          ],
                         ],
                       ),
                       SizedBox(height: 3.h),
@@ -801,8 +802,6 @@ class _TeamActivityScreenState extends State<TeamActivityScreen> {
                           fontWeight: FontWeight.w600,
                           color: AppColors.black,
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                       ),
                       SizedBox(height: 3.h),
                       Text(
@@ -811,30 +810,35 @@ class _TeamActivityScreenState extends State<TeamActivityScreen> {
                           fontSize: 11.5,
                           color: AppColors.sandText,
                         ),
-                        maxLines: 4,
-                        overflow: TextOverflow.ellipsis,
                       ),
                       SizedBox(height: 6.h),
-                      Row(
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8.w,
+                        runSpacing: 4.h,
                         children: [
-                          Icon(
-                            Icons.access_time_rounded,
-                            size: 12,
-                            color: AppColors.sandText,
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.access_time_rounded,
+                                size: 12,
+                                color: AppColors.sandText,
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                DateFormat(
+                                  'yyyy-MM-dd • hh:mm a',
+                                  'ar',
+                                ).format(activity.timestamp),
+                                style: TextStyles.customStyle(
+                                  fontSize: 10.5,
+                                  color: AppColors.sandText,
+                                ),
+                              ),
+                            ],
                           ),
-                          SizedBox(width: 4.w),
-                          Text(
-                            DateFormat(
-                              'yyyy-MM-dd • hh:mm a',
-                              'ar',
-                            ).format(activity.timestamp),
-                            style: TextStyles.customStyle(
-                              fontSize: 10.5,
-                              color: AppColors.sandText,
-                            ),
-                          ),
-                          if (activity.isOfflineSync) ...[
-                            SizedBox(width: 8.w),
+                          if (activity.isOfflineSync)
                             Container(
                               padding: EdgeInsets.symmetric(
                                 horizontal: 6.w,
@@ -866,7 +870,6 @@ class _TeamActivityScreenState extends State<TeamActivityScreen> {
                                 ],
                               ),
                             ),
-                          ],
                         ],
                       ),
                     ],
@@ -893,21 +896,19 @@ class _TeamActivityScreenState extends State<TeamActivityScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
-        return Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: isDesktop ? 650 : double.infinity,
-              maxHeight: MediaQuery.of(context).size.height * 0.85,
+        return ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: isDesktop ? 650 : double.infinity,
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
+          ),
+          child: Container(
+            padding: EdgeInsets.all(isDesktop ? 24 : 20.r),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
             ),
-            child: Container(
-              padding: EdgeInsets.all(isDesktop ? 24 : 20.r),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: isDesktop
-                    ? BorderRadius.circular(20)
-                    : BorderRadius.vertical(top: Radius.circular(24.r)),
-              ),
-              child: SingleChildScrollView(
+            child: SingleChildScrollView(
+              child: SelectionArea(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -917,13 +918,14 @@ class _TeamActivityScreenState extends State<TeamActivityScreen> {
                         width: 40.w,
                         height: 4.h,
                         decoration: BoxDecoration(
-                          color: AppColors.lightGreyColor,
+                          color: AppColors.grey,
                           borderRadius: BorderRadius.circular(2.r),
                         ),
                       ),
                     ),
                     SizedBox(height: 16.h),
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         CircleAvatar(
                           radius: 22.r,
@@ -999,27 +1001,41 @@ class _TeamActivityScreenState extends State<TeamActivityScreen> {
                         child: Column(
                           children: activity.extraData!.entries.map((e) {
                             return Padding(
-                              padding: EdgeInsets.symmetric(vertical: 3.h),
+                              padding: EdgeInsets.symmetric(vertical: 4.h),
                               child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    ActivityFieldLocalizer.localizeKey(
-                                      context,
-                                      e.key,
-                                    ),
-                                    style: TextStyles.customStyle(
-                                      fontSize: 11,
-                                      color: AppColors.sandText,
+                                  ConstrainedBox(
+                                    constraints:
+                                        BoxConstraints(maxWidth: 130.w),
+                                    child: Text(
+                                      ActivityFieldLocalizer.localizeKey(
+                                        context,
+                                        e.key,
+                                      ),
+                                      style: TextStyles.customStyle(
+                                        fontSize: 11,
+                                        color: AppColors.sandText,
+                                      ),
                                     ),
                                   ),
-                                  Text(
-                                    '${e.value}',
-                                    style: TextStyles.customStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.black,
+                                  SizedBox(width: 8.w),
+                                  Expanded(
+                                    child: Text(
+                                      ActivityFieldLocalizer.formatValue(
+                                        context,
+                                        e.key,
+                                        e.value,
+                                      ),
+                                      textAlign: TextAlign.end,
+                                      softWrap: true,
+                                      style: TextStyles.customStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.black,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -1029,68 +1045,68 @@ class _TeamActivityScreenState extends State<TeamActivityScreen> {
                         ),
                       ),
                     ],
-                    if (ActivityNavigationHelper.hasLinkedEntity(activity)) ...[
-                      SizedBox(height: 16.h),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.pop(ctx);
-                            ActivityNavigationHelper.navigateToLinkedEntity(
-                              context,
-                              activity,
-                            );
-                          },
-                          icon: Icon(
-                            ActivityNavigationHelper.getLinkedEntityIcon(
-                              activity,
-                            ),
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                          label: Text(
-                            ActivityNavigationHelper.getLinkedEntityLabel(
-                              activity,
-                            ),
-                            style: TextStyles.customStyle(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryColor,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                            ),
-                            padding: EdgeInsets.symmetric(vertical: 12.h),
-                          ),
-                        ),
-                      ),
-                    ],
-                    SizedBox(height: 10.h),
+                  if (ActivityNavigationHelper.hasLinkedEntity(activity)) ...[
+                    SizedBox(height: 16.h),
                     SizedBox(
                       width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: AppColors.lightGreyColor),
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          ActivityNavigationHelper.navigateToLinkedEntity(
+                            context,
+                            activity,
+                          );
+                        },
+                        icon: Icon(
+                          ActivityNavigationHelper.getLinkedEntityIcon(
+                            activity,
+                          ),
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                        label: Text(
+                          ActivityNavigationHelper.getLinkedEntityLabel(
+                            activity,
+                          ),
+                          style: TextStyles.customStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryColor,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.r),
                           ),
                           padding: EdgeInsets.symmetric(vertical: 12.h),
                         ),
-                        child: Text(
-                          AppStrings.close.tr(),
-                          style: TextStyles.customStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.sandText,
-                          ),
-                        ),
                       ),
                     ),
                   ],
+                  SizedBox(height: 10.h),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: AppColors.lightGreyColor),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                      ),
+                      child: Text(
+                        AppStrings.close.tr(),
+                        style: TextStyles.customStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.sandText,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
                 ),
               ),
             ),
@@ -1109,13 +1125,17 @@ class _TeamActivityScreenState extends State<TeamActivityScreen> {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 5.h),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            title,
-            style: TextStyles.customStyle(
-              fontSize: 12,
-              color: AppColors.sandText,
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: 130.w),
+            child: Text(
+              title,
+              style: TextStyles.customStyle(
+                fontSize: 12,
+                color: AppColors.sandText,
+              ),
             ),
           ),
           SizedBox(width: 10.w),
@@ -1123,6 +1143,7 @@ class _TeamActivityScreenState extends State<TeamActivityScreen> {
             child: Text(
               value,
               textAlign: TextAlign.end,
+              softWrap: true,
               style: TextStyles.customStyle(
                 fontSize: 12,
                 fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
