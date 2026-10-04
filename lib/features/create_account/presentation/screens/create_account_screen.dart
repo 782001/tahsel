@@ -17,11 +17,11 @@ import 'package:tahsel/features/create_account/presentation/cubit/create_account
 import 'package:tahsel/features/create_account/presentation/cubit/create_account/create_account_state.dart';
 import 'package:tahsel/features/offline_sync/presentation/widgets/offline_banner.dart';
 import 'package:tahsel/features/settings/presentation/widgets/currency_selection_bottom_sheet.dart';
-import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
-import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
+import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/text_fields/custom_text_form_field.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
 class CreateAccountScreen extends StatefulWidget {
   const CreateAccountScreen({super.key});
@@ -252,7 +252,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         body: Center(
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              maxWidth: isDesktop ? 800 : double.infinity,
+              maxWidth: isDesktop ? 1000 : double.infinity,
             ),
             child: SafeArea(
               child: OfflineBanner(
@@ -415,8 +415,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
                                       // Phone Field
                                       CustomTextFormField(
-                                        labelText: AppStrings.phone
-                                            .tr(),
+                                        labelText: AppStrings.phone.tr(),
                                         controller: _phoneController,
                                         keyboardType: TextInputType.phone,
                                         hintText: '01xxxxxxxxx',
@@ -451,8 +450,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                             '${AppStrings.vatNumber.tr()} (${AppStrings.optional.tr()})',
                                         controller: _vatController,
                                         keyboardType: TextInputType.text,
-                                        hintText:
-                                            AppStrings.vatNumberHint.tr(),
+                                        hintText: AppStrings.vatNumberHint.tr(),
                                         prefixIcon: Icons.receipt_long_outlined,
                                       ),
                                       SizedBox(height: isDesktop ? 24 : 24.h),
@@ -464,8 +462,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                         controller: _taxRateController,
                                         keyboardType:
                                             const TextInputType.numberWithOptions(
-                                          decimal: true,
-                                        ),
+                                              decimal: true,
+                                            ),
                                         hintText: AppStrings.taxRateHint.tr(),
                                         prefixIcon: Icons.percent_rounded,
                                         suffixIcon: Padding(
@@ -487,8 +485,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                         validator: (value) {
                                           if (value != null &&
                                               value.trim().isNotEmpty) {
-                                            final parsed =
-                                                double.tryParse(value.trim());
+                                            final parsed = double.tryParse(
+                                              value.trim(),
+                                            );
                                             if (parsed == null ||
                                                 parsed < 0 ||
                                                 parsed > 100) {
@@ -508,8 +507,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                         controller: _addressController,
                                         keyboardType:
                                             TextInputType.streetAddress,
-                                        hintText: AppStrings
-                                            .businessAddressHint
+                                        hintText: AppStrings.businessAddressHint
                                             .tr(),
                                         prefixIcon: Icons.location_on_outlined,
                                       ),
@@ -816,10 +814,13 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
                                                 if (_formKey.currentState!
                                                     .validate()) {
-                                                  final isOffline = context
-                                                      .read<ConnectivityCubit>()
-                                                      .state
-                                                      is ConnectivityDisconnected;
+                                                  final isOffline =
+                                                      context
+                                                              .read<
+                                                                ConnectivityCubit
+                                                              >()
+                                                              .state
+                                                          is ConnectivityDisconnected;
                                                   if (isOffline) {
                                                     showfailureToast(
                                                       AppStrings
@@ -881,7 +882,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                                           currency:
                                                               _selectedCurrency
                                                                   .toMap(),
-                                                          crn: _crnController
+                                                          crn:
+                                                              _crnController
                                                                   .text
                                                                   .trim()
                                                                   .isEmpty
@@ -889,7 +891,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                                               : _crnController
                                                                     .text
                                                                     .trim(),
-                                                          vat: _vatController
+                                                          vat:
+                                                              _vatController
                                                                   .text
                                                                   .trim()
                                                                   .isEmpty
@@ -899,24 +902,24 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                                                     .trim(),
                                                           taxRate:
                                                               _taxRateController
+                                                                  .text
+                                                                  .trim()
+                                                                  .isEmpty
+                                                              ? null
+                                                              : double.tryParse(
+                                                                  _taxRateController
                                                                       .text
-                                                                      .trim()
-                                                                      .isEmpty
-                                                                  ? null
-                                                                  : double.tryParse(
-                                                                      _taxRateController
-                                                                          .text
-                                                                          .trim(),
-                                                                    ),
+                                                                      .trim(),
+                                                                ),
                                                           address:
                                                               _addressController
-                                                                      .text
-                                                                      .trim()
-                                                                      .isEmpty
-                                                                  ? null
-                                                                  : _addressController
-                                                                        .text
-                                                                        .trim(),
+                                                                  .text
+                                                                  .trim()
+                                                                  .isEmpty
+                                                              ? null
+                                                              : _addressController
+                                                                    .text
+                                                                    .trim(),
                                                         ),
                                                       );
 

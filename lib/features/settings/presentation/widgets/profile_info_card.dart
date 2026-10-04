@@ -401,7 +401,7 @@ class ProfileInfoCard extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                         color: AppColors.textColor,
                       ),
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     SizedBox(height: 2.h),
