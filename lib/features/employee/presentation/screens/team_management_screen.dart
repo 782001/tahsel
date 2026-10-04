@@ -148,11 +148,13 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
                   onPressed: () =>
                       Navigator.pushNamed(context, AppRoutes.teamActivity),
                 ),
-                SizedBox(width: 2.w),
+
                 Center(
                   child: Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 9.w, vertical: 4.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 9.w,
+                      vertical: 4.h,
+                    ),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [AppColors.vipGoldStart, AppColors.vipGoldEnd],
@@ -650,8 +652,10 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
                       Navigator.pushNamed(context, AppRoutes.teamActivity),
                   borderRadius: BorderRadius.circular(12.r),
                   child: Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 8.h,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12.r),
