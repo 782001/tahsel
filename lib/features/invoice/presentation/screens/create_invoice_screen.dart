@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/extensions.dart';
 import 'package:tahsel/core/services/contact_service.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/services/profile/business_profile_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/customer_data_masker.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
-import 'package:tahsel/core/utils/customer_data_masker.dart';
 import 'package:tahsel/features/customer/domain/entities/customer_entity.dart';
 import 'package:tahsel/features/customer/presentation/cubit/customer_cubit.dart';
 import 'package:tahsel/features/customer/presentation/widgets/customer_autocomplete_field.dart';
 import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_cubit.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_state.dart';
-import 'package:tahsel/core/constants/app_permissions.dart';
-import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/convert_quotation_button.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/convert_quotation_dialog.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/invoice_item_row.dart';
@@ -196,12 +196,12 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
         _phoneController.text = inv.customerPhone ?? '';
         _ledgerController.text = inv.ledgerNumber ?? '';
       } else {
-        _phoneController.text = (inv.customerPhone != null &&
-                inv.customerPhone!.isNotEmpty)
+        _phoneController.text =
+            (inv.customerPhone != null && inv.customerPhone!.isNotEmpty)
             ? '••••••••••'
             : '';
-        _ledgerController.text = (inv.ledgerNumber != null &&
-                inv.ledgerNumber!.isNotEmpty)
+        _ledgerController.text =
+            (inv.ledgerNumber != null && inv.ledgerNumber!.isNotEmpty)
             ? '••••••'
             : '';
       }
@@ -281,8 +281,9 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => MultiInventoryPickerBottomSheet(
-        initialSelectedQuantities:
-            existingQuantities.isNotEmpty ? existingQuantities : null,
+        initialSelectedQuantities: existingQuantities.isNotEmpty
+            ? existingQuantities
+            : null,
         isEditMode: _isEditMode,
         confirmButtonText: AppStrings.confirmSelection.tr(),
         onItemsConfirmed: (selectedItems) {
@@ -295,8 +296,9 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
               _itemControllers.clear();
             }
 
-            final returnedProductIds =
-                selectedItems.map((e) => e.product.id).toSet();
+            final returnedProductIds = selectedItems
+                .map((e) => e.product.id)
+                .toSet();
             final returnedProductNames = selectedItems
                 .map((e) => e.product.name.trim().toLowerCase())
                 .toSet();
@@ -342,8 +344,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
               } else if (itemsByName.containsKey(
                 ctrl.desc.text.trim().toLowerCase(),
               )) {
-                matchedItem =
-                    itemsByName[ctrl.desc.text.trim().toLowerCase()];
+                matchedItem = itemsByName[ctrl.desc.text.trim().toLowerCase()];
               }
 
               if (matchedItem != null) {
@@ -352,8 +353,8 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                 ctrl.purchasePrice = matchedItem.product.purchasePrice;
                 if (ctrl.price.text.trim().isEmpty ||
                     ctrl.price.text.trim() == '0') {
-                  ctrl.price.text =
-                      matchedItem.product.sellingPrice.toSmartAmount();
+                  ctrl.price.text = matchedItem.product.sellingPrice
+                      .toSmartAmount();
                 }
                 if (ctrl.unit.text.trim().isEmpty &&
                     matchedItem.product.unit.isNotEmpty) {
@@ -372,8 +373,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                   initialUnit: item.product.unit,
                 );
                 newCtrl.desc.text = item.product.name;
-                newCtrl.price.text =
-                    item.product.sellingPrice.toSmartAmount();
+                newCtrl.price.text = item.product.sellingPrice.toSmartAmount();
                 newCtrl.qty.text = item.quantity.toSmartAmount();
                 _itemControllers.add(newCtrl);
               }
@@ -388,7 +388,10 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
     );
   }
 
-  Future<void> _submit(BuildContext context, {bool convertToInvoice = false}) async {
+  Future<void> _submit(
+    BuildContext context, {
+    bool convertToInvoice = false,
+  }) async {
     final uid = AppStrings.userToken;
     if (uid.isEmpty) return;
 
@@ -426,8 +429,9 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
       final qty = double.tryParse(ctrl.qty.text) ?? 1.0;
       final itemDiscount = double.tryParse(ctrl.discount.text) ?? 0.0;
       final subtotal = price * qty;
-      final discountRate =
-          subtotal > 0 ? (itemDiscount / subtotal).clamp(0.0, 1.0) : 0.0;
+      final discountRate = subtotal > 0
+          ? (itemDiscount / subtotal).clamp(0.0, 1.0)
+          : 0.0;
 
       return InvoiceItem(
         id: _isEditMode
@@ -450,16 +454,16 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
     final bool isRestricted = _isCustomerRestricted;
     final phoneToSave = isRestricted
         ? (_selectedCustomer?.phoneNumber ??
-            (_isEditMode ? widget.invoiceToEdit?.customerPhone : null))
+              (_isEditMode ? widget.invoiceToEdit?.customerPhone : null))
         : (_phoneController.text.trim().isNotEmpty
-            ? _phoneController.text.trim()
-            : null);
+              ? _phoneController.text.trim()
+              : null);
     final ledgerToSave = isRestricted
         ? (_selectedCustomer?.ledgerNumber ??
-            (_isEditMode ? widget.invoiceToEdit?.ledgerNumber : null))
+              (_isEditMode ? widget.invoiceToEdit?.ledgerNumber : null))
         : (_ledgerController.text.trim().isNotEmpty
-            ? _ledgerController.text.trim()
-            : null);
+              ? _ledgerController.text.trim()
+              : null);
 
     if (_isEditMode) {
       // Edit mode — patch mutable fields, preserve payments/status/createdAt
@@ -523,10 +527,12 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
         lastUpdatedAt: DateTime.now(),
         dueDate: _isQuotation ? null : _dueDate,
         taxRate: profileTaxRate,
-        creatorEmployeeUid: AppStrings.isEmployee && AppStrings.employeeAuthUid.isNotEmpty
+        creatorEmployeeUid:
+            AppStrings.isEmployee && AppStrings.employeeAuthUid.isNotEmpty
             ? AppStrings.employeeAuthUid
             : null,
-        creatorEmployeeName: AppStrings.isEmployee && AppStrings.loggedInEmployeeName.isNotEmpty
+        creatorEmployeeName:
+            AppStrings.isEmployee && AppStrings.loggedInEmployeeName.isNotEmpty
             ? AppStrings.loggedInEmployeeName
             : null,
       );
@@ -543,8 +549,8 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
     final isRestricted = _isCustomerRestricted;
     final effectiveTaxRate = _isEditMode
         ? (widget.invoiceToEdit?.taxRate ??
-            BusinessProfileService.instance.cachedProfile?.taxRate ??
-            0.0)
+              BusinessProfileService.instance.cachedProfile?.taxRate ??
+              0.0)
         : (BusinessProfileService.instance.cachedProfile?.taxRate ?? 0.0);
 
     return BlocListener<InvoiceCubit, InvoiceState>(
@@ -621,11 +627,11 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
           title: Text(
             _isEditMode
                 ? (_isQuotation
-                    ? AppStrings.editQuotation.tr()
-                    : AppStrings.invoiceEditTitle.tr())
+                      ? AppStrings.editQuotation.tr()
+                      : AppStrings.invoiceEditTitle.tr())
                 : (_isQuotation
-                    ? AppStrings.createQuotation.tr()
-                    : AppStrings.createInvoice.tr()),
+                      ? AppStrings.createQuotation.tr()
+                      : AppStrings.createInvoice.tr()),
             style: TextStyles.customStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -645,7 +651,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
           child: Center(
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                maxWidth: isDesktop ? 700 : double.infinity,
+                maxWidth: isDesktop ? 1000 : double.infinity,
               ),
               child: BlocBuilder<InvoiceCubit, InvoiceState>(
                 builder: (context, state) {
@@ -682,14 +688,14 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                                   } else {
                                     _phoneController.text =
                                         (customer.phoneNumber != null &&
-                                                customer.phoneNumber!.isNotEmpty)
-                                            ? '••••••••••'
-                                            : '';
+                                            customer.phoneNumber!.isNotEmpty)
+                                        ? '••••••••••'
+                                        : '';
                                     _ledgerController.text =
                                         (customer.ledgerNumber != null &&
-                                                customer.ledgerNumber!.isNotEmpty)
-                                            ? '••••••'
-                                            : '';
+                                            customer.ledgerNumber!.isNotEmpty)
+                                        ? '••••••'
+                                        : '';
                                   }
                                 });
                               },
@@ -703,18 +709,20 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                               label: AppStrings.customerPhone.tr(),
                               isNumber: true,
                               readOnly: isRestricted,
-                              obscureText: isRestricted &&
+                              obscureText:
+                                  isRestricted &&
                                   _phoneController.text.isNotEmpty,
                               enableInteractiveSelection: !isRestricted,
                               suffixIcon: isRestricted
                                   ? Tooltip(
-                                      message:
-                                          AppStrings.permRestrictedData.tr(),
+                                      message: AppStrings.permRestrictedData
+                                          .tr(),
                                       child: Icon(
                                         Icons.visibility_off_outlined,
                                         size: 20,
-                                        color: AppColors.blackLight
-                                            .withValues(alpha: 0.6),
+                                        color: AppColors.blackLight.withValues(
+                                          alpha: 0.6,
+                                        ),
                                       ),
                                     )
                                   : null,
@@ -727,18 +735,20 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                                   : AppStrings.invoiceLedgerHint.tr(),
                               label: AppStrings.ledgerNumber.tr(),
                               readOnly: isRestricted,
-                              obscureText: isRestricted &&
+                              obscureText:
+                                  isRestricted &&
                                   _ledgerController.text.isNotEmpty,
                               enableInteractiveSelection: !isRestricted,
                               suffixIcon: isRestricted
                                   ? Tooltip(
-                                      message:
-                                          AppStrings.permRestrictedData.tr(),
+                                      message: AppStrings.permRestrictedData
+                                          .tr(),
                                       child: Icon(
                                         Icons.visibility_off_outlined,
                                         size: 20,
-                                        color: AppColors.blackLight
-                                            .withValues(alpha: 0.6),
+                                        color: AppColors.blackLight.withValues(
+                                          alpha: 0.6,
+                                        ),
                                       ),
                                     )
                                   : null,
@@ -883,13 +893,13 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                               label: _isEditMode
                                   ? AppStrings.invoiceSaveEdit.tr()
                                   : (_isQuotation
-                                      ? AppStrings.saveQuotation.tr()
-                                      : AppStrings.invoiceSubmit.tr()),
+                                        ? AppStrings.saveQuotation.tr()
+                                        : AppStrings.invoiceSubmit.tr()),
                               icon: _isEditMode
                                   ? Icons.save_rounded
                                   : (_isQuotation
-                                      ? Icons.request_quote_rounded
-                                      : Icons.receipt_long_rounded),
+                                        ? Icons.request_quote_rounded
+                                        : Icons.receipt_long_rounded),
                               onPressed: isLoading
                                   ? null
                                   : () => _submit(context),
@@ -904,7 +914,10 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                                 label: AppStrings.saveAndConvertToInvoice.tr(),
                                 onTap: isLoading
                                     ? null
-                                    : () => _submit(context, convertToInvoice: true),
+                                    : () => _submit(
+                                        context,
+                                        convertToInvoice: true,
+                                      ),
                               ),
                             ],
                             const SizedBox(height: 24),
@@ -1244,8 +1257,8 @@ class _TotalCard extends StatelessWidget {
                 hasTax
                     ? AppStrings.totalAfterTax.tr()
                     : (isQuotation
-                        ? AppStrings.quotationTotal.tr()
-                        : AppStrings.invoiceGrandTotal.tr()),
+                          ? AppStrings.quotationTotal.tr()
+                          : AppStrings.invoiceGrandTotal.tr()),
                 style: TextStyles.customStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,

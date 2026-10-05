@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
-import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 
 class InvoiceFeaturesSection extends StatelessWidget {
   const InvoiceFeaturesSection({super.key});
@@ -41,35 +39,35 @@ class InvoiceFeaturesSection extends StatelessWidget {
           subtitle: AppStrings.invoiceFeaturesItem3Subtitle.tr(),
           color: Colors.orange,
         ),
-        const SizedBox(height: 32),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: () {
-              context.read<MainLayoutCubit>().changeBottomNav(3);
-            },
-            icon: Icon(Icons.list_alt_rounded, color: AppColors.primaryColor),
-            label: Text(
-              AppStrings.invoiceFeaturesManageBtn.tr(),
-              style: TextStyles.customStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primaryColor,
-              ),
-            ),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              side: BorderSide(
-                color: AppColors.primaryColor.withValues(alpha: 0.5),
-                width: 1.5,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              backgroundColor: AppColors.primaryColor.withValues(alpha: 0.05),
-            ),
-          ),
-        ),
+        // const SizedBox(height: 32),
+        // SizedBox(
+        //   width: double.infinity,
+        //   child: OutlinedButton.icon(
+        //     onPressed: () {
+        //       context.read<MainLayoutCubit>().changeBottomNav(3);
+        //     },
+        //     icon: Icon(Icons.list_alt_rounded, color: AppColors.primaryColor),
+        //     label: Text(
+        //       AppStrings.invoiceFeaturesManageBtn.tr(),
+        //       style: TextStyles.customStyle(
+        //         fontSize: 15,
+        //         fontWeight: FontWeight.bold,
+        //         color: AppColors.primaryColor,
+        //       ),
+        //     ),
+        //     style: OutlinedButton.styleFrom(
+        //       padding: const EdgeInsets.symmetric(vertical: 16),
+        //       side: BorderSide(
+        //         color: AppColors.primaryColor.withValues(alpha: 0.5),
+        //         width: 1.5,
+        //       ),
+        //       shape: RoundedRectangleBorder(
+        //         borderRadius: BorderRadius.circular(16),
+        //       ),
+        //       backgroundColor: AppColors.primaryColor.withValues(alpha: 0.05),
+        //     ),
+        //   ),
+        // ),
       ],
     );
   }

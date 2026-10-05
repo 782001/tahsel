@@ -13,6 +13,7 @@ import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/customer_data_masker.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/widgets/permission_guard.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/customer/domain/entities/customer_entity.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
@@ -23,7 +24,6 @@ import 'package:tahsel/features/operation/presentation/cubit/ps_session_state.da
 import 'package:tahsel/features/operation/presentation/utils/operation_validator.dart';
 import 'package:tahsel/features/operation/presentation/widgets/active_sessions_list.dart';
 import 'package:tahsel/features/operation/presentation/widgets/invoice_features_section.dart';
-import 'package:tahsel/features/operation/presentation/widgets/invoice_quick_launch_card.dart';
 import 'package:tahsel/features/operation/presentation/widgets/ps_session_form.dart';
 import 'package:tahsel/features/operation/presentation/widgets/quick_add_mode_selector.dart';
 import 'package:tahsel/features/operation/presentation/widgets/quick_add_shop_form.dart';
@@ -526,6 +526,22 @@ class _HomeScreenState extends State<HomeScreen> {
     context.read<OperationCubit>().addOperation(operation);
   }
 
+  Future<void> _handleCreate({required bool isQuotation}) async {
+    final result = await Navigator.of(context).pushNamed(
+      AppRoutes.createInvoice,
+      arguments: {'isQuotation': isQuotation},
+    );
+
+    if (!mounted) return;
+
+    if (result is Map<String, dynamic> && result.containsKey('invoice')) {
+      // ignore: use_build_context_synchronously
+      await Navigator.of(
+        context,
+      ).pushNamed(AppRoutes.invoiceDetail, arguments: result);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!PermissionService.instance.hasPermission(AppPermissions.posAccess)) {
@@ -688,7 +704,7 @@ class _HomeScreenState extends State<HomeScreen> {
             alignment: Alignment.topCenter,
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                maxWidth: isDesktop ? 800 : double.infinity,
+                maxWidth: isDesktop ? 1000 : double.infinity,
               ),
               child: Stack(
                 children: [
@@ -828,26 +844,96 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ] else if (_selectedMode == QuickAddMode.invoice) ...[
                           // Invoice Mode – navigate directly to CreateInvoiceScreen
-                          const SizedBox(height: 8),
-                          InvoiceQuickLaunchCard(
-                            onTap: () async {
-                              final result = await Navigator.of(
-                                context,
-                              ).pushNamed(AppRoutes.createInvoice);
-
-                              if (!context.mounted) return;
-
-                              if (result is Map<String, dynamic> &&
-                                  result.containsKey('invoice')) {
-                                await Navigator.of(context).pushNamed(
-                                  AppRoutes.invoiceDetail,
-                                  arguments: result,
-                                );
-                              }
-                            },
-                          ),
                           const SizedBox(height: 32),
                           const InvoiceFeaturesSection(),
+                          const SizedBox(
+                            height: 50,
+                          ), // ── Create Buttons (Invoice & Quotation) ───────────────────────
+                          PermissionGuard(
+                            permission: AppPermissions.invoicesCreate,
+                            child: Row(
+                              children: [
+                                // Create Invoice Button
+                                Expanded(
+                                  child: SizedBox(
+                                    height: 56.h,
+                                    child: ElevatedButton.icon(
+                                      onPressed: () =>
+                                          _handleCreate(isQuotation: false),
+                                      icon: Icon(
+                                        Icons.receipt_long_rounded,
+                                        color: AppColors.whiteColor,
+                                        size: 20,
+                                      ),
+                                      label: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          AppStrings.createInvoice.tr(),
+                                          style: TextStyles.customStyle(
+                                            color: AppColors.whiteColor,
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.primaryColor,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16.r,
+                                          ),
+                                        ),
+                                        elevation: 0,
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 8.w,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 12.w),
+                                // Create Quotation Button
+                                Expanded(
+                                  child: SizedBox(
+                                    height: 56.h,
+                                    child: ElevatedButton.icon(
+                                      onPressed: () =>
+                                          _handleCreate(isQuotation: true),
+                                      icon: Icon(
+                                        Icons.request_quote_rounded,
+                                        color: AppColors.whiteColor,
+                                        size: 20,
+                                      ),
+                                      label: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          AppStrings.createQuotation.tr(),
+                                          style: TextStyles.customStyle(
+                                            color: AppColors.whiteColor,
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            AppColors.movementInvoiceReturn,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16.r,
+                                          ),
+                                        ),
+                                        elevation: 0,
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 8.w,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ] else ...[
                           // Shop Mode Body (Simplified Form)
                           QuickAddShopForm(
