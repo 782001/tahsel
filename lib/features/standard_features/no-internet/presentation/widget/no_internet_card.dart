@@ -37,7 +37,12 @@ class NoInternetCard extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(Assets.imagesAppLogo, width: 90.w, height: 90.w),
+          Image.asset(
+            Assets.imagesAppLogo,
+            fit: BoxFit.contain,
+            width: 90.w,
+            height: 90.w,
+          ),
           SizedBox(height: 20.h),
           AnimatedBuilder(
             animation: colorAnimation,

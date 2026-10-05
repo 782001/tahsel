@@ -384,8 +384,8 @@ class _SplashScreenState extends State<SplashScreen>
                       Center(
                         child: Image.asset(
                           Assets.imagesAppLogo,
-                          width: 180.h,
-                          height: 180.h,
+                          width: 210.h,
+                          height: 210.h,
                           fit: BoxFit.fill,
                         ),
                       ),

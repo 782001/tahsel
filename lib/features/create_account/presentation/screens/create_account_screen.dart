@@ -288,25 +288,28 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                             children: [
                               // Branding Area
                               Container(
-                                width: isDesktop ? 64 : 64.w,
-                                height: isDesktop ? 64 : 64.w,
+                                width: isDesktop ? 74 : 72.w,
+                                height: isDesktop ? 74 : 72.w,
+                                clipBehavior: Clip.antiAlias,
                                 decoration: BoxDecoration(
                                   color: AppColors.primaryColor,
-                                  borderRadius: BorderRadius.circular(16.r),
+                                  borderRadius: BorderRadius.circular(18.r),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(
-                                        alpha: 0.04,
+                                      color: AppColors.primaryColor.withValues(
+                                        alpha: 0.25,
                                       ),
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 2),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
                                     ),
                                   ],
                                 ),
-                                child: Image.asset(
-                                  Assets.imagesAppLogo,
-                                  width: isDesktop ? 35 : 32.w,
-                                  height: isDesktop ? 35 : 32.w,
+                                child: Transform.scale(
+                                  scale: 1.35,
+                                  child: Image.asset(
+                                    Assets.imagesAppLogo,
+                                    fit: BoxFit.contain,
+                                  ),
                                 ),
                               ),
                               SizedBox(height: 16.h),
