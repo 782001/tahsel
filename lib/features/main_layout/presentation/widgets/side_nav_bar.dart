@@ -103,6 +103,7 @@ class SideNavBar extends StatelessWidget {
                           Assets.imagesAppLogo,
                           width: 40.w,
                           height: 40.w,
+                          fit: BoxFit.cover,
                         ),
                       ),
                     ),
