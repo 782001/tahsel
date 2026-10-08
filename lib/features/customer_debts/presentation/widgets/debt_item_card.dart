@@ -33,8 +33,9 @@ class DebtItemCard extends StatelessWidget {
   });
 
   Future<void> _rescheduleDueDate(BuildContext context) async {
-    if (!PermissionService.instance.hasPermission(AppPermissions.customersEdit))
+    if (!PermissionService.instance.hasPermission(AppPermissions.customersEdit)) {
       return;
+    }
     if (item.remainingDebt <= 0) return;
     final uid = AppStrings.userToken;
     if (uid.isEmpty) return;
