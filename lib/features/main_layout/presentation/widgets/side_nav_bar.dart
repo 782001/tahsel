@@ -68,60 +68,57 @@ class SideNavBar extends StatelessWidget {
           ),
           child: Column(
             children: [
-              // Header / Logo Section
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 48,
-                  horizontal: 24,
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              AppColors.primaryColor,
-                              AppColors.primaryColor.withValues(alpha: 0.7),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primaryColor.withValues(
-                                alpha: 0.3,
-                              ),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Image.asset(
-                          Assets.imagesAppLogo,
-                          width: 40.w,
-                          height: 40.w,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24),
-                child: Divider(thickness: 1),
-              ),
-              const SizedBox(height: 24),
-
               // Navigation Menu
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   children: [
+                    // Header / Logo Section
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 30),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    AppColors.primaryColor,
+                                    AppColors.primaryColor.withValues(
+                                      alpha: 0.7,
+                                    ),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.primaryColor.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Image.asset(
+                                Assets.imagesAppLogo,
+                                width: 40.w,
+                                height: 40.w,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24),
+                      child: Divider(thickness: 1),
+                    ),
                     if (canViewHome ||
                         canViewExpenses ||
                         canViewDebts ||
