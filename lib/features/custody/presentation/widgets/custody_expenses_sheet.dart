@@ -11,6 +11,11 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/custody/domain/entities/custody_entity.dart';
 
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
+
 import '../../domain/entities/custody_expense_item.dart';
 import '../cubit/custody_cubit.dart';
 import '../utils/custody_category_helper.dart';
@@ -27,6 +32,10 @@ class CustodyExpensesSheet extends StatelessWidget {
     CustodyEntity custody, {
     CustodyCubit? cubit,
   }) {
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      showfailureToast(AppStrings.noInternetConnection.tr());
+      return;
+    }
     final isDesktop = ResponsiveLayout.isDesktop(context);
     if (isDesktop) {
       showDialog(
@@ -125,6 +134,11 @@ class CustodyExpensesSheet extends StatelessWidget {
                   IconButton(
                     tooltip: AppStrings.printCustodyStatement.tr(),
                     onPressed: () {
+                      if (context.read<ConnectivityCubit>().state
+                          is ConnectivityDisconnected) {
+                        showfailureToast(AppStrings.noInternetConnection.tr());
+                        return;
+                      }
                       CustodyStatementPdfExporter.printCustodyStatement(
                         context,
                         custody: custody,
@@ -140,6 +154,11 @@ class CustodyExpensesSheet extends StatelessWidget {
                   IconButton(
                     tooltip: AppStrings.shareCustodyStatement.tr(),
                     onPressed: () {
+                      if (context.read<ConnectivityCubit>().state
+                          is ConnectivityDisconnected) {
+                        showfailureToast(AppStrings.noInternetConnection.tr());
+                        return;
+                      }
                       CustodyStatementPdfExporter.exportAndShare(
                         custody: custody,
                         isArabic: AppStrings.currentLang == 'ar',
@@ -391,6 +410,10 @@ class CustodyExpensesSheet extends StatelessWidget {
     BuildContext context,
     CustodyExpenseItem item,
   ) async {
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      showfailureToast(AppStrings.noInternetConnection.tr());
+      return;
+    }
     if (custody.isSettled) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

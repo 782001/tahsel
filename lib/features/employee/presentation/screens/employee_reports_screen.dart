@@ -13,6 +13,7 @@ import 'package:tahsel/features/employee/presentation/cubit/employee_state.dart'
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/shared/widgets/no_internet_view.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
 class EmployeeReportsScreen extends StatefulWidget {
   const EmployeeReportsScreen({super.key});
@@ -86,10 +87,7 @@ class _EmployeeReportsScreenState extends State<EmployeeReportsScreen> {
       body: BlocBuilder<ConnectivityCubit, ConnectivityState>(
         builder: (context, connectivityState) {
           if (connectivityState is ConnectivityDisconnected) {
-            return NoInternetView(
-              onRetry: () =>
-                  context.read<ConnectivityCubit>().checkConnectivity(),
-            );
+            return const NoInternetView();
           }
           return SafeArea(
             child: Center(
@@ -130,7 +128,16 @@ class _EmployeeReportsScreenState extends State<EmployeeReportsScreen> {
                                   ),
                                   SizedBox(height: 12.h),
                                   ElevatedButton(
-                                    onPressed: _fetchReportData,
+                                    onPressed: () {
+                                      if (context.read<ConnectivityCubit>().state
+                                          is ConnectivityDisconnected) {
+                                        showfailureToast(
+                                          AppStrings.noInternetConnection.tr(),
+                                        );
+                                        return;
+                                      }
+                                      _fetchReportData();
+                                    },
                                     child: Text(AppStrings.retry.tr()),
                                   ),
                                 ],
@@ -197,6 +204,11 @@ class _EmployeeReportsScreenState extends State<EmployeeReportsScreen> {
                 }).toList(),
                 onChanged: (val) {
                   if (val != null) {
+                    if (context.read<ConnectivityCubit>().state
+                        is ConnectivityDisconnected) {
+                      showfailureToast(AppStrings.noInternetConnection.tr());
+                      return;
+                    }
                     setState(() {
                       _selectedMonthKey = val;
                     });

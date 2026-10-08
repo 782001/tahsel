@@ -26,6 +26,11 @@ import 'package:tahsel/shared/widgets/custom_app_bar/custom_app_bar.dart';
 import 'package:tahsel/shared/widgets/text_fields/custom_search_field.dart';
 import 'package:tahsel/shared/widgets/text_fields/custom_text_form_field.dart';
 
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/shared/widgets/no_internet_view.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
+
 import '../utils/custody_statement_pdf_exporter.dart';
 
 class CustodyManagementScreen extends StatefulWidget {
@@ -85,6 +90,10 @@ class _CustodyManagementScreenState extends State<CustodyManagementScreen> {
           custody.recipientEmployeeId == AppStrings.employeeAuthUid);
 
   Future<void> _printCustody(CustodyEntity custody) async {
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      showfailureToast(AppStrings.noInternetConnection.tr());
+      return;
+    }
     if (!canExport) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppStrings.noPermissionForAction.tr())),
@@ -111,6 +120,10 @@ class _CustodyManagementScreenState extends State<CustodyManagementScreen> {
   }
 
   Future<void> _shareCustody(CustodyEntity custody) async {
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      showfailureToast(AppStrings.noInternetConnection.tr());
+      return;
+    }
     if (!canExport) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppStrings.noPermissionForAction.tr())),
@@ -136,6 +149,10 @@ class _CustodyManagementScreenState extends State<CustodyManagementScreen> {
   }
 
   void _showEditNotesDialog(CustodyEntity custody) {
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      showfailureToast(AppStrings.noInternetConnection.tr());
+      return;
+    }
     if (!canEditNotes(custody)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppStrings.noPermissionForAction.tr())),
@@ -203,6 +220,11 @@ class _CustodyManagementScreenState extends State<CustodyManagementScreen> {
                 SizedBox(height: isDesktop ? 18 : 18.h),
                 ElevatedButton(
                   onPressed: () async {
+                    if (context.read<ConnectivityCubit>().state
+                        is ConnectivityDisconnected) {
+                      showfailureToast(AppStrings.noInternetConnection.tr());
+                      return;
+                    }
                     final notes = controller.text.trim();
                     Navigator.pop(ctx);
                     await _cubit.updateCustodyNotes(
@@ -239,6 +261,10 @@ class _CustodyManagementScreenState extends State<CustodyManagementScreen> {
   }
 
   void _showDeleteCustodyDialog(CustodyEntity custody) {
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      showfailureToast(AppStrings.noInternetConnection.tr());
+      return;
+    }
     if (!canDeleteCustody) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppStrings.noPermissionForAction.tr())),
@@ -367,6 +393,11 @@ class _CustodyManagementScreenState extends State<CustodyManagementScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
+              if (context.read<ConnectivityCubit>().state
+                  is ConnectivityDisconnected) {
+                showfailureToast(AppStrings.noInternetConnection.tr());
+                return;
+              }
               Navigator.pop(ctx);
               await _cubit.deleteCustody(custody.id);
             },
@@ -514,8 +545,13 @@ class _CustodyManagementScreenState extends State<CustodyManagementScreen> {
 
               // Content Area
               Expanded(
-                child: BlocConsumer<CustodyCubit, CustodyState>(
-                  bloc: _cubit,
+                child: BlocBuilder<ConnectivityCubit, ConnectivityState>(
+                  builder: (context, connectivityState) {
+                    if (connectivityState is ConnectivityDisconnected) {
+                      return const NoInternetView();
+                    }
+                    return BlocConsumer<CustodyCubit, CustodyState>(
+                      bloc: _cubit,
                   listener: (context, state) {
                     if (state is CustodyActionSuccess) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -631,15 +667,24 @@ class _CustodyManagementScreenState extends State<CustodyManagementScreen> {
                       ),
                     );
                   },
-                ),
-              ),
-            ],
+                );
+              },
+            ),
           ),
-        ),
-        // Role guarded FloatingActionButton
-        floatingActionButton: canCreateCustody
-            ? FloatingActionButton.extended(
-                onPressed: () => NewCustodyDialog.show(context, _cubit),
+        ],
+      ),
+    ),
+    // Role guarded FloatingActionButton
+    floatingActionButton: canCreateCustody
+        ? FloatingActionButton.extended(
+            onPressed: () {
+              if (context.read<ConnectivityCubit>().state
+                  is ConnectivityDisconnected) {
+                showfailureToast(AppStrings.noInternetConnection.tr());
+                return;
+              }
+              NewCustodyDialog.show(context, _cubit);
+            },
                 backgroundColor: AppColors.primaryColor,
                 icon: const Icon(Icons.add_rounded, color: Colors.white),
                 label: Text(
@@ -1226,8 +1271,14 @@ class _CustodyManagementScreenState extends State<CustodyManagementScreen> {
             children: [
               // Details Button
               OutlinedButton.icon(
-                onPressed: () =>
-                    CustodyExpensesSheet.show(context, custody, cubit: _cubit),
+                onPressed: () {
+                  if (context.read<ConnectivityCubit>().state
+                      is ConnectivityDisconnected) {
+                    showfailureToast(AppStrings.noInternetConnection.tr());
+                    return;
+                  }
+                  CustodyExpensesSheet.show(context, custody, cubit: _cubit);
+                },
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.blackLight,
                   side: BorderSide(color: AppColors.lightGreyColor),
@@ -1258,11 +1309,20 @@ class _CustodyManagementScreenState extends State<CustodyManagementScreen> {
                     // + Record Expense Button (Guarded)
                     if (allowAddExp) ...[
                       ElevatedButton.icon(
-                        onPressed: () => AddCustodyExpenseDialog.show(
-                          context,
-                          custody: custody,
-                          cubit: _cubit,
-                        ),
+                        onPressed: () {
+                          if (context.read<ConnectivityCubit>().state
+                              is ConnectivityDisconnected) {
+                            showfailureToast(
+                              AppStrings.noInternetConnection.tr(),
+                            );
+                            return;
+                          }
+                          AddCustodyExpenseDialog.show(
+                            context,
+                            custody: custody,
+                            cubit: _cubit,
+                          );
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.orange.withValues(
                             alpha: 0.12,
@@ -1297,11 +1357,20 @@ class _CustodyManagementScreenState extends State<CustodyManagementScreen> {
                     // Settle Custody Button (Guarded)
                     if (allowSettle)
                       ElevatedButton.icon(
-                        onPressed: () => SettleCustodyDialog.show(
-                          context,
-                          custody: custody,
-                          cubit: _cubit,
-                        ),
+                        onPressed: () {
+                          if (context.read<ConnectivityCubit>().state
+                              is ConnectivityDisconnected) {
+                            showfailureToast(
+                              AppStrings.noInternetConnection.tr(),
+                            );
+                            return;
+                          }
+                          SettleCustodyDialog.show(
+                            context,
+                            custody: custody,
+                            cubit: _cubit,
+                          );
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryColor,
                           foregroundColor: Colors.white,

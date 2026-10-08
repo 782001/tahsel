@@ -10,8 +10,12 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/custody/domain/entities/custody_entity.dart';
 import 'package:tahsel/features/custody/presentation/cubit/custody_cubit.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/shared/widgets/shimmer/shimmer_loading.dart';
 import 'package:tahsel/shared/widgets/text_fields/custom_text_form_field.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
 class AddCustodyExpenseDialog extends StatefulWidget {
   final CustodyEntity custody;
@@ -28,6 +32,10 @@ class AddCustodyExpenseDialog extends StatefulWidget {
     required CustodyEntity custody,
     required CustodyCubit cubit,
   }) {
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      showfailureToast(AppStrings.noInternetConnection.tr());
+      return Future.value();
+    }
     return showDialog(
       context: context,
       barrierDismissible: false,
@@ -73,6 +81,10 @@ class _AddCustodyExpenseDialogState extends State<AddCustodyExpenseDialog> {
   double get _excessAmount => _enteredAmount - widget.custody.remainingAmount;
 
   Future<void> _submit() async {
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      showfailureToast(AppStrings.noInternetConnection.tr());
+      return;
+    }
     // ── Permission Guard ──
     final canAdd =
         PermissionService.instance.isOwner ||

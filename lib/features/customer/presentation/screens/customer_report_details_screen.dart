@@ -17,6 +17,9 @@ import 'package:tahsel/features/customer/presentation/utils/customer_statement_p
 import 'package:tahsel/features/customer/presentation/widgets/customer_operation_tile.dart';
 import 'package:tahsel/features/customer/presentation/widgets/customer_summary_card.dart';
 import 'package:tahsel/features/customer/presentation/widgets/skeletons/customer_operation_skeleton.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/shared/widgets/no_internet_view.dart';
 import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
 import '../../../../core/services/injection_container.dart';
@@ -104,10 +107,17 @@ class CustomerReportDetailsScreen extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
           ),
         ),
-        body: _CustomerDetailsBody(
-          uid: uid,
-          customerName: customerName,
-          customer: customer,
+        body: BlocBuilder<ConnectivityCubit, ConnectivityState>(
+          builder: (context, connectivityState) {
+            if (connectivityState is ConnectivityDisconnected) {
+              return const NoInternetView();
+            }
+            return _CustomerDetailsBody(
+              uid: uid,
+              customerName: customerName,
+              customer: customer,
+            );
+          },
         ),
       ),
     );
@@ -166,6 +176,10 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
       showfailureToast(AppStrings.noPermissionForAction.tr());
       return;
     }
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      showfailureToast(AppStrings.noInternetConnection.tr());
+      return;
+    }
     if (_isExporting) return;
     setState(() => _isExporting = true);
     try {
@@ -212,6 +226,10 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
     );
     if (!canPrintShare) {
       showfailureToast(AppStrings.noPermissionForAction.tr());
+      return;
+    }
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      showfailureToast(AppStrings.noInternetConnection.tr());
       return;
     }
     if (_isExporting) return;
@@ -268,10 +286,15 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
       return;
     }
 
-    final hasPhone = customer?.phoneNumber != null &&
+    final hasPhone =
+        customer?.phoneNumber != null &&
         customer!.phoneNumber!.trim().isNotEmpty;
     if (!hasPhone) {
       showfailureToast(AppStrings.noPhoneForCustomer.tr());
+      return;
+    }
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      showfailureToast(AppStrings.noInternetConnection.tr());
       return;
     }
 
@@ -423,6 +446,11 @@ class _CustomerDetailsBodyState extends State<_CustomerDetailsBody> {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
+                      if (context.read<ConnectivityCubit>().state
+                          is ConnectivityDisconnected) {
+                        showfailureToast(AppStrings.noInternetConnection.tr());
+                        return;
+                      }
                       context.read<CustomerDetailsCubit>().fetchOperations(
                         widget.uid,
                         widget.customerName,

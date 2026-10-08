@@ -15,7 +15,11 @@ import 'package:tahsel/features/customer/presentation/widgets/skeletons/customer
 
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:tahsel/features/main_layout/presentation/screens/main_layout_screen.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import '../../../../core/services/injection_container.dart';
+import '../../../../shared/widgets/no_internet_view.dart';
+import '../../../../shared/widgets/toast/custom_toast.dart';
 import '../cubit/customer_reports/customer_reports_cubit.dart';
 import '../cubit/customer_reports/customer_reports_state.dart';
 
@@ -25,6 +29,10 @@ class CustomersListScreen extends StatelessWidget {
   const CustomersListScreen({super.key, required this.uid});
 
   void _showAddCustomerDialog(BuildContext context) {
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      showfailureToast(AppStrings.noInternetConnection.tr());
+      return;
+    }
     showDialog(
       context: context,
       builder: (dialogCtx) => BlocProvider.value(
@@ -104,7 +112,14 @@ class CustomersListScreen extends StatelessWidget {
                 ),
               ),
             ),
-            body: _CustomersListBody(uid: uid),
+            body: BlocBuilder<ConnectivityCubit, ConnectivityState>(
+              builder: (context, connectivityState) {
+                if (connectivityState is ConnectivityDisconnected) {
+                  return const NoInternetView();
+                }
+                return _CustomersListBody(uid: uid);
+              },
+            ),
           );
         },
       ),
@@ -140,6 +155,9 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
   void _onScroll() {
     if (_searchController.text.trim().isNotEmpty) return;
     if (_isBottom) {
+      if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+        return;
+      }
       context.read<CustomerReportsCubit>().fetchMoreCustomers(widget.uid);
     }
   }
@@ -305,6 +323,13 @@ class _CustomersListBodyState extends State<_CustomersListBody> {
                                     ),
                                   ),
                                   onPressed: () {
+                                    if (context.read<ConnectivityCubit>().state
+                                        is ConnectivityDisconnected) {
+                                      showfailureToast(
+                                        AppStrings.noInternetConnection.tr(),
+                                      );
+                                      return;
+                                    }
                                     showDialog(
                                       context: context,
                                       builder: (dialogCtx) => BlocProvider.value(

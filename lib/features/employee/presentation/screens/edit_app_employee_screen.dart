@@ -8,9 +8,12 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/custom_app_bar/custom_app_bar.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
 import '../../data/models/app_employee_model.dart';
 import '../cubit/team_management_cubit.dart';
@@ -176,6 +179,10 @@ class _EditAppEmployeeScreenState extends State<EditAppEmployeeScreen> {
   }
 
   Future<void> _submit() async {
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      showfailureToast(AppStrings.noInternetConnection.tr());
+      return;
+    }
     final trimmedName = _nameController.text.trim();
     if (trimmedName.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(

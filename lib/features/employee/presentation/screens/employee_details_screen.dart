@@ -228,10 +228,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
       body: BlocBuilder<ConnectivityCubit, ConnectivityState>(
         builder: (context, connectivityState) {
           if (connectivityState is ConnectivityDisconnected) {
-            return NoInternetView(
-              onRetry: () =>
-                  context.read<ConnectivityCubit>().checkConnectivity(),
-            );
+            return const NoInternetView();
           }
           return BlocConsumer<EmployeeCubit, EmployeeState>(
             listener: (context, state) {
@@ -930,6 +927,10 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
     EmployeeEntity employee,
     String status,
   ) {
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      showfailureToast(AppStrings.noInternetConnection.tr());
+      return;
+    }
     final formKey = GlobalKey<FormState>();
     final notesController = TextEditingController();
     DateTime selectedDate = DateTime.now();
@@ -1698,12 +1699,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
                   : () {
                       if (context.read<ConnectivityCubit>().state
                           is ConnectivityDisconnected) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(AppStrings.noInternetConnection.tr()),
-                            backgroundColor: AppColors.error,
-                          ),
-                        );
+                        showfailureToast(AppStrings.noInternetConnection.tr());
                         return;
                       }
 
@@ -2178,12 +2174,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
     List<AttendanceEntity> attendanceLogs,
   ) {
     if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppStrings.noInternetConnection.tr()),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      showfailureToast(AppStrings.noInternetConnection.tr());
       return;
     }
 
@@ -2257,12 +2248,7 @@ class _EmployeeDetailsScreenState extends State<EmployeeDetailsScreen>
 
   void _showRequestAdvanceDialog(EmployeeEntity employee) {
     if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppStrings.noInternetConnection.tr()),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      showfailureToast(AppStrings.noInternetConnection.tr());
       return;
     }
     final employeeCubit = context.read<EmployeeCubit>();

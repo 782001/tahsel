@@ -14,6 +14,8 @@ import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/customer/domain/entities/customer_entity.dart';
 import 'package:tahsel/features/customer/domain/usecases/get_customer_operations_usecase.dart';
 import 'package:tahsel/features/customer/presentation/utils/customer_statement_pdf_exporter.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
@@ -82,6 +84,11 @@ class CustomerListCard extends StatelessWidget {
             AppPermissions.customersViewReports,
           )) {
             showfailureToast(AppStrings.noPermissionForAction.tr());
+            return;
+          }
+          if (context.read<ConnectivityCubit>().state
+              is ConnectivityDisconnected) {
+            showfailureToast(AppStrings.noInternetConnection.tr());
             return;
           }
           Navigator.pushNamed(
@@ -227,7 +234,14 @@ class CustomerListCard extends StatelessWidget {
                       tooltip: AppStrings.customerAccountStatement.tr(),
                       visualDensity: VisualDensity.compact,
                       splashRadius: 20,
-                      onPressed: () => _showStatementOptions(context),
+                      onPressed: () {
+                        if (context.read<ConnectivityCubit>().state
+                            is ConnectivityDisconnected) {
+                          showfailureToast(AppStrings.noInternetConnection.tr());
+                          return;
+                        }
+                        _showStatementOptions(context);
+                      },
                     ),
                   ),
                   const SizedBox(width: 2),
@@ -243,6 +257,11 @@ class CustomerListCard extends StatelessWidget {
                       visualDensity: VisualDensity.compact,
                       splashRadius: 20,
                       onPressed: () {
+                        if (context.read<ConnectivityCubit>().state
+                            is ConnectivityDisconnected) {
+                          showfailureToast(AppStrings.noInternetConnection.tr());
+                          return;
+                        }
                         showDialog(
                           context: context,
                           builder: (dialogCtx) => BlocProvider.value(
@@ -323,6 +342,10 @@ class _CustomerStatementOptionsWidgetState
 
   Future<void> _executeAction(_StatementAction action) async {
     if (_runningAction != null) return;
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      showfailureToast(AppStrings.noInternetConnection.tr());
+      return;
+    }
     setState(() => _runningAction = action);
 
     try {

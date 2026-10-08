@@ -10,9 +10,13 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:tahsel/features/main_layout/presentation/screens/main_layout_screen.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/custom_app_bar/custom_app_bar.dart';
+import 'package:tahsel/shared/widgets/no_internet_view.dart';
 import 'package:tahsel/shared/widgets/shimmer/shimmer_loading.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
 import '../cubit/team_management_cubit.dart';
 import '../cubit/team_management_state.dart';
@@ -77,6 +81,11 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
+              if (context.read<ConnectivityCubit>().state
+                  is ConnectivityDisconnected) {
+                showfailureToast(AppStrings.noInternetConnection.tr());
+                return;
+              }
               _cubit.deleteEmployee(employeeAuthUid: employeeAuthUid);
             },
             style: ElevatedButton.styleFrom(
@@ -145,8 +154,14 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
                     size: 24,
                   ),
                   tooltip: AppStrings.teamActivityLogTitle.tr(),
-                  onPressed: () =>
-                      Navigator.pushNamed(context, AppRoutes.teamActivity),
+                  onPressed: () {
+                    if (context.read<ConnectivityCubit>().state
+                        is ConnectivityDisconnected) {
+                      showfailureToast(AppStrings.noInternetConnection.tr());
+                      return;
+                    }
+                    Navigator.pushNamed(context, AppRoutes.teamActivity);
+                  },
                 ),
 
                 Center(
@@ -194,11 +209,18 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
           ),
         ),
         floatingActionButton: FloatingActionButton.extended(
-          onPressed: () => Navigator.pushNamed(
-            context,
-            AppRoutes.addAppEmployee,
-            arguments: _cubit,
-          ),
+          onPressed: () {
+            if (context.read<ConnectivityCubit>().state
+                is ConnectivityDisconnected) {
+              showfailureToast(AppStrings.noInternetConnection.tr());
+              return;
+            }
+            Navigator.pushNamed(
+              context,
+              AppRoutes.addAppEmployee,
+              arguments: _cubit,
+            );
+          },
           backgroundColor: AppColors.primaryColor,
           icon: const Icon(Icons.person_add_rounded, color: Colors.white),
           label: Text(
@@ -211,132 +233,140 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
           ),
         ),
         body: SafeArea(
-          child: BlocConsumer<TeamManagementCubit, TeamManagementState>(
-            listener: (context, state) {
-              if (state is TeamManagementActionSuccess) {
-                final isDisableAction =
-                    state.message == AppStrings.employeeDisabledSuccess;
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    backgroundColor: isDisableAction
-                        ? const Color(0xFFE65100)
-                        : AppColors.success,
-                    content: Row(
-                      children: [
-                        Icon(
-                          isDisableAction
-                              ? Icons.block_flipped
-                              : Icons.check_circle_outline_rounded,
-                          color: Colors.white,
-                          size: 20,
+          child: BlocBuilder<ConnectivityCubit, ConnectivityState>(
+            builder: (context, connectivityState) {
+              if (connectivityState is ConnectivityDisconnected) {
+                return const NoInternetView();
+              }
+              return BlocConsumer<TeamManagementCubit, TeamManagementState>(
+                listener: (context, state) {
+                  if (state is TeamManagementActionSuccess) {
+                    final isDisableAction =
+                        state.message == AppStrings.employeeDisabledSuccess;
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
                         ),
-                        SizedBox(width: 10.w),
-                        Expanded(
-                          child: Text(
-                            state.message.tr(),
-                            style: TextStyles.customStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
+                        backgroundColor: isDisableAction
+                            ? const Color(0xFFE65100)
+                            : AppColors.success,
+                        content: Row(
+                          children: [
+                            Icon(
+                              isDisableAction
+                                  ? Icons.block_flipped
+                                  : Icons.check_circle_outline_rounded,
                               color: Colors.white,
+                              size: 20,
                             ),
-                          ),
+                            SizedBox(width: 10.w),
+                            Expanded(
+                              child: Text(
+                                state.message.tr(),
+                                style: TextStyles.customStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    duration: const Duration(seconds: 3),
-                  ),
-                );
-              } else if (state is TeamManagementFailure) {
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    backgroundColor: AppColors.error,
-                    content: Row(
-                      children: [
-                        Icon(
-                          Icons.error_outline_rounded,
-                          color: Colors.white,
-                          size: 20.sp,
+                        duration: const Duration(seconds: 3),
+                      ),
+                    );
+                  } else if (state is TeamManagementFailure) {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
                         ),
-                        SizedBox(width: 10.w),
-                        Expanded(
-                          child: Text(
-                            state.message,
-                            style: TextStyles.customStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
+                        backgroundColor: AppColors.error,
+                        content: Row(
+                          children: [
+                            Icon(
+                              Icons.error_outline_rounded,
                               color: Colors.white,
+                              size: 20.sp,
                             ),
-                          ),
+                            SizedBox(width: 10.w),
+                            Expanded(
+                              child: Text(
+                                state.message,
+                                style: TextStyles.customStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    duration: const Duration(seconds: 3),
-                  ),
-                );
-              }
-            },
-            builder: (context, state) {
-              if (state is TeamManagementLoading && _cubit.employees.isEmpty) {
-                return _buildShimmerSkeleton(isDesktop);
-              }
-
-              final employees = _cubit.employees;
-
-              if (employees.isEmpty) {
-                return _buildEmptyState(context);
-              }
-
-              return RefreshIndicator(
-                onRefresh: () => _cubit.loadEmployees(),
-                color: AppColors.primaryColor,
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxWidth: isDesktop ? 1000 : double.infinity,
-                    ),
-                    child: ListView(
-                      physics: const AlwaysScrollableScrollPhysics(
-                        parent: BouncingScrollPhysics(),
+                        duration: const Duration(seconds: 3),
                       ),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isDesktop ? 24 : 16.w,
-                        vertical: 16.h,
-                      ),
-                      children: [
-                        // Overview Banner
-                        _buildOverviewCard(context, employees),
-                        SizedBox(height: 16.h),
+                    );
+                  }
+                },
+                builder: (context, state) {
+                  if (state is TeamManagementLoading &&
+                      _cubit.employees.isEmpty) {
+                    return _buildShimmerSkeleton(isDesktop);
+                  }
 
-                        // List Header
-                        Text(
-                          '${AppStrings.registeredSystemEmployees.tr()} (${employees.length})',
-                          style: TextStyles.customStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.black,
+                  final employees = _cubit.employees;
+
+                  if (employees.isEmpty) {
+                    return _buildEmptyState(context);
+                  }
+
+                  return RefreshIndicator(
+                    onRefresh: () => _cubit.loadEmployees(),
+                    color: AppColors.primaryColor,
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: isDesktop ? 1000 : double.infinity,
+                        ),
+                        child: ListView(
+                          physics: const AlwaysScrollableScrollPhysics(
+                            parent: BouncingScrollPhysics(),
                           ),
-                        ),
-                        SizedBox(height: 10.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isDesktop ? 24 : 16.w,
+                            vertical: 16.h,
+                          ),
+                          children: [
+                            // Overview Banner
+                            _buildOverviewCard(context, employees),
+                            SizedBox(height: 16.h),
 
-                        // Employee Cards
-                        ...employees.map(
-                          (emp) => _buildEmployeeCard(context, emp),
+                            // List Header
+                            Text(
+                              '${AppStrings.registeredSystemEmployees.tr()} (${employees.length})',
+                              style: TextStyles.customStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.black,
+                              ),
+                            ),
+                            SizedBox(height: 10.h),
+
+                            // Employee Cards
+                            ...employees.map(
+                              (emp) => _buildEmployeeCard(context, emp),
+                            ),
+                            SizedBox(height: 80.h), // Spacing for FAB
+                          ],
                         ),
-                        SizedBox(height: 80.h), // Spacing for FAB
-                      ],
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                },
               );
             },
           ),
@@ -648,8 +678,14 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
                 ),
                 SizedBox(height: 12.h),
                 InkWell(
-                  onTap: () =>
-                      Navigator.pushNamed(context, AppRoutes.teamActivity),
+                  onTap: () {
+                    if (context.read<ConnectivityCubit>().state
+                        is ConnectivityDisconnected) {
+                      showfailureToast(AppStrings.noInternetConnection.tr());
+                      return;
+                    }
+                    Navigator.pushNamed(context, AppRoutes.teamActivity);
+                  },
                   borderRadius: BorderRadius.circular(12.r),
                   child: Container(
                     padding: EdgeInsets.symmetric(
@@ -771,6 +807,11 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(16.r),
           onTap: () {
+            if (context.read<ConnectivityCubit>().state
+                is ConnectivityDisconnected) {
+              showfailureToast(AppStrings.noInternetConnection.tr());
+              return;
+            }
             Navigator.pushNamed(
               context,
               AppRoutes.employeeActivity,
@@ -831,6 +872,13 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
                         value: isActive,
                         activeThumbColor: AppColors.success,
                         onChanged: (_) {
+                          if (context.read<ConnectivityCubit>().state
+                              is ConnectivityDisconnected) {
+                            showfailureToast(
+                              AppStrings.noInternetConnection.tr(),
+                            );
+                            return;
+                          }
                           _cubit.toggleStatus(
                             employeeAuthUid: emp.authUid,
                             currentStatus: emp.accountStatus,
@@ -876,6 +924,13 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
                           color: AppColors.primaryColor,
                           tooltip: AppStrings.employeeActivityLog.tr(),
                           onPressed: () {
+                            if (context.read<ConnectivityCubit>().state
+                                is ConnectivityDisconnected) {
+                              showfailureToast(
+                                AppStrings.noInternetConnection.tr(),
+                              );
+                              return;
+                            }
                             Navigator.pushNamed(
                               context,
                               AppRoutes.employeeActivity,
@@ -888,6 +943,13 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
                           color: AppColors.primaryColor,
                           tooltip: AppStrings.editAppEmployee.tr(),
                           onPressed: () {
+                            if (context.read<ConnectivityCubit>().state
+                                is ConnectivityDisconnected) {
+                              showfailureToast(
+                                AppStrings.noInternetConnection.tr(),
+                              );
+                              return;
+                            }
                             Navigator.pushNamed(
                               context,
                               AppRoutes.editAppEmployee,
@@ -902,8 +964,16 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
                           ),
                           color: AppColors.error,
                           tooltip: AppStrings.deleteEmployeeAccess.tr(),
-                          onPressed: () =>
-                              _showDeleteConfirmation(emp.authUid, emp.name),
+                          onPressed: () {
+                            if (context.read<ConnectivityCubit>().state
+                                is ConnectivityDisconnected) {
+                              showfailureToast(
+                                AppStrings.noInternetConnection.tr(),
+                              );
+                              return;
+                            }
+                            _showDeleteConfirmation(emp.authUid, emp.name);
+                          },
                         ),
                       ],
                     ),

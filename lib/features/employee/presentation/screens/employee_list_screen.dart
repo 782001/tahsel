@@ -20,6 +20,7 @@ import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit
 import 'package:tahsel/features/main_layout/presentation/screens/main_layout_screen.dart';
 import 'package:tahsel/routes/app_routes.dart';
 import 'package:tahsel/shared/widgets/no_internet_view.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
 class EmployeeListScreen extends StatefulWidget {
   const EmployeeListScreen({super.key});
@@ -118,13 +119,12 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
               onPressed: () async {
                 if (!PermissionService.instance
                     .hasPermission(AppPermissions.employeesView)) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      duration: const Duration(seconds: 2),
-                      content: Text(AppStrings.noPermissionForAction.tr()),
-                      backgroundColor: AppColors.orange,
-                    ),
-                  );
+                  showfailureToast(AppStrings.noPermissionForAction.tr());
+                  return;
+                }
+                if (context.read<ConnectivityCubit>().state
+                    is ConnectivityDisconnected) {
+                  showfailureToast(AppStrings.noInternetConnection.tr());
                   return;
                 }
                 await Navigator.pushNamed(context, AppRoutes.employeeReports);
@@ -172,10 +172,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
           child: BlocBuilder<ConnectivityCubit, ConnectivityState>(
             builder: (context, connectivityState) {
               if (connectivityState is ConnectivityDisconnected) {
-                return NoInternetView(
-                  onRetry: () =>
-                      context.read<ConnectivityCubit>().checkConnectivity(),
-                );
+                return const NoInternetView();
               }
               return BlocBuilder<EmployeeCubit, EmployeeState>(
                 buildWhen: (previous, current) =>
@@ -558,6 +555,11 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
       child: InkWell(
         borderRadius: BorderRadius.circular(16.r),
         onTap: () async {
+          if (context.read<ConnectivityCubit>().state
+              is ConnectivityDisconnected) {
+            showfailureToast(AppStrings.noInternetConnection.tr());
+            return;
+          }
           await Navigator.pushNamed(
             context,
             AppRoutes.employeeDetails,
@@ -717,12 +719,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
 
   void _showAddEmployeeDialog() {
     if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppStrings.noInternetConnection.tr()),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      showfailureToast(AppStrings.noInternetConnection.tr());
       return;
     }
     showDialog(
@@ -740,12 +737,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
 
   void _showEditEmployeeDialog(EmployeeEntity employee) {
     if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppStrings.noInternetConnection.tr()),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      showfailureToast(AppStrings.noInternetConnection.tr());
       return;
     }
     showDialog(

@@ -18,6 +18,9 @@ import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/customer/presentation/cubit/customer_cubit.dart';
 import 'package:tahsel/features/customer/presentation/cubit/customer_state.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
 class NotificationDialog extends StatefulWidget {
   final String customerName;
@@ -55,6 +58,11 @@ class NotificationDialog extends StatefulWidget {
     DateTime? targetDate,
   }) {
     if (_isShowing) return;
+
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      showfailureToast(AppStrings.noInternetConnection.tr());
+      return;
+    }
 
     if (!PermissionService.instance.hasPermission(AppPermissions.customersViewPhone) ||
         !PermissionService.instance.hasPermission(AppPermissions.customersSendWhatsapp)) {
@@ -164,6 +172,10 @@ class NotificationDialog extends StatefulWidget {
     String operationType = 'payment',
     DateTime? targetDate,
   }) async {
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      showfailureToast(AppStrings.noInternetConnection.tr());
+      return;
+    }
     final messenger = ScaffoldMessenger.of(context);
     final cubit = context.read<CustomerCubit>();
     final uid = AppStrings.userToken;
@@ -300,6 +312,10 @@ class _NotificationDialogState extends State<NotificationDialog> {
   }
 
   Future<void> _sendNotification() async {
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      showfailureToast(AppStrings.noInternetConnection.tr());
+      return;
+    }
     final phone = _phoneController.text.trim();
     if (phone.isEmpty && !kIsWeb && Platform.isAndroid) {
       setState(() => _errorText = AppStrings.requiredField.tr());

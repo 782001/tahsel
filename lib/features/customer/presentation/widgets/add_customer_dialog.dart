@@ -8,7 +8,10 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/core/utils/customer_data_masker.dart';
 import 'package:tahsel/features/customer/domain/entities/customer_entity.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 import '../cubit/customer_reports/customer_reports_cubit.dart';
 
 class AddCustomerDialog extends StatefulWidget {
@@ -80,6 +83,10 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
   }
 
   Future<void> _submit() async {
+    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      showfailureToast(AppStrings.noInternetConnection.tr());
+      return;
+    }
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {

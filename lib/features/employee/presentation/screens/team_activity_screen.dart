@@ -17,8 +17,12 @@ import 'package:tahsel/features/employee/presentation/cubit/team_management_stat
 import 'package:tahsel/features/employee/presentation/utils/activity_field_localizer.dart';
 import 'package:tahsel/features/employee/presentation/utils/activity_navigation_helper.dart';
 import 'package:tahsel/features/employee/presentation/utils/employee_activity_export_service.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/shared/widgets/custom_app_bar/custom_app_bar.dart';
+import 'package:tahsel/shared/widgets/no_internet_view.dart';
 import 'package:tahsel/shared/widgets/shimmer/shimmer_loading.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
 class TeamActivityScreen extends StatefulWidget {
   const TeamActivityScreen({super.key});
@@ -100,6 +104,11 @@ class _TeamActivityScreenState extends State<TeamActivityScreen> {
               icon: const Icon(Icons.share_outlined),
               tooltip: AppStrings.exportReport.tr(),
               onPressed: () {
+                if (context.read<ConnectivityCubit>().state
+                    is ConnectivityDisconnected) {
+                  showfailureToast(AppStrings.noInternetConnection.tr());
+                  return;
+                }
                 AppEmployeeModel? selectedEmp;
                 if (state.selectedEmployeeUid != 'all') {
                   for (final e
@@ -131,7 +140,12 @@ class _TeamActivityScreenState extends State<TeamActivityScreen> {
           },
         ),
       ),
-      body: BlocConsumer<EmployeeActivityCubit, EmployeeActivityState>(
+      body: BlocBuilder<ConnectivityCubit, ConnectivityState>(
+        builder: (context, connectivityState) {
+          if (connectivityState is ConnectivityDisconnected) {
+            return const NoInternetView();
+          }
+          return BlocConsumer<EmployeeActivityCubit, EmployeeActivityState>(
         listener: (context, state) {
           if (state is EmployeeActivityLoaded && state.errorMessage != null) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -250,8 +264,10 @@ class _TeamActivityScreenState extends State<TeamActivityScreen> {
 
           return const SizedBox.shrink();
         },
-      ),
-    );
+      );
+    },
+  ),
+);
   }
 
   Widget _buildTeamHeaderCard() {

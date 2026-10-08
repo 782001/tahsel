@@ -18,6 +18,10 @@ import '../cubit/employee_activity_cubit.dart';
 import '../cubit/employee_activity_state.dart';
 import '../utils/activity_field_localizer.dart';
 import '../utils/activity_navigation_helper.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/shared/widgets/no_internet_view.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 import '../utils/employee_activity_export_service.dart';
 
 class EmployeeActivityScreen extends StatefulWidget {
@@ -102,6 +106,11 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
               icon: const Icon(Icons.share_outlined),
               tooltip: AppStrings.exportReport.tr(),
               onPressed: () {
+                if (context.read<ConnectivityCubit>().state
+                    is ConnectivityDisconnected) {
+                  showfailureToast(AppStrings.noInternetConnection.tr());
+                  return;
+                }
                 EmployeeActivityExportService.showExportOptions(
                   context,
                   title:
@@ -122,7 +131,12 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
           },
         ),
       ),
-      body: BlocConsumer<EmployeeActivityCubit, EmployeeActivityState>(
+      body: BlocBuilder<ConnectivityCubit, ConnectivityState>(
+        builder: (context, connectivityState) {
+          if (connectivityState is ConnectivityDisconnected) {
+            return const NoInternetView();
+          }
+          return BlocConsumer<EmployeeActivityCubit, EmployeeActivityState>(
         listener: (context, state) {
           if (state is EmployeeActivityLoaded && state.errorMessage != null) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -239,8 +253,10 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
 
           return const SizedBox.shrink();
         },
-      ),
-    );
+      );
+    },
+  ),
+);
   }
 
   Widget _buildEmployeeHeaderCard(AppEmployeeModel emp) {
