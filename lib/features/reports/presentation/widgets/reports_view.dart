@@ -133,7 +133,7 @@ class _ReportsViewState extends State<ReportsView> {
                       child: Center(
                         child: ConstrainedBox(
                           constraints: BoxConstraints(
-                            maxWidth: isDesktop ? 850 : double.infinity,
+                            maxWidth: isDesktop ? 1000 : double.infinity,
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
