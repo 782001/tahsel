@@ -214,6 +214,7 @@ class AppStrings {
   static const String userTypeKey = 'userType';
   static const String cafe = 'cafe';
   static const String shop = 'shop';
+  static const String quickPay = 'quick_pay';
   static const String shopIncome = "shop_income";
   static const String shopManagement = "shop_management";
   static const String shopIncomeDetails = "shop_income_details";
@@ -1880,6 +1881,8 @@ class AppStrings {
   static const String deficitReasonOtherLabel = "deficit_reason_other_label";
   static const String deficitReasonOtherHint = "deficit_reason_other_hint";
   static const String cannotDeleteCustodySettledExpense = "cannot_delete_custody_settled_expense";
+  static const String quotationOfflineSavedNotice = "quotation_offline_saved_notice";
+  static const String invoiceOfflineSavedNotice = "invoice_offline_saved_notice";
 }
 
 

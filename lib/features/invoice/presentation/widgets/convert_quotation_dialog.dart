@@ -6,25 +6,20 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
+import 'package:tahsel/shared/widgets/buttons/quick_action_button.dart';
 import 'package:tahsel/shared/widgets/quick_due_date_selector.dart';
 
 class ConvertQuotationResult {
   final bool confirmed;
   final DateTime? dueDate;
 
-  const ConvertQuotationResult({
-    required this.confirmed,
-    this.dueDate,
-  });
+  const ConvertQuotationResult({required this.confirmed, this.dueDate});
 }
 
 class ConvertQuotationDialog extends StatefulWidget {
   final InvoiceEntity quotation;
 
-  const ConvertQuotationDialog({
-    super.key,
-    required this.quotation,
-  });
+  const ConvertQuotationDialog({super.key, required this.quotation});
 
   static Future<ConvertQuotationResult?> show(
     BuildContext context,
@@ -62,12 +57,7 @@ class _ConvertQuotationDialogState extends State<ConvertQuotationDialog> {
       ),
       backgroundColor: AppColors.surface,
       contentPadding: EdgeInsets.all(paddingVal),
-      titlePadding: EdgeInsets.fromLTRB(
-        paddingVal,
-        paddingVal,
-        paddingVal,
-        0,
-      ),
+      titlePadding: EdgeInsets.fromLTRB(paddingVal, paddingVal, paddingVal, 0),
       actionsPadding: EdgeInsets.fromLTRB(
         paddingVal,
         0,
@@ -260,65 +250,41 @@ class _ConvertQuotationDialogState extends State<ConvertQuotationDialog> {
         ),
       ),
       actions: [
-        Row(
-          children: [
-            Expanded(
-              child: ElevatedButton.icon(
+        Center(
+          child: Column(
+            children: [
+              QuickActionButton(
+                label: AppStrings.confirmConversion.tr(),
+                icon: Icons.check_rounded,
                 onPressed: () {
                   Navigator.of(context).pop(
-                    ConvertQuotationResult(
-                      confirmed: true,
-                      dueDate: _dueDate,
-                    ),
+                    ConvertQuotationResult(confirmed: true, dueDate: _dueDate),
                   );
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryColor,
-                  foregroundColor: Colors.white,
+              ),
+
+              SizedBox(height: isDesktop ? 10 : 10.h),
+              TextButton(
+                onPressed: () => Navigator.of(
+                  context,
+                ).pop(const ConvertQuotationResult(confirmed: false)),
+                style: TextButton.styleFrom(
                   padding: EdgeInsets.symmetric(
+                    horizontal: isDesktop ? 16 : 16.w,
                     vertical: isDesktop ? 12 : 12.h,
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(isDesktop ? 12 : 12.r),
-                  ),
-                  elevation: 0,
                 ),
-                icon: Icon(
-                  Icons.check_rounded,
-                  size: isDesktop ? 18 : 18.sp,
-                  color: Colors.white,
-                ),
-                label: Text(
-                  AppStrings.confirmConversion.tr(),
+                child: Text(
+                  AppStrings.cancel.tr(),
                   style: TextStyles.customStyle(
-                    fontSize: isDesktop ? 14 : 14.sp,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                    fontSize: isDesktop ? 13 : 13.sp,
+                    color: AppColors.subTitleColor,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
-            ),
-            SizedBox(width: isDesktop ? 10 : 10.w),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(
-                const ConvertQuotationResult(confirmed: false),
-              ),
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isDesktop ? 16 : 16.w,
-                  vertical: isDesktop ? 12 : 12.h,
-                ),
-              ),
-              child: Text(
-                AppStrings.cancel.tr(),
-                style: TextStyles.customStyle(
-                  fontSize: isDesktop ? 13 : 13.sp,
-                  color: AppColors.subTitleColor,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );

@@ -151,6 +151,7 @@
   "quick_add": "Quick Add",
   "playstation": "Playstation",
   "shop": "Shop",
+  "quick_pay": "Quick Pay",    
   "by_time": "By Time",
   "by_turn": "By Turn",
   "customer_name": "Customer Name",
@@ -1676,7 +1677,9 @@
   "account_active_status": "Active",
   "account_disabled_status": "Disabled",
   "date_column_header": "Date",
-  "time_column_header": "Time"
+  "time_column_header": "Time",
+  "quotation_offline_saved_notice": "Quotation saved locally pending internet sync",
+  "invoice_offline_saved_notice": "Invoice saved locally pending internet sync"
 }
 
 

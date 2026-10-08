@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
-import 'package:tahsel/core/constants/app_permissions.dart';
-import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/widgets/permission_guard.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/customer_debts/data/models/debt_item_model.dart';
@@ -33,7 +33,8 @@ class DebtItemCard extends StatelessWidget {
   });
 
   Future<void> _rescheduleDueDate(BuildContext context) async {
-    if (!PermissionService.instance.hasPermission(AppPermissions.customersEdit)) return;
+    if (!PermissionService.instance.hasPermission(AppPermissions.customersEdit))
+      return;
     if (item.remainingDebt <= 0) return;
     final uid = AppStrings.userToken;
     if (uid.isEmpty) return;
@@ -205,21 +206,21 @@ class DebtItemCard extends StatelessWidget {
                                       color: isSettled
                                           ? AppColors.disabledColor
                                           : (item.remainingDebt > 0 &&
-                                                  item.dueDate != null &&
-                                                  DateTime.now().isAfter(
-                                                    DateTime(
-                                                      item.dueDate!.year,
-                                                      item.dueDate!.month,
-                                                      item.dueDate!.day,
-                                                      23,
-                                                      59,
-                                                      59,
-                                                    ),
-                                                  ))
-                                              ? AppColors.error
-                                              : (item.dueDate != null
-                                                  ? AppColors.primaryColor
-                                                  : AppColors.disabledColor),
+                                                item.dueDate != null &&
+                                                DateTime.now().isAfter(
+                                                  DateTime(
+                                                    item.dueDate!.year,
+                                                    item.dueDate!.month,
+                                                    item.dueDate!.day,
+                                                    23,
+                                                    59,
+                                                    59,
+                                                  ),
+                                                ))
+                                          ? AppColors.error
+                                          : (item.dueDate != null
+                                                ? AppColors.primaryColor
+                                                : AppColors.disabledColor),
                                     ),
                                     SizedBox(width: isDesktop ? 6 : 4.w),
                                     Flexible(
@@ -233,19 +234,19 @@ class DebtItemCard extends StatelessWidget {
                                           color: isSettled
                                               ? AppColors.disabledColor
                                               : (item.remainingDebt > 0 &&
-                                                      item.dueDate != null &&
-                                                      DateTime.now().isAfter(
-                                                        DateTime(
-                                                          item.dueDate!.year,
-                                                          item.dueDate!.month,
-                                                          item.dueDate!.day,
-                                                          23,
-                                                          59,
-                                                          59,
-                                                        ),
-                                                      ))
-                                                  ? AppColors.error
-                                                  : (AppColors.primaryColor),
+                                                    item.dueDate != null &&
+                                                    DateTime.now().isAfter(
+                                                      DateTime(
+                                                        item.dueDate!.year,
+                                                        item.dueDate!.month,
+                                                        item.dueDate!.day,
+                                                        23,
+                                                        59,
+                                                        59,
+                                                      ),
+                                                    ))
+                                              ? AppColors.error
+                                              : (AppColors.primaryColor),
                                           fontSize: isDesktop ? 12 : 11,
                                           fontWeight: item.dueDate != null
                                               ? FontWeight.bold
@@ -258,9 +259,8 @@ class DebtItemCard extends StatelessWidget {
                                       Icon(
                                         Icons.edit_calendar_rounded,
                                         size: isDesktop ? 22 : 22.r,
-                                        color: AppColors.disabledColor.withValues(
-                                          alpha: 0.7,
-                                        ),
+                                        color: AppColors.disabledColor
+                                            .withValues(alpha: 0.7),
                                       ),
                                     ],
                                   ],
@@ -309,7 +309,7 @@ class DebtItemCard extends StatelessWidget {
                 SizedBox(height: 14.h),
                 // --- Row 2: Financials ---
                 Container(
-                  padding: EdgeInsets.all(12.r),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: AppColors.stitchSurfaceLow,
                     borderRadius: BorderRadius.circular(12.r),

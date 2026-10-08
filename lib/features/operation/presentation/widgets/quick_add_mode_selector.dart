@@ -26,7 +26,7 @@ class QuickAddModeSelector extends StatelessWidget {
         children: [
           Expanded(
             child: _ModeCard(
-              title: AppStrings.shop.tr(),
+              title: AppStrings.quickPay.tr(),
               icon: Icons.storefront,
               isSelected: selectedMode == QuickAddMode.shop,
               onTap: () => onModeChanged(QuickAddMode.shop),
@@ -50,7 +50,7 @@ class QuickAddModeSelector extends StatelessWidget {
       children: [
         Expanded(
           child: _ModeCard(
-            title: AppStrings.shop.tr(),
+            title: AppStrings.quickPay.tr(),
             icon: Icons.storefront,
             isSelected: selectedMode == QuickAddMode.shop,
             onTap: () => onModeChanged(QuickAddMode.shop),

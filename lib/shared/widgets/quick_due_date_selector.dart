@@ -38,8 +38,9 @@ class QuickDueDateSelector extends StatelessWidget {
   Future<void> _pickCustomDate(BuildContext context) async {
     final DateTime minDate = DateTime(2000);
     final DateTime initialDate = selectedDate ?? _today;
-    final DateTime finalInitialDate =
-        initialDate.isBefore(minDate) ? minDate : initialDate;
+    final DateTime finalInitialDate = initialDate.isBefore(minDate)
+        ? minDate
+        : initialDate;
 
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -75,7 +76,8 @@ class QuickDueDateSelector extends StatelessWidget {
     final is1Week = _isSameDay(selectedDate, _in1Week);
     final is2Weeks = _isSameDay(selectedDate, _in2Weeks);
     final isEndOfMonth = _isSameDay(selectedDate, _endOfMonth);
-    final isCustom = selectedDate != null &&
+    final isCustom =
+        selectedDate != null &&
         !is3Days &&
         !is1Week &&
         !is2Weeks &&
@@ -101,7 +103,10 @@ class QuickDueDateSelector extends StatelessWidget {
                   onTap: () => onDateChanged(null),
                   borderRadius: BorderRadius.circular(8.r),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 2,
+                    ),
                     child: Text(
                       AppStrings.clear.tr(),
                       style: TextStyles.customStyle(
@@ -129,28 +134,28 @@ class QuickDueDateSelector extends StatelessWidget {
                 onTap: () => onDateChanged(is3Days ? null : _in3Days),
                 isDesktop: isDesktop,
               ),
-              SizedBox(width: 8.w),
+              const SizedBox(width: 4),
               _buildChip(
                 label: AppStrings.after1Week.tr(),
                 isSelected: is1Week,
                 onTap: () => onDateChanged(is1Week ? null : _in1Week),
                 isDesktop: isDesktop,
               ),
-              SizedBox(width: 8.w),
+              const SizedBox(width: 4),
               _buildChip(
                 label: AppStrings.after2Weeks.tr(),
                 isSelected: is2Weeks,
                 onTap: () => onDateChanged(is2Weeks ? null : _in2Weeks),
                 isDesktop: isDesktop,
               ),
-              SizedBox(width: 8.w),
+              const SizedBox(width: 4),
               _buildChip(
                 label: AppStrings.endOfMonth.tr(),
                 isSelected: isEndOfMonth,
                 onTap: () => onDateChanged(isEndOfMonth ? null : _endOfMonth),
                 isDesktop: isDesktop,
               ),
-              SizedBox(width: 8.w),
+              const SizedBox(width: 4),
               _buildChip(
                 label: isCustom
                     ? DateFormatter.formatNumericDate(selectedDate!)

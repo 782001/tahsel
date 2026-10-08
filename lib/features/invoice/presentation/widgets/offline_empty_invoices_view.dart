@@ -23,7 +23,7 @@ class OfflineEmptyInvoicesView extends StatelessWidget {
             AppStrings.noInternetConnection.tr(),
             style: TextStyles.customStyle(
               fontSize: 18,
-              color: AppColors.blackLight,
+              color: AppColors.disabledColor,
               fontWeight: FontWeight.bold,
             ),
             textAlign: TextAlign.center,
@@ -35,7 +35,7 @@ class OfflineEmptyInvoicesView extends StatelessWidget {
               AppStrings.offlineNoRecentInvoices.tr(),
               style: TextStyles.customStyle(
                 fontSize: 14,
-                color: AppColors.disabledColor,
+                color: AppColors.blackLight,
               ),
               textAlign: TextAlign.center,
             ),

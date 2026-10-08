@@ -47,7 +47,7 @@ import 'package:tahsel/features/invoice/presentation/widgets/record_payment_shee
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/routes/app_routes.dart';
-import 'package:tahsel/shared/widgets/no_internet_view.dart';
+import 'package:tahsel/features/invoice/data/datasources/offline_invoice_local_data_source.dart';
 import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
 class InvoiceDetailScreen extends StatefulWidget {
@@ -75,19 +75,22 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
   void initState() {
     super.initState();
     _invoice = widget.invoice;
-    // Always fetch the latest invoice data from the server when the screen
-    // opens so the payments list and status are never stale (e.g., after a
-    // payment edit/delete in the Debt module).
+    // Always fetch the latest invoice data when the screen opens.
+    // If offline, check local storage; if online, fetch latest from server and history.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        final isDisconnected =
+            context.read<ConnectivityCubit>().state is ConnectivityDisconnected;
         context.read<InvoiceCubit>().loadInvoice(
           AppStrings.userToken,
           _invoice.id,
         );
-        context.read<InvoiceHistoryCubit>().loadHistory(
-          uid: AppStrings.userToken,
-          invoiceId: _invoice.id,
-        );
+        if (!isDisconnected) {
+          context.read<InvoiceHistoryCubit>().loadHistory(
+            uid: AppStrings.userToken,
+            invoiceId: _invoice.id,
+          );
+        }
       }
     });
     if (widget.showPaymentImmediately) {
@@ -99,7 +102,21 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     }
   }
 
-  void _showRecordPaymentSheet(BuildContext context, bool isDismissible) {
+  void _showRecordPaymentSheet(BuildContext context, bool isDismissible) async {
+    final connectivityState = context.read<ConnectivityCubit>().state;
+    if (connectivityState is ConnectivityDisconnected) {
+      final pending =
+          await di.sl<OfflineInvoiceLocalDataSource>().getPendingInvoices();
+      final isPendingLocally =
+          pending.any((i) => i['invoiceId'] == _invoice.id);
+      if (!isPendingLocally) {
+        if (!context.mounted) return;
+        showfailureToast(AppStrings.noInternetConnection.tr());
+        return;
+      }
+    }
+
+    if (!context.mounted) return;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -108,6 +125,55 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
       builder: (_) => BlocProvider.value(
         value: context.read<InvoiceCubit>(),
         child: RecordPaymentSheet(invoice: _invoice, onSuccess: () {}),
+      ),
+    );
+  }
+
+  Widget _buildOfflineBanner(BuildContext context) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
+    final msg = _invoice.isQuotation
+        ? AppStrings.quotationOfflineSavedNotice.tr()
+        : AppStrings.invoiceOfflineSavedNotice.tr();
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 16 : 14.w,
+        vertical: isDesktop ? 12 : 10.h,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.warning.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(isDesktop ? 14 : 12.r),
+        border: Border.all(
+          color: AppColors.warning.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: AppColors.warning.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.cloud_off_rounded,
+              color: AppColors.warning,
+              size: isDesktop ? 18 : 16.sp,
+            ),
+          ),
+          SizedBox(width: isDesktop ? 12 : 10.w),
+          Expanded(
+            child: Text(
+              msg,
+              style: TextStyles.customStyle(
+                fontSize: isDesktop ? 13 : 12.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textColor,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -838,6 +904,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
       return;
     }
     if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
+      showfailureToast(AppStrings.noInternetConnection.tr());
       return;
     }
     final cubit = context.read<InvoiceCubit>();
@@ -895,11 +962,20 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
 
   Future<void> _handleConvertQuotation() async {
     final connectivityState = context.read<ConnectivityCubit>().state;
-    if (connectivityState is ConnectivityDisconnected) {
-      showfailureToast(AppStrings.noInternetConnection.tr());
-      return;
+    final isOffline = connectivityState is ConnectivityDisconnected;
+
+    if (isOffline) {
+      final pending =
+          await di.sl<OfflineInvoiceLocalDataSource>().getPendingInvoices();
+      final isOfflinePending =
+          pending.any((i) => i['invoiceId'] == _invoice.id);
+      if (!isOfflinePending) {
+        showfailureToast(AppStrings.noInternetConnection.tr());
+        return;
+      }
     }
 
+    if (!mounted) return;
     final result = await ConvertQuotationDialog.show(context, _invoice);
     if (result != null && result.confirmed && mounted) {
       context.read<InvoiceCubit>().convertQuotationToInvoice(
@@ -912,67 +988,80 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
-    return BlocListener<InvoiceCubit, InvoiceState>(
-      listener: (context, state) {
-        if (state is InvoiceDetailLoaded) {
-          setState(() {
-            _invoice = state.invoice;
-            _debtTransactions = state.debtTransactions;
-          });
-        } else if (state is InvoicePaymentSuccess) {
+    return BlocListener<ConnectivityCubit, ConnectivityState>(
+      listener: (context, connectivityState) {
+        if (connectivityState is ConnectivityConnected) {
           final uid = AppStrings.userToken;
           context.read<InvoiceCubit>().loadInvoice(uid, _invoice.id);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(AppStrings.invoicePaymentSuccess.tr()),
-              backgroundColor: AppColors.success,
-            ),
-          );
-        } else if (state is InvoiceUpdateSuccess) {
-          // Reload the freshest data after an edit
-          final uid = AppStrings.userToken;
-          context.read<InvoiceCubit>().loadInvoice(uid, _invoice.id);
-          // Reload history to reflect the new entries
           context.read<InvoiceHistoryCubit>().loadHistory(
             uid: uid,
             invoiceId: _invoice.id,
           );
-        } else if (state is InvoiceVoidSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(AppStrings.invoiceVoidSuccess.tr()),
-              backgroundColor: AppColors.warning,
-            ),
-          );
-          // Reload to reflect voided status
-          final uid = AppStrings.userToken;
-          context.read<InvoiceCubit>().loadInvoice(uid, _invoice.id);
-        } else if (state is InvoiceConvertSuccess) {
-          final uid = AppStrings.userToken;
-          context.read<InvoiceCubit>().loadInvoice(uid, state.invoiceId);
-          context.read<InvoiceHistoryCubit>().loadHistory(
-            uid: uid,
-            invoiceId: state.invoiceId,
-          );
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(AppStrings.quotationConvertedSuccess.tr()),
-              backgroundColor: AppColors.success,
-            ),
-          );
-        } else if (state is InvoiceFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: AppColors.error,
-            ),
-          );
         }
       },
-      child: BlocBuilder<ConnectivityCubit, ConnectivityState>(
-        builder: (context, connectivityState) {
-          final isDisconnected = connectivityState is ConnectivityDisconnected;
-          return Scaffold(
+      child: BlocListener<InvoiceCubit, InvoiceState>(
+        listener: (context, state) {
+          if (state is InvoiceDetailLoaded) {
+            setState(() {
+              _invoice = state.invoice;
+              _debtTransactions = state.debtTransactions;
+            });
+          } else if (state is InvoicePaymentSuccess) {
+            final uid = AppStrings.userToken;
+            context.read<InvoiceCubit>().loadInvoice(uid, _invoice.id);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(AppStrings.invoicePaymentSuccess.tr()),
+                backgroundColor: AppColors.success,
+              ),
+            );
+          } else if (state is InvoiceUpdateSuccess) {
+            // Reload the freshest data after an edit
+            final uid = AppStrings.userToken;
+            context.read<InvoiceCubit>().loadInvoice(uid, _invoice.id);
+            // Reload history to reflect the new entries
+            context.read<InvoiceHistoryCubit>().loadHistory(
+              uid: uid,
+              invoiceId: _invoice.id,
+            );
+          } else if (state is InvoiceVoidSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(AppStrings.invoiceVoidSuccess.tr()),
+                backgroundColor: AppColors.warning,
+              ),
+            );
+            // Reload to reflect voided status
+            final uid = AppStrings.userToken;
+            context.read<InvoiceCubit>().loadInvoice(uid, _invoice.id);
+          } else if (state is InvoiceConvertSuccess) {
+            final uid = AppStrings.userToken;
+            context.read<InvoiceCubit>().loadInvoice(uid, state.invoiceId);
+            if (context.read<ConnectivityCubit>().state is! ConnectivityDisconnected) {
+              context.read<InvoiceHistoryCubit>().loadHistory(
+                uid: uid,
+                invoiceId: state.invoiceId,
+              );
+            }
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(AppStrings.quotationConvertedSuccess.tr()),
+                backgroundColor: AppColors.success,
+              ),
+            );
+          } else if (state is InvoiceFailure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          }
+        },
+        child: BlocBuilder<ConnectivityCubit, ConnectivityState>(
+          builder: (context, connectivityState) {
+            final isDisconnected = connectivityState is ConnectivityDisconnected;
+            return Scaffold(
             backgroundColor: AppColors.scafoldBackGround,
 
             appBar: AppBar(
@@ -1071,12 +1160,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                         : AppStrings.invoiceSharePdf.tr(),
                     onPressed: () async {
                       if (isDisconnected) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(AppStrings.noInternetConnection.tr()),
-                            backgroundColor: AppColors.error,
-                          ),
-                        );
+                        showfailureToast(AppStrings.noInternetConnection.tr());
                         return;
                       }
 
@@ -1172,12 +1256,10 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                   IconButton(
                     icon: Icon(
                       Icons.published_with_changes_rounded,
-                      color: isDisconnected
-                          ? AppColors.disabledColor
-                          : AppColors.primaryColor,
+                      color: AppColors.primaryColor,
                     ),
                     tooltip: AppStrings.convertToSalesInvoice.tr(),
-                    onPressed: isDisconnected ? null : _handleConvertQuotation,
+                    onPressed: _handleConvertQuotation,
                   ),
                 // Edit — only for non-voided invoices with permission
                 if (_invoice.status != InvoiceStatus.voided &&
@@ -1196,12 +1278,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                         : AppStrings.invoiceEditTitle.tr(),
                     onPressed: () async {
                       if (isDisconnected) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(AppStrings.noInternetConnection.tr()),
-                            backgroundColor: AppColors.error,
-                          ),
-                        );
+                        showfailureToast(AppStrings.noInternetConnection.tr());
                         return;
                       }
                       final cubit = context.read<InvoiceCubit>();
@@ -1230,12 +1307,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                     tooltip: AppStrings.invoiceVoid.tr(),
                     onPressed: () {
                       if (isDisconnected) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(AppStrings.noInternetConnection.tr()),
-                            backgroundColor: AppColors.error,
-                          ),
-                        );
+                        showfailureToast(AppStrings.noInternetConnection.tr());
                         return;
                       }
                       _confirmVoid(context);
@@ -1243,32 +1315,31 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                   ),
               ],
             ),
-            body: isDisconnected
-                ? NoInternetView(
-                    onRetry: () =>
-                        context.read<ConnectivityCubit>().checkConnectivity(),
-                  )
-                : SafeArea(
-                    child: BlocBuilder<InvoiceCubit, InvoiceState>(
-                      builder: (context, state) {
-                        final isLoading = state is InvoiceLoading;
-                        return Center(
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxWidth: isDesktop ? 1000 : double.infinity,
-                            ),
+            body: SafeArea(
+              child: BlocBuilder<InvoiceCubit, InvoiceState>(
+                builder: (context, state) {
+                  final isLoading = state is InvoiceLoading;
+                  return Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: isDesktop ? 1000 : double.infinity,
+                      ),
 
-                            child: Stack(
+                      child: Stack(
+                        children: [
+                          SingleChildScrollView(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 20.w,
+                              vertical: 20.h,
+                            ),
+                            child: Column(
+                              crossAxisAlignment:
+                                  CrossAxisAlignment.start,
                               children: [
-                                SingleChildScrollView(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 20.w,
-                                    vertical: 20.h,
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
+                                if (isDisconnected) ...[
+                                  _buildOfflineBanner(context),
+                                  const SizedBox(height: 14),
+                                ],
                                       // ── Status Card ────────────────────────────────────
                                       InvoiceStatusCard(
                                         invoice: _invoice,
@@ -1849,7 +1920,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                           permission:
                                               AppPermissions.invoicesCreate,
                                           child: ConvertQuotationButton(
-                                            onTap: (isLoading || isDisconnected)
+                                            onTap: isLoading
                                                 ? null
                                                 : _handleConvertQuotation,
                                           ),
@@ -1879,6 +1950,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
           );
         },
       ),
-    );
-  }
+    ),
+  );
+}
 }

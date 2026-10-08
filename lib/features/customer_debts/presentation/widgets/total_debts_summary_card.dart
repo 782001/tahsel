@@ -109,7 +109,7 @@ class _TotalDebtsSummaryCardState extends State<TotalDebtsSummaryCard> {
                         Icon(
                           Icons.people_alt_outlined,
                           color: AppColors.disabledColor,
-                          size: 16,
+                          size: 20,
                         ),
                         SizedBox(width: 6.w),
                         Text(

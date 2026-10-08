@@ -38,7 +38,7 @@ class TransactionDetailCard extends StatelessWidget {
             "${AppStrings.psSessionTurn.tr()} - ${operation.turnCount ?? 0} ادوار";
       }
     } else {
-      subtitleText = operation.productName ?? AppStrings.shop.tr();
+      subtitleText = operation.productName ?? AppStrings.quickPay.tr();
     }
 
     final String customerName =

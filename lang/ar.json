@@ -170,6 +170,7 @@
   "quick_add": "إضافة عملية سريعة",
   "playstation": "بلايستيشن",
   "shop": "المحل",
+  "quick_pay": "بيع سريع",
   "by_time": "بالوقت",
   "by_turn": "بالدور",
   "customer_name": "اسم الزبون",
@@ -1676,5 +1677,7 @@
   "account_active_status": "نشط",
   "account_disabled_status": "معطل",
   "date_column_header": "التاريخ",
-  "time_column_header": "الوقت"
+  "time_column_header": "الوقت",
+  "quotation_offline_saved_notice": "عرض السعر محفوظ محلياً لحين الاتصال بالإنترنت",
+  "invoice_offline_saved_notice": "بيانات الفاتورة محفوظة محلياً لحين الاتصال بالإنترنت"
 }

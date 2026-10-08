@@ -380,8 +380,6 @@ class InvoiceCubit extends Cubit<InvoiceState> {
   // ── Detail ─────────────────────────────────────────────────────────────────
 
   Future<void> loadInvoice(String uid, String invoiceId) async {
-    emit(InvoiceLoading());
-
     // Check offline storage first
     final pendingInvoices = await offlineInvoiceLocalDataSource.getPendingInvoices();
     final localMatch = pendingInvoices.firstWhere(
@@ -394,6 +392,13 @@ class InvoiceCubit extends Cubit<InvoiceState> {
         emit(InvoiceDetailLoaded(inv));
         return;
     }
+
+    if (connectivityCubit.state is ConnectivityDisconnected) {
+      // Offline and not in pending storage: keep existing in-memory data without failing
+      return;
+    }
+
+    emit(InvoiceLoading());
 
     final result = await getInvoiceByIdUseCase(uid, invoiceId);
     result.fold(
@@ -455,6 +460,11 @@ class InvoiceCubit extends Cubit<InvoiceState> {
        await offlineInvoiceLocalDataSource.updateOfflinePayment(invoiceId, paidNow, note);
        emit(InvoicePaymentSuccess());
        return;
+    }
+
+    if (connectivityCubit.state is ConnectivityDisconnected) {
+      emit(InvoiceFailure(AppStrings.noInternetConnection.tr()));
+      return;
     }
 
     emit(InvoiceLoading());
@@ -606,6 +616,10 @@ class InvoiceCubit extends Cubit<InvoiceState> {
       emit(InvoiceFailure(AppStrings.noPermissionForAction.tr()));
       return;
     }
+    if (connectivityCubit.state is ConnectivityDisconnected) {
+      emit(InvoiceFailure(AppStrings.noInternetConnection.tr()));
+      return;
+    }
     emit(InvoiceLoading());
 
     // Build the structured params so the use-case contract is explicit.
@@ -656,6 +670,10 @@ class InvoiceCubit extends Cubit<InvoiceState> {
   }) async {
     if (!PermissionService.instance.hasPermission(AppPermissions.invoicesDelete)) {
       emit(InvoiceFailure(AppStrings.noPermissionForAction.tr()));
+      return;
+    }
+    if (connectivityCubit.state is ConnectivityDisconnected) {
+      emit(InvoiceFailure(AppStrings.noInternetConnection.tr()));
       return;
     }
     emit(InvoiceLoading());
