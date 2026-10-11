@@ -26,11 +26,11 @@ import 'package:tahsel/features/cashbox/data/datasources/vault_remote_data_sourc
 import 'package:tahsel/features/cashbox/domain/entities/vault_transaction_entity.dart';
 import 'package:tahsel/features/customer/presentation/cubit/customer_cubit.dart';
 import 'package:tahsel/features/debt/domain/entities/payment_entity.dart';
+import 'package:tahsel/features/invoice/data/datasources/offline_invoice_local_data_source.dart';
 import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_cubit.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_history_cubit.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_state.dart';
-import 'package:tahsel/features/invoice/presentation/widgets/convert_quotation_button.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/convert_quotation_dialog.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/debt_payment_history_list.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/invoice_history_timeline.dart';
@@ -47,7 +47,7 @@ import 'package:tahsel/features/invoice/presentation/widgets/record_payment_shee
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:tahsel/routes/app_routes.dart';
-import 'package:tahsel/features/invoice/data/datasources/offline_invoice_local_data_source.dart';
+import 'package:tahsel/shared/widgets/buttons/quick_action_button.dart';
 import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
 class InvoiceDetailScreen extends StatefulWidget {
@@ -1916,16 +1916,17 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
 
                                       // ── Convert Quotation Button ──────────────────────
                                       if (_invoice.isQuotation)
-                                        PermissionGuard(
+     PermissionGuard(
                                           permission:
                                               AppPermissions.invoicesCreate,
-                                          child: ConvertQuotationButton(
-                                            onTap: isLoading
-                                                ? null
-                                                : _handleConvertQuotation,
-                                          ),
-                                        ),
-
+      child: QuickActionButton(
+                                  label: AppStrings.saveAndConvertToInvoice.tr(),
+                                  icon: Icons.published_with_changes_rounded,
+                                  onPressed:  isLoading
+                                                  ? null
+                                                  : _handleConvertQuotation,
+                                ),
+    ),
                                       const SizedBox(height: 40),
                                     ],
                                   ),
