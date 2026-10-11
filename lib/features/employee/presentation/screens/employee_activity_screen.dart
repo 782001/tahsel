@@ -823,7 +823,7 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                               ),
                               SizedBox(height: 2.h),
                               Text(
-                                '${activity.employeeName} • ${DateFormat('yyyy-MM-dd • hh:mm a', 'ar').format(activity.timestamp)}',
+                                '${(activity.employeeName.trim().isNotEmpty && activity.employeeName.trim() != "موظف النظام") ? activity.employeeName.trim() : widget.employee.name} • ${DateFormat("yyyy-MM-dd • hh:mm a", "ar").format(activity.timestamp)}',
                                 style: TextStyles.customStyle(
                                   fontSize: 11,
                                   color: AppColors.sandText,

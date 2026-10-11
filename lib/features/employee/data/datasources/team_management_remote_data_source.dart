@@ -98,6 +98,7 @@ class TeamManagementRemoteDataSourceImpl implements TeamManagementRemoteDataSour
         'role': 'employee',
         'ownerUid': ownerUid,
         'name': name.trim(),
+        'displayName': name.trim(),
         'email': email.trim().toLowerCase(),
         'accountStatus': 'active',
         'platformType': 'both',
@@ -107,6 +108,9 @@ class TeamManagementRemoteDataSourceImpl implements TeamManagementRemoteDataSour
         'isVip': ownerIsVip,
         'createdAt': FieldValue.serverTimestamp(),
       });
+
+      user.updateDisplayName(name.trim()).catchError((_) {});
+      ActivityLoggerService.cacheEmployeeName(employeeAuthUid, name.trim());
 
       // 2. Owner's team roster record
       final teamRef = firestore
@@ -179,9 +183,13 @@ class TeamManagementRemoteDataSourceImpl implements TeamManagementRemoteDataSour
           .orderBy('createdAt', descending: true)
           .get();
 
-      return snapshot.docs
+      final employees = snapshot.docs
           .map((doc) => AppEmployeeModel.fromMap(doc.data(), doc.id))
           .toList();
+      for (final emp in employees) {
+        ActivityLoggerService.cacheEmployeeName(emp.authUid, emp.name);
+      }
+      return employees;
     } catch (e) {
       AppLogger.printMessage('[TeamManagement] Error getting employees: $e');
       throw ServerException(e.toString());
@@ -209,6 +217,8 @@ class TeamManagementRemoteDataSourceImpl implements TeamManagementRemoteDataSour
       if (trimmedName != null && trimmedName.isNotEmpty) {
         userUpdates['name'] = trimmedName;
         userUpdates['fullName'] = trimmedName;
+        userUpdates['displayName'] = trimmedName;
+        ActivityLoggerService.cacheEmployeeName(employeeAuthUid, trimmedName);
       }
       batch.update(userRef, userUpdates);
 

@@ -76,6 +76,49 @@ class EmployeeActivityRemoteDataSourceImpl implements EmployeeActivityRemoteData
 
   EmployeeActivityRemoteDataSourceImpl({required this.firestore});
 
+  final Map<String, String> _employeeNameCache = {};
+  DateTime? _lastEmployeeCacheTime;
+
+  Future<void> _ensureEmployeesCached(String ownerUid) async {
+    final now = DateTime.now();
+    if (_lastEmployeeCacheTime != null &&
+        now.difference(_lastEmployeeCacheTime!).inMinutes < 5 &&
+        _employeeNameCache.isNotEmpty) {
+      return;
+    }
+    try {
+      final snap = await firestore
+          .collection('users')
+          .doc(ownerUid)
+          .collection('app_employees')
+          .get();
+      for (final doc in snap.docs) {
+        final data = doc.data();
+        final name = (data['name'] as String?)?.trim();
+        final authUid = (data['authUid'] as String?)?.trim() ?? doc.id;
+        if (name != null && name.isNotEmpty) {
+          _employeeNameCache[authUid] = name;
+        }
+      }
+      _lastEmployeeCacheTime = now;
+    } catch (_) {}
+  }
+
+  EmployeeActivityModel _resolveActivityModel(
+    Map<String, dynamic> data,
+    String id,
+  ) {
+    final model = EmployeeActivityModel.fromMap(data, id);
+    final rawName = model.employeeName.trim();
+    if (rawName.isEmpty || rawName == 'موظف النظام') {
+      final cachedName = _employeeNameCache[model.employeeUid];
+      if (cachedName != null && cachedName.isNotEmpty) {
+        return model.copyWith(employeeName: cachedName);
+      }
+    }
+    return model;
+  }
+
   @override
   Future<EmployeeActivityResult> getActivitiesPaginated({
     required String ownerUid,
@@ -96,6 +139,8 @@ class EmployeeActivityRemoteDataSourceImpl implements EmployeeActivityRemoteData
     }
 
     try {
+      await _ensureEmployeesCached(cleanOwner);
+
       Query<Map<String, dynamic>> query = firestore
           .collection('users')
           .doc(cleanOwner)
@@ -137,7 +182,7 @@ class EmployeeActivityRemoteDataSourceImpl implements EmployeeActivityRemoteData
 
       final querySnapshot = await query.get();
       final activities = querySnapshot.docs.map((doc) {
-        return EmployeeActivityModel.fromMap(doc.data(), doc.id);
+        return _resolveActivityModel(doc.data(), doc.id);
       }).toList();
 
       final newLastDoc = querySnapshot.docs.isNotEmpty ? querySnapshot.docs.last : null;
@@ -188,12 +233,14 @@ class EmployeeActivityRemoteDataSourceImpl implements EmployeeActivityRemoteData
         query = query.startAfterDocument(lastDoc);
       }
 
+      await _ensureEmployeesCached(ownerUid);
+
       final fetchLimit = limit > 50 ? limit : limit * 4;
       final querySnapshot = await query.limit(fetchLimit).get();
       final docs = querySnapshot.docs;
 
       var activities = docs.map((doc) {
-        return EmployeeActivityModel.fromMap(doc.data(), doc.id);
+        return _resolveActivityModel(doc.data(), doc.id);
       }).toList();
 
       final cleanEmp = employeeUid.trim();
@@ -282,9 +329,11 @@ class EmployeeActivityRemoteDataSourceImpl implements EmployeeActivityRemoteData
 
       query = query.orderBy('timestamp', descending: true).limit(limit);
 
+      await _ensureEmployeesCached(cleanOwner);
+
       final snapshot = await query.get();
       return snapshot.docs
-          .map((doc) => EmployeeActivityModel.fromMap(doc.data(), doc.id))
+          .map((doc) => _resolveActivityModel(doc.data(), doc.id))
           .toList();
     } on FirebaseException catch (e) {
       AppLogger.printMessage('[EmployeeActivityRemoteDataSource] getAllActivitiesForExport FirebaseException: $e');

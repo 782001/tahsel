@@ -25,6 +25,7 @@ class UserModel extends UserEntity {
 
   factory UserModel.fromFirebaseUser(
     User user, {
+    String? displayName,
     String? userType,
     String? accountStatus,
     String? platformType,
@@ -43,7 +44,7 @@ class UserModel extends UserEntity {
     return UserModel(
       uid: user.uid,
       email: user.email ?? '',
-      displayName: user.displayName,
+      displayName: displayName ?? user.displayName,
       userType: userType ?? 'cafe',
       accountStatus: accountStatus ?? 'active',
       platformType: platformType ?? 'mobile',

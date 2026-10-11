@@ -48,11 +48,11 @@ class PermissionService {
     // Mirror to AppStrings for fast access
     AppStrings.userRole = _currentRole;
     AppStrings.userPermissions = _permissions.toList();
-    if (employeeUid != null) {
-      AppStrings.employeeAuthUid = employeeUid;
+    if (employeeUid != null && employeeUid.trim().isNotEmpty) {
+      AppStrings.employeeAuthUid = employeeUid.trim();
     }
-    if (employeeName != null) {
-      AppStrings.loggedInEmployeeName = employeeName;
+    if (employeeName != null && employeeName.trim().isNotEmpty) {
+      AppStrings.loggedInEmployeeName = employeeName.trim();
     }
 
     changeNotifier.value++;
@@ -123,6 +123,21 @@ class PermissionService {
           );
           onAccountDisabled?.call();
           return;
+        }
+
+        // Update employee name in real-time if changed
+        final updatedName = (data['name'] as String?)?.trim() ??
+            (data['displayName'] as String?)?.trim() ??
+            (data['fullName'] as String?)?.trim();
+        if (updatedName != null && updatedName.isNotEmpty) {
+          if (AppStrings.loggedInEmployeeName != updatedName) {
+            AppStrings.loggedInEmployeeName = updatedName;
+            await storage.saveData(
+              key: keyEmployeeName,
+              value: updatedName,
+            );
+            changeNotifier.value++;
+          }
         }
 
         // Update permissions in real-time if changed

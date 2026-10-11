@@ -8,6 +8,14 @@ class ActivityLoggerService {
 
   ActivityLoggerService({required this.firestore});
 
+  static final Map<String, String> employeeNamesCache = {};
+
+  static void cacheEmployeeName(String uid, String name) {
+    if (uid.trim().isNotEmpty && name.trim().isNotEmpty) {
+      employeeNamesCache[uid.trim()] = name.trim();
+    }
+  }
+
   /// Generates a standardized activity model for current session or explicit actor.
   EmployeeActivityModel createActivityModel({
     required String ownerUid,
@@ -23,11 +31,27 @@ class ActivityLoggerService {
     DateTime? timestamp,
     bool isOfflineSync = false,
   }) {
-    final effectiveEmpUid = employeeUid ?? AppStrings.employeeAuthUid;
-    final effectiveEmpName = employeeName ??
-        (AppStrings.loggedInEmployeeName.isNotEmpty
-            ? AppStrings.loggedInEmployeeName
-            : 'موظف النظام');
+    final effectiveEmpUid = (employeeUid != null && employeeUid.trim().isNotEmpty)
+        ? employeeUid.trim()
+        : AppStrings.employeeAuthUid.trim();
+
+    String effectiveEmpName = '';
+    if (employeeName != null && employeeName.trim().isNotEmpty) {
+      effectiveEmpName = employeeName.trim();
+    } else if (AppStrings.loggedInEmployeeName.trim().isNotEmpty) {
+      effectiveEmpName = AppStrings.loggedInEmployeeName.trim();
+    } else if (effectiveEmpUid.isNotEmpty &&
+        employeeNamesCache.containsKey(effectiveEmpUid)) {
+      effectiveEmpName = employeeNamesCache[effectiveEmpUid] ?? '';
+    }
+
+    if (effectiveEmpName.isEmpty) {
+      effectiveEmpName = AppStrings.isEmployee ? 'موظف النظام' : 'المالك';
+    } else if (effectiveEmpUid.isNotEmpty &&
+        effectiveEmpName != 'موظف النظام' &&
+        effectiveEmpName != 'المالك') {
+      cacheEmployeeName(effectiveEmpUid, effectiveEmpName);
+    }
 
     final now = timestamp ?? DateTime.now();
     final docId =

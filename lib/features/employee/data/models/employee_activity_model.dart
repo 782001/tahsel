@@ -59,6 +59,38 @@ class EmployeeActivityModel extends EmployeeActivityEntity {
     );
   }
 
+  EmployeeActivityModel copyWith({
+    String? id,
+    String? ownerUid,
+    String? employeeUid,
+    String? employeeName,
+    String? rolePreset,
+    String? actionCategory,
+    String? actionType,
+    String? actionTitle,
+    String? details,
+    double? amount,
+    Map<String, dynamic>? extraData,
+    DateTime? timestamp,
+    bool? isOfflineSync,
+  }) {
+    return EmployeeActivityModel(
+      id: id ?? this.id,
+      ownerUid: ownerUid ?? this.ownerUid,
+      employeeUid: employeeUid ?? this.employeeUid,
+      employeeName: employeeName ?? this.employeeName,
+      rolePreset: rolePreset ?? this.rolePreset,
+      actionCategory: actionCategory ?? this.actionCategory,
+      actionType: actionType ?? this.actionType,
+      actionTitle: actionTitle ?? this.actionTitle,
+      details: details ?? this.details,
+      amount: amount ?? this.amount,
+      extraData: extraData ?? this.extraData,
+      timestamp: timestamp ?? this.timestamp,
+      isOfflineSync: isOfflineSync ?? this.isOfflineSync,
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,

@@ -70,12 +70,37 @@ class EmployeeActivityExportService {
     return tahselDir;
   }
 
+  /// Resolves the actual employee name using the single employee context or the roster list
+  static String _resolveActivityEmployeeName(
+    EmployeeActivityEntity act, {
+    AppEmployeeModel? singleEmployee,
+    List<AppEmployeeModel>? employees,
+  }) {
+    final raw = act.employeeName.trim();
+    if (raw.isNotEmpty && raw != 'موظف النظام') {
+      return raw;
+    }
+    if (singleEmployee != null &&
+        (act.employeeUid == singleEmployee.authUid || act.employeeUid.isEmpty)) {
+      return singleEmployee.name;
+    }
+    if (employees != null && employees.isNotEmpty) {
+      for (final e in employees) {
+        if (e.authUid == act.employeeUid) {
+          return e.name;
+        }
+      }
+    }
+    return raw.isNotEmpty ? raw : 'موظف النظام';
+  }
+
   /// Open Modal to choose between PDF or Excel export
   static void showExportOptions(
     BuildContext context, {
     required String title,
     String? subtitle,
     AppEmployeeModel? employee,
+    List<AppEmployeeModel>? employees,
     required List<EmployeeActivityEntity> activities,
     required EmployeeActivityStats stats,
     DateTimeRange? dateRange,
@@ -238,6 +263,7 @@ class EmployeeActivityExportService {
                   title: title,
                   subtitle: subtitle,
                   employee: employee,
+                  employees: employees,
                   activities: finalActivities,
                   stats: stats,
                   dateRange: dateRange,
@@ -283,6 +309,7 @@ class EmployeeActivityExportService {
                   context,
                   title: title,
                   employee: employee,
+                  employees: employees,
                   activities: finalActivities,
                   stats: stats,
                   dateRange: dateRange,
@@ -324,6 +351,7 @@ class EmployeeActivityExportService {
     required String title,
     String? subtitle,
     AppEmployeeModel? employee,
+    List<AppEmployeeModel>? employees,
     required List<EmployeeActivityEntity> activities,
     required EmployeeActivityStats stats,
     DateTimeRange? dateRange,
@@ -342,6 +370,7 @@ class EmployeeActivityExportService {
         title: title,
         subtitle: subtitle,
         employee: employee,
+        employees: employees,
         activities: activities,
         stats: stats,
         currency: currency,
@@ -356,6 +385,7 @@ class EmployeeActivityExportService {
     required String title,
     String? subtitle,
     AppEmployeeModel? employee,
+    List<AppEmployeeModel>? employees,
     required List<EmployeeActivityEntity> activities,
     required EmployeeActivityStats stats,
     required String currency,
@@ -404,7 +434,13 @@ class EmployeeActivityExportService {
           content.add(pw.SizedBox(height: 14));
 
           // 3. Activities Detailed Table
-          content.add(_buildPdfActivitiesTable(activities, currency, isArabic));
+          content.add(_buildPdfActivitiesTable(
+            activities,
+            currency,
+            isArabic,
+            employee: employee,
+            employees: employees,
+          ));
 
           return content;
         },
@@ -684,8 +720,10 @@ class EmployeeActivityExportService {
   static pw.Widget _buildPdfActivitiesTable(
     List<EmployeeActivityEntity> activities,
     String currency,
-    bool isArabic,
-  ) {
+    bool isArabic, {
+    AppEmployeeModel? employee,
+    List<AppEmployeeModel>? employees,
+  }) {
     final headers = [
       '#',
       AppStrings.dateTimeHeader.tr(),
@@ -727,6 +765,11 @@ class EmployeeActivityExportService {
       final amtStr = act.amount != null && act.amount! > 0
           ? '${act.amount!.toSmartAmount()} $currency'
           : '-';
+      final empDisplayName = _resolveActivityEmployeeName(
+        act,
+        singleEmployee: employee,
+        employees: employees,
+      );
 
       return pw.TableRow(
         decoration: pw.BoxDecoration(
@@ -757,7 +800,7 @@ class EmployeeActivityExportService {
               alignment:
                   isArabic ? pw.Alignment.centerRight : pw.Alignment.centerLeft,
               child: pw.Text(
-                act.employeeName.cleanForPdf(),
+                empDisplayName.cleanForPdf(),
                 textAlign: isArabic ? pw.TextAlign.right : pw.TextAlign.left,
                 style: pw.TextStyle(
                   fontSize: 8,
@@ -888,6 +931,7 @@ class EmployeeActivityExportService {
     BuildContext context, {
     required String title,
     AppEmployeeModel? employee,
+    List<AppEmployeeModel>? employees,
     required List<EmployeeActivityEntity> activities,
     required EmployeeActivityStats stats,
     DateTimeRange? dateRange,
@@ -1030,12 +1074,17 @@ class EmployeeActivityExportService {
         final act = activities[i];
         final dateStr = DateFormat('yyyy-MM-dd').format(act.timestamp);
         final timeStr = DateFormat('HH:mm:ss').format(act.timestamp);
+        final empName = _resolveActivityEmployeeName(
+          act,
+          singleEmployee: employee,
+          employees: employees,
+        );
 
         sheet.appendRow([
           IntCellValue(i + 1),
           TextCellValue(dateStr),
           TextCellValue(timeStr),
-          TextCellValue(act.employeeName),
+          TextCellValue(empName),
           TextCellValue(ActivityFieldLocalizer.formatRole(act.rolePreset)),
           TextCellValue(_getCategoryLabel(act.actionCategory)),
           TextCellValue(act.actionTitle),

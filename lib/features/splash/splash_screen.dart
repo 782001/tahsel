@@ -165,9 +165,28 @@ class _SplashScreenState extends State<SplashScreen>
 
         // Live permissions update from Firestore
         final perms = List<String>.from(data['permissions'] ?? []);
-        final empName = (data['name'] as String?) ??
-            (data['fullName'] as String?) ??
+        String? empName = (data['name'] as String?)?.trim() ??
+            (data['fullName'] as String?)?.trim() ??
+            (data['displayName'] as String?)?.trim() ??
             user.displayName;
+
+        final ownerUidPre = data['ownerUid'] as String?;
+        if ((empName == null || empName.isEmpty) &&
+            ownerUidPre != null &&
+            ownerUidPre.isNotEmpty) {
+          try {
+            final empDoc = await FirebaseFirestore.instance
+                .collection('users')
+                .doc(ownerUidPre)
+                .collection('app_employees')
+                .doc(user.uid)
+                .get();
+            if (empDoc.exists && empDoc.data() != null) {
+              empName = (empDoc.data()!['name'] as String?)?.trim();
+            }
+          } catch (_) {}
+        }
+
         PermissionService.instance.init(
           role: 'employee',
           permissionsList: perms,

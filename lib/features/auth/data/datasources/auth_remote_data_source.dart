@@ -128,8 +128,37 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSourceBase {
         final permissions = (data['permissions'] as List?)?.cast<String>() ??
             (role == 'owner' ? const ['*'] : const <String>[]);
 
+        String? resolvedDisplayName = (data['name'] as String?)?.trim() ??
+            (data['displayName'] as String?)?.trim() ??
+            (data['fullName'] as String?)?.trim();
+
+        if (isEmployee &&
+            (resolvedDisplayName == null || resolvedDisplayName.isEmpty) &&
+            ownerUid != null &&
+            ownerUid.isNotEmpty) {
+          try {
+            final empDoc = await firestore
+                .collection('users')
+                .doc(ownerUid)
+                .collection('app_employees')
+                .doc(userCredential.user!.uid)
+                .get();
+            if (empDoc.exists && empDoc.data() != null) {
+              resolvedDisplayName =
+                  (empDoc.data()!['name'] as String?)?.trim();
+            }
+          } catch (_) {}
+        }
+
+        if (resolvedDisplayName != null && resolvedDisplayName.isNotEmpty) {
+          userCredential.user
+              ?.updateDisplayName(resolvedDisplayName)
+              .catchError((_) {});
+        }
+
         return UserModel.fromFirebaseUser(
           userCredential.user!,
+          displayName: resolvedDisplayName,
           userType: userType,
           accountStatus: accountStatus,
           platformType: platformType,

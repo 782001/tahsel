@@ -84,6 +84,22 @@ class _TeamActivityScreenState extends State<TeamActivityScreen> {
     }
   }
 
+  String _resolveEmployeeName(EmployeeActivityEntity activity) {
+    final raw = activity.employeeName.trim();
+    if (raw.isNotEmpty && raw != 'موظف النظام') {
+      return raw;
+    }
+    try {
+      final employees = context.read<TeamManagementCubit>().employees;
+      for (final emp in employees) {
+        if (emp.authUid == activity.employeeUid) {
+          return emp.name;
+        }
+      }
+    } catch (_) {}
+    return raw.isNotEmpty ? raw : 'موظف النظام';
+  }
+
   @override
   Widget build(BuildContext context) {
     final currency = CurrencyService.instance.currentSymbol;
@@ -130,6 +146,7 @@ class _TeamActivityScreenState extends State<TeamActivityScreen> {
                   stats: state.stats,
                   dateRange: state.selectedDateRange,
                   employee: selectedEmp,
+                  employees: context.read<TeamManagementCubit>().employees,
                   hasMore: state.hasMore,
                   onFetchAllForExport: () => context
                       .read<EmployeeActivityCubit>()
@@ -766,7 +783,7 @@ class _TeamActivityScreenState extends State<TeamActivityScreen> {
                               runSpacing: 2.h,
                               children: [
                                 Text(
-                                  activity.employeeName,
+                                  _resolveEmployeeName(activity),
                                   style: TextStyles.customStyle(
                                     fontSize: 13.5,
                                     fontWeight: FontWeight.bold,
@@ -963,7 +980,7 @@ class _TeamActivityScreenState extends State<TeamActivityScreen> {
                               ),
                               SizedBox(height: 2.h),
                               Text(
-                                '${activity.employeeName} (${ActivityFieldLocalizer.formatRole(activity.rolePreset)}) • ${DateFormat('yyyy-MM-dd • hh:mm a', 'ar').format(activity.timestamp)}',
+                                '${_resolveEmployeeName(activity)} (${ActivityFieldLocalizer.formatRole(activity.rolePreset)}) • ${DateFormat('yyyy-MM-dd • hh:mm a', 'ar').format(activity.timestamp)}',
                                 style: TextStyles.customStyle(
                                   fontSize: 11,
                                   color: AppColors.sandText,
