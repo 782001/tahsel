@@ -9,6 +9,7 @@ import 'package:tahsel/core/services/profile/business_profile_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/customer_data_masker.dart';
+import 'package:tahsel/core/utils/date_formatter.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/customer/domain/entities/customer_entity.dart';
@@ -16,7 +17,6 @@ import 'package:tahsel/features/customer/presentation/cubit/customer_cubit.dart'
 import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_cubit.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_state.dart';
-import 'package:tahsel/features/invoice/presentation/widgets/convert_quotation_button.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/convert_quotation_dialog.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/create_invoice_customer_field.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/create_invoice_notes_field.dart';
@@ -96,6 +96,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
   final _notesController = TextEditingController();
   final _overallDiscountController = TextEditingController();
   DateTime? _dueDate;
+  DateTime? _invoiceDate;
 
   // ── Line items ─────────────────────────────────────────────────────────────
   final List<_ItemControllers> _itemControllers = [];
@@ -214,6 +215,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
           ? inv.discountAmount.toSmartAmount()
           : '';
       _dueDate = inv.dueDate;
+      _invoiceDate = inv.createdAt;
       for (final item in inv.items) {
         _itemControllers.add(_ItemControllers.fromItem(item));
       }
@@ -470,7 +472,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
               : null);
 
     if (_isEditMode) {
-      // Edit mode — patch mutable fields, preserve payments/status/createdAt
+      // Edit mode — patch mutable fields, preserve payments/status
       final updated = widget.invoiceToEdit!.copyWith(
         customerName: customerName,
         customerPhone: phoneToSave,
@@ -480,6 +482,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
             ? _notesController.text.trim()
             : null,
         discountAmount: overallDiscount,
+        createdAt: _invoiceDate ?? DateTime.now(),
         lastUpdatedAt: DateTime.now(),
         dueDate: _isQuotation ? null : _dueDate,
         clearDueDate: _isQuotation || _dueDate == null,
@@ -527,7 +530,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
             ? _notesController.text.trim()
             : null,
         discountAmount: overallDiscount,
-        createdAt: DateTime.now(),
+        createdAt: _invoiceDate ?? DateTime.now(),
         lastUpdatedAt: DateTime.now(),
         dueDate: _isQuotation ? null : _dueDate,
         taxRate: profileTaxRate,
@@ -543,6 +546,48 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
 
       _pendingInvoice = invoice;
       context.read<InvoiceCubit>().createInvoice(invoice);
+    }
+  }
+
+  Future<void> _pickInvoiceDate() async {
+    final DateTime minDate = DateTime(2000);
+    final DateTime initialDate = _invoiceDate ?? DateTime.now();
+    final DateTime finalInitialDate = initialDate.isBefore(minDate)
+        ? minDate
+        : initialDate;
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: finalInitialDate,
+      firstDate: minDate,
+      lastDate: DateTime(2101),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: AppColors.isDark
+                ? ColorScheme.dark(primary: AppColors.primaryColor)
+                : ColorScheme.light(
+                    primary: AppColors.primaryColor,
+                    onPrimary: AppColors.white,
+                    onSurface: AppColors.black,
+                  ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        final originalTime = _invoiceDate ?? DateTime.now();
+        _invoiceDate = DateTime(
+          picked.year,
+          picked.month,
+          picked.day,
+          originalTime.hour,
+          originalTime.minute,
+          originalTime.second,
+        );
+      });
     }
   }
 
@@ -892,6 +937,79 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                             CreateInvoiceNotesField(
                               controller: _notesController,
                             ),
+                            const SizedBox(height: 24),
+
+                            // ── Invoice Date ─────────────────────────────────
+                            CreateInvoiceSectionHeader(
+                              title: AppStrings.invoiceDate.tr(),
+                            ),
+                            const SizedBox(height: 12),
+                            InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: _pickInvoiceDate,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 16,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceContainerHigh,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: AppColors.disabledColor.withValues(
+                                      alpha: 0.1,
+                                    ),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.calendar_today_outlined,
+                                          color: _invoiceDate != null
+                                              ? AppColors.primaryColor
+                                              : AppColors.disabledColor,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          _invoiceDate != null
+                                              ? DateFormatter.formatNumericDate(
+                                                  _invoiceDate!,
+                                                )
+                                              : AppStrings.notSet.tr(),
+                                          style: TextStyles.customStyle(
+                                            color: _invoiceDate != null
+                                                ? AppColors.textColor
+                                                : AppColors.disabledColor,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    if (_invoiceDate != null)
+                                      IconButton(
+                                        icon: Icon(
+                                          Icons.clear,
+                                          color: AppColors.error,
+                                          size: 20,
+                                        ),
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(),
+                                        onPressed: () {
+                                          setState(() {
+                                            _invoiceDate = null;
+                                          });
+                                        },
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
                             const SizedBox(height: 32),
 
                             // ── Submit Button ────────────────────────────────
@@ -916,9 +1034,10 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                                   AppPermissions.invoicesCreate,
                                 )) ...[
                               const SizedBox(height: 12),
-                              ConvertQuotationButton(
+                              QuickActionButton(
                                 label: AppStrings.saveAndConvertToInvoice.tr(),
-                                onTap: isLoading
+                                icon: Icons.published_with_changes_rounded,
+                                onPressed: isLoading
                                     ? null
                                     : () => _submit(
                                         context,

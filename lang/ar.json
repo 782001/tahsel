@@ -667,6 +667,7 @@
   "invoice_customer_section": "بيانات العميل",
   "invoice_items_section": "البنود",
   "invoice_notes_section": "ملاحظات (اختياري)",
+  "invoice_date": "تاريخ الفاتورة",
   "invoice_add_item": "إضافة بند",
   "invoice_item": "بند",
   "invoice_item_desc": "الوصف",

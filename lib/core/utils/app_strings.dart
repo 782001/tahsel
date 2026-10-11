@@ -835,6 +835,7 @@ class AppStrings {
   static const String invoiceCustomerSection = "invoice_customer_section";
   static const String invoiceItemsSection = "invoice_items_section";
   static const String invoiceNotesSection = "invoice_notes_section";
+  static const String invoiceDate = "invoice_date";
   static const String invoiceAddItem = "invoice_add_item";
   static const String invoiceItem = "invoice_item";
   static const String invoiceItemDesc = "invoice_item_desc";

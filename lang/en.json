@@ -646,6 +646,7 @@
   "invoice_customer_section": "Customer Info",
   "invoice_items_section": "Items",
   "invoice_notes_section": "Notes (Optional)",
+  "invoice_date": "Invoice Date",
   "invoice_add_item": "Add Item",
   "invoice_item": "Item",
   "invoice_item_desc": "Description",

@@ -395,6 +395,7 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
           'items': items,
           'totalAmount': newTotalAmount,
           'discountAmount': invoice.discountAmount,
+          'createdAt': Timestamp.fromDate(invoice.createdAt),
           'lastUpdatedAt': FieldValue.serverTimestamp(),
         });
         return;
@@ -518,6 +519,7 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
         'items': items,
         'totalAmount': newTotalAmount,
         'discountAmount': invoice.discountAmount,
+        'createdAt': Timestamp.fromDate(invoice.createdAt),
         'status': newStatus,
         'syncedTotalPaid': totalPaid,
         'dueDate': invoice.dueDate != null

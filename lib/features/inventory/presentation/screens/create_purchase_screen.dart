@@ -10,6 +10,7 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/services/profile/business_profile_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
+import 'package:tahsel/core/utils/date_formatter.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/utils/vault_balance_helper.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
@@ -46,6 +47,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
   final List<InventoryPurchaseItemEntity> _selectedItems = [];
   final TextEditingController _notesController = TextEditingController();
   final TextEditingController _paidAmountController = TextEditingController();
+  DateTime? _purchaseDate;
   String _selectedPaymentMethod = 'cash';
   List<InventorySupplierEntity> _suppliers = [];
   List<InventoryProductEntity> _allProducts = [];
@@ -388,7 +390,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
           notes: _notesController.text.trim().isNotEmpty
               ? _notesController.text.trim()
               : null,
-          createdAt: DateTime.now(),
+          createdAt: _purchaseDate ?? DateTime.now(),
           isSynced: false,
           paymentMethod: _selectedPaymentMethod,
           paidAmount: actualPaidAmount,
@@ -794,8 +796,8 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                     Container(
                       height: _isCardExpanded
                           ? (isDesktop
-                                ? 360
-                                : MediaQuery.of(context).size.height / 3)
+                                ? 440
+                                : MediaQuery.of(context).size.height * 0.42)
                           : null,
                       padding: EdgeInsets.all(isDesktop ? 16 : 16.w),
                       decoration: BoxDecoration(
@@ -845,6 +847,10 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                             height: isDesktop ? 10 : 10.h,
                                           ),
                                           _buildPaymentMethodSection(isDesktop),
+                                          SizedBox(
+                                            height: isDesktop ? 12 : 12.h,
+                                          ),
+                                          _buildPurchaseDateSection(isDesktop),
                                           SizedBox(
                                             height: isDesktop ? 12 : 12.h,
                                           ),
@@ -1923,6 +1929,126 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
             ],
           ),
         ],
+      ],
+    );
+  }
+
+  Future<void> _pickPurchaseDate() async {
+    final DateTime minDate = DateTime(2000);
+    final DateTime initialDate = _purchaseDate ?? DateTime.now();
+    final DateTime finalInitialDate = initialDate.isBefore(minDate)
+        ? minDate
+        : initialDate;
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: finalInitialDate,
+      firstDate: minDate,
+      lastDate: DateTime(2101),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: AppColors.isDark
+                ? ColorScheme.dark(primary: AppColors.primaryColor)
+                : ColorScheme.light(
+                    primary: AppColors.primaryColor,
+                    onPrimary: AppColors.white,
+                    onSurface: AppColors.black,
+                  ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        final now = DateTime.now();
+        _purchaseDate = DateTime(
+          picked.year,
+          picked.month,
+          picked.day,
+          now.hour,
+          now.minute,
+          now.second,
+        );
+      });
+    }
+  }
+
+  Widget _buildPurchaseDateSection(bool isDesktop) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          AppStrings.invoiceDate.tr(),
+          style: TextStyles.customStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: AppColors.blackReal,
+          ),
+        ),
+        SizedBox(height: isDesktop ? 8 : 8.h),
+        InkWell(
+          borderRadius: BorderRadius.circular(isDesktop ? 12 : 12.r),
+          onTap: _pickPurchaseDate,
+          child: Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isDesktop ? 16 : 16.w,
+              vertical: isDesktop ? 14 : 14.h,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(isDesktop ? 12 : 12.r),
+              border: Border.all(
+                color: AppColors.disabledColor.withValues(alpha: 0.1),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.calendar_today_outlined,
+                      color: _purchaseDate != null
+                          ? AppColors.primaryColor
+                          : AppColors.disabledColor,
+                      size: isDesktop ? 20 : 20.r,
+                    ),
+                    SizedBox(width: isDesktop ? 12 : 12.w),
+                    Text(
+                      _purchaseDate != null
+                          ? DateFormatter.formatNumericDate(_purchaseDate!)
+                          : AppStrings.notSet.tr(),
+                      style: TextStyles.customStyle(
+                        color: _purchaseDate != null
+                            ? AppColors.textColor
+                            : AppColors.disabledColor,
+                        fontSize: isDesktop ? 15 : 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                if (_purchaseDate != null)
+                  IconButton(
+                    icon: Icon(
+                      Icons.clear,
+                      color: AppColors.error,
+                      size: isDesktop ? 20 : 20.r,
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onPressed: () {
+                      setState(() {
+                        _purchaseDate = null;
+                      });
+                    },
+                  ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
