@@ -13,12 +13,16 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/customer/domain/entities/customer_entity.dart';
 import 'package:tahsel/features/customer/presentation/cubit/customer_cubit.dart';
-import 'package:tahsel/features/customer/presentation/widgets/customer_autocomplete_field.dart';
 import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_cubit.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_state.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/convert_quotation_button.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/convert_quotation_dialog.dart';
+import 'package:tahsel/features/invoice/presentation/widgets/create_invoice_customer_field.dart';
+import 'package:tahsel/features/invoice/presentation/widgets/create_invoice_notes_field.dart';
+import 'package:tahsel/features/invoice/presentation/widgets/create_invoice_section_header.dart';
+import 'package:tahsel/features/invoice/presentation/widgets/create_invoice_simple_field.dart';
+import 'package:tahsel/features/invoice/presentation/widgets/create_invoice_total_card.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/invoice_item_row.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/multi_inventory_picker_bottom_sheet.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
@@ -667,11 +671,11 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // ── Section: Customer Info ───────────────────────
-                            _SectionHeader(
+                            CreateInvoiceSectionHeader(
                               title: AppStrings.invoiceCustomerSection.tr(),
                             ),
                             const SizedBox(height: 12),
-                            _CustomerField(
+                            CreateInvoiceCustomerField(
                               controller: _customerController,
                               hint: AppStrings.customerNameHint.tr(),
                               label: AppStrings.customerName.tr(),
@@ -701,7 +705,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                               },
                             ),
                             const SizedBox(height: 10),
-                            _SimpleField(
+                            CreateInvoiceSimpleField(
                               controller: _phoneController,
                               hint: isRestricted
                                   ? AppStrings.permRestrictedData.tr()
@@ -728,7 +732,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                                   : null,
                             ),
                             const SizedBox(height: 10),
-                            _SimpleField(
+                            CreateInvoiceSimpleField(
                               controller: _ledgerController,
                               hint: isRestricted
                                   ? AppStrings.permRestrictedData.tr()
@@ -759,7 +763,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                _SectionHeader(
+                                CreateInvoiceSectionHeader(
                                   title: AppStrings.invoiceItemsSection.tr(),
                                 ),
                                 if (AppStrings.isVip)
@@ -844,7 +848,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                               ),
                             ),
                             const SizedBox(height: 16),
-                            _SimpleField(
+                            CreateInvoiceSimpleField(
                               controller: _overallDiscountController,
                               hint: '0',
                               label: AppStrings.overallDiscountLabel.tr(),
@@ -854,7 +858,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                             const SizedBox(height: 16),
 
                             // ── Grand Total ──────────────────────────────────
-                            _TotalCard(
+                            CreateInvoiceTotalCard(
                               rawSubtotal: _rawSubtotal,
                               totalDiscount: _totalDiscount,
                               grandTotal: _grandTotal,
@@ -881,11 +885,13 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                             ],
 
                             // ── Notes ────────────────────────────────────────
-                            _SectionHeader(
+                            CreateInvoiceSectionHeader(
                               title: AppStrings.invoiceNotesSection.tr(),
                             ),
                             const SizedBox(height: 12),
-                            _NotesField(controller: _notesController),
+                            CreateInvoiceNotesField(
+                              controller: _notesController,
+                            ),
                             const SizedBox(height: 32),
 
                             // ── Submit Button ────────────────────────────────
@@ -940,342 +946,6 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-// ── Private sub-widgets ────────────────────────────────────────────────────
-
-class _SectionHeader extends StatelessWidget {
-  final String title;
-
-  const _SectionHeader({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: TextStyles.customStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-        color: AppColors.black,
-      ),
-    );
-  }
-}
-
-class _CustomerField extends StatelessWidget {
-  final TextEditingController controller;
-  final String hint;
-  final String label;
-  final VoidCallback onContactTap;
-  final bool canPickContact;
-  final ValueChanged<CustomerEntity>? onSelected;
-
-  const _CustomerField({
-    required this.controller,
-    required this.hint,
-    required this.label,
-    required this.onContactTap,
-    this.canPickContact = true,
-    this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyles.customStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppColors.blackLight,
-          ),
-        ),
-        const SizedBox(height: 6),
-        CustomerAutocompleteField(
-          controller: controller,
-          hint: hint,
-          suffixIcon: canPickContact ? Icons.contact_phone_rounded : null,
-          onSuffixIconPressed: canPickContact ? onContactTap : null,
-          onSelected: onSelected,
-        ),
-      ],
-    );
-  }
-}
-
-class _SimpleField extends StatelessWidget {
-  final TextEditingController controller;
-  final String hint;
-  final String label;
-  final bool isNumber;
-  final ValueChanged<String>? onChanged;
-  final bool readOnly;
-  final bool obscureText;
-  final bool enableInteractiveSelection;
-  final Widget? suffixIcon;
-
-  const _SimpleField({
-    required this.controller,
-    required this.hint,
-    required this.label,
-    this.isNumber = false,
-    this.onChanged,
-    this.readOnly = false,
-    this.obscureText = false,
-    this.enableInteractiveSelection = true,
-    this.suffixIcon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyles.customStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppColors.blackLight,
-          ),
-        ),
-        const SizedBox(height: 6),
-        TextField(
-          cursorColor: AppColors.primaryColor,
-          controller: controller,
-          readOnly: readOnly,
-          obscureText: obscureText,
-          enableInteractiveSelection: enableInteractiveSelection,
-          keyboardType: isNumber ? TextInputType.phone : TextInputType.text,
-          onChanged: onChanged,
-          style: TextStyles.customStyle(fontSize: 15),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyles.customStyle(color: AppColors.disabledColor),
-            suffixIcon: suffixIcon,
-            filled: true,
-            fillColor: AppColors.surface,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: AppColors.dividerColor),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: AppColors.dividerColor),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: AppColors.primaryColor, width: 1.5),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _NotesField extends StatelessWidget {
-  final TextEditingController controller;
-
-  const _NotesField({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      cursorColor: AppColors.primaryColor,
-      controller: controller,
-      maxLines: 3,
-      style: TextStyles.customStyle(fontSize: 14),
-      decoration: InputDecoration(
-        hintText: AppStrings.invoiceNotesHint.tr(),
-        hintStyle: TextStyles.customStyle(color: AppColors.disabledColor),
-        filled: true,
-        fillColor: AppColors.surface,
-        contentPadding: const EdgeInsets.all(16),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppColors.dividerColor),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppColors.dividerColor),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppColors.primaryColor, width: 1.5),
-        ),
-      ),
-    );
-  }
-}
-
-class _TotalCard extends StatelessWidget {
-  final double rawSubtotal;
-  final double totalDiscount;
-  final double grandTotal;
-  final double taxRate;
-  final bool isQuotation;
-
-  const _TotalCard({
-    required this.rawSubtotal,
-    required this.totalDiscount,
-    required this.grandTotal,
-    this.taxRate = 0.0,
-    this.isQuotation = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final hasTax = taxRate > 0;
-    final taxAmount = hasTax ? grandTotal * (taxRate / 100.0) : 0.0;
-    final beforeTax = hasTax ? (grandTotal - taxAmount) : grandTotal;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.primaryColor,
-            AppColors.primaryColor.withValues(alpha: 0.75),
-          ],
-          begin: AlignmentDirectional.topStart,
-          end: AlignmentDirectional.bottomEnd,
-        ),
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primaryColor.withValues(alpha: 0.25),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          if (totalDiscount > 0) ...[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  AppStrings.subtotalBeforeDiscount.tr(),
-                  style: TextStyles.customStyle(
-                    fontSize: 13,
-                    color: Colors.white.withValues(alpha: 0.8),
-                  ),
-                ),
-                Text(
-                  '${rawSubtotal.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-                  style: TextStyles.customStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white.withValues(alpha: 0.8),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  AppStrings.overallDiscountAmount.tr(),
-                  style: TextStyles.customStyle(
-                    fontSize: 13,
-                    color: Colors.yellowAccent.withValues(alpha: 0.9),
-                  ),
-                ),
-                Text(
-                  '-${totalDiscount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-                  style: TextStyles.customStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.yellowAccent,
-                  ),
-                ),
-              ],
-            ),
-            const Divider(color: Colors.white24, height: 16),
-          ],
-          if (hasTax) ...[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  AppStrings.totalBeforeTax.tr(),
-                  style: TextStyles.customStyle(
-                    fontSize: 13,
-                    color: Colors.white.withValues(alpha: 0.8),
-                  ),
-                ),
-                Text(
-                  '${beforeTax.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-                  style: TextStyles.customStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white.withValues(alpha: 0.8),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${AppStrings.vatAmount.tr()} (${taxRate.toSmartAmount()}%)',
-                  style: TextStyles.customStyle(
-                    fontSize: 13,
-                    color: Colors.yellowAccent.withValues(alpha: 0.9),
-                  ),
-                ),
-                Text(
-                  '${taxAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-                  style: TextStyles.customStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.yellowAccent,
-                  ),
-                ),
-              ],
-            ),
-            const Divider(color: Colors.white24, height: 16),
-          ],
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                hasTax
-                    ? AppStrings.totalAfterTax.tr()
-                    : (isQuotation
-                          ? AppStrings.quotationTotal.tr()
-                          : AppStrings.invoiceGrandTotal.tr()),
-                style: TextStyles.customStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-              Text(
-                '${grandTotal.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-                style: TextStyles.customStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }
