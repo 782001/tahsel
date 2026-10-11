@@ -926,11 +926,12 @@ class _ReportsViewState extends State<ReportsView> {
         return (start: DateTime(now.year, now.month, 1), end: now);
       case 3:
         // All time: rely first on account creation date, fallback to 1800-01-01
-        final creationTime =
-            FirebaseAuth.instance.currentUser?.metadata.creationTime;
-        final startDate = creationTime != null
-            ? DateTime(creationTime.year, creationTime.month, creationTime.day)
-            : DateTime(1800, 1, 1);
+        // final creationTime =
+        //     FirebaseAuth.instance.currentUser?.metadata.creationTime;
+        // final startDate = creationTime != null
+        //     ? DateTime(creationTime.year, creationTime.month, creationTime.day)
+        //     : DateTime(1800, 1, 1);
+        final startDate = DateTime(1900, 1, 1);
         return (start: startDate, end: now);
       default:
         return (start: DateTime(now.year, now.month, now.day), end: now);

@@ -232,6 +232,7 @@ class EmployeeActivityExportService {
             onTap: () async {
               final finalActivities = await resolveActivitiesToExport(context);
               if (context.mounted) {
+                final isArabic = AppStrings.currentLang == AppStrings.arabicCode;
                 exportPdf(
                   context,
                   title: title,
@@ -240,6 +241,7 @@ class EmployeeActivityExportService {
                   activities: finalActivities,
                   stats: stats,
                   dateRange: dateRange,
+                  isArabic: isArabic,
                 );
               }
             },
@@ -325,7 +327,10 @@ class EmployeeActivityExportService {
     required List<EmployeeActivityEntity> activities,
     required EmployeeActivityStats stats,
     DateTimeRange? dateRange,
+    bool? isArabic,
   }) async {
+    final effectiveIsArabic =
+        isArabic ?? (AppStrings.currentLang == AppStrings.arabicCode);
     final currency = CurrencyService.instance.currentSymbol;
     final nowStr = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
     final filename = 'Tahsel_Activity_$nowStr.pdf';
@@ -341,6 +346,7 @@ class EmployeeActivityExportService {
         stats: stats,
         currency: currency,
         dateRange: dateRange,
+        isArabic: effectiveIsArabic,
       ),
       pdfFileName: filename,
     );
@@ -354,6 +360,7 @@ class EmployeeActivityExportService {
     required EmployeeActivityStats stats,
     required String currency,
     DateTimeRange? dateRange,
+    required bool isArabic,
   }) async {
     final pdf = pw.Document();
     final ttfRegular = await PdfAssetCache.getRegularFont();
@@ -370,7 +377,7 @@ class EmployeeActivityExportService {
             bold: ttfBold,
             fontFallback: PdfAssetCache.getFallbackFonts(),
           ),
-          textDirection: pw.TextDirection.rtl,
+          textDirection: isArabic ? pw.TextDirection.rtl : pw.TextDirection.ltr,
           margin: const pw.EdgeInsets.all(24),
         ),
         header: (context) => _buildPdfHeader(
@@ -379,6 +386,7 @@ class EmployeeActivityExportService {
           title: title,
           subtitle: subtitle,
           dateRange: dateRange,
+          isArabic: isArabic,
         ),
         footer: (context) => _buildPdfFooter(context),
         build: (context) {
@@ -396,7 +404,7 @@ class EmployeeActivityExportService {
           content.add(pw.SizedBox(height: 14));
 
           // 3. Activities Detailed Table
-          content.add(_buildPdfActivitiesTable(activities, currency));
+          content.add(_buildPdfActivitiesTable(activities, currency, isArabic));
 
           return content;
         },
@@ -412,17 +420,20 @@ class EmployeeActivityExportService {
     required String title,
     String? subtitle,
     DateTimeRange? dateRange,
+    required bool isArabic,
   }) {
     final nowFormatted = DateFormat('yyyy/MM/dd HH:mm').format(DateTime.now());
     final periodText = dateRange != null
-        ? '${DateFormat('yyyy/MM/dd').format(dateRange.start)} إلى ${DateFormat('yyyy/MM/dd').format(dateRange.end)}'
+        ? (isArabic
+            ? '${DateFormat('yyyy/MM/dd').format(dateRange.start)} إلى ${DateFormat('yyyy/MM/dd').format(dateRange.end)}'
+            : '${DateFormat('yyyy/MM/dd').format(dateRange.start)} - ${DateFormat('yyyy/MM/dd').format(dateRange.end)}')
         : AppStrings.allTime.tr();
 
     final businessName = (profile?.projectName.isNotEmpty == true)
         ? profile!.projectName
         : ((profile?.fullName.isNotEmpty == true)
               ? profile!.fullName
-              : 'تطبيق تحصيل');
+              : (isArabic ? 'تطبيق تحصيل' : 'Tahsel App'));
 
     return pw.Container(
       padding: const pw.EdgeInsets.only(bottom: 12),
@@ -673,6 +684,7 @@ class EmployeeActivityExportService {
   static pw.Widget _buildPdfActivitiesTable(
     List<EmployeeActivityEntity> activities,
     String currency,
+    bool isArabic,
   ) {
     final headers = [
       '#',
@@ -685,7 +697,146 @@ class EmployeeActivityExportService {
       AppStrings.syncTypeHeader.tr(),
     ];
 
-    return pw.Table(
+    final headerRow = pw.TableRow(
+      decoration: const pw.BoxDecoration(color: _primaryColor),
+      children: headers.map((h) {
+        return pw.Padding(
+          padding: const pw.EdgeInsets.symmetric(
+            horizontal: 4,
+            vertical: 5,
+          ),
+          child: pw.Center(
+            child: pw.Text(
+              h,
+              style: pw.TextStyle(
+                fontSize: 8.5,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.white,
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+
+    final dataRows = activities.asMap().entries.map((entry) {
+      final i = entry.key;
+      final act = entry.value;
+      final isEven = i % 2 == 0;
+      final dtStr = DateFormat('yyyy-MM-dd HH:mm').format(act.timestamp);
+      final amtStr = act.amount != null && act.amount! > 0
+          ? '${act.amount!.toSmartAmount()} $currency'
+          : '-';
+
+      return pw.TableRow(
+        decoration: pw.BoxDecoration(
+          color: isEven ? PdfColors.white : _neutralLight,
+        ),
+        children: [
+          pw.Padding(
+            padding: const pw.EdgeInsets.all(4),
+            child: pw.Center(
+              child: pw.Text(
+                '${i + 1}',
+                style: const pw.TextStyle(fontSize: 8),
+              ),
+            ),
+          ),
+          pw.Padding(
+            padding: const pw.EdgeInsets.all(4),
+            child: pw.Center(
+              child: pw.Text(
+                dtStr,
+                style: const pw.TextStyle(fontSize: 7.5),
+              ),
+            ),
+          ),
+          pw.Padding(
+            padding: const pw.EdgeInsets.all(4),
+            child: pw.Align(
+              alignment:
+                  isArabic ? pw.Alignment.centerRight : pw.Alignment.centerLeft,
+              child: pw.Text(
+                act.employeeName.cleanForPdf(),
+                textAlign: isArabic ? pw.TextAlign.right : pw.TextAlign.left,
+                style: pw.TextStyle(
+                  fontSize: 8,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+                overflow: pw.TextOverflow.clip,
+              ),
+            ),
+          ),
+          pw.Padding(
+            padding: const pw.EdgeInsets.all(4),
+            child: pw.Center(
+              child: pw.Text(
+                _getCategoryLabel(act.actionCategory).cleanForPdf(),
+                style: const pw.TextStyle(fontSize: 7.5),
+              ),
+            ),
+          ),
+          pw.Padding(
+            padding: const pw.EdgeInsets.all(4),
+            child: pw.Align(
+              alignment:
+                  isArabic ? pw.Alignment.centerRight : pw.Alignment.centerLeft,
+              child: pw.Text(
+                act.actionTitle.cleanForPdf(),
+                textAlign: isArabic ? pw.TextAlign.right : pw.TextAlign.left,
+                style: pw.TextStyle(
+                  fontSize: 8,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          pw.Padding(
+            padding: const pw.EdgeInsets.all(4),
+            child: pw.Center(
+              child: pw.Text(
+                amtStr.cleanForPdf(),
+                style: const pw.TextStyle(fontSize: 7.5),
+              ),
+            ),
+          ),
+          pw.Padding(
+            padding: const pw.EdgeInsets.all(4),
+            child: pw.Align(
+              alignment:
+                  isArabic ? pw.Alignment.centerRight : pw.Alignment.centerLeft,
+              child: pw.Text(
+                act.details.cleanForPdf(),
+                textAlign: isArabic ? pw.TextAlign.right : pw.TextAlign.left,
+                style: const pw.TextStyle(fontSize: 7.5),
+              ),
+            ),
+          ),
+          pw.Padding(
+            padding: const pw.EdgeInsets.all(4),
+            child: pw.Center(
+              child: pw.Text(
+                act.isOfflineSync
+                    ? AppStrings.offlineSynced.tr()
+                    : AppStrings.directOnline.tr(),
+                style: pw.TextStyle(
+                  fontSize: 7,
+                  color: act.isOfflineSync
+                      ? _secondaryColor
+                      : _neutralMuted,
+                  fontWeight: act.isOfflineSync
+                      ? pw.FontWeight.bold
+                      : pw.FontWeight.normal,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }).toList();
+
+    return PdfAssetCache.buildDirectionalTable(
+      isArabic: isArabic,
       border: pw.TableBorder.all(color: _border, width: 0.5),
       columnWidths: const {
         0: pw.FixedColumnWidth(22),
@@ -697,128 +848,9 @@ class EmployeeActivityExportService {
         6: pw.FlexColumnWidth(2.5),
         7: pw.FixedColumnWidth(42),
       },
-      children: [
-        pw.TableRow(
-          decoration: const pw.BoxDecoration(color: _primaryColor),
-          children: headers.map((h) {
-            return pw.Padding(
-              padding: const pw.EdgeInsets.symmetric(
-                horizontal: 4,
-                vertical: 5,
-              ),
-              child: pw.Center(
-                child: pw.Text(
-                  h,
-                  style: pw.TextStyle(
-                    fontSize: 8.5,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.white,
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-        ...activities.asMap().entries.map((entry) {
-          final i = entry.key;
-          final act = entry.value;
-          final isEven = i % 2 == 0;
-          final dtStr = DateFormat('yyyy-MM-dd HH:mm').format(act.timestamp);
-          final amtStr = act.amount != null && act.amount! > 0
-              ? '${act.amount!.toSmartAmount()} $currency'
-              : '-';
-
-          return pw.TableRow(
-            decoration: pw.BoxDecoration(
-              color: isEven ? PdfColors.white : _neutralLight,
-            ),
-            children: [
-              pw.Padding(
-                padding: const pw.EdgeInsets.all(4),
-                child: pw.Center(
-                  child: pw.Text(
-                    '${i + 1}',
-                    style: const pw.TextStyle(fontSize: 8),
-                  ),
-                ),
-              ),
-              pw.Padding(
-                padding: const pw.EdgeInsets.all(4),
-                child: pw.Center(
-                  child: pw.Text(
-                    dtStr,
-                    style: const pw.TextStyle(fontSize: 7.5),
-                  ),
-                ),
-              ),
-              pw.Padding(
-                padding: const pw.EdgeInsets.all(4),
-                child: pw.Text(
-                  act.employeeName.cleanForPdf(),
-                  style: pw.TextStyle(
-                    fontSize: 8,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                  overflow: pw.TextOverflow.clip,
-                ),
-              ),
-              pw.Padding(
-                padding: const pw.EdgeInsets.all(4),
-                child: pw.Center(
-                  child: pw.Text(
-                    _getCategoryLabel(act.actionCategory).cleanForPdf(),
-                    style: const pw.TextStyle(fontSize: 7.5),
-                  ),
-                ),
-              ),
-              pw.Padding(
-                padding: const pw.EdgeInsets.all(4),
-                child: pw.Text(
-                  act.actionTitle.cleanForPdf(),
-                  style: pw.TextStyle(
-                    fontSize: 8,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
-              ),
-              pw.Padding(
-                padding: const pw.EdgeInsets.all(4),
-                child: pw.Center(
-                  child: pw.Text(
-                    amtStr.cleanForPdf(),
-                    style: const pw.TextStyle(fontSize: 7.5),
-                  ),
-                ),
-              ),
-              pw.Padding(
-                padding: const pw.EdgeInsets.all(4),
-                child: pw.Text(
-                  act.details.cleanForPdf(),
-                  style: const pw.TextStyle(fontSize: 7.5),
-                ),
-              ),
-              pw.Padding(
-                padding: const pw.EdgeInsets.all(4),
-                child: pw.Center(
-                  child: pw.Text(
-                    act.isOfflineSync
-                        ? AppStrings.offlineSynced.tr()
-                        : AppStrings.directOnline.tr(),
-                    style: pw.TextStyle(
-                      fontSize: 7,
-                      color: act.isOfflineSync
-                          ? _secondaryColor
-                          : _neutralMuted,
-                      fontWeight: act.isOfflineSync
-                          ? pw.FontWeight.bold
-                          : pw.FontWeight.normal,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        }),
+      rows: [
+        headerRow,
+        ...dataRows,
       ],
     );
   }

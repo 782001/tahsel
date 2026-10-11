@@ -695,7 +695,8 @@ class CustodyStatementPdfExporter {
           ),
         ),
         pw.SizedBox(height: 8),
-        pw.Table(
+        PdfAssetCache.buildDirectionalTable(
+          isArabic: isArabic,
           border: pw.TableBorder.all(color: _border, width: 0.8),
           columnWidths: {
             0: const pw.FixedColumnWidth(24),
@@ -705,7 +706,7 @@ class CustodyStatementPdfExporter {
             4: const pw.FixedColumnWidth(65),
             5: const pw.FixedColumnWidth(65),
           },
-          children: [
+          rows: [
             // Header Row
             pw.TableRow(
               decoration: const pw.BoxDecoration(color: _navyPrimary),

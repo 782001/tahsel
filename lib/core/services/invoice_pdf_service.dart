@@ -583,7 +583,8 @@ class InvoicePdfService {
     final hasTax = effectiveTaxRate > 0;
 
     if (hasTax) {
-      return pw.Table(
+      return PdfAssetCache.buildDirectionalTable(
+        isArabic: isArabic,
         border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.8),
         columnWidths: {
           0: const pw.FlexColumnWidth(0.6), // #
@@ -596,7 +597,7 @@ class InvoicePdfService {
           7: const pw.FlexColumnWidth(1.2), // Tax
           8: const pw.FlexColumnWidth(1.6), // Total After Tax
         },
-        children: [
+        rows: [
           // Header
           pw.TableRow(
             decoration: const pw.BoxDecoration(color: _primary),
@@ -697,7 +698,8 @@ class InvoicePdfService {
       );
     }
 
-    return pw.Table(
+    return PdfAssetCache.buildDirectionalTable(
+      isArabic: isArabic,
       border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.8),
       columnWidths: {
         0: const pw.FlexColumnWidth(0.7), // #
@@ -708,7 +710,7 @@ class InvoicePdfService {
         5: const pw.FlexColumnWidth(1.3), // Discount
         6: const pw.FlexColumnWidth(1.7), // Total
       },
-      children: [
+      rows: [
         // Header
         pw.TableRow(
           decoration: const pw.BoxDecoration(color: _primary),
@@ -1040,10 +1042,11 @@ class InvoicePdfService {
       }
     }
 
-    final summaryTable = pw.Table(
+    final summaryTable = PdfAssetCache.buildDirectionalTable(
+      isArabic: isArabic,
       border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.8),
       columnWidths: columnWidths,
-      children: [
+      rows: [
         // Header
         pw.TableRow(
           decoration: const pw.BoxDecoration(color: _primary),
@@ -1826,7 +1829,8 @@ class InvoicePdfService {
     final hasTax = effectiveTaxRate > 0;
 
     if (hasTax) {
-      return pw.Table(
+      return PdfAssetCache.buildDirectionalTable(
+        isArabic: isArabic,
         border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.8),
         columnWidths: {
           0: const pw.FlexColumnWidth(0.6), // #
@@ -1838,7 +1842,7 @@ class InvoicePdfService {
           6: const pw.FlexColumnWidth(1.2), // Tax
           7: const pw.FlexColumnWidth(1.6), // Total After Tax
         },
-        children: [
+        rows: [
           // Header
           pw.TableRow(
             decoration: const pw.BoxDecoration(color: _purchasePrimary),
@@ -1929,7 +1933,8 @@ class InvoicePdfService {
       );
     }
 
-    return pw.Table(
+    return PdfAssetCache.buildDirectionalTable(
+      isArabic: isArabic,
       border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.8),
       columnWidths: {
         0: const pw.FlexColumnWidth(0.7), // #
@@ -1939,7 +1944,7 @@ class InvoicePdfService {
         4: const pw.FlexColumnWidth(1.7), // Purchase Price
         5: const pw.FlexColumnWidth(1.9), // Total Price
       },
-      children: [
+      rows: [
         // Header
         pw.TableRow(
           decoration: const pw.BoxDecoration(color: _purchasePrimary),
@@ -2093,10 +2098,11 @@ class InvoicePdfService {
       }
     }
 
-    final summaryTable = pw.Table(
+    final summaryTable = PdfAssetCache.buildDirectionalTable(
+      isArabic: isArabic,
       border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.8),
       columnWidths: columnWidths,
-      children: [
+      rows: [
         // Header
         pw.TableRow(
           decoration: const pw.BoxDecoration(color: _purchasePrimary),

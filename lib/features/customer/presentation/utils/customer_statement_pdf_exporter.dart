@@ -495,9 +495,7 @@ class CustomerStatementPdfExporter {
               ),
               // Document title & date
               pw.Column(
-                crossAxisAlignment: isArabic
-                    ? pw.CrossAxisAlignment.start
-                    : pw.CrossAxisAlignment.end,
+                crossAxisAlignment: pw.CrossAxisAlignment.end,
                 children: [
                   pw.Container(
                     padding: const pw.EdgeInsets.symmetric(
@@ -802,8 +800,9 @@ class CustomerStatementPdfExporter {
               AppStrings.openingBalance.tr(),
               isBold: true,
               color: _neutralDark,
+              isArabic: isArabic,
             ),
-            _tableCell(AppStrings.openingBalance.tr()),
+            _tableCell(AppStrings.openingBalance.tr(), isArabic: isArabic),
             _tableCell(
               openingBalance > 0 ? openingBalance.toSmartAmount() : '-',
               align: pw.Alignment.center,
@@ -857,11 +856,12 @@ class CustomerStatementPdfExporter {
             _tableCell(
               typeLabel,
               isBold: true,
+              align: pw.Alignment.center,
               color: isSettlement
                   ? PdfColors.amber800
                   : (isPayment ? _creditGreen : _primaryDark),
             ),
-            _tableCell(detailsStr),
+            _tableCell(detailsStr, isArabic: isArabic),
             _tableCell(
               debitStr,
               align: pw.Alignment.center,
@@ -915,26 +915,37 @@ class CustomerStatementPdfExporter {
             6: pw.FlexColumnWidth(1.5),
           };
 
-    return pw.Table(
+    return PdfAssetCache.buildDirectionalTable(
+      isArabic: isArabic,
       border: pw.TableBorder.all(color: _border, width: 0.5),
       columnWidths: columnWidths,
-      children: tableRows,
+      rows: tableRows,
     );
   }
 
   static pw.Widget _tableCell(
     String text, {
-    pw.Alignment align = pw.Alignment.centerLeft,
+    pw.Alignment? align,
     bool isBold = false,
     PdfColor color = _neutralDark,
+    bool isArabic = true,
   }) {
+    final effectiveAlign = align ??
+        (isArabic ? pw.Alignment.centerRight : pw.Alignment.centerLeft);
     return pw.Container(
       padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 4.5),
-      alignment: align,
+      alignment: effectiveAlign,
       child: pw.Text(
         text.cleanForPdf(),
         maxLines: 2,
         overflow: pw.TextOverflow.clip,
+        textAlign: align != null
+            ? (align == pw.Alignment.center
+                ? pw.TextAlign.center
+                : align == pw.Alignment.centerRight
+                    ? pw.TextAlign.right
+                    : pw.TextAlign.left)
+            : (isArabic ? pw.TextAlign.right : pw.TextAlign.left),
         style: pw.TextStyle(
           fontSize: 8,
           fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,

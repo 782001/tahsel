@@ -448,7 +448,8 @@ class VaultPdfExporter {
             'Outflow (-)',
           ];
 
-    return pw.Table(
+    return PdfAssetCache.buildDirectionalTable(
+      isArabic: isArabic,
       border: pw.TableBorder.all(color: _border, width: 0.5),
       columnWidths: {
         0: const pw.FixedColumnWidth(26),
@@ -458,7 +459,7 @@ class VaultPdfExporter {
         4: const pw.FixedColumnWidth(70),
         5: const pw.FixedColumnWidth(70),
       },
-      children: [
+      rows: [
         // Header Row
         pw.TableRow(
           decoration: const pw.BoxDecoration(color: _emeraldLight),

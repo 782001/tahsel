@@ -50,4 +50,74 @@ class PdfAssetCache {
     } catch (_) {}
     return _logoImage;
   }
+
+  /// Builds a [pw.Table] that aligns columns correctly according to text direction.
+  /// When [isArabic] is true, columns are laid out Right-to-Left (column 0 on the far right).
+  /// When [isArabic] is false, columns are laid out Left-to-Right (column 0 on the far left).
+  static pw.Table buildDirectionalTable({
+    required bool isArabic,
+    required List<pw.TableRow> rows,
+    Map<int, pw.TableColumnWidth>? columnWidths,
+    pw.TableBorder? border,
+    pw.TableCellVerticalAlignment defaultVerticalAlignment =
+        pw.TableCellVerticalAlignment.top,
+    pw.TableColumnWidth defaultColumnWidth = const pw.IntrinsicColumnWidth(),
+    pw.TableWidth tableWidth = pw.TableWidth.max,
+  }) {
+    if (!isArabic) {
+      return pw.Table(
+        children: rows,
+        columnWidths: columnWidths,
+        border: border,
+        defaultVerticalAlignment: defaultVerticalAlignment,
+        defaultColumnWidth: defaultColumnWidth,
+        tableWidth: tableWidth,
+      );
+    }
+
+    // Determine max columns across all rows to properly map column widths
+    int maxCols = 0;
+    for (final row in rows) {
+      if (row.children.length > maxCols) {
+        maxCols = row.children.length;
+      }
+    }
+    if (columnWidths != null && columnWidths.isNotEmpty) {
+      for (final key in columnWidths.keys) {
+        if (key + 1 > maxCols) {
+          maxCols = key + 1;
+        }
+      }
+    }
+
+    final reversedRows = rows.map((row) {
+      return pw.TableRow(
+        children: row.children.reversed.toList(),
+        repeat: row.repeat,
+        verticalAlignment: row.verticalAlignment,
+        decoration: row.decoration,
+      );
+    }).toList();
+
+    Map<int, pw.TableColumnWidth>? reversedWidths;
+    if (columnWidths != null && maxCols > 0) {
+      reversedWidths = {};
+      for (final entry in columnWidths.entries) {
+        final reversedIndex = maxCols - 1 - entry.key;
+        if (reversedIndex >= 0) {
+          reversedWidths[reversedIndex] = entry.value;
+        }
+      }
+    }
+
+    return pw.Table(
+      children: reversedRows,
+      columnWidths: reversedWidths,
+      border: border,
+      defaultVerticalAlignment: defaultVerticalAlignment,
+      defaultColumnWidth: defaultColumnWidth,
+      tableWidth: tableWidth,
+    );
+  }
 }
+
