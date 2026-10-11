@@ -15,9 +15,9 @@ extension NumberExtensions on num {
   /// - Compact if very large (e.g. 1.2M)
   /// - Fixed decimals if small
   String toSmartAmount({int decimalDigits = 1}) {
-    if (this >= 1000000 || this <= -1000000) {
-      return NumberFormat.compact().format(this);
-    }
+    // if (this >= 1000000 || this <= -1000000) {
+    //   return NumberFormat.compact().format(this);
+    // }
 
     final formatted = toStringAsFixed(decimalDigits);
 
