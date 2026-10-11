@@ -783,7 +783,7 @@ class InvoicePdfService {
     double fontSize = 10,
   }) {
     return pw.Padding(
-      padding: const pw.EdgeInsets.symmetric(vertical: 5, horizontal: 3),
+      padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 2),
       child: pw.Text(
         text.cleanForPdf(),
         style: pw.TextStyle(
@@ -792,6 +792,7 @@ class InvoicePdfService {
           fontSize: fontSize,
         ),
         textAlign: align,
+        maxLines: 2,
       ),
     );
   }
@@ -1020,9 +1021,9 @@ class InvoicePdfService {
           _buildTableCell("${invoice.totalPaid.toSmartAmount()} $currency", isBold: true, color: _success, fontSize: 9.5),
           _buildTableCell("${invoice.remainingAmount.toSmartAmount()} $currency", isBold: true, color: invoice.remainingAmount <= 0.01 ? _success : _error, fontSize: 9.5),
         ]);
-        columnWidths[0] = const pw.FlexColumnWidth(1.2);
-        columnWidths[1] = const pw.FlexColumnWidth(1.1);
-        columnWidths[2] = const pw.FlexColumnWidth(1.3);
+        columnWidths[0] = const pw.FlexColumnWidth(1.35); // قبل الخصم
+        columnWidths[1] = const pw.FlexColumnWidth(1.05); // الخصم
+        columnWidths[2] = const pw.FlexColumnWidth(1.45); // الصافي الإجمالي
         columnWidths[3] = const pw.FlexColumnWidth(1.1);
         columnWidths[4] = const pw.FlexColumnWidth(1.1);
       } else {
@@ -1036,7 +1037,7 @@ class InvoicePdfService {
           _buildTableCell("${invoice.totalPaid.toSmartAmount()} $currency", isBold: true, color: _success, fontSize: 10),
           _buildTableCell("${invoice.remainingAmount.toSmartAmount()} $currency", isBold: true, color: invoice.remainingAmount <= 0.01 ? _success : _error, fontSize: 10),
         ]);
-        columnWidths[0] = const pw.FlexColumnWidth(1.3);
+        columnWidths[0] = const pw.FlexColumnWidth(1.4);
         columnWidths[1] = const pw.FlexColumnWidth(1.1);
         columnWidths[2] = const pw.FlexColumnWidth(1.1);
       }
@@ -1052,7 +1053,14 @@ class InvoicePdfService {
           decoration: const pw.BoxDecoration(color: _primary),
           children: [
             for (final h in headers)
-              _buildTableHeader(h, fontSize: headers.length >= 7 ? 8 : 8.5),
+              _buildTableHeader(
+                h,
+                fontSize: headers.length >= 7
+                    ? 7.5
+                    : headers.length >= 5
+                        ? 8
+                        : 8.5,
+              ),
           ],
         ),
         // Values row
@@ -2108,7 +2116,14 @@ class InvoicePdfService {
           decoration: const pw.BoxDecoration(color: _purchasePrimary),
           children: [
             for (final h in headers)
-              _buildTableHeader(h, fontSize: headers.length >= 5 ? 8.5 : 9),
+              _buildTableHeader(
+                h,
+                fontSize: headers.length >= 7
+                    ? 7.5
+                    : headers.length >= 5
+                        ? 8
+                        : 8.5,
+              ),
           ],
         ),
         // Values row

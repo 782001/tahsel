@@ -62,36 +62,94 @@ extension StringExtensions on String {
     return formattedPhone;
   }
 
-  /// Cleans emojis and maps unsupported symbols (like multiplication ×) to safe ASCII
-  /// equivalents to avoid PDF font missing glyph exceptions (e.g. U+00D7)
+  /// Cleans emojis, removes Arabic diacritics/tatweel, normalizes Arabic/Persian letters,
+  /// maps unsupported symbols (like multiplication ×, curly quotes, dashes) to safe equivalents
+  /// and strips invisible control characters to avoid PDF font missing glyph exceptions or broken shaping.
   String cleanForPdf([String defaultValue = '']) {
     if (trim().isEmpty) return defaultValue;
 
-    // 1. Map mathematical and special typography symbols to safe ASCII equivalents
-    var processed = replaceAll('×', 'x')
+    var text = this;
+
+    // 1. Remove invisible, control, and bidi override characters
+    text = text
+        .replaceAll('\u200B', '') // Zero-width space
+        .replaceAll('\u200C', '') // Zero-width non-joiner
+        .replaceAll('\u200D', '') // Zero-width joiner
+        .replaceAll('\uFEFF', '') // Zero-width no-break space (BOM)
+        .replaceAll('\u200E', '') // LRM
+        .replaceAll('\u200F', '') // RLM
+        .replaceAll('\u202A', '') // LRE
+        .replaceAll('\u202B', '') // RLE
+        .replaceAll('\u202C', '') // PDF
+        .replaceAll('\u202D', '') // LRO
+        .replaceAll('\u202E', '') // RLO
+        .replaceAll('\u2060', '') // Word joiner
+        .replaceAll('\u00AD', '') // Soft hyphen
+        .replaceAll('\u00A0', ' '); // Non-breaking space
+
+    // 2. Normalize smart quotes, dashes, symbols and typography
+    text = text
+        .replaceAll('«', '"')
+        .replaceAll('»', '"')
+        .replaceAll('“', '"')
+        .replaceAll('”', '"')
+        .replaceAll('‘', "'")
+        .replaceAll('’', "'")
+        .replaceAll('–', '-') // En-dash
+        .replaceAll('—', '-') // Em-dash
+        .replaceAll('−', '-') // Minus sign
+        .replaceAll('…', '...')
+        .replaceAll('×', 'x')
         .replaceAll('✕', 'x')
         .replaceAll('✖', 'x')
         .replaceAll('⨉', 'x')
         .replaceAll('÷', '/')
-        .replaceAll('−', '-')
-        .replaceAll('–', '-')
-        .replaceAll('—', '-')
         .replaceAll('•', '-')
-        .replaceAll('…', '...')
-        .replaceAll('’', "'")
-        .replaceAll('‘', "'")
-        .replaceAll('”', '"')
-        .replaceAll('“', '"')
-        .replaceAll('\u00A0', ' ')
-        .replaceAll('\u200E', '')
-        .replaceAll('\u200F', '')
-        .replaceAll('\u202A', '')
-        .replaceAll('\u202B', '')
-        .replaceAll('\u202C', '')
-        .replaceAll('\u202D', '')
-        .replaceAll('\u202E', '');
+        .replaceAll('▪', '-')
+        .replaceAll('▫', '-')
+        .replaceAll('◦', '-')
+        .replaceAll('●', '-')
+        .replaceAll('★', '')
+        .replaceAll('☆', '')
+        .replaceAll('✓', '')
+        .replaceAll('✔', '');
 
-    // 2. Filter emojis and unsupported symbol ranges
+    // 3. Remove Arabic diacritics (tashkeel) and tatweel (kashida)
+    // DGAgnadeen font lacks glyphs for tashkeel and tatweel causes broken widths
+    final diacriticsPattern = RegExp(
+      r'[\u064B-\u065F\u0670\u0640\uFC5E-\uFC63]',
+    );
+    text = text.replaceAll(diacriticsPattern, '');
+
+    // 4. Normalize Persian / Urdu characters to standard Arabic
+    text = text
+        .replaceAll('ی', 'ي') // Farsi Yeh (U+06CC)
+        .replaceAll('ے', 'ي') // Urdu Yeh Barree (U+06D2)
+        .replaceAll('ۓ', 'ي') // Urdu Yeh Barree with Hamza (U+06D3)
+        .replaceAll('ک', 'ك') // Farsi Keheh (U+06A9)
+        .replaceAll('گ', 'ك') // Farsi Gaf (U+06AF)
+        .replaceAll('پ', 'ب') // Farsi Peh (U+067E)
+        .replaceAll('چ', 'ج') // Farsi Tcheh (U+0686)
+        .replaceAll('ژ', 'ز') // Farsi Jeh (U+0698)
+        .replaceAll('ہ', 'ه') // Urdu Heh Goal (U+06C1)
+        .replaceAll('ھ', 'ه') // Urdu Heh Doachashmee (U+06BE)
+        .replaceAll('ە', 'ه') // Kurdish Ae / Heh (U+06D5)
+        .replaceAll('ٱ', 'ا'); // Alef Wasla (U+0671)
+
+    // 5. Normalize Persian / Urdu digits (U+06F0 - U+06F9) to standard Arabic-Indic digits
+    text = text
+        .replaceAll('۰', '٠')
+        .replaceAll('۱', '١')
+        .replaceAll('۲', '٢')
+        .replaceAll('۳', '٣')
+        .replaceAll('۴', '٤')
+        .replaceAll('۵', '٥')
+        .replaceAll('۶', '٦')
+        .replaceAll('۷', '٧')
+        .replaceAll('۸', '٨')
+        .replaceAll('۹', '٩');
+
+    // 6. Comprehensive Emoji and pictographs removal
     final emojiPattern = RegExp(
       r'[\u{1F600}-\u{1F64F}'
       r'|\u{1F300}-\u{1F5FF}'
@@ -106,10 +164,55 @@ extension StringExtensions on String {
       r'|\u{2700}-\u{27BF}'
       r'|\u{FE00}-\u{FE0F}'
       r'|\u{1F1E6}-\u{1F1FF}'
+      r'|\u{E0020}-\u{E007F}'
       r']+',
       unicode: true,
     );
-    final cleaned = processed.replaceAll(emojiPattern, '').trim();
+    final cleaned = text.replaceAll(emojiPattern, '').trim();
+    return cleaned.isEmpty ? defaultValue : cleaned;
+  }
+
+  /// Cleans and normalizes text for safe UI display (normalizing keyboards & control chars)
+  String cleanForDisplay([String defaultValue = '']) {
+    if (trim().isEmpty) return defaultValue;
+
+    var text = this;
+    text = text
+        .replaceAll('\u200B', '')
+        .replaceAll('\u200C', '')
+        .replaceAll('\u200D', '')
+        .replaceAll('\uFEFF', '')
+        .replaceAll('\u200E', '')
+        .replaceAll('\u200F', '')
+        .replaceAll('\u202A', '')
+        .replaceAll('\u202B', '')
+        .replaceAll('\u202C', '')
+        .replaceAll('\u202D', '')
+        .replaceAll('\u202E', '')
+        .replaceAll('\u2060', '')
+        .replaceAll('\u00AD', '')
+        .replaceAll('\u00A0', ' ')
+        .replaceAll('ی', 'ي')
+        .replaceAll('ک', 'ك')
+        .replaceAll('گ', 'ك')
+        .replaceAll('پ', 'ب')
+        .replaceAll('چ', 'ج')
+        .replaceAll('ژ', 'ز')
+        .replaceAll('ہ', 'ه')
+        .replaceAll('ھ', 'ه')
+        .replaceAll('ە', 'ه')
+        .replaceAll('ٱ', 'ا')
+        .replaceAll('«', '"')
+        .replaceAll('»', '"')
+        .replaceAll('“', '"')
+        .replaceAll('”', '"')
+        .replaceAll('‘', "'")
+        .replaceAll('’', "'")
+        .replaceAll('–', '-')
+        .replaceAll('—', '-')
+        .replaceAll('−', '-');
+
+    final cleaned = text.trim();
     return cleaned.isEmpty ? defaultValue : cleaned;
   }
 }
@@ -127,5 +230,11 @@ extension NullableStringExtensions on String? {
   String cleanForPdf([String defaultValue = '']) {
     if (this == null || this!.trim().isEmpty) return defaultValue;
     return this!.cleanForPdf(defaultValue);
+  }
+
+  /// Safely cleans and normalizes nullable string for UI display
+  String cleanForDisplay([String defaultValue = '']) {
+    if (this == null || this!.trim().isEmpty) return defaultValue;
+    return this!.cleanForDisplay(defaultValue);
   }
 }

@@ -675,7 +675,7 @@ class ReceiptImageService {
       textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
       textAlign: TextAlign.center,
       text: TextSpan(
-        text: text,
+        text: text.cleanForDisplay(),
         style: TextStyle(
           color: color,
           fontSize: size,
