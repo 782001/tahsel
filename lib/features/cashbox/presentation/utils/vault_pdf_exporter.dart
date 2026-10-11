@@ -246,8 +246,8 @@ class VaultPdfExporter {
             children: [
               if (logoImage != null)
                 pw.Container(
-                  width: 46,
-                  height: 46,
+                  width: 65,
+                  height: 65,
                   margin: pw.EdgeInsets.only(
                     left: isArabic ? 12 : 0,
                     right: isArabic ? 0 : 12,

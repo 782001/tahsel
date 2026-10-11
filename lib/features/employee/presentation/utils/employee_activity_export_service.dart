@@ -524,7 +524,11 @@ class EmployeeActivityExportService {
             ),
           ),
           if (logoImage != null)
-            pw.Container(width: 52, height: 52, child: pw.Image(logoImage)),
+            pw.Container(
+              width: 70,
+              height: 70,
+              child: pw.Image(logoImage, fit: pw.BoxFit.contain),
+            ),
         ],
       ),
     );

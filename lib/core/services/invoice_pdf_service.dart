@@ -344,9 +344,8 @@ class InvoicePdfService {
                 ],
                 if (logoImage != null)
                   pw.Container(
-                    height: 50,
-                    constraints: const pw.BoxConstraints(maxWidth: 100),
-                    decoration: const pw.BoxDecoration(color: PdfColors.white),
+                    height: 75,
+                    constraints: const pw.BoxConstraints(maxWidth: 160),
                     alignment: pw.Alignment.center,
                     child: pw.Image(logoImage, fit: pw.BoxFit.contain),
                   ),
@@ -1537,9 +1536,8 @@ class InvoicePdfService {
                 ],
                 if (logoImage != null)
                   pw.Container(
-                    height: 50,
-                    constraints: const pw.BoxConstraints(maxWidth: 100),
-                    decoration: const pw.BoxDecoration(color: PdfColors.white),
+                    height: 75,
+                    constraints: const pw.BoxConstraints(maxWidth: 160),
                     alignment: pw.Alignment.center,
                     child: pw.Image(logoImage, fit: pw.BoxFit.contain),
                   ),

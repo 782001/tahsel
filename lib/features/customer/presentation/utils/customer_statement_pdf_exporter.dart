@@ -451,11 +451,11 @@ class CustomerStatementPdfExporter {
                 children: [
                   if (logoImage != null)
                     pw.Container(
-                      width: 44,
-                      height: 44,
+                      width: 65,
+                      height: 65,
                       margin: pw.EdgeInsets.only(
-                        left: isArabic ? 10 : 0,
-                        right: isArabic ? 0 : 10,
+                        left: isArabic ? 12 : 0,
+                        right: isArabic ? 0 : 12,
                       ),
                       child: pw.Image(logoImage, fit: pw.BoxFit.contain),
                     ),
