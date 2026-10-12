@@ -1201,6 +1201,7 @@ class AppStrings {
   static const String selectProductAndQty = "select_product_and_qty";
   static const String unitPriceKey = "unit_price";
   static const String availableInStock = "available_in_stock";
+  static const String available = "available";
   static const String confirmSelection = "confirm_selection";
   static const String maxQuantityReached = "max_quantity_reached";
   static const String overallDiscountLabel = "overall_discount_label";

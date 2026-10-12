@@ -11,6 +11,10 @@ class CreateInvoiceCustomerField extends StatelessWidget {
   final VoidCallback onContactTap;
   final bool canPickContact;
   final ValueChanged<CustomerEntity>? onSelected;
+  final FocusNode? focusNode;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onSubmitted;
+  final bool autofocus;
 
   const CreateInvoiceCustomerField({
     super.key,
@@ -20,6 +24,10 @@ class CreateInvoiceCustomerField extends StatelessWidget {
     required this.onContactTap,
     this.canPickContact = true,
     this.onSelected,
+    this.focusNode,
+    this.textInputAction,
+    this.onSubmitted,
+    this.autofocus = false,
   });
 
   @override
@@ -39,6 +47,10 @@ class CreateInvoiceCustomerField extends StatelessWidget {
         CustomerAutocompleteField(
           controller: controller,
           hint: hint,
+          focusNode: focusNode,
+          textInputAction: textInputAction,
+          onSubmitted: onSubmitted,
+          autofocus: autofocus,
           suffixIcon: canPickContact ? Icons.contact_phone_rounded : null,
           onSuffixIconPressed: canPickContact ? onContactTap : null,
           onSelected: onSelected,

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/features/inventory/data/datasources/inventory_local_data_source.dart';
+import 'package:tahsel/features/inventory/domain/entities/inventory_product_entity.dart';
 
 /// A single editable line-item row used inside the invoice form.
 class InvoiceItemRow extends StatefulWidget {
@@ -13,6 +16,16 @@ class InvoiceItemRow extends StatefulWidget {
   final TextEditingController qtyController;
   final TextEditingController unitController;
   final TextEditingController discountController;
+  final FocusNode? descFocusNode;
+  final FocusNode? priceFocusNode;
+  final FocusNode? qtyFocusNode;
+  final FocusNode? discountFocusNode;
+  final FocusNode? unitFocusNode;
+  final List<InventoryProductEntity>? availableProducts;
+  final ValueChanged<InventoryProductEntity>? onProductSelected;
+  final VoidCallback? onNextItem;
+  final String? productId;
+  final double? maxQuantity;
   final double? purchasePrice;
   final double taxRate;
   final bool isQuotation;
@@ -27,6 +40,16 @@ class InvoiceItemRow extends StatefulWidget {
     required this.qtyController,
     required this.unitController,
     required this.discountController,
+    this.descFocusNode,
+    this.priceFocusNode,
+    this.qtyFocusNode,
+    this.discountFocusNode,
+    this.unitFocusNode,
+    this.availableProducts,
+    this.onProductSelected,
+    this.onNextItem,
+    this.productId,
+    this.maxQuantity,
     this.purchasePrice,
     this.taxRate = 0.0,
     this.isQuotation = false,
@@ -41,9 +64,455 @@ class InvoiceItemRow extends StatefulWidget {
 class _InvoiceItemRowState extends State<InvoiceItemRow> {
   bool _isTotalExpanded = false;
 
+  final LayerLink _layerLink = LayerLink();
+  final GlobalKey _descFieldKey = GlobalKey();
+  OverlayEntry? _overlayEntry;
+  List<InventoryProductEntity> _suggestions = [];
+  List<InventoryProductEntity> _fallbackProducts = [];
+
+  FocusNode? _ownedDescFocus;
+  FocusNode? _ownedPriceFocus;
+  FocusNode? _ownedQtyFocus;
+  FocusNode? _ownedDiscountFocus;
+  FocusNode? _ownedUnitFocus;
+
+  FocusNode get _descFocus =>
+      widget.descFocusNode ?? (_ownedDescFocus ??= FocusNode());
+  FocusNode get _priceFocus =>
+      widget.priceFocusNode ?? (_ownedPriceFocus ??= FocusNode());
+  FocusNode get _qtyFocus =>
+      widget.qtyFocusNode ?? (_ownedQtyFocus ??= FocusNode());
+  FocusNode get _discountFocus =>
+      widget.discountFocusNode ?? (_ownedDiscountFocus ??= FocusNode());
+  FocusNode get _unitFocus =>
+      widget.unitFocusNode ?? (_ownedUnitFocus ??= FocusNode());
+
+  @override
+  void initState() {
+    super.initState();
+    _descFocus.addListener(_onDescFocusChange);
+    widget.descController.addListener(_onDescTextChanged);
+    if (widget.availableProducts == null || widget.availableProducts!.isEmpty) {
+      _loadFallbackProducts();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant InvoiceItemRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.descController != widget.descController) {
+      oldWidget.descController.removeListener(_onDescTextChanged);
+      widget.descController.addListener(_onDescTextChanged);
+    }
+    if (oldWidget.descFocusNode != widget.descFocusNode) {
+      (oldWidget.descFocusNode ?? _ownedDescFocus)?.removeListener(
+        _onDescFocusChange,
+      );
+      _descFocus.addListener(_onDescFocusChange);
+    }
+  }
+
+  @override
+  void dispose() {
+    try {
+      _descFocus.removeListener(_onDescFocusChange);
+    } catch (_) {}
+    try {
+      widget.descController.removeListener(_onDescTextChanged);
+    } catch (_) {}
+    _hideOverlay();
+    _ownedDescFocus?.dispose();
+    _ownedPriceFocus?.dispose();
+    _ownedQtyFocus?.dispose();
+    _ownedDiscountFocus?.dispose();
+    _ownedUnitFocus?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadFallbackProducts() async {
+    try {
+      final local = GetIt.I<InventoryLocalDataSource>();
+      final prods = await local.getProducts();
+      if (mounted && prods.isNotEmpty) {
+        setState(() {
+          _fallbackProducts = prods;
+        });
+      }
+    } catch (_) {}
+  }
+
+  void _onDescFocusChange() {
+    if (!_descFocus.hasFocus) {
+      Future.delayed(const Duration(milliseconds: 200), () {
+        if (mounted && !_descFocus.hasFocus) {
+          _hideOverlay();
+        }
+      });
+    } else if (widget.descController.text.trim().isNotEmpty) {
+      _updateSuggestions(widget.descController.text);
+    }
+  }
+
+  void _onDescTextChanged() {
+    if (_descFocus.hasFocus) {
+      _updateSuggestions(widget.descController.text);
+    }
+  }
+
+  String _normalizeArabic(String text) {
+    return text
+        .replaceAll(RegExp(r'[\u064B-\u065F\u0670]'), '')
+        .replaceAll(RegExp(r'[إأآا]'), 'ا')
+        .replaceAll('ة', 'ه')
+        .replaceAll('ى', 'ي')
+        .trim()
+        .toLowerCase();
+  }
+
+  void _updateSuggestions(String text) {
+    if (!mounted) return;
+    final rawQuery = text.trim();
+    final normalizedQuery = _normalizeArabic(rawQuery);
+    final allProducts =
+        (widget.availableProducts != null &&
+            widget.availableProducts!.isNotEmpty)
+        ? widget.availableProducts!
+        : _fallbackProducts;
+
+    if (rawQuery.isEmpty || allProducts.isEmpty) {
+      _suggestions = [];
+      _hideOverlay();
+      return;
+    }
+
+    _suggestions = allProducts
+        .where((p) {
+          // Show ONLY available products with stock in inventory > 0
+          if (!p.isAvailable || p.currentQuantity <= 0) return false;
+
+          final normName = _normalizeArabic(p.name);
+          final normCategory = _normalizeArabic(p.categoryName);
+          final sku = p.sku.toLowerCase();
+          final barcode = p.barcode?.toLowerCase() ?? '';
+          final lowerRaw = rawQuery.toLowerCase();
+
+          return normName.contains(normalizedQuery) ||
+              normCategory.contains(normalizedQuery) ||
+              sku.contains(lowerRaw) ||
+              barcode.contains(lowerRaw);
+        })
+        .take(6)
+        .toList();
+
+    if (_suggestions.isNotEmpty && _descFocus.hasFocus) {
+      _showOverlay();
+    } else {
+      _hideOverlay();
+    }
+  }
+
+  void _showOverlay() {
+    if (!mounted) return;
+    if (_overlayEntry != null) {
+      _overlayEntry!.markNeedsBuild();
+      return;
+    }
+
+    final renderBox =
+        _descFieldKey.currentContext?.findRenderObject() as RenderBox?;
+    final size = renderBox?.size ?? const Size(300, 50);
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) {
+        return Positioned(
+          width: size.width,
+          child: CompositedTransformFollower(
+            link: _layerLink,
+            showWhenUnlinked: false,
+            offset: Offset(0.0, size.height + 4.0),
+            child: Material(
+              elevation: 8,
+              borderRadius: BorderRadius.circular(14),
+              color: AppColors.surface,
+              shadowColor: AppColors.blackLight.withValues(alpha: 0.18),
+              child: Container(
+                constraints: const BoxConstraints(maxHeight: 250),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: AppColors.primaryColor.withValues(alpha: 0.25),
+                  ),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    shrinkWrap: true,
+                    itemCount: _suggestions.length,
+                    separatorBuilder: (context, index) => Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: AppColors.dividerColor.withValues(alpha: 0.6),
+                    ),
+                    itemBuilder: (context, index) {
+                      final item = _suggestions[index];
+                      return _buildSuggestionItem(item);
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  void _hideOverlay() {
+    if (_overlayEntry != null) {
+      _overlayEntry!.remove();
+      _overlayEntry = null;
+    }
+  }
+
+  void _selectProduct(InventoryProductEntity product) {
+    widget.descController.text = product.name;
+    widget.descController.selection = TextSelection.fromPosition(
+      TextPosition(offset: product.name.length),
+    );
+    widget.priceController.text = product.sellingPrice.toSmartAmount();
+    if (product.unit.trim().isNotEmpty) {
+      widget.unitController.text = product.unit.trim();
+    }
+    final currentQty = double.tryParse(widget.qtyController.text) ?? 0.0;
+    final maxQty = product.currentQuantity;
+    if (currentQty <= 0) {
+      widget.qtyController.text = '1';
+    } else if (maxQty > 0 && currentQty > maxQty) {
+      widget.qtyController.text = maxQty.toSmartAmount();
+    }
+    _hideOverlay();
+    widget.onProductSelected?.call(product);
+    setState(() {});
+    widget.onChanged();
+
+    // Focus price and select all text so user can either confirm or overwrite
+    _priceFocus.requestFocus();
+    if (widget.priceController.text.isNotEmpty) {
+      widget.priceController.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: widget.priceController.text.length,
+      );
+    }
+  }
+
+  Widget _buildSuggestionItem(InventoryProductEntity item) {
+    final currency = AppStrings.currencyEgp.tr();
+    final isLowStock = item.currentQuantity <= item.minQuantity;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTapDown: (_) => _selectProduct(item),
+        onTap: () => _selectProduct(item),
+        hoverColor: AppColors.primaryColor.withValues(alpha: 0.05),
+        splashColor: AppColors.primaryColor.withValues(alpha: 0.1),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryColor.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: AppColors.primaryColor.withValues(alpha: 0.15),
+                  ),
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.inventory_2_outlined,
+                    size: 18,
+                    color: AppColors.primaryColor,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      item.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyles.customStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        if (item.categoryName.trim().isNotEmpty) ...[
+                          Flexible(
+                            child: Text(
+                              item.categoryName.trim(),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyles.customStyle(
+                                fontSize: 11,
+                                color: AppColors.subTitleColor,
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 5),
+                            child: Text(
+                              '•',
+                              style: TextStyles.customStyle(
+                                fontSize: 10,
+                                color: AppColors.disabledColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                        Flexible(
+                          child: Text(
+                            '${AppStrings.available.tr()}: ${item.currentQuantity.toSmartAmount()} ${item.unit}',
+                            maxLines: 4,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyles.customStyle(
+                              fontSize: 11,
+                              fontWeight: isLowStock
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
+                              color: isLowStock
+                                  ? AppColors.warning
+                                  : AppColors.subTitleColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryColor.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${item.sellingPrice.toSmartAmount()} $currency',
+                  style: TextStyles.customStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  InventoryProductEntity? get _matchedProduct {
+    final allProducts =
+        (widget.availableProducts != null &&
+            widget.availableProducts!.isNotEmpty)
+        ? widget.availableProducts!
+        : _fallbackProducts;
+    if (allProducts.isEmpty) return null;
+
+    final currentDesc = widget.descController.text.trim();
+    if (currentDesc.isEmpty) return null;
+
+    // 1. If productId is provided, verify description still matches that product
+    if (widget.productId != null && widget.productId!.isNotEmpty) {
+      for (final p in allProducts) {
+        if (p.id == widget.productId) {
+          if (p.name.trim().toLowerCase() == currentDesc.toLowerCase() ||
+              _normalizeArabic(p.name) == _normalizeArabic(currentDesc)) {
+            return p;
+          }
+        }
+      }
+    }
+
+    // 2. Otherwise match by product name in inventory
+    final normDesc = _normalizeArabic(currentDesc);
+    for (final p in allProducts) {
+      if (p.name.trim().toLowerCase() == currentDesc.toLowerCase() ||
+          _normalizeArabic(p.name) == normDesc) {
+        return p;
+      }
+    }
+
+    return null;
+  }
+
+  double? get _effectiveMaxQty {
+    if (widget.maxQuantity != null) {
+      return widget.maxQuantity;
+    }
+    final product = _matchedProduct;
+    if (product == null)
+      return null; // Custom product not in inventory -> no stock limit
+    return product.currentQuantity;
+  }
+
+  void _showStockLimitFeedback(double maxQty) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.info_outline, color: Colors.white, size: 18),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                '${AppStrings.availableInStock.tr()}: ${maxQty.toSmartAmount()}',
+                style: TextStyles.customStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: AppColors.warning,
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
   void _changeQty(double delta) {
     final currentQty = double.tryParse(widget.qtyController.text) ?? 1.0;
-    final newQty = (currentQty + delta).clamp(1.0, 999999.0);
+    final maxQty = _effectiveMaxQty;
+
+    if (delta > 0 && maxQty != null && currentQty >= maxQty) {
+      _showStockLimitFeedback(maxQty);
+      return;
+    }
+
+    final upperLimit = maxQty ?? 999999.0;
+    final newQty = (currentQty + delta).clamp(1.0, upperLimit);
     widget.qtyController.text = newQty.toSmartAmount();
     setState(() {});
     widget.onChanged();
@@ -177,12 +646,30 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
           ),
           const SizedBox(height: 10),
 
-          // Description field
-          InvoiceItemRowItemField(
-            controller: widget.descController,
-            hint: AppStrings.invoiceItemDescHint.tr(),
-            label: AppStrings.invoiceItemDesc.tr(),
-            onChanged: (_) => widget.onChanged(),
+          // Description field with Autocomplete overlay
+          CompositedTransformTarget(
+            link: _layerLink,
+            child: KeyedSubtree(
+              key: _descFieldKey,
+              child: InvoiceItemRowItemField(
+                controller: widget.descController,
+                focusNode: _descFocus,
+                textInputAction: TextInputAction.next,
+                onSubmitted: (_) {
+                  _hideOverlay();
+                  _priceFocus.requestFocus();
+                  if (widget.priceController.text.isNotEmpty) {
+                    widget.priceController.selection = TextSelection(
+                      baseOffset: 0,
+                      extentOffset: widget.priceController.text.length,
+                    );
+                  }
+                },
+                hint: AppStrings.invoiceItemDescHint.tr(),
+                label: AppStrings.invoiceItemDesc.tr(),
+                onChanged: (_) => widget.onChanged(),
+              ),
+            ),
           ),
           const SizedBox(height: 8),
 
@@ -193,6 +680,17 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
                 flex: 3,
                 child: InvoiceItemRowItemField(
                   controller: widget.priceController,
+                  focusNode: _priceFocus,
+                  textInputAction: TextInputAction.next,
+                  onSubmitted: (_) {
+                    _qtyFocus.requestFocus();
+                    if (widget.qtyController.text.isNotEmpty) {
+                      widget.qtyController.selection = TextSelection(
+                        baseOffset: 0,
+                        extentOffset: widget.qtyController.text.length,
+                      );
+                    }
+                  },
                   hint: '0.00',
                   label: AppStrings.invoiceItemPrice.tr(),
                   isNumber: true,
@@ -208,53 +706,102 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
               // Quantity field with stepper controls
               Expanded(
                 flex: 2,
-                child: InvoiceItemRowItemField(
-                  controller: widget.qtyController,
-                  hint: '1',
-                  label: AppStrings.invoiceItemQty.tr(),
-                  isNumber: true,
-                  suffixWidget: SizedBox(
-                    width: 52,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        InkWell(
-                          onTap: () => _changeQty(-1),
-                          borderRadius: BorderRadius.circular(4),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 2,
-                              vertical: 4,
+                child: Builder(
+                  builder: (context) {
+                    final maxQty = _effectiveMaxQty;
+                    final isAtMax = maxQty != null && qty >= maxQty;
+
+                    return InvoiceItemRowItemField(
+                      controller: widget.qtyController,
+                      focusNode: _qtyFocus,
+                      textInputAction: TextInputAction.next,
+                      onSubmitted: (_) {
+                        final currentMax = _effectiveMaxQty;
+                        if (currentMax != null) {
+                          final currentTyped =
+                              double.tryParse(widget.qtyController.text) ?? 1.0;
+                          if (currentTyped > currentMax) {
+                            widget.qtyController.text = currentMax
+                                .toSmartAmount();
+                            _showStockLimitFeedback(currentMax);
+                          }
+                        }
+                        _discountFocus.requestFocus();
+                        if (widget.discountController.text.isNotEmpty) {
+                          widget.discountController.selection = TextSelection(
+                            baseOffset: 0,
+                            extentOffset: widget.discountController.text.length,
+                          );
+                        }
+                      },
+                      hint: '1',
+                      label: maxQty != null
+                          ? '${AppStrings.invoiceItemQty.tr()} (${AppStrings.available.tr()}: ${maxQty.toSmartAmount()})'
+                          : AppStrings.invoiceItemQty.tr(),
+                      isNumber: true,
+                      suffixWidget: SizedBox(
+                        width: 52,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            InkWell(
+                              onTap: () => _changeQty(-1),
+                              borderRadius: BorderRadius.circular(4),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 2,
+                                  vertical: 4,
+                                ),
+                                child: Icon(
+                                  Icons.remove,
+                                  size: 15,
+                                  color: AppColors.blackLight,
+                                ),
+                              ),
                             ),
-                            child: Icon(
-                              Icons.remove,
-                              size: 15,
-                              color: AppColors.blackLight,
+                            InkWell(
+                              onTap: isAtMax
+                                  ? () => _showStockLimitFeedback(maxQty)
+                                  : () => _changeQty(1),
+                              borderRadius: BorderRadius.circular(4),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 2,
+                                  vertical: 4,
+                                ),
+                                child: Icon(
+                                  Icons.add,
+                                  size: 15,
+                                  color: isAtMax
+                                      ? AppColors.disabledColor
+                                      : AppColors.primaryColor,
+                                ),
+                              ),
                             ),
-                          ),
+                            const SizedBox(width: 4),
+                          ],
                         ),
-                        InkWell(
-                          onTap: () => _changeQty(1),
-                          borderRadius: BorderRadius.circular(4),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 2,
-                              vertical: 4,
-                            ),
-                            child: Icon(
-                              Icons.add,
-                              size: 15,
-                              color: AppColors.primaryColor,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                      ],
-                    ),
-                  ),
-                  onChanged: (_) {
-                    setState(() {});
-                    widget.onChanged();
+                      ),
+                      onChanged: (val) {
+                        final currentMax = _effectiveMaxQty;
+                        if (currentMax != null && val.trim().isNotEmpty) {
+                          final parsed = double.tryParse(val.trim());
+                          if (parsed != null && parsed > currentMax) {
+                            widget.qtyController.text = currentMax
+                                .toSmartAmount();
+                            widget.qtyController.selection =
+                                TextSelection.fromPosition(
+                                  TextPosition(
+                                    offset: widget.qtyController.text.length,
+                                  ),
+                                );
+                            _showStockLimitFeedback(currentMax);
+                          }
+                        }
+                        setState(() {});
+                        widget.onChanged();
+                      },
+                    );
                   },
                 ),
               ),
@@ -270,6 +817,17 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
                 flex: 2,
                 child: InvoiceItemRowItemField(
                   controller: widget.discountController,
+                  focusNode: _discountFocus,
+                  textInputAction: TextInputAction.next,
+                  onSubmitted: (_) {
+                    _unitFocus.requestFocus();
+                    if (widget.unitController.text.isNotEmpty) {
+                      widget.unitController.selection = TextSelection(
+                        baseOffset: 0,
+                        extentOffset: widget.unitController.text.length,
+                      );
+                    }
+                  },
                   hint: '0',
                   label: AppStrings.invoiceItemDiscount.tr(),
                   isNumber: true,
@@ -287,6 +845,15 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
                 flex: 1,
                 child: InvoiceItemRowItemField(
                   controller: widget.unitController,
+                  focusNode: _unitFocus,
+                  textInputAction: TextInputAction.next,
+                  onSubmitted: (_) {
+                    if (widget.onNextItem != null) {
+                      widget.onNextItem!();
+                    } else {
+                      _unitFocus.unfocus();
+                    }
+                  },
                   hint: AppStrings.unitPieceHint.tr(),
                   label: AppStrings.unit.tr(),
                   onChanged: (_) {
@@ -850,6 +1417,10 @@ class InvoiceItemRowItemField extends StatelessWidget {
   final Widget? suffixWidget;
   final Widget? prefixWidget;
   final void Function(String)? onChanged;
+  final FocusNode? focusNode;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onSubmitted;
+  final VoidCallback? onTap;
 
   const InvoiceItemRowItemField({
     super.key,
@@ -861,6 +1432,10 @@ class InvoiceItemRowItemField extends StatelessWidget {
     this.suffixWidget,
     this.prefixWidget,
     this.onChanged,
+    this.focusNode,
+    this.textInputAction,
+    this.onSubmitted,
+    this.onTap,
   });
 
   @override
@@ -870,6 +1445,8 @@ class InvoiceItemRowItemField extends StatelessWidget {
       children: [
         Text(
           label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyles.customStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
@@ -880,8 +1457,23 @@ class InvoiceItemRowItemField extends StatelessWidget {
         TextField(
           cursorColor: AppColors.primaryColor,
           controller: controller,
+          focusNode: focusNode,
+          textInputAction: textInputAction,
+          onSubmitted: onSubmitted,
+          onTap:
+              onTap ??
+              () {
+                if (isNumber && controller.text.isNotEmpty) {
+                  controller.selection = TextSelection(
+                    baseOffset: 0,
+                    extentOffset: controller.text.length,
+                  );
+                }
+              },
           onChanged: onChanged,
-          keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+          keyboardType: isNumber
+              ? const TextInputType.numberWithOptions(decimal: true)
+              : TextInputType.text,
           style: TextStyles.customStyle(fontSize: 14),
           decoration: InputDecoration(
             hintText: hint,

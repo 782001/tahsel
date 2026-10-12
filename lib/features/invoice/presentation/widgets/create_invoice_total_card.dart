@@ -472,8 +472,8 @@ class _CreateInvoiceTotalCardState extends State<CreateInvoiceTotalCard> {
                                         ? Icons.request_quote_outlined
                                         : Icons.receipt_long_outlined,
                                     label: widget.isQuotation
-                                        ? AppStrings.quotationTotal.tr()
-                                        : AppStrings.invoiceGrandTotal.tr(),
+                                        ? "${AppStrings.quotationTotal.tr()}: ${widget.grandTotal.toSmartAmount()} $currency"
+                                        : "${AppStrings.invoiceGrandTotal.tr()}: ${widget.grandTotal.toSmartAmount()} $currency",
                                     color: Colors.white.withValues(alpha: 0.9),
                                     bgColor: Colors.white.withValues(
                                       alpha: 0.1,

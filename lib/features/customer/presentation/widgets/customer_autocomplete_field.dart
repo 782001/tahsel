@@ -20,6 +20,7 @@ class CustomerAutocompleteField extends StatefulWidget {
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onSubmitted;
   final ValueChanged<CustomerEntity>? onSelected;
+  final bool autofocus;
 
   const CustomerAutocompleteField({
     super.key,
@@ -33,6 +34,7 @@ class CustomerAutocompleteField extends StatefulWidget {
     this.textInputAction,
     this.onSubmitted,
     this.onSelected,
+    this.autofocus = false,
   });
 
   @override
@@ -201,7 +203,16 @@ class _CustomerAutocompleteFieldState extends State<CustomerAutocompleteField> {
           cursorColor: AppColors.primaryColor,
           controller: widget.controller,
           focusNode: _effectiveFocusNode,
+          autofocus: widget.autofocus,
           textInputAction: widget.textInputAction,
+          onTap: () {
+            if (widget.controller.text.isNotEmpty) {
+              widget.controller.selection = TextSelection(
+                baseOffset: 0,
+                extentOffset: widget.controller.text.length,
+              );
+            }
+          },
           onSubmitted: (val) {
             _hideOverlay();
             widget.onSubmitted?.call(val);

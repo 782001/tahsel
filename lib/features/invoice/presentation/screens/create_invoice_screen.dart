@@ -22,6 +22,10 @@ import 'package:tahsel/features/invoice/presentation/widgets/create_invoice_cust
 import 'package:tahsel/features/invoice/presentation/widgets/create_invoice_notes_field.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/create_invoice_section_header.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/create_invoice_simple_field.dart';
+import 'package:get_it/get_it.dart';
+import 'package:tahsel/features/inventory/data/datasources/inventory_local_data_source.dart';
+import 'package:tahsel/features/inventory/domain/entities/inventory_product_entity.dart';
+import 'package:tahsel/features/inventory/domain/repositories/inventory_repository.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/create_invoice_total_card.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/invoice_item_row.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/multi_inventory_picker_bottom_sheet.dart';
@@ -37,7 +41,13 @@ class _ItemControllers {
   final TextEditingController qty;
   final TextEditingController unit;
   final TextEditingController discount;
+  final FocusNode descFocus;
+  final FocusNode priceFocus;
+  final FocusNode qtyFocus;
+  final FocusNode discountFocus;
+  final FocusNode unitFocus;
   double? purchasePrice;
+  double? maxQuantity;
 
   /// Pre-fill from an existing InvoiceItem (edit mode).
   _ItemControllers.fromItem(InvoiceItem item)
@@ -51,14 +61,29 @@ class _ItemControllers {
             ? item.discountAmount.toSmartAmount()
             : '0',
       ),
-      purchasePrice = item.purchasePrice;
+      descFocus = FocusNode(),
+      priceFocus = FocusNode(),
+      qtyFocus = FocusNode(),
+      discountFocus = FocusNode(),
+      unitFocus = FocusNode(),
+      purchasePrice = item.purchasePrice,
+      maxQuantity = null;
 
-  _ItemControllers({this.productId, this.purchasePrice, String? initialUnit})
-    : desc = TextEditingController(),
-      price = TextEditingController(),
-      qty = TextEditingController(text: '1'),
-      unit = TextEditingController(text: initialUnit ?? ''),
-      discount = TextEditingController(text: '0');
+  _ItemControllers({
+    this.productId,
+    this.purchasePrice,
+    this.maxQuantity,
+    String? initialUnit,
+  }) : desc = TextEditingController(),
+       price = TextEditingController(),
+       qty = TextEditingController(text: '1'),
+       unit = TextEditingController(text: initialUnit ?? ''),
+       discount = TextEditingController(text: '0'),
+       descFocus = FocusNode(),
+       priceFocus = FocusNode(),
+       qtyFocus = FocusNode(),
+       discountFocus = FocusNode(),
+       unitFocus = FocusNode();
 
   void dispose() {
     desc.dispose();
@@ -66,6 +91,11 @@ class _ItemControllers {
     qty.dispose();
     unit.dispose();
     discount.dispose();
+    descFocus.dispose();
+    priceFocus.dispose();
+    qtyFocus.dispose();
+    discountFocus.dispose();
+    unitFocus.dispose();
   }
 }
 
@@ -95,11 +125,15 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
   final _ledgerController = TextEditingController();
   final _notesController = TextEditingController();
   final _overallDiscountController = TextEditingController();
+  final FocusNode _customerFocus = FocusNode();
+  final FocusNode _phoneFocus = FocusNode();
+  final FocusNode _ledgerFocus = FocusNode();
   DateTime? _dueDate;
   DateTime? _invoiceDate;
 
   // ── Line items ─────────────────────────────────────────────────────────────
   final List<_ItemControllers> _itemControllers = [];
+  List<InventoryProductEntity> _availableProducts = [];
 
   // ── Derived totals ─────────────────────────────────────────────────────────
   /// Raw subtotal of all items before ANY discounts (sum of qty * price).
@@ -217,12 +251,76 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
       _dueDate = inv.dueDate;
       _invoiceDate = inv.createdAt;
       for (final item in inv.items) {
-        _itemControllers.add(_ItemControllers.fromItem(item));
+        final ctrl = _ItemControllers.fromItem(item);
+        _itemControllers.add(ctrl);
+        _initialAllocatedQuantities[item.description.trim().toLowerCase()] =
+            item.quantity;
       }
       if (_itemControllers.isEmpty) _addItem();
     } else {
       _addItem(); // Start with one empty item row
     }
+    _loadAvailableProducts();
+  }
+
+  final Map<String, double> _initialAllocatedQuantities = {};
+
+  double _maxQuantityFor(InventoryProductEntity product) {
+    final initial = _initialAllocatedQuantities[product.id] ??
+        _initialAllocatedQuantities[product.name.trim().toLowerCase()] ??
+        0.0;
+    if (_isEditMode) {
+      return product.currentQuantity + initial;
+    } else {
+      return product.currentQuantity >= initial
+          ? product.currentQuantity
+          : (initial > 0 ? initial : product.currentQuantity);
+    }
+  }
+
+  InventoryProductEntity? _findProduct(_ItemControllers ctrl) {
+    if (ctrl.productId != null && ctrl.productId!.isNotEmpty) {
+      final byId = _availableProducts.where((p) => p.id == ctrl.productId);
+      if (byId.isNotEmpty) return byId.first;
+    }
+    final desc = ctrl.desc.text.trim().toLowerCase();
+    if (desc.isNotEmpty) {
+      final byName = _availableProducts.where(
+        (p) => p.name.trim().toLowerCase() == desc,
+      );
+      if (byName.isNotEmpty) return byName.first;
+    }
+    return null;
+  }
+
+  Future<void> _loadAvailableProducts() async {
+    try {
+      final localDataSource = GetIt.I<InventoryLocalDataSource>();
+      var products = await localDataSource.getProducts();
+      if (products.isEmpty) {
+        final repo = GetIt.I<InventoryRepository>();
+        await repo.fetchAllProductsFromRemoteWithoutLimit();
+        products = await localDataSource.getProducts();
+      }
+      if (mounted) {
+        setState(() {
+          _availableProducts = products;
+          for (final ctrl in _itemControllers) {
+            final p = _findProduct(ctrl);
+            if (p != null) {
+              ctrl.productId ??= p.id;
+              ctrl.purchasePrice ??= p.purchasePrice;
+              final descKey = ctrl.desc.text.trim().toLowerCase();
+              if (_initialAllocatedQuantities.containsKey(descKey)) {
+                _initialAllocatedQuantities[p.id] =
+                    _initialAllocatedQuantities[descKey]!;
+              }
+              ctrl.maxQuantity = _maxQuantityFor(p);
+            }
+          }
+        });
+      }
+    } catch (_) {}
   }
 
   @override
@@ -233,16 +331,27 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
     _ledgerController.dispose();
     _notesController.dispose();
     _overallDiscountController.dispose();
+    _customerFocus.dispose();
+    _phoneFocus.dispose();
+    _ledgerFocus.dispose();
     for (final c in _itemControllers) {
       c.dispose();
     }
     super.dispose();
   }
 
-  void _addItem() {
+  void _addItem({bool autoFocus = false}) {
+    final newCtrl = _ItemControllers();
     setState(() {
-      _itemControllers.add(_ItemControllers());
+      _itemControllers.add(newCtrl);
     });
+    if (autoFocus) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          newCtrl.descFocus.requestFocus();
+        }
+      });
+    }
   }
 
   void _removeItem(int index) {
@@ -261,6 +370,12 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
         _phoneController.text = result['phone'] ?? '';
         _selectedCustomer = null;
       });
+      // Smart auto focus after contact selection:
+      if (_ledgerController.text.trim().isEmpty) {
+        _ledgerFocus.requestFocus();
+      } else if (_itemControllers.isNotEmpty) {
+        _itemControllers.first.descFocus.requestFocus();
+      }
     }
   }
 
@@ -357,6 +472,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                 ctrl.productId = matchedItem.product.id;
                 ctrl.qty.text = matchedItem.quantity.toSmartAmount();
                 ctrl.purchasePrice = matchedItem.product.purchasePrice;
+                ctrl.maxQuantity = _maxQuantityFor(matchedItem.product);
                 if (ctrl.price.text.trim().isEmpty ||
                     ctrl.price.text.trim() == '0') {
                   ctrl.price.text = matchedItem.product.sellingPrice
@@ -376,6 +492,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                 final newCtrl = _ItemControllers(
                   productId: item.product.id,
                   purchasePrice: item.product.purchasePrice,
+                  maxQuantity: _maxQuantityFor(item.product),
                   initialUnit: item.product.unit,
                 );
                 newCtrl.desc.text = item.product.name;
@@ -722,6 +839,17 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                             const SizedBox(height: 12),
                             CreateInvoiceCustomerField(
                               controller: _customerController,
+                              focusNode: _customerFocus,
+                              autofocus: !_isEditMode,
+                              textInputAction: TextInputAction.next,
+                              onSubmitted: (_) {
+                                if (canViewCustomerPhone && !isRestricted) {
+                                  _phoneFocus.requestFocus();
+                                } else if (_itemControllers.isNotEmpty) {
+                                  _itemControllers.first.descFocus
+                                      .requestFocus();
+                                }
+                              },
                               hint: AppStrings.customerNameHint.tr(),
                               label: AppStrings.customerName.tr(),
                               onContactTap: _pickContact,
@@ -737,21 +865,41 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                                   } else {
                                     _phoneController.text =
                                         (customer.phoneNumber != null &&
-                                            customer.phoneNumber!.isNotEmpty)
-                                        ? '••••••••••'
-                                        : '';
+                                                customer.phoneNumber!.isNotEmpty)
+                                            ? '••••••••••'
+                                            : '';
                                     _ledgerController.text =
                                         (customer.ledgerNumber != null &&
-                                            customer.ledgerNumber!.isNotEmpty)
-                                        ? '••••••'
-                                        : '';
+                                                customer.ledgerNumber!.isNotEmpty)
+                                            ? '••••••'
+                                            : '';
                                   }
                                 });
+                                // Smart auto focus jump:
+                                final hasPhone =
+                                    _phoneController.text.trim().isNotEmpty;
+                                final hasLedger =
+                                    _ledgerController.text.trim().isNotEmpty;
+                                if (!isRestricted &&
+                                    canViewCustomerPhone &&
+                                    !hasPhone) {
+                                  _phoneFocus.requestFocus();
+                                } else if (!isRestricted && !hasLedger) {
+                                  _ledgerFocus.requestFocus();
+                                } else if (_itemControllers.isNotEmpty) {
+                                  _itemControllers.first.descFocus
+                                      .requestFocus();
+                                }
                               },
                             ),
                             const SizedBox(height: 10),
                             CreateInvoiceSimpleField(
                               controller: _phoneController,
+                              focusNode: _phoneFocus,
+                              textInputAction: TextInputAction.next,
+                              onSubmitted: (_) {
+                                _ledgerFocus.requestFocus();
+                              },
                               hint: isRestricted
                                   ? AppStrings.permRestrictedData.tr()
                                   : AppStrings.invoicePhoneHint.tr(),
@@ -779,6 +927,14 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                             const SizedBox(height: 10),
                             CreateInvoiceSimpleField(
                               controller: _ledgerController,
+                              focusNode: _ledgerFocus,
+                              textInputAction: TextInputAction.next,
+                              onSubmitted: (_) {
+                                if (_itemControllers.isNotEmpty) {
+                                  _itemControllers.first.descFocus
+                                      .requestFocus();
+                                }
+                              },
                               hint: isRestricted
                                   ? AppStrings.permRestrictedData.tr()
                                   : AppStrings.invoiceLedgerHint.tr(),
@@ -858,7 +1014,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                             // Line item rows
                             for (int i = 0; i < _itemControllers.length; i++)
                               InvoiceItemRow(
-                                key: ValueKey(i),
+                                key: ObjectKey(_itemControllers[i]),
                                 index: i,
                                 descController: _itemControllers[i].desc,
                                 priceController: _itemControllers[i].price,
@@ -866,6 +1022,40 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                                 unitController: _itemControllers[i].unit,
                                 discountController:
                                     _itemControllers[i].discount,
+                                descFocusNode: _itemControllers[i].descFocus,
+                                priceFocusNode: _itemControllers[i].priceFocus,
+                                qtyFocusNode: _itemControllers[i].qtyFocus,
+                                discountFocusNode:
+                                    _itemControllers[i].discountFocus,
+                                unitFocusNode: _itemControllers[i].unitFocus,
+                                availableProducts: _availableProducts,
+                                productId: _itemControllers[i].productId,
+                                maxQuantity: _itemControllers[i].maxQuantity,
+                                onProductSelected: (product) {
+                                  _itemControllers[i].productId = product.id;
+                                  _itemControllers[i].purchasePrice =
+                                      product.purchasePrice;
+                                  _itemControllers[i].maxQuantity =
+                                      _maxQuantityFor(product);
+                                  setState(() {});
+                                },
+                                onNextItem: () {
+                                  if (i + 1 < _itemControllers.length) {
+                                    _itemControllers[i + 1].descFocus
+                                        .requestFocus();
+                                  } else {
+                                    final currentDesc =
+                                        _itemControllers[i].desc.text.trim();
+                                    final currentPrice =
+                                        _itemControllers[i].price.text.trim();
+                                    if (currentDesc.isNotEmpty ||
+                                        currentPrice.isNotEmpty) {
+                                      _addItem(autoFocus: true);
+                                    } else {
+                                      FocusScope.of(context).unfocus();
+                                    }
+                                  }
+                                },
                                 purchasePrice:
                                     _itemControllers[i].purchasePrice,
                                 taxRate: effectiveTaxRate,
@@ -877,7 +1067,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                             const SizedBox(height: 16),
                             Center(
                               child: TextButton.icon(
-                                onPressed: _addItem,
+                                onPressed: () => _addItem(autoFocus: true),
                                 icon: Icon(
                                   Icons.add_circle_outline,
                                   color: AppColors.primaryColor,

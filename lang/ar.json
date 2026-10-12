@@ -946,6 +946,7 @@
   "select_product_and_qty": "اختر المنتج والكمية",
   "unit_price": "سعر القطعة",
   "available_in_stock": "المتاح بالمخزن",
+  "available": "المتاح",
   "confirm_selection": "تأكيد واختيار",
   "max_quantity_reached": "الحد الأقصى المتاح بالمخزن",
   "overall_discount_label": "خصم من المبلغ الكلي للفاتورة (مبلغ نقدي / {currency})",

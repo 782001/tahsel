@@ -12,6 +12,10 @@ class CreateInvoiceSimpleField extends StatelessWidget {
   final bool obscureText;
   final bool enableInteractiveSelection;
   final Widget? suffixIcon;
+  final FocusNode? focusNode;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onSubmitted;
+  final bool autofocus;
 
   const CreateInvoiceSimpleField({
     super.key,
@@ -24,6 +28,10 @@ class CreateInvoiceSimpleField extends StatelessWidget {
     this.obscureText = false,
     this.enableInteractiveSelection = true,
     this.suffixIcon,
+    this.focusNode,
+    this.textInputAction,
+    this.onSubmitted,
+    this.autofocus = false,
   });
 
   @override
@@ -43,6 +51,18 @@ class CreateInvoiceSimpleField extends StatelessWidget {
         TextField(
           cursorColor: AppColors.primaryColor,
           controller: controller,
+          focusNode: focusNode,
+          autofocus: autofocus,
+          textInputAction: textInputAction,
+          onSubmitted: onSubmitted,
+          onTap: () {
+            if (controller.text.isNotEmpty) {
+              controller.selection = TextSelection(
+                baseOffset: 0,
+                extentOffset: controller.text.length,
+              );
+            }
+          },
           readOnly: readOnly,
           obscureText: obscureText,
           enableInteractiveSelection: enableInteractiveSelection,
