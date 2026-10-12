@@ -17,6 +17,7 @@ class InvoiceSummaryColumn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           label,
@@ -24,14 +25,21 @@ class InvoiceSummaryColumn extends StatelessWidget {
             fontSize: 11,
             color: AppColors.blackLight,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
         ),
         const SizedBox(height: 4),
-        Text(
-          amount.toSmartAmount(),
-          style: TextStyles.customStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
-            color: color,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            amount.toSmartAmount(),
+            style: TextStyles.customStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+            maxLines: 1,
           ),
         ),
       ],

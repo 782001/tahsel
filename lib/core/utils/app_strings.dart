@@ -1884,6 +1884,13 @@ class AppStrings {
   static const String cannotDeleteCustodySettledExpense = "cannot_delete_custody_settled_expense";
   static const String quotationOfflineSavedNotice = "quotation_offline_saved_notice";
   static const String invoiceOfflineSavedNotice = "invoice_offline_saved_notice";
+  static const String unitPriceAfterDiscount = "unit_price_after_discount";
+  static const String quickDiscount = "quick_discount";
+  static const String profitEstimate = "profit_estimate";
+  static const String lossAlert = "loss_alert";
+  static const String savedAmount = "saved_amount";
+  static const String atCostNoProfit = "at_cost_no_profit";
+  static const String unitPieceHint = "unit_piece_hint";
 }
 
 

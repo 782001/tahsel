@@ -10,6 +10,45 @@ class PaymentSummaryCard extends StatelessWidget {
   final InvoiceEntity invoice;
   const PaymentSummaryCard({super.key, required this.invoice});
 
+  Widget _buildRow({
+    required String label,
+    required String value,
+    required TextStyle labelStyle,
+    required TextStyle valueStyle,
+    int labelFlex = 1,
+    int valueFlex = 1,
+  }) {
+    return Row(
+      children: [
+        Expanded(
+          flex: labelFlex,
+          child: Text(
+            label,
+            style: labelStyle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          flex: valueFlex,
+          child: Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerEnd,
+              child: Text(
+                value,
+                style: valueStyle,
+                maxLines: 1,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasTax = invoice.effectiveTaxRate > 0;
@@ -25,92 +64,69 @@ class PaymentSummaryCard extends StatelessWidget {
       child: Column(
         children: [
           if (invoice.totalDiscountAmount > 0) ...[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  AppStrings.subtotalBeforeDiscount.tr(),
-                  style: TextStyles.customStyle(
-                    fontSize: 13,
-                    color: AppColors.subTitleColor,
-                  ),
-                ),
-                Text(
+            _buildRow(
+              label: AppStrings.subtotalBeforeDiscount.tr(),
+              value:
                   '${invoice.rawSubtotalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-                  style: TextStyles.customStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.black,
-                  ),
-                ),
-              ],
+              labelStyle: TextStyles.customStyle(
+                fontSize: 13,
+                color: AppColors.subTitleColor,
+              ),
+              valueStyle: TextStyles.customStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.black,
+              ),
             ),
             const SizedBox(height: 6),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  AppStrings.overallDiscountAmount.tr(),
-                  style: TextStyles.customStyle(
-                    fontSize: 13,
-                    color: AppColors.orange,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
+            _buildRow(
+              label: AppStrings.overallDiscountAmount.tr(),
+              value:
                   '-${invoice.totalDiscountAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-                  style: TextStyles.customStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.orange,
-                  ),
-                ),
-              ],
+              labelStyle: TextStyles.customStyle(
+                fontSize: 13,
+                color: AppColors.orange,
+                fontWeight: FontWeight.w600,
+              ),
+              valueStyle: TextStyles.customStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppColors.orange,
+              ),
             ),
             Divider(color: AppColors.dividerColor, height: 20),
           ],
           if (hasTax) ...[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  AppStrings.totalBeforeTax.tr(),
-                  style: TextStyles.customStyle(
-                    fontSize: 13,
-                    color: AppColors.subTitleColor,
-                  ),
-                ),
-                Text(
+            _buildRow(
+              label: AppStrings.totalBeforeTax.tr(),
+              value:
                   '${invoice.totalBeforeTaxAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-                  style: TextStyles.customStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.black,
-                  ),
-                ),
-              ],
+              labelStyle: TextStyles.customStyle(
+                fontSize: 13,
+                color: AppColors.subTitleColor,
+              ),
+              valueStyle: TextStyles.customStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.black,
+              ),
             ),
             const SizedBox(height: 6),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
+            _buildRow(
+              label:
                   '${AppStrings.vatAmount.tr()} (${invoice.effectiveTaxRate.toSmartAmount()}%)',
-                  style: TextStyles.customStyle(
-                    fontSize: 13,
-                    color: AppColors.primaryColor,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
+              value:
                   '${invoice.calculatedTaxAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-                  style: TextStyles.customStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryColor,
-                  ),
-                ),
-              ],
+              labelStyle: TextStyles.customStyle(
+                fontSize: 13,
+                color: AppColors.primaryColor,
+                fontWeight: FontWeight.w600,
+              ),
+              valueStyle: TextStyles.customStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryColor,
+              ),
             ),
             Divider(color: AppColors.dividerColor, height: 20),
           ],
@@ -126,28 +142,33 @@ class PaymentSummaryCard extends StatelessWidget {
             )
           else
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                InvoiceSummaryColumn(
-                  label: hasTax
-                      ? AppStrings.totalAfterTax.tr()
-                      : AppStrings.totalDueLabel.tr(),
-                  amount: invoice.totalAmount,
-                  color: AppColors.black,
+                Expanded(
+                  child: InvoiceSummaryColumn(
+                    label: hasTax
+                        ? AppStrings.totalAfterTax.tr()
+                        : AppStrings.totalDueLabel.tr(),
+                    amount: invoice.totalAmount,
+                    color: AppColors.black,
+                  ),
                 ),
                 Container(width: 1, height: 40, color: AppColors.dividerColor),
-                InvoiceSummaryColumn(
-                  label: AppStrings.invoiceTotalPaid.tr(),
-                  amount: invoice.totalPaid,
-                  color: AppColors.success,
+                Expanded(
+                  child: InvoiceSummaryColumn(
+                    label: AppStrings.invoiceTotalPaid.tr(),
+                    amount: invoice.totalPaid,
+                    color: AppColors.success,
+                  ),
                 ),
                 Container(width: 1, height: 40, color: AppColors.dividerColor),
-                InvoiceSummaryColumn(
-                  label: AppStrings.invoiceRemainingAmount.tr(),
-                  amount: invoice.remainingAmount,
-                  color: invoice.remainingAmount > 0
-                      ? AppColors.error
-                      : AppColors.success,
+                Expanded(
+                  child: InvoiceSummaryColumn(
+                    label: AppStrings.invoiceRemainingAmount.tr(),
+                    amount: invoice.remainingAmount,
+                    color: invoice.remainingAmount > 0
+                        ? AppColors.error
+                        : AppColors.success,
+                  ),
                 ),
               ],
             ),

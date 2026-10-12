@@ -111,26 +111,36 @@ class _InvoiceItemsCardState extends State<InvoiceItemsCard> {
                           ],
                         ),
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          if (hasTax)
-                            Text(
-                              AppStrings.totalAfterTax.tr(),
-                              style: TextStyles.customStyle(
-                                fontSize: 10,
-                                color: AppColors.subTitleColor,
+                      const SizedBox(width: 8),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 130),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            if (hasTax)
+                              Text(
+                                AppStrings.totalAfterTax.tr(),
+                                style: TextStyles.customStyle(
+                                  fontSize: 10,
+                                  color: AppColors.subTitleColor,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: AlignmentDirectional.centerEnd,
+                              child: Text(
+                                '${itemTotal.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                                style: TextStyles.customStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primaryColor,
+                                ),
                               ),
                             ),
-                          Text(
-                            '${itemTotal.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-                            style: TextStyles.customStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primaryColor,
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
