@@ -56,7 +56,7 @@ class _ReportsViewState extends State<ReportsView> {
               Padding(
                 padding: EdgeInsets.symmetric(
                   horizontal: isDesktop ? 24 : 16.w,
-                  vertical: 10.h,
+                  vertical: isDesktop ? 10 : 10.h,
                 ),
                 child: Stack(
                   alignment: Alignment.center,
@@ -138,14 +138,10 @@ class _ReportsViewState extends State<ReportsView> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              isDesktop
-                                  ? const SizedBox(height: 20)
-                                  : 20.verticalSpace,
-
                               Center(
                                 child: ConstrainedBox(
                                   constraints: BoxConstraints(
-                                    maxWidth: isDesktop ? 600 : double.infinity,
+                                    maxWidth: isDesktop ? 900 : double.infinity,
                                   ),
                                   child: Padding(
                                     padding: isDesktop

@@ -468,8 +468,9 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
       return widget.maxQuantity;
     }
     final product = _matchedProduct;
-    if (product == null)
+    if (product == null){
       return null; // Custom product not in inventory -> no stock limit
+    }
     return product.currentQuantity;
   }
 

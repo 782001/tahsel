@@ -50,7 +50,7 @@ class _ReportsTimeRangeSelectorState extends State<ReportsTimeRangeSelector> {
     return Container(
       height: isDesktop ? 60.h : 50.h,
       margin: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 24.w),
-      padding: EdgeInsets.all(4.r),
+      padding: EdgeInsets.all(isDesktop ?  4 : 2.r),
       decoration: BoxDecoration(
         color: AppColors.stitchSurfaceLow,
         borderRadius: BorderRadius.circular(25.r),
