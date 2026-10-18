@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
-import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 
 class ReportsTimeRangeSelector extends StatefulWidget {
   final Function(int index) onTabChanged;
@@ -25,12 +23,12 @@ class ReportsTimeRangeSelector extends StatefulWidget {
 
 class _ReportsTimeRangeSelectorState extends State<ReportsTimeRangeSelector> {
   late int _selectedIndex;
-  final List<String> _tabsCafe = [
-    AppStrings.daily,
-    AppStrings.weekly,
-    AppStrings.monthly,
-  ];
-  final List<String> _tabsShop = [
+  // final List<String> _tabsCafe = [
+  //   AppStrings.daily,
+  //   AppStrings.weekly,
+  //   AppStrings.monthly,
+  // ];
+  final List<String> _tabs = [
     AppStrings.daily,
     AppStrings.weekly,
     AppStrings.monthly,
@@ -50,15 +48,14 @@ class _ReportsTimeRangeSelectorState extends State<ReportsTimeRangeSelector> {
     return Container(
       height: isDesktop ? 60.h : 50.h,
       margin: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 24.w),
-      padding: EdgeInsets.all(isDesktop ?  4 : 2.r),
+      padding: EdgeInsets.all(isDesktop ? 4 : 2.r),
       decoration: BoxDecoration(
         color: AppColors.stitchSurfaceLow,
         borderRadius: BorderRadius.circular(25.r),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final isShop = context.read<MainLayoutCubit>().isShop;
-          final tabs = isShop ? _tabsShop : _tabsCafe;
+          final tabs = _tabs;
           double tabWidth = (constraints.maxWidth) / tabs.length;
 
           return Stack(
