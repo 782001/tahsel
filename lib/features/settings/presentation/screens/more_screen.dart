@@ -178,7 +178,7 @@ class _MoreScreenState extends State<MoreScreen> {
                         child: Center(
                           child: ConstrainedBox(
                             constraints: BoxConstraints(
-                              maxWidth: isDesktop ? 800 : double.infinity,
+                              maxWidth: isDesktop ? 900 : double.infinity,
                             ),
                             child: ValueListenableBuilder<int>(
                               valueListenable:
@@ -482,8 +482,12 @@ class _MoreScreenState extends State<MoreScreen> {
                                                     left: -20,
                                                     bottom: -20,
                                                     child: Container(
-                                                      width: 100.w,
-                                                      height: 100.h,
+                                                      width: isDesktop
+                                                          ? 100
+                                                          : 100.w,
+                                                      height: isDesktop
+                                                          ? 100
+                                                          : 100.h,
                                                       decoration: BoxDecoration(
                                                         shape: BoxShape.circle,
                                                         color: Colors.white
@@ -1153,8 +1157,12 @@ class _MoreScreenState extends State<MoreScreen> {
                                                       left: -20,
                                                       bottom: -20,
                                                       child: Container(
-                                                        width: 100.w,
-                                                        height: 100.h,
+                                                        width: isDesktop
+                                                            ? 100
+                                                            : 100.w,
+                                                        height: isDesktop
+                                                            ? 100
+                                                            : 100.h,
                                                         decoration:
                                                             BoxDecoration(
                                                               shape: BoxShape

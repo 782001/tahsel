@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/features/standard_features/theme/presentation/cubit/theme_cubit.dart';
 
@@ -30,6 +30,19 @@ class AppColors {
   // --- Dynamic Theme-Aware Colors ---
 
   static Color get primaryColor =>
+      isDark ? const Color(0xFF90CAF9) : const Color(0xFF1E56A0);
+
+  // --- Hero CTA & Quick Action Button Colors ---
+  static Color get primaryGradientStart =>
+      isDark ? const Color(0xFF90CAF9) : const Color(0xFF1E56A0);
+
+  static Color get primaryGradientEnd =>
+      isDark ? const Color(0xFF64B5F6) : const Color(0xFF163E75);
+
+  static Color get onPrimary =>
+      isDark ? const Color(0xFF0D2847) : Colors.white;
+
+  static Color get primaryShadow =>
       isDark ? const Color(0xFF90CAF9) : const Color(0xFF1E56A0);
 
   static Color get actionButton =>
@@ -258,4 +271,64 @@ class AppColors {
       isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32);
   static Color get vaultOutflow =>
       isDark ? const Color(0xFFEF5350) : const Color(0xFFD32F2F);
+
+  // --- Owner Smart Dashboard Colors ---
+  static List<Color> get dashboardPosGradient => [
+    primaryColor,
+    isDark ? const Color(0xFF0D2D59) : const Color(0xFF153E75),
+  ];
+  static List<Color> get dashboardExpensesGradient => [
+    error,
+    isDark ? const Color(0xFF8B1D1D) : const Color(0xFFC62828),
+  ];
+  static List<Color> get dashboardDebtsGradient => [
+    warning,
+    isDark ? const Color(0xFF9E4700) : const Color(0xFFEF6C00),
+  ];
+  static List<Color> get dashboardInvoicesGradient => [
+    info,
+    isDark ? const Color(0xFF013660) : const Color(0xFF01579B),
+  ];
+  static List<Color> get dashboardReportsGradient => [
+    isDark ? const Color(0xFFAB47BC) : const Color(0xFF7B1FA2),
+    isDark ? const Color(0xFF4A148C) : const Color(0xFF38006B),
+  ];
+  static List<Color> get dashboardCustomersGradient => [
+    isDark ? const Color(0xFF26A69A) : const Color(0xFF00897B),
+    isDark ? const Color(0xFF004D40) : const Color(0xFF00332C),
+  ];
+  static List<Color> get dashboardVaultGradient => [
+    isDark ? const Color(0xFFFFA726) : const Color(0xFFF57F17),
+    isDark ? const Color(0xFFE65100) : const Color(0xFFBF360C),
+  ];
+  static List<Color> get dashboardInventoryGradient => [
+    inventorySupplierTeal,
+    isDark ? const Color(0xFF004D40) : const Color(0xFF00332C),
+  ];
+  static List<Color> get dashboardTeamGradient => [
+    isDark ? const Color(0xFFBA68C8) : const Color(0xFF8E24AA),
+    isDark ? const Color(0xFF4A148C) : const Color(0xFF38006B),
+  ];
+  static List<Color> get dashboardCustodiesGradient => [
+    isDark ? const Color(0xFFFF7043) : const Color(0xFFD84315),
+    isDark ? const Color(0xFFBF360C) : const Color(0xFF872306),
+  ];
+  static List<Color> get dashboardHrGradient => [
+    isDark ? const Color(0xFF5C6BC0) : const Color(0xFF3949AB),
+    isDark ? const Color(0xFF1A237E) : const Color(0xFF0D1240),
+  ];
+  static List<Color> get dashboardShippingGradient => [
+    isDark ? const Color(0xFF26C6DA) : const Color(0xFF0097A7),
+    isDark ? const Color(0xFF006064) : const Color(0xFF00363A),
+  ];
+  static List<Color> get dashboardMoreGradient => [
+    isDark ? const Color(0xFF78909C) : const Color(0xFF546E7A),
+    isDark ? const Color(0xFF37474F) : const Color(0xFF263238),
+  ];
+
+  static Color get dashboardShopBadge =>
+      isDark ? const Color(0xFF4FC3F7) : const Color(0xFF0288D1);
+  static Color get dashboardCafeBadge =>
+      isDark ? const Color(0xFFBA68C8) : const Color(0xFF7B1FA2);
+  static const Color vipTextColor = Color(0xFF4A2800);
 }

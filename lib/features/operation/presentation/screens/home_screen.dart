@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -24,6 +25,7 @@ import 'package:tahsel/features/operation/presentation/cubit/ps_session_state.da
 import 'package:tahsel/features/operation/presentation/utils/operation_validator.dart';
 import 'package:tahsel/features/operation/presentation/widgets/active_sessions_list.dart';
 import 'package:tahsel/features/operation/presentation/widgets/invoice_features_section.dart';
+import 'package:tahsel/features/operation/presentation/widgets/owner_smart_dashboard.dart';
 import 'package:tahsel/features/operation/presentation/widgets/ps_session_form.dart';
 import 'package:tahsel/features/operation/presentation/widgets/quick_add_mode_selector.dart';
 import 'package:tahsel/features/operation/presentation/widgets/quick_add_shop_form.dart';
@@ -47,11 +49,26 @@ import '../cubit/operation_state.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
+  /// Tracks whether the OwnerSmartDashboard is currently active and visible on index 0
+  /// (as opposed to POS selling form).
+  static final ValueNotifier<bool> isOwnerDashboardVisible = ValueNotifier<bool>(
+    PermissionService.instance.isOwner &&
+    AppStrings.isVip &&
+    (sl<CashHelper>().getData(
+      key: AppStrings.hasActiveTeamEmployeesKey(AppStrings.userToken),
+    ) == true),
+  );
+
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // State variables for executive owner dashboard
+  bool _hasActiveTeamEmployees = false;
+  int _activeTeamEmployeesCount = 0;
+  bool _showPosForm = false;
+
   // State variables for navigation between modes
   QuickAddMode _selectedMode = QuickAddMode.shop;
   PlayStationMode _psSubMode = PlayStationMode.time;
@@ -107,13 +124,30 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
 
+    // Check cached active team employees status for instant zero-flicker rendering
+    final uid = AppStrings.userToken;
+    final cachedActive = sl<CashHelper>().getData(
+      key: AppStrings.hasActiveTeamEmployeesKey(uid),
+    );
+    if (cachedActive is bool) {
+      _hasActiveTeamEmployees = cachedActive;
+    }
+    final cachedCount = sl<CashHelper>().getData(
+      key: AppStrings.activeTeamEmployeesCountKey(uid),
+    );
+    if (cachedCount is int) {
+      _activeTeamEmployeesCount = cachedCount;
+    }
+    HomeScreen.isOwnerDashboardVisible.value =
+        _canAccessExecutiveDashboard && _hasActiveTeamEmployees && !_showPosForm;
+    _checkActiveTeamEmployees();
+
     // Check user type from MainLayoutCubit
     final layoutCubit = context.read<MainLayoutCubit>();
     if (layoutCubit.isShop) {
       _selectedMode = QuickAddMode.shop;
     }
 
-    final uid = AppStrings.userToken;
     if (uid.isNotEmpty) {
       context.read<CustomerCubit>().fetchCustomers(uid);
       context.read<ProductCubit>().fetchProducts(uid);
@@ -146,6 +180,54 @@ class _HomeScreenState extends State<HomeScreen> {
 
     _totalAmountController.addListener(_updateShopDebt);
     _paidController.addListener(_updateShopDebt);
+  }
+
+  bool get _canAccessExecutiveDashboard =>
+      PermissionService.instance.isOwner && AppStrings.isVip;
+
+  Future<void> _checkActiveTeamEmployees() async {
+    if (!_canAccessExecutiveDashboard) return;
+    final uid = AppStrings.userToken;
+    if (uid.isEmpty) return;
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('app_employees')
+          .where('accountStatus', isEqualTo: 'active')
+          .get(const GetOptions(source: Source.serverAndCache))
+          .timeout(const Duration(seconds: 4));
+
+      final activeCount = snapshot.docs.length;
+      final hasActive = activeCount > 0;
+
+      sl<CashHelper>().saveData(
+        key: AppStrings.hasActiveTeamEmployeesKey(uid),
+        value: hasActive,
+      );
+      sl<CashHelper>().saveData(
+        key: AppStrings.activeTeamEmployeesCountKey(uid),
+        value: activeCount,
+      );
+
+      if (mounted) {
+        if (_hasActiveTeamEmployees != hasActive ||
+            _activeTeamEmployeesCount != activeCount) {
+          setState(() {
+            _hasActiveTeamEmployees = hasActive;
+            _activeTeamEmployeesCount = activeCount;
+          });
+        }
+        HomeScreen.isOwnerDashboardVisible.value =
+            _canAccessExecutiveDashboard && hasActive && !_showPosForm;
+      }
+    } catch (e) {
+      // Gracefully silent when offline or upon network timeout
+      AppLogger.printMessage(
+        '[HomeScreen] Offline or error verifying active team employees: $e',
+      );
+    }
   }
 
   void _updateShopDebt() {
@@ -699,31 +781,139 @@ class _HomeScreenState extends State<HomeScreen> {
       ],
       child: BlocBuilder<OperationCubit, OperationState>(
         builder: (context, state) {
-          final isDesktop = ResponsiveLayout.isDesktop(context);
-          return Align(
-            alignment: Alignment.topCenter,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: isDesktop ? 1000 : double.infinity,
-              ),
-              child: Stack(
+          return ValueListenableBuilder<int>(
+            valueListenable: PermissionService.instance.changeNotifier,
+            builder: (context, _, __) {
+              if (!_canAccessExecutiveDashboard) {
+                if (HomeScreen.isOwnerDashboardVisible.value) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    HomeScreen.isOwnerDashboardVisible.value = false;
+                  });
+                }
+                return _buildQuickAddContent(context, state);
+              }
+
+              final bool showSmartDashboard =
+                  _hasActiveTeamEmployees && !_showPosForm;
+
+              if (HomeScreen.isOwnerDashboardVisible.value != showSmartDashboard) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  HomeScreen.isOwnerDashboardVisible.value = showSmartDashboard;
+                });
+              }
+
+              if (showSmartDashboard) {
+                return OwnerSmartDashboard(
+                  activeEmployeesCount: _activeTeamEmployeesCount,
+                  onOpenPos: () {
+                    setState(() => _showPosForm = true);
+                    HomeScreen.isOwnerDashboardVisible.value = false;
+                  },
+                );
+              }
+
+              return PopScope(
+                canPop: !_showPosForm,
+                onPopInvokedWithResult: (didPop, _) {
+                  if (!didPop && _showPosForm) {
+                    setState(() => _showPosForm = false);
+                    HomeScreen.isOwnerDashboardVisible.value = _hasActiveTeamEmployees;
+                  }
+                },
+                child: _buildQuickAddContent(
+                  context,
+                  state,
+                  showReturnBanner: _hasActiveTeamEmployees && _showPosForm,
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildQuickAddContent(
+    BuildContext context,
+    OperationState state, {
+    bool showReturnBanner = false,
+  }) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: isDesktop ? 1000 : double.infinity,
+        ),
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Center(
-                          child: Text(
-                            AppStrings.quickAdd.tr(),
-                            style: TextStyles.customStyle(
-                              color: AppColors.black,
-                              fontSize: 25,
-                              fontWeight: FontWeight.bold,
+                  if (showReturnBanner) ...[
+                    InkWell(
+                      onTap: () {
+                        setState(() => _showPosForm = false);
+                        HomeScreen.isOwnerDashboardVisible.value = _hasActiveTeamEmployees;
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 9,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryColor.withValues(
+                            alpha: 0.1,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.primaryColor.withValues(
+                              alpha: 0.25,
                             ),
-                            textAlign: TextAlign.center,
+                            width: 1.2,
                           ),
                         ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.arrow_back_rounded,
+                              color: AppColors.primaryColor,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                AppStrings.backToSmartDashboard.tr(),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyles.customStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primaryColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                  Center(
+                    child: Text(
+                      AppStrings.quickAdd.tr(),
+                      style: TextStyles.customStyle(
+                        color: AppColors.black,
+                        fontSize: 25,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                         20.verticalSpace,
                         // Mode Selection
                         // if (context.read<MainLayoutCubit>().isCafe &&
@@ -1026,8 +1216,5 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           );
-        },
-      ),
-    );
   }
 }

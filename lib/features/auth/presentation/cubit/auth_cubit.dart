@@ -22,6 +22,7 @@ import 'package:tahsel/features/debt/presentation/cubit/debt_cubit.dart';
 import 'package:tahsel/features/expenses/presentation/cubit/expense_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
 import 'package:tahsel/features/operation/presentation/cubit/operation_cubit.dart';
+import 'package:tahsel/features/operation/presentation/screens/home_screen.dart';
 import 'package:tahsel/features/product/presentation/cubit/product_cubit.dart';
 import 'package:tahsel/features/reports/presentation/cubit/reports_cubit/reports_cubit.dart';
 import 'package:tahsel/features/inventory/data/datasources/inventory_local_data_source.dart';
@@ -267,6 +268,7 @@ class AuthCubit extends Cubit<AuthState> {
     AppStrings.userToken = '';
     AppStrings.userType = AppStrings.cafe;
     AppStrings.isVip = false;
+    HomeScreen.isOwnerDashboardVisible.value = false;
 
     // Clear persistent secure storage
     final secureStorage = sl<SecureStorageHelper>();

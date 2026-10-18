@@ -64,7 +64,44 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
   void _init() async {
     await _loadUserType();
     loadLowStockCount();
+    _checkInitialActiveTeamEmployees();
     _ensureValidInitialIndex();
+  }
+
+  Future<void> _checkInitialActiveTeamEmployees() async {
+    final uid = AppStrings.userToken;
+    final isOwner = PermissionService.instance.isOwner;
+    final isVip = AppStrings.isVip;
+    if (!isOwner || !isVip || uid.isEmpty) return;
+
+    try {
+      final snapshot = await firestore
+          .collection('users')
+          .doc(uid)
+          .collection('app_employees')
+          .where('accountStatus', isEqualTo: 'active')
+          .get(const GetOptions(source: Source.serverAndCache))
+          .timeout(const Duration(seconds: 4));
+
+      final activeCount = snapshot.docs.length;
+      final hasActive = activeCount > 0;
+
+      await cashHelper.saveData(
+        key: AppStrings.hasActiveTeamEmployeesKey(uid),
+        value: hasActive,
+      );
+      await cashHelper.saveData(
+        key: AppStrings.activeTeamEmployeesCountKey(uid),
+        value: activeCount,
+      );
+
+      HomeScreen.isOwnerDashboardVisible.value = hasActive;
+    } catch (e) {
+      // Offline or network error: gracefully ignore and rely on local cache
+      AppLogger.printMessage(
+        '[MainLayoutCubit] Offline or error verifying active team employees: $e',
+      );
+    }
   }
 
   void _ensureValidInitialIndex() {

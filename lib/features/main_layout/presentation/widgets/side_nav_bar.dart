@@ -11,6 +11,7 @@ import 'package:tahsel/core/utils/assets.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
 import 'package:tahsel/features/main_layout/presentation/widgets/side_nav_bar_action_nav_tile.dart';
+import 'package:tahsel/features/operation/presentation/screens/home_screen.dart';
 
 class SideNavBar extends StatelessWidget {
   final MainLayoutCubit cubit;
@@ -168,20 +169,39 @@ class SideNavBar extends StatelessWidget {
                       padding: EdgeInsets.symmetric(horizontal: 24),
                       child: Divider(thickness: 1),
                     ),
-                    if (canViewHome ||
-                        canViewExpenses ||
-                        canViewDebts ||
-                        canViewInvoices ||
-                        canViewReports)
+                    ValueListenableBuilder<bool>(
+                      valueListenable: HomeScreen.isOwnerDashboardVisible,
+                      builder: (context, isOwnerDashboard, _) {
+                      
+                        final homeLabel = isOwnerDashboard
+                            ? AppStrings.home.tr()
+                            : AppStrings.cashier.tr();
+                        final homeIcon = isOwnerDashboard
+                            ? Icons.home_rounded
+                            : Icons.point_of_sale_rounded;
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (canViewHome ||
+                                canViewExpenses ||
+                                canViewDebts ||
+                                canViewInvoices ||
+                                canViewReports)
                       _buildSectionHeader(context, AppStrings.mainMenu.tr()),
-                    if (canViewHome)
-                      _NavTile(
-                        index: 0,
-                        icon: Icons.home_rounded,
-                        label: AppStrings.home.tr(),
-                        isSelected: cubit.currentIndex == 0,
-                        onTap: () => cubit.changeBottomNav(0),
-                      ),
+                            if (canViewHome)
+                              _NavTile(
+                                index: 0,
+                                icon: homeIcon,
+                                label: homeLabel,
+                                isSelected: cubit.currentIndex == 0,
+                                onTap: () => cubit.changeBottomNav(0),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
                     if (canViewExpenses)
                       _NavTile(
                         index: 1,

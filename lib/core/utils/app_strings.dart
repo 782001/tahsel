@@ -23,6 +23,12 @@ class AppStrings {
   static String userType = 'cafe';
   static bool isVip = false;
 
+  /// Cache keys scoped strictly per account/owner UID to prevent cross-account data leaks
+  static String hasActiveTeamEmployeesKey(String uid) =>
+      'has_active_team_employees_$uid';
+  static String activeTeamEmployeesCountKey(String uid) =>
+      'active_team_employees_count_$uid';
+
   // ── Role-Based Access Control (RBAC) Session ──
   static String userRole = 'owner';
   static bool get isOwner => userRole == 'owner' || userRole.isEmpty;
@@ -284,6 +290,7 @@ class AppStrings {
 
   // General Nav
   static const String home = "home";
+  static const String cashier = "cashier";
   static const String reports = "reports";
 
   // Login Screen
@@ -1892,6 +1899,33 @@ class AppStrings {
   static const String savedAmount = "saved_amount";
   static const String atCostNoProfit = "at_cost_no_profit";
   static const String unitPieceHint = "unit_piece_hint";
+
+  // Smart Executive Dashboard
+  static const String backToSmartDashboard = "back_to_smart_dashboard";
+  static const String directSaleAndQuickAdd = "direct_sale_and_quick_add";
+  static const String timeSessionsAndQuickAdd = "time_sessions_and_quick_add";
+  static const String trackDailyExpenses = "track_daily_expenses";
+  static const String manageDebtsAndPayments = "manage_debts_and_payments";
+  static const String salesInvoicesAndQuotes = "sales_invoices_and_quotes";
+  static const String salesAndProfitAnalytics = "sales_and_profit_analytics";
+  static const String customerDatabaseAndRecords = "customer_database_and_records";
+  static const String cashFlowAndVaultTransactions = "cash_flow_and_vault_transactions";
+  static const String trackProductsAndStockMovement = "track_products_and_stock_movement";
+  static const String manageTeamAccountsAndPermissions = "manage_team_accounts_and_permissions";
+  static const String handoverAndSettleCustodies = "handover_and_settle_custodies";
+  static const String attendancePayrollAndAdvances = "attendance_payroll_and_advances";
+  static const String shippingPolicyReconciliation = "shipping_policy_reconciliation";
+  static const String generalSettingsAndBackup = "general_settings_and_backup";
+  static const String ownerAccount = "owner_account";
+  static const String businessTypeShop = "business_type_shop";
+  static const String businessTypeCafe = "business_type_cafe";
+  static const String teamMembersActiveCount = "team_members_active_count";
+  static const String dashboardAndOperations = "dashboard_and_operations";
+  static const String dashboardOperationsSubtitle = "dashboard_operations_subtitle";
+  static const String quickPosAction = "quick_pos_action";
+  static const String quickSessionsAction = "quick_sessions_action";
+  static const String shortagesCount = "shortages_count";
+  static const String activeMembersCount = "active_members_count";
 }
 
 

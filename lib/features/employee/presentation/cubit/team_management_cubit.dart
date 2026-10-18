@@ -6,6 +6,9 @@ import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import '../../data/datasources/team_management_remote_data_source.dart';
 import '../../data/models/app_employee_model.dart';
+import 'package:tahsel/core/services/injection_container.dart';
+import 'package:tahsel/core/storage/cashhelper.dart';
+import 'package:tahsel/features/operation/presentation/screens/home_screen.dart';
 import 'team_management_state.dart';
 
 class TeamManagementCubit extends Cubit<TeamManagementState> {
@@ -16,6 +19,22 @@ class TeamManagementCubit extends Cubit<TeamManagementState> {
 
   List<AppEmployeeModel> _employees = [];
   List<AppEmployeeModel> get employees => List.unmodifiable(_employees);
+
+  void _syncActiveEmployeesCache(String ownerUid) {
+    final activeCount =
+        _employees.where((e) => e.accountStatus == 'active').length;
+    final hasActive = activeCount > 0;
+    sl<CashHelper>().saveData(
+      key: AppStrings.hasActiveTeamEmployeesKey(ownerUid),
+      value: hasActive,
+    );
+    sl<CashHelper>().saveData(
+      key: AppStrings.activeTeamEmployeesCountKey(ownerUid),
+      value: activeCount,
+    );
+    HomeScreen.isOwnerDashboardVisible.value =
+        PermissionService.instance.isOwner && AppStrings.isVip && hasActive;
+  }
 
   Future<void> loadEmployees() async {
     final ownerUid = AppStrings.userToken;
@@ -29,6 +48,7 @@ class TeamManagementCubit extends Cubit<TeamManagementState> {
     emit(TeamManagementLoading());
     try {
       _employees = await remoteDataSource.getAppEmployees(ownerUid);
+      _syncActiveEmployeesCache(ownerUid);
       emit(TeamManagementLoaded(_employees));
     } catch (e) {
       emit(TeamManagementFailure(e.toString()));
@@ -113,6 +133,7 @@ class TeamManagementCubit extends Cubit<TeamManagementState> {
       );
 
       _employees = [newEmp, ..._employees];
+      _syncActiveEmployeesCache(ownerUid);
       emit(const TeamManagementActionSuccess(AppStrings.appEmployeeAddedSuccess));
       emit(TeamManagementLoaded(_employees));
       return true;
@@ -226,6 +247,8 @@ class TeamManagementCubit extends Cubit<TeamManagementState> {
         return emp;
       }).toList();
 
+      _syncActiveEmployeesCache(ownerUid);
+
       emit(TeamManagementActionSuccess(
         newStatus == 'active'
             ? AppStrings.employeeActivatedSuccess
@@ -260,6 +283,7 @@ class TeamManagementCubit extends Cubit<TeamManagementState> {
       );
 
       _employees = _employees.where((e) => e.authUid != employeeAuthUid).toList();
+      _syncActiveEmployeesCache(ownerUid);
       emit(const TeamManagementActionSuccess(AppStrings.employeeDeletedSuccess));
       emit(TeamManagementLoaded(_employees));
       return true;
