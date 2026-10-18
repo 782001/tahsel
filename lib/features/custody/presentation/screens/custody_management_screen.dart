@@ -50,7 +50,13 @@ class _CustodyManagementScreenState extends State<CustodyManagementScreen> {
   void initState() {
     super.initState();
     _cubit = sl<CustodyCubit>();
-    _cubit.loadCustodies();
+    final isShop = (AppStrings.userType == AppStrings.shop ||
+        AppStrings.userType == 'shop');
+    final isVip = AppStrings.isVip;
+    final isOwner = PermissionService.instance.isOwner;
+    if (isShop && isOwner && isVip) {
+      _cubit.loadCustodies();
+    }
   }
 
   @override
@@ -452,6 +458,121 @@ class _CustodyManagementScreenState extends State<CustodyManagementScreen> {
     } catch (_) {}
     final isInBottomBar = cubit?.mobileBottomNavIndices.contains(12) ?? false;
     final showBackButton = isPushed || (!isDesktop && !isInBottomBar);
+
+    final isShop = cubit?.isShop ??
+        (AppStrings.userType == AppStrings.shop ||
+            AppStrings.userType == 'shop');
+    final isOwner = PermissionService.instance.isOwner;
+    final isVip = AppStrings.isVip;
+    final hasAccess = isShop && isOwner && isVip;
+
+    if (!hasAccess) {
+      return Scaffold(
+        backgroundColor: AppColors.scafoldBackGround,
+        appBar: showBackButton
+            ? AppBar(
+                backgroundColor: AppColors.scafoldBackGround,
+                elevation: 0,
+                leading: IconButton(
+                  icon: Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: AppColors.primaryColor,
+                  ),
+                  onPressed: () {
+                    if (isEmbedded) {
+                      cubit?.changeBottomNav(5);
+                    } else if (Navigator.of(context).canPop()) {
+                      Navigator.of(context).pop();
+                    }
+                  },
+                ),
+              )
+            : null,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: (!isOwner || !isShop)
+                        ? AppColors.error.withValues(alpha: 0.12)
+                        : Colors.amber.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    (!isOwner || !isShop)
+                        ? Icons.lock_rounded
+                        : Icons.workspace_premium_rounded,
+                    color: (!isOwner || !isShop)
+                        ? AppColors.error
+                        : Colors.amber,
+                    size: 56,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  (!isOwner || !isShop)
+                      ? AppStrings.noPermissionForAction.tr()
+                      : AppStrings.vipAccount.tr(),
+                  style: TextStyles.customStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.blackReal,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  !isOwner
+                      ? 'هذه الميزة مخصصة لحساب المالك فقط'
+                      : (!isShop
+                          ? 'هذه الميزة مخصصة لحسابات المتاجر والمحلات فقط'
+                          : AppStrings.vipOnlyNotice.tr()),
+                  textAlign: TextAlign.center,
+                  style: TextStyles.customStyle(
+                    fontSize: 14,
+                    color: AppColors.sandText,
+                  ),
+                ),
+                if (showBackButton) ...[
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryColor,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {
+                      if (isEmbedded) {
+                        cubit?.changeBottomNav(5);
+                      } else if (Navigator.of(context).canPop()) {
+                        Navigator.of(context).pop();
+                      }
+                    },
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    label: Text(
+                      AppStrings.errorScreenGoBackButton.tr(),
+                      style: TextStyles.customStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return BlocProvider.value(
       value: _cubit,

@@ -17,6 +17,55 @@ class SideNavBar extends StatelessWidget {
   final bool isShop;
 
   const SideNavBar({super.key, required this.cubit, this.isShop = false});
+  void _showVipNoticeDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.scafoldBackGround,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        title: Row(
+          children: [
+            const Icon(
+              Icons.workspace_premium_rounded,
+              color: Colors.amber,
+              size: 28,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              AppStrings.vipAccount.tr(),
+              style: TextStyles.customStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.blackReal,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          AppStrings.vipOnlyNotice.tr(),
+          style: TextStyles.customStyle(
+            fontSize: 14,
+            color: AppColors.sandText,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              AppStrings.ok.tr(),
+              style: TextStyles.customStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,15 +85,15 @@ class SideNavBar extends StatelessWidget {
         final canViewReports =
             permissions.hasPermission(AppPermissions.reportsViewSales) ||
             permissions.hasPermission(AppPermissions.reportsViewNetProfit);
-        final canViewVault = permissions.hasPermission(
-          AppPermissions.vaultAccess,
-        );
-        final canViewInventory = permissions.hasPermission(
-          AppPermissions.inventoryView,
-        );
-        final canManageHREmployees = permissions.hasPermission(
-          AppPermissions.hrEmployeesManage,
-        );
+        final canViewVault =
+            (!Platform.isIOS || (AppStrings.isVip)) &&
+            permissions.hasPermission(AppPermissions.vaultAccess);
+        final canViewInventory =
+            (!Platform.isIOS || (AppStrings.isVip)) &&
+            permissions.hasPermission(AppPermissions.inventoryView);
+        final canManageHREmployees =
+            (!Platform.isIOS || (AppStrings.isVip)) &&
+            permissions.hasPermission(AppPermissions.hrEmployeesManage);
         final canViewCustomers = permissions.hasPermission(
           AppPermissions.customersView,
         );
@@ -169,7 +218,8 @@ class SideNavBar extends StatelessWidget {
                       if ((isShop && canViewVault) ||
                           (isShop && canViewInventory) ||
                           canManageHREmployees ||
-                          canManageTeam) ...[
+                          canManageTeam ||
+                          (isShop && canManageCustodies)) ...[
                         const SizedBox(height: 16),
                         _buildSectionHeader(
                           context,
@@ -181,7 +231,13 @@ class SideNavBar extends StatelessWidget {
                             label: AppStrings.vaultTitle.tr(),
                             tag: "VIP ✨",
                             isSelected: cubit.currentIndex == 7,
-                            onTap: () => cubit.changeBottomNav(7),
+                            onTap: () {
+                              if (!AppStrings.isVip) {
+                                _showVipNoticeDialog(context);
+                                return;
+                              }
+                              cubit.changeBottomNav(7);
+                            },
                           ),
                         if (isShop && canViewInventory)
                           SideNavBarActionNavTile(
@@ -190,7 +246,13 @@ class SideNavBar extends StatelessWidget {
                             tag: "VIP ✨",
                             badgeCount: cubit.lowStockCount,
                             isSelected: cubit.currentIndex == 8,
-                            onTap: () => cubit.changeBottomNav(8),
+                            onTap: () {
+                              if (!AppStrings.isVip) {
+                                _showVipNoticeDialog(context);
+                                return;
+                              }
+                              cubit.changeBottomNav(8);
+                            },
                           ),
                         if (canManageHREmployees)
                           SideNavBarActionNavTile(
@@ -198,7 +260,13 @@ class SideNavBar extends StatelessWidget {
                             label: AppStrings.employeeManagement.tr(),
                             tag: "VIP ✨",
                             isSelected: cubit.currentIndex == 9,
-                            onTap: () => cubit.changeBottomNav(9),
+                            onTap: () {
+                              if (!AppStrings.isVip) {
+                                _showVipNoticeDialog(context);
+                                return;
+                              }
+                              cubit.changeBottomNav(9);
+                            },
                           ),
                         if (canManageTeam)
                           SideNavBarActionNavTile(
@@ -206,15 +274,27 @@ class SideNavBar extends StatelessWidget {
                             label: AppStrings.teamAndPermissions.tr(),
                             tag: "VIP ✨",
                             isSelected: cubit.currentIndex == 11,
-                            onTap: () => cubit.changeBottomNav(11),
+                            onTap: () {
+                              if (!AppStrings.isVip) {
+                                _showVipNoticeDialog(context);
+                                return;
+                              }
+                              cubit.changeBottomNav(11);
+                            },
                           ),
-                        if (canManageCustodies)
+                        if (isShop && canManageCustodies)
                           SideNavBarActionNavTile(
                             icon: Icons.account_balance_wallet_outlined,
                             label: AppStrings.employeeCustodies.tr(),
                             tag: "VIP ✨",
                             isSelected: cubit.currentIndex == 12,
-                            onTap: () => cubit.changeBottomNav(12),
+                            onTap: () {
+                              if (!AppStrings.isVip) {
+                                _showVipNoticeDialog(context);
+                                return;
+                              }
+                              cubit.changeBottomNav(12);
+                            },
                           ),
                       ],
                     ],

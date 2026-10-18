@@ -133,7 +133,10 @@ class AppRoutes {
           builder: (_) => const TeamManagementScreen(),
         );
       case custodyManagement:
-        if (!PermissionService.instance.isOwner) {
+        final isShop =
+            (AppStrings.userType == AppStrings.shop ||
+            AppStrings.userType == 'shop');
+        if (!isShop || !PermissionService.instance.isOwner) {
           return _permissionRestrictedRoute();
         }
         if (!AppStrings.isVip) return _vipRestrictedRoute();
@@ -153,10 +156,10 @@ class AppRoutes {
           builder: (_) => AddAppEmployeeScreen(cubit: cubit),
         );
       case editAppEmployee:
+        if (!AppStrings.isVip) return _vipRestrictedRoute();
         if (!PermissionService.instance.isOwner) {
           return _permissionRestrictedRoute();
         }
-        if (!AppStrings.isVip) return _vipRestrictedRoute();
         final args = settings.arguments;
         if (args is Map) {
           final employee = args['employee'] as AppEmployeeModel;

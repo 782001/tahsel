@@ -1,37 +1,38 @@
 import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tahsel/core/services/injection_container.dart';
-import 'package:tahsel/core/storage/cashhelper.dart';
-import 'package:tahsel/core/storage/secure_storage_helper.dart';
 import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/services/permission_service.dart';
+import 'package:tahsel/core/storage/cashhelper.dart';
+import 'package:tahsel/core/storage/secure_storage_helper.dart';
 import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
-import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
+import 'package:tahsel/features/cashbox/presentation/cubit/vault_cubit.dart';
+import 'package:tahsel/features/cashbox/presentation/screens/vault_screen.dart';
+import 'package:tahsel/features/custody/presentation/screens/custody_management_screen.dart';
+import 'package:tahsel/features/customer/presentation/screens/customers_list_screen.dart';
+import 'package:tahsel/features/employee/presentation/cubit/employee_cubit.dart';
+import 'package:tahsel/features/employee/presentation/cubit/team_management_cubit.dart';
+import 'package:tahsel/features/employee/presentation/screens/employee_list_screen.dart';
+import 'package:tahsel/features/employee/presentation/screens/team_management_screen.dart';
 import 'package:tahsel/features/expenses/presentation/screens/expenses_screen.dart';
+import 'package:tahsel/features/inventory/domain/repositories/inventory_repository.dart';
+import 'package:tahsel/features/inventory/presentation/cubits/inventory_dashboard_cubit.dart';
+import 'package:tahsel/features/inventory/presentation/screens/inventory_main_screen.dart';
 import 'package:tahsel/features/invoice/presentation/cubit/invoice_cubit.dart';
 import 'package:tahsel/features/invoice/presentation/screens/invoices_screen.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_state.dart';
 import 'package:tahsel/features/my_debts/presentation/screens/unified_debts_screen.dart';
 import 'package:tahsel/features/operation/presentation/screens/home_screen.dart';
 import 'package:tahsel/features/reports/domain/usecases/cleanup_old_reports_usecase.dart';
-import 'package:tahsel/features/cashbox/presentation/cubit/vault_cubit.dart';
-import 'package:tahsel/features/cashbox/presentation/screens/vault_screen.dart';
-import 'package:tahsel/features/customer/presentation/screens/customers_list_screen.dart';
-import 'package:tahsel/features/employee/presentation/cubit/employee_cubit.dart';
-import 'package:tahsel/features/employee/presentation/screens/employee_list_screen.dart';
-import 'package:tahsel/features/inventory/presentation/cubits/inventory_dashboard_cubit.dart';
-import 'package:tahsel/features/inventory/domain/repositories/inventory_repository.dart';
-import 'package:tahsel/features/inventory/presentation/screens/inventory_main_screen.dart';
 import 'package:tahsel/features/reports/presentation/screens/reports_screen.dart';
 import 'package:tahsel/features/settings/presentation/screens/more_screen.dart';
 import 'package:tahsel/features/shipping_reconciliation/presentation/screens/shipping_reconciliation_screen.dart';
-import 'package:tahsel/features/employee/presentation/cubit/team_management_cubit.dart';
-import 'package:tahsel/features/employee/presentation/screens/team_management_screen.dart';
-import 'package:tahsel/features/custody/presentation/screens/custody_management_screen.dart';
+import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
 class MainLayoutCubit extends Cubit<MainLayoutState> {
   final CleanupOldReportsUseCase cleanupOldReportsUseCase;
@@ -47,11 +48,14 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
   }) : super(MainLayoutInitial()) {
     _ensureValidInitialIndex();
     _init();
-    PermissionService.instance.changeNotifier.addListener(_onPermissionsChanged);
+    PermissionService.instance.changeNotifier.addListener(
+      _onPermissionsChanged,
+    );
   }
 
-  String _userType =
-      AppStrings.userType.isNotEmpty ? AppStrings.userType : AppStrings.cafe;
+  String _userType = AppStrings.userType.isNotEmpty
+      ? AppStrings.userType
+      : AppStrings.cafe;
   String get userType => _userType;
 
   bool get isShop => _userType == AppStrings.shop;
@@ -77,7 +81,6 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
 
   bool isIndexAllowed(int index) {
     final permissions = PermissionService.instance;
-    if (permissions.isOwner) return true;
 
     switch (index) {
       case 0:
@@ -101,16 +104,23 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
             ((!Platform.isIOS) || AppStrings.isVip) &&
             permissions.hasPermission(AppPermissions.vaultAccess);
       case 8:
-        return isShop && permissions.hasPermission(AppPermissions.inventoryView);
+        return isShop &&
+            ((!Platform.isIOS) || AppStrings.isVip) &&
+            permissions.hasPermission(AppPermissions.inventoryView);
       case 9:
         return ((!Platform.isIOS) || AppStrings.isVip) &&
             permissions.hasPermission(AppPermissions.hrEmployeesManage);
       case 10:
         return isShop &&
-            permissions.hasPermission(AppPermissions.shippingReconciliationView);
+            permissions.hasPermission(
+              AppPermissions.shippingReconciliationView,
+            );
       case 11:
-      case 12:
         return ((!Platform.isIOS) || AppStrings.isVip) && permissions.isOwner;
+      case 12:
+        return isShop &&
+            ((!Platform.isIOS) || AppStrings.isVip) &&
+            permissions.isOwner;
       default:
         return false;
     }
@@ -132,23 +142,20 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
 
   /// Returns the indices of tabs that are actually present in the mobile BottomNavBar.
   List<int> get mobileBottomNavIndices {
-    final primary = [0, 1, 2, if (isShop) 3, 4]
-        .where((idx) => isIndexAllowed(idx))
-        .toList();
+    final primary = [
+      0,
+      1,
+      2,
+      if (isShop) 3,
+      4,
+    ].where((idx) => isIndexAllowed(idx)).toList();
     const int targetCapacity = 5;
     final availableSlots = (targetCapacity - 1) - primary.length;
-    final secondary = [
-      6,
-      if (isShop) 8,
-      if (isShop) 7,
-      if (isShop) 10,
-      9,
-      11,
-      12,
-    ]
-        .where((idx) => isIndexAllowed(idx))
-        .take(availableSlots > 0 ? availableSlots : 0)
-        .toList();
+    final secondary =
+        [6, if (isShop) 8, if (isShop) 7, if (isShop) 10, 9, 11, 12]
+            .where((idx) => isIndexAllowed(idx))
+            .take(availableSlots > 0 ? availableSlots : 0)
+            .toList();
     return [...primary, ...secondary, 5];
   }
 
@@ -269,8 +276,9 @@ class MainLayoutCubit extends Cubit<MainLayoutState> {
 
   @override
   Future<void> close() {
-    PermissionService.instance.changeNotifier
-        .removeListener(_onPermissionsChanged);
+    PermissionService.instance.changeNotifier.removeListener(
+      _onPermissionsChanged,
+    );
     return super.close();
   }
 }
