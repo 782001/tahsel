@@ -15,7 +15,7 @@ class PaymentSummaryCard extends StatelessWidget {
     required String value,
     required TextStyle labelStyle,
     required TextStyle valueStyle,
-    int labelFlex = 1,
+    int labelFlex = 2,
     int valueFlex = 1,
   }) {
     return Row(
@@ -25,7 +25,7 @@ class PaymentSummaryCard extends StatelessWidget {
           child: Text(
             label,
             style: labelStyle,
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
         ),
@@ -37,11 +37,7 @@ class PaymentSummaryCard extends StatelessWidget {
             child: FittedBox(
               fit: BoxFit.scaleDown,
               alignment: AlignmentDirectional.centerEnd,
-              child: Text(
-                value,
-                style: valueStyle,
-                maxLines: 1,
-              ),
+              child: Text(value, style: valueStyle, maxLines: 1),
             ),
           ),
         ),
@@ -145,9 +141,7 @@ class PaymentSummaryCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: InvoiceSummaryColumn(
-                    label: hasTax
-                        ? AppStrings.totalAfterTax.tr()
-                        : AppStrings.totalDueLabel.tr(),
+                    label: AppStrings.totalDueLabel.tr(),
                     amount: invoice.totalAmount,
                     color: AppColors.black,
                   ),

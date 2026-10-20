@@ -1714,7 +1714,14 @@
   "quick_pos_action": "Quick POS Point of Sale",
   "quick_sessions_action": "Sessions & Quick Add Screen",
   "shortages_count": "{count} low stock",
-  "active_members_count": "{count} active"
+  "active_members_count": "{count} active",
+  "invoice_item_already_added_max_stock": "Item \"{name}\" is already added in line ({index}) with maximum stock available ({max})",
+  "invoice_item_already_added_qty_clamped": "Item \"{name}\" is already added in line ({index}). Quantity increased to maximum available stock ({max})",
+  "invoice_item_already_added_qty_updated": "Item \"{name}\" is already added in line ({index}). Quantity updated to ({qty})",
+  "invoice_item_badge_added": "Added ({qty})",
+  "barcode_not_found_in_inventory": "No item found in inventory with barcode \"{barcode}\"",
+  "invoice_inventory_max_stock_reached": "Item \"{name}\" reached maximum available stock ({max})",
+  "barcode_scanned_item_added": "\"{name}\" successfully added via barcode"
 }
 
 

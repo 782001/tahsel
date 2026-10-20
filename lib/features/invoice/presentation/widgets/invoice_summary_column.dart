@@ -25,7 +25,7 @@ class InvoiceSummaryColumn extends StatelessWidget {
             fontSize: 11,
             color: AppColors.blackLight,
           ),
-          maxLines: 1,
+          maxLines: 2,
           overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.center,
         ),

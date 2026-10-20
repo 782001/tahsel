@@ -924,6 +924,19 @@ class AppStrings {
   static const String invoiceUpdateSuccess = "invoice_update_success";
   static const String invoiceVoidSuccess = "invoice_void_success";
   static const String invoiceItemDiscount = "invoice_item_discount";
+  static const String invoiceItemAlreadyAddedMaxStock =
+      "invoice_item_already_added_max_stock";
+  static const String invoiceItemAlreadyAddedQtyClamped =
+      "invoice_item_already_added_qty_clamped";
+  static const String invoiceItemAlreadyAddedQtyUpdated =
+      "invoice_item_already_added_qty_updated";
+  static const String invoiceItemBadgeAdded = "invoice_item_badge_added";
+  static const String barcodeNotFoundInInventory =
+      "barcode_not_found_in_inventory";
+  static const String invoiceInventoryMaxStockReached =
+      "invoice_inventory_max_stock_reached";
+  static const String barcodeScannedItemAdded =
+      "barcode_scanned_item_added";
 
   // Invoice Edit History
   static const String invoiceHistory = "invoice_history";

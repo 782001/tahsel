@@ -34,6 +34,24 @@ import 'package:tahsel/features/standard_features/no-internet/logic/connectivity
 import 'package:tahsel/shared/widgets/buttons/quick_action_button.dart';
 import 'package:tahsel/shared/widgets/quick_due_date_selector.dart';
 
+class _ConsolidatedInvoiceItem {
+  final String description;
+  final double unitPrice;
+  double quantity;
+  final String? unit;
+  double discount;
+  final double? purchasePrice;
+
+  _ConsolidatedInvoiceItem({
+    required this.description,
+    required this.unitPrice,
+    required this.quantity,
+    this.unit,
+    required this.discount,
+    this.purchasePrice,
+  });
+}
+
 class _ItemControllers {
   String? productId;
   final TextEditingController desc;
@@ -278,15 +296,30 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
     }
   }
 
+  String _normalizeArabic(String text) {
+    return text
+        .replaceAll(RegExp(r'[\u064B-\u065F\u0670]'), '')
+        .replaceAll(RegExp(r'[إأآا]'), 'ا')
+        .replaceAll('ة', 'ه')
+        .replaceAll('ى', 'ي')
+        .replaceAll('ئ', 'ي')
+        .replaceAll('ؤ', 'و')
+        .trim()
+        .toLowerCase();
+  }
+
   InventoryProductEntity? _findProduct(_ItemControllers ctrl) {
     if (ctrl.productId != null && ctrl.productId!.isNotEmpty) {
       final byId = _availableProducts.where((p) => p.id == ctrl.productId);
       if (byId.isNotEmpty) return byId.first;
     }
     final desc = ctrl.desc.text.trim().toLowerCase();
+    final normDesc = _normalizeArabic(ctrl.desc.text);
     if (desc.isNotEmpty) {
       final byName = _availableProducts.where(
-        (p) => p.name.trim().toLowerCase() == desc,
+        (p) =>
+            p.name.trim().toLowerCase() == desc ||
+            _normalizeArabic(p.name) == normDesc,
       );
       if (byName.isNotEmpty) return byName.first;
     }
@@ -379,6 +412,236 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
     }
   }
 
+  Map<String, double> get _selectedProductQuantitiesMap {
+    final Map<String, double> map = {};
+    for (final ctrl in _itemControllers) {
+      final pid = ctrl.productId;
+      final q = double.tryParse(ctrl.qty.text.trim()) ?? 0.0;
+      if (pid != null && pid.isNotEmpty && q > 0) {
+        map[pid] = (map[pid] ?? 0.0) + q;
+      }
+    }
+    return map;
+  }
+
+  void _handleProductSelected(
+    _ItemControllers targetCtrl,
+    InventoryProductEntity product, {
+    bool isExternalScanner = false,
+  }) {
+    final index = _itemControllers.indexOf(targetCtrl);
+    if (index == -1) {
+      // Controller has already been removed or replaced, ignore stale call
+      return;
+    }
+
+    // Check if this product is already in another row
+    int existingIndex = -1;
+    final normalizedSelectedName = _normalizeArabic(product.name);
+
+    for (int j = 0; j < _itemControllers.length; j++) {
+      if (j == index) continue;
+      final ctrl = _itemControllers[j];
+      final isSameId = ctrl.productId != null && ctrl.productId == product.id;
+      final isSameName =
+          ctrl.desc.text.trim().isNotEmpty &&
+          _normalizeArabic(ctrl.desc.text) == normalizedSelectedName;
+      if (isSameId || isSameName) {
+        existingIndex = j;
+        break;
+      }
+    }
+
+    if (existingIndex != -1) {
+      // Duplicate product detected -> merge into existing row
+      final existingCtrl = _itemControllers[existingIndex];
+      final currentCtrl = targetCtrl;
+
+      final existingQty = double.tryParse(existingCtrl.qty.text.trim()) ?? 1.0;
+      final currentQty = double.tryParse(currentCtrl.qty.text.trim()) ?? 1.0;
+      final addQty = currentQty > 0 ? currentQty : 1.0;
+      final maxAllowed = _maxQuantityFor(product);
+      final targetQty = existingQty + addQty;
+
+      existingCtrl.productId = product.id;
+      existingCtrl.purchasePrice ??= product.purchasePrice;
+      existingCtrl.maxQuantity = maxAllowed;
+      if (existingCtrl.price.text.trim().isEmpty ||
+          existingCtrl.price.text.trim() == '0') {
+        existingCtrl.price.text = product.sellingPrice.toSmartAmount();
+      }
+      if (existingCtrl.unit.text.trim().isEmpty &&
+          product.unit.trim().isNotEmpty) {
+        existingCtrl.unit.text = product.unit.trim();
+      }
+
+      // ignore: unnecessary_null_comparison
+      if (!_isQuotation && maxAllowed != null && maxAllowed > 0) {
+        if (existingQty >= maxAllowed) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                AppStrings.invoiceItemAlreadyAddedMaxStock.tr(
+                  namedArgs: {
+                    'name': product.name,
+                    'index': '${existingIndex + 1}',
+                    'max': maxAllowed.toSmartAmount(),
+                  },
+                ),
+              ),
+              backgroundColor: AppColors.warning,
+            ),
+          );
+        } else if (targetQty > maxAllowed) {
+          existingCtrl.qty.text = maxAllowed.toSmartAmount();
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                AppStrings.invoiceItemAlreadyAddedQtyClamped.tr(
+                  namedArgs: {
+                    'name': product.name,
+                    'index': '${existingIndex + 1}',
+                    'max': maxAllowed.toSmartAmount(),
+                  },
+                ),
+              ),
+              backgroundColor: AppColors.warning,
+            ),
+          );
+        } else {
+          existingCtrl.qty.text = targetQty.toSmartAmount();
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                AppStrings.invoiceItemAlreadyAddedQtyUpdated.tr(
+                  namedArgs: {
+                    'name': product.name,
+                    'index': '${existingIndex + 1}',
+                    'qty': targetQty.toSmartAmount(),
+                  },
+                ),
+              ),
+              backgroundColor: AppColors.primaryColor,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        existingCtrl.qty.text = targetQty.toSmartAmount();
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppStrings.invoiceItemAlreadyAddedQtyUpdated.tr(
+                namedArgs: {
+                  'name': product.name,
+                  'index': '${existingIndex + 1}',
+                  'qty': targetQty.toSmartAmount(),
+                },
+              ),
+            ),
+            backgroundColor: AppColors.primaryColor,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+
+      // Remove the redundant current row
+      setState(() {
+        if (_itemControllers.length > 1) {
+          _itemControllers.remove(currentCtrl);
+          currentCtrl.dispose();
+        } else {
+          currentCtrl.desc.clear();
+          currentCtrl.price.clear();
+          currentCtrl.qty.text = '1';
+          currentCtrl.productId = null;
+        }
+      });
+
+      if (isExternalScanner) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _ItemControllers? emptyCtrl;
+          for (final c in _itemControllers) {
+            if (c.desc.text.trim().isEmpty && c.price.text.trim().isEmpty) {
+              emptyCtrl = c;
+              break;
+            }
+          }
+          if (emptyCtrl != null && emptyCtrl.descFocus.canRequestFocus) {
+            emptyCtrl.descFocus.requestFocus();
+          } else {
+            _addItem(autoFocus: true);
+          }
+        });
+      } else {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (existingCtrl.qtyFocus.canRequestFocus) {
+            existingCtrl.qtyFocus.requestFocus();
+            existingCtrl.qty.selection = TextSelection(
+              baseOffset: 0,
+              extentOffset: existingCtrl.qty.text.length,
+            );
+          }
+        });
+      }
+      return;
+    }
+
+    // Normal fresh selection for row
+    final ctrl = targetCtrl;
+    setState(() {
+      ctrl.productId = product.id;
+      ctrl.desc.text = product.name;
+      ctrl.desc.selection = TextSelection.fromPosition(
+        TextPosition(offset: product.name.length),
+      );
+      ctrl.price.text = product.sellingPrice.toSmartAmount();
+      if (product.unit.trim().isNotEmpty) {
+        ctrl.unit.text = product.unit.trim();
+      }
+      final currentQty = double.tryParse(ctrl.qty.text.trim()) ?? 0.0;
+      final maxQty = _maxQuantityFor(product);
+      if (currentQty <= 0) {
+        ctrl.qty.text = '1';
+      // ignore: unnecessary_null_comparison
+      } else if (maxQty != null && maxQty > 0 && currentQty > maxQty) {
+        ctrl.qty.text = maxQty.toSmartAmount();
+      }
+      ctrl.purchasePrice = product.purchasePrice;
+      ctrl.maxQuantity = maxQty;
+    });
+
+    if (isExternalScanner) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final currentIndex = _itemControllers.indexOf(ctrl);
+        if (currentIndex != -1 && currentIndex + 1 < _itemControllers.length) {
+          final nextCtrl = _itemControllers[currentIndex + 1];
+          if (nextCtrl.descFocus.canRequestFocus) {
+            nextCtrl.descFocus.requestFocus();
+            return;
+          }
+        }
+        _addItem(autoFocus: true);
+      });
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (ctrl.priceFocus.canRequestFocus) {
+          ctrl.priceFocus.requestFocus();
+          if (ctrl.price.text.isNotEmpty) {
+            ctrl.price.selection = TextSelection(
+              baseOffset: 0,
+              extentOffset: ctrl.price.text.length,
+            );
+          }
+        }
+      });
+    }
+  }
+
   void _openMultiInventoryPicker() {
     final Map<String, double> existingQuantities = {};
     final Set<String> initialProductIds = {};
@@ -389,11 +652,13 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
       final qty = double.tryParse(ctrl.qty.text.trim()) ?? 0.0;
       if (name.isNotEmpty && qty > 0) {
         if (ctrl.productId != null && ctrl.productId!.isNotEmpty) {
-          existingQuantities[ctrl.productId!] = qty;
+          existingQuantities[ctrl.productId!] =
+              (existingQuantities[ctrl.productId!] ?? 0.0) + qty;
           initialProductIds.add(ctrl.productId!);
         }
-        existingQuantities[name] = qty;
-        initialProductNames.add(name.toLowerCase());
+        existingQuantities[name] =
+            (existingQuantities[name] ?? 0.0) + qty;
+        initialProductNames.add(_normalizeArabic(name));
       }
     }
 
@@ -409,19 +674,22 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
         confirmButtonText: AppStrings.confirmSelection.tr(),
         onItemsConfirmed: (selectedItems) {
           setState(() {
-            // Remove initial placeholder row if user hasn't typed in it
-            if (_itemControllers.length == 1 &&
-                _itemControllers.first.desc.text.trim().isEmpty &&
-                _itemControllers.first.price.text.trim().isEmpty) {
-              _itemControllers.first.dispose();
-              _itemControllers.clear();
-            }
+            // Clean up any empty/blank placeholder rows
+            _itemControllers.removeWhere((ctrl) {
+              final isBlank = ctrl.desc.text.trim().isEmpty &&
+                  ctrl.price.text.trim().isEmpty;
+              if (isBlank) {
+                ctrl.dispose();
+                return true;
+              }
+              return false;
+            });
 
             final returnedProductIds = selectedItems
                 .map((e) => e.product.id)
                 .toSet();
             final returnedProductNames = selectedItems
-                .map((e) => e.product.name.trim().toLowerCase())
+                .map((e) => _normalizeArabic(e.product.name))
                 .toSet();
 
             final Map<String, SelectedInventoryItem> itemsByProdId = {
@@ -429,23 +697,23 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
             };
             final Map<String, SelectedInventoryItem> itemsByName = {
               for (final item in selectedItems)
-                item.product.name.trim().toLowerCase(): item,
+                _normalizeArabic(item.product.name): item,
             };
 
-            // Remove inventory items that were previously passed but user deselected them
+            // Remove inventory items that were previously passed but user deselected them in picker
             _itemControllers.removeWhere((ctrl) {
               final isInventoryItem =
                   (ctrl.productId != null &&
                       initialProductIds.contains(ctrl.productId)) ||
                   initialProductNames.contains(
-                    ctrl.desc.text.trim().toLowerCase(),
+                    _normalizeArabic(ctrl.desc.text),
                   );
               if (isInventoryItem) {
                 final stillSelected =
                     (ctrl.productId != null &&
                         returnedProductIds.contains(ctrl.productId)) ||
                     returnedProductNames.contains(
-                      ctrl.desc.text.trim().toLowerCase(),
+                      _normalizeArabic(ctrl.desc.text),
                     );
                 if (!stillSelected) {
                   ctrl.dispose();
@@ -455,35 +723,50 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
               return false; // Keep custom manual items intact
             });
 
-            // Update existing matched controllers
+            // Update existing matched controllers & remove any duplicate rows
             final matchedProductIds = <String>{};
-            for (final ctrl in _itemControllers) {
+            final toRemoveIndices = <int>[];
+
+            for (int i = 0; i < _itemControllers.length; i++) {
+              final ctrl = _itemControllers[i];
               SelectedInventoryItem? matchedItem;
               if (ctrl.productId != null &&
                   itemsByProdId.containsKey(ctrl.productId)) {
                 matchedItem = itemsByProdId[ctrl.productId];
               } else if (itemsByName.containsKey(
-                ctrl.desc.text.trim().toLowerCase(),
+                _normalizeArabic(ctrl.desc.text),
               )) {
-                matchedItem = itemsByName[ctrl.desc.text.trim().toLowerCase()];
+                matchedItem = itemsByName[_normalizeArabic(ctrl.desc.text)];
               }
 
               if (matchedItem != null) {
-                ctrl.productId = matchedItem.product.id;
-                ctrl.qty.text = matchedItem.quantity.toSmartAmount();
-                ctrl.purchasePrice = matchedItem.product.purchasePrice;
-                ctrl.maxQuantity = _maxQuantityFor(matchedItem.product);
-                if (ctrl.price.text.trim().isEmpty ||
-                    ctrl.price.text.trim() == '0') {
-                  ctrl.price.text = matchedItem.product.sellingPrice
-                      .toSmartAmount();
+                if (matchedProductIds.contains(matchedItem.product.id)) {
+                  // Duplicate row for this product! Mark for removal
+                  toRemoveIndices.add(i);
+                } else {
+                  ctrl.productId = matchedItem.product.id;
+                  ctrl.desc.text = matchedItem.product.name;
+                  ctrl.qty.text = matchedItem.quantity.toSmartAmount();
+                  ctrl.purchasePrice = matchedItem.product.purchasePrice;
+                  ctrl.maxQuantity = _maxQuantityFor(matchedItem.product);
+                  if (ctrl.price.text.trim().isEmpty ||
+                      ctrl.price.text.trim() == '0') {
+                    ctrl.price.text = matchedItem.product.sellingPrice
+                        .toSmartAmount();
+                  }
+                  if (ctrl.unit.text.trim().isEmpty &&
+                      matchedItem.product.unit.isNotEmpty) {
+                    ctrl.unit.text = matchedItem.product.unit;
+                  }
+                  matchedProductIds.add(matchedItem.product.id);
                 }
-                if (ctrl.unit.text.trim().isEmpty &&
-                    matchedItem.product.unit.isNotEmpty) {
-                  ctrl.unit.text = matchedItem.product.unit;
-                }
-                matchedProductIds.add(matchedItem.product.id);
               }
+            }
+
+            // Remove any extra duplicate rows in reverse order
+            for (final idx in toRemoveIndices.reversed) {
+              _itemControllers[idx].dispose();
+              _itemControllers.removeAt(idx);
             }
 
             // Add newly selected products
@@ -499,6 +782,7 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                 newCtrl.price.text = item.product.sellingPrice.toSmartAmount();
                 newCtrl.qty.text = item.quantity.toSmartAmount();
                 _itemControllers.add(newCtrl);
+                matchedProductIds.add(item.product.id);
               }
             }
 
@@ -546,14 +830,38 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
       return;
     }
 
-    final items = validItems.asMap().entries.map((entry) {
-      final ctrl = entry.value;
-      final price = double.tryParse(ctrl.price.text) ?? 0.0;
-      final qty = double.tryParse(ctrl.qty.text) ?? 1.0;
-      final itemDiscount = double.tryParse(ctrl.discount.text) ?? 0.0;
-      final subtotal = price * qty;
+    // Consolidate any duplicate items (by productId or normalized description + price + unit)
+    final Map<String, _ConsolidatedInvoiceItem> consolidatedMap = {};
+    for (final ctrl in validItems) {
+      final key = (ctrl.productId != null && ctrl.productId!.isNotEmpty)
+          ? 'id_${ctrl.productId}'
+          : 'desc_${_normalizeArabic(ctrl.desc.text)}_${ctrl.price.text.trim()}_${ctrl.unit.text.trim()}';
+
+      final price = double.tryParse(ctrl.price.text.trim()) ?? 0.0;
+      final qty = double.tryParse(ctrl.qty.text.trim()) ?? 1.0;
+      final itemDiscount = double.tryParse(ctrl.discount.text.trim()) ?? 0.0;
+
+      if (consolidatedMap.containsKey(key)) {
+        final existing = consolidatedMap[key]!;
+        existing.quantity += qty;
+        existing.discount += itemDiscount;
+      } else {
+        consolidatedMap[key] = _ConsolidatedInvoiceItem(
+          description: ctrl.desc.text.trim(),
+          unitPrice: price,
+          quantity: qty,
+          unit: ctrl.unit.text.trim().isNotEmpty ? ctrl.unit.text.trim() : null,
+          discount: itemDiscount,
+          purchasePrice: ctrl.purchasePrice,
+        );
+      }
+    }
+
+    final items = consolidatedMap.values.toList().asMap().entries.map((entry) {
+      final item = entry.value;
+      final subtotal = item.unitPrice * item.quantity;
       final discountRate = subtotal > 0
-          ? (itemDiscount / subtotal).clamp(0.0, 1.0)
+          ? (item.discount / subtotal).clamp(0.0, 1.0)
           : 0.0;
 
       return InvoiceItem(
@@ -562,12 +870,12 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                   ? widget.invoiceToEdit!.items[entry.key].id
                   : 'item_${entry.key}')
             : 'item_${entry.key}',
-        description: ctrl.desc.text.trim(),
-        unitPrice: price,
-        quantity: qty,
-        unit: ctrl.unit.text.trim().isNotEmpty ? ctrl.unit.text.trim() : null,
+        description: item.description,
+        unitPrice: item.unitPrice,
+        quantity: item.quantity,
+        unit: item.unit,
         discountRate: discountRate,
-        purchasePrice: ctrl.purchasePrice,
+        purchasePrice: item.purchasePrice,
       );
     }).toList();
 
@@ -1029,16 +1337,16 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                                     _itemControllers[i].discountFocus,
                                 unitFocusNode: _itemControllers[i].unitFocus,
                                 availableProducts: _availableProducts,
+                                selectedProductQuantities:
+                                    _selectedProductQuantitiesMap,
                                 productId: _itemControllers[i].productId,
                                 maxQuantity: _itemControllers[i].maxQuantity,
-                                onProductSelected: (product) {
-                                  _itemControllers[i].productId = product.id;
-                                  _itemControllers[i].purchasePrice =
-                                      product.purchasePrice;
-                                  _itemControllers[i].maxQuantity =
-                                      _maxQuantityFor(product);
-                                  setState(() {});
-                                },
+                                onProductSelected: (product, {isExternalScanner = false}) =>
+                                    _handleProductSelected(
+                                      _itemControllers[i],
+                                      product,
+                                      isExternalScanner: isExternalScanner,
+                                    ),
                                 onNextItem: () {
                                   if (i + 1 < _itemControllers.length) {
                                     _itemControllers[i + 1].descFocus

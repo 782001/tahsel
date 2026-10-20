@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
@@ -7,6 +9,12 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/inventory/data/datasources/inventory_local_data_source.dart';
 import 'package:tahsel/features/inventory/domain/entities/inventory_product_entity.dart';
+import 'package:tahsel/features/inventory/presentation/widgets/barcode_scanner_dialog.dart';
+
+typedef OnInvoiceItemProductSelected = void Function(
+  InventoryProductEntity product, {
+  bool isExternalScanner,
+});
 
 /// A single editable line-item row used inside the invoice form.
 class InvoiceItemRow extends StatefulWidget {
@@ -22,7 +30,8 @@ class InvoiceItemRow extends StatefulWidget {
   final FocusNode? discountFocusNode;
   final FocusNode? unitFocusNode;
   final List<InventoryProductEntity>? availableProducts;
-  final ValueChanged<InventoryProductEntity>? onProductSelected;
+  final OnInvoiceItemProductSelected? onProductSelected;
+  final Map<String, double>? selectedProductQuantities;
   final VoidCallback? onNextItem;
   final String? productId;
   final double? maxQuantity;
@@ -47,6 +56,7 @@ class InvoiceItemRow extends StatefulWidget {
     this.unitFocusNode,
     this.availableProducts,
     this.onProductSelected,
+    this.selectedProductQuantities,
     this.onNextItem,
     this.productId,
     this.maxQuantity,
@@ -153,7 +163,45 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
     }
   }
 
+  bool get _isCameraScanSupported => kIsWeb || !Platform.isWindows;
+
+  bool _isLikelyBarcode(String query) {
+    final trimmed = query.trim();
+    return RegExp(r'^[A-Za-z0-9_\-\.]{3,50}$').hasMatch(trimmed);
+  }
+
   void _onDescTextChanged() {
+    final rawText = widget.descController.text;
+    if (rawText.contains('\n') || rawText.contains('\r')) {
+      final cleaned = rawText.replaceAll('\r', '').replaceAll('\n', '').trim();
+      widget.descController.text = cleaned;
+      widget.descController.selection = TextSelection.fromPosition(
+        TextPosition(offset: cleaned.length),
+      );
+      if (cleaned.isNotEmpty) {
+        _handleScannedCode(cleaned, isExternalScanner: true).then((matched) {
+          if (!matched && mounted) {
+            if (_isLikelyBarcode(cleaned)) {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    AppStrings.barcodeNotFoundInInventory.tr(
+                      namedArgs: {'barcode': cleaned},
+                    ),
+                  ),
+                  backgroundColor: AppColors.warning,
+                  duration: const Duration(seconds: 2),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+            _updateSuggestions(cleaned);
+          }
+        });
+        return;
+      }
+    }
     if (_descFocus.hasFocus) {
       _updateSuggestions(widget.descController.text);
     }
@@ -211,7 +259,10 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
     }
   }
 
+  bool _isSelectingProduct = false;
+
   void _showOverlay() {
+    _isSelectingProduct = false;
     if (!mounted) return;
     if (_overlayEntry != null) {
       _overlayEntry!.markNeedsBuild();
@@ -278,7 +329,21 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
     }
   }
 
-  void _selectProduct(InventoryProductEntity product) {
+  void _selectProduct(
+    InventoryProductEntity product, {
+    bool isExternalScanner = false,
+  }) {
+    if (_isSelectingProduct) return;
+    _isSelectingProduct = true;
+    _hideOverlay();
+    if (widget.onProductSelected != null) {
+      widget.onProductSelected!(product, isExternalScanner: isExternalScanner);
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) _isSelectingProduct = false;
+      });
+      return;
+    }
+
     widget.descController.text = product.name;
     widget.descController.selection = TextSelection.fromPosition(
       TextPosition(offset: product.name.length),
@@ -294,29 +359,110 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
     } else if (maxQty > 0 && currentQty > maxQty) {
       widget.qtyController.text = maxQty.toSmartAmount();
     }
-    _hideOverlay();
-    widget.onProductSelected?.call(product);
+    if (!mounted) return;
     setState(() {});
     widget.onChanged();
 
-    // Focus price and select all text so user can either confirm or overwrite
-    _priceFocus.requestFocus();
-    if (widget.priceController.text.isNotEmpty) {
-      widget.priceController.selection = TextSelection(
-        baseOffset: 0,
-        extentOffset: widget.priceController.text.length,
+    if (isExternalScanner && widget.onNextItem != null) {
+      widget.onNextItem!();
+    } else {
+      // Focus price and select all text so user can either confirm or overwrite
+      _priceFocus.requestFocus();
+      if (widget.priceController.text.isNotEmpty) {
+        widget.priceController.selection = TextSelection(
+          baseOffset: 0,
+          extentOffset: widget.priceController.text.length,
+        );
+      }
+    }
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) _isSelectingProduct = false;
+    });
+  }
+
+  Future<bool> _handleScannedCode(
+    String rawCode, {
+    bool isExternalScanner = false,
+  }) async {
+    final target = rawCode.trim().toLowerCase();
+    if (target.isEmpty) return false;
+
+    var allProducts =
+        (widget.availableProducts != null &&
+            widget.availableProducts!.isNotEmpty)
+        ? widget.availableProducts!
+        : _fallbackProducts;
+
+    if (allProducts.isEmpty) {
+      await _loadFallbackProducts();
+      allProducts = _fallbackProducts;
+    }
+
+    InventoryProductEntity? matchedProduct;
+    for (final p in allProducts) {
+      final barcode = p.barcode?.trim().toLowerCase();
+      final sku = p.sku.trim().toLowerCase();
+      final id = p.id.trim().toLowerCase();
+      if ((barcode != null && barcode == target) ||
+          sku == target ||
+          id == target) {
+        matchedProduct = p;
+        break;
+      }
+    }
+
+    if (matchedProduct != null) {
+      _hideOverlay();
+      _selectProduct(matchedProduct, isExternalScanner: isExternalScanner);
+      return true;
+    }
+    return false;
+  }
+
+  Future<void> _scanBarcodeForItem() async {
+    if (!_isCameraScanSupported) return;
+    _hideOverlay();
+    final scannedCode = await BarcodeScannerDialog.scan(context);
+    if (scannedCode == null || scannedCode.trim().isEmpty) return;
+
+    final matched = await _handleScannedCode(
+      scannedCode,
+      isExternalScanner: false,
+    );
+    if (!matched) {
+      widget.descController.text = scannedCode.trim();
+      widget.descController.selection = TextSelection.fromPosition(
+        TextPosition(offset: scannedCode.trim().length),
       );
+      widget.onChanged();
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppStrings.barcodeNotFoundInInventory.tr(
+                namedArgs: {'barcode': scannedCode.trim()},
+              ),
+            ),
+            backgroundColor: AppColors.warning,
+          ),
+        );
+      }
     }
   }
 
   Widget _buildSuggestionItem(InventoryProductEntity item) {
     final currency = AppStrings.currencyEgp.tr();
     final isLowStock = item.currentQuantity <= item.minQuantity;
+    final isAlreadyInInvoice = widget.selectedProductQuantities != null &&
+        widget.selectedProductQuantities!.containsKey(item.id);
+    final alreadyQty = isAlreadyInInvoice
+        ? widget.selectedProductQuantities![item.id]!
+        : 0.0;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTapDown: (_) => _selectProduct(item),
         onTap: () => _selectProduct(item),
         hoverColor: AppColors.primaryColor.withValues(alpha: 0.05),
         splashColor: AppColors.primaryColor.withValues(alpha: 0.1),
@@ -348,15 +494,50 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      item.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyles.customStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.black,
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyles.customStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.black,
+                            ),
+                          ),
+                        ),
+                        if (isAlreadyInInvoice) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 1.5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryColor.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: AppColors.primaryColor.withValues(alpha: 0.25),
+                                width: 0.8,
+                              ),
+                            ),
+                            child: Text(
+                              AppStrings.invoiceItemBadgeAdded.tr(
+                                namedArgs: {
+                                  'qty': alreadyQty.toSmartAmount(),
+                                },
+                              ),
+                              style: TextStyles.customStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primaryColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 3),
                     Row(
@@ -607,6 +788,7 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
                   ],
                 ),
               ),
+              const Spacer(),
               Material(
                 color: Colors.transparent,
                 child: InkWell(
@@ -656,8 +838,51 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
                 controller: widget.descController,
                 focusNode: _descFocus,
                 textInputAction: TextInputAction.next,
-                onSubmitted: (_) {
+                suffixWidget: _isCameraScanSupported
+                    ? IconButton(
+                        icon: Icon(
+                          Icons.qr_code_scanner_rounded,
+                          color: AppColors.primaryColor,
+                          size: 20,
+                        ),
+                        tooltip: AppStrings.barcodeScanTitle.tr(),
+                        splashRadius: 20,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 36,
+                          minHeight: 36,
+                        ),
+                        onPressed: _scanBarcodeForItem,
+                      )
+                    : null,
+                onSubmitted: (value) async {
                   _hideOverlay();
+                  final trimmed = value.trim();
+                  if (trimmed.isNotEmpty) {
+                    final matched = await _handleScannedCode(
+                      trimmed,
+                      isExternalScanner: true,
+                    );
+                    if (matched) {
+                      return;
+                    } else if (_isLikelyBarcode(trimmed)) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              AppStrings.barcodeNotFoundInInventory.tr(
+                                namedArgs: {'barcode': trimmed},
+                              ),
+                            ),
+                            backgroundColor: AppColors.warning,
+                            duration: const Duration(seconds: 2),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    }
+                  }
                   _priceFocus.requestFocus();
                   if (widget.priceController.text.isNotEmpty) {
                     widget.priceController.selection = TextSelection(

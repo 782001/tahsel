@@ -1714,5 +1714,12 @@
   "quick_pos_action": "نقطة البيع السريعة (POS)",
   "quick_sessions_action": "شاشة الجلسات والإضافة السريعة",
   "shortages_count": "{count} نواقص",
-  "active_members_count": "{count} نشط"
+  "active_members_count": "{count} نشط",
+  "invoice_item_already_added_max_stock": "الصنف \"{name}\" مضاف بالفعل في البند رقم ({index}) بالكمية القصوى المتاحة بالمخزن ({max})",
+  "invoice_item_already_added_qty_clamped": "الصنف \"{name}\" مضاف بالفعل في البند رقم ({index}). تم زيادة الكمية للحد الأقصى المتاح بالمخزن ({max})",
+  "invoice_item_already_added_qty_updated": "الصنف \"{name}\" مضاف بالفعل في البند رقم ({index}). تم تحديث الكمية لتصبح ({qty})",
+  "invoice_item_badge_added": "مضاف ({qty})",
+  "barcode_not_found_in_inventory": "لم يتم العثور على صنف بالباركود \"{barcode}\" في المخزن",
+  "invoice_inventory_max_stock_reached": "الصنف \"{name}\" وصل للحد الأقصى المتاح بالمخزن ({max})",
+  "barcode_scanned_item_added": "تمت إضافة \"{name}\" بنجاح بالباركود"
 }

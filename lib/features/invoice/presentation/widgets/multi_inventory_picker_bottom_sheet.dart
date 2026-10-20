@@ -81,6 +81,18 @@ class _MultiInventoryPickerBottomSheetState
     }
   }
 
+  String _normalizeArabic(String text) {
+    return text
+        .replaceAll(RegExp(r'[\u064B-\u065F\u0670]'), '')
+        .replaceAll(RegExp(r'[إأآا]'), 'ا')
+        .replaceAll('ة', 'ه')
+        .replaceAll('ى', 'ي')
+        .replaceAll('ئ', 'ي')
+        .replaceAll('ؤ', 'و')
+        .trim()
+        .toLowerCase();
+  }
+
   Future<void> _loadProducts() async {
     try {
       final localDataSource = GetIt.I<InventoryLocalDataSource>();
@@ -106,13 +118,16 @@ class _MultiInventoryPickerBottomSheetState
         for (final entry in widget.initialSelectedQuantities!.entries) {
           final rawKey = entry.key.trim();
           final lowerKey = rawKey.toLowerCase();
+          final normKey = _normalizeArabic(rawKey);
           final qty = entry.value;
           if (qty <= 0) continue;
 
           for (final m in models) {
             final p = m as InventoryProductEntity;
-            if (p.id == rawKey || p.name.trim().toLowerCase() == lowerKey) {
-              initialAllocated[p.id] = qty;
+            if (p.id == rawKey ||
+                p.name.trim().toLowerCase() == lowerKey ||
+                _normalizeArabic(p.name) == normKey) {
+              initialAllocated[p.id] = (initialAllocated[p.id] ?? 0.0) + qty;
             }
           }
         }
@@ -171,6 +186,7 @@ class _MultiInventoryPickerBottomSheetState
 
   void _applyFilter() {
     final q = _searchController.text.trim().toLowerCase();
+    final normQ = _normalizeArabic(_searchController.text);
     final top20Ids = BestSellerHelper.getTop20BestSellerIds(_allProducts);
 
     setState(() {
@@ -187,6 +203,7 @@ class _MultiInventoryPickerBottomSheetState
         final matchesQuery =
             q.isEmpty ||
             p.name.toLowerCase().contains(q) ||
+            _normalizeArabic(p.name).contains(normQ) ||
             p.sku.toLowerCase().contains(q) ||
             (p.barcode?.toLowerCase().contains(q) ?? false);
 
@@ -249,6 +266,108 @@ class _MultiInventoryPickerBottomSheetState
       }
     }
     return result;
+  }
+
+  bool _isLikelyBarcode(String query) {
+    final trimmed = query.trim();
+    return RegExp(r'^[A-Za-z0-9_\-\.]{3,50}$').hasMatch(trimmed);
+  }
+
+  void _handleBarcodeScanned(String rawCode, {bool isFromCamera = false}) {
+    final target = rawCode.trim().toLowerCase();
+    if (target.isEmpty) return;
+
+    InventoryProductEntity? matchedProduct;
+    for (final p in _allProducts) {
+      final barcode = p.barcode?.trim().toLowerCase();
+      final sku = p.sku.trim().toLowerCase();
+      final id = p.id.trim().toLowerCase();
+      if ((barcode != null && barcode == target) ||
+          sku == target ||
+          id == target) {
+        matchedProduct = p;
+        break;
+      }
+    }
+
+    if (matchedProduct != null) {
+      final currentQty = _selectedQuantities[matchedProduct.id] ?? 0;
+      final maxQty = _maxQuantityFor(matchedProduct);
+      if (currentQty < maxQty) {
+        setState(() {
+          _selectedQuantities[matchedProduct!.id] = currentQty + 1;
+        });
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(
+                  Icons.check_circle_outline,
+                  color: Colors.white,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${matchedProduct.name} (+1)',
+                    style: TextStyles.customStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: AppColors.primaryColor,
+            duration: const Duration(seconds: 1),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppStrings.invoiceInventoryMaxStockReached.tr(
+                namedArgs: {
+                  'name': matchedProduct.name,
+                  'max': maxQty.toSmartAmount(),
+                },
+              ),
+            ),
+            backgroundColor: AppColors.warning,
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      _searchController.clear();
+      _applyFilter();
+    } else {
+      if (isFromCamera || _isLikelyBarcode(rawCode)) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppStrings.barcodeNotFoundInInventory.tr(
+                namedArgs: {'barcode': rawCode.trim()},
+              ),
+            ),
+            backgroundColor: AppColors.warning,
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        _searchController.selection = TextSelection(
+          baseOffset: 0,
+          extentOffset: _searchController.text.length,
+        );
+      } else {
+        _applyFilter();
+      }
+    }
   }
 
   double get _totalAmount {
@@ -343,43 +462,14 @@ class _MultiInventoryPickerBottomSheetState
                         context,
                       );
                       if (scannedCode != null && scannedCode.isNotEmpty) {
-                        _searchController.text = scannedCode;
-                        _applyFilter();
-                        final target = scannedCode.trim().toLowerCase();
-                        for (final p in _allProducts) {
-                          if ((p.barcode?.trim().toLowerCase() == target) ||
-                              (p.sku.trim().toLowerCase() == target)) {
-                            final currentQty = _selectedQuantities[p.id] ?? 0;
-                            final maxQty = _maxQuantityFor(p);
-                            if (currentQty < maxQty) {
-                              setState(() {
-                                _selectedQuantities[p.id] = currentQty + 1;
-                              });
-                            }
-                            break;
-                          }
-                        }
+                        _handleBarcodeScanned(scannedCode, isFromCamera: true);
                       }
                     },
               autofocus: true,
               onChanged: (_) => _applyFilter(),
               onSubmitted: (scannedCode) {
                 if (scannedCode.isNotEmpty) {
-                  _applyFilter();
-                  final target = scannedCode.trim().toLowerCase();
-                  for (final p in _allProducts) {
-                    if ((p.barcode?.trim().toLowerCase() == target) ||
-                        (p.sku.trim().toLowerCase() == target)) {
-                      final currentQty = _selectedQuantities[p.id] ?? 0;
-                      final maxQty = _maxQuantityFor(p);
-                      if (currentQty < maxQty) {
-                        setState(() {
-                          _selectedQuantities[p.id] = currentQty + 1;
-                        });
-                      }
-                      break;
-                    }
-                  }
+                  _handleBarcodeScanned(scannedCode, isFromCamera: false);
                 }
               },
             ),
