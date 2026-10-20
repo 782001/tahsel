@@ -510,7 +510,9 @@ class _OwnerSmartDashboardState extends State<OwnerSmartDashboard> {
                       const SizedBox(width: 5),
                       Text(
                         AppStrings.teamMembersActiveCount.tr(
-                          namedArgs: {'count': '${widget.activeEmployeesCount}'},
+                          namedArgs: {
+                            'count': '${widget.activeEmployeesCount}',
+                          },
                         ),
                         style: TextStyles.customStyle(
                           fontSize: 11,
@@ -630,8 +632,9 @@ class _OwnerSmartDashboardState extends State<OwnerSmartDashboard> {
                                             color: AppColors.error.withValues(
                                               alpha: isDark ? 0.2 : 0.1,
                                             ),
-                                            borderRadius:
-                                                BorderRadius.circular(6),
+                                            borderRadius: BorderRadius.circular(
+                                              6,
+                                            ),
                                           ),
                                           child: Text(
                                             '${state.customerCount} ${AppStrings.customers.tr()}',
@@ -693,6 +696,7 @@ class _OwnerSmartDashboardState extends State<OwnerSmartDashboard> {
             children: [
               Expanded(
                 child: Material(
+                  borderRadius: BorderRadius.circular(12),
                   child: InkWell(
                     onTap: widget.onOpenPos,
                     borderRadius: BorderRadius.circular(12),
@@ -709,15 +713,6 @@ class _OwnerSmartDashboardState extends State<OwnerSmartDashboard> {
                           end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primaryShadow.withValues(
-                              alpha: isDark ? 0.22 : 0.28,
-                            ),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
                       ),
                       child: Row(
                         children: [
