@@ -12,6 +12,11 @@ import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/debt/presentation/cubit/total_debts/total_debts_cubit.dart';
 import 'package:tahsel/features/debt/presentation/cubit/total_debts/total_debts_state.dart';
 import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit.dart';
+import 'package:tahsel/core/services/profile/business_profile_service.dart';
+import 'package:tahsel/features/settings/data/models/user_profile_model.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/routes/app_routes.dart';
 
 /// Representation of an executive dashboard card item.
 class _DashboardCardItem {
@@ -60,6 +65,7 @@ class _OwnerSmartDashboardState extends State<OwnerSmartDashboard> {
     if (uid.isNotEmpty) {
       sl<TotalDebtsCubit>().getTotalDebts(uid);
     }
+    BusinessProfileService.instance.getProfile();
   }
 
   @override
@@ -93,6 +99,22 @@ class _OwnerSmartDashboardState extends State<OwnerSmartDashboard> {
         isVip &&
         isShop &&
         permissions.hasPermission(AppPermissions.inventoryView);
+    final canManageProducts =
+        canViewInventory &&
+        permissions.hasPermission(AppPermissions.inventoryManageProducts);
+    final canManageCategories =
+        canViewInventory &&
+        (permissions.hasPermission(AppPermissions.inventoryManageCategories) ||
+            permissions.hasPermission(AppPermissions.inventoryView));
+    final canManageSuppliers =
+        canViewInventory &&
+        permissions.hasPermission(AppPermissions.inventoryManageSuppliers);
+    final canManagePurchases =
+        canViewInventory &&
+        permissions.hasPermission(AppPermissions.inventoryPurchases);
+    final canViewStockMovements =
+        canViewInventory &&
+        permissions.hasPermission(AppPermissions.inventoryStockAdjustments);
     final canManageHREmployees =
         isVip && permissions.hasPermission(AppPermissions.hrEmployeesManage);
     final canViewCustomers = permissions.hasPermission(
@@ -222,6 +244,81 @@ class _OwnerSmartDashboardState extends State<OwnerSmartDashboard> {
           tag: 'VIP ✨',
           badgeCount: cubit.lowStockCount > 0 ? cubit.lowStockCount : null,
           onTap: () => cubit.changeBottomNav(8),
+        ),
+      );
+    }
+
+    // 81: Total Products (VIP & Shop)
+    if (canManageProducts) {
+      items.add(
+        _DashboardCardItem(
+          index: 81,
+          title: AppStrings.totalProductsCount.tr(),
+          subtitle: AppStrings.totalProductsCatalogDesc.tr(),
+          icon: Icons.shopping_bag_rounded,
+          accentColor: AppColors.primaryColor,
+          tag: 'VIP ✨',
+          onTap: () => Navigator.pushNamed(context, AppRoutes.inventoryProducts),
+        ),
+      );
+    }
+
+    // 82: Product Categories (VIP & Shop)
+    if (canManageCategories) {
+      items.add(
+        _DashboardCardItem(
+          index: 82,
+          title: AppStrings.inventoryCategories.tr(),
+          subtitle: AppStrings.inventoryCategoriesCardDesc.tr(),
+          icon: Icons.category_rounded,
+          accentColor: AppColors.inventoryCategoryBrown,
+          tag: 'VIP ✨',
+          onTap: () => Navigator.pushNamed(context, AppRoutes.inventoryCategories),
+        ),
+      );
+    }
+
+    // 83: Suppliers (VIP & Shop)
+    if (canManageSuppliers) {
+      items.add(
+        _DashboardCardItem(
+          index: 83,
+          title: AppStrings.inventorySuppliers.tr(),
+          subtitle: AppStrings.inventorySuppliersCardDesc.tr(),
+          icon: Icons.local_shipping_rounded,
+          accentColor: AppColors.inventorySupplierTeal,
+          tag: 'VIP ✨',
+          onTap: () => Navigator.pushNamed(context, AppRoutes.inventorySuppliers),
+        ),
+      );
+    }
+
+    // 84: Purchase Invoices (VIP & Shop)
+    if (canManagePurchases) {
+      items.add(
+        _DashboardCardItem(
+          index: 84,
+          title: AppStrings.inventoryPurchases.tr(),
+          subtitle: AppStrings.inventoryPurchasesCardDesc.tr(),
+          icon: Icons.receipt_long_rounded,
+          accentColor: AppColors.inventoryPurchasePurple,
+          tag: 'VIP ✨',
+          onTap: () => Navigator.pushNamed(context, AppRoutes.inventoryPurchases),
+        ),
+      );
+    }
+
+    // 85: Stock Movements History (VIP & Shop)
+    if (canViewStockMovements) {
+      items.add(
+        _DashboardCardItem(
+          index: 85,
+          title: AppStrings.inventoryStockMovements.tr(),
+          subtitle: AppStrings.inventoryStockMovementsCardDesc.tr(),
+          icon: Icons.history_rounded,
+          accentColor: AppColors.error,
+          tag: 'VIP ✨',
+          onTap: () => Navigator.pushNamed(context, AppRoutes.inventoryStockMovements),
         ),
       );
     }
@@ -415,41 +512,81 @@ class _OwnerSmartDashboardState extends State<OwnerSmartDashboard> {
                 ),
               ),
 
-              // Activity Type Pill (Shop / Cafe)
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 9,
-                  vertical: 4.5,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.blackLight.withValues(
-                    alpha: isDark ? 0.12 : 0.07,
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      cubit.isShop
-                          ? Icons.storefront_rounded
-                          : Icons.local_cafe_rounded,
-                      color: AppColors.blackLight,
-                      size: 13,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      cubit.isShop
-                          ? AppStrings.businessTypeShop.tr()
-                          : AppStrings.businessTypeCafe.tr(),
-                      style: TextStyles.customStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.blackLight,
-                      ),
-                    ),
-                  ],
-                ),
+              // Activity Type / Project Name Pill
+              BlocConsumer<ConnectivityCubit, ConnectivityState>(
+                listenWhen: (prev, curr) =>
+                    prev is ConnectivityDisconnected &&
+                    curr is ConnectivityConnected,
+                listener: (context, state) {
+                  BusinessProfileService.instance.getProfile(forceRemote: true);
+                },
+                builder: (context, connectivityState) {
+                  final isOffline =
+                      connectivityState is ConnectivityDisconnected;
+
+                  return ValueListenableBuilder<UserProfileModel?>(
+                    valueListenable:
+                        BusinessProfileService.instance.profileNotifier,
+                    builder: (context, profile, _) {
+                      final activeProfile = profile ??
+                          BusinessProfileService.instance.cachedProfile;
+                      final projectName =
+                          activeProfile?.projectName.trim() ?? '';
+                      final hasValidName = projectName.isNotEmpty;
+
+                      final String displayName = (!isOffline && hasValidName)
+                          ? projectName
+                          : (cubit.isShop
+                              ? AppStrings.businessTypeShop.tr()
+                              : AppStrings.businessTypeCafe.tr());
+
+                      final isDesktop = ResponsiveLayout.isDesktop(context);
+
+                      return ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: isDesktop ? 260 : 180,
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 9,
+                            vertical: 4.5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.blackLight.withValues(
+                              alpha: isDark ? 0.12 : 0.07,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                cubit.isShop
+                                    ? Icons.storefront_rounded
+                                    : Icons.local_cafe_rounded,
+                                color: AppColors.blackLight,
+                                size: 13,
+                              ),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  displayName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyles.customStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.blackLight,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
 
               // VIP Badge

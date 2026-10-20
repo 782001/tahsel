@@ -1071,6 +1071,15 @@ class AppStrings {
   static const String filterByCategory = "filter_by_category";
   static const String filterBySupplier = "filter_by_supplier";
   static const String totalProductsCount = "total_products_count";
+  static const String totalProductsCatalogDesc = "total_products_catalog_desc";
+  static const String inventoryCategoriesCardDesc =
+      "inventory_categories_card_desc";
+  static const String inventorySuppliersCardDesc =
+      "inventory_suppliers_card_desc";
+  static const String inventoryPurchasesCardDesc =
+      "inventory_purchases_card_desc";
+  static const String inventoryStockMovementsCardDesc =
+      "inventory_stock_movements_card_desc";
   static const String bestSeller = "best_seller";
   static const String bestSellersOnly = "best_sellers_only";
   static const String totalSold = "total_sold";

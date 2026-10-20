@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -13,6 +13,11 @@ class BusinessProfileService {
   static final BusinessProfileService instance = BusinessProfileService._internal();
 
   UserProfileModel? _cachedProfile;
+
+  /// Reactive notifier holding the active business profile.
+  /// Any UI widget can listen to this notifier via ValueListenableBuilder.
+  late final ValueNotifier<UserProfileModel?> profileNotifier =
+      ValueNotifier<UserProfileModel?>(_cachedProfile);
 
   /// Returns the in-memory cached profile if available (synchronous)
   UserProfileModel? get cachedProfile => _cachedProfile;
@@ -35,6 +40,9 @@ class BusinessProfileService {
 
     // 1. In-memory check
     if (_cachedProfile != null && _cachedProfile!.uid == uid && !forceRemote) {
+      if (profileNotifier.value != _cachedProfile) {
+        profileNotifier.value = _cachedProfile;
+      }
       return _cachedProfile;
     }
 
@@ -46,6 +54,7 @@ class BusinessProfileService {
       if (rawJson != null && rawJson.isNotEmpty && !forceRemote) {
         final map = jsonDecode(rawJson) as Map<String, dynamic>;
         _cachedProfile = UserProfileModel.fromMap(map, uid: uid);
+        profileNotifier.value = _cachedProfile;
         return _cachedProfile;
       }
     } catch (e) {
@@ -76,6 +85,7 @@ class BusinessProfileService {
   /// Persists the profile in memory and in SharedPreferences keyed by [profile.uid]
   Future<void> saveProfileToCache(UserProfileModel profile) async {
     _cachedProfile = profile;
+    profileNotifier.value = profile;
     if (profile.uid.isEmpty) return;
 
     try {
@@ -91,5 +101,6 @@ class BusinessProfileService {
   /// Clears in-memory cache (e.g. on sign out)
   void clearMemoryCache() {
     _cachedProfile = null;
+    profileNotifier.value = null;
   }
 }
