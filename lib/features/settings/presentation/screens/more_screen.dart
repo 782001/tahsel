@@ -233,7 +233,7 @@ class _MoreScreenState extends State<MoreScreen> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        SizedBox(height: isDesktop ? 20 : 20.h),
+                                        SizedBox(height: isDesktop ? 10 : 10.h),
                                         Row(
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
