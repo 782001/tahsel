@@ -441,7 +441,7 @@ class _InventoryMainScreenState extends State<InventoryMainScreen> {
         children: [
           CircleAvatar(
             backgroundColor: color.withValues(alpha: 0.15),
-            radius: isDesktop ? 22.r : 18.r,
+            radius: isDesktop ? 22 : 18.r,
             child: Icon(icon, color: color, size: isDesktop ? 22 : 18),
           ),
           SizedBox(height: 10.h),

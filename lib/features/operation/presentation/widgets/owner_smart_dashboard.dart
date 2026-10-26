@@ -909,7 +909,11 @@ class _OwnerSmartDashboardState extends State<OwnerSmartDashboard> {
                 Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    onTap: () => cubit.changeBottomNav(8),
+                    onTap: () => Navigator.pushNamed(
+                      context,
+                      AppRoutes.inventoryProducts,
+                      arguments: true,
+                    ),
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
                       height: 46,
