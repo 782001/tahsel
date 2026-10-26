@@ -2,8 +2,10 @@
 
 import 'dart:io';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -11,17 +13,21 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:tahsel/core/extensions/extensions.dart';
+import 'package:tahsel/core/services/injection_container.dart' as di;
 import 'package:tahsel/core/services/pdf_asset_cache.dart';
 import 'package:tahsel/core/services/profile/business_profile_service.dart';
 import 'package:tahsel/core/services/tahsel_print_service.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/customer_data_masker.dart';
-import 'package:get_it/get_it.dart';
+import 'package:tahsel/features/customer/data/models/customer_model.dart';
+import 'package:tahsel/features/customer/domain/entities/customer_entity.dart';
 import 'package:tahsel/features/inventory/data/datasources/inventory_local_data_source.dart';
 import 'package:tahsel/features/inventory/domain/entities/inventory_purchase_entity.dart';
 import 'package:tahsel/features/inventory/domain/entities/inventory_supplier_entity.dart';
 import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
 import 'package:tahsel/features/settings/data/models/user_profile_model.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
+import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
 import 'package:whatsapp_share2/whatsapp_share2.dart';
 
 class InvoicePdfService {
@@ -71,14 +77,70 @@ class InvoicePdfService {
     return tahselDir;
   }
 
+  /// Safely resolves full customer entity (including tax number & CRN) from Firestore when online
+  static Future<CustomerEntity?> _fetchCustomer(InvoiceEntity invoice) async {
+    try {
+      final isDisconnected = di.sl.isRegistered<ConnectivityCubit>()
+          ? di.sl<ConnectivityCubit>().state is ConnectivityDisconnected
+          : false;
+      if (isDisconnected) return null;
+
+      final uid = invoice.uid.isNotEmpty ? invoice.uid : AppStrings.userToken;
+      if (uid.isEmpty) return null;
+
+      final customerName = invoice.customerName?.trim();
+      final customerPhone = invoice.customerPhone?.trim();
+
+      if ((customerName == null || customerName.isEmpty) &&
+          (customerPhone == null || customerPhone.isEmpty)) {
+        return null;
+      }
+
+      final collection = FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('customers');
+
+      if (customerName != null && customerName.isNotEmpty) {
+        final query = await collection
+            .where('name', isEqualTo: customerName)
+            .limit(1)
+            .get()
+            .timeout(const Duration(milliseconds: 1500));
+        if (query.docs.isNotEmpty) {
+          return CustomerModel.fromJson(
+            query.docs.first.data(),
+            id: query.docs.first.id,
+          );
+        }
+      }
+
+      if (customerPhone != null && customerPhone.isNotEmpty) {
+        final query = await collection
+            .where('phoneNumber', isEqualTo: customerPhone)
+            .limit(1)
+            .get()
+            .timeout(const Duration(milliseconds: 1500));
+        if (query.docs.isNotEmpty) {
+          return CustomerModel.fromJson(
+            query.docs.first.data(),
+            id: query.docs.first.id,
+          );
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
   /// Save PDF to device storage (opens Windows Folder Picker on Windows)
   static Future<File?> saveInvoicePdfToStorage({
     required InvoiceEntity invoice,
     required bool isArabic,
+    CustomerEntity? customer,
   }) async {
-    final pdfBytes = await _buildPdf(invoice, isArabic);
+    final pdfBytes = await _buildPdf(invoice, isArabic, customer: customer);
     final cleanId = invoice.id.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
-    final prefix = invoice.isQuotation ? 'Ard_Seer' : 'Fatoora';
+    final prefix = invoice.isQuotation ? 'Tahsel_Ard_Seer' : 'Tahsel_Fatoora';
     final filename = '${prefix}_$cleanId.pdf';
 
     final storageDir = await _getPublicStorageDirectory();
@@ -91,10 +153,11 @@ class InvoicePdfService {
     InvoiceEntity invoice, {
     required bool isArabic,
     String? phoneNumber,
+    CustomerEntity? customer,
   }) async {
-    final pdfBytes = await _buildPdf(invoice, isArabic);
+    final pdfBytes = await _buildPdf(invoice, isArabic, customer: customer);
     final cleanId = invoice.id.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
-    final prefix = invoice.isQuotation ? 'Ard_Seer' : 'Fatoora';
+    final prefix = invoice.isQuotation ? 'Tahsel_Ard_Seer' : 'Tahsel_Fatoora';
     final filename = '${prefix}_$cleanId.pdf';
 
     final dir = await getTemporaryDirectory();
@@ -153,8 +216,9 @@ class InvoicePdfService {
   static Future<File> generateInvoicePdf({
     required InvoiceEntity invoice,
     required bool isArabic,
+    CustomerEntity? customer,
   }) async {
-    final pdfBytes = await _buildPdf(invoice, isArabic);
+    final pdfBytes = await _buildPdf(invoice, isArabic, customer: customer);
     final dir = await getTemporaryDirectory();
     final file = File('${dir.path}/invoice_${invoice.id}.pdf');
     await file.writeAsBytes(pdfBytes);
@@ -164,8 +228,9 @@ class InvoicePdfService {
   static Future<Uint8List> getInvoicePdfBytes({
     required InvoiceEntity invoice,
     required bool isArabic,
+    CustomerEntity? customer,
   }) async {
-    return await _buildPdf(invoice, isArabic);
+    return await _buildPdf(invoice, isArabic, customer: customer);
   }
 
   /// Print sales invoice directly or open Tahsel themed print preview
@@ -174,12 +239,13 @@ class InvoicePdfService {
     InvoiceEntity invoice, {
     required bool isArabic,
     bool direct = false,
+    CustomerEntity? customer,
   }) async {
     final cleanId = invoice.id.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
     final shortId = invoice.id.length > 8
         ? invoice.id.substring(0, 8).toUpperCase()
         : invoice.id.toUpperCase();
-    final filename = 'Fatoora_$cleanId.pdf';
+    final filename = 'Tahsel_Fatoora_$cleanId.pdf';
     final title = isArabic
         ? 'طباعة فاتورة #$shortId'
         : 'Print Invoice #$shortId';
@@ -188,13 +254,14 @@ class InvoicePdfService {
       final bytes = await getInvoicePdfBytes(
         invoice: invoice,
         isArabic: isArabic,
+        customer: customer,
       );
       await TahselPrintService.directPrint(bytes: bytes, jobName: title);
     } else {
       await TahselPrintService.openPrintPreview(
         context: context,
         title: title,
-        buildPdf: (format) => _buildPdf(invoice, isArabic),
+        buildPdf: (format) => _buildPdf(invoice, isArabic, customer: customer),
         pdfFileName: filename,
       );
     }
@@ -202,9 +269,28 @@ class InvoicePdfService {
 
   static Future<Uint8List> _buildPdf(
     InvoiceEntity invoice,
-    bool isArabic,
-  ) async {
+    bool isArabic, {
+    CustomerEntity? customer,
+  }) async {
     final pdf = pw.Document();
+
+    // If customer is already provided (e.g. from screen in offline/online mode), use it directly!
+    // We only attempt Firestore fetch if customer was not passed and the device is online.
+    final isDisconnected = di.sl.isRegistered<ConnectivityCubit>()
+        ? di.sl<ConnectivityCubit>().state is ConnectivityDisconnected
+        : false;
+
+    if (customer == null && !isDisconnected) {
+      customer = await _fetchCustomer(invoice);
+    }
+
+    // Fallback if still null
+    customer ??= CustomerEntity(
+      name: invoice.customerName?.trim() ?? '',
+      phoneNumber: invoice.customerPhone?.trim(),
+      ledgerNumber: invoice.ledgerNumber?.trim(),
+      lastUsedAt: invoice.createdAt,
+    );
 
     // Load cached fonts, logo and active seller profile
     final ttfRegular = await PdfAssetCache.getRegularFont();
@@ -235,7 +321,16 @@ class InvoicePdfService {
         ),
         build: (context) => [
           pw.SizedBox(height: 8),
-          _buildBusinessAndCustomerInfo(invoice, sellerProfile, isArabic),
+          _buildBusinessAndCustomerInfo(
+            invoice,
+            sellerProfile,
+            isArabic,
+            customer,
+          ),
+          if (invoice.notes != null && invoice.notes!.trim().isNotEmpty) ...[
+            pw.SizedBox(height: 8),
+            _buildNotes(invoice.notes!, isArabic),
+          ],
           pw.SizedBox(height: 10),
           _buildItemsTable(invoice, isArabic, sellerProfile),
           pw.SizedBox(height: 10),
@@ -259,10 +354,15 @@ class InvoicePdfService {
     bool isArabic,
     UserProfileModel? sellerProfile,
   ) {
-    final dateStr = DateFormat(
-      isArabic ? "dd MMMM yyyy - hh:mm a" : "MMM dd, yyyy - hh:mm a",
-      isArabic ? "ar" : "en",
+    final timeStr = DateFormat(
+      'hh:mm a',
+      isArabic ? 'ar' : 'en',
     ).format(invoice.createdAt);
+    final datePart = DateFormat(
+      'dd/MM/yyyy',
+      isArabic ? 'ar' : 'en',
+    ).format(invoice.createdAt);
+    final dateStr = "$datePart - $timeStr";
 
     final titleText = invoice.isQuotation
         ? (isArabic ? "عرض سعر" : "QUOTATION")
@@ -362,8 +462,29 @@ class InvoicePdfService {
   static pw.Widget _buildBusinessAndCustomerInfo(
     InvoiceEntity invoice,
     UserProfileModel? sellerProfile,
-    bool isArabic,
-  ) {
+    bool isArabic, [
+    CustomerEntity? customer,
+  ]) {
+    final customerName =
+        (customer?.name != null && customer!.name.trim().isNotEmpty)
+        ? customer.name.trim()
+        : (invoice.customerName?.trim() ?? "");
+
+    final customerPhone =
+        (invoice.customerPhone != null &&
+            invoice.customerPhone!.trim().isNotEmpty)
+        ? invoice.customerPhone!.trim()
+        : (customer?.phoneNumber?.trim() ?? "");
+
+    final customerLedger =
+        (invoice.ledgerNumber != null &&
+            invoice.ledgerNumber!.trim().isNotEmpty)
+        ? invoice.ledgerNumber!.trim()
+        : (customer?.ledgerNumber?.trim() ?? "");
+
+    final customerTax = customer?.taxNumber?.trim() ?? "";
+    final customerCr = customer?.commercialRegistration?.trim() ?? "";
+
     return pw.Row(
       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -489,8 +610,8 @@ class InvoicePdfService {
                 ),
                 pw.SizedBox(height: 3),
                 pw.Text(
-                  invoice.customerName.cleanForPdf(
-                    isArabic ? "عميل" : "Customer",
+                  customerName.cleanForPdf(
+                    isArabic ? "عميل نقدي" : "Cash Customer",
                   ),
                   style: pw.TextStyle(
                     fontSize: 12,
@@ -498,22 +619,62 @@ class InvoicePdfService {
                     color: PdfColors.grey900,
                   ),
                 ),
-                if (invoice.customerPhone != null &&
-                    invoice.customerPhone!.isNotEmpty) ...[
+                if (customerPhone.isNotEmpty) ...[
                   pw.SizedBox(height: 2),
                   pw.Text(
-                    "${isArabic ? 'الهاتف:' : 'Phone:'} ${CustomerDataMasker.formatCustomerDisplayPhone(invoice.customerPhone).cleanForPdf()}",
+                    "${isArabic ? 'الهاتف:' : 'Phone:'} ${CustomerDataMasker.formatCustomerDisplayPhone(customerPhone).cleanForPdf()}",
                     style: const pw.TextStyle(
                       fontSize: 9,
                       color: PdfColors.grey800,
                     ),
                   ),
                 ],
-                if (invoice.ledgerNumber != null &&
-                    invoice.ledgerNumber!.isNotEmpty) ...[
+                if (customerLedger.isNotEmpty) ...[
                   pw.SizedBox(height: 2),
                   pw.Text(
-                    "${isArabic ? 'رقم الدفتر:' : 'Ledger #:'} ${CustomerDataMasker.formatCustomerDisplayLedger(invoice.ledgerNumber).cleanForPdf()}",
+                    "${isArabic ? 'رقم الدفتر:' : 'Ledger #:'} ${CustomerDataMasker.formatCustomerDisplayLedger(customerLedger).cleanForPdf()}",
+                    style: const pw.TextStyle(
+                      fontSize: 9,
+                      color: PdfColors.grey800,
+                    ),
+                  ),
+                ],
+                if (customerCr.isNotEmpty) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    "${isArabic ? 'س.ت:' : 'CRN:'} ${CustomerDataMasker.formatCustomerDisplayCr(customerCr).cleanForPdf()}",
+                    style: const pw.TextStyle(
+                      fontSize: 9,
+                      color: PdfColors.grey800,
+                    ),
+                  ),
+                ],
+                if (customerTax.isNotEmpty) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    "${isArabic ? 'الرقم الضريبي:' : 'VAT:'} ${CustomerDataMasker.formatCustomerDisplayTax(customerTax).cleanForPdf()}",
+                    style: const pw.TextStyle(
+                      fontSize: 9,
+                      color: PdfColors.grey800,
+                    ),
+                  ),
+                ],
+
+                if (invoice.dueDate != null && !invoice.isQuotation) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    "${isArabic ? 'تاريخ الاستحقاق:' : 'Due Date:'} ${DateFormat('yyyy/MM/dd').format(invoice.dueDate!)}",
+                    style: const pw.TextStyle(
+                      fontSize: 9,
+                      color: PdfColors.grey800,
+                    ),
+                  ),
+                ],
+                if (invoice.linkedDebtId != null &&
+                    invoice.linkedDebtId!.isNotEmpty) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    "${isArabic ? 'رقم الدين المرتبط:' : 'Linked Debt #:'} ${invoice.linkedDebtId!.cleanForPdf()}",
                     style: const pw.TextStyle(
                       fontSize: 9,
                       color: PdfColors.grey800,
@@ -615,10 +776,7 @@ class InvoicePdfService {
                 isArabic ? "قبل الضريبة" : "Before Tax",
                 fontSize: 8,
               ),
-              _buildTableHeader(
-                isArabic ? "الضريبة" : "Tax",
-                fontSize: 8,
-              ),
+              _buildTableHeader(isArabic ? "الضريبة" : "Tax", fontSize: 8),
               _buildTableHeader(
                 isArabic ? "بعد الضريبة" : "After Tax",
                 fontSize: 8,
@@ -646,14 +804,22 @@ class InvoicePdfService {
               return pw.TableRow(
                 decoration: pw.BoxDecoration(color: rowColor),
                 children: [
-                  _buildTableCell("${i + 1}", align: pw.TextAlign.center, fontSize: 8),
+                  _buildTableCell(
+                    "${i + 1}",
+                    align: pw.TextAlign.center,
+                    fontSize: 8,
+                  ),
                   _buildTableCell(
                     item.description.cleanForPdf(),
                     align: isArabic ? pw.TextAlign.right : pw.TextAlign.left,
                     isBold: true,
                     fontSize: 8.5,
                   ),
-                  _buildTableCell(unitText, align: pw.TextAlign.center, fontSize: 8),
+                  _buildTableCell(
+                    unitText,
+                    align: pw.TextAlign.center,
+                    fontSize: 8,
+                  ),
                   _buildTableCell(
                     item.quantity.toSmartAmount(),
                     align: pw.TextAlign.center,
@@ -961,19 +1127,52 @@ class InvoicePdfService {
           isArabic ? "قبل الخصم" : "Subtotal",
           isArabic ? "الخصم" : "Discount",
           isArabic ? "قبل الضريبة" : "Before Tax",
-          isArabic ? "ضريبة (${effectiveTaxRate.toSmartAmount()}%)" : "VAT (${effectiveTaxRate.toSmartAmount()}%)",
+          isArabic
+              ? "ضريبة (${effectiveTaxRate.toSmartAmount()}%)"
+              : "VAT (${effectiveTaxRate.toSmartAmount()}%)",
           isArabic ? "بعد الضريبة" : "After Tax",
           isArabic ? "المدفوع" : "Paid",
           isArabic ? "المتبقي" : "Remaining",
         ]);
         values.addAll([
-          _buildTableCell("${invoice.rawSubtotalAmount.toSmartAmount()} $currency", fontSize: 8.5),
-          _buildTableCell("-${invoice.totalDiscountAmount.toSmartAmount()} $currency", color: _error, isBold: true, fontSize: 8.5),
-          _buildTableCell("${totalBeforeTax.toSmartAmount()} $currency", fontSize: 8.5),
-          _buildTableCell("${taxAmount.toSmartAmount()} $currency", color: _primary, isBold: true, fontSize: 8.5),
-          _buildTableCell("${invoice.totalAmount.toSmartAmount()} $currency", isBold: true, color: _primaryDark, fontSize: 8.5),
-          _buildTableCell("${invoice.totalPaid.toSmartAmount()} $currency", isBold: true, color: _success, fontSize: 8.5),
-          _buildTableCell("${invoice.remainingAmount.toSmartAmount()} $currency", isBold: true, color: invoice.remainingAmount <= 0.01 ? _success : _error, fontSize: 8.5),
+          _buildTableCell(
+            "${invoice.rawSubtotalAmount.toSmartAmount()} $currency",
+            fontSize: 8.5,
+          ),
+          _buildTableCell(
+            "-${invoice.totalDiscountAmount.toSmartAmount()} $currency",
+            color: _error,
+            isBold: true,
+            fontSize: 8.5,
+          ),
+          _buildTableCell(
+            "${totalBeforeTax.toSmartAmount()} $currency",
+            fontSize: 8.5,
+          ),
+          _buildTableCell(
+            "${taxAmount.toSmartAmount()} $currency",
+            color: _primary,
+            isBold: true,
+            fontSize: 8.5,
+          ),
+          _buildTableCell(
+            "${invoice.totalAmount.toSmartAmount()} $currency",
+            isBold: true,
+            color: _primaryDark,
+            fontSize: 8.5,
+          ),
+          _buildTableCell(
+            "${invoice.totalPaid.toSmartAmount()} $currency",
+            isBold: true,
+            color: _success,
+            fontSize: 8.5,
+          ),
+          _buildTableCell(
+            "${invoice.remainingAmount.toSmartAmount()} $currency",
+            isBold: true,
+            color: invoice.remainingAmount <= 0.01 ? _success : _error,
+            fontSize: 8.5,
+          ),
         ]);
         columnWidths[0] = const pw.FlexColumnWidth(1.1);
         columnWidths[1] = const pw.FlexColumnWidth(1.0);
@@ -985,17 +1184,42 @@ class InvoicePdfService {
       } else {
         headers.addAll([
           isArabic ? "الإجمالي قبل الضريبة" : "Total Before Tax",
-          isArabic ? "ضريبة القيمة المضافة (${effectiveTaxRate.toSmartAmount()}%)" : "VAT (${effectiveTaxRate.toSmartAmount()}%)",
+          isArabic
+              ? "ضريبة القيمة المضافة (${effectiveTaxRate.toSmartAmount()}%)"
+              : "VAT (${effectiveTaxRate.toSmartAmount()}%)",
           isArabic ? "الإجمالي بعد الضريبة" : "Total After Tax",
           isArabic ? "المبلغ المدفوع" : "Amount Paid",
           isArabic ? "المبلغ المتبقي" : "Remaining Amount",
         ]);
         values.addAll([
-          _buildTableCell("${totalBeforeTax.toSmartAmount()} $currency", fontSize: 9),
-          _buildTableCell("${taxAmount.toSmartAmount()} $currency", color: _primary, isBold: true, fontSize: 9),
-          _buildTableCell("${invoice.totalAmount.toSmartAmount()} $currency", isBold: true, color: _primaryDark, fontSize: 9.5),
-          _buildTableCell("${invoice.totalPaid.toSmartAmount()} $currency", isBold: true, color: _success, fontSize: 9.5),
-          _buildTableCell("${invoice.remainingAmount.toSmartAmount()} $currency", isBold: true, color: invoice.remainingAmount <= 0.01 ? _success : _error, fontSize: 9.5),
+          _buildTableCell(
+            "${totalBeforeTax.toSmartAmount()} $currency",
+            fontSize: 9,
+          ),
+          _buildTableCell(
+            "${taxAmount.toSmartAmount()} $currency",
+            color: _primary,
+            isBold: true,
+            fontSize: 9,
+          ),
+          _buildTableCell(
+            "${invoice.totalAmount.toSmartAmount()} $currency",
+            isBold: true,
+            color: _primaryDark,
+            fontSize: 9.5,
+          ),
+          _buildTableCell(
+            "${invoice.totalPaid.toSmartAmount()} $currency",
+            isBold: true,
+            color: _success,
+            fontSize: 9.5,
+          ),
+          _buildTableCell(
+            "${invoice.remainingAmount.toSmartAmount()} $currency",
+            isBold: true,
+            color: invoice.remainingAmount <= 0.01 ? _success : _error,
+            fontSize: 9.5,
+          ),
         ]);
         columnWidths[0] = const pw.FlexColumnWidth(1.3);
         columnWidths[1] = const pw.FlexColumnWidth(1.3);
@@ -1014,11 +1238,34 @@ class InvoicePdfService {
           isArabic ? "المتبقي" : "Remaining",
         ]);
         values.addAll([
-          _buildTableCell("${invoice.rawSubtotalAmount.toSmartAmount()} $currency", fontSize: 9),
-          _buildTableCell("-${invoice.totalDiscountAmount.toSmartAmount()} $currency", color: _error, isBold: true, fontSize: 9),
-          _buildTableCell("${invoice.totalAmount.toSmartAmount()} $currency", isBold: true, color: _primaryDark, fontSize: 9.5),
-          _buildTableCell("${invoice.totalPaid.toSmartAmount()} $currency", isBold: true, color: _success, fontSize: 9.5),
-          _buildTableCell("${invoice.remainingAmount.toSmartAmount()} $currency", isBold: true, color: invoice.remainingAmount <= 0.01 ? _success : _error, fontSize: 9.5),
+          _buildTableCell(
+            "${invoice.rawSubtotalAmount.toSmartAmount()} $currency",
+            fontSize: 9,
+          ),
+          _buildTableCell(
+            "-${invoice.totalDiscountAmount.toSmartAmount()} $currency",
+            color: _error,
+            isBold: true,
+            fontSize: 9,
+          ),
+          _buildTableCell(
+            "${invoice.totalAmount.toSmartAmount()} $currency",
+            isBold: true,
+            color: _primaryDark,
+            fontSize: 9.5,
+          ),
+          _buildTableCell(
+            "${invoice.totalPaid.toSmartAmount()} $currency",
+            isBold: true,
+            color: _success,
+            fontSize: 9.5,
+          ),
+          _buildTableCell(
+            "${invoice.remainingAmount.toSmartAmount()} $currency",
+            isBold: true,
+            color: invoice.remainingAmount <= 0.01 ? _success : _error,
+            fontSize: 9.5,
+          ),
         ]);
         columnWidths[0] = const pw.FlexColumnWidth(1.35); // قبل الخصم
         columnWidths[1] = const pw.FlexColumnWidth(1.05); // الخصم
@@ -1032,9 +1279,24 @@ class InvoicePdfService {
           isArabic ? "المتبقي" : "Remaining",
         ]);
         values.addAll([
-          _buildTableCell("${invoice.totalAmount.toSmartAmount()} $currency", isBold: true, color: _primaryDark, fontSize: 10),
-          _buildTableCell("${invoice.totalPaid.toSmartAmount()} $currency", isBold: true, color: _success, fontSize: 10),
-          _buildTableCell("${invoice.remainingAmount.toSmartAmount()} $currency", isBold: true, color: invoice.remainingAmount <= 0.01 ? _success : _error, fontSize: 10),
+          _buildTableCell(
+            "${invoice.totalAmount.toSmartAmount()} $currency",
+            isBold: true,
+            color: _primaryDark,
+            fontSize: 10,
+          ),
+          _buildTableCell(
+            "${invoice.totalPaid.toSmartAmount()} $currency",
+            isBold: true,
+            color: _success,
+            fontSize: 10,
+          ),
+          _buildTableCell(
+            "${invoice.remainingAmount.toSmartAmount()} $currency",
+            isBold: true,
+            color: invoice.remainingAmount <= 0.01 ? _success : _error,
+            fontSize: 10,
+          ),
         ]);
         columnWidths[0] = const pw.FlexColumnWidth(1.4);
         columnWidths[1] = const pw.FlexColumnWidth(1.1);
@@ -1057,8 +1319,8 @@ class InvoicePdfService {
                 fontSize: headers.length >= 7
                     ? 7.5
                     : headers.length >= 5
-                        ? 8
-                        : 8.5,
+                    ? 8
+                    : 8.5,
               ),
           ],
         ),
@@ -1108,11 +1370,7 @@ class InvoicePdfService {
                   ),
                 ],
               ),
-              pw.Container(
-                width: 1,
-                height: 18,
-                color: PdfColors.grey300,
-              ),
+              pw.Container(width: 1, height: 18, color: PdfColors.grey300),
               pw.Row(
                 children: [
                   pw.Text(
@@ -1135,41 +1393,6 @@ class InvoicePdfService {
             ],
           ),
         ),
-
-        // Notes (if any)
-        if (invoice.notes != null && invoice.notes!.trim().isNotEmpty) ...[
-          pw.SizedBox(height: 6),
-          pw.Container(
-            width: double.infinity,
-            padding: const pw.EdgeInsets.all(7),
-            decoration: pw.BoxDecoration(
-              color: PdfColors.grey50,
-              borderRadius: pw.BorderRadius.circular(6),
-              border: pw.Border.all(color: PdfColors.grey200, width: 0.8),
-            ),
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Text(
-                  isArabic ? "ملاحظات:" : "Notes:",
-                  style: pw.TextStyle(
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.grey700,
-                    fontSize: 8.5,
-                  ),
-                ),
-                pw.SizedBox(height: 2),
-                pw.Text(
-                  invoice.notes!.cleanForPdf(),
-                  style: const pw.TextStyle(
-                    color: PdfColors.grey700,
-                    fontSize: 8,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ],
     );
   }
@@ -1217,17 +1440,14 @@ class InvoicePdfService {
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           pw.Text(
-            isArabic ? "ملاحظات:" : "Notes:",
+            isArabic
+                ? "ملاحظات:   ${notes.cleanForPdf()}"
+                : "Notes:   ${notes.cleanForPdf()}",
             style: pw.TextStyle(
               fontWeight: pw.FontWeight.bold,
               fontSize: 10,
               color: PdfColors.grey700,
             ),
-          ),
-          pw.SizedBox(height: 3),
-          pw.Text(
-            notes.cleanForPdf(),
-            style: const pw.TextStyle(fontSize: 9, color: PdfColors.black),
           ),
         ],
       ),
@@ -1271,7 +1491,7 @@ class InvoicePdfService {
   }) async {
     final pdfBytes = await _buildPurchasePdf(purchase, isArabic, supplier);
     final cleanId = purchase.id.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
-    final filename = 'Purchase_Fatoora_$cleanId.pdf';
+    final filename = 'Purchase_Tahsel_Fatoora_$cleanId.pdf';
 
     final storageDir = await _getPublicStorageDirectory();
     final savedFile = File('${storageDir.path}/$filename');
@@ -1287,7 +1507,7 @@ class InvoicePdfService {
   }) async {
     final pdfBytes = await _buildPurchasePdf(purchase, isArabic, supplier);
     final cleanId = purchase.id.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
-    final filename = 'Purchase_Fatoora_$cleanId.pdf';
+    final filename = 'Purchase_Tahsel_Fatoora_$cleanId.pdf';
 
     final dir = await getTemporaryDirectory();
     final shareFile = File('${dir.path}/$filename');
@@ -1297,11 +1517,11 @@ class InvoicePdfService {
     final idShort = purchase.id.replaceAll('pur_', '');
     final subject = isArabic
         ? (hasTax
-            ? 'فاتورة شراء ضريبية مبسطة رقم #$idShort'
-            : 'فاتورة شراء رقم #$idShort')
+              ? 'فاتورة شراء ضريبية مبسطة رقم #$idShort'
+              : 'فاتورة شراء رقم #$idShort')
         : (hasTax
-            ? 'Simplified Tax Purchase Invoice #$idShort'
-            : 'Purchase Invoice #$idShort');
+              ? 'Simplified Tax Purchase Invoice #$idShort'
+              : 'Purchase Invoice #$idShort');
 
     if (!kIsWeb && Platform.isWindows) {
       try {
@@ -1350,15 +1570,15 @@ class InvoicePdfService {
   }) async {
     final cleanId = purchase.id.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
     final shortId = purchase.id.replaceAll('pur_', '');
-    final filename = 'Purchase_Fatoora_$cleanId.pdf';
+    final filename = 'Purchase_Tahsel_Fatoora_$cleanId.pdf';
     final hasTax = purchase.effectiveTaxRate > 0;
     final title = isArabic
         ? (hasTax
-            ? 'طباعة فاتورة شراء ضريبية مبسطة #$shortId'
-            : 'طباعة فاتورة شراء #$shortId')
+              ? 'طباعة فاتورة شراء ضريبية مبسطة #$shortId'
+              : 'طباعة فاتورة شراء #$shortId')
         : (hasTax
-            ? 'Print Simplified Tax Purchase Invoice #$shortId'
-            : 'Print Purchase Invoice #$shortId');
+              ? 'Print Simplified Tax Purchase Invoice #$shortId'
+              : 'Print Purchase Invoice #$shortId');
 
     if (direct) {
       final bytes = await getPurchasePdfBytes(
@@ -1396,9 +1616,13 @@ class InvoicePdfService {
           supplier = sups.where((s) => s.id == purchase.supplierId).firstOrNull;
         }
         if (supplier == null && purchase.supplierName.isNotEmpty) {
-          supplier = sups.where((s) =>
-              s.companyName == purchase.supplierName ||
-              s.name == purchase.supplierName).firstOrNull;
+          supplier = sups
+              .where(
+                (s) =>
+                    s.companyName == purchase.supplierName ||
+                    s.name == purchase.supplierName,
+              )
+              .firstOrNull;
         }
       } catch (_) {}
     }
@@ -1432,6 +1656,10 @@ class InvoicePdfService {
             isArabic,
             supplier,
           ),
+          if (purchase.notes != null && purchase.notes!.trim().isNotEmpty) ...[
+            pw.SizedBox(height: 8),
+            _buildNotes(purchase.notes!, isArabic),
+          ],
           pw.SizedBox(height: 10),
           _buildPurchaseItemsTable(purchase, isArabic, buyerProfile),
           pw.SizedBox(height: 10),
@@ -1449,10 +1677,15 @@ class InvoicePdfService {
     bool isArabic, [
     UserProfileModel? buyerProfile,
   ]) {
-    final dateStr = DateFormat(
-      isArabic ? "dd MMMM yyyy - hh:mm a" : "MMM dd, yyyy - hh:mm a",
-      isArabic ? "ar" : "en",
+    final timeStr = DateFormat(
+      'hh:mm a',
+      isArabic ? 'ar' : 'en',
     ).format(purchase.createdAt);
+    final datePart = DateFormat(
+      'dd/MM/yyyy',
+      isArabic ? 'ar' : 'en',
+    ).format(purchase.createdAt);
+    final dateStr = "$datePart - $timeStr";
 
     final effectiveTaxRate =
         purchase.taxRate ?? buyerProfile?.taxRate ?? purchase.effectiveTaxRate;
@@ -1470,8 +1703,8 @@ class InvoicePdfService {
                 pw.Text(
                   hasTax
                       ? (isArabic
-                          ? "فاتورة شراء ضريبية مبسطة"
-                          : "SIMPLIFIED TAX PURCHASE INVOICE")
+                            ? "فاتورة شراء ضريبية مبسطة"
+                            : "SIMPLIFIED TAX PURCHASE INVOICE")
                       : (isArabic ? "فاتورة شراء مخزون" : "PURCHASE INVOICE"),
                   style: pw.TextStyle(
                     fontSize: hasTax ? 18 : 22,
@@ -1564,7 +1797,8 @@ class InvoicePdfService {
 
     if (supplier != null) {
       final hasCompany =
-          supplier.companyName != null && supplier.companyName!.trim().isNotEmpty;
+          supplier.companyName != null &&
+          supplier.companyName!.trim().isNotEmpty;
       final hasPerson = supplier.name.trim().isNotEmpty;
 
       if (hasCompany) {
@@ -1697,10 +1931,7 @@ class InvoicePdfService {
                         fontWeight: pw.FontWeight.bold,
                       ),
                     ),
-                    _buildPurchasePaymentBadge(
-                      purchase,
-                      isArabic,
-                    ),
+                    _buildPurchasePaymentBadge(purchase, isArabic),
                   ],
                 ),
                 pw.SizedBox(height: 3),
@@ -1744,8 +1975,7 @@ class InvoicePdfService {
                     ),
                   ),
                 ],
-                if (supplier != null &&
-                    supplier.address.trim().isNotEmpty) ...[
+                if (supplier != null && supplier.address.trim().isNotEmpty) ...[
                   pw.SizedBox(height: 2),
                   pw.Text(
                     "${isArabic ? 'العنوان:' : 'Address:'} ${supplier.address.trim()}",
@@ -1866,10 +2096,7 @@ class InvoicePdfService {
                 isArabic ? "قبل الضريبة" : "Before Tax",
                 fontSize: 8,
               ),
-              _buildTableHeader(
-                isArabic ? "الضريبة" : "Tax",
-                fontSize: 8,
-              ),
+              _buildTableHeader(isArabic ? "الضريبة" : "Tax", fontSize: 8),
               _buildTableHeader(
                 isArabic ? "بعد الضريبة" : "After Tax",
                 fontSize: 8,
@@ -1894,14 +2121,22 @@ class InvoicePdfService {
               return pw.TableRow(
                 decoration: pw.BoxDecoration(color: rowColor),
                 children: [
-                  _buildTableCell("${i + 1}", align: pw.TextAlign.center, fontSize: 8),
+                  _buildTableCell(
+                    "${i + 1}",
+                    align: pw.TextAlign.center,
+                    fontSize: 8,
+                  ),
                   _buildTableCell(
                     item.productName.cleanForPdf(),
                     align: isArabic ? pw.TextAlign.right : pw.TextAlign.left,
                     isBold: true,
                     fontSize: 8.5,
                   ),
-                  _buildTableCell(unitText, align: pw.TextAlign.center, fontSize: 8),
+                  _buildTableCell(
+                    unitText,
+                    align: pw.TextAlign.center,
+                    fontSize: 8,
+                  ),
                   _buildTableCell(
                     item.quantity.toSmartAmount(),
                     align: pw.TextAlign.center,
@@ -2044,11 +2279,34 @@ class InvoicePdfService {
           isArabic ? "المتبقي للمورد" : "Remaining to Supplier",
         ]);
         values.addAll([
-          _buildTableCell("${totalBeforeTax.toSmartAmount()} $currency", fontSize: 9),
-          _buildTableCell("${taxAmount.toSmartAmount()} $currency", color: _purchasePrimary, isBold: true, fontSize: 9),
-          _buildTableCell("${purchase.totalAmount.toSmartAmount()} $currency", isBold: true, color: _purchasePrimaryDark, fontSize: 9.5),
-          _buildTableCell("${purchase.paidAmount.toSmartAmount()} $currency", isBold: true, color: _success, fontSize: 9.5),
-          _buildTableCell("${purchase.remainingDebt.toSmartAmount()} $currency", isBold: true, color: purchase.remainingDebt <= 0.01 ? _success : _error, fontSize: 9.5),
+          _buildTableCell(
+            "${totalBeforeTax.toSmartAmount()} $currency",
+            fontSize: 9,
+          ),
+          _buildTableCell(
+            "${taxAmount.toSmartAmount()} $currency",
+            color: _purchasePrimary,
+            isBold: true,
+            fontSize: 9,
+          ),
+          _buildTableCell(
+            "${purchase.totalAmount.toSmartAmount()} $currency",
+            isBold: true,
+            color: _purchasePrimaryDark,
+            fontSize: 9.5,
+          ),
+          _buildTableCell(
+            "${purchase.paidAmount.toSmartAmount()} $currency",
+            isBold: true,
+            color: _success,
+            fontSize: 9.5,
+          ),
+          _buildTableCell(
+            "${purchase.remainingDebt.toSmartAmount()} $currency",
+            isBold: true,
+            color: purchase.remainingDebt <= 0.01 ? _success : _error,
+            fontSize: 9.5,
+          ),
         ]);
         columnWidths[0] = const pw.FlexColumnWidth(1.3);
         columnWidths[1] = const pw.FlexColumnWidth(1.3);
@@ -2065,10 +2323,28 @@ class InvoicePdfService {
           isArabic ? "المبلغ المدفوع" : "Amount Paid",
         ]);
         values.addAll([
-          _buildTableCell("${totalBeforeTax.toSmartAmount()} $currency", fontSize: 9.5),
-          _buildTableCell("${taxAmount.toSmartAmount()} $currency", color: _purchasePrimary, isBold: true, fontSize: 9.5),
-          _buildTableCell("${purchase.totalAmount.toSmartAmount()} $currency", isBold: true, color: _purchasePrimaryDark, fontSize: 10),
-          _buildTableCell("${purchase.totalAmount.toSmartAmount()} $currency", isBold: true, color: _success, fontSize: 10),
+          _buildTableCell(
+            "${totalBeforeTax.toSmartAmount()} $currency",
+            fontSize: 9.5,
+          ),
+          _buildTableCell(
+            "${taxAmount.toSmartAmount()} $currency",
+            color: _purchasePrimary,
+            isBold: true,
+            fontSize: 9.5,
+          ),
+          _buildTableCell(
+            "${purchase.totalAmount.toSmartAmount()} $currency",
+            isBold: true,
+            color: _purchasePrimaryDark,
+            fontSize: 10,
+          ),
+          _buildTableCell(
+            "${purchase.totalAmount.toSmartAmount()} $currency",
+            isBold: true,
+            color: _success,
+            fontSize: 10,
+          ),
         ]);
         columnWidths[0] = const pw.FlexColumnWidth(1.4);
         columnWidths[1] = const pw.FlexColumnWidth(1.4);
@@ -2083,9 +2359,24 @@ class InvoicePdfService {
           isArabic ? "المتبقي للمورد" : "Remaining to Supplier",
         ]);
         values.addAll([
-          _buildTableCell("${purchase.totalAmount.toSmartAmount()} $currency", isBold: true, color: _purchasePrimaryDark, fontSize: 10),
-          _buildTableCell("${purchase.paidAmount.toSmartAmount()} $currency", isBold: true, color: _success, fontSize: 10),
-          _buildTableCell("${purchase.remainingDebt.toSmartAmount()} $currency", isBold: true, color: purchase.remainingDebt <= 0.01 ? _success : _error, fontSize: 10),
+          _buildTableCell(
+            "${purchase.totalAmount.toSmartAmount()} $currency",
+            isBold: true,
+            color: _purchasePrimaryDark,
+            fontSize: 10,
+          ),
+          _buildTableCell(
+            "${purchase.paidAmount.toSmartAmount()} $currency",
+            isBold: true,
+            color: _success,
+            fontSize: 10,
+          ),
+          _buildTableCell(
+            "${purchase.remainingDebt.toSmartAmount()} $currency",
+            isBold: true,
+            color: purchase.remainingDebt <= 0.01 ? _success : _error,
+            fontSize: 10,
+          ),
         ]);
         columnWidths[0] = const pw.FlexColumnWidth(1.3);
         columnWidths[1] = const pw.FlexColumnWidth(1.1);
@@ -2096,8 +2387,18 @@ class InvoicePdfService {
           isArabic ? "المبلغ المدفوع" : "Amount Paid",
         ]);
         values.addAll([
-          _buildTableCell("${purchase.totalAmount.toSmartAmount()} $currency", isBold: true, color: _purchasePrimaryDark, fontSize: 10.5),
-          _buildTableCell("${purchase.totalAmount.toSmartAmount()} $currency", isBold: true, color: _success, fontSize: 10.5),
+          _buildTableCell(
+            "${purchase.totalAmount.toSmartAmount()} $currency",
+            isBold: true,
+            color: _purchasePrimaryDark,
+            fontSize: 10.5,
+          ),
+          _buildTableCell(
+            "${purchase.totalAmount.toSmartAmount()} $currency",
+            isBold: true,
+            color: _success,
+            fontSize: 10.5,
+          ),
         ]);
         columnWidths[0] = const pw.FlexColumnWidth(1.5);
         columnWidths[1] = const pw.FlexColumnWidth(1.2);
@@ -2119,8 +2420,8 @@ class InvoicePdfService {
                 fontSize: headers.length >= 7
                     ? 7.5
                     : headers.length >= 5
-                        ? 8
-                        : 8.5,
+                    ? 8
+                    : 8.5,
               ),
           ],
         ),
@@ -2170,11 +2471,7 @@ class InvoicePdfService {
                   ),
                 ],
               ),
-              pw.Container(
-                width: 1,
-                height: 18,
-                color: PdfColors.grey300,
-              ),
+              pw.Container(width: 1, height: 18, color: PdfColors.grey300),
               pw.Row(
                 children: [
                   pw.Text(
@@ -2197,41 +2494,6 @@ class InvoicePdfService {
             ],
           ),
         ),
-
-        // Notes (if any)
-        if (purchase.notes != null && purchase.notes!.trim().isNotEmpty) ...[
-          pw.SizedBox(height: 6),
-          pw.Container(
-            width: double.infinity,
-            padding: const pw.EdgeInsets.all(7),
-            decoration: pw.BoxDecoration(
-              color: PdfColors.grey50,
-              borderRadius: pw.BorderRadius.circular(6),
-              border: pw.Border.all(color: PdfColors.grey200, width: 0.8),
-            ),
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Text(
-                  isArabic ? "ملاحظات:" : "Notes:",
-                  style: pw.TextStyle(
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.grey700,
-                    fontSize: 9,
-                  ),
-                ),
-                pw.SizedBox(height: 2),
-                pw.Text(
-                  purchase.notes!.cleanForPdf(),
-                  style: const pw.TextStyle(
-                    color: PdfColors.grey700,
-                    fontSize: 8.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ],
     );
   }

@@ -11,7 +11,6 @@ import 'package:tahsel/core/extensions/string_extensions.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
-
 import 'package:url_launcher/url_launcher.dart';
 
 class TahselPrintPreviewScreen extends StatelessWidget {
@@ -79,7 +78,10 @@ class TahselPrintPreviewScreen extends StatelessWidget {
     if (!kIsWeb && Platform.isWindows) {
       try {
         final uri = Uri.file(file.path);
-        final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        final launched = await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
         if (launched) return;
       } catch (_) {}
 
@@ -88,10 +90,9 @@ class TahselPrintPreviewScreen extends StatelessWidget {
       } catch (_) {}
     } else if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
       try {
-        await Share.shareXFiles(
-          [XFile(file.path, mimeType: 'application/pdf')],
-          subject: title,
-        );
+        await Share.shareXFiles([
+          XFile(file.path, mimeType: 'application/pdf'),
+        ], subject: title);
       } catch (_) {
         try {
           await Printing.sharePdf(
@@ -104,7 +105,10 @@ class TahselPrintPreviewScreen extends StatelessWidget {
     } else if (!kIsWeb && Platform.isMacOS) {
       try {
         final uri = Uri.file(file.path);
-        final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        final launched = await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
         if (launched) return;
       } catch (_) {}
       try {
@@ -113,7 +117,10 @@ class TahselPrintPreviewScreen extends StatelessWidget {
     } else if (!kIsWeb && Platform.isLinux) {
       try {
         final uri = Uri.file(file.path);
-        final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        final launched = await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
         if (launched) return;
       } catch (_) {}
       try {
@@ -316,7 +323,7 @@ class TahselPrintPreviewScreen extends StatelessWidget {
                   Icon(
                     Icons.error_outline_rounded,
                     color: AppColors.error,
-                    size: 48.sp,
+                    size: 48,
                   ),
                   SizedBox(height: 12.h),
                   Text(

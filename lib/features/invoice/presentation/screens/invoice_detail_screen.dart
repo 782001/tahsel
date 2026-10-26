@@ -24,7 +24,9 @@ import 'package:tahsel/core/widgets/permission_guard.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/cashbox/data/datasources/vault_remote_data_source.dart';
 import 'package:tahsel/features/cashbox/domain/entities/vault_transaction_entity.dart';
+import 'package:tahsel/features/customer/domain/entities/customer_entity.dart';
 import 'package:tahsel/features/customer/presentation/cubit/customer_cubit.dart';
+import 'package:tahsel/features/customer/presentation/cubit/customer_state.dart';
 import 'package:tahsel/features/debt/domain/entities/payment_entity.dart';
 import 'package:tahsel/features/invoice/data/datasources/offline_invoice_local_data_source.dart';
 import 'package:tahsel/features/invoice/domain/entities/invoice_entity.dart';
@@ -71,6 +73,38 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
   /// Non-null only when the invoice has a [linkedDebtId].
   List<PaymentEntity>? _debtTransactions;
 
+  /// Resolves full customer details (from loaded cubit cache or invoice fields)
+  /// ensuring printing/sharing works completely offline without network calls.
+  CustomerEntity _resolveCustomerForPdf() {
+    CustomerEntity? customer;
+    try {
+      final customerCubit = context.read<CustomerCubit>();
+      if (customerCubit.state is CustomerLoaded) {
+        final list = (customerCubit.state as CustomerLoaded).customers;
+        for (final c in list) {
+          if ((_invoice.customerName != null &&
+                  _invoice.customerName!.trim().isNotEmpty &&
+                  c.name.trim().toLowerCase() ==
+                      _invoice.customerName!.trim().toLowerCase()) ||
+              (_invoice.customerPhone != null &&
+                  _invoice.customerPhone!.trim().isNotEmpty &&
+                  c.phoneNumber?.trim() == _invoice.customerPhone!.trim())) {
+            customer = c;
+            break;
+          }
+        }
+      }
+    } catch (_) {}
+
+    return customer ??
+        CustomerEntity(
+          name: _invoice.customerName?.trim() ?? '',
+          phoneNumber: _invoice.customerPhone?.trim(),
+          ledgerNumber: _invoice.ledgerNumber?.trim(),
+          lastUsedAt: _invoice.createdAt,
+        );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -105,10 +139,12 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
   void _showRecordPaymentSheet(BuildContext context, bool isDismissible) async {
     final connectivityState = context.read<ConnectivityCubit>().state;
     if (connectivityState is ConnectivityDisconnected) {
-      final pending =
-          await di.sl<OfflineInvoiceLocalDataSource>().getPendingInvoices();
-      final isPendingLocally =
-          pending.any((i) => i['invoiceId'] == _invoice.id);
+      final pending = await di
+          .sl<OfflineInvoiceLocalDataSource>()
+          .getPendingInvoices();
+      final isPendingLocally = pending.any(
+        (i) => i['invoiceId'] == _invoice.id,
+      );
       if (!isPendingLocally) {
         if (!context.mounted) return;
         showfailureToast(AppStrings.noInternetConnection.tr());
@@ -144,9 +180,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
       decoration: BoxDecoration(
         color: AppColors.warning.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(isDesktop ? 14 : 12.r),
-        border: Border.all(
-          color: AppColors.warning.withValues(alpha: 0.35),
-        ),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.35)),
       ),
       child: Row(
         children: [
@@ -965,10 +999,12 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     final isOffline = connectivityState is ConnectivityDisconnected;
 
     if (isOffline) {
-      final pending =
-          await di.sl<OfflineInvoiceLocalDataSource>().getPendingInvoices();
-      final isOfflinePending =
-          pending.any((i) => i['invoiceId'] == _invoice.id);
+      final pending = await di
+          .sl<OfflineInvoiceLocalDataSource>()
+          .getPendingInvoices();
+      final isOfflinePending = pending.any(
+        (i) => i['invoiceId'] == _invoice.id,
+      );
       if (!isOfflinePending) {
         showfailureToast(AppStrings.noInternetConnection.tr());
         return;
@@ -1037,7 +1073,8 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
           } else if (state is InvoiceConvertSuccess) {
             final uid = AppStrings.userToken;
             context.read<InvoiceCubit>().loadInvoice(uid, state.invoiceId);
-            if (context.read<ConnectivityCubit>().state is! ConnectivityDisconnected) {
+            if (context.read<ConnectivityCubit>().state
+                is! ConnectivityDisconnected) {
               context.read<InvoiceHistoryCubit>().loadHistory(
                 uid: uid,
                 invoiceId: state.invoiceId,
@@ -1060,696 +1097,675 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
         },
         child: BlocBuilder<ConnectivityCubit, ConnectivityState>(
           builder: (context, connectivityState) {
-            final isDisconnected = connectivityState is ConnectivityDisconnected;
+            final isDisconnected =
+                connectivityState is ConnectivityDisconnected;
             return Scaffold(
-            backgroundColor: AppColors.scafoldBackGround,
+              backgroundColor: AppColors.scafoldBackGround,
 
-            appBar: AppBar(
-              scrolledUnderElevation: 0,
-              backgroundColor: AppColors.surface,
-              elevation: 0,
-              title: Text(
-                _invoice.isQuotation
-                    ? AppStrings.quotationDetails.tr()
-                    : AppStrings.invoiceDetail.tr(),
-                style: TextStyles.customStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primaryColor,
-                ),
-              ),
-              centerTitle: true,
-              leading: IconButton(
-                icon: Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: AppColors.primaryColor,
-                ),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-              actions: [
-                // Print Invoice / Quotation
-                PermissionGuard(
-                  permission: AppPermissions.invoicesPrintShare,
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.print_rounded,
-                      color: AppColors.primaryColor,
-                    ),
-                    tooltip: _invoice.isQuotation
-                        ? AppStrings.printQuotation.tr()
-                        : AppStrings.printInvoice.tr(),
-                    onPressed: () async {
-                      try {
-                        final isArabic = AppStrings.currentLang == 'ar';
-                        if (di.sl.isRegistered<ActivityLoggerService>()) {
-                          final isQuo = _invoice.isQuotation;
-                          final ownerUid = AppStrings.userToken;
-                          final actionTitle = isQuo
-                              ? 'طباعة عرض سعر: ${_invoice.referenceNumber}'
-                              : 'طباعة فاتورة مبيعات: ${_invoice.referenceNumber}';
-                          final details = isQuo
-                              ? 'قام الموظف بطباعة عرض سعر رقم ${_invoice.referenceNumber} للعميل ${_invoice.customerName ?? "نقدي"} بإجمالي ${_invoice.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}'
-                              : 'قام الموظف بطباعة فاتورة مبيعات رقم ${_invoice.referenceNumber} للعميل ${_invoice.customerName ?? "نقدي"} بإجمالي ${_invoice.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}';
-                          di.sl<ActivityLoggerService>().logStandalone(
-                            ownerUid: ownerUid,
-                            actionCategory: 'invoices',
-                            actionType: isQuo ? 'print_quotation' : 'print_invoice',
-                            actionTitle: actionTitle,
-                            details: details,
-                            amount: _invoice.totalAmount,
-                            extraData: {
-                              'invoiceId': _invoice.id,
-                              'referenceNumber': _invoice.referenceNumber,
-                              'customerName': _invoice.customerName,
-                              'total': _invoice.totalAmount,
-                              'isQuotation': isQuo,
-                            },
-                          );
-                        }
-
-                        await InvoicePdfService.printInvoice(
-                          context,
-                          _invoice,
-                          isArabic: isArabic,
-                        );
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(e.toString()),
-                              backgroundColor: AppColors.error,
-                            ),
-                          );
-                        }
-                      }
-                    },
+              appBar: AppBar(
+                scrolledUnderElevation: 0,
+                backgroundColor: AppColors.surface,
+                elevation: 0,
+                title: Text(
+                  _invoice.isQuotation
+                      ? AppStrings.quotationDetails.tr()
+                      : AppStrings.invoiceDetail.tr(),
+                  style: TextStyles.customStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryColor,
                   ),
                 ),
-                // Share as PDF
-                PermissionGuard(
-                  permission: AppPermissions.invoicesPrintShare,
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.picture_as_pdf_rounded,
-                      color: isDisconnected
-                          ? AppColors.disabledColor
-                          : AppColors.primaryColor,
-                    ),
-                    tooltip: _invoice.isQuotation
-                        ? AppStrings.shareQuotationPdf.tr()
-                        : AppStrings.invoiceSharePdf.tr(),
-                    onPressed: () async {
-                      if (isDisconnected) {
-                        showfailureToast(AppStrings.noInternetConnection.tr());
-                        return;
-                      }
+                centerTitle: true,
+                leading: IconButton(
+                  icon: Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: AppColors.primaryColor,
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                actions: [
+                  // Print Invoice / Quotation
+                  PermissionGuard(
+                    permission: AppPermissions.invoicesPrintShare,
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.print_rounded,
+                        color: AppColors.primaryColor,
+                      ),
+                      tooltip: _invoice.isQuotation
+                          ? AppStrings.printQuotation.tr()
+                          : AppStrings.printInvoice.tr(),
+                      onPressed: () async {
+                        try {
+                          final isArabic = AppStrings.currentLang == 'ar';
+                          if (di.sl.isRegistered<ActivityLoggerService>()) {
+                            final isQuo = _invoice.isQuotation;
+                            final ownerUid = AppStrings.userToken;
+                            final actionTitle = isQuo
+                                ? 'طباعة عرض سعر: ${_invoice.referenceNumber}'
+                                : 'طباعة فاتورة مبيعات: ${_invoice.referenceNumber}';
+                            final details = isQuo
+                                ? 'قام الموظف بطباعة عرض سعر رقم ${_invoice.referenceNumber} للعميل ${_invoice.customerName ?? "نقدي"} بإجمالي ${_invoice.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}'
+                                : 'قام الموظف بطباعة فاتورة مبيعات رقم ${_invoice.referenceNumber} للعميل ${_invoice.customerName ?? "نقدي"} بإجمالي ${_invoice.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}';
+                            di.sl<ActivityLoggerService>().logStandalone(
+                              ownerUid: ownerUid,
+                              actionCategory: 'invoices',
+                              actionType: isQuo
+                                  ? 'print_quotation'
+                                  : 'print_invoice',
+                              actionTitle: actionTitle,
+                              details: details,
+                              amount: _invoice.totalAmount,
+                              extraData: {
+                                'invoiceId': _invoice.id,
+                                'referenceNumber': _invoice.referenceNumber,
+                                'customerName': _invoice.customerName,
+                                'total': _invoice.totalAmount,
+                                'isQuotation': isQuo,
+                              },
+                            );
+                          }
 
-                      final canViewPhone = CustomerDataMasker.canViewCustomerPhone;
-                      String? phone;
-
-                      if (canViewPhone) {
-                        phone = _invoice.customerPhone;
-                        if (!kIsWeb && Platform.isAndroid) {
-                          if (phone == null || phone.isEmpty) {
-                            final result = await PhoneInputSheet.show(context);
-                            if (result == null) return;
-                            phone = result;
-
-                            if (_invoice.customerName != null) {
-                              try {
-                                di.sl<CustomerCubit>().updateCustomerPhone(
-                                  AppStrings.userToken,
-                                  _invoice.customerName!,
-                                  phone,
-                                );
-                              } catch (e) {
-                                AppLogger.printMessage(
-                                  'Failed to update customer phone: $e',
-                                );
-                              }
-                            }
-
-                            // Save the phone number to the invoice document
-                            // ignore: use_build_context_synchronously
-                            context.read<InvoiceCubit>().updateInvoice(
-                              _invoice.copyWith(customerPhone: phone),
-                              previous: _invoice,
+                          await InvoicePdfService.printInvoice(
+                            context,
+                            _invoice,
+                            isArabic: isArabic,
+                            customer: _resolveCustomerForPdf(),
+                          );
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(e.toString()),
+                                backgroundColor: AppColors.error,
+                              ),
                             );
                           }
                         }
-                      }
-
-                      try {
-                        final isArabic = AppStrings.currentLang == 'ar';
-                        if (di.sl.isRegistered<ActivityLoggerService>()) {
-                          final isQuo = _invoice.isQuotation;
-                          final ownerUid = AppStrings.userToken;
-                          final actionTitle = isQuo
-                              ? 'مشاركة/تصدير عرض سعر: ${_invoice.referenceNumber}'
-                              : 'مشاركة/تصدير فاتورة مبيعات: ${_invoice.referenceNumber}';
-                          final details = isQuo
-                              ? 'قام الموظف بمشاركة/تصدير عرض سعر PDF رقم ${_invoice.referenceNumber} للعميل ${_invoice.customerName ?? "نقدي"} بإجمالي ${_invoice.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}'
-                              : 'قام الموظف بمشاركة/تصدير فاتورة مبيعات PDF رقم ${_invoice.referenceNumber} للعميل ${_invoice.customerName ?? "نقدي"} بإجمالي ${_invoice.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}';
-                          di.sl<ActivityLoggerService>().logStandalone(
-                            ownerUid: ownerUid,
-                            actionCategory: 'invoices',
-                            actionType: isQuo ? 'export_quotation_pdf' : 'export_invoice_pdf',
-                            actionTitle: actionTitle,
-                            details: details,
-                            amount: _invoice.totalAmount,
-                            extraData: {
-                              'invoiceId': _invoice.id,
-                              'referenceNumber': _invoice.referenceNumber,
-                              'customerName': _invoice.customerName,
-                              'total': _invoice.totalAmount,
-                              'isQuotation': isQuo,
-                            },
-                          );
-                        }
-
-                        await InvoicePdfService.generateAndShareInvoice(
-                          _invoice,
-                          isArabic: isArabic,
-                          phoneNumber: phone,
-                        );
-                      } catch (e) {
-                        if (context.mounted) {
-                          AppLogger.printMessage(
-                            'Failed to generate and share invoice: $e',
-                          );
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(e.toString()),
-                              backgroundColor: AppColors.error,
-                            ),
-                          );
-                        }
-                      }
-                    },
-                  ),
-                ),
-                // Convert Quotation to Invoice — only for quotations with invoice creation permission
-                if (_invoice.isQuotation &&
-                    PermissionService.instance.hasPermission(
-                      AppPermissions.invoicesCreate,
-                    ))
-                  IconButton(
-                    icon: Icon(
-                      Icons.published_with_changes_rounded,
-                      color: AppColors.primaryColor,
+                      },
                     ),
-                    tooltip: AppStrings.convertToSalesInvoice.tr(),
-                    onPressed: _handleConvertQuotation,
                   ),
-                // Edit — only for non-voided invoices with permission
-                if (_invoice.status != InvoiceStatus.voided &&
-                    PermissionService.instance.hasPermission(
-                      AppPermissions.invoicesEdit,
-                    ))
-                  IconButton(
-                    icon: Icon(
-                      Icons.edit_square,
-                      color: isDisconnected
-                          ? AppColors.disabledColor
-                          : AppColors.primaryColor,
-                    ),
-                    tooltip: _invoice.isQuotation
-                        ? AppStrings.editQuotation.tr()
-                        : AppStrings.invoiceEditTitle.tr(),
-                    onPressed: () async {
-                      if (isDisconnected) {
-                        showfailureToast(AppStrings.noInternetConnection.tr());
-                        return;
-                      }
-                      final cubit = context.read<InvoiceCubit>();
-                      final updated = await Navigator.of(
-                        context,
-                      ).pushNamed(AppRoutes.editInvoice, arguments: _invoice);
-                      if (updated == true && mounted) {
-                        cubit.loadInvoice(AppStrings.userToken, _invoice.id);
-                      }
-                    },
-                  ),
-                // Void — only for pending/partial invoices with permission
-                if (!_invoice.isQuotation &&
-                    (_invoice.status == InvoiceStatus.pending ||
-                        _invoice.status == InvoiceStatus.partial) &&
-                    PermissionService.instance.hasPermission(
-                      AppPermissions.invoicesDelete,
-                    ))
-                  IconButton(
-                    icon: Icon(
-                      Icons.cancel_presentation,
-                      color: isDisconnected
-                          ? AppColors.disabledColor
-                          : AppColors.error,
-                    ),
-                    tooltip: AppStrings.invoiceVoid.tr(),
-                    onPressed: () {
-                      if (isDisconnected) {
-                        showfailureToast(AppStrings.noInternetConnection.tr());
-                        return;
-                      }
-                      _confirmVoid(context);
-                    },
-                  ),
-              ],
-            ),
-            body: SafeArea(
-              child: BlocBuilder<InvoiceCubit, InvoiceState>(
-                builder: (context, state) {
-                  final isLoading = state is InvoiceLoading;
-                  return Center(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: isDesktop ? 1000 : double.infinity,
+                  // Share as PDF
+                  PermissionGuard(
+                    permission: AppPermissions.invoicesPrintShare,
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.picture_as_pdf_rounded,
+                        color: isDisconnected
+                            ? AppColors.disabledColor
+                            : AppColors.primaryColor,
                       ),
+                      tooltip: _invoice.isQuotation
+                          ? AppStrings.shareQuotationPdf.tr()
+                          : AppStrings.invoiceSharePdf.tr(),
+                      onPressed: () async {
+                        if (isDisconnected) {
+                          showfailureToast(
+                            AppStrings.noInternetConnection.tr(),
+                          );
+                          return;
+                        }
 
-                      child: Stack(
-                        children: [
-                          SingleChildScrollView(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 20.w,
-                              vertical: 20.h,
-                            ),
-                            child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
-                              children: [
-                                if (isDisconnected) ...[
-                                  _buildOfflineBanner(context),
-                                  const SizedBox(height: 14),
-                                ],
-                                      // ── Status Card ────────────────────────────────────
-                                      InvoiceStatusCard(
-                                        invoice: _invoice,
-                                        statusColor: _statusColor(
-                                          _invoice.status,
-                                        ),
-                                        statusLabel: _statusLabel(
-                                          _invoice.status,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 20),
+                        final canViewPhone =
+                            CustomerDataMasker.canViewCustomerPhone;
+                        String? phone;
 
-                                      // ── Customer Info ──────────────────────────────────
-                                      if (_invoice.customerName != null ||
-                                          _invoice.customerPhone != null ||
-                                          _invoice.linkedDebtId != null) ...[
-                                        InvoiceSectionTitle(
-                                          title: AppStrings
-                                              .invoiceCustomerSection
-                                              .tr(),
-                                        ),
-                                        const SizedBox(height: 12),
-                                        InvoiceInfoCard(
-                                          children: [
-                                            if (_invoice.customerName != null)
-                                              InvoiceInfoRow(
-                                                icon: Icons.person_rounded,
-                                                label: _invoice.customerName!,
-                                              ),
-                                            if (_invoice.customerPhone != null)
-                                              InvoiceInfoRow(
-                                                icon:
-                                                    CustomerDataMasker
-                                                        .canViewCustomerPhone
-                                                    ? Icons.phone_rounded
-                                                    : Icons
-                                                          .visibility_off_outlined,
-                                                label:
-                                                    CustomerDataMasker
-                                                        .canViewCustomerPhone
-                                                    ? _invoice.customerPhone!
-                                                    : CustomerDataMasker.maskPhone(
-                                                        _invoice.customerPhone!,
-                                                      ),
-                                              ),
-                                            if (_invoice.ledgerNumber != null)
-                                              InvoiceInfoRow(
-                                                icon:
-                                                    CustomerDataMasker
-                                                        .canViewCustomerPhone
-                                                    ? Icons.tag_rounded
-                                                    : Icons
-                                                          .visibility_off_outlined,
-                                                label:
-                                                    CustomerDataMasker
-                                                        .canViewCustomerPhone
-                                                    ? '# ${_invoice.ledgerNumber}'
-                                                    : '# ${CustomerDataMasker.maskGeneric(_invoice.ledgerNumber!)}',
-                                              ),
-                                            if (_invoice.linkedDebtId != null)
-                                              InvoiceInfoRow(
-                                                icon: Icons.link_rounded,
-                                                label:
-                                                    '${AppStrings.invoiceLinkedToDebt.tr()}: ${_invoice.linkedDebtId}',
-                                              ),
-                                            if (_invoice.dueDate != null)
-                                              InvoiceInfoRow(
-                                                icon: Icons
-                                                    .event_available_rounded,
-                                                label:
-                                                    '${AppStrings.paymentDueDate.tr()}: ${DateFormat('yyyy/MM/dd').format(_invoice.dueDate!)}',
-                                              ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 20),
+                        if (canViewPhone) {
+                          phone = _invoice.customerPhone;
+                          if (!kIsWeb && Platform.isAndroid) {
+                            if (phone == null || phone.isEmpty) {
+                              final result = await PhoneInputSheet.show(
+                                context,
+                              );
+                              if (result == null) return;
+                              phone = result;
+
+                              if (_invoice.customerName != null) {
+                                try {
+                                  di.sl<CustomerCubit>().updateCustomerPhone(
+                                    AppStrings.userToken,
+                                    _invoice.customerName!,
+                                    phone,
+                                  );
+                                } catch (e) {
+                                  AppLogger.printMessage(
+                                    'Failed to update customer phone: $e',
+                                  );
+                                }
+                              }
+
+                              // Save the phone number to the invoice document
+                              // ignore: use_build_context_synchronously
+                              context.read<InvoiceCubit>().updateInvoice(
+                                _invoice.copyWith(customerPhone: phone),
+                                previous: _invoice,
+                              );
+                            }
+                          }
+                        }
+
+                        try {
+                          final isArabic = AppStrings.currentLang == 'ar';
+                          if (di.sl.isRegistered<ActivityLoggerService>()) {
+                            final isQuo = _invoice.isQuotation;
+                            final ownerUid = AppStrings.userToken;
+                            final actionTitle = isQuo
+                                ? 'مشاركة/تصدير عرض سعر: ${_invoice.referenceNumber}'
+                                : 'مشاركة/تصدير فاتورة مبيعات: ${_invoice.referenceNumber}';
+                            final details = isQuo
+                                ? 'قام الموظف بمشاركة/تصدير عرض سعر PDF رقم ${_invoice.referenceNumber} للعميل ${_invoice.customerName ?? "نقدي"} بإجمالي ${_invoice.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}'
+                                : 'قام الموظف بمشاركة/تصدير فاتورة مبيعات PDF رقم ${_invoice.referenceNumber} للعميل ${_invoice.customerName ?? "نقدي"} بإجمالي ${_invoice.totalAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}';
+                            di.sl<ActivityLoggerService>().logStandalone(
+                              ownerUid: ownerUid,
+                              actionCategory: 'invoices',
+                              actionType: isQuo
+                                  ? 'export_quotation_pdf'
+                                  : 'export_invoice_pdf',
+                              actionTitle: actionTitle,
+                              details: details,
+                              amount: _invoice.totalAmount,
+                              extraData: {
+                                'invoiceId': _invoice.id,
+                                'referenceNumber': _invoice.referenceNumber,
+                                'customerName': _invoice.customerName,
+                                'total': _invoice.totalAmount,
+                                'isQuotation': isQuo,
+                              },
+                            );
+                          }
+
+                          await InvoicePdfService.generateAndShareInvoice(
+                            _invoice,
+                            isArabic: isArabic,
+                            phoneNumber: phone,
+                            customer: _resolveCustomerForPdf(),
+                          );
+                        } catch (e) {
+                          if (context.mounted) {
+                            AppLogger.printMessage(
+                              'Failed to generate and share invoice: $e',
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(e.toString()),
+                                backgroundColor: AppColors.error,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                    ),
+                  ),
+                  // Convert Quotation to Invoice — only for quotations with invoice creation permission
+                  if (_invoice.isQuotation &&
+                      PermissionService.instance.hasPermission(
+                        AppPermissions.invoicesCreate,
+                      ))
+                    IconButton(
+                      icon: Icon(
+                        Icons.published_with_changes_rounded,
+                        color: AppColors.primaryColor,
+                      ),
+                      tooltip: AppStrings.convertToSalesInvoice.tr(),
+                      onPressed: _handleConvertQuotation,
+                    ),
+                  // Edit — only for non-voided invoices with permission
+                  if (_invoice.status != InvoiceStatus.voided &&
+                      PermissionService.instance.hasPermission(
+                        AppPermissions.invoicesEdit,
+                      ))
+                    IconButton(
+                      icon: Icon(
+                        Icons.edit_square,
+                        color: isDisconnected
+                            ? AppColors.disabledColor
+                            : AppColors.primaryColor,
+                      ),
+                      tooltip: _invoice.isQuotation
+                          ? AppStrings.editQuotation.tr()
+                          : AppStrings.invoiceEditTitle.tr(),
+                      onPressed: () async {
+                        if (isDisconnected) {
+                          showfailureToast(
+                            AppStrings.noInternetConnection.tr(),
+                          );
+                          return;
+                        }
+                        final cubit = context.read<InvoiceCubit>();
+                        final updated = await Navigator.of(
+                          context,
+                        ).pushNamed(AppRoutes.editInvoice, arguments: _invoice);
+                        if (updated == true && mounted) {
+                          cubit.loadInvoice(AppStrings.userToken, _invoice.id);
+                        }
+                      },
+                    ),
+                  // Void — only for pending/partial invoices with permission
+                  if (!_invoice.isQuotation &&
+                      (_invoice.status == InvoiceStatus.pending ||
+                          _invoice.status == InvoiceStatus.partial) &&
+                      PermissionService.instance.hasPermission(
+                        AppPermissions.invoicesDelete,
+                      ))
+                    IconButton(
+                      icon: Icon(
+                        Icons.cancel_presentation,
+                        color: isDisconnected
+                            ? AppColors.disabledColor
+                            : AppColors.error,
+                      ),
+                      tooltip: AppStrings.invoiceVoid.tr(),
+                      onPressed: () {
+                        if (isDisconnected) {
+                          showfailureToast(
+                            AppStrings.noInternetConnection.tr(),
+                          );
+                          return;
+                        }
+                        _confirmVoid(context);
+                      },
+                    ),
+                ],
+              ),
+              body: SafeArea(
+                child: BlocBuilder<InvoiceCubit, InvoiceState>(
+                  builder: (context, state) {
+                    final isLoading = state is InvoiceLoading;
+                    return Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: isDesktop ? 1000 : double.infinity,
+                        ),
+
+                        child: Stack(
+                          children: [
+                            SingleChildScrollView(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 20.w,
+                                vertical: 20.h,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (isDisconnected) ...[
+                                    _buildOfflineBanner(context),
+                                    const SizedBox(height: 14),
+                                  ],
+                                  // ── Status Card ────────────────────────────────────
+                                  InvoiceStatusCard(
+                                    invoice: _invoice,
+                                    statusColor: _statusColor(_invoice.status),
+                                    statusLabel: _statusLabel(_invoice.status),
+                                  ),
+                                  const SizedBox(height: 20),
+
+                                  // ── Customer Info ──────────────────────────────────
+                                  if (_invoice.customerName != null ||
+                                      _invoice.customerPhone != null ||
+                                      _invoice.linkedDebtId != null) ...[
+                                    InvoiceSectionTitle(
+                                      title: AppStrings.invoiceCustomerSection
+                                          .tr(),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    InvoiceInfoCard(
+                                      children: [
+                                        if (_invoice.customerName != null)
+                                          InvoiceInfoRow(
+                                            icon: Icons.person_rounded,
+                                            label: _invoice.customerName!,
+                                          ),
+                                        if (_invoice.customerPhone != null)
+                                          InvoiceInfoRow(
+                                            icon:
+                                                CustomerDataMasker
+                                                    .canViewCustomerPhone
+                                                ? Icons.phone_rounded
+                                                : Icons.visibility_off_outlined,
+                                            label:
+                                                CustomerDataMasker
+                                                    .canViewCustomerPhone
+                                                ? _invoice.customerPhone!
+                                                : CustomerDataMasker.maskPhone(
+                                                    _invoice.customerPhone!,
+                                                  ),
+                                          ),
+                                        if (_invoice.ledgerNumber != null)
+                                          InvoiceInfoRow(
+                                            icon:
+                                                CustomerDataMasker
+                                                    .canViewCustomerPhone
+                                                ? Icons.tag_rounded
+                                                : Icons.visibility_off_outlined,
+                                            label:
+                                                CustomerDataMasker
+                                                    .canViewCustomerPhone
+                                                ? '# ${_invoice.ledgerNumber}'
+                                                : '# ${CustomerDataMasker.maskGeneric(_invoice.ledgerNumber!)}',
+                                          ),
+                                        if (_invoice.linkedDebtId != null)
+                                          InvoiceInfoRow(
+                                            icon: Icons.link_rounded,
+                                            label:
+                                                '${AppStrings.invoiceLinkedToDebt.tr()}: ${_invoice.linkedDebtId}',
+                                          ),
+                                        if (_invoice.dueDate != null)
+                                          InvoiceInfoRow(
+                                            icon: Icons.event_available_rounded,
+                                            label:
+                                                '${AppStrings.paymentDueDate.tr()}: ${DateFormat('yyyy/MM/dd').format(_invoice.dueDate!)}',
+                                          ),
                                       ],
+                                    ),
+                                    const SizedBox(height: 20),
+                                  ],
 
-                                      // ── Items ──────────────────────────────────────────
-                                      InvoiceSectionTitle(
-                                        title: AppStrings
-                                            .invoiceItemsSectionDetail
-                                            .tr(),
-                                      ),
-                                      const SizedBox(height: 12),
-                                      InvoiceItemsCard(
-                                        items: _invoice.items,
-                                        taxRate: _invoice.effectiveTaxRate,
-                                        isQuotation: _invoice.isQuotation,
-                                      ),
-                                      const SizedBox(height: 20),
+                                  // ── Items ──────────────────────────────────────────
+                                  InvoiceSectionTitle(
+                                    title: AppStrings.invoiceItemsSectionDetail
+                                        .tr(),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  InvoiceItemsCard(
+                                    items: _invoice.items,
+                                    taxRate: _invoice.effectiveTaxRate,
+                                    isQuotation: _invoice.isQuotation,
+                                  ),
+                                  const SizedBox(height: 20),
 
-                                      // ── Overall Cash Discount Card ─────────────
-                                      if (_invoice.totalDiscountAmount > 0) ...[
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 16,
-                                            vertical: 14,
+                                  // ── Overall Cash Discount Card ─────────────
+                                  if (_invoice.totalDiscountAmount > 0) ...[
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 14,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.orange.withValues(
+                                          alpha: 0.08,
+                                        ),
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: AppColors.orange.withValues(
+                                            alpha: 0.3,
                                           ),
-                                          decoration: BoxDecoration(
-                                            color: AppColors.orange.withValues(
-                                              alpha: 0.08,
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              16,
-                                            ),
-                                            border: Border.all(
-                                              color: AppColors.orange
-                                                  .withValues(alpha: 0.3),
-                                              width: 1.2,
-                                            ),
-                                          ),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
                                             children: [
-                                              Row(
-                                                children: [
-                                                  Container(
-                                                    padding:
-                                                        const EdgeInsets.all(8),
-                                                    decoration: BoxDecoration(
-                                                      color: AppColors.orange
-                                                          .withValues(
-                                                            alpha: 0.15,
-                                                          ),
-                                                      shape: BoxShape.circle,
-                                                    ),
-                                                    child: const Icon(
-                                                      Icons.local_offer_rounded,
-                                                      color: AppColors.orange,
-                                                      size: 20,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 12),
-                                                  Text(
-                                                    AppStrings
-                                                        .overallDiscountAmount
-                                                        .tr(),
-                                                    style:
-                                                        TextStyles.customStyle(
-                                                          fontSize: 14,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          color:
-                                                              AppColors.black,
-                                                        ),
-                                                  ),
-                                                ],
-                                              ),
-                                              Text(
-                                                '-${_invoice.totalDiscountAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-                                                style: TextStyles.customStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
+                                              Container(
+                                                padding: const EdgeInsets.all(
+                                                  8,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.orange
+                                                      .withValues(alpha: 0.15),
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: const Icon(
+                                                  Icons.local_offer_rounded,
                                                   color: AppColors.orange,
+                                                  size: 20,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Text(
+                                                AppStrings.overallDiscountAmount
+                                                    .tr(),
+                                                style: TextStyles.customStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: AppColors.black,
                                                 ),
                                               ),
                                             ],
                                           ),
-                                        ),
-                                        const SizedBox(height: 20),
-                                      ],
-
-                                      // ── Payment / Financial Summary ────────────────────
-                                      PaymentSummaryCard(invoice: _invoice),
-                                      const SizedBox(height: 20),
-                                      if (!_invoice.isQuotation &&
-                                          _invoice.status ==
-                                              InvoiceStatus.paid &&
-                                          _invoice.totalPaid >
-                                              _invoice.totalAmount)
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            bottom: 16,
+                                          Text(
+                                            '-${_invoice.totalDiscountAmount.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                                            style: TextStyles.customStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.orange,
+                                            ),
                                           ),
-                                          child: Container(
-                                            padding: EdgeInsets.all(
-                                              isDesktop ? 14 : 14.w,
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 20),
+                                  ],
+
+                                  // ── Payment / Financial Summary ────────────────────
+                                  PaymentSummaryCard(invoice: _invoice),
+                                  const SizedBox(height: 20),
+                                  if (!_invoice.isQuotation &&
+                                      _invoice.status == InvoiceStatus.paid &&
+                                      _invoice.totalPaid > _invoice.totalAmount)
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                        bottom: 16,
+                                      ),
+                                      child: Container(
+                                        padding: EdgeInsets.all(
+                                          isDesktop ? 14 : 14.w,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.info.withValues(
+                                            alpha: 0.08,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            isDesktop ? 14 : 14.r,
+                                          ),
+                                          border: Border.all(
+                                            color: AppColors.info.withValues(
+                                              alpha: 0.3,
                                             ),
-                                            decoration: BoxDecoration(
-                                              color: AppColors.info.withValues(
-                                                alpha: 0.08,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(
-                                                    isDesktop ? 14 : 14.r,
-                                                  ),
-                                              border: Border.all(
-                                                color: AppColors.info
-                                                    .withValues(alpha: 0.3),
-                                              ),
-                                            ),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
+                                          ),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
                                               children: [
-                                                Row(
-                                                  children: [
-                                                    Icon(
-                                                      Icons
-                                                          .info_outline_rounded,
-                                                      size: isDesktop
-                                                          ? 18
-                                                          : 18.sp,
-                                                      color: AppColors.info,
-                                                    ),
-                                                    SizedBox(
-                                                      width: isDesktop
-                                                          ? 8
-                                                          : 8.w,
-                                                    ),
-                                                    Expanded(
-                                                      child: Text(
-                                                        "${AppStrings.invoicePaidNotice.tr()}   ${(_invoice.totalPaid - _invoice.totalAmount).toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
-                                                        style:
-                                                            TextStyles.customStyle(
-                                                              fontSize: 12,
-                                                              color: AppColors
-                                                                  .info,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w600,
-                                                            ),
-                                                      ),
-                                                    ),
-                                                  ],
+                                                Icon(
+                                                  Icons.info_outline_rounded,
+                                                  size: isDesktop ? 18 : 18.sp,
+                                                  color: AppColors.info,
                                                 ),
                                                 SizedBox(
-                                                  height: isDesktop ? 10 : 10.h,
+                                                  width: isDesktop ? 8 : 8.w,
                                                 ),
-                                                SizedBox(
-                                                  width: double.infinity,
-                                                  child: ElevatedButton.icon(
-                                                    onPressed: _isRefunding
-                                                        ? null
-                                                        : () =>
-                                                              _handleRefundOverpaidSurplus(),
-                                                    style: ElevatedButton.styleFrom(
-                                                      backgroundColor:
-                                                          AppColors.info,
-                                                      foregroundColor:
-                                                          Colors.white,
-                                                      elevation: 0,
-                                                      padding:
-                                                          EdgeInsets.symmetric(
-                                                            horizontal:
-                                                                isDesktop
-                                                                ? 14
-                                                                : 14.w,
-                                                            vertical: isDesktop
-                                                                ? 8
-                                                                : 8.h,
-                                                          ),
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              isDesktop
-                                                                  ? 10
-                                                                  : 10.r,
-                                                            ),
-                                                      ),
-                                                    ),
-                                                    icon: _isRefunding
-                                                        ? SizedBox(
-                                                            width: isDesktop
-                                                                ? 16
-                                                                : 16.sp,
-                                                            height: isDesktop
-                                                                ? 16
-                                                                : 16.sp,
-                                                            child:
-                                                                const CircularProgressIndicator(
-                                                                  strokeWidth:
-                                                                      2,
-                                                                  color: Colors
-                                                                      .white,
-                                                                ),
-                                                          )
-                                                        : Icon(
-                                                            Icons
-                                                                .output_rounded,
-                                                            size: isDesktop
-                                                                ? 18
-                                                                : 18.sp,
-                                                            color: Colors.white,
-                                                          ),
-                                                    label: Text(
-                                                      AppStrings
-                                                          .refundOverpaidToCustomer
-                                                          .tr(),
-                                                      style:
-                                                          TextStyles.customStyle(
-                                                            fontSize: 12,
-                                                            color: Colors.white,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                          ),
-                                                    ),
+                                                Expanded(
+                                                  child: Text(
+                                                    "${AppStrings.invoicePaidNotice.tr()}   ${(_invoice.totalPaid - _invoice.totalAmount).toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
+                                                    style:
+                                                        TextStyles.customStyle(
+                                                          fontSize: 12,
+                                                          color: AppColors.info,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                        ),
                                                   ),
                                                 ),
                                               ],
                                             ),
+                                            SizedBox(
+                                              height: isDesktop ? 10 : 10.h,
+                                            ),
+                                            SizedBox(
+                                              width: double.infinity,
+                                              child: ElevatedButton.icon(
+                                                onPressed: _isRefunding
+                                                    ? null
+                                                    : () =>
+                                                          _handleRefundOverpaidSurplus(),
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor:
+                                                      AppColors.info,
+                                                  foregroundColor: Colors.white,
+                                                  elevation: 0,
+                                                  padding: EdgeInsets.symmetric(
+                                                    horizontal: isDesktop
+                                                        ? 14
+                                                        : 14.w,
+                                                    vertical: isDesktop
+                                                        ? 8
+                                                        : 8.h,
+                                                  ),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          isDesktop ? 10 : 10.r,
+                                                        ),
+                                                  ),
+                                                ),
+                                                icon: _isRefunding
+                                                    ? SizedBox(
+                                                        width: isDesktop
+                                                            ? 16
+                                                            : 16.sp,
+                                                        height: isDesktop
+                                                            ? 16
+                                                            : 16.sp,
+                                                        child:
+                                                            const CircularProgressIndicator(
+                                                              strokeWidth: 2,
+                                                              color:
+                                                                  Colors.white,
+                                                            ),
+                                                      )
+                                                    : Icon(
+                                                        Icons.output_rounded,
+                                                        size: isDesktop
+                                                            ? 18
+                                                            : 18.sp,
+                                                        color: Colors.white,
+                                                      ),
+                                                label: Text(
+                                                  AppStrings
+                                                      .refundOverpaidToCustomer
+                                                      .tr(),
+                                                  style: TextStyles.customStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  if (!_invoice.isQuotation &&
+                                      _invoice.status == InvoiceStatus.voided &&
+                                      (_invoice.historicalPaid > 0 ||
+                                          _invoice.isRefundedToCustomer))
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                        bottom: 16,
+                                      ),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                          vertical: 10,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.info.withValues(
+                                            alpha: 0.08,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          border: Border.all(
+                                            color: AppColors.info.withValues(
+                                              alpha: 0.3,
+                                            ),
                                           ),
                                         ),
-                                      if (!_invoice.isQuotation &&
-                                          _invoice.status ==
-                                              InvoiceStatus.voided &&
-                                          (_invoice.historicalPaid > 0 ||
-                                              _invoice.isRefundedToCustomer))
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            bottom: 16,
-                                          ),
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 14,
-                                              vertical: 10,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: AppColors.info.withValues(
-                                                alpha: 0.08,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                              border: Border.all(
-                                                color: AppColors.info
-                                                    .withValues(alpha: 0.3),
-                                              ),
-                                            ),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
                                               children: [
-                                                Row(
-                                                  children: [
-                                                    Icon(
-                                                      Icons
-                                                          .info_outline_rounded,
-                                                      size: 18,
-                                                      color: AppColors.info,
-                                                    ),
-                                                    const SizedBox(width: 8),
-                                                    Expanded(
-                                                      child: Text(
-                                                        "${AppStrings.invoiceVoidNotice.tr()}   ${(_invoice.isRefundedToCustomer ? 0.0 : _invoice.totalPaid).toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
-                                                        style:
-                                                            TextStyles.customStyle(
-                                                              fontSize: 12,
-                                                              color: AppColors
-                                                                  .info,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w600,
+                                                Icon(
+                                                  Icons.info_outline_rounded,
+                                                  size: 18,
+                                                  color: AppColors.info,
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Expanded(
+                                                  child: Text(
+                                                    "${AppStrings.invoiceVoidNotice.tr()}   ${(_invoice.isRefundedToCustomer ? 0.0 : _invoice.totalPaid).toSmartAmount()} ${AppStrings.currencyEgp.tr()}",
+                                                    style:
+                                                        TextStyles.customStyle(
+                                                          fontSize: 12,
+                                                          color: AppColors.info,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                        ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 10),
+                                            _invoice.isRefundedToCustomer
+                                                ? Container(
+                                                    width: double.infinity,
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          vertical: 8,
+                                                          horizontal: 12,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: AppColors.success
+                                                          .withValues(
+                                                            alpha: 0.1,
+                                                          ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            12.r,
+                                                          ),
+                                                      border: Border.all(
+                                                        color: AppColors.success
+                                                            .withValues(
+                                                              alpha: 0.4,
                                                             ),
                                                       ),
                                                     ),
-                                                  ],
-                                                ),
-                                                const SizedBox(height: 10),
-                                                _invoice.isRefundedToCustomer
-                                                    ? Container(
-                                                        width: double.infinity,
-                                                        padding:
-                                                            const EdgeInsets.symmetric(
-                                                              vertical: 8,
-                                                              horizontal: 12,
-                                                            ),
-                                                        decoration: BoxDecoration(
-                                                          color: AppColors
-                                                              .success
-                                                              .withValues(
-                                                                alpha: 0.1,
-                                                              ),
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                12.r,
-                                                              ),
-                                                          border: Border.all(
-                                                            color: AppColors
-                                                                .success
-                                                                .withValues(
-                                                                  alpha: 0.4,
-                                                                ),
-                                                          ),
+                                                    child: Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .center,
+                                                      children: [
+                                                        Icon(
+                                                          Icons
+                                                              .check_circle_rounded,
+                                                          color:
+                                                              AppColors.success,
+                                                          size: isDesktop
+                                                              ? 18
+                                                              : 18.sp,
                                                         ),
-                                                        child: Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .center,
-                                                          children: [
-                                                            Icon(
-                                                              Icons
-                                                                  .check_circle_rounded,
-                                                              color: AppColors
-                                                                  .success,
-                                                              size: isDesktop
-                                                                  ? 18
-                                                                  : 18.sp,
-                                                            ),
-                                                            SizedBox(
-                                                              width: isDesktop
-                                                                  ? 8
-                                                                  : 8.w,
-                                                            ),
-                                                            Expanded(
-                                                              child: Text(
-                                                                AppStrings
-                                                                    .refundAlreadyDone
-                                                                    .tr(),
-                                                                style: TextStyles.customStyle(
+                                                        SizedBox(
+                                                          width: isDesktop
+                                                              ? 8
+                                                              : 8.w,
+                                                        ),
+                                                        Expanded(
+                                                          child: Text(
+                                                            AppStrings
+                                                                .refundAlreadyDone
+                                                                .tr(),
+                                                            style:
+                                                                TextStyles.customStyle(
                                                                   fontSize: 12,
                                                                   color: AppColors
                                                                       .success,
@@ -1757,76 +1773,74 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                                                       FontWeight
                                                                           .bold,
                                                                 ),
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      )
-                                                    : SizedBox(
-                                                        width: double.infinity,
-                                                        child: ElevatedButton.icon(
-                                                          onPressed:
-                                                              _isRefunding
-                                                              ? null
-                                                              : () =>
-                                                                    _handleRefundToCustomer(),
-                                                          style: ElevatedButton.styleFrom(
-                                                            backgroundColor:
-                                                                AppColors.error,
-                                                            foregroundColor:
-                                                                Colors.white,
-                                                            elevation: 2,
-                                                            padding:
-                                                                EdgeInsets.symmetric(
-                                                                  vertical:
-                                                                      isDesktop
-                                                                      ? 12
-                                                                      : 12.h,
-                                                                  horizontal:
-                                                                      isDesktop
-                                                                      ? 16
-                                                                      : 16.w,
-                                                                ),
-                                                            shape: RoundedRectangleBorder(
-                                                              borderRadius:
-                                                                  BorderRadius.circular(
-                                                                    12.r,
-                                                                  ),
-                                                            ),
                                                           ),
-                                                          icon: _isRefunding
-                                                              ? SizedBox(
-                                                                  width:
-                                                                      isDesktop
-                                                                      ? 18
-                                                                      : 18.sp,
-                                                                  height:
-                                                                      isDesktop
-                                                                      ? 18
-                                                                      : 18.sp,
-                                                                  child: const CircularProgressIndicator(
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  )
+                                                : SizedBox(
+                                                    width: double.infinity,
+                                                    child: ElevatedButton.icon(
+                                                      onPressed: _isRefunding
+                                                          ? null
+                                                          : () =>
+                                                                _handleRefundToCustomer(),
+                                                      style: ElevatedButton.styleFrom(
+                                                        backgroundColor:
+                                                            AppColors.error,
+                                                        foregroundColor:
+                                                            Colors.white,
+                                                        elevation: 2,
+                                                        padding:
+                                                            EdgeInsets.symmetric(
+                                                              vertical:
+                                                                  isDesktop
+                                                                  ? 12
+                                                                  : 12.h,
+                                                              horizontal:
+                                                                  isDesktop
+                                                                  ? 16
+                                                                  : 16.w,
+                                                            ),
+                                                        shape: RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                12.r,
+                                                              ),
+                                                        ),
+                                                      ),
+                                                      icon: _isRefunding
+                                                          ? SizedBox(
+                                                              width: isDesktop
+                                                                  ? 18
+                                                                  : 18.sp,
+                                                              height: isDesktop
+                                                                  ? 18
+                                                                  : 18.sp,
+                                                              child:
+                                                                  const CircularProgressIndicator(
                                                                     strokeWidth:
                                                                         2,
                                                                     color: Colors
                                                                         .white,
                                                                   ),
-                                                                )
-                                                              : Icon(
-                                                                  Icons
-                                                                      .output_rounded,
-                                                                  size:
-                                                                      isDesktop
-                                                                      ? 18
-                                                                      : 18.sp,
-                                                                  color: Colors
-                                                                      .white,
-                                                                ),
-                                                          label: Center(
-                                                            child: Text(
-                                                              AppStrings
-                                                                  .refundToCustomer
-                                                                  .tr(),
-                                                              style: TextStyles.customStyle(
+                                                            )
+                                                          : Icon(
+                                                              Icons
+                                                                  .output_rounded,
+                                                              size: isDesktop
+                                                                  ? 18
+                                                                  : 18.sp,
+                                                              color:
+                                                                  Colors.white,
+                                                            ),
+                                                      label: Center(
+                                                        child: Text(
+                                                          AppStrings
+                                                              .refundToCustomer
+                                                              .tr(),
+                                                          style:
+                                                              TextStyles.customStyle(
                                                                 fontSize: 13,
                                                                 color: Colors
                                                                     .white,
@@ -1834,124 +1848,122 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                                                     FontWeight
                                                                         .bold,
                                                               ),
-                                                            ),
-                                                          ),
                                                         ),
                                                       ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-
-                                      const SizedBox(height: 20),
-
-                                      // ── Edit History Timeline ─────────────────────
-                                      InvoiceSectionTitle(
-                                        title: AppStrings.invoiceHistory.tr(),
-                                      ),
-                                      const SizedBox(height: 12),
-                                      const InvoiceHistoryTimeline(),
-                                      const SizedBox(height: 20),
-
-                                      // ── Payment History ────────────────────────────────
-                                      if (!_invoice.isQuotation) ...[
-                                        InvoiceSectionTitle(
-                                          title: AppStrings
-                                              .invoicePaymentHistory
-                                              .tr(),
-                                        ),
-                                        const SizedBox(height: 12),
-                                        // If linked to a debt, use debt transactions as the
-                                        // authoritative payment history; otherwise fallback
-                                        // to the invoice's own payments array.
-                                        if (_debtTransactions != null &&
-                                            _debtTransactions!.isNotEmpty)
-                                          DebtPaymentHistoryList(
-                                            transactions: _debtTransactions!,
-                                          )
-                                        else
-                                          InvoicePaymentHistoryList(
-                                            payments: _invoice.payments,
-                                          ),
-                                        const SizedBox(height: 20),
-                                      ],
-
-                                      // ── Notes ──────────────────────────────────────────
-                                      if (_invoice.notes?.isNotEmpty ==
-                                          true) ...[
-                                        InvoiceSectionTitle(
-                                          title: AppStrings.invoiceNotesSection
-                                              .tr(),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        InvoiceInfoCard(
-                                          children: [
-                                            InvoiceInfoRow(
-                                              icon: Icons.notes_rounded,
-                                              label: _invoice.notes!,
-                                            ),
+                                                    ),
+                                                  ),
                                           ],
                                         ),
-                                        const SizedBox(height: 20),
-                                      ],
-
-                                      // ── Record Payment Button ──────────────────────────
-                                      if (!_invoice.isQuotation &&
-                                          _invoice.status !=
-                                              InvoiceStatus.paid &&
-                                          _invoice.status !=
-                                              InvoiceStatus.voided)
-                                        PermissionGuard(
-                                          permission: AppPermissions
-                                              .invoicesRecordPayment,
-                                          child: RecordPaymentButton(
-                                            onTap: isLoading
-                                                ? null
-                                                : () => _showRecordPaymentSheet(
-                                                    context,
-                                                    true,
-                                                  ),
-                                          ),
-                                        ),
-
-                                      // ── Convert Quotation Button ──────────────────────
-                                      if (_invoice.isQuotation)
-     PermissionGuard(
-                                          permission:
-                                              AppPermissions.invoicesCreate,
-      child: QuickActionButton(
-                                  label: AppStrings.saveAndConvertToInvoice.tr(),
-                                  icon: Icons.published_with_changes_rounded,
-                                  onPressed:  isLoading
-                                                  ? null
-                                                  : _handleConvertQuotation,
-                                ),
-    ),
-                                      const SizedBox(height: 40),
-                                    ],
-                                  ),
-                                ),
-                                if (isLoading)
-                                  Container(
-                                    color: Colors.black.withValues(alpha: 0.3),
-                                    child: Center(
-                                      child: CircularProgressIndicator(
-                                        color: AppColors.primaryColor,
-                                        strokeWidth: 4,
                                       ),
                                     ),
+
+                                  const SizedBox(height: 20),
+
+                                  // ── Edit History Timeline ─────────────────────
+                                  InvoiceSectionTitle(
+                                    title: AppStrings.invoiceHistory.tr(),
                                   ),
-                              ],
+                                  const SizedBox(height: 12),
+                                  const InvoiceHistoryTimeline(),
+                                  const SizedBox(height: 20),
+
+                                  // ── Payment History ────────────────────────────────
+                                  if (!_invoice.isQuotation) ...[
+                                    InvoiceSectionTitle(
+                                      title: AppStrings.invoicePaymentHistory
+                                          .tr(),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    // If linked to a debt, use debt transactions as the
+                                    // authoritative payment history; otherwise fallback
+                                    // to the invoice's own payments array.
+                                    if (_debtTransactions != null &&
+                                        _debtTransactions!.isNotEmpty)
+                                      DebtPaymentHistoryList(
+                                        transactions: _debtTransactions!,
+                                      )
+                                    else
+                                      InvoicePaymentHistoryList(
+                                        payments: _invoice.payments,
+                                      ),
+                                    const SizedBox(height: 20),
+                                  ],
+
+                                  // ── Notes ──────────────────────────────────────────
+                                  if (_invoice.notes?.isNotEmpty == true) ...[
+                                    InvoiceSectionTitle(
+                                      title: AppStrings.invoiceNotesSection
+                                          .tr(),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    InvoiceInfoCard(
+                                      children: [
+                                        InvoiceInfoRow(
+                                          icon: Icons.notes_rounded,
+                                          label: _invoice.notes!,
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 20),
+                                  ],
+
+                                  // ── Record Payment Button ──────────────────────────
+                                  if (!_invoice.isQuotation &&
+                                      _invoice.status != InvoiceStatus.paid &&
+                                      _invoice.status != InvoiceStatus.voided)
+                                    PermissionGuard(
+                                      permission:
+                                          AppPermissions.invoicesRecordPayment,
+                                      child: RecordPaymentButton(
+                                        onTap: isLoading
+                                            ? null
+                                            : () => _showRecordPaymentSheet(
+                                                context,
+                                                true,
+                                              ),
+                                      ),
+                                    ),
+
+                                  // ── Convert Quotation Button ──────────────────────
+                                  if (_invoice.isQuotation)
+                                    PermissionGuard(
+                                      permission: AppPermissions.invoicesCreate,
+                                      child: QuickActionButton(
+                                        label: AppStrings
+                                            .saveAndConvertToInvoice
+                                            .tr(),
+                                        icon: Icons
+                                            .published_with_changes_rounded,
+                                        onPressed: isLoading
+                                            ? null
+                                            : _handleConvertQuotation,
+                                      ),
+                                    ),
+                                  const SizedBox(height: 40),
+                                ],
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-          );
-        },
+                            if (isLoading)
+                              Container(
+                                color: Colors.black.withValues(alpha: 0.3),
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.primaryColor,
+                                    strokeWidth: 4,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            );
+          },
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
