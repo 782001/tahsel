@@ -5,14 +5,15 @@ import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/shared/widgets/shimmer/shimmer_loading.dart';
 
 class ProductCardSkeleton extends StatelessWidget {
-  const ProductCardSkeleton({super.key});
+  final EdgeInsetsGeometry? margin;
+  const ProductCardSkeleton({super.key, this.margin});
 
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
 
     return Container(
-      margin: EdgeInsets.only(bottom: isDesktop ? 12 : 12.h),
+      margin: margin ?? EdgeInsets.only(bottom: isDesktop ? 12 : 12.h),
       padding: EdgeInsets.all(isDesktop ? 16 : 14.w),
       decoration: BoxDecoration(
         color: AppColors.surface,

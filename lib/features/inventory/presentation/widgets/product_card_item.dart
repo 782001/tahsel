@@ -1,4 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
@@ -29,7 +32,8 @@ class ProductCardItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = ResponsiveLayout.isDesktop(context);
+    final isDesktop =
+        ResponsiveLayout.isDesktop(context) || (!kIsWeb && Platform.isWindows);
     final p = product;
 
     final isOut = p.currentQuantity <= 0;
@@ -75,102 +79,126 @@ class ProductCardItem extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isDesktop ? 8 : 8.w,
-                        vertical: isDesktop ? 3 : 3.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(
-                          color: statusColor.withValues(alpha: 0.4),
-                        ),
-                      ),
-                      child: Text(
-                        statusLabel,
-                        style: TextStyles.customStyle(
-                          fontSize: 11,
-                          color: statusColor,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    Expanded(
+                      child: Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isDesktop ? 8 : 8.w,
+                              vertical: isDesktop ? 3 : 3.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: statusColor.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(12.r),
+                              border: Border.all(
+                                color: statusColor.withValues(alpha: 0.4),
+                              ),
+                            ),
+                            child: Text(
+                              statusLabel,
+                              style: TextStyles.customStyle(
+                                fontSize: 11,
+                                color: statusColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          if (isBestSeller)
+                            Transform.rotate(
+                              angle: -0.12,
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isDesktop ? 9 : 9.w,
+                                  vertical: isDesktop ? 4 : 4.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      AppColors.bestSellerStart,
+                                      AppColors.bestSellerEnd,
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(
+                                    isDesktop ? 8 : 8.r,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.bestSellerStart
+                                          .withValues(alpha: 0.45),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                  border: Border.all(
+                                    color: Colors.white
+                                        .withValues(alpha: 0.6),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.local_fire_department_rounded,
+                                      color: Colors.white,
+                                      size: 13,
+                                    ),
+                                    SizedBox(
+                                      width: isDesktop ? 3 : 3.w,
+                                    ),
+                                    Text(
+                                      AppStrings.bestSeller.tr(),
+                                      style: TextStyles.customStyle(
+                                        fontSize: 10.5,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
-                    if (isBestSeller) ...[
-                      SizedBox(width: isDesktop ? 8 : 8.w),
-                      Transform.rotate(
-                        angle: -0.12,
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: isDesktop ? 9 : 9.w,
-                            vertical: isDesktop ? 4 : 4.h,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [
-                                AppColors.bestSellerStart,
-                                AppColors.bestSellerEnd,
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(
-                              isDesktop ? 8 : 8.r,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.bestSellerStart.withValues(
-                                  alpha: 0.45,
-                                ),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
+                    if (onManualAdjustment != null || onEdit != null) ...[
+                      SizedBox(width: isDesktop ? 6 : 6.w),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (onManualAdjustment != null)
+                            IconButton(
+                              visualDensity: VisualDensity.compact,
+                              constraints: const BoxConstraints(),
+                              padding: EdgeInsets.all(isDesktop ? 6 : 8),
+                              icon: Icon(
+                                Icons.tune_rounded,
+                                color: AppColors.lowStockOrange,
+                                size: isDesktop ? 20 : 22,
                               ),
-                            ],
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.6),
-                              width: 1,
+                              onPressed: onManualAdjustment,
                             ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.local_fire_department_rounded,
-                                color: Colors.white,
-                                size: 13,
+                          if (onEdit != null)
+                            IconButton(
+                              visualDensity: VisualDensity.compact,
+                              constraints: const BoxConstraints(),
+                              padding: EdgeInsets.all(isDesktop ? 6 : 8),
+                              icon: Icon(
+                                Icons.edit_note,
+                                color: AppColors.primaryColor,
+                                size: isDesktop ? 22 : 24,
                               ),
-                              SizedBox(width: isDesktop ? 3 : 3.w),
-                              Text(
-                                AppStrings.bestSeller.tr(),
-                                style: TextStyles.customStyle(
-                                  fontSize: 10.5,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                              onPressed: onEdit,
+                            ),
+                        ],
                       ),
                     ],
-                    const Spacer(),
-                    if (onManualAdjustment != null)
-                      IconButton(
-                        icon: Icon(
-                          Icons.tune_rounded,
-                          color: AppColors.lowStockOrange,
-                        ),
-                        onPressed: onManualAdjustment,
-                      ),
-                    if (onEdit != null)
-                      IconButton(
-                        icon: Icon(
-                          Icons.edit_note,
-                          color: AppColors.primaryColor,
-                        ),
-                        onPressed: onEdit,
-                      ),
                   ],
                 ),
-                SizedBox(height: isDesktop ? 8 : 8.h),
+                SizedBox(height: isDesktop ? 4 : 4.h),
                 Row(
                   children: [
                     CircleAvatar(
@@ -182,7 +210,7 @@ class ProductCardItem extends StatelessWidget {
                         size: isDesktop ? 22 : 20,
                       ),
                     ),
-                    SizedBox(width: isDesktop ? 14 : 12.w),
+                    SizedBox(width: isDesktop ? 12 : 12.w),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -230,21 +258,24 @@ class ProductCardItem extends StatelessWidget {
                                         size: 12,
                                         color: AppColors.sandText,
                                       ),
-                                      SizedBox(width: 4.w),
-                                      Text(
-                                        p.sku,
-                                        style: TextStyles.customStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.sandText,
+                                      SizedBox(width: isDesktop ? 4 : 4.w),
+                                      Flexible(
+                                        child: Text(
+                                          p.sku,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyles.customStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.sandText,
+                                          ),
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
                                if (p.barcode != null &&
-                                  p.barcode!.isNotEmpty) ...[
-                                SizedBox(width: isDesktop ? 6 : 4.w),
+                                  p.barcode!.isNotEmpty)
                                 Container(
                                   padding: EdgeInsets.symmetric(
                                     horizontal: isDesktop ? 8 : 6.w,
@@ -264,19 +295,22 @@ class ProductCardItem extends StatelessWidget {
                                         size: 11,
                                         color: AppColors.primaryColor,
                                       ),
-                                      SizedBox(width: 4.w),
-                                      Text(
-                                        p.barcode!,
-                                        style: TextStyles.customStyle(
-                                          fontSize: 10.5,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.primaryColor,
+                                      SizedBox(width: isDesktop ? 4 : 4.w),
+                                      Flexible(
+                                        child: Text(
+                                          p.barcode!,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyles.customStyle(
+                                            fontSize: 10.5,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.primaryColor,
+                                          ),
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                              ],
 
                               // if (p.supplierName.isNotEmpty)
                               //   Container(
@@ -347,13 +381,19 @@ class ProductCardItem extends StatelessWidget {
                                       size: 12,
                                       color: statusColor,
                                     ),
-                                    SizedBox(width: 4.w),
-                                    Text(
-                                      '${AppStrings.quantity.tr()}: ${p.currentQuantity.toSmartAmount()} ${p.unit}',
-                                      style: TextStyles.customStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: statusColor,
+                                    SizedBox(width: isDesktop ? 4 : 4.w),
+                                    Flexible(
+                                      child: Text(
+                                        isDesktop
+                                            ? '${p.currentQuantity.toSmartAmount()} ${p.unit}'
+                                            : '${AppStrings.quantity.tr()}: ${p.currentQuantity.toSmartAmount()} ${p.unit}',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyles.customStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: statusColor,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -383,13 +423,19 @@ class ProductCardItem extends StatelessWidget {
                                       size: 12,
                                       color: AppColors.success,
                                     ),
-                                    SizedBox(width: 4.w),
-                                    Text(
-                                      '${AppStrings.sellingPrice.tr()}: ${p.sellingPrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-                                      style: TextStyles.customStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.success,
+                                    SizedBox(width: isDesktop ? 4 : 4.w),
+                                    Flexible(
+                                      child: Text(
+                                        isDesktop
+                                            ? '${p.sellingPrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}'
+                                            : '${AppStrings.sellingPrice.tr()}: ${p.sellingPrice.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyles.customStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.success,
+                                        ),
                                       ),
                                     ),
                                   ],

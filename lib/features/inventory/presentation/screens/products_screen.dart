@@ -171,9 +171,56 @@ class _ProductsScreenState extends State<ProductsScreen> {
     );
   }
 
+  Widget _buildProductCardItem(
+    BuildContext context,
+    InventoryProductEntity p,
+    int index,
+    Set<String> top20Ids,
+  ) {
+    return ProductCardItem(
+      product: p,
+      index: index,
+      isBestSeller: top20Ids.contains(p.id),
+      onTap: () {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.inventoryManageProducts,
+        )) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppStrings.noPermissionForAction.tr())),
+          );
+          return;
+        }
+        _openProductDetailsDialog(p);
+      },
+      onManualAdjustment: () {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.inventoryStockAdjustments,
+        )) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppStrings.noPermissionForAction.tr())),
+          );
+          return;
+        }
+        _openManualAdjustmentDialog(p);
+      },
+      onEdit: () {
+        if (!PermissionService.instance.hasPermission(
+          AppPermissions.inventoryManageProducts,
+        )) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppStrings.noPermissionForAction.tr())),
+          );
+          return;
+        }
+        _openAddEditProductDialog(p);
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
+    final isTwoColumns = isDesktop;
 
     return MultiBlocListener(
       listeners: [
@@ -260,9 +307,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                           actionTitle: 'تصدير أصناف المخزون Excel',
                           details:
                               'تصدير كشف أصناف وبيانات المخزون بالكامل إلى ملف Excel',
-                          extraData: {
-                            'filePath': savedPath,
-                          },
+                          extraData: {'filePath': savedPath},
                         );
                       }
                       messenger.showSnackBar(
@@ -308,7 +353,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
           child: Center(
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                maxWidth: isDesktop ? 1000 : double.infinity,
+                maxWidth: isDesktop ? 1200 : double.infinity,
               ),
               child: Padding(
                 padding: EdgeInsets.all(isDesktop ? 24 : 16.w),
@@ -634,174 +679,155 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
                     // Products List View
                     Expanded(
-                      child:
-                          BlocBuilder<
-                            InventoryProductsCubit,
-                            InventoryProductsState
-                          >(
-                            builder: (context, state) {
-                              if (state is InventoryProductsLoading) {
-                                return ListView.builder(
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  itemCount: 6,
-                                  itemBuilder: (_, __) =>
-                                      const ProductCardSkeleton(),
+                      child: BlocBuilder<InventoryProductsCubit, InventoryProductsState>(
+                        builder: (context, state) {
+                          if (state is InventoryProductsLoading) {
+                            if (isTwoColumns) {
+                              return GridView.builder(
+                                physics: const NeverScrollableScrollPhysics(),
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 2,
+                                      mainAxisExtent: 215,
+                                      crossAxisSpacing: 16,
+                                      mainAxisSpacing: 16,
+                                    ),
+                                itemCount: 6,
+                                itemBuilder: (_, __) =>
+                                    const ProductCardSkeleton(
+                                      margin: EdgeInsets.zero,
+                                    ),
+                              );
+                            }
+                            return ListView.builder(
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: 6,
+                              itemBuilder: (_, __) =>
+                                  const ProductCardSkeleton(),
+                            );
+                          }
+                          if (state is InventoryProductsLoaded) {
+                            var products = state.products;
+                            final top20Ids =
+                                BestSellerHelper.getTop20BestSellerIds(
+                                  state.products,
                                 );
-                              }
-                              if (state is InventoryProductsLoaded) {
-                                var products = state.products;
-                                final top20Ids =
-                                    BestSellerHelper.getTop20BestSellerIds(
-                                      state.products,
-                                    );
 
-                                if (_showUnavailableOnly) {
-                                  products = products
-                                      .where((p) => !p.isAvailable)
-                                      .toList();
-                                } else if (_showLowStockOnly) {
-                                  products = products
-                                      .where(
-                                        (p) =>
-                                            p.currentQuantity <= p.minQuantity,
-                                      )
-                                      .toList();
-                                } else if (_showAdequateStockOnly) {
-                                  products = products
-                                      .where(
-                                        (p) =>
-                                            p.currentQuantity > p.minQuantity,
-                                      )
-                                      .toList();
-                                }
+                            if (_showUnavailableOnly) {
+                              products = products
+                                  .where((p) => !p.isAvailable)
+                                  .toList();
+                            } else if (_showLowStockOnly) {
+                              products = products
+                                  .where(
+                                    (p) => p.currentQuantity <= p.minQuantity,
+                                  )
+                                  .toList();
+                            } else if (_showAdequateStockOnly) {
+                              products = products
+                                  .where(
+                                    (p) => p.currentQuantity > p.minQuantity,
+                                  )
+                                  .toList();
+                            }
 
-                                if (_showBestSellersOnly) {
-                                  products = products
-                                      .where((p) => top20Ids.contains(p.id))
-                                      .toList();
-                                }
+                            if (_showBestSellersOnly) {
+                              products = products
+                                  .where((p) => top20Ids.contains(p.id))
+                                  .toList();
+                            }
 
-                                if (products.isEmpty) {
-                                  final canManage = PermissionService.instance
-                                      .hasPermission(
-                                        AppPermissions.inventoryManageProducts,
-                                      );
-                                  return InventoryEmptyState(
-                                    icon: Icons.inventory_2_outlined,
-                                    title: AppStrings.noProductsFound.tr(),
-                                    description: AppStrings.emptyProductsDesc
-                                        .tr(),
-                                    actionLabel: canManage
-                                        ? AppStrings.addProduct.tr()
-                                        : null,
-                                    onAction: canManage
-                                        ? () => _openAddEditProductDialog()
-                                        : null,
+                            if (products.isEmpty) {
+                              final canManage = PermissionService.instance
+                                  .hasPermission(
+                                    AppPermissions.inventoryManageProducts,
                                   );
-                                }
+                              return InventoryEmptyState(
+                                icon: Icons.inventory_2_outlined,
+                                title: AppStrings.noProductsFound.tr(),
+                                description: AppStrings.emptyProductsDesc.tr(),
+                                actionLabel: canManage
+                                    ? AppStrings.addProduct.tr()
+                                    : null,
+                                onAction: canManage
+                                    ? () => _openAddEditProductDialog()
+                                    : null,
+                              );
+                            }
 
-                                return RefreshIndicator(
-                                  color: AppColors.primaryColor,
-                                  onRefresh: () async {
-                                    await context
-                                        .read<InventoryProductsCubit>()
-                                        .fetchProducts(
-                                          query: _searchController.text,
-                                          categoryId: _selectedCategory,
-                                          supplierId: _selectedSupplier,
+                            return RefreshIndicator(
+                              color: AppColors.primaryColor,
+                              onRefresh: () async {
+                                await context
+                                    .read<InventoryProductsCubit>()
+                                    .fetchProducts(
+                                      query: _searchController.text,
+                                      categoryId: _selectedCategory,
+                                      supplierId: _selectedSupplier,
+                                    );
+                              },
+                              child: isTwoColumns
+                                  ? GridView.builder(
+                                      controller: _scrollController,
+                                      physics:
+                                          const AlwaysScrollableScrollPhysics(
+                                            parent: BouncingScrollPhysics(),
+                                          ),
+                                      gridDelegate:
+                                          const SliverGridDelegateWithFixedCrossAxisCount(
+                                            crossAxisCount: 2,
+                                            mainAxisExtent: 215,
+                                            crossAxisSpacing: 16,
+                                            mainAxisSpacing: 16,
+                                          ),
+                                      itemCount:
+                                          products.length +
+                                          (state.isPaginationLoading ? 2 : 0),
+                                      itemBuilder: (context, index) {
+                                        if (index >= products.length) {
+                                          return const ProductCardSkeleton(
+                                            margin: EdgeInsets.zero,
+                                          );
+                                        }
+                                        final p = products[index];
+                                        return _buildProductCardItem(
+                                          context,
+                                          p,
+                                          index,
+                                          top20Ids,
                                         );
-                                  },
-                                  child: ListView.separated(
-                                    controller: _scrollController,
-                                    physics:
-                                        const AlwaysScrollableScrollPhysics(
-                                          parent: BouncingScrollPhysics(),
-                                        ),
-                                    itemCount:
-                                        products.length +
-                                        (state.isPaginationLoading ? 1 : 0),
-                                    separatorBuilder: (_, __) =>
-                                        SizedBox(height: isDesktop ? 12 : 12.h),
-                                    itemBuilder: (context, index) {
-                                      if (index == products.length) {
-                                        return const ProductCardSkeleton();
-                                      }
-                                      final p = products[index];
-                                      return ProductCardItem(
-                                        product: p,
-                                        index: index,
-                                        isBestSeller: top20Ids.contains(p.id),
-                                        onTap: () {
-                                          if (!PermissionService.instance
-                                              .hasPermission(
-                                                AppPermissions
-                                                    .inventoryManageProducts,
-                                              )) {
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  AppStrings
-                                                      .noPermissionForAction
-                                                      .tr(),
-                                                ),
-                                              ),
-                                            );
-                                            return;
-                                          }
-                                          _openProductDetailsDialog(p);
-                                        },
-                                        onManualAdjustment: () {
-                                          if (!PermissionService.instance
-                                              .hasPermission(
-                                                AppPermissions
-                                                    .inventoryStockAdjustments,
-                                              )) {
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  AppStrings
-                                                      .noPermissionForAction
-                                                      .tr(),
-                                                ),
-                                              ),
-                                            );
-                                            return;
-                                          }
-                                          _openManualAdjustmentDialog(p);
-                                        },
-                                        onEdit: () {
-                                          if (!PermissionService.instance
-                                              .hasPermission(
-                                                AppPermissions
-                                                    .inventoryManageProducts,
-                                              )) {
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  AppStrings
-                                                      .noPermissionForAction
-                                                      .tr(),
-                                                ),
-                                              ),
-                                            );
-                                            return;
-                                          }
-                                          _openAddEditProductDialog(p);
-                                        },
-                                      );
-                                    },
-                                  ),
-                                );
-                              }
-                              return const SizedBox.shrink();
-                            },
-                          ),
+                                      },
+                                    )
+                                  : ListView.separated(
+                                      controller: _scrollController,
+                                      physics:
+                                          const AlwaysScrollableScrollPhysics(
+                                            parent: BouncingScrollPhysics(),
+                                          ),
+                                      itemCount:
+                                          products.length +
+                                          (state.isPaginationLoading ? 1 : 0),
+                                      separatorBuilder: (_, __) => SizedBox(
+                                        height: isDesktop ? 12 : 12.h,
+                                      ),
+                                      itemBuilder: (context, index) {
+                                        if (index == products.length) {
+                                          return const ProductCardSkeleton();
+                                        }
+                                        final p = products[index];
+                                        return _buildProductCardItem(
+                                          context,
+                                          p,
+                                          index,
+                                          top20Ids,
+                                        );
+                                      },
+                                    ),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
                     ),
                   ],
                 ),
