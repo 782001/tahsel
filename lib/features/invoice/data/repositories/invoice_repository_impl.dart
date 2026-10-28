@@ -122,11 +122,19 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
   Future<Either<Failure, void>> recordPayment(
     String uid,
     String invoiceId,
-    InvoicePayment payment,
-  ) async {
+    InvoicePayment payment, {
+    String? paymentMethod,
+    String? customerName,
+  }) async {
     try {
       final paymentModel = InvoicePaymentModel.fromEntity(payment);
-      await remoteDataSource.recordPayment(uid, invoiceId, paymentModel);
+      await remoteDataSource.recordPayment(
+        uid,
+        invoiceId,
+        paymentModel,
+        paymentMethod: paymentMethod,
+        customerName: customerName,
+      );
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -137,10 +145,18 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
   Future<Either<Failure, void>> linkDebtToInvoice(
     String uid,
     String invoiceId,
-    String debtId,
-  ) async {
+    String debtId, {
+    String? paymentMethod,
+    String? customerName,
+  }) async {
     try {
-      await remoteDataSource.linkDebtToInvoice(uid, invoiceId, debtId);
+      await remoteDataSource.linkDebtToInvoice(
+        uid,
+        invoiceId,
+        debtId,
+        paymentMethod: paymentMethod,
+        customerName: customerName,
+      );
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(e.toString()));

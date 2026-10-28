@@ -61,10 +61,14 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
       _notesController.text = widget.initialPurchase!.notes ?? '';
       _selectedPaymentMethod = widget.initialPurchase!.paymentMethod;
       _paidAmountController.text = widget.isReorder
-          ? '0'
+          ? (_selectedPaymentMethod == 'debt'
+              ? '0'
+              : _totalAmount.toSmartAmount())
           : widget.initialPurchase!.paidAmount.toSmartAmount();
     } else {
-      _paidAmountController.text = '0';
+      _paidAmountController.text = _totalAmount > 0
+          ? _totalAmount.toSmartAmount()
+          : '0';
     }
     context.read<InventorySuppliersCubit>().fetchSuppliers();
     context.read<InventoryProductsCubit>().fetchProducts();
@@ -85,7 +89,19 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
     return total;
   }
 
+  void _syncPaidAmountOnTotalChanged(double oldTotal) {
+    if (_selectedPaymentMethod == 'cash' || _selectedPaymentMethod == 'card') {
+      final currentPaid =
+          double.tryParse(_paidAmountController.text.trim()) ?? 0.0;
+      if (currentPaid == 0 || (currentPaid - oldTotal).abs() < 0.01) {
+        _paidAmountController.text =
+            _totalAmount > 0 ? _totalAmount.toSmartAmount() : '0';
+      }
+    }
+  }
+
   void _addItem(InventoryProductEntity product, double qty, double price) {
+    final oldTotal = _totalAmount;
     setState(() {
       final existingIndex = _selectedItems.indexWhere(
         (item) =>
@@ -120,6 +136,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
         );
       }
     });
+    _syncPaidAmountOnTotalChanged(oldTotal);
   }
 
   Future<void> _showEditItemDialog(int index) async {
@@ -248,6 +265,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                             double.tryParse(priceController.text.trim()) ??
                             item.purchasePrice;
                         final newUnit = unitController.text.trim();
+                        final oldTotal = _totalAmount;
                         if (newQty <= 0) {
                           _removeItem(index);
                         } else {
@@ -259,6 +277,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                               unit: newUnit.isNotEmpty ? newUnit : item.unit,
                             );
                           });
+                          _syncPaidAmountOnTotalChanged(oldTotal);
                         }
                         Navigator.of(ctx).pop();
                       },
@@ -282,9 +301,11 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
   }
 
   void _removeItem(int index) {
+    final oldTotal = _totalAmount;
     setState(() {
       _selectedItems.removeAt(index);
     });
+    _syncPaidAmountOnTotalChanged(oldTotal);
   }
 
   Future<void> _savePurchase() async {
@@ -322,28 +343,20 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
 
       // Parse paid amount
       final bool isEdit = widget.initialPurchase != null && !widget.isReorder;
-      final double actualPaidAmount;
-      if (isEdit) {
-        if (widget.initialPurchase!.paymentMethod == 'debt') {
-          actualPaidAmount = widget.initialPurchase!.paidAmount.clamp(
-            0.0,
-            _totalAmount,
-          );
-        } else {
-          actualPaidAmount = _totalAmount;
-        }
-      } else {
-        final double parsedPaid =
-            double.tryParse(_paidAmountController.text.trim()) ?? 0.0;
-        actualPaidAmount = _selectedPaymentMethod == 'debt'
-            ? parsedPaid.clamp(0.0, _totalAmount)
-            : _totalAmount;
-      }
+      final double parsedPaid =
+          double.tryParse(_paidAmountController.text.trim()) ??
+          (_selectedPaymentMethod == 'debt' ? 0.0 : _totalAmount);
+      final double actualPaidAmount = parsedPaid.clamp(0.0, _totalAmount);
 
-      // Proactive Vault Balance check (only checks incremental amount needed)
-      final double neededFromVault = isEdit
-          ? (actualPaidAmount - widget.initialPurchase!.paidAmount)
-          : actualPaidAmount;
+      // Proactive Vault Balance check (only checks incremental amount needed for cash transactions)
+      final bool isCashPayment = _selectedPaymentMethod != 'card';
+      final double oldVaultPaid = isEdit
+          ? (widget.initialPurchase!.paymentMethod == 'card'
+              ? 0.0
+              : widget.initialPurchase!.paidAmount)
+          : 0.0;
+      final double currentVaultNeeded = isCashPayment ? actualPaidAmount : 0.0;
+      final double neededFromVault = currentVaultNeeded - oldVaultPaid;
 
       if (neededFromVault > 0 && AppStrings.isVaultEnabled()) {
         final currentVaultBalance =
@@ -1785,7 +1798,6 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                     AppStrings.paymentCash.tr(),
                     style: TextStyles.customStyle(
                       fontSize: isDesktop ? 13 : 11,
-
                       fontWeight: FontWeight.bold,
                       color: _selectedPaymentMethod == 'cash'
                           ? Colors.white
@@ -1800,6 +1812,13 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                   if (selected) {
                     setState(() {
                       _selectedPaymentMethod = 'cash';
+                      final paid =
+                          double.tryParse(_paidAmountController.text.trim()) ??
+                          0.0;
+                      if (paid == 0 && _totalAmount > 0) {
+                        _paidAmountController.text =
+                            _totalAmount.toSmartAmount();
+                      }
                     });
                   }
                 },
@@ -1809,13 +1828,11 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
             Expanded(
               child: ChoiceChip(
                 showCheckmark: false,
-
                 label: Center(
                   child: Text(
                     AppStrings.paymentCard.tr(),
                     style: TextStyles.customStyle(
                       fontSize: isDesktop ? 13 : 11,
-
                       fontWeight: FontWeight.bold,
                       color: _selectedPaymentMethod == 'card'
                           ? Colors.white
@@ -1830,6 +1847,13 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                   if (selected) {
                     setState(() {
                       _selectedPaymentMethod = 'card';
+                      final paid =
+                          double.tryParse(_paidAmountController.text.trim()) ??
+                          0.0;
+                      if (paid == 0 && _totalAmount > 0) {
+                        _paidAmountController.text =
+                            _totalAmount.toSmartAmount();
+                      }
                     });
                   }
                 },
@@ -1844,7 +1868,6 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                     AppStrings.paymentDebt.tr(),
                     style: TextStyles.customStyle(
                       fontSize: isDesktop ? 13 : 11,
-
                       fontWeight: FontWeight.bold,
                       color: _selectedPaymentMethod == 'debt'
                           ? Colors.white
@@ -1859,6 +1882,12 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                   if (selected) {
                     setState(() {
                       _selectedPaymentMethod = 'debt';
+                      final paid =
+                          double.tryParse(_paidAmountController.text.trim()) ??
+                          0.0;
+                      if (paid >= _totalAmount && _totalAmount > 0) {
+                        _paidAmountController.text = '0';
+                      }
                     });
                   }
                 },
@@ -1866,70 +1895,191 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
             ),
           ],
         ),
-        if (_selectedPaymentMethod == 'debt') ...[
-          SizedBox(height: isDesktop ? 12 : 12.h),
-          Row(
-            children: [
-              Expanded(
+        SizedBox(height: isDesktop ? 12 : 12.h),
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        AppStrings.paidAmount.tr(),
+                        style: TextStyles.customStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.blackReal,
+                        ),
+                      ),
+                      if (_totalAmount > 0)
+                        InkWell(
+                          onTap: () {
+                            setState(() {
+                              _paidAmountController.text =
+                                  _totalAmount.toSmartAmount();
+                            });
+                          },
+                          child: Text(
+                            AppStrings.fullPayment.tr().isNotEmpty
+                                ? AppStrings.fullPayment.tr()
+                                : "دفع كامل",
+                            style: TextStyles.customStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primaryColor,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  SizedBox(height: isDesktop ? 6 : 6.h),
+                  QuickAddTextField(
+                    controller: _paidAmountController,
+                    isNumber: true,
+                    hint: AppStrings.paidAmount.tr(),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: isDesktop ? 12 : 12.w),
+            Expanded(
+              child: Container(
+                padding: EdgeInsets.all(isDesktop ? 12 : 12.w),
+                decoration: BoxDecoration(
+                  color: (remainingDebt > 0.001
+                          ? AppColors.warning
+                          : AppColors.success)
+                      .withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8.r),
+                  border: Border.all(
+                    color: (remainingDebt > 0.001
+                            ? AppColors.warning
+                            : AppColors.success)
+                        .withValues(alpha: 0.4),
+                  ),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      AppStrings.paidAmount.tr(),
+                      remainingDebt > 0.001
+                          ? AppStrings.remainingDebt.tr()
+                          : AppStrings.paidFull.tr(),
                       style: TextStyles.customStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.blackReal,
+                        fontSize: 12,
+                        color: AppColors.sandText,
                       ),
                     ),
-                    SizedBox(height: isDesktop ? 6 : 6.h),
-                    QuickAddTextField(
-                      controller: _paidAmountController,
-                      isNumber: true,
-                      hint: AppStrings.paidAmount.tr(),
-                      onChanged: (_) => setState(() {}),
+                    SizedBox(height: isDesktop ? 2 : 2.h),
+                    Text(
+                      remainingDebt > 0.001
+                          ? '${remainingDebt.toSmartAmount()} ${AppStrings.currencyEgp.tr()}'
+                          : AppStrings.paid.tr(),
+                      style: TextStyles.customStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: remainingDebt > 0.001
+                            ? AppColors.warning
+                            : AppColors.success,
+                      ),
                     ),
                   ],
                 ),
               ),
-              SizedBox(width: isDesktop ? 12 : 12.w),
-              Expanded(
-                child: Container(
-                  padding: EdgeInsets.all(isDesktop ? 12 : 12.w),
-                  decoration: BoxDecoration(
-                    color: AppColors.warning.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8.r),
-                    border: Border.all(
-                      color: AppColors.warning.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        AppStrings.remainingDebt.tr(),
-                        style: TextStyles.customStyle(
-                          fontSize: 12,
-                          color: AppColors.sandText,
-                        ),
-                      ),
-                      SizedBox(height: isDesktop ? 2 : 2.h),
-                      Text(
-                        '${remainingDebt.toSmartAmount()} ${AppStrings.currencyEgp.tr()}',
-                        style: TextStyles.customStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.warning,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+            ),
+          ],
+        ),
+        SizedBox(height: isDesktop ? 10 : 10.h),
+        _buildPaymentMethodInfoCard(parsedPaid, remainingDebt, isDesktop),
+      ],
+    );
+  }
+
+  Widget _buildPaymentMethodInfoCard(
+    double paid,
+    double debt,
+    bool isDesktop,
+  ) {
+    final hasDebt = debt > 0.001;
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    final IconData icon;
+    final Color color;
+    final String text;
+
+    if (_selectedPaymentMethod == 'debt') {
+      if (paid <= 0) {
+        icon = Icons.receipt_long_rounded;
+        color = const Color(0xFFE65100);
+        text = isAr
+            ? "الشراء آجل بالكامل - سيتم تسجيل كامل الفاتورة كدين للمورد دون دفعات نقدية"
+            : "Credit purchase - Full amount recorded as supplier debt.";
+      } else {
+        icon = Icons.payments_outlined;
+        color = const Color(0xFFE65100);
+        text = isAr
+            ? "الشراء آجل مع دفعة مقدمة - سيتم خصم (${paid.toSmartAmount()} ${AppStrings.currencyEgp.tr()}) من الخزينة وترحيل الباقي كدين للمورد"
+            : "Credit purchase with down payment - Down payment deducted from vault and remainder recorded as debt.";
+      }
+    } else if (_selectedPaymentMethod == 'card') {
+      if (!hasDebt) {
+        icon = Icons.credit_card_rounded;
+        color = AppColors.primaryColor;
+        text = isAr
+            ? "الدفع بالبطاقة / البنك - سيتم تسجيل الفاتورة كمدفوعة بالكامل دون خصم من الخزينة النقدية"
+            : "Paid via Card/Bank - Marked as fully paid without affecting cash vault.";
+      } else {
+        icon = Icons.info_outline_rounded;
+        color = AppColors.orange;
+        text = isAr
+            ? "الدفع بالبطاقة (جزئي) - سيتم سداد (${paid.toSmartAmount()} ${AppStrings.currencyEgp.tr()}) بالبطاقة، وترحيل المتبقي كدين للمورد"
+            : "Partial card payment - Remainder will be recorded as supplier debt.";
+      }
+    } else {
+      // cash
+      if (!hasDebt) {
+        icon = Icons.check_circle_outline_rounded;
+        color = const Color(0xFF2E7D32);
+        text = isAr
+            ? "الدفع نقداً (كاش) - سيتم خصم كامل المبلغ من الخزينة فوراً"
+            : "Cash payment - Full amount will be deducted from cash vault.";
+      } else {
+        icon = Icons.info_outline_rounded;
+        color = AppColors.orange;
+        text = isAr
+            ? "الدفع نقداً (جزئي) - سيتم خصم (${paid.toSmartAmount()} ${AppStrings.currencyEgp.tr()}) من الخزينة، وترحيل المتبقي كدين للمورد"
+            : "Partial cash payment - Amount will be deducted from vault, remaining as supplier debt.";
+      }
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 14 : 12.w,
+        vertical: isDesktop ? 10 : 8.h,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: color),
+          SizedBox(width: isDesktop ? 10 : 8.w),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyles.customStyle(
+                fontSize: isDesktop ? 12.5 : 11,
+                fontWeight: FontWeight.w600,
+                color: color,
               ),
-            ],
+            ),
           ),
         ],
-      ],
+      ),
     );
   }
 

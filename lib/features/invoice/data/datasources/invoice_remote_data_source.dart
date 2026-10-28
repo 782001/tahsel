@@ -8,6 +8,7 @@ import 'package:tahsel/core/services/injection_container.dart';
 import 'package:tahsel/core/usecases/pagination_params.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/summary_helper.dart';
+import 'package:tahsel/features/cashbox/domain/entities/vault_transaction_entity.dart';
 
 import '../../domain/entities/invoice_entity.dart';
 import '../models/invoice_model.dart';
@@ -28,11 +29,19 @@ abstract class InvoiceRemoteDataSource {
   Future<void> recordPayment(
     String uid,
     String invoiceId,
-    InvoicePaymentModel payment,
-  );
+    InvoicePaymentModel payment, {
+    String? paymentMethod,
+    String? customerName,
+  });
 
   /// Links a debt record to an existing invoice.
-  Future<void> linkDebtToInvoice(String uid, String invoiceId, String debtId);
+  Future<void> linkDebtToInvoice(
+    String uid,
+    String invoiceId,
+    String debtId, {
+    String? paymentMethod,
+    String? customerName,
+  });
 
   /// Updates mutable invoice fields (customer info, notes, items).
   /// Payments and created-at are never overwritten.
@@ -73,6 +82,44 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
         .collection('users/${invoice.uid}/invoices')
         .doc(invoice.id)
         .set(payload, SetOptions(merge: true));
+
+    // Record Vault Inflow for fully paid invoices (Cash or Card)
+    if (AppStrings.isVaultEnabled() &&
+        invoice.status == InvoiceStatus.paid &&
+        invoice.totalAmount > 0) {
+      final vaultTxRef = firestore
+          .collection('users/${invoice.uid}/vault_transactions')
+          .doc('vault_tx_inv_${invoice.id}');
+      final vaultSummaryRef = firestore
+          .collection('users/${invoice.uid}/vault')
+          .doc('summary');
+
+      final custDesc = (invoice.customerName != null &&
+              invoice.customerName!.trim().isNotEmpty)
+          ? ' - ${invoice.customerName!.trim()}'
+          : '';
+
+      await vaultTxRef.set({
+        'id': 'vault_tx_inv_${invoice.id}',
+        'uid': invoice.uid,
+        'amount': invoice.totalAmount,
+        'direction': 'in',
+        'source': VaultTransactionSource.customerDebt.name,
+        'type': invoice.paymentMethod == 'card' ? 'invoice_card_sale' : 'invoice_cash_sale',
+        'description':
+            'فاتورة مبيعات ${invoice.paymentMethod == "card" ? "(كارت)" : "نقداً"} #${invoice.referenceNumber ?? invoice.id}$custDesc',
+        'relatedEntityId': invoice.id,
+        'createdAt': Timestamp.fromDate(invoice.createdAt),
+        'paymentMethod': invoice.paymentMethod ?? 'cash',
+      }, SetOptions(merge: true));
+
+      await vaultSummaryRef.set({
+        'currentBalance': FieldValue.increment(invoice.totalAmount),
+        'totalIn': FieldValue.increment(invoice.totalAmount),
+        'transactionCount': FieldValue.increment(1),
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    }
 
     if (sl.isRegistered<ActivityLoggerService>()) {
       final isQuotation = invoice.status == InvoiceStatus.quotation;
@@ -220,8 +267,10 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
   Future<void> recordPayment(
     String uid,
     String invoiceId,
-    InvoicePaymentModel payment,
-  ) async {
+    InvoicePaymentModel payment, {
+    String? paymentMethod,
+    String? customerName,
+  }) async {
     final ref = firestore.collection('users/$uid/invoices').doc(invoiceId);
 
     String? capturedRefNum;
@@ -271,15 +320,23 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
       }
 
       capturedRefNum = existing.referenceNumber;
-      capturedCustName = existing.customerName;
+      capturedCustName = customerName ?? existing.customerName;
       capturedRemaining = remaining;
       capturedStatus = newStatus;
 
-      txn.update(ref, {
+      final updates = <String, dynamic>{
         'payments': updatedPayments,
         'status': newStatus,
         'lastUpdatedAt': FieldValue.serverTimestamp(),
-      });
+      };
+      if (paymentMethod != null && paymentMethod.isNotEmpty) {
+        updates['paymentMethod'] = paymentMethod;
+      }
+      if (customerName != null && customerName.isNotEmpty) {
+        updates['customerName'] = customerName;
+      }
+
+      txn.update(ref, updates);
     });
 
     if (sl.isRegistered<ActivityLoggerService>()) {
@@ -311,6 +368,7 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
           'remaining': capturedRemaining > 0 ? capturedRemaining : 0.0,
           'newStatus': capturedStatus,
           'note': payment.note,
+          if (paymentMethod != null) 'paymentMethod': paymentMethod,
         },
         timestamp: payment.paidAt,
       );
@@ -321,13 +379,22 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
   Future<void> linkDebtToInvoice(
     String uid,
     String invoiceId,
-    String debtId,
-  ) async {
+    String debtId, {
+    String? paymentMethod,
+    String? customerName,
+  }) async {
     final ref = firestore.collection('users/$uid/invoices').doc(invoiceId);
-    await ref.update({
+    final updates = <String, dynamic>{
       'linkedDebtId': debtId,
       'lastUpdatedAt': FieldValue.serverTimestamp(),
-    });
+    };
+    if (paymentMethod != null && paymentMethod.isNotEmpty) {
+      updates['paymentMethod'] = paymentMethod;
+    }
+    if (customerName != null && customerName.isNotEmpty) {
+      updates['customerName'] = customerName;
+    }
+    await ref.update(updates);
   }
 
   @override

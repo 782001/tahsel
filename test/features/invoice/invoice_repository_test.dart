@@ -69,15 +69,21 @@ class FakeInvoiceRemoteDataSource implements InvoiceRemoteDataSource {
   Future<void> recordPayment(
     String uid,
     String invoiceId,
-    InvoicePaymentModel payment,
-  ) async {
+    InvoicePaymentModel payment, {
+    String? paymentMethod,
+    String? customerName,
+  }) async {
     final idx = invoices.indexWhere(
       (inv) => inv.uid == uid && inv.id == invoiceId,
     );
     if (idx != -1) {
       final existing = invoices[idx];
       final updatedPayments = [...existing.payments, payment];
-      invoices[idx] = existing.copyWith(payments: updatedPayments);
+      invoices[idx] = existing.copyWith(
+        payments: updatedPayments,
+        paymentMethod: paymentMethod ?? existing.paymentMethod,
+        customerName: customerName ?? existing.customerName,
+      );
     }
   }
 
@@ -85,14 +91,20 @@ class FakeInvoiceRemoteDataSource implements InvoiceRemoteDataSource {
   Future<void> linkDebtToInvoice(
     String uid,
     String invoiceId,
-    String debtId,
-  ) async {
+    String debtId, {
+    String? paymentMethod,
+    String? customerName,
+  }) async {
     final idx = invoices.indexWhere(
       (inv) => inv.uid == uid && inv.id == invoiceId,
     );
     if (idx != -1) {
       final existing = invoices[idx];
-      invoices[idx] = existing.copyWith(linkedDebtId: debtId);
+      invoices[idx] = existing.copyWith(
+        linkedDebtId: debtId,
+        paymentMethod: paymentMethod ?? existing.paymentMethod,
+        customerName: customerName ?? existing.customerName,
+      );
     }
   }
 

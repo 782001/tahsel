@@ -65,44 +65,45 @@ class ProductDetailsDialog extends StatelessWidget {
             children: [
               // Header with Title & Close
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(isDesktop ? 10 : 10.w),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryColor.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.inventory_2_rounded,
-                          color: AppColors.primaryColor,
-                          size: isDesktop ? 24 : 24,
-                        ),
-                      ),
-                      SizedBox(width: isDesktop ? 12 : 12.w),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            product.name,
-                            style: TextStyles.customStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.blackReal,
-                            ),
+                  Container(
+                    padding: EdgeInsets.all(isDesktop ? 10 : 10.w),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryColor.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.inventory_2_rounded,
+                      color: AppColors.primaryColor,
+                      size: isDesktop ? 24 : 24,
+                    ),
+                  ),
+                  SizedBox(width: isDesktop ? 12 : 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          product.name,
+                          style: TextStyles.customStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.blackReal,
                           ),
-                          Text(
-                            product.sku,
-                            style: TextStyles.customStyle(
-                              fontSize: 12,
-                              color: AppColors.sandText,
-                            ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          product.sku,
+                          style: TextStyles.customStyle(
+                            fontSize: 12,
+                            color: AppColors.sandText,
                           ),
-                        ],
-                      ),
-                    ],
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
                   ),
                   IconButton(
                     icon: Icon(Icons.close, color: AppColors.blackLight),
@@ -136,30 +137,30 @@ class ProductDetailsDialog extends StatelessWidget {
                           ),
                         ),
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  isOut
-                                      ? Icons.remove_shopping_cart_rounded
-                                      : isLow
-                                      ? Icons.warning_amber_rounded
-                                      : Icons.check_circle_rounded,
-                                  color: statusColor,
-                                  size: 22,
-                                ),
-                                SizedBox(width: isDesktop ? 8 : 8.w),
-                                Text(
-                                  statusText,
-                                  style: TextStyles.customStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: statusColor,
-                                  ),
-                                ),
-                              ],
+                            Icon(
+                              isOut
+                                  ? Icons.remove_shopping_cart_rounded
+                                  : isLow
+                                  ? Icons.warning_amber_rounded
+                                  : Icons.check_circle_rounded,
+                              color: statusColor,
+                              size: 22,
                             ),
+                            SizedBox(width: isDesktop ? 8 : 8.w),
+                            Expanded(
+                              child: Text(
+                                statusText,
+                                style: TextStyles.customStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: statusColor,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
                             Text(
                               '${product.currentQuantity.toSmartAmount()} ${product.unit}',
                               style: TextStyles.customStyle(
@@ -263,25 +264,24 @@ class ProductDetailsDialog extends StatelessWidget {
                             ),
                           ),
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.qr_code_rounded,
+                              Icon(
+                                Icons.qr_code_rounded,
+                                color: AppColors.primaryColor,
+                                size: 20,
+                              ),
+                              SizedBox(width: isDesktop ? 8 : 8.w),
+                              Expanded(
+                                child: Text(
+                                  '${AppStrings.barcode.tr()}: ${product.barcode}',
+                                  style: TextStyles.customStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
                                     color: AppColors.primaryColor,
-                                    size: 20,
                                   ),
-                                  SizedBox(width: isDesktop ? 8 : 8.w),
-                                  Text(
-                                    '${AppStrings.barcode.tr()}: ${product.barcode}',
-                                    style: TextStyles.customStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.primaryColor,
-                                    ),
-                                  ),
-                                ],
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                               IconButton(
                                 icon: Icon(
@@ -494,6 +494,8 @@ class ProductDetailsDialog extends StatelessWidget {
                     fontSize: 11,
                     color: AppColors.sandText,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   value,
@@ -502,6 +504,8 @@ class ProductDetailsDialog extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                     color: AppColors.blackReal,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -528,13 +532,18 @@ class ProductDetailsDialog extends StatelessWidget {
             color: AppColors.sandText,
           ),
         ),
-        const Spacer(),
-        Text(
-          value,
-          style: TextStyles.customStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            color: AppColors.blackReal,
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: TextStyles.customStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: AppColors.blackReal,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],

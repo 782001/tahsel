@@ -42,6 +42,7 @@ class AddOperationUseCase implements BaseUseCase<String, AddOperationParams> {
           phoneNumber: params.operation.phoneNumber,
           isPaid: false,
           dueDate: params.operation.dueDate,
+          paymentMethod: params.operation.paymentMethod ?? 'cash',
         );
 
         await debtRepository.addDebt(debt);

@@ -18,6 +18,7 @@ class OperationEntity extends Equatable {
   final double? rate;
   final String? ledgerNumber;
   final DateTime? dueDate;
+  final String? paymentMethod; // 'cash', 'card', 'debt'
 
   const OperationEntity({
     this.id,
@@ -37,6 +38,7 @@ class OperationEntity extends Equatable {
     this.rate,
     this.ledgerNumber,
     this.dueDate,
+    this.paymentMethod = 'cash',
   });
 
   @override
@@ -58,5 +60,6 @@ class OperationEntity extends Equatable {
     rate,
     ledgerNumber,
     dueDate,
+    paymentMethod,
   ];
 }

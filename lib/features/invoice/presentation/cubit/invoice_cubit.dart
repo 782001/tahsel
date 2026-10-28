@@ -121,6 +121,8 @@ class InvoiceCubit extends Cubit<InvoiceState> {
           paidNow: paymentAmount,
           note: note,
           skipInvoicePayment: paymentAmount > 0, // If > 0, it's already in the invoice JSON
+          paymentMethod: p['paymentMethod'] as String? ?? invoice.paymentMethod,
+          customerName: p['customerName'] as String? ?? invoice.customerName,
         );
       }
 
@@ -190,14 +192,18 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     if (failure != null) {
       emit(InvoiceFailure(failure.message));
     } else if (invoiceId != null) {
-      // Automatically create baseline debt if amount > 0 (only for actual invoices, never for quotations)
+      // Automatically create baseline debt if amount > 0 (only for actual invoices with debt or remaining amount)
       if (!invoice.isQuotation && invoice.totalAmount > 0) {
-         await _processPaymentInternally(
-           uid: invoice.uid,
-           invoiceId: invoiceId,
-           invoice: invoice.copyWith(id: invoiceId),
-           paidNow: 0, // Just create the debt baseline
-         );
+        if (invoice.paymentMethod == 'debt' || invoice.remainingAmount > 0) {
+          await _processPaymentInternally(
+            uid: invoice.uid,
+            invoiceId: invoiceId,
+            invoice: invoice.copyWith(id: invoiceId),
+            paidNow: invoice.totalPaid,
+            paymentMethod: invoice.paymentMethod,
+            customerName: invoice.customerName,
+          );
+        }
       }
        _serverAllInvoices = null;
 
@@ -451,13 +457,21 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     required InvoiceEntity invoice,
     required double paidNow,
     String? note,
+    String? paymentMethod,
+    String? customerName,
   }) async {
     // Check if it's pending offline
     final pendingInvoices = await offlineInvoiceLocalDataSource.getPendingInvoices();
     final isPendingLocally = pendingInvoices.any((i) => i['invoiceId'] == invoiceId);
     
     if (isPendingLocally) {
-       await offlineInvoiceLocalDataSource.updateOfflinePayment(invoiceId, paidNow, note);
+       await offlineInvoiceLocalDataSource.updateOfflinePayment(
+         invoiceId,
+         paidNow,
+         note,
+         paymentMethod: paymentMethod,
+         customerName: customerName,
+       );
        emit(InvoicePaymentSuccess());
        return;
     }
@@ -474,6 +488,8 @@ class InvoiceCubit extends Cubit<InvoiceState> {
        invoice: invoice,
        paidNow: paidNow,
        note: note,
+       paymentMethod: paymentMethod,
+       customerName: customerName,
     );
     
     if (failure != null) {
@@ -491,9 +507,15 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     required double paidNow,
     String? note,
     bool skipInvoicePayment = false,
+    String? paymentMethod,
+    String? customerName,
   }) async {
     // Quotation invoices must never have payments recorded or linked debts created
     if (invoice.isQuotation) return null;
+
+    final effectiveCustomerName = (customerName != null && customerName.trim().isNotEmpty)
+        ? customerName.trim()
+        : (invoice.customerName ?? '').replaceAll('/', ' ').trim();
 
     // ── Compute remaining to decide debt requirements ────────────────────────
     final newTotalPaid =
@@ -522,7 +544,13 @@ class InvoiceCubit extends Cubit<InvoiceState> {
             paidAt: DateTime.now(),
             note: note,
           );
-          final payResult = await recordPaymentUseCase(uid, invoiceId, payment);
+          final payResult = await recordPaymentUseCase(
+            uid,
+            invoiceId,
+            payment,
+            paymentMethod: paymentMethod,
+            customerName: effectiveCustomerName.isNotEmpty ? effectiveCustomerName : null,
+          );
           final failed = payResult.fold((f) => f, (_) => null);
           if (failed != null) {
             return failed;
@@ -536,8 +564,7 @@ class InvoiceCubit extends Cubit<InvoiceState> {
             totalAmount: invoice.totalAmount, // ← FULL amount, NOT pre-subtracted
             paidAmount: paidNow, // ← what was paid right now
             remainingAmount: remaining, // ← totalAmount - paidNow
-            customerName:
-                (invoice.customerName ?? '').replaceAll('/', ' ').trim(),
+            customerName: effectiveCustomerName,
             productOrSessionDetails: 'فاتورة #$invoiceId',
             operationType: 'invoice_debt',
             timestamp: DateTime.now(),
@@ -551,9 +578,13 @@ class InvoiceCubit extends Cubit<InvoiceState> {
           final debtFailure = await debtResult.fold((f) async => f, (
             createdDebtId,
           ) async {
-            if (invoice.linkedDebtId == null) {
-              await linkDebtToInvoiceUseCase(uid, invoiceId, createdDebtId);
-            }
+            await linkDebtToInvoiceUseCase(
+              uid,
+              invoiceId,
+              createdDebtId,
+              paymentMethod: paymentMethod,
+              customerName: effectiveCustomerName.isNotEmpty ? effectiveCustomerName : null,
+            );
             return null;
           });
 
@@ -580,6 +611,15 @@ class InvoiceCubit extends Cubit<InvoiceState> {
             return payFailure;
           }
         }
+        if (paymentMethod != null || (customerName != null && customerName.isNotEmpty)) {
+          await linkDebtToInvoiceUseCase(
+            uid,
+            invoiceId,
+            existingDebt.operationId,
+            paymentMethod: paymentMethod,
+            customerName: effectiveCustomerName.isNotEmpty ? effectiveCustomerName : null,
+          );
+        }
       }
     }
     return null;
@@ -595,6 +635,7 @@ class InvoiceCubit extends Cubit<InvoiceState> {
         invoiceId: invoice.id,
         invoice: invoice,
         paidNow: 0,
+        paymentMethod: 'debt',
       );
 
   // ── Update Invoice ───────────────────────────────────────────────────────────

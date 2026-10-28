@@ -20,6 +20,7 @@ class OperationModel extends OperationEntity {
     super.rate,
     super.ledgerNumber,
     super.dueDate,
+    super.paymentMethod = 'cash',
   });
 
   factory OperationModel.fromJson(Map<String, dynamic> json, String id) {
@@ -53,6 +54,7 @@ class OperationModel extends OperationEntity {
               ? (json['dueDate'] as Timestamp).toDate()
               : DateTime.tryParse(json['dueDate'].toString()))
           : null,
+      paymentMethod: json['paymentMethod'] as String? ?? 'cash',
     );
   }
 
@@ -78,6 +80,7 @@ class OperationModel extends OperationEntity {
       'rate': rate,
       if (ledgerNumber != null) 'ledgerNumber': ledgerNumber,
       if (dueDate != null) 'dueDate': Timestamp.fromDate(dueDate!),
+      'paymentMethod': paymentMethod ?? 'cash',
     };
   }
 
@@ -100,6 +103,7 @@ class OperationModel extends OperationEntity {
       rate: entity.rate,
       ledgerNumber: entity.ledgerNumber,
       dueDate: entity.dueDate,
+      paymentMethod: entity.paymentMethod ?? 'cash',
     );
   }
 }

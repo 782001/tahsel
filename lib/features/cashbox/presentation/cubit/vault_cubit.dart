@@ -41,7 +41,10 @@ class VaultCubit extends Cubit<VaultState> {
     super.emit(state);
   }
 
-  Future<void> loadVaultData(String uid, {VaultTransactionSource? sourceFilter}) async {
+  Future<void> loadVaultData(String uid, {
+    VaultTransactionSource? sourceFilter,
+    String? paymentMethodFilter,
+  }) async {
     _uid = uid;
     if (state is! VaultLoaded) {
       emit(VaultLoading());
@@ -77,6 +80,7 @@ class VaultCubit extends Cubit<VaultState> {
             summary: summary,
             transactions: data.transactions,
             selectedSource: selectedSource,
+            selectedPaymentMethod: paymentMethodFilter ?? (state is VaultLoaded ? (state as VaultLoaded).selectedPaymentMethod : 'all'),
             hasMore: data.hasMore,
             lastDoc: data.lastDoc,
             isFiltering: false,
@@ -125,6 +129,38 @@ class VaultCubit extends Cubit<VaultState> {
       }
     } else {
       await loadVaultData(_uid!, sourceFilter: source);
+    }
+  }
+
+
+  Future<void> filterByPaymentMethod(String method) async {
+    final currentState = state;
+    if (currentState is! VaultLoaded) return;
+    if (currentState.selectedPaymentMethod == method) return;
+
+    emit(currentState.copyWith(selectedPaymentMethod: method));
+
+    // If filtered transactions are fewer than 5 and more exist on server, auto-load next batch
+    _autoFetchMoreIfFilteredSparse();
+  }
+
+  Future<void> _autoFetchMoreIfFilteredSparse([int maxAttempts = 3]) async {
+    final currentState = state;
+    if (currentState is! VaultLoaded) return;
+    if (currentState.selectedPaymentMethod == 'all') return;
+    if (maxAttempts <= 0) return;
+
+    if (currentState.filteredTransactions.length < 5 &&
+        currentState.hasMore &&
+        !currentState.isLoadingMore &&
+        !currentState.isFiltering) {
+      await loadMoreTransactions();
+      if (state is VaultLoaded) {
+        final updated = state as VaultLoaded;
+        if (updated.filteredTransactions.length < 5 && updated.hasMore) {
+          await _autoFetchMoreIfFilteredSparse(maxAttempts - 1);
+        }
+      }
     }
   }
 
@@ -290,6 +326,7 @@ class VaultCubit extends Cubit<VaultState> {
 
   Future<List<VaultTransactionEntity>> getAllTransactionsForExport({
     VaultTransactionSource? sourceFilter,
+    String? paymentMethodFilter,
   }) async {
     final uid = _resolvedUid ?? '';
     if (uid.isEmpty) return [];
@@ -308,8 +345,24 @@ class VaultCubit extends Cubit<VaultState> {
     );
 
     return result.fold(
-      (_) => state is VaultLoaded ? (state as VaultLoaded).transactions : [],
-      (data) => data.transactions,
+      (_) {
+        final list = state is VaultLoaded ? (state as VaultLoaded).transactions : <VaultTransactionEntity>[];
+        final selectedMethod = paymentMethodFilter ??
+            (state is VaultLoaded
+                ? (state as VaultLoaded).selectedPaymentMethod
+                : 'all');
+        if (selectedMethod == 'all') return list;
+        return list.where((t) => t.paymentMethod == selectedMethod).toList();
+      },
+      (data) {
+        final list = data.transactions;
+        final selectedMethod = paymentMethodFilter ??
+            (state is VaultLoaded
+                ? (state as VaultLoaded).selectedPaymentMethod
+                : 'all');
+        if (selectedMethod == 'all') return list;
+        return list.where((t) => t.paymentMethod == selectedMethod).toList();
+      },
     );
   }
 

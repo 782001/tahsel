@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -53,10 +53,13 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
         : widget.purchase.items.take(1).toList();
 
     final hasMoreItems = widget.purchase.items.length > 1;
+    final bool showDebtBreakdown =
+        widget.purchase.paymentMethod == 'debt' ||
+        widget.purchase.remainingDebt > 0.01;
 
     final method = widget.purchase.paymentMethod;
     final bool isSettledDebt =
-        method == 'debt' && widget.purchase.remainingDebt <= 0.01;
+        widget.purchase.remainingDebt <= 0.01;
     final Color methodColor = isSettledDebt
         ? AppColors.success
         : (method == 'debt'
@@ -335,9 +338,9 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
             ],
           ),
 
-          if (widget.purchase.paymentMethod == 'debt')
+          if (showDebtBreakdown)
             Divider(color: AppColors.disabledColor.withValues(alpha: 0.1)),
-          if (widget.purchase.paymentMethod == 'debt') ...[
+          if (showDebtBreakdown) ...[
             Container(
               padding: EdgeInsets.symmetric(
                 horizontal: isDesktop ? 10 : 10.w,
@@ -351,62 +354,59 @@ class _PurchaseCardItemState extends State<PurchaseCardItem> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  if (widget.purchase.paymentMethod == 'debt') ...[
-                    if (hasTax)
-                      Expanded(
-                        child: Column(
-                          children: [
-                            Text(
-                              AppStrings.amountPaid.tr(),
-                              style: TextStyles.customStyle(
-                                fontSize: 10.5,
-                                color: AppColors.sandText,
-                              ),
-                            ),
-                            SizedBox(height: 2.h),
-                            Text(
-                              widget.purchase.paidAmount.toSmartAmount(),
-                              style: TextStyles.customStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.success,
-                              ),
-                            ),
-                          ],
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Text(
+                          AppStrings.amountPaid.tr(),
+                          style: TextStyles.customStyle(
+                            fontSize: 10.5,
+                            color: AppColors.sandText,
+                          ),
                         ),
-                      ),
-                    Container(
-                      width: 1,
-                      height: 20.h,
-                      color: AppColors.disabledColor.withValues(alpha: 0.2),
-                    ),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          Text(
-                            AppStrings.remainingDebt.tr(),
-                            style: TextStyles.customStyle(
-                              fontSize: 10.5,
-                              color: widget.purchase.remainingDebt <= 0.01
-                                  ? AppColors.success
-                                  : AppColors.error,
-                            ),
+                        SizedBox(height: 2.h),
+                        Text(
+                          widget.purchase.paidAmount.toSmartAmount(),
+                          style: TextStyles.customStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.success,
                           ),
-                          SizedBox(height: 2.h),
-                          Text(
-                            widget.purchase.remainingDebt.toSmartAmount(),
-                            style: TextStyles.customStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: widget.purchase.remainingDebt <= 0.01
-                                  ? AppColors.success
-                                  : AppColors.error,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
+                  Container(
+                    width: 1,
+                    height: 20.h,
+                    color: AppColors.disabledColor.withValues(alpha: 0.2),
+                  ),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Text(
+                          AppStrings.remainingDebt.tr(),
+                          style: TextStyles.customStyle(
+                            fontSize: 10.5,
+                            color: widget.purchase.remainingDebt <= 0.01
+                                ? AppColors.success
+                                : AppColors.error,
+                          ),
+                        ),
+                        SizedBox(height: 2.h),
+                        Text(
+                          widget.purchase.remainingDebt.toSmartAmount(),
+                          style: TextStyles.customStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: widget.purchase.remainingDebt <= 0.01
+                                ? AppColors.success
+                                : AppColors.error,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),

@@ -14,6 +14,7 @@ class VaultTransactionModel extends VaultTransactionEntity {
     super.relatedOperationId,
     required super.createdAt,
     super.createdBy,
+    super.paymentMethod = 'cash',
   });
 
   factory VaultTransactionModel.fromMap(Map<String, dynamic> map, String docId) {
@@ -29,6 +30,9 @@ class VaultTransactionModel extends VaultTransactionEntity {
       parsedDate = DateTime.now();
     }
 
+    final rawMethod = (map['paymentMethod'] as String?)?.toLowerCase();
+    final paymentMethod = (rawMethod == 'card') ? 'card' : 'cash';
+
     return VaultTransactionModel(
       id: docId,
       uid: map['uid'] as String? ?? '',
@@ -43,6 +47,7 @@ class VaultTransactionModel extends VaultTransactionEntity {
       relatedOperationId: map['relatedOperationId'] as String?,
       createdAt: parsedDate,
       createdBy: map['createdBy'] as String?,
+      paymentMethod: paymentMethod,
     );
   }
 
@@ -59,6 +64,7 @@ class VaultTransactionModel extends VaultTransactionEntity {
       'relatedOperationId': relatedOperationId,
       'createdAt': Timestamp.fromDate(createdAt),
       'createdBy': createdBy,
+      'paymentMethod': paymentMethod,
     };
   }
 
@@ -75,6 +81,7 @@ class VaultTransactionModel extends VaultTransactionEntity {
       relatedOperationId: entity.relatedOperationId,
       createdAt: entity.createdAt,
       createdBy: entity.createdBy,
+      paymentMethod: entity.paymentMethod,
     );
   }
 

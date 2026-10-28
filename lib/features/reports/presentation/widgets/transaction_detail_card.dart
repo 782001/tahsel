@@ -323,30 +323,96 @@ class TransactionDetailCard extends StatelessWidget {
                         ],
                       ),
 
-                      // Payment Status Badge
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: isDesktop ? 8 : 8.w,
-                          vertical: isDesktop ? 4 : 4.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: hasDebt
-                              ? AppColors.error.withValues(alpha: 0.05)
-                              : AppColors.success.withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(
-                            isDesktop ? 8 : 8.r,
-                          ),
-                        ),
-                        child: Text(
-                          hasDebt
-                              ? AppStrings.remainingDebt.tr()
-                              : AppStrings.paid.tr(),
-                          style: TextStyles.customStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: hasDebt
-                                ? AppColors.error
-                                : AppColors.success,
+                      // Payment Status Badges
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: AlignmentDirectional.centerEnd,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (operation.paymentMethod != null) ...[
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: isDesktop ? 6 : 6.w,
+                                    vertical: isDesktop ? 3 : 3.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: (operation.paymentMethod == 'card'
+                                            ? AppColors.primaryColor
+                                            : (operation.paymentMethod == 'debt'
+                                                ? AppColors.warning
+                                                : AppColors.success))
+                                        .withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(
+                                      isDesktop ? 6 : 6.r,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        operation.paymentMethod == 'card'
+                                            ? Icons.credit_card_rounded
+                                            : (operation.paymentMethod == 'debt'
+                                                ? Icons.receipt_long_rounded
+                                                : Icons.payments_rounded),
+                                        size: 11,
+                                        color: operation.paymentMethod == 'card'
+                                            ? AppColors.primaryColor
+                                            : (operation.paymentMethod == 'debt'
+                                                ? AppColors.warning
+                                                : AppColors.success),
+                                      ),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        operation.paymentMethod == 'card'
+                                            ? AppStrings.paymentCardSales.tr()
+                                            : (operation.paymentMethod == 'debt'
+                                                ? AppStrings.paymentDebtSales.tr()
+                                                : AppStrings.paymentCashSales.tr()),
+                                        style: TextStyles.customStyle(
+                                          fontSize: 9.5,
+                                          fontWeight: FontWeight.bold,
+                                          color: operation.paymentMethod == 'card'
+                                              ? AppColors.primaryColor
+                                              : (operation.paymentMethod == 'debt'
+                                                  ? AppColors.warning
+                                                  : AppColors.success),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(width: isDesktop ? 6 : 6.w),
+                              ],
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isDesktop ? 8 : 8.w,
+                                  vertical: isDesktop ? 4 : 4.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: hasDebt
+                                      ? AppColors.error.withValues(alpha: 0.05)
+                                      : AppColors.success.withValues(alpha: 0.05),
+                                  borderRadius: BorderRadius.circular(
+                                    isDesktop ? 8 : 8.r,
+                                  ),
+                                ),
+                                child: Text(
+                                  hasDebt
+                                      ? AppStrings.remainingDebt.tr()
+                                      : AppStrings.paid.tr(),
+                                  style: TextStyles.customStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: hasDebt
+                                        ? AppColors.error
+                                        : AppColors.success,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),

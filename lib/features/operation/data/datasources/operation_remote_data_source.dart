@@ -53,15 +53,16 @@ class OperationRemoteDataSourceImpl implements OperationRemoteDataSource {
           'lastUpdatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
       }
-
-      // 3. Record Vault Inflow for fully paid direct operations
+      // 3. Record Vault Inflow for fully paid direct operations (Cash or Card)
       final double paidCash = operation.remainingDebt <= 0
           ? (operation.paidAmount > 0
                 ? operation.paidAmount
                 : operation.totalAmount)
           : operation.paidAmount;
 
-      if (AppStrings.isVaultEnabled() && paidCash > 0) {
+      if (operation.remainingDebt <= 0 &&
+          AppStrings.isVaultEnabled() &&
+          paidCash > 0) {
         final vaultTxRef = userRef
             .collection('vault_transactions')
             .doc('vault_tx_op_${docRef.id}');
@@ -78,10 +79,11 @@ class OperationRemoteDataSourceImpl implements OperationRemoteDataSource {
           'amount': paidCash,
           'direction': 'in',
           'source': VaultTransactionSource.customerDebt.name,
-          'type': 'cash_sale',
-          'description': 'مبيعات مباشرة: $desc',
+          'type': (operation.paymentMethod == 'card') ? 'card_sale' : 'cash_sale',
+          'description': (operation.paymentMethod == 'card') ? 'مبيعات مباشرة (كارت): $desc' : 'مبيعات مباشرة: $desc',
           'relatedEntityId': docRef.id,
           'createdAt': Timestamp.fromDate(timestamp),
+          'paymentMethod': operation.paymentMethod ?? 'cash',
         });
 
         batch.set(vaultSummaryRef, {

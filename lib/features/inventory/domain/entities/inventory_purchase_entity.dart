@@ -99,7 +99,7 @@ class InventoryPurchaseEntity extends Equatable {
   }
 
   double get remainingDebt =>
-      paymentMethod == 'debt' ? (totalAmount - paidAmount).clamp(0.0, double.infinity) : 0.0;
+      (totalAmount - paidAmount).clamp(0.0, double.infinity);
 
   int get itemsCount => items.length;
 

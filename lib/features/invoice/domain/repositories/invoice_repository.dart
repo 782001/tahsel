@@ -33,11 +33,21 @@ abstract class InvoiceRepository {
   /// Records a new ledger payment against an existing invoice.
   /// Never mutates the original invoice — creates a new payment record.
   Future<Either<Failure, void>> recordPayment(
-      String uid, String invoiceId, InvoicePayment payment);
+    String uid,
+    String invoiceId,
+    InvoicePayment payment, {
+    String? paymentMethod,
+    String? customerName,
+  });
 
   /// Links a debt record to an existing invoice.
   Future<Either<Failure, void>> linkDebtToInvoice(
-      String uid, String invoiceId, String debtId);
+    String uid,
+    String invoiceId,
+    String debtId, {
+    String? paymentMethod,
+    String? customerName,
+  });
 
   /// Updates mutable fields (customer info, notes, items) on an existing invoice.
   /// Payments and original totals are never mutated.

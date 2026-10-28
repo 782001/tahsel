@@ -108,6 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _selectedPhoneNumber;
   CustomerEntity? _selectedCustomer;
   DateTime? _dueDate;
+  String _selectedPaymentMethod = 'cash';
 
   void _onContactPickerPressed() async {
     final result = await ContactService.pickContact(context);
@@ -138,8 +139,14 @@ class _HomeScreenState extends State<HomeScreen> {
     if (cachedCount is int) {
       _activeTeamEmployeesCount = cachedCount;
     }
-    HomeScreen.isOwnerDashboardVisible.value =
-        _canAccessExecutiveDashboard && _hasActiveTeamEmployees && !_showPosForm;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        HomeScreen.isOwnerDashboardVisible.value =
+            _canAccessExecutiveDashboard &&
+            _hasActiveTeamEmployees &&
+            !_showPosForm;
+      }
+    });
     _checkActiveTeamEmployees();
 
     // Check user type from MainLayoutCubit
@@ -303,6 +310,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _selectedPhoneNumber = null;
       _selectedCustomer = null;
       _dueDate = null;
+      _selectedPaymentMethod = 'cash';
     });
   }
 
@@ -518,6 +526,24 @@ class _HomeScreenState extends State<HomeScreen> {
                     ? _ledgerController.text.trim()
                     : null));
 
+      final effectivePaymentMethod =
+          (_selectedPaymentMethod == 'debt' && remainingDebt <= 0)
+              ? 'cash'
+              : _selectedPaymentMethod;
+
+      if ((effectivePaymentMethod == 'debt' || remainingDebt > 0) && customerName.isEmpty) {
+        setState(() => _customerError = AppStrings.customerNameRequiredForDebt.tr());
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            duration: const Duration(seconds: 2),
+            content: Text(AppStrings.customerNameRequiredForDebt.tr()),
+            backgroundColor: AppColors.orange,
+          ),
+        );
+        _customerFocus.requestFocus();
+        return;
+      }
+
       operation = OperationEntity(
         uid: uid,
         type: AppStrings.shop,
@@ -530,6 +556,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ledgerNumber: ledgerToSave,
         lastUpdatedAt: DateTime.now(),
         dueDate: _dueDate,
+        paymentMethod: effectivePaymentMethod,
       );
     } else {
       if (_psSubMode == PlayStationMode.time) return;
@@ -564,6 +591,25 @@ class _HomeScreenState extends State<HomeScreen> {
       }
 
       final remainingPsDebt = (totalDue - paid) > 0 ? (totalDue - paid) : 0.0;
+      final effectivePsPaymentMethod =
+          (_selectedPaymentMethod == 'debt' && remainingPsDebt <= 0)
+              ? 'cash'
+              : _selectedPaymentMethod;
+
+      if ((effectivePsPaymentMethod == 'debt' || remainingPsDebt > 0) &&
+          customerName.isEmpty) {
+        setState(() => _customerError = AppStrings.customerNameRequiredForDebt.tr());
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            duration: const Duration(seconds: 2),
+            content: Text(AppStrings.customerNameRequiredForDebt.tr()),
+            backgroundColor: AppColors.orange,
+          ),
+        );
+        _customerFocus.requestFocus();
+        return;
+      }
+
       if (remainingPsDebt > 0 &&
           !PermissionService.instance.hasPermission(
             AppPermissions.posAddDebt,
@@ -597,11 +643,12 @@ class _HomeScreenState extends State<HomeScreen> {
         phoneNumber: _selectedPhoneNumber,
         totalAmount: totalDue,
         paidAmount: paid,
-        remainingDebt: (totalDue - paid) > 0 ? (totalDue - paid) : 0,
+        remainingDebt: remainingPsDebt,
         turnCount: _matchCount,
         rate: double.tryParse(_turnRateController.text),
         lastUpdatedAt: DateTime.now(),
         dueDate: _dueDate,
+        paymentMethod: effectivePsPaymentMethod,
       );
     }
 
@@ -1156,6 +1203,12 @@ class _HomeScreenState extends State<HomeScreen> {
                             onDueDateChanged: (date) {
                               setState(() {
                                 _dueDate = date;
+                              });
+                            },
+                            selectedPaymentMethod: _selectedPaymentMethod,
+                            onPaymentMethodChanged: (method) {
+                              setState(() {
+                                _selectedPaymentMethod = method;
                               });
                             },
                           ),

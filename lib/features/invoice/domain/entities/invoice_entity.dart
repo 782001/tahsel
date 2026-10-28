@@ -137,6 +137,7 @@ class InvoiceEntity extends Equatable {
 
   final DateTime? dueDate;
   final double? taxRate;
+  final String? paymentMethod; // 'cash', 'card', 'debt'
 
   /// Optional employee attribution for RBAC audits & offline sync
   final String? creatorEmployeeUid;
@@ -161,6 +162,7 @@ class InvoiceEntity extends Equatable {
     this.isRefundedToCustomer = false,
     this.dueDate,
     this.taxRate,
+    this.paymentMethod = 'cash',
     this.creatorEmployeeUid,
     this.creatorEmployeeName,
   });
@@ -317,6 +319,7 @@ class InvoiceEntity extends Equatable {
     DateTime? dueDate,
     bool clearDueDate = false,
     double? taxRate,
+    String? paymentMethod,
     String? creatorEmployeeUid,
     String? creatorEmployeeName,
   }) {
@@ -339,6 +342,7 @@ class InvoiceEntity extends Equatable {
       isRefundedToCustomer: isRefundedToCustomer ?? this.isRefundedToCustomer,
       dueDate: clearDueDate ? null : (dueDate ?? this.dueDate),
       taxRate: taxRate ?? this.taxRate,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
       creatorEmployeeUid: creatorEmployeeUid ?? this.creatorEmployeeUid,
       creatorEmployeeName: creatorEmployeeName ?? this.creatorEmployeeName,
     );
@@ -364,6 +368,7 @@ class InvoiceEntity extends Equatable {
     isRefundedToCustomer,
     dueDate,
     taxRate,
+    paymentMethod,
     creatorEmployeeUid,
     creatorEmployeeName,
   ];

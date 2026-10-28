@@ -120,7 +120,7 @@ class VaultTransactionCard extends StatelessWidget {
 
     return Container(
       margin: EdgeInsets.only(bottom: isDesktop ? 12 : 10.h),
-      padding: EdgeInsets.all(isDesktop ? 16 : 14.w),
+      padding: EdgeInsets.all(isDesktop ? 12 : 10.w),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16.r),
@@ -136,7 +136,7 @@ class VaultTransactionCard extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.all(isDesktop ? 12 : 10.w),
+            padding: EdgeInsets.all(isDesktop ? 12 : 8.w),
             decoration: BoxDecoration(
               color: sourceColor.withValues(alpha: 0.12),
               shape: BoxShape.circle,
@@ -147,28 +147,36 @@ class VaultTransactionCard extends StatelessWidget {
               size: isDesktop ? 22 : 20.sp,
             ),
           ),
-          SizedBox(width: isDesktop ? 14 : 12.w),
+          SizedBox(width: isDesktop ? 5 : 5.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isDesktop ? 8 : 6.w,
-                    vertical: isDesktop ? 3 : 2.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: sourceColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Text(
-                    sourceLabel,
-                    style: TextStyles.customStyle(
-                      color: sourceColor,
-                      fontSize: isDesktop ? 12 : 11,
-                      fontWeight: FontWeight.bold,
+                Wrap(
+                  spacing: isDesktop ? 6 : 6.w,
+                  runSpacing: isDesktop ? 4 : 4.h,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isDesktop ? 8 : 6.w,
+                        vertical: isDesktop ? 3 : 2.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: sourceColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Text(
+                        sourceLabel,
+                        style: TextStyles.customStyle(
+                          color: sourceColor,
+                          fontSize: isDesktop ? 12 : 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                  ),
+                    _buildPaymentMethodBadge(isDesktop),
+                  ],
                 ),
                 SizedBox(height: isDesktop ? 6 : 4.h),
                 Text(
@@ -268,7 +276,43 @@ class VaultTransactionCard extends StatelessWidget {
     );
   }
 
-  static IconData _getSourceIcon(VaultTransactionSource source) {
+  Widget _buildPaymentMethodBadge(bool isDesktop) {
+    final isCard = transaction.paymentMethod.toLowerCase() == 'card';
+    final color = isCard ? const Color(0xFF6366F1) : const Color(0xFF10B981);
+    final label = isCard
+        ? AppStrings.vaultFilterCard.tr()
+        : AppStrings.vaultFilterCash.tr();
+    final icon = isCard ? Icons.credit_card_rounded : Icons.payments_outlined;
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 7 : 5.w,
+        vertical: isDesktop ? 3 : 2.h,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 0.8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: isDesktop ? 12 : 10.sp, color: color),
+          SizedBox(width: isDesktop ? 4 : 3.w),
+          Text(
+            label,
+            style: TextStyles.customStyle(
+              color: color,
+              fontSize: isDesktop ? 11 : 10,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _getSourceIcon(VaultTransactionSource source) {
     switch (source) {
       case VaultTransactionSource.customerDebt:
         return Icons.person_add_alt_1_rounded;
@@ -328,9 +372,15 @@ class VaultTransactionCard extends StatelessWidget {
       case VaultTransactionSource.manualWithdrawal:
         return AppStrings.cashboxSourceManualWithdraw.tr();
       case VaultTransactionSource.custody:
-        if (type == 'custody_disbursement') return AppStrings.newCustody.tr();
-        if (type == 'custody_settlement_refund') return AppStrings.custodySettled.tr();
-        if (type == 'custody_settlement_reimbursement') return AppStrings.settleCustody.tr();
+        if (type == 'custody_disbursement') {
+          return AppStrings.newCustody.tr();
+        }
+        if (type == 'custody_settlement_refund') {
+          return AppStrings.custodySettled.tr();
+        }
+        if (type == 'custody_settlement_reimbursement') {
+          return AppStrings.settleCustody.tr();
+        }
         return AppStrings.custodyTitle.tr();
       case VaultTransactionSource.all:
         return AppStrings.filterAll.tr();

@@ -670,6 +670,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
                     debt.timestamp!.add(const Duration(milliseconds: 1)),
                   )
                 : FieldValue.serverTimestamp(),
+            'paymentMethod': debt.paymentMethod ?? 'cash',
           });
 
           batch.set(vaultSummaryRef, {

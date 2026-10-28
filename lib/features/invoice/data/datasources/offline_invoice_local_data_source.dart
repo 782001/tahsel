@@ -6,7 +6,13 @@ import '../../domain/entities/invoice_entity.dart';
 
 abstract class OfflineInvoiceLocalDataSource {
   Future<void> saveOfflineInvoice(InvoiceEntity invoice);
-  Future<void> updateOfflinePayment(String invoiceId, double paymentAmount, String? paymentNote);
+  Future<void> updateOfflinePayment(
+    String invoiceId,
+    double paymentAmount,
+    String? paymentNote, {
+    String? paymentMethod,
+    String? customerName,
+  });
   Future<List<Map<String, dynamic>>> getPendingInvoices();
   Future<void> deleteOfflineInvoice(String invoiceId);
   Future<void> convertOfflineQuotationToInvoice(String invoiceId, {DateTime? dueDate});
@@ -53,7 +59,13 @@ class OfflineInvoiceLocalDataSourceImpl implements OfflineInvoiceLocalDataSource
   }
 
   @override
-  Future<void> updateOfflinePayment(String invoiceId, double paymentAmount, String? paymentNote) async {
+  Future<void> updateOfflinePayment(
+    String invoiceId,
+    double paymentAmount,
+    String? paymentNote, {
+    String? paymentMethod,
+    String? customerName,
+  }) async {
     final box = await _getBox();
     final jsonStr = box.get(invoiceId);
     if (jsonStr != null) {
@@ -65,6 +77,9 @@ class OfflineInvoiceLocalDataSourceImpl implements OfflineInvoiceLocalDataSource
       
       data['paymentAmount'] = newPaymentAmount;
       data['paymentNote'] = paymentNote;
+      if (paymentMethod != null && paymentMethod.isNotEmpty) {
+        data['paymentMethod'] = paymentMethod;
+      }
       if (data['employeeUid'] == null && AppStrings.employeeAuthUid.isNotEmpty) {
         data['employeeUid'] = AppStrings.employeeAuthUid;
         data['employeeName'] = AppStrings.loggedInEmployeeName;
@@ -74,15 +89,23 @@ class OfflineInvoiceLocalDataSourceImpl implements OfflineInvoiceLocalDataSource
       // Update the embedded invoiceJson so UI reflects the payment immediately
       final invoiceMap = jsonDecode(data['invoiceJson']) as Map<String, dynamic>;
       
-      // Append the payment to the invoice's internal payments list
+      // Append the payment to the invoice's internal payments list if paymentAmount > 0
       final payments = List<dynamic>.from(invoiceMap['payments'] ?? []);
-      payments.add({
-        'id': 'pmt_offline_${DateTime.now().millisecondsSinceEpoch}',
-        'amount': paymentAmount,
-        'paidAt': DateTime.now().toIso8601String(),
-        'note': paymentNote,
-      });
-      invoiceMap['payments'] = payments;
+      if (paymentAmount > 0) {
+        payments.add({
+          'id': 'pmt_offline_${DateTime.now().millisecondsSinceEpoch}',
+          'amount': paymentAmount,
+          'paidAt': DateTime.now().toIso8601String(),
+          'note': paymentNote,
+        });
+        invoiceMap['payments'] = payments;
+      }
+      if (paymentMethod != null && paymentMethod.isNotEmpty) {
+        invoiceMap['paymentMethod'] = paymentMethod;
+      }
+      if (customerName != null && customerName.isNotEmpty) {
+        invoiceMap['customerName'] = customerName;
+      }
       
       // Calculate dynamic totals to update the status field correctly
       final model = InvoiceModel.fromMap(invoiceMap);

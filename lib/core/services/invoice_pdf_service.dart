@@ -605,7 +605,20 @@ class InvoicePdfService {
                         color: _primaryDark,
                       ),
                     ),
-                    _buildStatusBadge(invoice.status, isArabic),
+                    pw.Row(
+                      mainAxisSize: pw.MainAxisSize.min,
+                      children: [
+                        if (invoice.paymentMethod != null &&
+                            !invoice.isQuotation) ...[
+                          _buildPaymentMethodBadge(
+                            invoice.paymentMethod,
+                            isArabic,
+                          ),
+                          pw.SizedBox(width: 4),
+                        ],
+                        _buildStatusBadge(invoice.status, isArabic),
+                      ],
+                    ),
                   ],
                 ),
                 pw.SizedBox(height: 3),
@@ -686,6 +699,46 @@ class InvoicePdfService {
           ),
         ),
       ],
+    );
+  }
+
+  static pw.Widget _buildPaymentMethodBadge(
+    String? paymentMethod,
+    bool isArabic,
+  ) {
+    final String text;
+    final PdfColor color;
+    switch (paymentMethod) {
+      case 'card':
+        text = isArabic ? "كارت / بنكى" : "Card";
+        color = _primary;
+        break;
+      case 'debt':
+        text = isArabic ? "آجل (دين)" : "Credit";
+        color = _warning;
+        break;
+      case 'cash':
+      default:
+        text = isArabic ? "نقدى (كاش)" : "Cash";
+        color = _success;
+        break;
+    }
+
+    return pw.Container(
+      padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+      decoration: pw.BoxDecoration(
+        color: PdfColor(color.red, color.green, color.blue, 0.1),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
+        border: pw.Border.all(color: color, width: 1.2),
+      ),
+      child: pw.Text(
+        text,
+        style: pw.TextStyle(
+          fontSize: 8.5,
+          fontWeight: pw.FontWeight.bold,
+          color: PdfColors.white,
+        ),
+      ),
     );
   }
 
@@ -2011,29 +2064,36 @@ class InvoicePdfService {
   ) {
     String text;
     PdfColor color;
-    final isSettled =
-        purchase.paymentMethod == 'debt' && purchase.remainingDebt <= 0.01;
+    final hasDebt = purchase.remainingDebt > 0.01;
 
-    if (isSettled) {
-      text = isArabic ? "مسدد" : "Paid";
-      color = _success;
-    } else {
+    if (!hasDebt) {
       switch (purchase.paymentMethod) {
-        case 'cash':
-          text = isArabic ? "مسدد نقداً" : "Paid Cash";
-          color = _success;
-          break;
         case 'card':
           text = isArabic ? "مسدد بالبطاقة" : "Paid Card";
           color = _info;
           break;
+        case 'cash':
         case 'debt':
+        default:
+          text = isArabic ? "مسدد بالكامل" : "Paid in Full";
+          color = _success;
+          break;
+      }
+    } else {
+      switch (purchase.paymentMethod) {
+        case 'cash':
+          text = isArabic ? "نقداً (متبقي دين)" : "Cash (Partial Debt)";
+          color = _warning;
+          break;
+        case 'card':
+          text = isArabic ? "بالبطاقة (متبقي دين)" : "Card (Partial Debt)";
+          color = _warning;
+          break;
+        case 'debt':
+        default:
           text = isArabic ? "شراء آجل" : "Credit (Debt)";
           color = _warning;
           break;
-        default:
-          text = purchase.paymentMethod;
-          color = _purchasePrimary;
       }
     }
 
@@ -2260,7 +2320,8 @@ class InvoicePdfService {
         ? (purchase.totalAmount - taxAmount)
         : purchase.totalAmount;
 
-    final isDebt = purchase.paymentMethod == 'debt';
+    final isDebt =
+        purchase.paymentMethod == 'debt' || purchase.remainingDebt > 0.01;
 
     // Build financial summary table matching the products table style across full width
     final headers = <String>[];

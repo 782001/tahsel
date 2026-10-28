@@ -1210,6 +1210,26 @@ class AppStrings {
   static const String paymentCash = "payment_cash";
   static const String paymentCard = "payment_card";
   static const String paymentDebt = "payment_debt";
+  static const String paymentCashSales = "payment_cash_sales";
+  static const String paymentCardSales = "payment_card_sales";
+  static const String paymentDebtSales = "payment_debt_sales";
+  static const String customerNameRequiredForDebt = "customer_name_required_for_debt";
+  static const String cashSaleInfoDesc = "cash_sale_info_desc";
+  static const String cardSaleInfoDesc = "card_sale_info_desc";
+  static const String debtSaleInfoDesc = "debt_sale_info_desc";
+  static const String invoiceCashFullInfo = "invoice_cash_full_info";
+  static const String invoiceCashPartialInfo = "invoice_cash_partial_info";
+  static const String invoiceCardFullInfo = "invoice_card_full_info";
+  static const String invoiceCardPartialInfo = "invoice_card_partial_info";
+  static const String invoiceDebtFullInfo = "invoice_debt_full_info";
+  static const String invoiceDebtPartialInfo = "invoice_debt_partial_info";
+  static const String paymentAmountMustBePositive = "payment_amount_must_be_positive";
+  static const String payLater = "pay_later";
+  static const String confirmCashPayment = "confirm_cash_payment";
+  static const String confirmCardPayment = "confirm_card_payment";
+  static const String confirmDebtRecording = "confirm_debt_recording";
+  static const String downPayment = "down_payment";
+  static const String noDownPayment = "no_down_payment";
   static const String exportToExcel = "export_to_excel";
   static const String exportingExcel = "exporting_excel";
   static const String exportFailed = "export_failed";
@@ -1442,6 +1462,9 @@ class AppStrings {
   static const String employeeAdvance = "employee_advance";
   static const String vaultTitle = "vault_title";
   static const String vaultSubtitle = "vault_subtitle";
+  static const String vaultFilterAll = "vault_filter_all";
+  static const String vaultFilterCash = "vault_filter_cash";
+  static const String vaultFilterCard = "vault_filter_card";
   static const String validationAmountGreaterThanZero =
       "validation_amount_greater_than_zero";
   static const String currentlyAvailableBalance = "currently_available_balance";

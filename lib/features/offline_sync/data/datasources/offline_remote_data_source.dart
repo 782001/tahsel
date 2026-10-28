@@ -180,6 +180,8 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
           'createdAt': Timestamp.fromDate(
             DateTime.parse(timestampStr).add(const Duration(milliseconds: 1)),
           ),
+          'paymentMethod':
+              (payload['paymentMethod'] as String?)?.toLowerCase() ?? 'cash',
         });
 
         batch.set(vaultSummaryRef, {
@@ -379,6 +381,8 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
           'createdAt': Timestamp.fromDate(
             timestampDate.add(const Duration(milliseconds: 1)),
           ),
+          'paymentMethod':
+              (payload['paymentMethod'] as String?)?.toLowerCase() ?? 'cash',
         });
 
         batch.set(vaultSummaryRef, {
@@ -596,9 +600,10 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
 
     // Handle Summary Updates for Operations, Expenses, Employees, and Payroll
     final uid = payload['uid'] as String?;
-    if (uid != null && timestampDate != null) {
+    final txDate = timestampDate ?? DateTime.now();
+    if (uid != null) {
       final userRef = firestore.collection('users').doc(uid);
-      final summaryKeys = SummaryHelper.getSummaryKeys(timestampDate);
+      final summaryKeys = SummaryHelper.getSummaryKeys(txDate);
 
       if (collectionPath.contains('operations')) {
         final totalAmount = (payload['totalAmount'] as num?)?.toDouble() ?? 0;
@@ -613,6 +618,53 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
             'totalIncome': FieldValue.increment(totalAmount),
             if (isShop) 'cafeIncome': FieldValue.increment(totalAmount),
             if (isPS) 'playstationIncome': FieldValue.increment(totalAmount),
+            'transactionCount': FieldValue.increment(1),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        }
+
+        // Vault transaction for direct operations (cash or card)
+        final paidAmount = (payload['paidAmount'] as num?)?.toDouble() ?? 0;
+        final remainingDebt =
+            (payload['remainingDebt'] as num?)?.toDouble() ?? 0;
+        final double paid = remainingDebt <= 0
+            ? (paidAmount > 0 ? paidAmount : totalAmount)
+            : paidAmount;
+        final paymentMethod =
+            (payload['paymentMethod'] as String?)?.toLowerCase() ?? 'cash';
+        final isCard = paymentMethod == 'card';
+
+        // NOTE: If remainingDebt > 0, the initial paid amount is recorded in vault by debt sync (vault_tx_cust_${docId}_payment).
+        // Only record here if remainingDebt <= 0 to avoid duplicate vault entries!
+        if (remainingDebt <= 0 && AppStrings.isVaultEnabled() && paid > 0) {
+          final vaultTxRef = userRef
+              .collection('vault_transactions')
+              .doc('vault_tx_op_$docId');
+          final vaultSummaryRef = userRef.collection('vault').doc('summary');
+
+          final productName = payload['productName'] as String?;
+          final String desc = (productName != null && productName.isNotEmpty)
+              ? productName
+              : (payload['type'] as String? ?? 'مبيعات');
+
+          batch.set(vaultTxRef, {
+            'id': 'vault_tx_op_$docId',
+            'uid': uid,
+            'amount': paid,
+            'direction': 'in',
+            'source': VaultTransactionSource.customerDebt.name,
+            'type': isCard ? 'card_sale' : 'cash_sale',
+            'description': isCard
+                ? 'مبيعات مباشرة (كارت): $desc'
+                : 'مبيعات مباشرة: $desc',
+            'relatedEntityId': docId,
+            'createdAt': Timestamp.fromDate(txDate),
+            'paymentMethod': paymentMethod,
+          });
+
+          batch.set(vaultSummaryRef, {
+            'currentBalance': FieldValue.increment(paid),
+            'totalIn': FieldValue.increment(paid),
             'transactionCount': FieldValue.increment(1),
             'lastUpdatedAt': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
@@ -653,6 +705,9 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
                     ? (payload['category'] as String)
                     : 'مصروف');
 
+          final expPaymentMethod =
+              (payload['paymentMethod'] as String?)?.toLowerCase() ?? 'cash';
+
           batch.set(vaultTxRef, {
             'id': 'vault_tx_$docId',
             'uid': uid,
@@ -662,7 +717,8 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
             'type': vType,
             'description': description,
             'relatedEntityId': docId,
-            'createdAt': Timestamp.fromDate(timestampDate),
+            'createdAt': Timestamp.fromDate(txDate),
+            'paymentMethod': expPaymentMethod,
           });
 
           batch.set(vaultSummaryRef, {
@@ -698,7 +754,7 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
         }
       } else if (collectionPath.contains('advances')) {
         final amount = (payload['amount'] as num?)?.toDouble() ?? 0;
-        final date = timestampDate;
+        final date = timestampDate ?? txDate;
         final monthKey = DateFormat('yyyy-MM', 'en').format(date);
 
         final monthlyRef = userRef
@@ -1023,6 +1079,49 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
       batch.set(summaryRef, {
         'totalIncome': FieldValue.increment(totalAmount),
         'playstationIncome': FieldValue.increment(totalAmount),
+        'transactionCount': FieldValue.increment(1),
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    }
+
+    // 4. Record Vault Inflow for PlayStation sessions
+    final double paidPs = remainingDebt <= 0
+        ? (paidAmount > 0 ? paidAmount : totalAmount)
+        : paidAmount;
+    final psPaymentMethod =
+        (payload['paymentMethod'] as String?)?.toLowerCase() ?? 'cash';
+    final isCardPs = psPaymentMethod == 'card';
+
+    if (remainingDebt <= 0 && AppStrings.isVaultEnabled() && paidPs > 0) {
+      final vaultTxRef = userRef
+          .collection('vault_transactions')
+          .doc('vault_tx_ps_$sessionId');
+      final vaultSummaryRef = userRef.collection('vault').doc('summary');
+
+      final device = (sessionData['deviceId'] as String?)?.isNotEmpty == true
+          ? sessionData['deviceId'] as String
+          : ((sessionData['roomId'] as String?)?.isNotEmpty == true
+                ? sessionData['roomId'] as String
+                : 'جلسة بلايستيشن');
+
+      batch.set(vaultTxRef, {
+        'id': 'vault_tx_ps_$sessionId',
+        'uid': uid,
+        'amount': paidPs,
+        'direction': 'in',
+        'source': VaultTransactionSource.customerDebt.name,
+        'type': isCardPs ? 'card_sale' : 'cash_sale',
+        'description': isCardPs
+            ? 'جلسة بلايستيشن (كارت): $device'
+            : 'جلسة بلايستيشن: $device',
+        'relatedEntityId': sessionId,
+        'createdAt': Timestamp.fromDate(endTime),
+        'paymentMethod': psPaymentMethod,
+      });
+
+      batch.set(vaultSummaryRef, {
+        'currentBalance': FieldValue.increment(paidPs),
+        'totalIn': FieldValue.increment(paidPs),
         'transactionCount': FieldValue.increment(1),
         'lastUpdatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));

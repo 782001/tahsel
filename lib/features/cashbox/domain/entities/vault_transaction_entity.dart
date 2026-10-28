@@ -26,6 +26,7 @@ class VaultTransactionEntity extends Equatable {
   final String? relatedOperationId;
   final DateTime createdAt;
   final String? createdBy;
+  final String paymentMethod; // 'cash' or 'card'
 
   const VaultTransactionEntity({
     required this.id,
@@ -39,6 +40,7 @@ class VaultTransactionEntity extends Equatable {
     this.relatedOperationId,
     required this.createdAt,
     this.createdBy,
+    this.paymentMethod = 'cash',
   });
 
   @override
@@ -54,5 +56,6 @@ class VaultTransactionEntity extends Equatable {
         relatedOperationId,
         createdAt,
         createdBy,
+        paymentMethod,
       ];
 }

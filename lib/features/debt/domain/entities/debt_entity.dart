@@ -17,6 +17,7 @@ class DebtEntity extends Equatable {
   final String? ledgerNumber;
   final DateTime? dueDate;
   final DateTime? lastReminderSentAt;
+  final String? paymentMethod;
 
   const DebtEntity({
     this.id,
@@ -35,6 +36,7 @@ class DebtEntity extends Equatable {
     this.ledgerNumber,
     this.dueDate,
     this.lastReminderSentAt,
+    this.paymentMethod,
   });
 
   DebtEntity copyWith({
@@ -54,6 +56,7 @@ class DebtEntity extends Equatable {
     String? ledgerNumber,
     DateTime? dueDate,
     DateTime? lastReminderSentAt,
+    String? paymentMethod,
   }) {
     return DebtEntity(
       id: id ?? this.id,
@@ -73,6 +76,7 @@ class DebtEntity extends Equatable {
       ledgerNumber: ledgerNumber ?? this.ledgerNumber,
       dueDate: dueDate ?? this.dueDate,
       lastReminderSentAt: lastReminderSentAt ?? this.lastReminderSentAt,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
     );
   }
 
@@ -94,6 +98,7 @@ class DebtEntity extends Equatable {
     ledgerNumber,
     dueDate,
     lastReminderSentAt,
+    paymentMethod,
   ];
 }
 

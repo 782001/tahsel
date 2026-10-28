@@ -54,6 +54,7 @@ abstract class VaultRemoteDataSource {
     String? relatedEntityId,
     String? relatedOperationId,
     DateTime? createdAt,
+    String paymentMethod = 'cash',
   });
 
   Future<void> editManualTransaction({
@@ -109,6 +110,7 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
     DateTime? createdAt,
     bool? isShop,
     bool allowNegativeBalance = false,
+    String paymentMethod = 'cash',
   }) async {
     // 1. MANDATORY ELIGIBILITY & COST OPTIMIZATION: Zero Firebase interaction if Vault is not enabled
     if (!AppStrings.isVaultEnabled(isShop)) {
@@ -162,6 +164,7 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
         relatedEntityId: relatedEntityId,
         relatedOperationId: relatedOperationId,
         createdAt: txDate,
+        paymentMethod: paymentMethod,
       );
 
       tx.set(txRef, model.toMap());
@@ -284,6 +287,7 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
       relatedEntityId: transaction.relatedEntityId,
       relatedOperationId: transaction.relatedOperationId,
       createdAt: transaction.createdAt,
+      paymentMethod: transaction.paymentMethod,
     );
   }
 
@@ -299,6 +303,7 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
     String? relatedEntityId,
     String? relatedOperationId,
     DateTime? createdAt,
+    String paymentMethod = 'cash',
   }) async {
     if (!AppStrings.isVaultEnabled()) return;
     if (deltaAmount == 0) return;
@@ -322,6 +327,7 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
         relatedEntityId: relatedEntityId,
         relatedOperationId: relatedOperationId,
         createdAt: txDate,
+        paymentMethod: paymentMethod,
       );
 
       final batch = firestore.batch();

@@ -63,8 +63,19 @@ class RecordPaymentUseCase {
   RecordPaymentUseCase(this.repository);
 
   Future<Either<Failure, void>> call(
-      String uid, String invoiceId, InvoicePayment payment) {
-    return repository.recordPayment(uid, invoiceId, payment);
+    String uid,
+    String invoiceId,
+    InvoicePayment payment, {
+    String? paymentMethod,
+    String? customerName,
+  }) {
+    return repository.recordPayment(
+      uid,
+      invoiceId,
+      payment,
+      paymentMethod: paymentMethod,
+      customerName: customerName,
+    );
   }
 }
 
@@ -75,8 +86,19 @@ class LinkDebtToInvoiceUseCase {
   LinkDebtToInvoiceUseCase(this.repository);
 
   Future<Either<Failure, void>> call(
-      String uid, String invoiceId, String debtId) {
-    return repository.linkDebtToInvoice(uid, invoiceId, debtId);
+    String uid,
+    String invoiceId,
+    String debtId, {
+    String? paymentMethod,
+    String? customerName,
+  }) {
+    return repository.linkDebtToInvoice(
+      uid,
+      invoiceId,
+      debtId,
+      paymentMethod: paymentMethod,
+      customerName: customerName,
+    );
   }
 }
 

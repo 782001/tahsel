@@ -51,6 +51,7 @@ class OperationRepositoryImpl implements OperationRepository {
         'durationMinutes': model.durationMinutes,
         'turnCount': model.turnCount,
         'rate': model.rate,
+        'paymentMethod': model.paymentMethod ?? 'cash',
         if (AppStrings.isEmployee) ...{
           'employeeUid': AppStrings.employeeAuthUid,
           'employeeName': AppStrings.loggedInEmployeeName,

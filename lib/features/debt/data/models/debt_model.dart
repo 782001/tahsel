@@ -19,6 +19,7 @@ class DebtModel extends DebtEntity {
     super.ledgerNumber,
     super.dueDate,
     super.lastReminderSentAt,
+    super.paymentMethod,
   });
 
   factory DebtModel.fromJson(Map<String, dynamic> json, String id) {
@@ -57,6 +58,7 @@ class DebtModel extends DebtEntity {
               ? (json['lastReminderSentAt'] as Timestamp).toDate()
               : DateTime.tryParse(json['lastReminderSentAt'].toString()))
           : null,
+      paymentMethod: json['paymentMethod'] as String? ?? 'cash',
     );
   }
 
@@ -82,6 +84,7 @@ class DebtModel extends DebtEntity {
       if (dueDate != null) 'dueDate': Timestamp.fromDate(dueDate!),
       if (lastReminderSentAt != null)
         'lastReminderSentAt': Timestamp.fromDate(lastReminderSentAt!),
+      'paymentMethod': paymentMethod ?? 'cash',
     };
   }
 
@@ -103,6 +106,7 @@ class DebtModel extends DebtEntity {
       ledgerNumber: entity.ledgerNumber,
       dueDate: entity.dueDate,
       lastReminderSentAt: entity.lastReminderSentAt,
+      paymentMethod: entity.paymentMethod,
     );
   }
 }

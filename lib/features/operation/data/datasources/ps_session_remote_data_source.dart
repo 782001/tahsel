@@ -190,6 +190,7 @@ class PsSessionRemoteDataSourceImpl implements PsSessionRemoteDataSource {
           'description': 'تحصيل جلسة بلايستيشن: $cust',
           'relatedEntityId': sessionId,
           'createdAt': Timestamp.fromDate(endTime),
+          'paymentMethod': 'cash',
         });
 
         batch.set(vaultSummaryRef, {

@@ -101,6 +101,7 @@ class InvoiceModel extends InvoiceEntity {
     super.isRefundedToCustomer,
     super.dueDate,
     super.taxRate,
+    super.paymentMethod = 'cash',
     super.creatorEmployeeUid,
     super.creatorEmployeeName,
   });
@@ -124,6 +125,7 @@ class InvoiceModel extends InvoiceEntity {
     isRefundedToCustomer: e.isRefundedToCustomer,
     dueDate: e.dueDate,
     taxRate: e.taxRate,
+    paymentMethod: e.paymentMethod ?? 'cash',
     creatorEmployeeUid: e.creatorEmployeeUid,
     creatorEmployeeName: e.creatorEmployeeName,
   );
@@ -166,6 +168,7 @@ class InvoiceModel extends InvoiceEntity {
             ? map['dueDate'] as DateTime
             : DateTime.tryParse(map['dueDate'].toString())),
       taxRate: (map['taxRate'] as num?)?.toDouble(),
+      paymentMethod: map['paymentMethod'] as String? ?? 'cash',
       creatorEmployeeUid: map['creatorEmployeeUid'] as String?,
       creatorEmployeeName: map['creatorEmployeeName'] as String?,
     );
@@ -193,6 +196,7 @@ class InvoiceModel extends InvoiceEntity {
     'isRefundedToCustomer': isRefundedToCustomer,
     'dueDate': dueDate?.toIso8601String(),
     if (taxRate != null) 'taxRate': taxRate,
+    'paymentMethod': paymentMethod ?? 'cash',
     if (creatorEmployeeUid != null) 'creatorEmployeeUid': creatorEmployeeUid,
     if (creatorEmployeeName != null) 'creatorEmployeeName': creatorEmployeeName,
   };

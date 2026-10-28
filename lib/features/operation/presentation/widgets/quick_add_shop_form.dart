@@ -8,6 +8,7 @@ import 'package:tahsel/features/customer/domain/entities/customer_entity.dart';
 import 'package:tahsel/features/customer/presentation/widgets/customer_autocomplete_field.dart';
 import 'package:tahsel/features/invoice/presentation/widgets/multi_inventory_picker_bottom_sheet.dart';
 import 'package:tahsel/features/product/presentation/widgets/product_autocomplete_field.dart';
+import 'package:tahsel/shared/widgets/fields/payment_method_selector.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 import 'package:tahsel/shared/widgets/quick_due_date_selector.dart';
 import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
@@ -38,6 +39,8 @@ class QuickAddShopForm extends StatefulWidget {
   final DateTime? dueDate;
   final ValueChanged<DateTime?>? onDueDateChanged;
   final ValueChanged<CustomerEntity?>? onCustomerSelected;
+  final String selectedPaymentMethod;
+  final ValueChanged<String>? onPaymentMethodChanged;
 
   const QuickAddShopForm({
     super.key,
@@ -66,6 +69,8 @@ class QuickAddShopForm extends StatefulWidget {
     this.dueDate,
     this.onDueDateChanged,
     this.onCustomerSelected,
+    this.selectedPaymentMethod = 'cash',
+    this.onPaymentMethodChanged,
   });
 
   @override
@@ -75,17 +80,116 @@ class QuickAddShopForm extends StatefulWidget {
 class _QuickAddShopFormState extends State<QuickAddShopForm> {
   List<SelectedInventoryItem> _selectedInventoryItems = [];
   CustomerEntity? _selectedCustomer;
+  bool _isAutoUpdatingAmounts = false;
 
   @override
   void initState() {
     super.initState();
     widget.customerController.addListener(_onCustomerTextChanged);
+    widget.totalAmountController.addListener(_onTotalAmountChanged);
+    widget.paidController.addListener(_onPaidAmountChanged);
+    widget.debtController.addListener(_onDebtAmountChanged);
   }
 
   @override
   void dispose() {
     widget.customerController.removeListener(_onCustomerTextChanged);
+    widget.totalAmountController.removeListener(_onTotalAmountChanged);
+    widget.paidController.removeListener(_onPaidAmountChanged);
+    widget.debtController.removeListener(_onDebtAmountChanged);
     super.dispose();
+  }
+
+  void _onTotalAmountChanged() {
+    if (!widget.isShop) return;
+    if (_isAutoUpdatingAmounts) return;
+    _isAutoUpdatingAmounts = true;
+    try {
+      final total = double.tryParse(widget.totalAmountController.text) ?? 0.0;
+      if (widget.selectedPaymentMethod == 'cash' ||
+          widget.selectedPaymentMethod == 'card') {
+        widget.paidController.text = widget.totalAmountController.text;
+        widget.debtController.text = '0';
+      } else {
+        final paid = double.tryParse(widget.paidController.text) ?? 0.0;
+        final debt = (total - paid).clamp(0.0, double.infinity);
+        widget.debtController.text = debt.toSmartAmount();
+      }
+    } finally {
+      _isAutoUpdatingAmounts = false;
+    }
+    if (mounted) setState(() {});
+  }
+
+  void _onPaidAmountChanged() {
+    if (_isAutoUpdatingAmounts) return;
+    _isAutoUpdatingAmounts = true;
+    try {
+      if (widget.isShop) {
+        final total = double.tryParse(widget.totalAmountController.text) ?? 0.0;
+        final paid = double.tryParse(widget.paidController.text) ?? 0.0;
+        final debt = (total - paid).clamp(0.0, double.infinity);
+        widget.debtController.text = debt.toSmartAmount();
+      }
+    } finally {
+      _isAutoUpdatingAmounts = false;
+    }
+    if (mounted) setState(() {});
+  }
+
+  void _onDebtAmountChanged() {
+    if (mounted) setState(() {});
+  }
+
+  void _handlePaymentMethodChanged(String method) {
+    widget.onPaymentMethodChanged?.call(method);
+    _isAutoUpdatingAmounts = true;
+    try {
+      if (widget.isShop) {
+        final total = double.tryParse(widget.totalAmountController.text) ?? 0.0;
+        if (method == 'cash' || method == 'card') {
+          final currentPaid = double.tryParse(widget.paidController.text) ?? 0.0;
+          if (currentPaid == 0 && total > 0) {
+            widget.paidController.text = widget.totalAmountController.text;
+            widget.debtController.text = '0';
+          }
+        } else {
+          final currentPaid = double.tryParse(widget.paidController.text) ?? 0.0;
+          if (currentPaid >= total && total > 0) {
+            widget.paidController.text = '0';
+            widget.debtController.text = widget.totalAmountController.text;
+          } else {
+            final debt = (total - currentPaid).clamp(0.0, double.infinity);
+            widget.debtController.text = debt.toSmartAmount();
+          }
+          if (widget.customerController.text.trim().isEmpty) {
+            widget.customerFocus.requestFocus();
+          }
+        }
+      } else {
+        // Cafe mode
+        final currentPaid = double.tryParse(widget.paidController.text) ?? 0.0;
+        final currentDebt = double.tryParse(widget.debtController.text) ?? 0.0;
+
+        if (method == 'cash' || method == 'card') {
+          if (currentPaid == 0 && currentDebt > 0) {
+            widget.paidController.text = currentDebt.toSmartAmount();
+            widget.debtController.text = '0';
+          }
+        } else {
+          if (currentDebt == 0 && currentPaid > 0) {
+            widget.debtController.text = currentPaid.toSmartAmount();
+            widget.paidController.text = '0';
+          }
+          if (widget.customerController.text.trim().isEmpty) {
+            widget.customerFocus.requestFocus();
+          }
+        }
+      }
+    } finally {
+      _isAutoUpdatingAmounts = false;
+    }
+    if (mounted) setState(() {});
   }
 
   void _onCustomerTextChanged() {
@@ -150,12 +254,90 @@ class _QuickAddShopFormState extends State<QuickAddShopForm> {
           }
 
           final formattedTotal = totalPrice.toSmartAmount();
-          widget.totalAmountController.text = formattedTotal;
-
-          final paid = double.tryParse(widget.paidController.text) ?? 0.0;
-          final debt = (totalPrice - paid).clamp(0.0, double.infinity);
-          widget.debtController.text = debt.toSmartAmount();
+          _isAutoUpdatingAmounts = true;
+          try {
+            widget.totalAmountController.text = formattedTotal;
+            if (widget.selectedPaymentMethod == 'cash' ||
+                widget.selectedPaymentMethod == 'card') {
+              widget.paidController.text = formattedTotal;
+              widget.debtController.text = '0';
+            } else {
+              final paid = double.tryParse(widget.paidController.text) ?? 0.0;
+              final debt = (totalPrice - paid).clamp(0.0, double.infinity);
+              widget.debtController.text = debt.toSmartAmount();
+            }
+          } finally {
+            _isAutoUpdatingAmounts = false;
+          }
         },
+      ),
+    );
+  }
+
+  Widget _buildPaymentMethodInfoCard() {
+    final paid = double.tryParse(widget.paidController.text) ?? 0.0;
+    final debt = double.tryParse(widget.debtController.text) ?? 0.0;
+    final hasDebt = debt > 0.001;
+
+    final IconData icon;
+    final Color color;
+    final String text;
+
+    if (widget.selectedPaymentMethod == 'debt') {
+      if (paid <= 0) {
+        icon = Icons.receipt_long_rounded;
+        color = const Color(0xFFE65100);
+        text = AppStrings.debtSaleInfoDesc.tr();
+      } else {
+        icon = Icons.payments_outlined;
+        color = const Color(0xFFE65100);
+        text = AppStrings.invoiceDebtPartialInfo.tr();
+      }
+    } else if (widget.selectedPaymentMethod == 'card') {
+      if (!hasDebt) {
+        icon = Icons.credit_card_rounded;
+        color = AppColors.primaryColor;
+        text = AppStrings.cardSaleInfoDesc.tr();
+      } else {
+        icon = Icons.info_outline_rounded;
+        color = AppColors.orange;
+        text = AppStrings.invoiceCardPartialInfo.tr();
+      }
+    } else {
+      // cash
+      if (!hasDebt) {
+        icon = Icons.check_circle_outline_rounded;
+        color = const Color(0xFF2E7D32);
+        text = AppStrings.cashSaleInfoDesc.tr();
+      } else {
+        icon = Icons.info_outline_rounded;
+        color = AppColors.orange;
+        text = AppStrings.invoiceCashPartialInfo.tr();
+      }
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.25), width: 1),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyles.customStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -354,7 +536,14 @@ class _QuickAddShopFormState extends State<QuickAddShopForm> {
                 ? totalAmountFocus.requestFocus()
                 : paidFocus.requestFocus(),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
+          PaymentMethodSelector(
+            selectedMethod: widget.selectedPaymentMethod,
+            onMethodChanged: _handlePaymentMethodChanged,
+          ),
+          const SizedBox(height: 10),
+          _buildPaymentMethodInfoCard(),
+          const SizedBox(height: 18),
           Row(
             children: [
               if (isShop)
@@ -445,12 +634,13 @@ class _QuickAddShopFormState extends State<QuickAddShopForm> {
             valueListenable: debtController,
             builder: (context, value, child) {
               final debt = double.tryParse(value.text) ?? 0.0;
-              if (debt <= 0) return const SizedBox.shrink();
+              final isDebtMethod = widget.selectedPaymentMethod == 'debt';
+              if (debt <= 0 && !isDebtMethod) return const SizedBox.shrink();
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 12),
-                  if (isShop)
+                  if (isShop && debt > 0)
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Container(
@@ -459,22 +649,25 @@ class _QuickAddShopFormState extends State<QuickAddShopForm> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.primaryColor.withValues(alpha: 0.05),
+                          color: const Color(0xFFE65100).withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: const Color(0xFFE65100).withValues(alpha: 0.3),
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.info_outline,
                               size: 14,
-                              color: AppColors.primaryColor,
+                              color: Color(0xFFE65100),
                             ),
                             const SizedBox(width: 6),
                             Text(
                               "${AppStrings.remainingDebt.tr()}: ${value.text} ${AppStrings.currencyEgp.tr()}",
                               style: TextStyles.customStyle(
-                                color: AppColors.primaryColor,
+                                color: const Color(0xFFE65100),
                                 fontWeight: FontWeight.w600,
                                 fontSize: 14,
                               ),

@@ -1114,9 +1114,10 @@ class InventoryRepositoryImpl implements InventoryRepository {
       final cleanId = purchase.id.replaceAll('pur_', '');
       final debtId = 'debt_pur_$cleanId';
 
-      if (purchase.paymentMethod == 'debt') {
-        final remainingAmount = purchase.totalAmount - purchase.paidAmount;
+      final remainingAmount = (purchase.totalAmount - purchase.paidAmount).clamp(0.0, double.infinity);
+      final hasDebt = remainingAmount > 0 || purchase.paymentMethod == 'debt';
 
+      if (hasDebt) {
         final debtItem = MyDebtItemEntity(
           id: debtId,
           uid: uid,
@@ -1166,7 +1167,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
     required InventoryPurchaseEntity newPurchase,
   }) async {
     try {
-      if (newPurchase.paymentMethod == 'debt') {
+      if (newPurchase.remainingDebt > 0 || newPurchase.paymentMethod == 'debt') {
         await _syncPurchaseToMyDebts(newPurchase);
       } else {
         await _removePurchaseFromMyDebts(oldPurchase);
@@ -1194,7 +1195,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
       relatedEntityId: purchase.id,
       relatedOperationId: purchase.id,
       createdAt: purchase.createdAt,
-      allowNegativeBalance: isOfflineSync,
+      allowNegativeBalance: isOfflineSync || purchase.paymentMethod == 'card',
+      paymentMethod: purchase.paymentMethod == 'card' ? 'card' : 'cash',
     );
   }
 
@@ -1251,7 +1253,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
     bool isOfflineSync = false,
   }) async {
     try {
-      final deltaPaid = newPurchase.paidAmount - oldPurchase.paidAmount;
+      final oldPaid = oldPurchase.paidAmount;
+      final newPaid = newPurchase.paidAmount;
+      final deltaPaid = newPaid - oldPaid;
       if (deltaPaid == 0) return;
 
       final uid = _currentUid ?? AppStrings.userToken;
@@ -1559,44 +1563,6 @@ class InventoryRepositoryImpl implements InventoryRepository {
       }
 
       final bool hasConnection = await connectionChecker.hasConnection;
-      final double additionalPaid =
-          newPurchase.paidAmount - oldPurchase.paidAmount;
-
-      if (hasConnection && AppStrings.isVaultEnabled() && additionalPaid != 0) {
-        final uid = _currentUid ?? AppStrings.userToken;
-        if (uid.isNotEmpty) {
-          final cleanId = newPurchase.id.replaceAll('pur_', '');
-          if (additionalPaid > 0) {
-            await VaultRemoteDataSourceImpl.syncVaultTransaction(
-              uid: uid,
-              transactionId:
-                  'vault_tx_pur_${cleanId}_upd_${DateTime.now().millisecondsSinceEpoch}',
-              amount: additionalPaid,
-              direction: VaultTransactionDirection.outFlow,
-              source: VaultTransactionSource.inventory,
-              type: 'purchase_payment_update',
-              description:
-                  'تعديل دفعة مشتريات #$cleanId - ${newPurchase.supplierName}',
-              relatedEntityId: newPurchase.id,
-              createdAt: DateTime.now(),
-            );
-          } else {
-            await VaultRemoteDataSourceImpl.syncVaultTransaction(
-              uid: uid,
-              transactionId:
-                  'vault_tx_pur_${cleanId}_ref_${DateTime.now().millisecondsSinceEpoch}',
-              amount: additionalPaid.abs(),
-              direction: VaultTransactionDirection.inFlow,
-              source: VaultTransactionSource.inventory,
-              type: 'purchase_payment_refund',
-              description:
-                  'استرداد فارق تعديل مشتريات #$cleanId - ${newPurchase.supplierName}',
-              relatedEntityId: newPurchase.id,
-              createdAt: DateTime.now(),
-            );
-          }
-        }
-      }
 
       // 1. Save updated purchase model locally
       final model = InventoryPurchaseModel.fromEntity(
