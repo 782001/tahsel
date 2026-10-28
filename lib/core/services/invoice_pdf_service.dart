@@ -663,7 +663,7 @@ class InvoicePdfService {
                 if (invoice.dueDate != null && !invoice.isQuotation) ...[
                   pw.SizedBox(height: 2),
                   pw.Text(
-                    "${isArabic ? 'تاريخ الاستحقاق:' : 'Due Date:'} ${DateFormat('yyyy/MM/dd').format(invoice.dueDate!)}",
+                    "${isArabic ? 'تاريخ الاستحقاق:' : 'Due Date:'} ${DateFormat('dd/MM/yyyy', isArabic ? 'ar' : 'en').format(invoice.dueDate!)}",
                     style: const pw.TextStyle(
                       fontSize: 9,
                       color: PdfColors.grey800,

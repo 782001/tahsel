@@ -189,7 +189,6 @@
   "customer_name_hint": "اكتب اسم الزبون هنا...",
   "product_name_hint": "ايه اللي اتباع؟",
   "weekly": "أسبوعى",
-
   "net_profit": "صافي الربح",
   "total_income": "إجمالي الدخل",
   "total_expenses": "إجمالي المصاريف",
@@ -311,7 +310,6 @@
   "whatsapp_msg_template": "عزيزي {name}،\nنحيطكم علماً بأنه قد تم استلام مبلغ *{amount} {currency}.* بنجاح.\nإجمالي الرصيد المتبقي: *{remaining} {currency}.* حتى تاريخ {date}.\nالبيان: *{note}*\nشكرا على ثقتكم.",
   "whatsapp_edit_msg_template": "عزيزي {name}،\nنود إعلامكم بأنه قد تم تحديث سجلاتكم وتعديل قيمة المديونية.\nالقيمة الجديدة: *{amount} {currency}.*\nإجمالي الرصيد المتبقي: *{remaining} {currency}.* حتى تاريخ {date}.\nالبيان: *{note}*\nشكرا على ثقتكم.",
   "whatsapp_delete_msg_template": "عزيزي {name}،\nنود إعلامكم بأنه قد تم إلغاء المديونية التالية من سجلاتنا.\nالبيان: *{note}*\nتاريخ الإلغاء: {date}.\nفي حال وجود أي استفسار، يسعدنا تواصلكم معنا.\nشكرا على ثقتكم.",
-
   "sms_msg_template": "عزيزي {name}،\nتم استلام {amount} {currency}. بنجاح.\nالرصيد المتبقي: {remaining} {currency}. حتى {date}.\nالبيان: {note}\nشكرا على ثقتكم.",
   "sms_edit_msg_template": "عزيزي {name}،\nتم تحديث سجلات مديونيتكم.\nالقيمة الجديدة: {amount} {currency}.\nالرصيد المتبقي: {remaining} {currency}. حتى {date}.\nالبيان: {note}\nشكرا على ثقتكم.",
   "sms_delete_msg_template": "عزيزي {name}،\nتم إلغاء مديونية ({note}) من سجلاتنا بتاريخ {date}.\nلأي استفسار، يرجى التواصل معنا.\nشكرا على ثقتكم.",
@@ -359,7 +357,6 @@
   "total_purchases": "إجمالي المشتريات",
   "total_paid": "إجمالي المدفوع",
   "remaining_amount": "المبلغ المتبقي",
-
   "remaining_balance": "الرصيد المتبقي",
   "all_operations": "كافة العمليات",
   "purchase": "شراء",
@@ -869,7 +866,6 @@
   "update": "تحديث",
   "from": "من",
   "to": "إلى",
-
   "piece": "قطعة",
   "no_phone": "لا يوجد هاتف",
   "initial_stock": "رصيد أولي",
@@ -1023,7 +1019,6 @@
   "total_required_amount": "المبلغ المطلوب",
   "total_collected_amount": "المُحصل فعلياً",
   "total_remaining_amount": "المتبقي للتحصيل",
-
   "total_shipments": "إجمالي الشحنات",
   "matched_count": "متطابق",
   "missing_from_shipping_count": "غير موجود بالشحن",
@@ -1259,7 +1254,6 @@
   "print_report": "طباعة التقرير",
   "print_vault_report": "طباعة تقرير الخزنة",
   "print_preview": "معاينة وطباعة",
-
   "print_document": "طباعة المستند",
   "print_success": "تم إرسال أمر الطباعة بنجاح",
   "print_failed": "تعذر إرسال أمر الطباعة",
@@ -1726,5 +1720,6 @@
   "invoice_item_badge_added": "مضاف ({qty})",
   "barcode_not_found_in_inventory": "لم يتم العثور على صنف بالباركود \"{barcode}\" في المخزن",
   "invoice_inventory_max_stock_reached": "الصنف \"{name}\" وصل للحد الأقصى المتاح بالمخزن ({max})",
-  "barcode_scanned_item_added": "تمت إضافة \"{name}\" بنجاح بالباركود"
+  "barcode_scanned_item_added": "تمت إضافة \"{name}\" بنجاح بالباركود",
+  "preparing_print": "جاري تجهيز المستند للطباعة..."
 }

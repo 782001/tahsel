@@ -152,7 +152,7 @@
   "quick_add": "Quick Add",
   "playstation": "Playstation",
   "shop": "Shop",
-  "quick_pay": "Quick Pay",    
+  "quick_pay": "Quick Pay",
   "by_time": "By Time",
   "by_turn": "By Turn",
   "customer_name": "Customer Name",
@@ -293,7 +293,6 @@
   "whatsapp_msg_template": "Dear {name},\nWe would like to inform you that an amount of *{amount} {currency}* has been successfully received.\nRemaining balance: *{remaining} {currency}* as of {date}.\nDescription: *{note}*\nThank you for your business.",
   "whatsapp_edit_msg_template": "Dear {name},\nPlease be informed that your debt record has been updated.\nNew amount: *{amount} {currency}*\nRemaining balance: *{remaining} {currency}* as of {date}.\nDescription: *{note}*\nThank you for your business.",
   "whatsapp_delete_msg_template": "Dear {name},\nPlease be informed that the following debt has been removed from our records.\nDescription: *{note}*\nCancellation date: {date}.\nFor any inquiries, please feel free to contact us.\nThank you.",
-
   "sms_msg_template": "Dear {name},\n{amount} {currency} has been successfully received.\nRemaining balance: {remaining} {currency} as of {date}.\nDesc: {note}\nThank you.",
   "sms_edit_msg_template": "Dear {name},\nYour debt record has been updated.\nNew amount: {amount} {currency}\nRemaining balance: {remaining} {currency} as of {date}.\nDesc: {note}\nThank you.",
   "sms_delete_msg_template": "Dear {name},\nThe debt ({note}) has been removed from our records on {date}.\nFor inquiries, please contact us.\nThank you.",
@@ -341,7 +340,6 @@
   "total_purchases": "Total Purchases",
   "total_paid": "Total Paid",
   "remaining_amount": "Remaining Amount",
-
   "remaining_balance": "Remaining Balance",
   "all_operations": "All Operations",
   "purchase": "Purchase",
@@ -493,7 +491,6 @@
   "total_employees": "Total Employees",
   "reports_summary_title": "Monthly Reports Summary",
   "reports_summary_desc": "Visual performance review based on overall attendance and paid wages.",
-
   "hourly": "Hourly",
   "monthly": "Monthly",
   "daily": "Daily",
@@ -1001,7 +998,6 @@
   "total_required_amount": "Required Amount",
   "total_collected_amount": "Collected Amount",
   "total_remaining_amount": "Remaining Amount",
-
   "total_shipments": "Total Shipments",
   "matched_count": "Matched",
   "missing_from_shipping_count": "Missing from Shipping",
@@ -1122,7 +1118,6 @@
   "source_type": "Source Type",
   "deposit_success": "Deposit recorded successfully",
   "withdraw_success": "Withdrawal recorded successfully",
-
   "delete_transaction": "Delete Transaction",
   "delete_transaction_confirm": "Are you sure you want to delete this financial transaction from Cashbox?",
   "online_only_notice": "Cashbox is online-only and updates automatically upon successful sync",
@@ -1254,7 +1249,6 @@
   "print_report": "Print Report",
   "print_vault_report": "Print Vault Report",
   "print_preview": "Print Preview",
-
   "print_document": "Print Document",
   "print_success": "Print job sent successfully",
   "print_failed": "Failed to send print job",
@@ -1726,8 +1720,6 @@
   "invoice_item_badge_added": "Added ({qty})",
   "barcode_not_found_in_inventory": "No item found in inventory with barcode \"{barcode}\"",
   "invoice_inventory_max_stock_reached": "Item \"{name}\" reached maximum available stock ({max})",
-  "barcode_scanned_item_added": "\"{name}\" successfully added via barcode"
+  "barcode_scanned_item_added": "\"{name}\" successfully added via barcode",
+  "preparing_print": "Preparing document for printing..."
 }
-
-
-

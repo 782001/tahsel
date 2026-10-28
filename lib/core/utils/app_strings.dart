@@ -1179,6 +1179,7 @@ class AppStrings {
   static const String printDocument = "print_document";
   static const String printSuccess = "print_success";
   static const String printFailed = "print_failed";
+  static const String preparingPrint = "preparing_print";
   static const String pdfErrorLoading = "pdf_error_loading";
   static const String pdfSaving = "pdf_saving";
   static const String pdfSavedSuccessfully = "pdf_saved_successfully";
