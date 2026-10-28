@@ -58,9 +58,15 @@ class VaultRepositoryImpl implements VaultRepository {
     required String uid,
     required double amount,
     String? note,
+    String paymentMethod = 'cash',
   }) async {
     try {
-      await remoteDataSource.depositManual(uid: uid, amount: amount, note: note);
+      await remoteDataSource.depositManual(
+        uid: uid,
+        amount: amount,
+        note: note,
+        paymentMethod: paymentMethod,
+      );
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -72,9 +78,15 @@ class VaultRepositoryImpl implements VaultRepository {
     required String uid,
     required double amount,
     String? note,
+    String paymentMethod = 'cash',
   }) async {
     try {
-      await remoteDataSource.withdrawManual(uid: uid, amount: amount, note: note);
+      await remoteDataSource.withdrawManual(
+        uid: uid,
+        amount: amount,
+        note: note,
+        paymentMethod: paymentMethod,
+      );
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(e.toString()));

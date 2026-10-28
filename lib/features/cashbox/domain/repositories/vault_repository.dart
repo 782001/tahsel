@@ -26,12 +26,14 @@ abstract class VaultRepository {
     required String uid,
     required double amount,
     String? note,
+    String paymentMethod = 'cash',
   });
 
   Future<Either<Failure, void>> withdrawManual({
     required String uid,
     required double amount,
     String? note,
+    String paymentMethod = 'cash',
   });
 
   Future<Either<Failure, void>> recordTransaction({

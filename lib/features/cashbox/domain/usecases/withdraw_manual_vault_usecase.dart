@@ -11,11 +11,13 @@ class WithdrawManualVaultUseCase {
     required String uid,
     required double amount,
     String? note,
+    String paymentMethod = 'cash',
   }) {
     return repository.withdrawManual(
       uid: uid,
       amount: amount,
       note: note,
+      paymentMethod: paymentMethod,
     );
   }
 }

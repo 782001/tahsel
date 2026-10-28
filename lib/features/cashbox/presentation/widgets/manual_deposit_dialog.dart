@@ -6,10 +6,11 @@ import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/shared/widgets/fields/payment_method_selector.dart';
 import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
 class ManualDepositDialog extends StatefulWidget {
-  final Function(double amount, String? note) onSubmit;
+  final Function(double amount, String? note, String paymentMethod) onSubmit;
 
   const ManualDepositDialog({
     super.key,
@@ -24,6 +25,7 @@ class _ManualDepositDialogState extends State<ManualDepositDialog> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _noteController = TextEditingController();
   String? _errorText;
+  String _selectedPaymentMethod = 'cash';
 
   @override
   void dispose() {
@@ -49,7 +51,7 @@ class _ManualDepositDialogState extends State<ManualDepositDialog> {
     }
 
     final note = _noteController.text.trim();
-    widget.onSubmit(amount, note.isNotEmpty ? note : null);
+    widget.onSubmit(amount, note.isNotEmpty ? note : null, _selectedPaymentMethod);
     Navigator.of(context).pop();
   }
 
@@ -147,6 +149,16 @@ class _ManualDepositDialogState extends State<ManualDepositDialog> {
                       ),
                     ),
                   ],
+                  const SizedBox(height: 16),
+                  PaymentMethodSelector(
+                    selectedMethod: _selectedPaymentMethod,
+                    showDebtOption: false,
+                    onMethodChanged: (method) {
+                      setState(() {
+                        _selectedPaymentMethod = method;
+                      });
+                    },
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     AppStrings.enterNotes.tr(),

@@ -8,12 +8,14 @@ class PayDebtParams {
   final String customerName;
   final double amount;
   final DateTime? paymentDate;
+  final String paymentMethod;
 
   PayDebtParams({
     required this.uid,
     required this.customerName,
     required this.amount,
     this.paymentDate,
+    this.paymentMethod = 'cash',
   });
 }
 
@@ -29,6 +31,7 @@ class PayDebtUseCase implements BaseUseCase<void, PayDebtParams> {
       params.customerName,
       params.amount,
       paymentDate: params.paymentDate,
+      paymentMethod: params.paymentMethod,
     );
   }
 }

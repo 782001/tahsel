@@ -9,6 +9,7 @@ class MyDebtPaymentEntity extends Equatable {
   final String? relatedTo;
   final double remainingAmount;
   final DateTime createdAt;
+  final String? paymentMethod;
 
   const MyDebtPaymentEntity({
     this.id,
@@ -19,6 +20,7 @@ class MyDebtPaymentEntity extends Equatable {
     this.relatedTo,
     required this.remainingAmount,
     required this.createdAt,
+    this.paymentMethod = 'cash',
   });
 
   @override
@@ -31,5 +33,6 @@ class MyDebtPaymentEntity extends Equatable {
     relatedTo,
     remainingAmount,
     createdAt,
+    paymentMethod,
   ];
 }

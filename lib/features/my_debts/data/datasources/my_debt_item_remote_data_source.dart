@@ -31,6 +31,7 @@ abstract class MyDebtItemRemoteDataSource {
     double amount, {
     String? note,
     DateTime? paymentDate,
+    String paymentMethod = 'cash',
   });
   Future<void> markPersonAsPaid(String uid, String personName);
   Future<void> payItem({
@@ -39,6 +40,7 @@ abstract class MyDebtItemRemoteDataSource {
     required double amount,
     String? note,
     DateTime? paymentDate,
+    String paymentMethod = 'cash',
   });
   Future<void> deleteDebtItem(String uid, String debtId);
   Stream<List<MyDebtItemModel>> getDebtsStream(String uid);
@@ -538,6 +540,8 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           debt.operationType.contains('Purchase'));
 
       // Balance Check before batch commit for initial paid amount (Only for non-purchase debts because purchases already perform balance check)
+      final method = debt.paymentMethod ?? 'cash';
+      final isCard = method == 'card';
       if (AppStrings.isVaultEnabled() && debt.paidAmount > 0 && !isPurchase) {
         final summaryDoc = await userRef
             .collection('vault')
@@ -598,6 +602,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
                 )
               : FieldValue.serverTimestamp(),
           'type': debt.remainingAmount <= 0 ? 'full' : 'partial',
+          'paymentMethod': method,
         });
 
         // Only sync to Vault if NOT a purchase (since InventoryRepository already handles the purchase vault transaction)
@@ -614,7 +619,10 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
             'direction': 'out',
             'source': VaultTransactionSource.myDebt.name,
             'type': 'debt_payment',
-            'description': 'سداد دين للمورد/الشخص: ${debt.personName ?? ''}',
+            'paymentMethod': method,
+            'description': isCard
+                ? 'سداد دين (كارت) للمورد/الشخص: ${debt.personName ?? ''}'
+                : 'سداد دين للمورد/الشخص: ${debt.personName ?? ''}',
             'relatedEntityId': actualPaymentRef.id,
             'relatedOperationId': debt.id,
             'createdAt': debt.timestamp != null
@@ -757,6 +765,22 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           .collection('my_debt_items')
           .doc(debt.id);
 
+      if (AppStrings.isVaultEnabled() && payment.amountPaid > 0) {
+        final vaultSummaryRef = firestore
+            .collection('users')
+            .doc(uid)
+            .collection('vault')
+            .doc('summary');
+        final vaultSnap = await vaultSummaryRef.get();
+        final double currentVaultBalance =
+            (vaultSnap.exists && vaultSnap.data() != null)
+            ? ((vaultSnap.data()!['currentBalance'] as num?)?.toDouble() ?? 0.0)
+            : 0.0;
+        if (currentVaultBalance <= 0 || currentVaultBalance < payment.amountPaid) {
+          throw Exception(AppStrings.insufficientBalance);
+        }
+      }
+
       final paymentRef = debtRef.collection('payments').doc();
       final batch = firestore.batch();
 
@@ -795,6 +819,9 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
           debt.operationType.contains('مشتريات') ||
           debt.operationType.contains('Purchase'));
 
+      final method = payment.paymentMethod ?? 'cash';
+      final isCard = method == 'card';
+
       await VaultRemoteDataSourceImpl.syncVaultTransaction(
         firestore: firestore,
         uid: uid,
@@ -806,11 +833,17 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
             : VaultTransactionSource.myDebt,
         type: isPurchase ? 'purchase_payment' : 'debt_payment',
         description: isPurchase
-            ? 'سداد دفعة شراء للمورد: ${debt.personName ?? ''}'
-            : 'سداد دين للمورد/الشخص: ${debt.personName ?? ''}',
+            ? (isCard
+                ? 'سداد دفعة شراء (كارت) للمورد: ${debt.personName ?? ''}'
+                : 'سداد دفعة شراء للمورد: ${debt.personName ?? ''}')
+            : (isCard
+                ? 'سداد دين (كارت) للمورد/الشخص: ${debt.personName ?? ''}'
+                : 'سداد دين للمورد/الشخص: ${debt.personName ?? ''}'),
         relatedEntityId: paymentRef.id,
         relatedOperationId: debt.id,
         createdAt: payment.createdAt,
+        allowNegativeBalance: false,
+        paymentMethod: method,
       );
 
       await _recalculatePersonTotals(uid, debt.personName ?? '');
@@ -827,6 +860,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
     double amount, {
     String? note,
     DateTime? paymentDate,
+    String paymentMethod = 'cash',
   }) async {
     try {
       final snapshot = await firestore
@@ -926,6 +960,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
               : FieldValue.serverTimestamp(),
           'type': isPaid ? 'full' : 'partial',
           'note': note,
+          'paymentMethod': paymentMethod,
         });
 
         createdPayments.add({
@@ -963,6 +998,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
             (operationId != null && operationId.startsWith('pur_')));
 
         if (amountPaid > 0) {
+          final isCard = paymentMethod == 'card';
           await VaultRemoteDataSourceImpl.syncVaultTransaction(
             firestore: firestore,
             uid: uid,
@@ -974,11 +1010,17 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
                 : VaultTransactionSource.myDebt,
             type: isPurchase ? 'purchase_payment' : 'debt_payment',
             description: isPurchase
-                ? 'سداد دفعة شراء للمورد: $personName'
-                : 'سداد دين للمورد/الشخص: $personName',
+                ? (isCard
+                    ? 'سداد دفعة شراء (كارت) للمورد: $personName'
+                    : 'سداد دفعة شراء للمورد: $personName')
+                : (isCard
+                    ? 'سداد دين (كارت) للمورد/الشخص: $personName'
+                    : 'سداد دين للمورد/الشخص: $personName'),
             relatedEntityId: paymentId,
             relatedOperationId: debtId,
             createdAt: paymentDate ?? DateTime.now(),
+            allowNegativeBalance: false,
+            paymentMethod: paymentMethod,
           );
         }
 
@@ -1209,6 +1251,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
     required double amount,
     String? note,
     DateTime? paymentDate,
+    String paymentMethod = 'cash',
   }) async {
     try {
       final debtRef = firestore
@@ -1294,6 +1337,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
               : FieldValue.serverTimestamp(),
           'type': isPaid ? 'full' : 'partial',
           'note': note,
+          'paymentMethod': paymentMethod,
         });
 
         // 4. Update person doc
@@ -1316,6 +1360,7 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
             (operationId != null && operationId!.startsWith('pur_')));
 
         if (amount > 0) {
+          final isCard = paymentMethod == 'card';
           await VaultRemoteDataSourceImpl.syncVaultTransaction(
             firestore: firestore,
             uid: uid,
@@ -1327,11 +1372,17 @@ class MyDebtItemRemoteDataSourceImpl implements MyDebtItemRemoteDataSource {
                 : VaultTransactionSource.myDebt,
             type: isPurchase ? 'purchase_payment' : 'debt_payment',
             description: isPurchase
-                ? 'سداد دفعة شراء للمورد: $personName'
-                : 'سداد دين للمورد/الشخص: $personName',
+                ? (isCard
+                    ? 'سداد دفعة شراء (كارت) للمورد: $personName'
+                    : 'سداد دفعة شراء للمورد: $personName')
+                : (isCard
+                    ? 'سداد دين (كارت) للمورد/الشخص: $personName'
+                    : 'سداد دين للمورد/الشخص: $personName'),
             relatedEntityId: paymentId,
             relatedOperationId: debtId,
             createdAt: paymentDate ?? DateTime.now(),
+            allowNegativeBalance: false,
+            paymentMethod: paymentMethod,
           );
         }
 

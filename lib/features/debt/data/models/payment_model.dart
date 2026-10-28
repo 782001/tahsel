@@ -12,6 +12,7 @@ class PaymentModel extends PaymentEntity {
     required super.type,
     super.activityName,
     super.relatedTo,
+    super.paymentMethod,
   });
 
   factory PaymentModel.fromJson(Map<String, dynamic> json, String id) {
@@ -30,6 +31,7 @@ class PaymentModel extends PaymentEntity {
       ),
       activityName: json['activityName'],
       relatedTo: json['relatedTo'],
+      paymentMethod: json['paymentMethod'] as String? ?? 'cash',
     );
   }
 
@@ -43,6 +45,7 @@ class PaymentModel extends PaymentEntity {
       'type': type.name,
       'activityName': activityName,
       'relatedTo': relatedTo,
+      'paymentMethod': paymentMethod ?? 'cash',
     };
   }
 
@@ -57,6 +60,7 @@ class PaymentModel extends PaymentEntity {
       type: entity.type,
       activityName: entity.activityName,
       relatedTo: entity.relatedTo,
+      paymentMethod: entity.paymentMethod,
     );
   }
 }

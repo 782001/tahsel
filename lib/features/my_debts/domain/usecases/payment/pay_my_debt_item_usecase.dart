@@ -13,6 +13,7 @@ class PayMyDebtItemUseCase {
     required double amount,
     String? note,
     DateTime? paymentDate,
+    String paymentMethod = 'cash',
   }) async {
     return await repository.payMyDebtItem(
       uid: uid,
@@ -20,6 +21,7 @@ class PayMyDebtItemUseCase {
       amount: amount,
       note: note,
       paymentDate: paymentDate,
+      paymentMethod: paymentMethod,
     );
   }
 }

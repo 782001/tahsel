@@ -11,7 +11,10 @@ class MarkItemAsPaidUseCase implements BaseUseCase<void, DebtEntity> {
   MarkItemAsPaidUseCase({required this.repository});
 
   @override
-  Future<Either<Failure, void>> call(DebtEntity debt) {
+  Future<Either<Failure, void>> call(
+    DebtEntity debt, {
+    String paymentMethod = 'cash',
+  }) {
     final amountPaid = debt.remainingAmount;
     final newPaidAmount = debt.totalAmount;
     const newRemainingAmount = 0.0;
@@ -29,8 +32,13 @@ class MarkItemAsPaidUseCase implements BaseUseCase<void, DebtEntity> {
       remainingAmount: newRemainingAmount,
       createdAt: DateTime.now(),
       type: PaymentType.full,
+      paymentMethod: paymentMethod,
     );
 
-    return repository.payDebt(updatedDebt, payment);
+    return repository.payDebt(
+      updatedDebt,
+      payment,
+      paymentMethod: paymentMethod,
+    );
   }
 }

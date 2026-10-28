@@ -30,8 +30,13 @@ abstract class DebtRemoteDataSource {
     String customerName,
     double amount, {
     DateTime? paymentDate,
+    String paymentMethod = 'cash',
   });
-  Future<void> markCustomerAsPaid(String uid, String customerName);
+  Future<void> markCustomerAsPaid(
+    String uid,
+    String customerName, {
+    String paymentMethod = 'cash',
+  });
   Future<void> deleteCustomerDebts(String uid, String customerName);
   Future<void> deleteDebtItem(String uid, String debtId);
   Future<void> updatePayment({
@@ -630,6 +635,8 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
         final actualPaymentRef = debtRef
             .collection('payments')
             .doc('${debt.operationId}_payment');
+        final method = debt.paymentMethod ?? 'cash';
+        final isCard = method == 'card';
         batch.set(actualPaymentRef, {
           'uid': debt.uid,
           'debtId': debt.operationId,
@@ -645,6 +652,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
               : PaymentType.partial.name,
           'relatedTo': debt.customerName,
           'activityName': debt.productOrSessionDetails,
+          'paymentMethod': method,
         });
 
         if (AppStrings.isVaultEnabled() && debt.paidAmount > 0) {
@@ -662,7 +670,9 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             'type': debt.remainingAmount <= 0
                 ? 'full_settlement'
                 : 'partial_payment',
-            'description': 'تحصيل دفعة من العميل: ${debt.customerName ?? ''}',
+            'description': isCard
+                ? 'تحصيل دفعة (كارت) من العميل: ${debt.customerName ?? ''}'
+                : 'تحصيل دفعة من العميل: ${debt.customerName ?? ''}',
             'relatedEntityId': '${debt.operationId}_payment',
             'relatedOperationId': debt.operationId,
             'createdAt': debt.timestamp != null
@@ -670,7 +680,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
                     debt.timestamp!.add(const Duration(milliseconds: 1)),
                   )
                 : FieldValue.serverTimestamp(),
-            'paymentMethod': debt.paymentMethod ?? 'cash',
+            'paymentMethod': method,
           });
 
           batch.set(vaultSummaryRef, {
@@ -870,6 +880,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
 
         // Record the payment in sub-collection
         final paymentRef = debtRef.collection('payments').doc();
+        final method = payment.paymentMethod ?? 'cash';
         transaction.set(paymentRef, {
           'uid': uid,
           'debtId': debtRef.id,
@@ -881,6 +892,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
           'type': isPaid ? PaymentType.full.name : PaymentType.partial.name,
           'relatedTo': debtData['customerName'],
           'activityName': debtData['productOrSessionDetails'],
+          'paymentMethod': method,
         });
 
         // Record Vault Movement (Atomic Inflow)
@@ -890,6 +902,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
               .doc('vault_tx_cust_${paymentRef.id}');
           final vaultSummaryRef = userRef.collection('vault').doc('summary');
 
+          final isCard = method == 'card';
           transaction.set(vaultTxRef, {
             'id': 'vault_tx_cust_${paymentRef.id}',
             'uid': uid,
@@ -897,8 +910,10 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             'direction': 'in',
             'source': VaultTransactionSource.customerDebt.name,
             'type': isPaid ? 'full_settlement' : 'partial_payment',
-            'description':
-                'تحصيل دفعة من العميل: ${debtData['customerName'] ?? ''}',
+            'paymentMethod': method,
+            'description': isCard
+                ? 'تحصيل دفعة (كارت) من العميل: ${debtData['customerName'] ?? ''}'
+                : 'تحصيل دفعة من العميل: ${debtData['customerName'] ?? ''}',
             'relatedEntityId': paymentRef.id,
             'relatedOperationId': debtRef.id,
             'createdAt': payment.createdAt != null
@@ -1025,6 +1040,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
     String customerName,
     double amount, {
     DateTime? paymentDate,
+    String paymentMethod = 'cash',
   }) async {
     try {
       final snapshot = await firestore
@@ -1134,6 +1150,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             'type': isPaid ? PaymentType.full.name : PaymentType.partial.name,
             'relatedTo': debtData['customerName'],
             'activityName': debtData['productOrSessionDetails'],
+            'paymentMethod': paymentMethod,
           });
 
           // Record Vault Movement (Atomic Inflow)
@@ -1144,6 +1161,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
                 .doc('vault_tx_cust_${paymentRef.id}');
             final vaultSummaryRef = userRef.collection('vault').doc('summary');
 
+            final isCard = paymentMethod == 'card';
             transaction.set(vaultTxRef, {
               'id': 'vault_tx_cust_${paymentRef.id}',
               'uid': uid,
@@ -1151,8 +1169,10 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
               'direction': 'in',
               'source': VaultTransactionSource.customerDebt.name,
               'type': isPaid ? 'full_settlement' : 'partial_payment',
-              'description':
-                  'تحصيل دفعة من العميل: ${debtData['customerName'] ?? ''}',
+              'paymentMethod': paymentMethod,
+              'description': isCard
+                  ? 'تحصيل دفعة (كارت) من العميل: ${debtData['customerName'] ?? ''}'
+                  : 'تحصيل دفعة من العميل: ${debtData['customerName'] ?? ''}',
               'relatedEntityId': paymentRef.id,
               'relatedOperationId': debtRef.id,
               'createdAt': paymentDate != null
@@ -1252,7 +1272,11 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
   }
 
   @override
-  Future<void> markCustomerAsPaid(String uid, String customerName) async {
+  Future<void> markCustomerAsPaid(
+    String uid,
+    String customerName, {
+    String paymentMethod = 'cash',
+  }) async {
     try {
       final snapshot = await firestore
           .collection('users')
@@ -1350,6 +1374,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
             'type': PaymentType.settlement.name,
             'relatedTo': debtData['customerName'],
             'activityName': debtData['productOrSessionDetails'],
+            'paymentMethod': paymentMethod,
           });
 
           // Record Vault Movement (Atomic Inflow)
@@ -1360,6 +1385,7 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
                 .doc('vault_tx_cust_${paymentRef.id}');
             final vaultSummaryRef = userRef.collection('vault').doc('summary');
 
+            final isCard = paymentMethod == 'card';
             transaction.set(vaultTxRef, {
               'id': 'vault_tx_cust_${paymentRef.id}',
               'uid': uid,
@@ -1367,8 +1393,10 @@ class DebtRemoteDataSourceImpl implements DebtRemoteDataSource {
               'direction': 'in',
               'source': VaultTransactionSource.customerDebt.name,
               'type': 'full_settlement',
-              'description':
-                  'تحصيل كامل ديون العميل: ${debtData['customerName'] ?? ''}',
+              'paymentMethod': paymentMethod,
+              'description': isCard
+                  ? 'تحصيل كامل ديون (كارت) العميل: ${debtData['customerName'] ?? ''}'
+                  : 'تحصيل كامل ديون العميل: ${debtData['customerName'] ?? ''}',
               'relatedEntityId': paymentRef.id,
               'relatedOperationId': debtId,
               'createdAt': FieldValue.serverTimestamp(),

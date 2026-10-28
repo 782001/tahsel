@@ -27,17 +27,23 @@ abstract class DebtRepository {
     String filter = 'all',
   });
 
-  Future<Either<Failure, void>> payDebt(DebtEntity debt, PaymentEntity payment);
+  Future<Either<Failure, void>> payDebt(
+    DebtEntity debt,
+    PaymentEntity payment, {
+    String paymentMethod = 'cash',
+  });
   Future<Either<Failure, void>> payTotalDebt(
     String uid,
     String customerName,
     double amount, {
     DateTime? paymentDate,
+    String paymentMethod = 'cash',
   });
   Future<Either<Failure, void>> markCustomerAsPaid(
     String uid,
-    String customerName,
-  );
+    String customerName, {
+    String paymentMethod = 'cash',
+  });
   Future<Either<Failure, void>> deleteCustomerDebts(
     String uid,
     String customerName,

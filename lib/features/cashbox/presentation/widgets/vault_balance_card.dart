@@ -1,14 +1,13 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
-
-import 'package:tahsel/core/constants/app_permissions.dart';
-import 'package:tahsel/core/services/permission_service.dart';
 
 import '../../domain/entities/vault_summary_entity.dart';
 
@@ -27,8 +26,9 @@ class VaultBalanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final permissions = PermissionService.instance;
-    final canViewBalance =
-        permissions.hasPermission(AppPermissions.vaultViewBalance);
+    final canViewBalance = permissions.hasPermission(
+      AppPermissions.vaultViewBalance,
+    );
     final canDeposit = permissions.hasPermission(AppPermissions.vaultDeposit);
     final canWithdraw = permissions.hasPermission(AppPermissions.vaultWithdraw);
 
@@ -156,7 +156,9 @@ class VaultBalanceCard extends StatelessWidget {
                                 horizontal: isDesktop ? 10 : 8.w,
                                 vertical: isDesktop ? 5 : 4.h,
                               ),
-                              margin: EdgeInsets.only(left: 6.w),
+                              margin: EdgeInsets.only(
+                                left: isDesktop ? 6 : 6.w,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.25),
                                 borderRadius: BorderRadius.circular(20.r),
@@ -168,10 +170,10 @@ class VaultBalanceCard extends StatelessWidget {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(
+                                  const Icon(
                                     Icons.trending_down_rounded,
                                     color: Colors.white,
-                                    size: 14.sp,
+                                    size: 14,
                                   ),
                                   SizedBox(width: 4.w),
                                   Text(
@@ -196,7 +198,7 @@ class VaultBalanceCard extends StatelessWidget {
                   children: [
                     if (isNegative) ...[
                       Container(
-                        padding: EdgeInsets.all(6.w),
+                        padding: EdgeInsets.all(isDesktop ? 6 : 6.w),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
@@ -275,8 +277,9 @@ class VaultBalanceCard extends StatelessWidget {
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  Colors.white.withValues(alpha: 0.25),
+                              backgroundColor: Colors.white.withValues(
+                                alpha: 0.25,
+                              ),
                               elevation: 0,
                               padding: EdgeInsets.symmetric(
                                 vertical: isDesktop ? 14 : 12.h,

@@ -604,6 +604,7 @@ class InvoiceCubit extends Cubit<InvoiceState> {
               debt: existingDebt,
               amountToPay: paidNow,
               note: note,
+              paymentMethod: paymentMethod ?? 'cash',
             ),
           );
           final payFailure = payResult.fold((f) => f, (_) => null);

@@ -46,6 +46,13 @@ class DebtRepositoryImpl implements DebtRepository {
             model.timestamp?.toIso8601String() ??
             DateTime.now().toIso8601String();
         hivePayload['lastUpdatedAt'] = DateTime.now().toIso8601String();
+        if (model.dueDate != null) {
+          hivePayload['dueDate'] = model.dueDate!.toIso8601String();
+        }
+        if (model.lastReminderSentAt != null) {
+          hivePayload['lastReminderSentAt'] =
+              model.lastReminderSentAt!.toIso8601String();
+        }
         if (AppStrings.isEmployee) {
           hivePayload['employeeUid'] = AppStrings.employeeAuthUid;
           hivePayload['employeeName'] = AppStrings.loggedInEmployeeName;
@@ -137,11 +144,30 @@ class DebtRepositoryImpl implements DebtRepository {
   @override
   Future<Either<Failure, void>> payDebt(
     DebtEntity debt,
-    PaymentEntity payment,
-  ) async {
+    PaymentEntity payment, {
+    String paymentMethod = 'cash',
+  }) async {
     try {
+      final effectiveMethod = (payment.paymentMethod != null &&
+              payment.paymentMethod!.isNotEmpty)
+          ? payment.paymentMethod!
+          : paymentMethod;
       final debtModel = DebtModel.fromEntity(debt);
-      final paymentModel = PaymentModel.fromEntity(payment);
+      final paymentModel = PaymentModel.fromEntity(
+        payment.paymentMethod != null && payment.paymentMethod!.isNotEmpty
+            ? payment
+            : PaymentEntity(
+                id: payment.id,
+                debtId: payment.debtId,
+                amountPaid: payment.amountPaid,
+                remainingAmount: payment.remainingAmount,
+                createdAt: payment.createdAt,
+                type: payment.type,
+                relatedTo: payment.relatedTo,
+                activityName: payment.activityName,
+                paymentMethod: effectiveMethod,
+              ),
+      );
       await remoteDataSource.payDebt(debtModel, paymentModel);
       return const Right(null);
     } catch (e) {
@@ -155,6 +181,7 @@ class DebtRepositoryImpl implements DebtRepository {
     String customerName,
     double amount, {
     DateTime? paymentDate,
+    String paymentMethod = 'cash',
   }) async {
     try {
       await remoteDataSource.payTotalDebt(
@@ -162,6 +189,7 @@ class DebtRepositoryImpl implements DebtRepository {
         customerName,
         amount,
         paymentDate: paymentDate,
+        paymentMethod: paymentMethod,
       );
       return const Right(null);
     } catch (e) {
@@ -172,10 +200,15 @@ class DebtRepositoryImpl implements DebtRepository {
   @override
   Future<Either<Failure, void>> markCustomerAsPaid(
     String uid,
-    String customerName,
-  ) async {
+    String customerName, {
+    String paymentMethod = 'cash',
+  }) async {
     try {
-      await remoteDataSource.markCustomerAsPaid(uid, customerName);
+      await remoteDataSource.markCustomerAsPaid(
+        uid,
+        customerName,
+        paymentMethod: paymentMethod,
+      );
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(e.toString()));

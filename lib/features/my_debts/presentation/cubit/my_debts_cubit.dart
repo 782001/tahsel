@@ -285,6 +285,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
     String? details,
     String? phone,
     DateTime? timestamp,
+    String paymentMethod = 'cash',
   }) async {
     if (state.status == MyDebtsStatus.loading ||
         state.status == MyDebtsStatus.addingDebt ||
@@ -318,6 +319,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
       timestamp: timestamp ?? now,
       isPaid: (totalAmount - paidAmount) <= 0,
       phoneNumber: phone,
+      paymentMethod: paymentMethod,
     );
 
     final result = await addDebtUseCase(debt);
@@ -341,6 +343,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
     required String personName,
     required double amount,
     required double totalRemainingBefore,
+    String paymentMethod = 'cash',
   }) async {
     if (state.status == MyDebtsStatus.loading ||
         state.status == MyDebtsStatus.addingDebt ||
@@ -362,6 +365,7 @@ class MyDebtsCubit extends Cubit<MyDebtsState> {
       uid: uid,
       personName: sanitizedName,
       amount: amount,
+      paymentMethod: paymentMethod,
     );
 
     if (isClosed) return;

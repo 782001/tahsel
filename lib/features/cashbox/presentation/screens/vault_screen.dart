@@ -75,8 +75,12 @@ class _VaultScreenState extends State<VaultScreen> {
     showDialog(
       context: context,
       builder: (_) => ManualDepositDialog(
-        onSubmit: (amount, note) {
-          context.read<VaultCubit>().depositManual(amount: amount, note: note);
+        onSubmit: (amount, note, paymentMethod) {
+          context.read<VaultCubit>().depositManual(
+                amount: amount,
+                note: note,
+                paymentMethod: paymentMethod,
+              );
         },
       ),
     );
@@ -91,8 +95,12 @@ class _VaultScreenState extends State<VaultScreen> {
       context: context,
       builder: (_) => ManualWithdrawalDialog(
         currentBalance: currentBalance,
-        onSubmit: (amount, note) {
-          context.read<VaultCubit>().withdrawManual(amount: amount, note: note);
+        onSubmit: (amount, note, paymentMethod) {
+          context.read<VaultCubit>().withdrawManual(
+                amount: amount,
+                note: note,
+                paymentMethod: paymentMethod,
+              );
         },
       ),
     );

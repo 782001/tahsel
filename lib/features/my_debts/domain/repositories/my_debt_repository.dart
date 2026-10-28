@@ -57,6 +57,7 @@ abstract class MyDebtRepository {
     required double amount,
     String? note,
     DateTime? paymentDate,
+    String paymentMethod = 'cash',
   });
   Future<Either<Failure, void>> settleSupplierCredit({
     required String uid,
@@ -83,6 +84,7 @@ abstract class MyDebtRepository {
     required double amount,
     String? note,
     DateTime? paymentDate,
+    String paymentMethod = 'cash',
   });
   Future<Either<Failure, void>> updateMyDebtPayment({
     required String uid,

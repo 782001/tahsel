@@ -1195,7 +1195,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
       relatedEntityId: purchase.id,
       relatedOperationId: purchase.id,
       createdAt: purchase.createdAt,
-      allowNegativeBalance: isOfflineSync || purchase.paymentMethod == 'card',
+      allowNegativeBalance: isOfflineSync,
       paymentMethod: purchase.paymentMethod == 'card' ? 'card' : 'cash',
     );
   }

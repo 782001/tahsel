@@ -99,6 +99,7 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
             double paidAmount = 0;
             double remainingAmount = r.amount;
             String details = AppStrings.syncing.tr();
+            String paymentMethod = 'cash';
 
             if (r.type == 'my_debt_add') {
               try {
@@ -107,6 +108,7 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
                 paidAmount = (payload['paidAmount'] ?? 0).toDouble();
                 remainingAmount = (payload['remainingAmount'] ?? 0).toDouble();
                 details = payload['details'] ?? AppStrings.syncing.tr();
+                paymentMethod = payload['paymentMethod'] ?? 'cash';
               } catch (e) {
                 // Ignore parsing errors, keep defaults
               }
@@ -124,6 +126,7 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
               operationType: 'debt',
               timestamp: r.date,
               isPaid: remainingAmount <= 0,
+              paymentMethod: paymentMethod,
             );
           }
         )
@@ -200,6 +203,7 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
     required String personName,
     String? note,
     DateTime? paymentDate,
+    String paymentMethod = 'cash',
   }) async {
     if (state.status == MyDebtDetailsStatus.loading) return;
     emit(state.copyWith(status: MyDebtDetailsStatus.loading));
@@ -209,6 +213,7 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
       amount: amount,
       note: note,
       paymentDate: paymentDate,
+      paymentMethod: paymentMethod,
     );
     if (isClosed) return;
 
@@ -241,6 +246,7 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
     String? description,
     String? phone,
     DateTime? timestamp,
+    String paymentMethod = 'cash',
   }) async {
     if (state.status == MyDebtDetailsStatus.loading) return;
     emit(state.copyWith(status: MyDebtDetailsStatus.loading));
@@ -259,6 +265,7 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
       timestamp: timestamp ?? now,
       isPaid: (totalAmount - (paidAmount ?? 0)) <= 0,
       phoneNumber: phone,
+      paymentMethod: paymentMethod,
     );
 
     final result = await addDebtUseCase(debt);
@@ -278,6 +285,7 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
     required double amount,
     String? note,
     DateTime? paymentDate,
+    String paymentMethod = 'cash',
   }) async {
     if (state.status == MyDebtDetailsStatus.loading) return;
     emit(state.copyWith(status: MyDebtDetailsStatus.loading));
@@ -287,6 +295,7 @@ class MyDebtDetailsCubit extends Cubit<MyDebtDetailsState> {
       amount: amount,
       note: note,
       paymentDate: paymentDate,
+      paymentMethod: paymentMethod,
     );
     if (isClosed) return;
 

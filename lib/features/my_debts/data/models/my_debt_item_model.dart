@@ -17,6 +17,7 @@ class MyDebtItemModel extends MyDebtItemEntity {
     super.phoneNumber,
     super.isPaid,
     super.ledgerNumber,
+    super.paymentMethod = 'cash',
   });
 
   factory MyDebtItemModel.fromJson(Map<String, dynamic> json, String id) {
@@ -39,6 +40,7 @@ class MyDebtItemModel extends MyDebtItemEntity {
       phoneNumber: json['phoneNumber'],
       isPaid: json['isPaid'] ?? false,
       ledgerNumber: json['ledgerNumber'],
+      paymentMethod: json['paymentMethod'] as String? ?? 'cash',
     );
   }
 
@@ -61,6 +63,7 @@ class MyDebtItemModel extends MyDebtItemEntity {
       'phoneNumber': phoneNumber,
       'isPaid': isPaid,
       'ledgerNumber': ledgerNumber,
+      'paymentMethod': paymentMethod ?? 'cash',
     };
   }
 
@@ -80,6 +83,7 @@ class MyDebtItemModel extends MyDebtItemEntity {
       phoneNumber: entity.phoneNumber,
       isPaid: entity.isPaid,
       ledgerNumber: entity.ledgerNumber,
+      paymentMethod: entity.paymentMethod ?? 'cash',
     );
   }
 }

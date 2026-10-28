@@ -75,6 +75,7 @@ class DebtCubit extends Cubit<DebtState> {
     String? operationId,
     DateTime? timestamp,
     DateTime? dueDate,
+    String paymentMethod = 'cash',
   }) async {
     if (state is DebtLoading) return;
     final sanitizedName = customerName.replaceAll('/', ' ').trim();
@@ -94,6 +95,7 @@ class DebtCubit extends Cubit<DebtState> {
         operationId: operationId,
         now: now,
         dueDate: dueDate,
+        paymentMethod: paymentMethod,
       ),
     );
 
@@ -315,6 +317,7 @@ class DebtCubit extends Cubit<DebtState> {
     required double totalRemainingBefore,
     String? note,
     DateTime? paymentDate,
+    String paymentMethod = 'cash',
   }) async {
     if (state is DebtLoading) return;
     final sanitizedName = customerName.replaceAll('/', ' ').trim();
@@ -325,6 +328,7 @@ class DebtCubit extends Cubit<DebtState> {
         customerName: sanitizedName,
         amount: amount,
         paymentDate: paymentDate,
+        paymentMethod: paymentMethod,
       ),
     );
     result.fold((failure) => emit(DebtFailure(message: failure.message)), (_) {
@@ -346,12 +350,17 @@ class DebtCubit extends Cubit<DebtState> {
     required String customerName,
     required double totalAmount,
     String? note,
+    String paymentMethod = 'cash',
   }) async {
     if (state is DebtLoading) return;
     final sanitizedName = customerName.replaceAll('/', ' ').trim();
     emit(DebtLoading());
     final result = await markCustomerAsPaidUseCase(
-      MarkCustomerAsPaidParams(uid: uid, customerName: sanitizedName),
+      MarkCustomerAsPaidParams(
+        uid: uid,
+        customerName: sanitizedName,
+        paymentMethod: paymentMethod,
+      ),
     );
     result.fold((failure) => emit(DebtFailure(message: failure.message)), (_) {
       emit(
@@ -373,6 +382,7 @@ class DebtCubit extends Cubit<DebtState> {
     required double totalRemainingBefore,
     String? note,
     DateTime? paymentDate,
+    String paymentMethod = 'cash',
   }) async {
     if (state is DebtLoading) return;
     emit(DebtLoading());
@@ -382,6 +392,7 @@ class DebtCubit extends Cubit<DebtState> {
         amountToPay: amount,
         paymentDate: paymentDate,
         note: note,
+        paymentMethod: paymentMethod,
       ),
     );
     result.fold((failure) => emit(DebtFailure(message: failure.message)), (_) {
@@ -402,10 +413,14 @@ class DebtCubit extends Cubit<DebtState> {
   Future<void> markItemAsPaid({
     required DebtEntity debt,
     required double totalRemainingBefore,
+    String paymentMethod = 'cash',
   }) async {
     if (state is DebtLoading) return;
     emit(DebtLoading());
-    final result = await markItemAsPaidUseCase(debt);
+    final result = await markItemAsPaidUseCase(
+      debt,
+      paymentMethod: paymentMethod,
+    );
     result.fold((failure) => emit(DebtFailure(message: failure.message)), (_) {
       final amountPaid = debt.totalAmount - debt.paidAmount;
       emit(
@@ -483,6 +498,7 @@ class _AddCustomerDebtParams {
   final String? operationId;
   final DateTime now;
   final DateTime? dueDate;
+  final String paymentMethod;
 
   _AddCustomerDebtParams({
     required this.uid,
@@ -495,6 +511,7 @@ class _AddCustomerDebtParams {
     this.operationId,
     required this.now,
     this.dueDate,
+    this.paymentMethod = 'cash',
   });
 }
 
@@ -521,5 +538,6 @@ DebtEntity _createCustomerDebtEntity(_AddCustomerDebtParams params) {
     isPaid: remainingAmount <= 0,
     ledgerNumber: params.ledgerNumber,
     dueDate: params.dueDate,
+    paymentMethod: params.paymentMethod,
   );
 }

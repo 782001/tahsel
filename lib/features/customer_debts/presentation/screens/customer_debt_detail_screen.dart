@@ -29,6 +29,7 @@ import 'package:tahsel/features/debt/presentation/cubit/debt_cubit.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_state.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/shared/widgets/fields/payment_method_selector.dart';
 import 'package:tahsel/shared/widgets/no_internet_view.dart';
 import 'package:tahsel/shared/widgets/toast/custom_toast.dart';
 
@@ -158,89 +159,109 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
       return;
     }
     final currency = AppStrings.currencyEgp.tr();
+    String selectedPaymentMethod = 'cash';
     showDialog(
       context: context,
       builder: (ctx) => Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
-          child: AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16.r),
-            ),
-            title: Row(
-              children: [
-                Icon(
-                  Icons.check_circle_outline,
-                  color: AppColors.primaryColor,
-                  size: 24.r,
-                ),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: Text(
-                    AppStrings.confirmFullSettlementTitle.tr(),
+          child: StatefulBuilder(
+            builder: (dialogCtx, setDialogState) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16.r),
+              ),
+              title: Row(
+                children: [
+                  Icon(
+                    Icons.check_circle_outline,
+                    color: AppColors.primaryColor,
+                    size: 24.r,
+                  ),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Text(
+                      AppStrings.confirmFullSettlementTitle.tr(),
+                      style: TextStyles.customStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppStrings.confirmFullSettlementMsg
+                        .tr()
+                        .replaceAll('{customer}', customerName)
+                        .replaceAll('{amount}', totalDebt.toSmartAmount())
+                        .replaceAll('{currency}', currency),
                     style: TextStyles.customStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
                       color: AppColors.textColor,
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  PaymentMethodSelector(
+                    selectedMethod: selectedPaymentMethod,
+                    showDebtOption: false,
+                    onMethodChanged: (method) {
+                      setDialogState(() {
+                        selectedPaymentMethod = method;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: Text(
+                    AppStrings.cancel.tr(),
+                    style: TextStyles.customStyle(
+                      color: AppColors.grey,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    final uid = AppStrings.userToken;
+                    if (uid.isNotEmpty) {
+                      context
+                          .read<DebtCubit>()
+                          .markAsPaid(
+                            uid: uid,
+                            customerName: customerName,
+                            totalAmount: totalDebt,
+                            note: AppStrings.fullSettlement.tr(),
+                            paymentMethod: selectedPaymentMethod,
+                          )
+                          .then((_) => _fetchDebts());
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryColor,
+                    foregroundColor: AppColors.whiteColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                  ),
+                  child: Text(
+                    AppStrings.confirmFullSettlementBtn.tr(),
+                    style: TextStyles.customStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
               ],
             ),
-            content: Text(
-              AppStrings.confirmFullSettlementMsg
-                  .tr()
-                  .replaceAll('{customer}', customerName)
-                  .replaceAll('{amount}', totalDebt.toSmartAmount())
-                  .replaceAll('{currency}', currency),
-              style: TextStyles.customStyle(
-                fontSize: 14,
-                color: AppColors.textColor,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: Text(
-                  AppStrings.cancel.tr(),
-                  style: TextStyles.customStyle(
-                    color: AppColors.grey,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(ctx).pop();
-                  final uid = AppStrings.userToken;
-                  if (uid.isNotEmpty) {
-                    context
-                        .read<DebtCubit>()
-                        .markAsPaid(
-                          uid: uid,
-                          customerName: customerName,
-                          totalAmount: totalDebt,
-                          note: AppStrings.fullSettlement.tr(),
-                        )
-                        .then((_) => _fetchDebts());
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryColor,
-                  foregroundColor: AppColors.whiteColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                ),
-                child: Text(
-                  AppStrings.confirmFullSettlementBtn.tr(),
-                  style: TextStyles.customStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
           ),
         ),
       ),
@@ -262,82 +283,102 @@ class _CustomerDebtDetailScreenState extends State<CustomerDebtDetailScreen> {
     final itemDesc = item.itemDescription.trim().isNotEmpty
         ? item.itemDescription.trim()
         : AppStrings.customerDebts.tr();
+    String selectedPaymentMethod = 'cash';
 
     showDialog(
       context: context,
       builder: (ctx) => Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
-          child: AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16.r),
-            ),
-            title: Row(
-              children: [
-                Icon(
-                  Icons.check_circle_outline,
-                  color: AppColors.primaryColor,
-                  size: 24.r,
-                ),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: Text(
-                    AppStrings.confirmPayDebtTitle.tr(),
+          child: StatefulBuilder(
+            builder: (dialogCtx, setDialogState) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16.r),
+              ),
+              title: Row(
+                children: [
+                  Icon(
+                    Icons.check_circle_outline,
+                    color: AppColors.primaryColor,
+                    size: 24.r,
+                  ),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Text(
+                      AppStrings.confirmPayDebtTitle.tr(),
+                      style: TextStyles.customStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppStrings.confirmPayDebtMsg
+                        .tr()
+                        .replaceAll('{item}', itemDesc)
+                        .replaceAll('{amount}', item.remainingDebt.toSmartAmount())
+                        .replaceAll('{currency}', currency),
                     style: TextStyles.customStyle(
-                      fontSize: 16,
+                      fontSize: 14,
+                      color: AppColors.disabledColor,
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  PaymentMethodSelector(
+                    selectedMethod: selectedPaymentMethod,
+                    showDebtOption: false,
+                    onMethodChanged: (method) {
+                      setDialogState(() {
+                        selectedPaymentMethod = method;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: Text(
+                    AppStrings.cancel.tr(),
+                    style: TextStyles.customStyle(
+                      color: AppColors.grey,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    context.read<DebtCubit>().markItemAsPaid(
+                      debt: item.entity,
+                      totalRemainingBefore: currentDetail.totalDebt,
+                      paymentMethod: selectedPaymentMethod,
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryColor,
+                    foregroundColor: AppColors.whiteColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                  ),
+                  child: Text(
+                    AppStrings.confirmPayDebtBtn.tr(),
+                    style: TextStyles.customStyle(
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textColor,
                     ),
                   ),
                 ),
               ],
             ),
-            content: Text(
-              AppStrings.confirmPayDebtMsg
-                  .tr()
-                  .replaceAll('{item}', itemDesc)
-                  .replaceAll('{amount}', item.remainingDebt.toSmartAmount())
-                  .replaceAll('{currency}', currency),
-              style: TextStyles.customStyle(
-                fontSize: 14,
-                color: AppColors.disabledColor,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: Text(
-                  AppStrings.cancel.tr(),
-                  style: TextStyles.customStyle(
-                    color: AppColors.grey,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(ctx).pop();
-                  context.read<DebtCubit>().markItemAsPaid(
-                    debt: item.entity,
-                    totalRemainingBefore: currentDetail.totalDebt,
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryColor,
-                  foregroundColor: AppColors.whiteColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                ),
-                child: Text(
-                  AppStrings.confirmPayDebtBtn.tr(),
-                  style: TextStyles.customStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
           ),
         ),
       ),

@@ -15,6 +15,7 @@ import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debts_state.dart';
 import 'package:tahsel/shared/widgets/buttons/custom_button.dart';
+import 'package:tahsel/shared/widgets/fields/payment_method_selector.dart';
 import 'package:tahsel/shared/widgets/text_fields/custom_text_form_field.dart';
 
 class AddMyDebtScreen extends StatefulWidget {
@@ -34,6 +35,7 @@ class _AddMyDebtScreenState extends State<AddMyDebtScreen> {
 
   double _remaining = 0;
   DateTime? _selectedDate;
+  String _selectedPaymentMethod = 'cash';
 
   Future<void> _pickDate() async {
     final DateTime minDate = DateTime(2000);
@@ -289,6 +291,20 @@ class _AddMyDebtScreenState extends State<AddMyDebtScreen> {
                         ),
                         SizedBox(height: 12.h),
                         _buildRemainingDisplay(),
+
+                        if ((double.tryParse(_paidController.text) ?? 0) >
+                            0) ...[
+                          SizedBox(height: 16.h),
+                          PaymentMethodSelector(
+                            selectedMethod: _selectedPaymentMethod,
+                            showDebtOption: false,
+                            onMethodChanged: (method) {
+                              setState(() {
+                                _selectedPaymentMethod = method;
+                              });
+                            },
+                          ),
+                        ],
                         SizedBox(height: 20.h),
                         Text(
                           AppStrings.notes.tr(),
@@ -303,7 +319,7 @@ class _AddMyDebtScreenState extends State<AddMyDebtScreen> {
                           controller: _notesController,
                           hintText: AppStrings.notes.tr(),
                           prefixIcon: Icons.note_alt_outlined,
-                          maxLines: 3,
+                          maxLines: 1,
                         ),
                         SizedBox(height: 20.h),
                         Text(
@@ -406,6 +422,7 @@ class _AddMyDebtScreenState extends State<AddMyDebtScreen> {
                                     paidAmount:
                                         double.tryParse(_paidController.text) ??
                                         0,
+                                    paymentMethod: _selectedPaymentMethod,
                                     phone: _phoneController.text.isEmpty
                                         ? null
                                         : _phoneController.text,

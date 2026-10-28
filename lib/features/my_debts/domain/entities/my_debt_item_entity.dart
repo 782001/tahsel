@@ -15,6 +15,7 @@ class MyDebtItemEntity extends Equatable {
   final String? phoneNumber;
   final bool isPaid;
   final String? ledgerNumber;
+  final String? paymentMethod;
 
   bool get isPending =>
       id == null || id!.isEmpty || operationId.startsWith('pending_');
@@ -34,6 +35,7 @@ class MyDebtItemEntity extends Equatable {
     this.phoneNumber,
     this.isPaid = false,
     this.ledgerNumber,
+    this.paymentMethod = 'cash',
   });
 
   MyDebtItemEntity copyWith({
@@ -51,6 +53,7 @@ class MyDebtItemEntity extends Equatable {
     String? phoneNumber,
     bool? isPaid,
     String? ledgerNumber,
+    String? paymentMethod,
   }) {
     return MyDebtItemEntity(
       id: id ?? this.id,
@@ -67,6 +70,7 @@ class MyDebtItemEntity extends Equatable {
       phoneNumber: phoneNumber ?? this.phoneNumber,
       isPaid: isPaid ?? this.isPaid,
       ledgerNumber: ledgerNumber ?? this.ledgerNumber,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
     );
   }
 
@@ -86,5 +90,6 @@ class MyDebtItemEntity extends Equatable {
     phoneNumber,
     isPaid,
     ledgerNumber,
+    paymentMethod,
   ];
 }

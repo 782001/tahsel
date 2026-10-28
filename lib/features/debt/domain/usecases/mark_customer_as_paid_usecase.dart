@@ -11,13 +11,22 @@ class MarkCustomerAsPaidUseCase
 
   @override
   Future<Either<Failure, void>> call(MarkCustomerAsPaidParams params) {
-    return repository.markCustomerAsPaid(params.uid, params.customerName);
+    return repository.markCustomerAsPaid(
+      params.uid,
+      params.customerName,
+      paymentMethod: params.paymentMethod,
+    );
   }
 }
 
 class MarkCustomerAsPaidParams {
   final String uid;
   final String customerName;
+  final String paymentMethod;
 
-  MarkCustomerAsPaidParams({required this.uid, required this.customerName});
+  MarkCustomerAsPaidParams({
+    required this.uid,
+    required this.customerName,
+    this.paymentMethod = 'cash',
+  });
 }

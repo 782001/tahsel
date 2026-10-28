@@ -7,10 +7,12 @@ import 'package:tahsel/core/utils/app_logger.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/date_formatter.dart';
 import 'package:tahsel/core/utils/styles.dart';
+import 'package:tahsel/core/utils/vault_balance_helper.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_state.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/shared/widgets/fields/payment_method_selector.dart';
 import 'package:tahsel/shared/widgets/shimmer/shimmer_loading.dart';
 
 class MyPartialPaymentDialog extends StatefulWidget {
@@ -37,6 +39,7 @@ class _MyPartialPaymentDialogState extends State<MyPartialPaymentDialog> {
   final TextEditingController _noteController = TextEditingController();
   String? _errorText;
   DateTime? _selectedDate;
+  String _selectedPaymentMethod = 'cash';
 
   @override
   void dispose() {
@@ -116,6 +119,7 @@ class _MyPartialPaymentDialogState extends State<MyPartialPaymentDialog> {
               ? AppStrings.partialPayment.tr()
               : _noteController.text.trim(),
           paymentDate: _selectedDate,
+          paymentMethod: _selectedPaymentMethod,
         );
       } else {
         context.read<MyDebtDetailsCubit>().payDebt(
@@ -126,6 +130,7 @@ class _MyPartialPaymentDialogState extends State<MyPartialPaymentDialog> {
               ? AppStrings.partialPayment.tr()
               : _noteController.text.trim(),
           paymentDate: _selectedDate,
+          paymentMethod: _selectedPaymentMethod,
         );
       }
     }
@@ -139,7 +144,14 @@ class _MyPartialPaymentDialogState extends State<MyPartialPaymentDialog> {
           AppLogger.printMessage("Dialog Pop");
           Navigator.pop(kcontext);
         } else if (state.status == MyDebtDetailsStatus.error) {
-          setState(() => _errorText = state.message);
+          if (state.message != null &&
+              (state.message!.contains(AppStrings.insufficientBalance) ||
+                  state.message!.contains('insufficient_balance'))) {
+            Navigator.pop(kcontext);
+            VaultBalanceHelper.showInsufficientBalanceDialog(kcontext);
+          } else {
+            setState(() => _errorText = state.message);
+          }
         }
       },
       child: Center(
@@ -237,6 +249,17 @@ class _MyPartialPaymentDialogState extends State<MyPartialPaymentDialog> {
                         ),
                       ),
                     ],
+                    const SizedBox(height: 16),
+                    PaymentMethodSelector(
+                      selectedMethod: _selectedPaymentMethod,
+                      showDebtOption: false,
+                      onMethodChanged: (method) {
+                        setState(() {
+                          _selectedPaymentMethod = method;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
                     Text(
                       AppStrings.paymentDate.tr(),
                       style: TextStyles.customStyle(

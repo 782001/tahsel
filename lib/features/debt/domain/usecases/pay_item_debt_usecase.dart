@@ -10,12 +10,14 @@ class PayItemDebtParams {
   final double amountToPay;
   final DateTime? paymentDate;
   final String? note;
+  final String paymentMethod;
 
   PayItemDebtParams({
     required this.debt,
     required this.amountToPay,
     this.paymentDate,
     this.note,
+    this.paymentMethod = 'cash',
   });
 }
 
@@ -55,8 +57,13 @@ class PayItemDebtUseCase implements BaseUseCase<void, PayItemDebtParams> {
       createdAt: params.paymentDate ?? DateTime.now(),
       type: isPaid ? PaymentType.full : PaymentType.partial,
       activityName: params.note,
+      paymentMethod: params.paymentMethod,
     );
 
-    return repository.payDebt(updatedDebt, payment);
+    return repository.payDebt(
+      updatedDebt,
+      payment,
+      paymentMethod: params.paymentMethod,
+    );
   }
 }

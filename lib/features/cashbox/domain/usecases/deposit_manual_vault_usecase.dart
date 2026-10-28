@@ -11,11 +11,13 @@ class DepositManualVaultUseCase {
     required String uid,
     required double amount,
     String? note,
+    String paymentMethod = 'cash',
   }) {
     return repository.depositManual(
       uid: uid,
       amount: amount,
       note: note,
+      paymentMethod: paymentMethod,
     );
   }
 }

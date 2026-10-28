@@ -279,6 +279,7 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
     required double amount,
     String? note,
     DateTime? paymentDate,
+    String paymentMethod = 'cash',
   }) async {
     try {
       await itemRemoteDataSource.payItem(
@@ -287,6 +288,7 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
         amount: amount,
         note: note,
         paymentDate: paymentDate,
+        paymentMethod: paymentMethod,
       );
       return const Right(null);
     } catch (e) {
@@ -321,6 +323,7 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
     required double amount,
     String? note,
     DateTime? paymentDate,
+    String paymentMethod = 'cash',
   }) async {
     try {
       await itemRemoteDataSource.distributePayment(
@@ -329,6 +332,7 @@ class MyDebtRepositoryImpl implements MyDebtRepository {
         amount,
         note: note,
         paymentDate: paymentDate,
+        paymentMethod: paymentMethod,
       );
       return const Right(null);
     } catch (e) {

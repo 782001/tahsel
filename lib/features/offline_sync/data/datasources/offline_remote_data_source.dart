@@ -144,6 +144,9 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
       final actualPaymentRef = debtRef
           .collection('payments')
           .doc('${record.id}_payment');
+      final method =
+          (payload['paymentMethod'] as String?)?.toLowerCase() ?? 'cash';
+      final isCard = method == 'card';
       batch.set(actualPaymentRef, {
         'debtId': debtRef.id,
         'amountPaid': paidAmount,
@@ -152,6 +155,7 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
           DateTime.parse(timestampStr).add(const Duration(milliseconds: 1)),
         ),
         'type': remainingAmount <= 0 ? 'full' : 'partial',
+        'paymentMethod': method,
       });
 
       if (AppStrings.isVaultEnabled()) {
@@ -173,15 +177,18 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
               : VaultTransactionSource.myDebt.name,
           'type': isPurchase ? 'purchase_payment' : 'debt_payment',
           'description': isPurchase
-              ? 'سداد دفعة شراء (مزامنة): $personName'
-              : 'سداد دين (مزامنة): $personName',
+              ? (isCard
+                  ? 'سداد دفعة شراء (كارت - مزامنة): $personName'
+                  : 'سداد دفعة شراء (مزامنة): $personName')
+              : (isCard
+                  ? 'سداد دين (كارت - مزامنة): $personName'
+                  : 'سداد دين (مزامنة): $personName'),
           'relatedEntityId': '${record.id}_payment',
           'relatedOperationId': record.id,
           'createdAt': Timestamp.fromDate(
             DateTime.parse(timestampStr).add(const Duration(milliseconds: 1)),
           ),
-          'paymentMethod':
-              (payload['paymentMethod'] as String?)?.toLowerCase() ?? 'cash',
+          'paymentMethod': method,
         });
 
         batch.set(vaultSummaryRef, {
@@ -352,6 +359,9 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
       final actualPaymentRef = debtRef
           .collection('payments')
           .doc('${operationId}_payment');
+      final method =
+          (payload['paymentMethod'] as String?)?.toLowerCase() ?? 'cash';
+      final isCard = method == 'card';
       batch.set(actualPaymentRef, {
         'debtId': operationId,
         'amountPaid': paidAmount,
@@ -360,6 +370,7 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
           timestampDate.add(const Duration(milliseconds: 1)),
         ),
         'type': remainingAmount <= 0 ? 'full' : 'partial',
+        'paymentMethod': method,
       });
 
       if (AppStrings.isVaultEnabled()) {
@@ -375,14 +386,15 @@ class OfflineRemoteDataSourceImpl implements OfflineRemoteDataSource {
           'direction': 'in',
           'source': VaultTransactionSource.customerDebt.name,
           'type': remainingAmount <= 0 ? 'full_settlement' : 'partial_payment',
-          'description': 'تحصيل دفعة من العميل (مزامنة): $customerName',
+          'description': isCard
+              ? 'تحصيل دفعة (كارت) من العميل (مزامنة): $customerName'
+              : 'تحصيل دفعة من العميل (مزامنة): $customerName',
           'relatedEntityId': '${operationId}_payment',
           'relatedOperationId': operationId,
           'createdAt': Timestamp.fromDate(
             timestampDate.add(const Duration(milliseconds: 1)),
           ),
-          'paymentMethod':
-              (payload['paymentMethod'] as String?)?.toLowerCase() ?? 'cash',
+          'paymentMethod': method,
         });
 
         batch.set(vaultSummaryRef, {

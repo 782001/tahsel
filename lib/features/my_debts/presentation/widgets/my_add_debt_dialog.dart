@@ -8,8 +8,7 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/utils/vault_balance_helper.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_cubit.dart';
 import 'package:tahsel/features/my_debts/presentation/cubit/my_debt_details_state.dart';
-import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
-import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/shared/widgets/fields/payment_method_selector.dart';
 import 'package:tahsel/shared/widgets/shimmer/shimmer_loading.dart';
 
 class MyAddDebtDialog extends StatefulWidget {
@@ -35,6 +34,17 @@ class _MyAddDebtDialogState extends State<MyAddDebtDialog> {
   final FocusNode _notesFocus = FocusNode();
   String? _errorText;
   DateTime? _selectedDate;
+  String _selectedPaymentMethod = 'cash';
+
+  @override
+  void initState() {
+    super.initState();
+    _paidAmountController.addListener(_onPaidAmountChanged);
+  }
+
+  void _onPaidAmountChanged() {
+    if (mounted) setState(() {});
+  }
 
   Future<void> _pickDate() async {
     final DateTime minDate = DateTime(2000);
@@ -72,6 +82,7 @@ class _MyAddDebtDialogState extends State<MyAddDebtDialog> {
 
   @override
   void dispose() {
+    _paidAmountController.removeListener(_onPaidAmountChanged);
     _amountController.dispose();
     _paidAmountController.dispose();
     _notesController.dispose();
@@ -84,11 +95,6 @@ class _MyAddDebtDialogState extends State<MyAddDebtDialog> {
   void _submit() {
     final amountText = _amountController.text.trim();
     final paidText = _paidAmountController.text.trim();
-
-    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
-      setState(() => _errorText = AppStrings.noInternetConnection.tr());
-      return;
-    }
 
     if (amountText.isEmpty) {
       setState(() => _errorText = AppStrings.requiredField.tr());
@@ -124,6 +130,7 @@ class _MyAddDebtDialogState extends State<MyAddDebtDialog> {
             : AppStrings.newDebt.tr(),
         phone: widget.phoneNumber,
         timestamp: _selectedDate,
+        paymentMethod: _selectedPaymentMethod,
       );
     }
   }
@@ -216,6 +223,18 @@ class _MyAddDebtDialogState extends State<MyAddDebtDialog> {
                         ),
                       ],
                     ),
+                    if ((double.tryParse(_paidAmountController.text) ?? 0) > 0) ...[
+                      const SizedBox(height: 16),
+                      PaymentMethodSelector(
+                        selectedMethod: _selectedPaymentMethod,
+                        showDebtOption: false,
+                        onMethodChanged: (method) {
+                          setState(() {
+                            _selectedPaymentMethod = method;
+                          });
+                        },
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     Text(
                       AppStrings.notes.tr(),
@@ -234,7 +253,7 @@ class _MyAddDebtDialogState extends State<MyAddDebtDialog> {
                       child: TextField(
                         controller: _notesController,
                         focusNode: _notesFocus,
-                        maxLines: 2,
+                        maxLines: 1,
                         cursorColor: AppColors.primaryColor,
                         decoration: InputDecoration(
                           hintText: AppStrings.notes.tr(),

@@ -34,12 +34,14 @@ abstract class VaultRemoteDataSource {
     required String uid,
     required double amount,
     String? note,
+    String paymentMethod = 'cash',
   });
 
   Future<void> withdrawManual({
     required String uid,
     required double amount,
     String? note,
+    String paymentMethod = 'cash',
   });
 
   Future<void> recordTransaction(VaultTransactionModel transaction);
@@ -352,21 +354,25 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
     required String uid,
     required double amount,
     String? note,
+    String paymentMethod = 'cash',
   }) async {
     if (!AppStrings.isVaultEnabled()) return;
     if (amount <= 0) return;
 
     final String txId =
         'vault_manual_dep_${DateTime.now().millisecondsSinceEpoch}';
+    final isCard = paymentMethod == 'card';
+    final defaultDesc = isCard ? 'إيداع (كارت) يدوياً' : 'إيداع نقدي يدوياً';
     final transaction = VaultTransactionModel(
       id: txId,
       uid: uid,
       amount: amount,
       direction: VaultTransactionDirection.inFlow,
       source: VaultTransactionSource.manualDeposit,
-      type: 'manual_deposit',
-      description: note != null && note.isNotEmpty ? note : 'إيداع نقدي يدوياً',
+      type: isCard ? 'manual_deposit_card' : 'manual_deposit',
+      description: note != null && note.isNotEmpty ? note : defaultDesc,
       createdAt: DateTime.now(),
+      paymentMethod: paymentMethod,
     );
 
     await recordTransaction(transaction);
@@ -376,15 +382,16 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
         ownerUid: uid,
         actionCategory: 'vault',
         actionType: 'vault_deposit',
-        actionTitle: 'إيداع نقدي في الخزينة',
+        actionTitle: isCard ? 'إيداع (كارت) في الخزينة' : 'إيداع نقدي في الخزينة',
         details:
-            'إيداع يدوي في الخزينة بمبلغ ${amount.toSmartAmount()} ${AppStrings.currencyEgp.tr()} ${note != null && note.isNotEmpty ? "(البيان: $note)" : "(بدون بيان)"}',
+            '${isCard ? "إيداع (كارت) يدوي" : "إيداع نقدي يدوي"} في الخزينة بمبلغ ${amount.toSmartAmount()} ${AppStrings.currencyEgp.tr()} ${note != null && note.isNotEmpty ? "(البيان: $note)" : "(بدون بيان)"}',
         amount: amount,
         extraData: {
           'transactionId': txId,
           'amount': amount,
           if (note != null && note.isNotEmpty) 'note': note,
           'action': 'manual_deposit',
+          'paymentMethod': paymentMethod,
         },
         timestamp: transaction.createdAt,
       );
@@ -396,6 +403,7 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
     required String uid,
     required double amount,
     String? note,
+    String paymentMethod = 'cash',
   }) async {
     if (!AppStrings.isVaultEnabled()) return;
     if (amount <= 0) return;
@@ -405,9 +413,11 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
           'vault_manual_with_${DateTime.now().millisecondsSinceEpoch}';
       final now = DateTime.now();
       final monthKey = DateFormat('yyyy-MM', 'en').format(now);
+      final isCard = paymentMethod == 'card';
+      final defaultDesc = isCard ? 'سحب (كارت) يدوياً' : 'سحب نقدي يدوياً';
       final description = note != null && note.isNotEmpty
           ? note
-          : 'سحب نقدي يدوياً';
+          : defaultDesc;
 
       final transaction = VaultTransactionModel(
         id: txId,
@@ -415,9 +425,10 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
         amount: amount,
         direction: VaultTransactionDirection.outFlow,
         source: VaultTransactionSource.manualWithdrawal,
-        type: 'manual_withdrawal',
+        type: isCard ? 'manual_withdrawal_card' : 'manual_withdrawal',
         description: description,
         createdAt: now,
+        paymentMethod: paymentMethod,
       );
 
       final userRef = _getUserRef(uid);
@@ -467,15 +478,16 @@ class VaultRemoteDataSourceImpl implements VaultRemoteDataSource {
           ownerUid: uid,
           actionCategory: 'vault',
           actionType: 'vault_withdrawal',
-          actionTitle: 'سحب نقدي من الخزينة',
+          actionTitle: isCard ? 'سحب (كارت) من الخزينة' : 'سحب نقدي من الخزينة',
           details:
-              'سحب يدوي من الخزينة بمبلغ ${amount.toSmartAmount()} ${AppStrings.currencyEgp.tr()} (البيان: $description) وترحيله للمصروفات',
+              '${isCard ? "سحب (كارت) يدوي" : "سحب يدوي"} من الخزينة بمبلغ ${amount.toSmartAmount()} ${AppStrings.currencyEgp.tr()} (البيان: $description) وترحيله للمصروفات',
           amount: amount,
           extraData: {
             'transactionId': txId,
             'amount': amount,
             if (note != null && note.isNotEmpty) 'note': note,
             'action': 'manual_withdrawal',
+            'paymentMethod': paymentMethod,
           },
           timestamp: now,
         );

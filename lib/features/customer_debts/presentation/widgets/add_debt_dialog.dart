@@ -8,8 +8,7 @@ import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_cubit.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_state.dart';
 import 'package:tahsel/shared/widgets/quick_due_date_selector.dart';
-import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
-import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/shared/widgets/fields/payment_method_selector.dart';
 
 class AddDebtDialog extends StatefulWidget {
   final String customerName;
@@ -38,6 +37,17 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
   String? _errorText;
   DateTime? _selectedDate;
   DateTime? _dueDate;
+  String _selectedPaymentMethod = 'cash';
+
+  @override
+  void initState() {
+    super.initState();
+    _paidAmountController.addListener(_onPaidAmountChanged);
+  }
+
+  void _onPaidAmountChanged() {
+    if (mounted) setState(() {});
+  }
 
   Future<void> _pickDate() async {
     final DateTime minDate = DateTime(2000);
@@ -75,6 +85,7 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
 
   @override
   void dispose() {
+    _paidAmountController.removeListener(_onPaidAmountChanged);
     _amountController.dispose();
     _paidAmountController.dispose();
     _debtNameController.dispose();
@@ -87,11 +98,6 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
   void _submit() {
     final amountText = _amountController.text.trim();
     final paidText = _paidAmountController.text.trim();
-
-    if (context.read<ConnectivityCubit>().state is ConnectivityDisconnected) {
-      setState(() => _errorText = AppStrings.noInternetConnection.tr());
-      return;
-    }
 
     if (amountText.isEmpty) {
       setState(() => _errorText = AppStrings.validationFieldRequired.tr());
@@ -129,6 +135,7 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
         ledgerNumber: widget.ledgerNumber,
         timestamp: _selectedDate,
         dueDate: _dueDate,
+        paymentMethod: _selectedPaymentMethod,
       );
     }
   }
@@ -307,6 +314,19 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
                       ],
                     ),
 
+                    if ((double.tryParse(_paidAmountController.text) ?? 0) > 0) ...[
+                      const SizedBox(height: 16),
+                      PaymentMethodSelector(
+                        selectedMethod: _selectedPaymentMethod,
+                        showDebtOption: false,
+                        onMethodChanged: (method) {
+                          setState(() {
+                            _selectedPaymentMethod = method;
+                          });
+                        },
+                      ),
+                    ],
+
                     if (!widget.isShop) ...[
                       const SizedBox(height: 16),
                       // Type Field
@@ -357,7 +377,7 @@ class _AddDebtDialogState extends State<AddDebtDialog> {
                         cursorColor: AppColors.primaryColor,
                         controller: _debtNameController,
                         focusNode: _debtNameFocus,
-                        maxLines: 2,
+                        maxLines: 1,
                         textInputAction: TextInputAction.done,
                         onSubmitted: (_) => _submit(),
                         style: TextStyles.customStyle(

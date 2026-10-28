@@ -164,10 +164,14 @@ class VaultBalanceHelper {
     showDialog(
       context: context,
       builder: (_) => ManualDepositDialog(
-        onSubmit: (amount, note) async {
+        onSubmit: (amount, note, paymentMethod) async {
           try {
             final vaultCubit = sl<VaultCubit>();
-            await vaultCubit.depositManual(amount: amount, note: note);
+            await vaultCubit.depositManual(
+              amount: amount,
+              note: note,
+              paymentMethod: paymentMethod,
+            );
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(

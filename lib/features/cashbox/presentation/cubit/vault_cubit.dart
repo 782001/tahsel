@@ -204,7 +204,11 @@ class VaultCubit extends Cubit<VaultState> {
           ? AppStrings.userToken
           : FirebaseAuth.instance.currentUser?.uid);
 
-  Future<void> depositManual({required double amount, String? note}) async {
+  Future<void> depositManual({
+    required double amount,
+    String? note,
+    String paymentMethod = 'cash',
+  }) async {
     if (!PermissionService.instance.hasPermission(AppPermissions.vaultDeposit)) {
       emit(VaultError(AppStrings.noPermissionForAction.tr()));
       return;
@@ -220,6 +224,7 @@ class VaultCubit extends Cubit<VaultState> {
       uid: _uid!,
       amount: amount,
       note: note,
+      paymentMethod: paymentMethod,
     );
 
     result.fold(
@@ -231,7 +236,11 @@ class VaultCubit extends Cubit<VaultState> {
     );
   }
 
-  Future<void> withdrawManual({required double amount, String? note}) async {
+  Future<void> withdrawManual({
+    required double amount,
+    String? note,
+    String paymentMethod = 'cash',
+  }) async {
     if (!PermissionService.instance.hasPermission(AppPermissions.vaultWithdraw)) {
       emit(VaultError(AppStrings.noPermissionForAction.tr()));
       return;
@@ -255,6 +264,7 @@ class VaultCubit extends Cubit<VaultState> {
       uid: _uid!,
       amount: amount,
       note: note,
+      paymentMethod: paymentMethod,
     );
 
     result.fold(

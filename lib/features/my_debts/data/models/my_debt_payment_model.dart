@@ -11,6 +11,7 @@ class MyDebtPaymentModel extends MyDebtPaymentEntity {
     super.relatedTo,
     required super.remainingAmount,
     required super.createdAt,
+    super.paymentMethod = 'cash',
   });
 
   factory MyDebtPaymentModel.fromJson(Map<String, dynamic> json, String id) {
@@ -25,6 +26,7 @@ class MyDebtPaymentModel extends MyDebtPaymentEntity {
       createdAt: json['createdAt'] != null
           ? (json['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
+      paymentMethod: json['paymentMethod'] ?? 'cash',
     );
   }
 
@@ -37,6 +39,7 @@ class MyDebtPaymentModel extends MyDebtPaymentEntity {
       'relatedTo': relatedTo,
       'remainingAmount': remainingAmount,
       'createdAt': Timestamp.fromDate(createdAt),
+      'paymentMethod': paymentMethod ?? 'cash',
     };
   }
 
@@ -50,6 +53,7 @@ class MyDebtPaymentModel extends MyDebtPaymentEntity {
       relatedTo: entity.relatedTo,
       remainingAmount: entity.remainingAmount,
       createdAt: entity.createdAt,
+      paymentMethod: entity.paymentMethod ?? 'cash',
     );
   }
 }

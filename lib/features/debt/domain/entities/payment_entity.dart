@@ -12,6 +12,7 @@ class PaymentEntity extends Equatable {
   final PaymentType type;
   final String? activityName;
   final String? relatedTo;
+  final String? paymentMethod;
 
   const PaymentEntity({
     this.id,
@@ -23,6 +24,7 @@ class PaymentEntity extends Equatable {
     required this.type,
     this.activityName,
     this.relatedTo,
+    this.paymentMethod,
   });
 
   @override
@@ -36,5 +38,6 @@ class PaymentEntity extends Equatable {
     type,
     activityName,
     relatedTo,
+    paymentMethod,
   ];
 }

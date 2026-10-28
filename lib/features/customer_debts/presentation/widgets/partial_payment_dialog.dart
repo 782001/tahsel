@@ -11,6 +11,7 @@ import 'package:tahsel/features/debt/presentation/cubit/debt_cubit.dart';
 import 'package:tahsel/features/debt/presentation/cubit/debt_state.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_cubit.dart';
 import 'package:tahsel/features/standard_features/no-internet/logic/connectivity_state.dart';
+import 'package:tahsel/shared/widgets/fields/payment_method_selector.dart';
 
 class PartialPaymentDialog extends StatefulWidget {
   final String customerName;
@@ -34,6 +35,7 @@ class _PartialPaymentDialogState extends State<PartialPaymentDialog> {
   final TextEditingController _amountController = TextEditingController();
   String? _errorText;
   DateTime? _selectedDate;
+  String _selectedPaymentMethod = 'cash';
 
   @override
   void dispose() {
@@ -108,6 +110,7 @@ class _PartialPaymentDialogState extends State<PartialPaymentDialog> {
           amount: amount,
           totalRemainingBefore: widget.totalRemaining,
           paymentDate: _selectedDate,
+          paymentMethod: _selectedPaymentMethod,
         );
       } else {
         context.read<DebtCubit>().payDebt(
@@ -117,6 +120,7 @@ class _PartialPaymentDialogState extends State<PartialPaymentDialog> {
           totalRemainingBefore: widget.totalRemaining,
           note: AppStrings.partialPayment.tr(),
           paymentDate: _selectedDate,
+          paymentMethod: _selectedPaymentMethod,
         );
       }
     }
@@ -230,6 +234,16 @@ class _PartialPaymentDialogState extends State<PartialPaymentDialog> {
                         ),
                       ),
                     ],
+                    const SizedBox(height: 16),
+                    PaymentMethodSelector(
+                      selectedMethod: _selectedPaymentMethod,
+                      showDebtOption: false,
+                      onMethodChanged: (method) {
+                        setState(() {
+                          _selectedPaymentMethod = method;
+                        });
+                      },
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       AppStrings.paymentDate.tr(),

@@ -21,6 +21,7 @@ import 'package:tahsel/features/main_layout/presentation/cubit/main_layout_cubit
 
 import '../../../debt/domain/entities/debt_entity.dart';
 import '../../../debt/presentation/cubit/debt_state.dart';
+import 'package:tahsel/shared/widgets/fields/payment_method_selector.dart';
 
 class CustomerDebtsList extends StatefulWidget {
   final String searchQuery;
@@ -93,85 +94,105 @@ class _CustomerDebtsListState extends State<CustomerDebtsList> {
     final itemDesc = (debt.productOrSessionDetails ?? '').trim().isNotEmpty
         ? debt.productOrSessionDetails!.trim()
         : AppStrings.customerDebts.tr();
+    String selectedPaymentMethod = 'cash';
 
     showDialog(
       context: context,
       builder: (ctx) => Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
-          child: AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16.r),
-            ),
-            title: Row(
-              children: [
-                Icon(
-                  Icons.check_circle_outline,
-                  color: AppColors.primaryColor,
-                  size: 24.r,
-                ),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: Text(
-                    AppStrings.confirmPayDebtTitle.tr(),
+          child: StatefulBuilder(
+            builder: (dialogCtx, setDialogState) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16.r),
+              ),
+              title: Row(
+                children: [
+                  Icon(
+                    Icons.check_circle_outline,
+                    color: AppColors.primaryColor,
+                    size: 24.r,
+                  ),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Text(
+                      AppStrings.confirmPayDebtTitle.tr(),
+                      style: TextStyles.customStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppStrings.confirmPayDebtMsg
+                        .tr()
+                        .replaceAll('{item}', itemDesc)
+                        .replaceAll('{amount}', debt.remainingAmount.toSmartAmount())
+                        .replaceAll('{currency}', currency),
                     style: TextStyles.customStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
                       color: AppColors.textColor,
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  PaymentMethodSelector(
+                    selectedMethod: selectedPaymentMethod,
+                    showDebtOption: false,
+                    onMethodChanged: (method) {
+                      setDialogState(() {
+                        selectedPaymentMethod = method;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: Text(
+                    AppStrings.cancel.tr(),
+                    style: TextStyles.customStyle(
+                      color: AppColors.grey,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    final uid = AppStrings.userToken;
+                    if (uid.isNotEmpty) {
+                      context.read<DebtCubit>().markItemAsPaid(
+                        debt: debt,
+                        totalRemainingBefore: debt.remainingAmount,
+                        paymentMethod: selectedPaymentMethod,
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryColor,
+                    foregroundColor: AppColors.whiteColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                  ),
+                  child: Text(
+                    AppStrings.confirmPayDebtBtn.tr(),
+                    style: TextStyles.customStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
               ],
             ),
-            content: Text(
-              AppStrings.confirmPayDebtMsg
-                  .tr()
-                  .replaceAll('{item}', itemDesc)
-                  .replaceAll('{amount}', debt.remainingAmount.toSmartAmount())
-                  .replaceAll('{currency}', currency),
-              style: TextStyles.customStyle(
-                fontSize: 14,
-                color: AppColors.textColor,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: Text(
-                  AppStrings.cancel.tr(),
-                  style: TextStyles.customStyle(
-                    color: AppColors.grey,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(ctx).pop();
-                  final uid = AppStrings.userToken;
-                  if (uid.isNotEmpty) {
-                    context.read<DebtCubit>().markItemAsPaid(
-                      debt: debt,
-                      totalRemainingBefore: debt.remainingAmount,
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryColor,
-                  foregroundColor: AppColors.whiteColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                ),
-                child: Text(
-                  AppStrings.confirmPayDebtBtn.tr(),
-                  style: TextStyles.customStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
           ),
         ),
       ),

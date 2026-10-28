@@ -348,14 +348,14 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
           (_selectedPaymentMethod == 'debt' ? 0.0 : _totalAmount);
       final double actualPaidAmount = parsedPaid.clamp(0.0, _totalAmount);
 
-      // Proactive Vault Balance check (only checks incremental amount needed for cash transactions)
-      final bool isCashPayment = _selectedPaymentMethod != 'card';
+      // Proactive Vault Balance check for cash and card transactions
+      final bool isDebtOnly = _selectedPaymentMethod == 'debt';
       final double oldVaultPaid = isEdit
-          ? (widget.initialPurchase!.paymentMethod == 'card'
+          ? (widget.initialPurchase!.paymentMethod == 'debt'
               ? 0.0
               : widget.initialPurchase!.paidAmount)
           : 0.0;
-      final double currentVaultNeeded = isCashPayment ? actualPaidAmount : 0.0;
+      final double currentVaultNeeded = !isDebtOnly ? actualPaidAmount : 0.0;
       final double neededFromVault = currentVaultNeeded - oldVaultPaid;
 
       if (neededFromVault > 0 && AppStrings.isVaultEnabled()) {

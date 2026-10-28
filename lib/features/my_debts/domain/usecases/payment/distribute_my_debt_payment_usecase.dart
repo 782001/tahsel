@@ -13,6 +13,7 @@ class DistributeMyDebtPaymentUseCase {
     required double amount,
     String? note,
     DateTime? paymentDate,
+    String paymentMethod = 'cash',
   }) async {
     return await repository.distributeMyDebtPayment(
       uid: uid,
@@ -20,6 +21,7 @@ class DistributeMyDebtPaymentUseCase {
       amount: amount,
       note: note,
       paymentDate: paymentDate,
+      paymentMethod: paymentMethod,
     );
   }
 }
