@@ -494,7 +494,7 @@ class ProductDetailsDialog extends StatelessWidget {
                     fontSize: 11,
                     color: AppColors.sandText,
                   ),
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
@@ -504,7 +504,7 @@ class ProductDetailsDialog extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                     color: AppColors.blackReal,
                   ),
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
