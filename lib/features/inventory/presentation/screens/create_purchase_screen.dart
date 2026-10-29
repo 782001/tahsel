@@ -1308,7 +1308,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
     final newPurchasePriceController = TextEditingController();
     final newSellingPriceController = TextEditingController();
     final newQtyController = TextEditingController(text: '1');
-    final newUnitController = TextEditingController(text: 'Ù‚Ø·Ø¹Ø©');
+    final newUnitController = TextEditingController(text: 'قطعة');
 
     String? newSelectedCategoryId = categories.isNotEmpty
         ? categories.first.id
