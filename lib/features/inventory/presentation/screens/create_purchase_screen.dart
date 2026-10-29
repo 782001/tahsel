@@ -1119,7 +1119,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                                         ),
                                                       ),
                                                       Text(
-                                                        'Ã—',
+                                                        '×',
                                                         style:
                                                             TextStyles.customStyle(
                                                               fontSize: 13,
