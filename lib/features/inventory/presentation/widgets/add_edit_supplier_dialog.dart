@@ -5,9 +5,9 @@ import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
-import '../../domain/entities/inventory_supplier_entity.dart';
-
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
+
+import '../../domain/entities/inventory_supplier_entity.dart';
 
 class AddEditSupplierDialog extends StatefulWidget {
   final InventorySupplierEntity? supplier;
@@ -164,7 +164,7 @@ class _AddEditSupplierDialogState extends State<AddEditSupplierDialog> {
                       _buildField(
                         controller: _notesController,
                         label: AppStrings.notes.tr(),
-                        maxLines: 2,
+                        maxLines:1,
                         textInputAction: TextInputAction.done,
                         onSubmitted: (_) => _submit(),
                       ),

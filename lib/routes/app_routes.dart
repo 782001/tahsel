@@ -286,6 +286,7 @@ class AppRoutes {
               BlocProvider(
                 create: (_) => di.sl<InventoryStockMovementsCubit>(),
               ),
+              BlocProvider(create: (_) => di.sl<InventoryPurchasesCubit>()),
             ],
             child: ProductsScreen(showLowStockOnly: showLowStockOnly),
           ),
@@ -363,6 +364,7 @@ class AppRoutes {
               BlocProvider(
                 create: (_) => di.sl<InventoryStockMovementsCubit>(),
               ),
+              BlocProvider(create: (_) => di.sl<InventoryPurchasesCubit>()),
             ],
             child: const InventoryAnalyticsScreen(),
           ),

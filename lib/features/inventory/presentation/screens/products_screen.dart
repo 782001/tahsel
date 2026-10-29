@@ -22,10 +22,12 @@ import '../../domain/entities/inventory_supplier_entity.dart';
 import '../../domain/utils/best_seller_helper.dart';
 import '../cubits/inventory_categories_cubit.dart';
 import '../cubits/inventory_products_cubit.dart';
+import '../cubits/inventory_purchases_cubit.dart';
 import '../cubits/inventory_stock_movements_cubit.dart';
 import '../cubits/inventory_suppliers_cubit.dart';
 import '../widgets/add_edit_product_dialog.dart';
 import '../widgets/barcode_scanner_dialog.dart';
+import '../widgets/bulk_purchase_low_stock_dialog.dart';
 import '../widgets/inventory_empty_state.dart';
 import '../widgets/manual_stock_adjustment_dialog.dart';
 import '../widgets/product_card_item.dart';
@@ -79,6 +81,91 @@ class _ProductsScreenState extends State<ProductsScreen> {
     _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _openBulkPurchaseLowStockDialog() {
+    if (!PermissionService.instance.hasPermission(
+      AppPermissions.inventoryPurchases,
+    )) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppStrings.noPermissionForAction.tr()),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    final productsCubit = context.read<InventoryProductsCubit>();
+    final suppliersCubit = context.read<InventorySuppliersCubit>();
+    InventoryPurchasesCubit? purchasesCubit;
+    try {
+      purchasesCubit = context.read<InventoryPurchasesCubit>();
+    } catch (_) {
+      if (sl.isRegistered<InventoryPurchasesCubit>()) {
+        purchasesCubit = sl<InventoryPurchasesCubit>();
+      }
+    }
+
+    if (purchasesCubit == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppStrings.operationFailed.tr()),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    final state = productsCubit.state;
+    List<InventoryProductEntity> lowStockProducts = [];
+    if (state is InventoryProductsLoaded) {
+      lowStockProducts = state.products
+          .where((p) => p.isLowStock && p.isAvailable)
+          .toList();
+    }
+
+    if (lowStockProducts.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppStrings.noLowStockToBuy.tr()),
+          backgroundColor: AppColors.warning,
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: purchasesCubit!),
+          BlocProvider.value(value: productsCubit),
+          BlocProvider.value(value: suppliersCubit),
+        ],
+        child: BulkPurchaseLowStockDialog(
+          lowStockProducts: lowStockProducts,
+          suppliers: _suppliers,
+          onSuccess: () {
+            productsCubit.fetchProducts(
+              query: _searchController.text,
+              categoryId: _selectedCategory,
+              supplierId: _selectedSupplier,
+            );
+            if (sl.isRegistered<ActivityLoggerService>()) {
+              sl<ActivityLoggerService>().logStandalone(
+                ownerUid: AppStrings.userToken,
+                actionCategory: 'inventory',
+                actionType: 'bulk_purchase_low_stock',
+                actionTitle: AppStrings.buyLowStockProducts.tr(),
+                details: 'Bulk restock executed for low stock products',
+              );
+            }
+          },
+        ),
+      ),
+    );
   }
 
   void _openAddEditProductDialog([InventoryProductEntity? product]) {
@@ -336,6 +423,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
         floatingActionButton: PermissionGuard(
           permission: AppPermissions.inventoryManageProducts,
           child: FloatingActionButton.extended(
+            heroTag: 'add_product_fab',
             backgroundColor: AppColors.primaryColor,
             onPressed: () => _openAddEditProductDialog(),
             icon: const Icon(Icons.add, color: Colors.white),
@@ -362,58 +450,153 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     // Low Stock Active Filter Banner
                     if (_showLowStockOnly)
                       Padding(
-                        padding: EdgeInsets.only(bottom: 12.h),
+                        padding: EdgeInsets.only(bottom: isDesktop ? 12 : 12.h),
                         child: Container(
                           padding: EdgeInsets.symmetric(
-                            horizontal: 14.w,
-                            vertical: 10.h,
+                            horizontal: isDesktop ? 14 : 14.w,
+                            vertical: isDesktop ? 12 : 12.h,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.warning.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(10.r),
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.warning.withValues(alpha: 0.15),
+                                AppColors.warning.withValues(alpha: 0.06),
+                              ],
+                              begin: Alignment.topRight,
+                              end: Alignment.bottomLeft,
+                            ),
+                            borderRadius: BorderRadius.circular(12.r),
                             border: Border.all(
-                              color: AppColors.warning.withValues(alpha: 0.4),
+                              color: AppColors.warning.withValues(alpha: 0.45),
                             ),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Icon(
-                                    Icons.warning_amber_rounded,
-                                    color: AppColors.warning,
-                                    size: 20,
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: EdgeInsets.all(4.r),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.warning.withValues(
+                                            alpha: 0.2,
+                                          ),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          Icons.warning_amber_rounded,
+                                          color: AppColors.warning,
+                                          size: 18,
+                                        ),
+                                      ),
+                                      SizedBox(width: isDesktop ? 8 : 8.w),
+                                      Text(
+                                        AppStrings.lowStockWarning.tr(),
+                                        style: TextStyles.customStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.warning,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  SizedBox(width: 8.w),
-                                  Text(
-                                    AppStrings.lowStockWarning.tr(),
-                                    style: TextStyles.customStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.warning,
+                                  InkWell(
+                                    onTap: () {
+                                      setState(() => _showLowStockOnly = false);
+                                    },
+                                    child: Container(
+                                      padding: EdgeInsets.all(
+                                        isDesktop ? 4 : 4.r,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.warning.withValues(
+                                          alpha: 0.2,
+                                        ),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.close_rounded,
+                                        color: AppColors.warning,
+                                        size: 16,
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
-                              InkWell(
-                                onTap: () {
-                                  setState(() => _showLowStockOnly = false);
-                                },
-                                child: Container(
-                                  padding: EdgeInsets.all(4.r),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.warning.withValues(
-                                      alpha: 0.2,
+                              SizedBox(height: isDesktop ? 10 : 10.h),
+                              PermissionGuard(
+                                permission: AppPermissions.inventoryPurchases,
+                                child:
+                                    BlocBuilder<
+                                      InventoryProductsCubit,
+                                      InventoryProductsState
+                                    >(
+                                      builder: (context, state) {
+                                        final bool isProductsLoading =
+                                            state is InventoryProductsLoading;
+                                        final int lowStockCount =
+                                            state is InventoryProductsLoaded
+                                            ? state.products
+                                                  .where(
+                                                    (p) =>
+                                                        p.isLowStock &&
+                                                        p.isAvailable,
+                                                  )
+                                                  .length
+                                            : 0;
+                                        final bool canPurchase =
+                                            !isProductsLoading &&
+                                            lowStockCount > 0;
+
+                                        return SizedBox(
+                                          width: double.infinity,
+                                          height: 42,
+                                          child: ElevatedButton.icon(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: canPurchase
+                                                  ? AppColors.primaryColor
+                                                  : Colors.grey.shade400,
+                                              foregroundColor: Colors.white,
+                                              padding: EdgeInsets.symmetric(
+                                                horizontal: isDesktop
+                                                    ? 16
+                                                    : 16.w,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10.r),
+                                              ),
+                                              elevation: canPurchase ? 2 : 0,
+                                            ),
+                                            onPressed: canPurchase
+                                                ? _openBulkPurchaseLowStockDialog
+                                                : null,
+                                            icon: const Icon(
+                                              Icons
+                                                  .shopping_cart_checkout_rounded,
+                                              color: Colors.white,
+                                              size: 18,
+                                            ),
+                                            label: Text(
+                                              lowStockCount > 0
+                                                  ? '${AppStrings.buyLowStockProducts.tr()} ($lowStockCount)'
+                                                  : AppStrings
+                                                        .buyLowStockProducts
+                                                        .tr(),
+                                              style: TextStyles.customStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
                                     ),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    Icons.close_rounded,
-                                    color: AppColors.warning,
-                                    size: 16,
-                                  ),
-                                ),
                               ),
                             ],
                           ),

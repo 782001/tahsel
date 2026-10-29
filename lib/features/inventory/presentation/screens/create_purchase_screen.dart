@@ -5,14 +5,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get_it/get_it.dart';
+import 'package:tahsel/core/constants/app_permissions.dart';
 import 'package:tahsel/core/extensions/number_extensions.dart';
 import 'package:tahsel/core/extensions/string_extensions.dart';
+import 'package:tahsel/core/services/permission_service.dart';
 import 'package:tahsel/core/services/profile/business_profile_service.dart';
 import 'package:tahsel/core/utils/app_colors.dart';
 import 'package:tahsel/core/utils/app_strings.dart';
 import 'package:tahsel/core/utils/date_formatter.dart';
 import 'package:tahsel/core/utils/styles.dart';
 import 'package:tahsel/core/utils/vault_balance_helper.dart';
+import 'package:tahsel/core/widgets/permission_guard.dart';
 import 'package:tahsel/core/widgets/responsive_layout.dart';
 import 'package:tahsel/shared/widgets/fields/quick_text_field.dart';
 
@@ -24,16 +27,23 @@ import '../../domain/entities/inventory_supplier_entity.dart';
 import '../cubits/inventory_products_cubit.dart';
 import '../cubits/inventory_purchases_cubit.dart';
 import '../cubits/inventory_suppliers_cubit.dart';
+import '../widgets/add_edit_supplier_dialog.dart';
 import '../widgets/barcode_scanner_dialog.dart';
 import '../widgets/searchable_dropdown_field.dart';
+import '../widgets/supplier_selection_dialog.dart';
 
 class CreatePurchaseScreen extends StatefulWidget {
   final InventoryPurchaseEntity? initialPurchase;
   final bool isReorder;
+  final List<InventoryPurchaseItemEntity>? initialItems;
+  final InventorySupplierEntity? initialSupplier;
+
   const CreatePurchaseScreen({
     super.key,
     this.initialPurchase,
     this.isReorder = false,
+    this.initialItems,
+    this.initialSupplier,
   });
 
   @override
@@ -62,13 +72,21 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
       _selectedPaymentMethod = widget.initialPurchase!.paymentMethod;
       _paidAmountController.text = widget.isReorder
           ? (_selectedPaymentMethod == 'debt'
-              ? '0'
-              : _totalAmount.toSmartAmount())
+                ? '0'
+                : _totalAmount.toSmartAmount())
           : widget.initialPurchase!.paidAmount.toSmartAmount();
+    } else if (widget.initialItems != null && widget.initialItems!.isNotEmpty) {
+      _selectedItems.addAll(widget.initialItems!);
+      _paidAmountController.text = _totalAmount > 0
+          ? _totalAmount.toSmartAmount()
+          : '0';
     } else {
       _paidAmountController.text = _totalAmount > 0
           ? _totalAmount.toSmartAmount()
           : '0';
+    }
+    if (widget.initialSupplier != null) {
+      _selectedSupplier = widget.initialSupplier;
     }
     context.read<InventorySuppliersCubit>().fetchSuppliers();
     context.read<InventoryProductsCubit>().fetchProducts();
@@ -94,8 +112,9 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
       final currentPaid =
           double.tryParse(_paidAmountController.text.trim()) ?? 0.0;
       if (currentPaid == 0 || (currentPaid - oldTotal).abs() < 0.01) {
-        _paidAmountController.text =
-            _totalAmount > 0 ? _totalAmount.toSmartAmount() : '0';
+        _paidAmountController.text = _totalAmount > 0
+            ? _totalAmount.toSmartAmount()
+            : '0';
       }
     }
   }
@@ -300,6 +319,378 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
     );
   }
 
+  void _openAddSupplierDialog({String? initialName}) {
+    if (!PermissionService.instance.hasPermission(
+      AppPermissions.inventoryManageSuppliers,
+    )) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppStrings.appPermissionDenied.tr()),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AddEditSupplierDialog(
+        supplier: initialName != null && initialName.isNotEmpty
+            ? InventorySupplierEntity(
+                id: '',
+                name: initialName,
+                phone: '',
+                address: '',
+                createdAt: DateTime.now(),
+                updatedAt: DateTime.now(),
+              )
+            : null,
+        onSave: (supplier) {
+          context.read<InventorySuppliersCubit>().saveSupplier(supplier).then((
+            success,
+          ) {
+            if (success && mounted) {
+              setState(() {
+                _selectedSupplier = supplier;
+              });
+              context.read<InventorySuppliersCubit>().fetchSuppliers();
+            }
+          });
+        },
+      ),
+    );
+  }
+
+  void _openSupplierSelectionDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => SupplierSelectionDialog(
+        suppliers: _suppliers,
+        selectedSupplier: _selectedSupplier,
+        onSelected: (supplier) {
+          setState(() {
+            _selectedSupplier = supplier;
+          });
+        },
+        onCleared: () {
+          setState(() {
+            _selectedSupplier = null;
+          });
+        },
+        onAddNewSupplier:
+            PermissionService.instance.hasPermission(
+              AppPermissions.inventoryManageSuppliers,
+            )
+            ? (initialName) {
+                Navigator.of(ctx).pop();
+                _openAddSupplierDialog(initialName: initialName);
+              }
+            : null,
+      ),
+    );
+  }
+
+  Widget _buildSupplierSelector(bool isDesktop) {
+    final bool hasSupplier = _selectedSupplier != null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.business_rounded,
+                  size: isDesktop ? 18 : 16,
+                  color: AppColors.primaryColor,
+                ),
+                SizedBox(width: isDesktop ? 6 : 6.w),
+                Text(
+                  AppStrings.supplier.tr(),
+                  style: TextStyles.customStyle(
+                    fontSize: isDesktop ? 14 : 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.blackReal,
+                  ),
+                ),
+              ],
+            ),
+            if (hasSupplier)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Text(
+                  AppStrings.selectedSupplier.tr(),
+                  style: TextStyles.customStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryColor,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        SizedBox(height: isDesktop ? 8 : 8.h),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // The Smart Supplier Selector Card
+            Expanded(
+              child: InkWell(
+                onTap: _openSupplierSelectionDialog,
+                borderRadius: BorderRadius.circular(14.r),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isDesktop ? 14 : 12.w,
+                    vertical: isDesktop ? 10 : 8.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: hasSupplier
+                        ? AppColors.primaryColor.withValues(alpha: 0.05)
+                        : AppColors.stitchSurfaceHigh.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(14.r),
+                    border: Border.all(
+                      color: hasSupplier
+                          ? AppColors.primaryColor.withValues(alpha: 0.4)
+                          : AppColors.dividerColor.withValues(alpha: 0.7),
+                      width: hasSupplier ? 1.2 : 1.0,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      // Avatar or Search Icon
+                      Container(
+                        width: isDesktop ? 40 : 36,
+                        height: isDesktop ? 40 : 36,
+                        decoration: BoxDecoration(
+                          color: hasSupplier
+                              ? AppColors.primaryColor.withValues(alpha: 0.15)
+                              : AppColors.surface,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: hasSupplier
+                                ? AppColors.primaryColor.withValues(alpha: 0.3)
+                                : AppColors.dividerColor.withValues(alpha: 0.4),
+                          ),
+                        ),
+                        child: Center(
+                          child: hasSupplier
+                              ? Text(
+                                  _selectedSupplier!.name.isNotEmpty
+                                      ? _selectedSupplier!.name.characters.first
+                                            .toUpperCase()
+                                      : 'Ù…',
+                                  style: TextStyles.customStyle(
+                                    fontSize: isDesktop ? 16 : 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primaryColor,
+                                  ),
+                                )
+                              : Icon(
+                                  Icons.person_search_rounded,
+                                  size: isDesktop ? 20 : 18,
+                                  color: AppColors.primaryColor,
+                                ),
+                        ),
+                      ),
+                      SizedBox(width: isDesktop ? 12 : 10.w),
+
+                      // Supplier Info or Placeholder
+                      Expanded(
+                        child: hasSupplier
+                            ? Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          _selectedSupplier!.name,
+                                          style: TextStyles.customStyle(
+                                            fontSize: isDesktop ? 14 : 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.blackReal,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      if (_selectedSupplier!.companyName !=
+                                              null &&
+                                          _selectedSupplier!.companyName!
+                                              .trim()
+                                              .isNotEmpty) ...[
+                                        SizedBox(width: 6.w),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 6,
+                                            vertical: 1.5,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.surface,
+                                            borderRadius: BorderRadius.circular(
+                                              6.r,
+                                            ),
+                                            border: Border.all(
+                                              color: AppColors.dividerColor
+                                                  .withValues(alpha: 0.5),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            _selectedSupplier!.companyName!,
+                                            style: TextStyles.customStyle(
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.sandText,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  SizedBox(height: 2.h),
+                                  Row(
+                                    children: [
+                                      if (_selectedSupplier!
+                                          .phone
+                                          .isNotEmpty) ...[
+                                        Icon(
+                                          Icons.phone_outlined,
+                                          size: 11,
+                                          color: AppColors.sandText,
+                                        ),
+                                        SizedBox(width: 4.w),
+                                        Text(
+                                          _selectedSupplier!.phone,
+                                          style: TextStyles.customStyle(
+                                            fontSize: 11,
+                                            color: AppColors.sandText,
+                                          ),
+                                        ),
+                                      ] else
+                                        Text(
+                                          AppStrings.tapToChangeSupplier.tr(),
+                                          style: TextStyles.customStyle(
+                                            fontSize: 11,
+                                            color: AppColors.primaryColor,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ],
+                              )
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    AppStrings.tapToSelectSupplierOrSearch.tr(),
+                                    style: TextStyles.customStyle(
+                                      fontSize: isDesktop ? 13 : 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.sandText,
+                                    ),
+                                  ),
+                                  SizedBox(height: 2.h),
+                                  Text(
+                                    AppStrings.linkInvoiceToSupplierHint.tr(),
+                                    style: TextStyles.customStyle(
+                                      fontSize: 10.5,
+                                      color: AppColors.sandText.withValues(
+                                        alpha: 0.7,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
+
+                      // Action Badges / Change / Clear
+                      if (hasSupplier) ...[
+                        InkWell(
+                          onTap: () {
+                            setState(() {
+                              _selectedSupplier = null;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(20),
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Icon(
+                              Icons.close_rounded,
+                              size: 18,
+                              color: AppColors.sandText,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 4.w),
+                      ],
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isDesktop ? 10 : 8.w,
+                          vertical: isDesktop ? 6 : 5.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: hasSupplier
+                              ? AppColors.surface
+                              : AppColors.primaryColor,
+                          borderRadius: BorderRadius.circular(8.r),
+                          border: hasSupplier
+                              ? Border.all(
+                                  color: AppColors.primaryColor.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                )
+                              : null,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              hasSupplier
+                                  ? AppStrings.change.tr()
+                                  : AppStrings.choose.tr(),
+                              style: TextStyles.customStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: hasSupplier
+                                    ? AppColors.primaryColor
+                                    : Colors.white,
+                              ),
+                            ),
+                            SizedBox(width: 3.w),
+                            Icon(
+                              hasSupplier
+                                  ? Icons.swap_horiz_rounded
+                                  : Icons.arrow_forward_ios_rounded,
+                              size: 12,
+                              color: hasSupplier
+                                  ? AppColors.primaryColor
+                                  : Colors.white,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   void _removeItem(int index) {
     final oldTotal = _totalAmount;
     setState(() {
@@ -352,8 +743,8 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
       final bool isDebtOnly = _selectedPaymentMethod == 'debt';
       final double oldVaultPaid = isEdit
           ? (widget.initialPurchase!.paymentMethod == 'debt'
-              ? 0.0
-              : widget.initialPurchase!.paidAmount)
+                ? 0.0
+                : widget.initialPurchase!.paidAmount)
           : 0.0;
       final double currentVaultNeeded = !isDebtOnly ? actualPaidAmount : 0.0;
       final double neededFromVault = currentVaultNeeded - oldVaultPaid;
@@ -515,7 +906,12 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
               setState(() {
                 _suppliers = state.suppliers;
                 if (_suppliers.isNotEmpty && _selectedSupplier == null) {
-                  if (widget.initialPurchase != null) {
+                  if (widget.initialSupplier != null) {
+                    _selectedSupplier = _suppliers.firstWhere(
+                      (s) => s.id == widget.initialSupplier!.id,
+                      orElse: () => _suppliers.first,
+                    );
+                  } else if (widget.initialPurchase != null) {
                     _selectedSupplier = _suppliers.firstWhere(
                       (s) => s.id == widget.initialPurchase!.supplierId,
                       orElse: () => _suppliers.first,
@@ -541,6 +937,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
         appBar: AppBar(
           backgroundColor: AppColors.scafoldBackGround,
           elevation: 0,
+          scrolledUnderElevation: 0,
           leading: IconButton(
             icon: Icon(
               Icons.arrow_back_ios_new_rounded,
@@ -569,20 +966,12 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                 maxWidth: isDesktop ? 950 : double.infinity,
               ),
               child: Padding(
-                padding: EdgeInsets.all(isDesktop ? 24 : 16.w),
+                padding: EdgeInsets.all(isDesktop ? 12 : 10.w),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Step 1: Select Supplier (Searchable)
-                    SearchableDropdownField<InventorySupplierEntity>(
-                      label: AppStrings.supplier.tr(),
-                      items: _suppliers,
-                      selectedId: _selectedSupplier?.id,
-                      getName: (s) => s.name,
-                      getId: (s) => s.id,
-                      onSelected: (s) => setState(() => _selectedSupplier = s),
-                      onCleared: () => setState(() => _selectedSupplier = null),
-                    ),
+                    // Step 1: Select Supplier (Smart Dialog Selector)
+                    _buildSupplierSelector(isDesktop),
                     SizedBox(height: isDesktop ? 20 : 20.h),
 
                     // Step 2: Add Items
@@ -730,7 +1119,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                                         ),
                                                       ),
                                                       Text(
-                                                        '×',
+                                                        'Ã—',
                                                         style:
                                                             TextStyles.customStyle(
                                                               fontSize: 13,
@@ -919,7 +1308,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
     final newPurchasePriceController = TextEditingController();
     final newSellingPriceController = TextEditingController();
     final newQtyController = TextEditingController(text: '1');
-    final newUnitController = TextEditingController(text: 'قطعة');
+    final newUnitController = TextEditingController(text: 'Ù‚Ø·Ø¹Ø©');
 
     String? newSelectedCategoryId = categories.isNotEmpty
         ? categories.first.id
@@ -1024,31 +1413,35 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                             ),
                           ),
                           Expanded(
-                            child: InkWell(
-                              onTap: () {
-                                setDialogState(() {
-                                  isNewProductMode = true;
-                                });
-                              },
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                  vertical: isDesktop ? 8 : 8.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isNewProductMode
-                                      ? AppColors.primaryColor
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(8.r),
-                                ),
-                                child: Text(
-                                  AppStrings.newProduct.tr(),
-                                  textAlign: TextAlign.center,
-                                  style: TextStyles.customStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
+                            child: PermissionGuard(
+                              permission:
+                                  AppPermissions.inventoryManageProducts,
+                              child: InkWell(
+                                onTap: () {
+                                  setDialogState(() {
+                                    isNewProductMode = true;
+                                  });
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: isDesktop ? 8 : 8.h,
+                                  ),
+                                  decoration: BoxDecoration(
                                     color: isNewProductMode
-                                        ? Colors.white
-                                        : AppColors.blackLight,
+                                        ? AppColors.primaryColor
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(8.r),
+                                  ),
+                                  child: Text(
+                                    AppStrings.newProduct.tr(),
+                                    textAlign: TextAlign.center,
+                                    style: TextStyles.customStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: isNewProductMode
+                                          ? Colors.white
+                                          : AppColors.blackLight,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -1077,6 +1470,9 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                                       selectedId: selectedProd!.id,
                                       getName: (p) => p.name,
                                       getId: (p) => p.id,
+                                      getBarcode: (p) => p.barcode,
+                                      getSku: (p) => p.sku,
+                                      enableBarcodeScan: true,
                                       onSelected: (p) {
                                         setDialogState(() {
                                           selectedProd = p;
@@ -1394,187 +1790,190 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                           ),
                         ),
                         SizedBox(width: isDesktop ? 8 : 8.w),
-                        Flexible(
-                          flex: 2,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primaryColor,
-                              padding: EdgeInsets.symmetric(
-                                horizontal: isDesktop ? 16 : 12.w,
-                                vertical: isDesktop ? 10 : 10.h,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  isDesktop ? 10 : 10.r,
+                        PermissionGuard(
+                          permission: AppPermissions.inventoryManageProducts,
+                          child: Flexible(
+                            flex: 2,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryColor,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isDesktop ? 16 : 12.w,
+                                  vertical: isDesktop ? 10 : 10.h,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    isDesktop ? 10 : 10.r,
+                                  ),
                                 ),
                               ),
-                            ),
-                            onPressed: () {
-                              if (!isNewProductMode) {
-                                if (selectedProd == null) return;
-                                final qty =
-                                    double.tryParse(
-                                      qtyController.text.trim(),
-                                    ) ??
-                                    1;
-                                final price =
-                                    double.tryParse(
-                                      priceController.text.trim(),
-                                    ) ??
-                                    selectedProd!.purchasePrice;
-                                _addItem(selectedProd!, qty, price);
-                                Navigator.of(ctx).pop();
-                              } else {
-                                final name = newProductNameController.text
-                                    .trim();
-                                if (name.isEmpty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        AppStrings.pleaseEnterProductName.tr(),
-                                      ),
-                                    ),
-                                  );
-                                  return;
-                                }
-                                final purchasePrice =
-                                    double.tryParse(
-                                      newPurchasePriceController.text.trim(),
-                                    ) ??
-                                    0.0;
-                                final sellingPrice =
-                                    double.tryParse(
-                                      newSellingPriceController.text.trim(),
-                                    ) ??
-                                    purchasePrice;
-                                final qty =
-                                    double.tryParse(
-                                      newQtyController.text.trim(),
-                                    ) ??
-                                    1.0;
-                                final unit = newUnitController.text.trim();
-                                final barcode = newBarcodeController.text
-                                    .trim();
-
-                                // 1. Check if product already exists in inventory by name or barcode
-                                final existingProductInInventory = _allProducts
-                                    .where((p) {
-                                      if (p.name.trim().toLowerCase() ==
-                                          name.toLowerCase()) {
-                                        return true;
-                                      }
-                                      if (barcode.isNotEmpty &&
-                                          p.barcode != null &&
-                                          p.barcode!.trim().toLowerCase() ==
-                                              barcode.toLowerCase()) {
-                                        return true;
-                                      }
-                                      return false;
-                                    })
-                                    .firstOrNull;
-
-                                if (existingProductInInventory != null) {
-                                  _addItem(
-                                    existingProductInInventory,
-                                    qty,
-                                    purchasePrice > 0
-                                        ? purchasePrice
-                                        : existingProductInInventory
-                                              .purchasePrice,
-                                  );
+                              onPressed: () {
+                                if (!isNewProductMode) {
+                                  if (selectedProd == null) return;
+                                  final qty =
+                                      double.tryParse(
+                                        qtyController.text.trim(),
+                                      ) ??
+                                      1;
+                                  final price =
+                                      double.tryParse(
+                                        priceController.text.trim(),
+                                      ) ??
+                                      selectedProd!.purchasePrice;
+                                  _addItem(selectedProd!, qty, price);
                                   Navigator.of(ctx).pop();
-                                  return;
-                                }
-
-                                // 2. Check if this product was already added to _selectedItems during this session
-                                final existingSelectedItemIndex = _selectedItems
-                                    .indexWhere(
-                                      (item) =>
-                                          item.productName
-                                              .trim()
-                                              .toLowerCase() ==
-                                          name.toLowerCase(),
+                                } else {
+                                  final name = newProductNameController.text
+                                      .trim();
+                                  if (name.isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          AppStrings.pleaseEnterProductName
+                                              .tr(),
+                                        ),
+                                      ),
                                     );
+                                    return;
+                                  }
+                                  final purchasePrice =
+                                      double.tryParse(
+                                        newPurchasePriceController.text.trim(),
+                                      ) ??
+                                      0.0;
+                                  final sellingPrice =
+                                      double.tryParse(
+                                        newSellingPriceController.text.trim(),
+                                      ) ??
+                                      purchasePrice;
+                                  final qty =
+                                      double.tryParse(
+                                        newQtyController.text.trim(),
+                                      ) ??
+                                      1.0;
+                                  final unit = newUnitController.text.trim();
+                                  final barcode = newBarcodeController.text
+                                      .trim();
 
-                                if (existingSelectedItemIndex != -1) {
-                                  final existingItem =
-                                      _selectedItems[existingSelectedItemIndex];
-                                  final newTotalQty =
-                                      existingItem.quantity + qty;
-                                  final effectivePrice = purchasePrice > 0
-                                      ? purchasePrice
-                                      : existingItem.purchasePrice;
+                                  // 1. Check if product already exists in inventory by name or barcode
+                                  final existingProductInInventory =
+                                      _allProducts.where((p) {
+                                        if (p.name.trim().toLowerCase() ==
+                                            name.toLowerCase()) {
+                                          return true;
+                                        }
+                                        if (barcode.isNotEmpty &&
+                                            p.barcode != null &&
+                                            p.barcode!.trim().toLowerCase() ==
+                                                barcode.toLowerCase()) {
+                                          return true;
+                                        }
+                                        return false;
+                                      }).firstOrNull;
+
+                                  if (existingProductInInventory != null) {
+                                    _addItem(
+                                      existingProductInInventory,
+                                      qty,
+                                      purchasePrice > 0
+                                          ? purchasePrice
+                                          : existingProductInInventory
+                                                .purchasePrice,
+                                    );
+                                    Navigator.of(ctx).pop();
+                                    return;
+                                  }
+
+                                  // 2. Check if this product was already added to _selectedItems during this session
+                                  final existingSelectedItemIndex =
+                                      _selectedItems.indexWhere(
+                                        (item) =>
+                                            item.productName
+                                                .trim()
+                                                .toLowerCase() ==
+                                            name.toLowerCase(),
+                                      );
+
+                                  if (existingSelectedItemIndex != -1) {
+                                    final existingItem =
+                                        _selectedItems[existingSelectedItemIndex];
+                                    final newTotalQty =
+                                        existingItem.quantity + qty;
+                                    final effectivePrice = purchasePrice > 0
+                                        ? purchasePrice
+                                        : existingItem.purchasePrice;
+                                    setState(() {
+                                      _selectedItems[existingSelectedItemIndex] =
+                                          existingItem.copyWith(
+                                            quantity: newTotalQty,
+                                            purchasePrice: effectivePrice,
+                                            totalPrice:
+                                                newTotalQty * effectivePrice,
+                                            unit: unit.isNotEmpty
+                                                ? unit
+                                                : existingItem.unit,
+                                          );
+                                    });
+                                    Navigator.of(ctx).pop();
+                                    return;
+                                  }
+
+                                  final newProduct = InventoryProductEntity(
+                                    id: 'prod_${DateTime.now().millisecondsSinceEpoch}',
+                                    sku: newSkuController.text.trim(),
+                                    barcode:
+                                        newBarcodeController.text
+                                            .trim()
+                                            .isNotEmpty
+                                        ? newBarcodeController.text.trim()
+                                        : null,
+                                    name: name,
+                                    categoryId: newSelectedCategoryId ?? '',
+                                    categoryName: newSelectedCategoryName,
+                                    supplierId: _selectedSupplier?.id ?? '',
+                                    supplierName: _selectedSupplier?.name ?? '',
+                                    purchasePrice: purchasePrice,
+                                    sellingPrice: sellingPrice > 0
+                                        ? sellingPrice
+                                        : purchasePrice,
+                                    currentQuantity: 0.0,
+                                    minQuantity: 5.0,
+                                    unit: unit.isNotEmpty
+                                        ? unit
+                                        : AppStrings.piece.tr(),
+                                    createdAt: DateTime.now(),
+                                    updatedAt: DateTime.now(),
+                                    isSynced: false,
+                                  );
+
                                   setState(() {
-                                    _selectedItems[existingSelectedItemIndex] =
-                                        existingItem.copyWith(
-                                          quantity: newTotalQty,
-                                          purchasePrice: effectivePrice,
-                                          totalPrice:
-                                              newTotalQty * effectivePrice,
-                                          unit: unit.isNotEmpty
-                                              ? unit
-                                              : existingItem.unit,
-                                        );
+                                    _newProductsToCreate.add(newProduct);
+                                    _allProducts.add(newProduct);
+                                    _selectedItems.add(
+                                      InventoryPurchaseItemEntity(
+                                        productId: newProduct.id,
+                                        productName: newProduct.name,
+                                        quantity: qty,
+                                        purchasePrice: purchasePrice,
+                                        totalPrice: qty * purchasePrice,
+                                        unit: newProduct.unit.isNotEmpty
+                                            ? newProduct.unit
+                                            : null,
+                                      ),
+                                    );
                                   });
                                   Navigator.of(ctx).pop();
-                                  return;
                                 }
-
-                                final newProduct = InventoryProductEntity(
-                                  id: 'prod_${DateTime.now().millisecondsSinceEpoch}',
-                                  sku: newSkuController.text.trim(),
-                                  barcode:
-                                      newBarcodeController.text
-                                          .trim()
-                                          .isNotEmpty
-                                      ? newBarcodeController.text.trim()
-                                      : null,
-                                  name: name,
-                                  categoryId: newSelectedCategoryId ?? '',
-                                  categoryName: newSelectedCategoryName,
-                                  supplierId: _selectedSupplier?.id ?? '',
-                                  supplierName: _selectedSupplier?.name ?? '',
-                                  purchasePrice: purchasePrice,
-                                  sellingPrice: sellingPrice > 0
-                                      ? sellingPrice
-                                      : purchasePrice,
-                                  currentQuantity: 0.0,
-                                  minQuantity: 5.0,
-                                  unit: unit.isNotEmpty
-                                      ? unit
-                                      : AppStrings.piece.tr(),
-                                  createdAt: DateTime.now(),
-                                  updatedAt: DateTime.now(),
-                                  isSynced: false,
-                                );
-
-                                setState(() {
-                                  _newProductsToCreate.add(newProduct);
-                                  _allProducts.add(newProduct);
-                                  _selectedItems.add(
-                                    InventoryPurchaseItemEntity(
-                                      productId: newProduct.id,
-                                      productName: newProduct.name,
-                                      quantity: qty,
-                                      purchasePrice: purchasePrice,
-                                      totalPrice: qty * purchasePrice,
-                                      unit: newProduct.unit.isNotEmpty
-                                          ? newProduct.unit
-                                          : null,
-                                    ),
-                                  );
-                                });
-                                Navigator.of(ctx).pop();
-                              }
-                            },
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                AppStrings.invoiceAddItem.tr(),
-                                style: TextStyles.customStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                              },
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  AppStrings.invoiceAddItem.tr(),
+                                  style: TextStyles.customStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
                             ),
@@ -1619,10 +2018,6 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                     ),
                   ),
                   SizedBox(width: isDesktop ? 6 : 6.w),
-                  if (widget.initialPurchase == null || widget.isReorder) ...[
-                    _buildPaymentMethodBadge(),
-                    SizedBox(width: isDesktop ? 6 : 6.w),
-                  ],
                   Icon(
                     _isCardExpanded
                         ? Icons.keyboard_arrow_down_rounded
@@ -1643,38 +2038,6 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPaymentMethodBadge() {
-    String label;
-    Color color;
-    if (_selectedPaymentMethod == 'cash') {
-      label = AppStrings.paymentCash.tr();
-      color = AppColors.success;
-    } else if (_selectedPaymentMethod == 'card') {
-      label = AppStrings.paymentCard.tr();
-      color = AppColors.primaryColor;
-    } else {
-      label = AppStrings.paymentDebt.tr();
-      color = AppColors.warning;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Text(
-        label,
-        style: TextStyles.customStyle(
-          fontSize: 10,
-          color: color,
-          fontWeight: FontWeight.bold,
         ),
       ),
     );
@@ -1816,8 +2179,8 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                           double.tryParse(_paidAmountController.text.trim()) ??
                           0.0;
                       if (paid == 0 && _totalAmount > 0) {
-                        _paidAmountController.text =
-                            _totalAmount.toSmartAmount();
+                        _paidAmountController.text = _totalAmount
+                            .toSmartAmount();
                       }
                     });
                   }
@@ -1851,8 +2214,8 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                           double.tryParse(_paidAmountController.text.trim()) ??
                           0.0;
                       if (paid == 0 && _totalAmount > 0) {
-                        _paidAmountController.text =
-                            _totalAmount.toSmartAmount();
+                        _paidAmountController.text = _totalAmount
+                            .toSmartAmount();
                       }
                     });
                   }
@@ -1917,8 +2280,8 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
                         InkWell(
                           onTap: () {
                             setState(() {
-                              _paidAmountController.text =
-                                  _totalAmount.toSmartAmount();
+                              _paidAmountController.text = _totalAmount
+                                  .toSmartAmount();
                             });
                           },
                           child: Text(
@@ -1949,16 +2312,18 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
               child: Container(
                 padding: EdgeInsets.all(isDesktop ? 12 : 12.w),
                 decoration: BoxDecoration(
-                  color: (remainingDebt > 0.001
-                          ? AppColors.warning
-                          : AppColors.success)
-                      .withValues(alpha: 0.1),
+                  color:
+                      (remainingDebt > 0.001
+                              ? AppColors.warning
+                              : AppColors.success)
+                          .withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8.r),
                   border: Border.all(
-                    color: (remainingDebt > 0.001
-                            ? AppColors.warning
-                            : AppColors.success)
-                        .withValues(alpha: 0.4),
+                    color:
+                        (remainingDebt > 0.001
+                                ? AppColors.warning
+                                : AppColors.success)
+                            .withValues(alpha: 0.4),
                   ),
                 ),
                 child: Column(
@@ -1998,11 +2363,7 @@ class _CreatePurchaseScreenState extends State<CreatePurchaseScreen> {
     );
   }
 
-  Widget _buildPaymentMethodInfoCard(
-    double paid,
-    double debt,
-    bool isDesktop,
-  ) {
+  Widget _buildPaymentMethodInfoCard(double paid, double debt, bool isDesktop) {
     final hasDebt = debt > 0.001;
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
     final IconData icon;
