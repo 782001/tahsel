@@ -299,7 +299,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
           newQuantity: finalQuantity,
           notes: 'رصيد أولي (Initial Stock)',
           createdAt: DateTime.now(),
-          isSynced: false,
+          isSynced: hasConn,
         );
         await localDataSource.saveStockMovement(initialMovement);
       }
@@ -1363,10 +1363,24 @@ class InventoryRepositoryImpl implements InventoryRepository {
               currentQuantity: newQty,
               purchasePrice: item.purchasePrice,
               updatedAt: DateTime.now(),
-              isSynced: false,
+              isSynced: hasConnection,
             ),
           );
           await localDataSource.saveProduct(updatedProduct);
+
+          if (hasConnection && _currentUid != null) {
+            try {
+              await remoteDataSource.updateProductQuantityInRemote(
+                _currentUid!,
+                item.productId,
+                item.quantity,
+              );
+              await remoteDataSource.updateProductFieldsInRemote(
+                _currentUid!,
+                updatedProduct,
+              );
+            } catch (_) {}
+          }
 
           // Create Movement with collision-free ID
           final movement = StockMovementModel(
@@ -1380,7 +1394,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
             referenceId: purchase.id,
             notes: 'Purchase from ${purchase.supplierName}',
             createdAt: purchase.createdAt,
-            isSynced: false,
+            isSynced: hasConnection,
           );
           await localDataSource.saveStockMovement(movement);
         }
@@ -1484,7 +1498,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
             notes:
                 'إلغاء فاتورة شراء رقم #${purchase.id.replaceAll("pur_", "")}',
             createdAt: DateTime.now(),
-            isSynced: false,
+            isSynced: hasConnection,
           );
           await localDataSource.saveStockMovement(movement);
         }
@@ -1653,7 +1667,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
               notes:
                   'تعديل فاتورة شراء رقم #${newPurchase.id.replaceAll("pur_", "")}',
               createdAt: DateTime.now(),
-              isSynced: false,
+              isSynced: hasConnection,
             );
             await localDataSource.saveStockMovement(movement);
           }
@@ -1777,13 +1791,14 @@ class InventoryRepositoryImpl implements InventoryRepository {
 
       final prevQty = product.currentQuantity;
       final newQty = prevQty + adjustmentQuantity;
+      final bool hasConn = await connectionChecker.hasConnection;
 
       // Update product quantity
       final updatedProduct = InventoryProductModel.fromEntity(
         product.copyWith(
           currentQuantity: newQty,
           updatedAt: DateTime.now(),
-          isSynced: false,
+          isSynced: hasConn,
         ),
       );
       await localDataSource.saveProduct(updatedProduct);
@@ -1799,11 +1814,11 @@ class InventoryRepositoryImpl implements InventoryRepository {
         newQuantity: newQty,
         notes: reason,
         createdAt: DateTime.now(),
-        isSynced: false,
+        isSynced: hasConn,
       );
       await localDataSource.saveStockMovement(movement);
 
-      if (await connectionChecker.hasConnection && _currentUid != null) {
+      if (hasConn && _currentUid != null) {
         try {
           await remoteDataSource.updateProductQuantityInRemote(
             _currentUid!,
@@ -1915,7 +1930,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
                 ? 'Invoice Sale #$invoiceId'
                 : 'Invoice Return #$invoiceId',
             createdAt: DateTime.now(),
-            isSynced: false,
+            isSynced: hasConn,
           );
           await localDataSource.saveStockMovement(movement);
 
@@ -1992,6 +2007,24 @@ class InventoryRepositoryImpl implements InventoryRepository {
                 .getPurchaseByIdFromRemote(uid, p.id);
             if (remotePurchase == null) {
               // ── Scenario 1: Newly created purchase while offline ────────────
+              for (final item in p.items) {
+                // Avoid double-incrementing if the product was newly created and initialized in this sync cycle
+                final isNewlyCreatedInThisSync =
+                    unsyncedProducts.any((prod) => prod.id == item.productId);
+                if (!isNewlyCreatedInThisSync) {
+                  try {
+                    await remoteDataSource.updateProductQuantityInRemote(
+                      uid,
+                      item.productId,
+                      item.quantity,
+                    );
+                  } catch (e) {
+                    AppLogger.printMessage(
+                      'Inventory: sync purchase item qty error: $e',
+                    );
+                  }
+                }
+              }
               await _syncPurchaseToVault(p, isOfflineSync: true);
               await _syncPurchaseToExpenses(p);
               await _syncPurchaseToMyDebts(p);
@@ -2039,7 +2072,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
       if (unsyncedMovements.isNotEmpty) {
         // Apply manual adjustments made offline directly to remote product quantities:
         for (final m in unsyncedMovements) {
-          if (m.type == StockMovementType.manualAdjustment) {
+          if (m.type == StockMovementType.manualAdjustment &&
+              m.id.startsWith('sm_adj_')) {
             try {
               await remoteDataSource.updateProductQuantityInRemote(
                 uid,
